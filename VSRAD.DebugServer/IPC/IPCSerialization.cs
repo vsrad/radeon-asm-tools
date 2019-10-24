@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System;
+using System.Text.RegularExpressions;
 
 namespace VSRAD.DebugServer.IPC
 {
@@ -26,6 +27,7 @@ namespace VSRAD.DebugServer.IPC
     public sealed class IPCReader : BinaryReader
     {
         public IPCReader(Stream stream) : base(stream) { }
+        private static readonly Regex envMacroRegex = new Regex(@"\$ENVR\(([^)]+)\)", RegexOptions.Compiled);
 
         public string[] ReadLengthPrefixedStringArray()
         {
@@ -44,5 +46,17 @@ namespace VSRAD.DebugServer.IPC
 
         public DateTime ReadDateTime() =>
             DateTime.FromBinary(ReadInt64());
+
+        public override string ReadString()
+        {
+            var rawString = base.ReadString();
+            foreach(Match m in envMacroRegex.Matches(rawString))
+            {
+                var envName = m.Groups[1].Value;
+                var envValue = Environment.GetEnvironmentVariable(envName);
+                rawString = rawString.Replace(m.Value, envValue);
+            }
+            return rawString;
+        }
     }
 }
