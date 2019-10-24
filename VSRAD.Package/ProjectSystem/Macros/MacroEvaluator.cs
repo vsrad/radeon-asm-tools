@@ -144,6 +144,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
             return value;
         }
 
+        public string GetEnvironmentMacroValue(string name)
+        {
+            return Environment.GetEnvironmentVariable(name);
+        }
+
         public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, null);
 
         public async Task<string> EvaluateAsync(string src, string recursionStartName)
@@ -161,7 +166,12 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     break;
                 }
 
-                var macroEnd = src[macroStart + 1] == '(' ? src.IndexOf(')', macroStart + 3) : -1;
+                var isEnvironment = string.CompareOrdinal(src, macroStart + 1, "ENV", 0, 3) == 0
+                    && src.Length - macroStart > 6;
+
+                var macroEnd = isEnvironment
+                    ? src[macroStart + 4] == '(' ? src.IndexOf(')', macroStart + 6) : -1
+                    : src[macroStart + 1] == '(' ? src.IndexOf(')', macroStart + 3) : -1;
                 if (macroEnd == -1)
                 {
                     evaluated.Append(src, c, macroStart + 1 - c);
@@ -169,7 +179,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     continue;
                 }
 
-                var macroNameStart = macroStart + 2; // skip $(
+                var macroNameStart = macroStart + (isEnvironment ? 5 : 2); // skip $(
                 var macroNameLength = macroEnd - macroNameStart;
 
                 var imbalancedMacroStart = src.IndexOf('$', macroNameStart, macroNameLength);
@@ -181,7 +191,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 }
 
                 var macroName = src.Substring(macroNameStart, macroNameLength);
-                var macroValue = await GetMacroValueAsync(macroName, recursionStartName);
+                var macroValue = isEnvironment 
+                    ? GetEnvironmentMacroValue(macroName) 
+                    : await GetMacroValueAsync(macroName, recursionStartName);
                 evaluated.Append(src, c, macroStart - c);
                 evaluated.Append(macroValue);
                 c = macroEnd + 1;
