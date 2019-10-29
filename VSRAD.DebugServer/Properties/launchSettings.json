@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "VSRAD.DebugServer": {
+      "commandName": "Project",
+      "commandLineArgs": "9339"
+    }
+  }
+}

@@ -1,0 +1,265 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".vsct" #>
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h" />
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidVSPackage">
+    <Menus>
+      <!-- Tools -> RAD Debug -->
+      <Menu guid="guidCmdSetToolsMenu" id="ToolsMenuId" priority="0x700" type="Menu">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_TOOLS_OTHER2"/>
+        <Strings>
+          <ButtonText>RAD Debug</ButtonText>
+          <CommandName>RAD Debug</CommandName>
+        </Strings>
+      </Menu>
+      <!-- View -> Toolbars -> RAD Debug -->
+      <Menu guid="guidCmdSetToolbar" id="ToolbarId" type="Toolbar">
+        <Strings>
+          <ButtonText>RAD Debug</ButtonText>
+        </Strings>
+      </Menu>
+      <!-- Editor context menu -> Add to watches as array -->
+      <Menu guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuId" priority="0x1000" type="Menu">
+        <Parent guid="guidCmdSetSelectionArray" id="EditorContextMenuAddArrayToWatchesGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Add To Watches As Array</ButtonText>
+          <CommandName>Add To Watches As Array</CommandName>
+        </Strings>
+      </Menu>
+	  <!-- Editor context menu -> Add to watches as array -> From 0..15 -->
+	  <# for (int i = 0; i < 16; ++i) { #>
+	  <Menu guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Id" priority="0x<#= (0x1100 + i).ToString("x") #>" type="Menu">
+        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText><#= i #></ButtonText>
+        </Strings>
+      </Menu>
+	  <# } #>
+    </Menus>
+
+    <Buttons>
+      <!-- Tools menu -->
+      <Button guid="guidCmdSetProfile" id="ProfileCommandId" priority="0" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="profilerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Launch Remote Profiling</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetVisualizer" id="VisualizerWindowCommandId" priority="1" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Open Visualizer</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetDisassembly" id="DisassemblyCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="disassemblyIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Disassemble file</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetVisualizer" id="VisualizerOptionsCommandId" priority="2" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="optionsIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Options</ButtonText>
+        </Strings>
+      </Button>
+      <!-- Editor context menu -->
+      <Button guid="guidCmdSetFRTC" id="ForceRunToCursorCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Force Run To Cursor</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetSelection" id="AddSelectionToWatchesCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdSetSelection" id="EditorContextMenuSelectionGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Add To Watches</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetSelectionArray" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
+        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>From</ButtonText>
+        </Strings>
+      </Button>
+	  <# for (int i = 0; i < 16; ++i) { #>
+	  <Button guid="guidCmdSetSelectionArray" id="AddArrayToWatchesFrom<#= i #>ToHeaderId" priority="0x<#= (0x1200 + i).ToString("x") #>">
+        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+	  <# for (int j = i; j < 16; ++j) { #>
+	  <Button guid="guidCmdSetSelectionArray" id="AddArrayToWatchesFrom<#= i #>To<#= j #>Id" priority="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>">
+        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText><#= j #></ButtonText>
+        </Strings>
+      </Button>
+	  <# } #>
+	  <# } #>
+      <!--<Button guid="guidCmdEvaluateSelected" id="EvaluateSelectedCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Evaluate Selected</ButtonText>
+        </Strings>
+      </Button>-->
+    </Buttons>
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <!--  The bitmap id is defined in a way that is a little bit different from the others:
+            the declaration starts with a guid for the bitmap strip, then there is the resource id of the
+            bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
+            inside a button definition. An important aspect of this declaration is that the element id
+            must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, bmpPicArrows, bmpPicStrikethrough" />
+    </Bitmaps>
+
+    <Groups>
+      <!-- Toolbar -->
+      <Group guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+      </Group>
+      <!-- Tools menu -->
+      <Group guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0600">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
+      </Group>
+      <Group guid="guidCmdSetProfile" id="StandardToolbarGroup" priority="0xF000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
+      </Group>
+      <Group guid="guidCmdSetDisassembly" id="StandardToolbarGroup" priority="0xF000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
+      </Group>
+      <!-- Editor context menu -->
+      <Group guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>
+      <Group guid="guidCmdSetSelection" id="EditorContextMenuSelectionGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>
+      <Group guid="guidCmdSetSelectionArray" id="EditorContextMenuAddArrayToWatchesGroup" priority="0x4000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>
+      <Group guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuGroup" priority="0x4000">
+        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuId" />
+      </Group>
+	  <# for (int i = 0; i < 16; ++i) { #>
+	  <Group guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Group" priority="0x<#= (0x4100 + i).ToString("x") #>">
+        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Id" />
+      </Group>
+	  <# } #>
+      <!--<Group guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>-->
+    </Groups>
+  </Commands>
+
+  <CommandPlacements>
+    <CommandPlacement guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0100">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
+  </CommandPlacements>
+
+  <Symbols>
+    <GuidSymbol name="guidVSPackage" value="{033a507d-aaaa-4a75-b906-895d8cc0616e}" />
+
+    <GuidSymbol name="guidCmdSetToolbar" value="{E1436EB5-1D47-4714-85CB-6177E62AB2AD}">
+      <IDSymbol name="ToolbarId" value="0x1000"/>
+      <IDSymbol name="ToolbarGroup" value="0x0600" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidCmdSetToolsMenu" value="{E57C1D19-4B4F-4824-8C4B-3B08C52348B7}">
+      <IDSymbol name="ToolsMenuId" value="0x1021" />
+      <IDSymbol name="ToolsMenuGroup" value="0x0600" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetVisualizer" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
+      <IDSymbol name="VisualizerWindowCommandId" value="0x0100" />
+      <IDSymbol name="VisualizerOptionsCommandId" value="0x0101" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetDisassembly" value="{03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE}">
+      <IDSymbol name="DisassemblyCommandId" value="0x0100" />
+      <IDSymbol value="4128" name="StandardToolbarGroup" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetFRTC" value="{cefc8250-7cd1-46c1-b4f6-46a0a22a1c81}">
+      <IDSymbol value="0x0100" name="ForceRunToCursorCommandId" />
+      <IDSymbol value="4128" name="EditorContextMenuFRTCGroup" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetSelection" value="{8560BD12-1D31-40BA-B300-1A31FC901E93}">
+      <IDSymbol value="0x0100" name="AddSelectionToWatchesCommandId" />
+      <IDSymbol value="4128" name="EditorContextMenuSelectionGroup" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetSelectionArray" value="{A03BE90E-E3E1-47F8-815B-387605FDCB73}">
+      <IDSymbol value="0x1020" name="EditorContextMenuAddArrayToWatchesGroup" />
+      <IDSymbol value="0x1025" name="AddArrayToWatchesMenuGroup" />
+      <IDSymbol value="0x1030" name="AddArrayToWatchesMenuId" />
+      <IDSymbol value="0x1031" name="AddArrayToWatchesFromHeaderId" />
+	  <# for (int i = 0; i < 16; ++i) { #>
+	  <IDSymbol value="0x<#= (0x1100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Id" />
+	  <IDSymbol value="0x<#= (0x4100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Group" />
+	  <IDSymbol value="0x<#= (0x1200 + i).ToString("x") #>" name="AddArrayToWatchesFrom<#= i #>ToHeaderId" />
+	  <# for (int j = i; j < 16; ++j) { #>
+	  <IDSymbol value="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>" name="AddArrayToWatchesFrom<#=i #>To<#= j #>Id" />
+	  <# } #>
+	  <# } #>
+    </GuidSymbol>
+
+    <!--<GuidSymbol name="guidCmdEvaluateSelected" value="{6624A31D-4C20-4675-84D7-67D140842579}">
+      <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
+      <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
+    </GuidSymbol>-->
+
+    <GuidSymbol name="guidCmdSetProfile" value="{A74163CE-732B-4570-8374-21D51EF7C3AD}">
+      <IDSymbol value="0x0100" name="ProfileCommandId" />
+      <IDSymbol value="4128" name="StandardToolbarGroup" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">
+      <IDSymbol name="profilerIcon" value="1" />
+      <IDSymbol name="visualizerIcon" value="2" />
+      <IDSymbol name="optionsIcon" value="3" />
+      <IDSymbol name="disassemblyIcon" value="4" />
+      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="bmpPicStrikethrough" value="6" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

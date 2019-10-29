@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Rule Name="DebuggerGeneralProperties"
+      DisplayName="Debugger General Properties"
+      Description="General Debugger options"
+      xmlns="http://schemas.microsoft.com/build/2009/properties">
+    <Rule.DataSource>
+        <DataSource Persistence="ProjectFile" HasConfigurationCondition="False"/>
+    </Rule.DataSource>
+
+    <StringProperty Name="DebuggerFlavor" Visible="false" Description="The debug rule selected as the active debugger."/>
+</Rule>

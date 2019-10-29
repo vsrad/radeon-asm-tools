@@ -1,0 +1,470 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
+  <PropertyGroup>
+    <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">12.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>12.0</OldToolsVersion>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{7DDAD15C-AF23-4B42-8ADE-CD3BB23DF072}</ProjectGuid>
+    <ProjectTypeGuids>{82b43b9b-a64c-4715-b499-d71e9ca2bd60};{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>VSRAD.Package</RootNamespace>
+    <AssemblyName>RadeonAsmDebugger</AssemblyName>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>Key.snk</AssemblyOriginatorKeyFile>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet />
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisRuleSet />
+    <LangVersion>7.3</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="envdte100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="envdte80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualStudio.CommandBars, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.Debugger.Engine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Debugger.Interop.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Debugger.Interop.15.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.Debugger.InteropA, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.Reflection" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="VSLangProj, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="stdole">
+      <Guid>{00020430-0000-0000-C000-000000000046}</Guid>
+      <VersionMajor>2</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>primary</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\VSRAD.DebugServer\IPC\Commands.cs">
+      <Link>Server\IPC\Commands.cs</Link>
+    </Compile>
+    <Compile Include="..\VSRAD.DebugServer\IPC\IPCSerialization.cs">
+      <Link>Server\IPC\IPCSerialization.cs</Link>
+    </Compile>
+    <Compile Include="..\VSRAD.DebugServer\IPC\Responses.cs">
+      <Link>Server\IPC\Responses.cs</Link>
+    </Compile>
+    <Compile Include="..\VSRAD.DebugServer\IPC\StreamExtensions.cs">
+      <Link>Server\IPC\StreamExtensions.cs</Link>
+    </Compile>
+    <Compile Include="Colors.cs" />
+    <Compile Include="Commands\AddToWatchesCommand.cs" />
+    <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
+    <Compile Include="Commands\BaseRemoteCommand.cs" />
+    <Compile Include="Commands\DebugVisualizerCommand.cs" />
+    <Compile Include="Commands\DisassemblyCommand.cs" />
+    <Compile Include="Commands\EvaluateSelectedCommand.cs" />
+    <Compile Include="Commands\ForceRunToCursorCommand.cs" />
+    <Compile Include="Commands\ProfileCommand.cs" />
+    <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
+    <Compile Include="DebugVisualizer\ColumnSelector.cs" />
+    <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
+    <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
+    <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
+    <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
+      <DependentUpon>VisualizerControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\GroupIndexSelector.cs" />
+    <Compile Include="DebugVisualizer\MouseMove\IMouseMoveOperation.cs" />
+    <Compile Include="DebugVisualizer\MouseMove\MouseMoveController.cs" />
+    <Compile Include="DebugVisualizer\MouseMove\ReorderOperation.cs" />
+    <Compile Include="DebugVisualizer\NumberInput.xaml.cs">
+      <DependentUpon>NumberInput.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\SelectionController.cs" />
+    <Compile Include="DebugVisualizer\VisualizerHeaderControl.xaml.cs">
+      <DependentUpon>VisualizerHeaderControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
+    <Compile Include="DebugVisualizer\Watch.cs" />
+    <Compile Include="Options\DefaultOptionValues.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\ContextMenus\CopyContextMenu.cs" />
+    <Compile Include="DebugVisualizer\MouseMove\PanOperation.cs" />
+    <Compile Include="DebugVisualizer\RowStyling.cs" />
+    <Compile Include="DebugVisualizer\MouseMove\ScaleOperation.cs" />
+    <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
+    <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
+    <Compile Include="Errors.cs" />
+    <Compile Include="Server\DeployItem.cs" />
+    <Compile Include="Server\DeployItemTracker.cs" />
+    <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
+      <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
+    <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\MagicNumberConverter.cs" />
+    <Compile Include="Utils\ObservableDictionary.cs" />
+    <Compile Include="Options\ProfileOptions.cs" />
+    <Compile Include="Options\ProjectOptions.cs" />
+    <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
+    <Compile Include="ProjectSystem\OutputWindow.cs" />
+    <Compile Include="ProjectSystem\Profiles\PropertyPageEditorWrapper.cs" />
+    <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">
+      <DependentUpon>ProfileNameWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindow.xaml.cs">
+      <DependentUpon>ProfileOptionsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\ProfileTransferManager.cs" />
+    <Compile Include="ProjectSystem\Profiles\ProfileOptionsReflector.cs" />
+    <Compile Include="ProjectSystem\ProjectSourceManager.cs" />
+    <Compile Include="ProjectSystem\ProjectEvents.cs" />
+    <Compile Include="ProjectSystem\ProjectLifecycle.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditorWindow.xaml.cs">
+      <DependentUpon>MacroEditorWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Macros\MacroEvaluator.cs" />
+    <Compile Include="ToolWindows\OptionsControl.xaml.cs">
+      <DependentUpon>OptionsControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ToolWindows\ToolWindowIntegration.cs" />
+    <Compile Include="Server\BreakState.cs" />
+    <Compile Include="Server\CommunicationChannel.cs" />
+    <Compile Include="Server\DebugSession.cs" />
+    <Compile Include="DebugVisualizer\ColumnStyling.cs" />
+    <Compile Include="DebugVisualizer\VariableType.cs" />
+    <Compile Include="DebugVisualizer\VisualizerTable.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Options\DebuggerOptions.cs" />
+    <Compile Include="DebugVisualizer\ColumnHighlightRegion.cs" />
+    <Compile Include="DebugVisualizer\ColumnHighlightColor.cs" />
+    <Compile Include="Constants.cs" />
+    <Compile Include="DebugVisualizer\ColumnStylingOptions.cs" />
+    <Compile Include="ProjectSystem\DebuggerIntegration.cs" />
+    <Compile Include="ProjectSystem\DebuggerLaunchProvider.cs" />
+    <Compile Include="ProjectTypeRegistration.cs" />
+    <Compile Include="Options\VisualizerOptions.cs" />
+    <Compile Include="ProjectProperties.cs" />
+    <Compile Include="ProjectSystem\EditorExtensions\EvaluateSelectedQuickInfoSource.cs" />
+    <Compile Include="ProjectSystem\EditorExtensions\QuickInfoEvaluateSelectedState.cs" />
+    <Compile Include="ProjectSystem\Project.cs" />
+    <Compile Include="ProvideDebugEngineAttribute.cs" />
+    <Compile Include="ProvideDebugPortSupplierAttribute.cs" />
+    <Compile Include="Server\DeployFilePacker.cs" />
+    <Compile Include="Server\FileSynchronizationManager.cs" />
+    <Compile Include="Server\RemoteCommandExecutor.cs" />
+    <Compile Include="ToolWindows\BaseToolWindow.cs" />
+    <Compile Include="ToolWindows\OptionsWindow.cs" />
+    <Compile Include="ToolWindows\VisualizerWindow.cs" />
+    <Compile Include="Utils\DataFormatter.cs" />
+    <Compile Include="Utils\NotifyPropertyChanged.cs" />
+    <Compile Include="Utils\Ensure.cs" />
+    <Compile Include="Utils\Half.cs" />
+    <Compile Include="Utils\ProjectSystemExtensions.cs" />
+    <Compile Include="Utils\ReflectionUtils.cs" />
+    <Compile Include="Utils\DeployUtils.cs" />
+    <Compile Include="Utils\StringUtils.cs" />
+    <Compile Include="Utils\Win32Control.cs" />
+    <Compile Include="Utils\WpfDelegateCommand.cs" />
+    <Compile Include="VSLanguageInfo.cs" />
+    <Compile Include="VSPackage.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="VSPackage.resx">
+      <MergeWithCTO>true</MergeWithCTO>
+      <ManifestResourceName>VSPackage</ManifestResourceName>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="BuildSystem\DeployedBuildSystem\RADProject.targets">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="BuildSystem\DeployedBuildSystem\RADProject.props">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Key.snk" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="VSRAD.Package.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>VSRAD.Package.vsct</LastGenOutput>
+    </Content>
+    <VSCTCompile Include="VSRAD.Package.vsct">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>VSRAD.Package.tt</DependentUpon>
+      <ResourceName>Menus.ctmenu</ResourceName>
+      <SubType>Designer</SubType>
+    </VSCTCompile>
+    <Resource Include="Resources\DebugVisualizerWindowCommand.png" />
+    <None Include="Resources\HandCursor.cur" />
+    <Content Include="Resources\Package.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VSRAD.Deborgar\VSRAD.Deborgar.csproj">
+      <Project>{fc0f052f-e20b-4ab9-b2a0-96ba1ffe8feb}</Project>
+      <Name>VSRAD.Deborgar</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\VSRAD.ProjectItemTemplate\VSRAD.ProjectItemTemplate.csproj">
+      <Project>{cf4c6c64-dc0b-4ed6-9740-3abd3f2e7a91}</Project>
+      <Name>VSRAD.ProjectItemTemplate</Name>
+      <VSIXSubPath>ItemTemplates</VSIXSubPath>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <IncludeOutputGroupsInVSIX>TemplateProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+    </ProjectReference>
+    <ProjectReference Include="..\VSRAD.ProjectTemplate\VSRAD.ProjectTemplate.csproj">
+      <Project>{5EA738D2-9284-4FB6-856F-A89FD4C715DD}</Project>
+      <Name>VSRAD.ProjectTemplate</Name>
+      <VSIXSubPath>ProjectTemplates</VSIXSubPath>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <IncludeOutputGroupsInVSIX>TemplateProjectOutputGroup%3b</IncludeOutputGroupsInVSIX>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
+      <SubType>Designer</SubType>
+    </None>
+    <XamlPropertyRule Include="BuildSystem\Rules\general.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\general_file.xaml">
+      <RuleInjection>None</RuleInjection>
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\folder.xaml">
+      <RuleInjection>None</RuleInjection>
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\debugger_general.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\general.browseobject.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\RADDebugger.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="DebugVisualizer\VisualizerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DebugVisualizer\NumberInput.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DebugVisualizer\VisualizerHeaderControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Macros\MacroEditorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\ProfileNameWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\ProfileOptionsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ToolWindows\EvaluateSelectedControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ToolWindows\OptionsControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="BuildSystem\Rules\source_file.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="BuildSystem\Rules\Build.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build">
+      <Version>15.9.20</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Build.Tasks.Core">
+      <Version>15.9.20</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Composition">
+      <Version>15.8.117</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Editor">
+      <Version>15.8.525</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Imaging.Interop.14.0.DesignTime">
+      <Version>14.3.26930</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Language">
+      <Version>15.8.525</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Language.StandardClassification">
+      <Version>15.8.525</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.OLE.Interop">
+      <Version>7.10.6071</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.ProjectSystem">
+      <Version>15.8.243</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk">
+      <Version>15.8.243</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk.Tools">
+      <Version>15.8.243</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers">
+      <Version>15.8.36</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.SDK.EmbedInteropTypes">
+      <Version>15.0.27</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop">
+      <Version>1.16.30</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Shell.15.0">
+      <Version>15.9.28307</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime">
+      <Version>14.3.26929</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Threading">
+      <Version>15.8.209</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers">
+      <Version>15.8.209</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools">
+      <Version>15.9.3039</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>9.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Composition">
+      <Version>1.3.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Reflection.Metadata">
+      <Version>1.6.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup />
+  <PropertyGroup>
+    <UseCodebase>true</UseCodebase>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
+  <!-- https://github.com/Microsoft/VSProjectSystem/issues/234#issuecomment-525065410 -->
+  <Import Project="$(UserProfile)\.nuget\packages\microsoft.visualstudio.projectsystem.sdk.tools\15.8.243\build\Microsoft.VisualStudio.ProjectSystem.Sdk.Tools.targets" Condition="!$(PrepareResourceNamesDependsOn.Contains('GenerateRuleSourceFromXaml'))" />
+  <!-- TODO: This copies the build authoring to a well-known location so that on the machine this project builds on,
+       the projects created by the 3rd party consumer can open and build. But the real 3rd party consumer will not
+       have run this step so they won't be able to open their projects. 
+       To ship, the project type author must create an MSI that places these files in a well-known location on the
+       customer machine and update the project template to point at that location.-->
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <BuildSystemToCopy Include="BuildSystem\DeployedBuildSystem\**\*" />
+      <RulesToCopy Include="BuildSystem\Rules\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(BuildSystemToCopy)" DestinationFiles="@(BuildSystemToCopy->'$(LocalAppData)\CustomProjectSystems\RADProject\%(RecursiveDir)%(FileName)%(Extension)')" />
+    <Copy SourceFiles="@(RulesToCopy)" DestinationFiles="@(RulesToCopy->'$(LocalAppData)\CustomProjectSystems\RADProject\Rules\%(RecursiveDir)%(FileName)%(Extension)')" />
+  </Target>
+  <PropertyGroup>
+    <TransformOnBuild>true</TransformOnBuild>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TextTemplating\Microsoft.TextTemplating.targets" />
+</Project>

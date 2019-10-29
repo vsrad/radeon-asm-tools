@@ -1,0 +1,125 @@
+﻿<UserControl x:Class="VSRAD.Package.DebugVisualizer.VisualizerHeaderControl" x:Name="HeaderControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer"
+             mc:Ignorable="d"
+             d:DesignHeight="140" d:DesignWidth="700">
+    <UserControl.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Show hidden system variable" IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="3D NDRange" IsChecked="{Binding Options.VisualizerOptions.NDRange3D, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem IsEnabled="False" Header="Show:"/>
+            <MenuItem Header="Columns" IsChecked="{Binding ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="App args" IsChecked="{Binding ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Break args" IsChecked="{Binding ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
+        </ContextMenu>
+    </UserControl.ContextMenu>
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <Style x:Key="NDRangeInput" TargetType="local:NumberInput">
+            <Setter Property="IsEnabled" Value="{Binding DataContext.GroupIndexEditable, ElementName=HeaderControl}"/>
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="true">
+                    <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)/ErrorContent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="NDRange3DInput" TargetType="local:NumberInput" BasedOn="{StaticResource NDRangeInput}">
+            <Setter Property="Visibility" Value="{Binding DataContext.Options.VisualizerOptions.NDRange3D, ElementName=HeaderControl, Converter={StaticResource BoolToVisibility}}"/>
+        </Style>
+        <Style x:Key="NDRange3DLabel" TargetType="Label">
+            <Setter Property="Visibility" Value="{Binding DataContext.Options.VisualizerOptions.NDRange3D, ElementName=HeaderControl, Converter={StaticResource BoolToVisibility}}"/>
+        </Style>
+    </UserControl.Resources>
+    <StackPanel>
+        <StackPanel.Style>
+            <Style TargetType="StackPanel">
+                <Setter Property="Background" Value="White"/>
+            </Style>
+        </StackPanel.Style>
+        <WrapPanel>
+            <Label Content="Counter:" Height="26" Width="68"/>
+            <local:NumberInput Value="{Binding DataContext.Options.DebuggerOptions.Counter, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                               Width="60" Height="24" />
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Group #:" Height="26"/>
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.X, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.Y, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.Z, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Groups:" Height="26" Style="{StaticResource NDRange3DLabel}"/>  
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.DimX, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.DimY, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.DimZ, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label Content="Group size:" Height="26"/>
+                <local:NumberInput Value="{Binding DataContext.GroupIndex.GroupSize, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                                   Minimum="64" Maximum="512" Step="64" Width="38" Height="24"/>
+            </StackPanel>
+            <Label Content="{Binding Status, Mode=OneWay}" Height="26"/>
+        </WrapPanel>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="68"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="Auto" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowColumnsField}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="Auto" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowAppArgsField}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="Auto" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowBreakArgsField}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
+            </Grid.RowDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" Content="Columns:"/>
+            <Label Grid.Row="1" Grid.Column="0" Content="App args:"/>
+            <Label Grid.Row="2" Grid.Column="0" Content="Break args:"/>
+            <TextBox Text="{Binding Options.VisualizerColumnStyling.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
+                     Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"/>
+            <TextBox Text="{Binding Options.DebuggerOptions.AppArgs, UpdateSourceTrigger=PropertyChanged}"
+                     Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center"/>
+            <TextBox Text="{Binding Options.DebuggerOptions.BreakArgs, UpdateSourceTrigger=PropertyChanged}"
+                     Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"/>
+        </Grid>
+    </StackPanel>
+</UserControl>

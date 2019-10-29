@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Rule
+	Name="Build"
+	PageTemplate="tool"
+	DisplayName="Build"
+	xmlns="http://schemas.microsoft.com/build/2009/properties">
+    <Rule.DataSource>
+        <DataSource Persistence="ProjectFile"/>
+    </Rule.DataSource>
+
+    <StringListProperty Name="BuildToolEnvironmentVariables" DisplayName="Build Tool Environment Variables" 
+                        Separator=";"
+                        Description="Semi-colon separated list of environment variables for project build"/>
+
+    <StringProperty Name="BuildToolExe" DisplayName="Build Tool Executable"
+                    Description="The path to the build tool.">
+        <StringProperty.ValueEditors>
+            <ValueEditor EditorType="DefaultFilePropertyEditor" DisplayName="&lt;Browse...&gt;">
+                <ValueEditor.Metadata>
+                    <NameValuePair Name="Filters" Value="Executables (*.exe)|*.exe" />
+                </ValueEditor.Metadata>
+            </ValueEditor>
+        </StringProperty.ValueEditors>
+    </StringProperty>
+
+    <StringProperty Name="BuildToolExeArguments" DisplayName="Build Tool Command Arguments">
+        <StringProperty.ValueEditors>
+            <ValueEditor EditorType="PropertyPageSubstitutionEditor" DisplayName="&lt;Edit with substitutions...&gt;" />
+        </StringProperty.ValueEditors>
+    </StringProperty>
+</Rule>

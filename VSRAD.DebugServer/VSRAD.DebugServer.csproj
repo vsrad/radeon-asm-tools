@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Packaging.Tools.Trimming" Version="1.1.0-preview1-26619-01" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TrimUnusedDependencies>true</TrimUnusedDependencies>
+    <LangVersion>7.3</LangVersion>
+    <Version>5.14</Version>
+    <AssemblyName>RadeonAsmDebugServer</AssemblyName>
+    <RootNamespace>VSRAD.DebugServer</RootNamespace>
+  </PropertyGroup>
+
+</Project>

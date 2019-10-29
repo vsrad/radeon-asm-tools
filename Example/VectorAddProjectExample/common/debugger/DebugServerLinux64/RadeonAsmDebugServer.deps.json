@@ -1,0 +1,35 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v2.2/linux-x64",
+    "signature": "9b3355d4b5c3d62b809d73042b2fbc5c9c5a05cc"
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v2.2": {},
+    ".NETCoreApp,Version=v2.2/linux-x64": {
+      "RadeonAsmDebugServer/5.14": {
+        "dependencies": {
+          "Microsoft.Packaging.Tools.Trimming": "1.1.0-preview1-26619-01"
+        },
+        "runtime": {
+          "RadeonAsmDebugServer.dll": {}
+        }
+      },
+      "Microsoft.Packaging.Tools.Trimming/1.1.0-preview1-26619-01": {}
+    }
+  },
+  "libraries": {
+    "RadeonAsmDebugServer/5.14": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Packaging.Tools.Trimming/1.1.0-preview1-26619-01": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-TsJW2A6DsEN+cmXUNsAXJppmZmGFbYPxk9LWUhZm6xAeMdbbgzipSI+72HMzNLHupGHQ/cD1eXm6oxnYWq8AXw==",
+      "path": "microsoft.packaging.tools.trimming/1.1.0-preview1-26619-01",
+      "hashPath": "microsoft.packaging.tools.trimming.1.1.0-preview1-26619-01.nupkg.sha512"
+    }
+  }
+}

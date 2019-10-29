@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectCapability Include="RADProject" />
+    <ProjectCapability Include="UseFileGlobs" />
+    <ProjectCapability Include="OpenProjectFile" />
+    <ProjectCapability Include="HandlesOwnReload" />
+    <ProjectCapability Include="ProjectConfigurationsDeclaredAsItems" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SourceFile Include="**/*"/>
+    <SourceFile Remove="*.radproj; *.radproj.user; *.radproj.user.json"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\ProjectItemsSchema.xaml;"/>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\debugger_general.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\Build.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\RADDebugger.xaml;">
+      <Context>Project</Context>
+    </PropertyPageSchema>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general.browseobject.xaml">
+      <Context>BrowseObject</Context>
+    </PropertyPageSchema>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general_file.xaml">
+      <Context>File</Context>
+    </PropertyPageSchema>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\folder.xaml; $(MSBuildThisFileDirectory)Rules\source_file.xaml;">
+      <Context>File;BrowseObject</Context>
+    </PropertyPageSchema>
+  </ItemGroup>
+
+  <Import Project="$(MSBuildProjectFullPath).user" Condition="Exists('$(MSBuildProjectFullPath).user')" />
+
+  <Target Name="Run">
+  </Target>
+
+  <UsingTask TaskName="VSRAD.BuildTools.SourceValidationBuild"
+             AssemblyFile="$(MSBuildUserExtensionsPath)\VSRAD\VSRAD.BuildTools.dll"/>
+
+  <Target Name="Build">
+    <SourceValidationBuild ProjectRoot="$(MSBuildProjectDirectory)"
+                           StartFile="%(SourceFile.Identity)"
+                           BuildToolExe="$(BuildToolExe)"
+                           BuildToolExeArguments="$(BuildToolExeArguments)"
+                           BuildToolEnvironmentVariables="$(BuildToolEnvironmentVariables)"/>
+  </Target>
+
+  <Target Name="Rebuild">
+  </Target>
+</Project>

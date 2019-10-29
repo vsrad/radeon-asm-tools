@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VSTemplate Version="3.0.0" Type="Item" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
+  <TemplateData>
+    <Name>Source File</Name>
+    <Description>Radeon Asm source file (.s, ...)</Description>
+    <Icon>RADProjectItem.ico</Icon>
+    <ProjectType>RadeonAsm</ProjectType>
+    <AppliesTo>RADProject</AppliesTo><!-- must match the unique project capability-->
+    <TemplateID>3E7AD838-858C-443D-B8B0-B02B897061EF</TemplateID>
+    <DefaultName>main.s</DefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <ProjectItem OpenInEditor="true">main.s</ProjectItem>
+  </TemplateContent>
+</VSTemplate>

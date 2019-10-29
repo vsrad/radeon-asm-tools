@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Rule
+	Name="RADDebugger"
+	PageTemplate="debugger"
+	DisplayName="RAD Debugger"
+	Description="RAD Debugger"
+	xmlns="http://schemas.microsoft.com/build/2009/properties">
+</Rule>

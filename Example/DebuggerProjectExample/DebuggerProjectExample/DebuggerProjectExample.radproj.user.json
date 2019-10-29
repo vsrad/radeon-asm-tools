@@ -1,0 +1,85 @@
+{
+  "DebuggerOptions": {
+    "Watches": [
+      {
+        "Name": "v[tid]",
+        "Type": "Uint",
+        "IsAVGPR": false
+      },
+      {
+        "Name": "v[in1]",
+        "Type": "Float",
+        "IsAVGPR": false
+      },
+      {
+        "Name": "v[in2]",
+        "Type": "Float",
+        "IsAVGPR": false
+      },
+      {
+        "Name": "v[out]",
+        "Type": "Float",
+        "IsAVGPR": false
+      }
+    ],
+    "Counter": 0,
+    "AppArgs": "",
+    "BreakArgs": ""
+  },
+  "VisualizerOptions": {
+    "ShowSystemVariable": false,
+    "MaskLanes": false,
+    "NDRange3D": false,
+    "LaneGrouping": 4,
+    "CheckMagicNumber": true,
+    "MagicNumber": "0x777",
+    "ShowAppArgs": false,
+    "ShowBrkArgs": false
+  },
+  "VisualizerColumnStyling": {
+    "VisibleColumns": "0-63",
+    "HighlightRegions": []
+  },
+  "ActiveProfile": "Default",
+  "Profiles": {
+    "Default": {
+      "General": {
+        "DeployDirectory": "/home/stud/radeon-asm-debugger-example/gfx9",
+        "RemoteMachine": "192.168.0.108",
+        "Port": 9339,
+        "AutosaveSource": 1,
+        "CopySources": true,
+        "AdditionalSources": ""
+      },
+      "Debugger": {
+        "Executable": "bash",
+        "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDebugWorkDir)/gfx9/fp32_v_add.s -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
+        "WorkingDirectory": "/home/stud/radeon-asm-debugger-example",
+        "OutputPath": "$(RadDebugWorkDir)/tmp_dir/debug_result",
+        "BinaryOutput": true,
+        "ParseValidWatches": false,
+        "ValidWatchesFilePath": "",
+        "RunAsAdmin": false,
+        "TimeoutSecs": 0
+      },
+      "Disassembler": {
+        "Executable": "",
+        "Arguments": "",
+        "WorkingDirectory": "",
+        "OutputPath": "",
+        "LocalOutputCopyPath": "",
+        "LineMarker": ""
+      },
+      "Profiler": {
+        "Executable": "",
+        "Arguments": "",
+        "WorkingDirectory": "",
+        "OutputPath": "",
+        "ViewerExecutable": "",
+        "ViewerArguments": "",
+        "LocalOutputCopyPath": "",
+        "RunAsAdmin": false
+      }
+    }
+  }
+}
