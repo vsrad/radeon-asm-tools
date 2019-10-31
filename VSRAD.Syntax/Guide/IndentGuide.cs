@@ -2,7 +2,6 @@
 using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Formatting;
 using System;
 using System.Windows;
@@ -94,7 +93,7 @@ namespace VSRAD.Syntax.Guides
 
                 if (viewLineStart.Equals(viewLineEnd)) continue;
 
-                var indentStart = IndentValue(span.Start);
+                var indentStart = block.SpaceStart;
                 var leftOffset = indentStart * spaceWidth + horizontalOffset;
                 var brush = Brushes.White;
 
@@ -109,21 +108,6 @@ namespace VSRAD.Syntax.Guides
                     Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top : _wpfTextView.ViewportBottom,
                 };
             }
-        }
-
-        private int IndentValue(SnapshotPoint point)
-        {
-            var count = 0;
-            var line = point.Snapshot.GetLineFromPosition(point);
-            var lineText = line.GetText();
-            foreach (var ch in lineText)
-            {
-                if (ch == ' ') count++;
-                else if (ch == '\t') count += 4;
-                else break;
-            }
-
-            return count;
         }
 
         private void ClearAndUpdateCurrentGuides(IEnumerable<Line> newIndentGuides)

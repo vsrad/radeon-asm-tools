@@ -12,7 +12,8 @@ namespace VSRAD.Syntax.Parser.Blocks
         public FunctionBlock(
             IBaseBlock parrent,
             SnapshotPoint blockStart,
-            IBaseToken functionToken) : base(parrent, BlockType.Function, blockStart)
+            IBaseToken functionToken,
+            int spaceStart) : base(parrent, BlockType.Function, blockStart, spaceStart: spaceStart)
         {
             this.FunctionToken = functionToken;
             this.Tokens.Add(FunctionToken);

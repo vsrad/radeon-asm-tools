@@ -141,7 +141,8 @@ namespace VSRAD.Syntax.Parser
             {
                 if (text.IndexOf(parserManager.DeclorationEndPattern) != -1)
                 {
-                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken));
+                    var spaceStart = GetSpaceStart(text);
+                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, spaceStart));
                     startFindManyLineDeclorationEnd = false;
                     var functionArgsText = text.Substring(0, text.IndexOf(parserManager.DeclorationEndPattern)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
@@ -167,10 +168,11 @@ namespace VSRAD.Syntax.Parser
             {
                 var functionMatch = parserManager.FunctionNameRegular.Match(text);
                 var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length));
+                var spaceStart = GetSpaceStart(text);
 
                 if (!parserManager.EnableManyLineDecloration)
                 {
-                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken));
+                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
                     currentRootBlock.FunctionTokens.Add(functionToken);
 
                     var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=' }, StringSplitOptions.RemoveEmptyEntries);
@@ -186,7 +188,7 @@ namespace VSRAD.Syntax.Parser
                     {
                         if (text.IndexOf(parserManager.DeclorationEndPattern) != -1)
                         {
-                            currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken));
+                            currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
                             currentRootBlock.FunctionTokens.Add(functionToken);
 
                             var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.IndexOf(parserManager.DeclorationEndPattern) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
@@ -212,7 +214,7 @@ namespace VSRAD.Syntax.Parser
                     }
                     else
                     {
-                        currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, functionToken.SymbolSpan.End, functionToken));
+                        currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, functionToken.SymbolSpan.End, functionToken, spaceStart));
                         currentRootBlock.FunctionTokens.Add(functionToken);
                     }
                 }
@@ -238,9 +240,10 @@ namespace VSRAD.Syntax.Parser
             {
                 if (cmpText.StartsWith(startPattern))
                 {
+                    var spaceStart = GetSpaceStart(text);
                     var blockActualStart = new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(startPattern) + startPattern.Length);
                     var blockStart = new SnapshotPoint(currentSnapshot, indexStartLine + text.Length);
-                    currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, startBlock: blockStart, blockActualStart: blockActualStart);
+                    currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, startBlock: blockStart, spaceStart, blockActualStart: blockActualStart);
                     return;
                 }
             }
@@ -268,8 +271,9 @@ namespace VSRAD.Syntax.Parser
                         currentListBlock.Add(currentTreeBlock);
                     if (currentTreeBlock.Parrent != null)
                     {
+                        var spaceStart = GetSpaceStart(text);
                         currentTreeBlock = currentTreeBlock.Parrent;
-                        currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length));
+                        currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), spaceStart);
                         return;
                     }
                 }
@@ -311,6 +315,19 @@ namespace VSRAD.Syntax.Parser
             }
 
             return null;
+        }
+
+        private int GetSpaceStart(string text)
+        {
+            int spaceStart = 0;
+            foreach (var ch in text)
+            {
+                if (ch == ' ') spaceStart++;
+                else if (ch == '\t') spaceStart += 4;
+                else break;
+            }
+
+            return spaceStart;
         }
     }
 }
