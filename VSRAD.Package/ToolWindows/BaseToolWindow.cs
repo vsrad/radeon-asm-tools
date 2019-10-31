@@ -7,6 +7,8 @@ namespace VSRAD.Package.ToolWindows
 {
     public abstract class BaseToolWindow : ToolWindowPane
     {
+        private EnvDTE.WindowEvents WindowEvents { get; set; }
+
         private readonly UIElement _projectStateMissingMessage = new TextBlock
         {
             Text = "No active projects found.",
@@ -38,6 +40,26 @@ namespace VSRAD.Package.ToolWindows
         {
             ((Grid)Content).Children.Clear();
             ((Grid)Content).Children.Add(_projectStateMissingMessage);
+        }
+
+        public override void OnToolWindowCreated()
+        {
+            var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
+            var events = (EnvDTE80.Events2)dte.Events;
+            WindowEvents = events.WindowEvents;
+            WindowEvents.WindowActivated += OnWindowFocusLost;
+        }
+
+        protected virtual void OnWindowFocusLost() { }
+
+        private void OnWindowFocusLost(EnvDTE.Window _, EnvDTE.Window lostFocus)
+        {
+            if (lostFocus == null) return;
+
+            if (lostFocus.Caption == Caption)
+            {
+                OnWindowFocusLost();
+            }
         }
     }
 }
