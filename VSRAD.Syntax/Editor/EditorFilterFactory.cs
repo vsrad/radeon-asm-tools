@@ -10,13 +10,13 @@ namespace VSRAD.Syntax.Editor
     [Export(typeof(IVsTextViewCreationListener))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TextViewRole(PredefinedTextViewRoles.Interactive)]
-    internal sealed class ViewCreationListener : IVsTextViewCreationListener
+    internal sealed class EditorFilterFactory : IVsTextViewCreationListener
     {
         private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
         private readonly DefinitionService _definitionService;
 
         [ImportingConstructor]
-        public ViewCreationListener(IVsEditorAdaptersFactoryService adaptersFactoryService, DefinitionService definitionService)
+        public EditorFilterFactory(IVsEditorAdaptersFactoryService adaptersFactoryService, DefinitionService definitionService)
         {
             this._adaptersFactoryService = adaptersFactoryService;
             this._definitionService = definitionService;
