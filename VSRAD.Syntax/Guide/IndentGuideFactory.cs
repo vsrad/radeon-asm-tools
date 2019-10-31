@@ -9,7 +9,7 @@ namespace VSRAD.Syntax.Guides
 {
     [Export(typeof(IWpfTextViewCreationListener))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
-    [TextViewRole(PredefinedTextViewRoles.Interactive)]
+    [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class IndentGuideFactory : IWpfTextViewCreationListener
     {
 
