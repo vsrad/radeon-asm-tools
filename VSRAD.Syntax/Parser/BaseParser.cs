@@ -89,7 +89,7 @@ namespace VSRAD.Syntax.Parser
                             var startCommentBlock = new SnapshotPoint(currentSnapshot, startManyLineCommentIndex);
                             var endCommentBlock = new SnapshotPoint(currentSnapshot, endIndex);
                             var newCommentBlock = new BaseBlock(currentTreeBlock, BlockType.Comment, startCommentBlock);
-                            newCommentBlock.SetBlockReady(endCommentBlock);
+                            newCommentBlock.SetBlockReady(endCommentBlock, endCommentBlock);
                             if (newCommentBlock.BlockReady)
                             {
                                 newCommentBlock.AddToken(newCommentBlock.BlockSpan, Tokens.TokenType.Comment);
@@ -249,7 +249,8 @@ namespace VSRAD.Syntax.Parser
             {
                 if (cmpText.StartsWith(endPattern))
                 {
-                    currentTreeBlock.SetBlockReady(new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(endPattern) + endPattern.Length));
+                    var endBlock = new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(endPattern) + endPattern.Length);
+                    currentTreeBlock.SetBlockReady(endBlock: endBlock, actualEndBlock: endBlock);
                     if (currentTreeBlock.BlockReady)
                         currentListBlock.Add(currentTreeBlock);
                     if (currentTreeBlock.Parrent != null)
@@ -262,7 +263,7 @@ namespace VSRAD.Syntax.Parser
             {
                 if (cmpText.StartsWith(middlePattern))
                 {
-                    currentTreeBlock.SetBlockReady(currentSnapshot.GetLineFromLineNumber(currentLine.LineNumber - 1).End);
+                    currentTreeBlock.SetBlockReady(currentSnapshot.GetLineFromLineNumber(currentLine.LineNumber - 1).End, currentLine.Start);
                     if (currentTreeBlock.BlockReady)
                         currentListBlock.Add(currentTreeBlock);
                     if (currentTreeBlock.Parrent != null)

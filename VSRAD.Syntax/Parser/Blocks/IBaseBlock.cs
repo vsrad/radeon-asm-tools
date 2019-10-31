@@ -17,7 +17,7 @@ namespace VSRAD.Syntax.Parser.Blocks
         IBaseBlock AddChildren(BlockType blockType, SnapshotPoint startBlock, SnapshotPoint blockActualStart = default);
         IBaseBlock AddChildren(IBaseBlock baseBlock);
         IBaseToken AddToken(SnapshotSpan symbolSpan, TokenType tokenType);
-        void SetBlockReady(SnapshotPoint endBlock);
+        void SetBlockReady(SnapshotPoint endBlock, SnapshotPoint actualEndBlock);
         IList<IBaseBlock> GetBlockElements();
         IList<SnapshotSpan> GetBlocksSnapshotSpan();
         IList<Span> GetBlocksSpan();

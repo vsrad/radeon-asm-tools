@@ -26,6 +26,7 @@ namespace VSRAD.Syntax.Parser.Blocks
 
         private SnapshotPoint BlockStart { get; set; }
         private SnapshotPoint BlockActualStart { get; set; }
+        private SnapshotPoint BlockActualEnd { get; set; }
 
         public SnapshotSpan BlockActualSpan { get; set; }
 
@@ -97,11 +98,12 @@ namespace VSRAD.Syntax.Parser.Blocks
             return listElements;
         }
 
-        public virtual void SetBlockReady(SnapshotPoint endBlock)
+        public virtual void SetBlockReady(SnapshotPoint endBlock, SnapshotPoint actualEndBlock)
         {
             if (this.BlockStart.Snapshot != null && this.BlockStart.Snapshot.Equals(endBlock.Snapshot) && this.BlockStart < endBlock)
             {
                 this.BlockSpan = new SnapshotSpan(this.BlockStart, endBlock);
+                this.BlockActualEnd = actualEndBlock;
                 SetActualSpan();
                 this.BlockReady = true;
             }
@@ -109,7 +111,7 @@ namespace VSRAD.Syntax.Parser.Blocks
 
         public virtual void SetActualSpan()
         {
-            this.BlockActualSpan = new SnapshotSpan(BlockActualStart, BlockSpan.End);
+            this.BlockActualSpan = new SnapshotSpan(BlockActualStart, BlockActualEnd);
         }
     }
 }

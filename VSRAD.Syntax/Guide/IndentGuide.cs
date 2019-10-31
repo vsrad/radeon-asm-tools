@@ -67,8 +67,8 @@ namespace VSRAD.Syntax.Guides
                 var firstVisibleLine = _wpfTextView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
                 var lastVisibleLine = _wpfTextView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
 
-                var newSpanElements = _currentParser.ListBlock.Where(block => IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine)).ToList();
-                var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine, lastVisibleLine);
+                var newSpanElements = _currentParser.ListBlock.Where(block => block.BlockType != BlockType.Root && block.BlockType != BlockType.Comment && IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine));
+                var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
 
                 ClearAndUpdateCurrentGuides(updatedIndentGuides);
             });
@@ -77,19 +77,18 @@ namespace VSRAD.Syntax.Guides
         private bool IsInVisualBuffer(IBaseBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
             bool isOnStart = block.BlockSpan.Start <= lastVisibleLine.End;
-            bool isOnEnd = block.BlockSpan.End >= firstVisibleLine.Start;
+            bool isOnEnd = block.BlockSpan.End >= firstVisibleLine.End;
 
-            return isOnStart && isOnEnd;
+            bool isInBlockAll = (block.BlockSpan.Start <= firstVisibleLine.End) && (block.BlockSpan.End >= lastVisibleLine.Start);
+
+            return isOnStart && isOnEnd || isInBlockAll;
         }
 
-        private IEnumerable<Line> GetUpdatedIndentGuides(IEnumerable<IBaseBlock> blocks, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
+        private IEnumerable<Line> GetUpdatedIndentGuides(IEnumerable<IBaseBlock> blocks, double horizontalOffset, double spaceWidth)
         {
-            double horizontalOffset = firstVisibleLine.TextLeft;
-            double spaceWidth = firstVisibleLine.VirtualSpaceWidth;
-
             foreach (var block in blocks)
             {
-                var span = block.BlockSpan;
+                var span = block.BlockActualSpan;
                 var viewLineStart = _wpfTextView.GetTextViewLineContainingBufferPosition(span.Start);
                 var viewLineEnd = _wpfTextView.GetTextViewLineContainingBufferPosition(span.End);
 
@@ -101,12 +100,12 @@ namespace VSRAD.Syntax.Guides
 
                 yield return new Line()
                 {
-                    Width = 5,
                     Stroke = Brushes.DarkGray,
+                    StrokeThickness = 1,
                     StrokeDashArray = new DoubleCollection() { 2 },
                     X1 = leftOffset,
                     X2 = leftOffset,
-                    Y1 = viewLineStart.Bottom,
+                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom : _wpfTextView.ViewportTop,
                     Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top : _wpfTextView.ViewportBottom,
                 };
             }
