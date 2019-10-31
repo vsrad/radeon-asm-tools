@@ -20,6 +20,8 @@ namespace VSRAD.DebugServer
                     return new FetchResultRangeHandler(fetchResultRange).RunAsync();
                 case Deploy deploy:
                     return new DeployHandler(deploy).RunAsync();
+                case ListEnvironmentVariables listEnvironmentVariables:
+                    return new ListEnvironmentVariablesHandler(listEnvironmentVariables).RunAsync();
                 default:
                     throw new ArgumentException($"Unknown command type {command.GetType()}");
             }
