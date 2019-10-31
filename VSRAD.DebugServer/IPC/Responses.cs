@@ -14,6 +14,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case 0: return ExecutionCompleted.Deserialize(reader);
                 case 1: return MetadataFetched.Deserialize(reader);
                 case 2: return ResultRangeFetched.Deserialize(reader);
+                case 3: return EnvironmentVariablesListed.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {responseType}");
         }
@@ -26,6 +27,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ExecutionCompleted _: responseType = 0; break;
                 case MetadataFetched _: responseType = 1; break;
                 case ResultRangeFetched _: responseType = 2; break;
+                case EnvironmentVariablesListed _: responseType = 3; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write(responseType);

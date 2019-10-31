@@ -24,10 +24,10 @@ namespace VSRAD.DebugServer.IPC
         public void WriteLengthPrefixedDict(IReadOnlyDictionary<string, string> dictionary)
         {
             Write7BitEncodedInt(dictionary.Count);
-            foreach (var (key, value) in dictionary)
+            foreach (var entry in dictionary)
             {
-                Write(key);
-                Write(value);
+                Write(entry.Key);
+                Write(entry.Value);
             }
         }
 
