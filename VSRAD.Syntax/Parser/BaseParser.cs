@@ -323,7 +323,7 @@ namespace VSRAD.Syntax.Parser
             foreach (var ch in text)
             {
                 if (ch == ' ') spaceStart++;
-                else if (ch == '\t') spaceStart += 4;
+                else if (ch == '\t') spaceStart += parserManager.TabSize;
                 else break;
             }
 
