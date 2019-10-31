@@ -11,10 +11,12 @@ using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Windows.Media;
 
-namespace VSRAD.Syntax.Guides
+namespace VSRAD.Syntax.Guide
 {
     internal sealed class IndentGuide
     {
+        public static bool IsEnabled;
+
         private readonly IWpfTextView _wpfTextView;
         private readonly IParserManager _parserManager;
         private readonly IAdornmentLayer _layer;
@@ -59,19 +61,25 @@ namespace VSRAD.Syntax.Guides
 
         private void SetupIndentGuides()
         {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            if (!Package.Instance.OptionPage.isEnabledIndentGuides)
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                _canvas.Visibility = Visibility.Visible;
+                foreach (var oldIndentGuide in _currentAdornments)
+                {
+                    _canvas.Children.Remove(oldIndentGuide);
+                }
+                _currentAdornments = new List<Line>();
 
-                var firstVisibleLine = _wpfTextView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
-                var lastVisibleLine = _wpfTextView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
+                return;
+            }
+            _canvas.Visibility = Visibility.Visible;
 
-                var newSpanElements = _currentParser.ListBlock.Where(block => block.BlockType != BlockType.Root && block.BlockType != BlockType.Comment && IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine));
-                var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
+            var firstVisibleLine = _wpfTextView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
+            var lastVisibleLine = _wpfTextView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
 
-                ClearAndUpdateCurrentGuides(updatedIndentGuides);
-            });
+            var newSpanElements = _currentParser.ListBlock.Where(block => block.BlockType != BlockType.Root && block.BlockType != BlockType.Comment && IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine));
+            var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
+
+            ClearAndUpdateCurrentGuides(updatedIndentGuides);
         }
 
         private bool IsInVisualBuffer(IBaseBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)

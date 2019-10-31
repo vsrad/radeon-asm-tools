@@ -11,6 +11,12 @@ namespace VSRAD.Syntax.Options
         [DefaultValue(SortState.ByName)]
         public SortState sortOptions { get; set; } = SortState.ByName;
 
+        [Category("Syntax highlight")]
+        [DisplayName("Indent guide lines")]
+        [Description("Enable/disable indent guide lines")]
+        [DefaultValue(true)]
+        public bool isEnabledIndentGuides { get; set; } = true;
+
         public enum SortState
         {
             [Description("by line number")]

@@ -5,7 +5,7 @@ using System;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Parser;
 
-namespace VSRAD.Syntax.Guides
+namespace VSRAD.Syntax.Guide
 {
     [Export(typeof(IWpfTextViewCreationListener))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
