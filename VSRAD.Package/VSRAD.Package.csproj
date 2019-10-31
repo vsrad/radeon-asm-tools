@@ -230,6 +230,7 @@
     <Compile Include="Utils\ProjectSystemExtensions.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\DeployUtils.cs" />
+    <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\Win32Control.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
