@@ -132,6 +132,11 @@ namespace VSRAD.Package.DebugVisualizer
             ClearSelection();
         }
 
+        public void HostWindowDeactivated()
+        {
+            CancelEdit();
+        }
+
         public void ColorClicked(int clickedColumnIndex, ColumnHighlightColor? color)
         {
             var selectedColumns = SelectedColumns
@@ -393,7 +398,6 @@ namespace VSRAD.Package.DebugVisualizer
             // Cmd key succesfully processed
             return true;
         }
-
         #endregion
     }
 }

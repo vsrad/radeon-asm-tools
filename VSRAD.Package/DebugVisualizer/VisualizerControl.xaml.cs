@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
 using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
 
@@ -19,6 +20,10 @@ namespace VSRAD.Package.DebugVisualizer
                 getGroupCount: (groupSize) => _breakState?.GetGroupCount(groupSize) ?? 0,
                 GroupSelectionChanged);
             headerControl.GroupSizeChanged += ApplyColumnStyling;
+            Application.Current.Deactivated += (sender, e) =>
+            {
+                _table.HostWindowDeactivated();
+            };
 
             integration.BreakEntered += BreakEntered;
             integration.AddWatch += AddWatch;
