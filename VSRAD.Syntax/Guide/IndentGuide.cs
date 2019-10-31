@@ -26,7 +26,6 @@ namespace VSRAD.Syntax.Guides
         {
             _wpfTextView = textView ?? throw new NullReferenceException();
             _parserManager = parserManager ?? throw new NullReferenceException();
-            _parserManager.TabSize = _wpfTextView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
 
             _currentAdornments = new List<Line>();
             _canvas = new Canvas
@@ -39,7 +38,6 @@ namespace VSRAD.Syntax.Guides
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
             _wpfTextView.LayoutChanged += UpdateIndentGuides;
-            _wpfTextView.Options.OptionChanged += OptionsChanged;
         }
 
         private void CanvasRemoved(object tag, UIElement element)
@@ -133,11 +131,6 @@ namespace VSRAD.Syntax.Guides
             _currentParser = _parserManager.ActualParser;
 
             UpdateIndentGuides();
-        }
-
-        private void OptionsChanged(object sender, object args)
-        {
-            _parserManager.TabSize = _wpfTextView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
         }
     }
 }
