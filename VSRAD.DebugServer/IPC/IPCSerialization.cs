@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace VSRAD.DebugServer.IPC
 {
@@ -18,6 +19,16 @@ namespace VSRAD.DebugServer.IPC
         {
             Write7BitEncodedInt(data.Length);
             Write(data);
+        }
+
+        public void WriteLengthPrefixedDict(IReadOnlyDictionary<string, string> dictionary)
+        {
+            Write7BitEncodedInt(dictionary.Count);
+            foreach (var (key, value) in dictionary)
+            {
+                Write(key);
+                Write(value);
+            }
         }
 
         public void Write(DateTime timestamp) =>
@@ -42,6 +53,15 @@ namespace VSRAD.DebugServer.IPC
         {
             var length = Read7BitEncodedInt();
             return ReadBytes(length);
+        }
+
+        public Dictionary<string, string> ReadLengthPrefixedStringDict()
+        {
+            var count = Read7BitEncodedInt();
+            var dict = new Dictionary<string, string>(count);
+            for (int i = 0; i < count; ++i)
+                dict[ReadString()] = ReadString();
+            return dict;
         }
 
         public DateTime ReadDateTime() =>

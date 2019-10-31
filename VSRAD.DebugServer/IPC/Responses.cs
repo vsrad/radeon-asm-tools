@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace VSRAD.DebugServer.IPC.Responses
@@ -133,6 +134,25 @@ namespace VSRAD.DebugServer.IPC.Responses
             writer.Write(Timestamp);
             writer.Write((byte)Status);
         }
+    }
+
+    public sealed class EnvironmentVariablesListed : IResponse
+    {
+        public IReadOnlyDictionary<string, string> Variables { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "EnvironmentVariablesListed",
+            $"Variables = <{Variables.Count} items>",
+        });
+
+        public static EnvironmentVariablesListed Deserialize(IPCReader reader) => new EnvironmentVariablesListed
+        {
+            Variables = reader.ReadLengthPrefixedStringDict()
+        };
+
+        public void Serialize(IPCWriter writer) =>
+            writer.WriteLengthPrefixedDict(Variables);
     }
 
     public enum ExecutionStatus : byte

@@ -14,6 +14,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case 1: return FetchMetadata.Deserialize(reader);
                 case 2: return FetchResultRange.Deserialize(reader);
                 case 3: return Deploy.Deserialize(reader);
+                case 4: return ListEnvironmentVariables.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {commandType}");
         }
@@ -27,6 +28,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case FetchMetadata _: commandType = 1; break;
                 case FetchResultRange _: commandType = 2; break;
                 case Deploy _: commandType = 3; break;
+                case ListEnvironmentVariables _: commandType = 4; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write(commandType);
@@ -165,5 +167,14 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.WriteLengthPrefixedBlob(Data);
             writer.Write(Destination);
         }
+    }
+
+    public sealed class ListEnvironmentVariables : ICommand
+    {
+        public override string ToString() => "ListEnvironmentVariables";
+
+        public static ListEnvironmentVariables Deserialize(IPCReader _) => new ListEnvironmentVariables();
+
+        public void Serialize(IPCWriter _) { }
     }
 }
