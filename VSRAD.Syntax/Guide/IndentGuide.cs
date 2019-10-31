@@ -1,16 +1,16 @@
 ﻿using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Formatting;
 using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
 using System.Windows.Shapes;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.Text.Formatting;
-using VSRAD.Syntax.Parser.Blocks;
 using System.Windows.Media;
-using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Guides
 {
@@ -37,8 +37,7 @@ namespace VSRAD.Syntax.Guides
             _layer = _wpfTextView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
-            _parserManager.UpdateParserHandler += ParserCompleted;
-            _wpfTextView.LayoutChanged += ParserCompleted;
+            _wpfTextView.LayoutChanged += UpdateIndentGuides;
         }
 
         private void CanvasRemoved(object tag, UIElement element)
@@ -94,14 +93,16 @@ namespace VSRAD.Syntax.Guides
                 var viewLineStart = _wpfTextView.GetTextViewLineContainingBufferPosition(span.Start);
                 var viewLineEnd = _wpfTextView.GetTextViewLineContainingBufferPosition(span.End);
 
+                if (viewLineStart.Equals(viewLineEnd)) continue;
+
                 var indentStart = IndentValue(span.Start);
                 var leftOffset = indentStart * spaceWidth + horizontalOffset;
                 var brush = Brushes.White;
 
                 yield return new Line()
                 {
-                    Width = 30.5,
-                    Stroke = Brushes.White,
+                    Width = 5,
+                    Stroke = Brushes.DarkGray,
                     StrokeDashArray = new DoubleCollection() { 2 },
                     X1 = leftOffset,
                     X2 = leftOffset,
@@ -141,7 +142,7 @@ namespace VSRAD.Syntax.Guides
             }
         }
 
-        private void ParserCompleted(object actualParser, object _)
+        private void UpdateIndentGuides(object actualParser, object _)
         {
             _currentParser = _parserManager.ActualParser;
 
