@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -53,6 +55,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
             foreach (var macroName in vsMacroNames.Union(radMacroNames))
                 macros["$(" + macroName + ")"] = await evaluator.GetMacroValueAsync(macroName);
+
+            foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
+                macros["$ENV(" + (string)entry.Key + ")"] = (string)entry.Value;
 
             return macros;
         }
