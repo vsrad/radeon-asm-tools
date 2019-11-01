@@ -31,8 +31,8 @@ The following sections provide an overview of the properties that can be configu
 
 * [General](#general-properties)
 * [Debugger](#debugger-properties)
-* Disassembler
-* Profiler
+* [Disassembler](#disassembler-properties)
+* [Profiler](#profiler-properties)
 
 Other chapters will reference these sections as needed.
 
@@ -64,3 +64,26 @@ Other chapters will reference these sections as needed.
 * **Timeout**: debug script execution timeout (in seconds). Once reached, the debug process is terminated. Set to `0` to disable.
 * **Parse Valid Watches File**: specifies whether the file specified in **Valid Watches File Path** should be used to filter vald watches.
 * **Valid Watches File Path**: path to the file with valid watch names on the remote machine.
+* **Output Offset**: `int` number, that indicates
+  - if **Output Mode** is `binary`: amount of bytes to skip.
+  - if **Output Mode** is `text`: amount of lines to skip.
+
+### Disassembler Properties
+
+* **Executable**: path to the disassembler executable on the remote machine.
+* **Arguments**: command-line arguments for **Executable**.
+* **Working Directory**: disassembler working directory.
+* **Output Path**: path to the disassembler script output file (can be relative to **Working Directory**).
+* **Local Path**: path to the file on local machine to copy disassembler output file.
+* **Line Marker**: disassemble will search this line in output file and place the cursor on it if this line exists.
+
+### Profiler Properties
+
+* **Executable**: path to the profiler executable on the remote machine.
+* **Arguments**: command-line arguments for **Executable**.
+* **Working Directory**: profiler working directory.
+* **Output Path**: path to the profiler script output file (can be relative to **Working Directory**).
+* **Viewer Executable**: path to the viewer executable on the local machine.
+* **Viewer Arguments**: command-line arguments for **Viewer Executable**.
+* **Local Copy Path**: path to the file on local machine to copy profiler output file.
+* **Run As Admin**: specifies whether the `Executable` is run with administrator rights.
