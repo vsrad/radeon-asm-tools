@@ -4,7 +4,7 @@ The extension provides the following features:
 
 * [Project template](#project-template)
 * [Profiles](#profiles)
-* Remote debugging tools
+* [Remote debugging tools](#remote-debugging-tools)
 * Disassembling tools
 * Profiling tools
 * Data visualization tools
@@ -17,15 +17,29 @@ To use the tools described below, you must first create a new
 After [installing the extension](README.md#installation), you should see
 the project template in the *Create a new project* dialog:
 
- ![Template](Resources/Manual/ProjTemplate.PNG)
+![Template](Resources/Manual/ProjTemplate.PNG)
 
 You can find it by selecting `Radeon Asm` in the *Languages* dropdown.
 
 ## Profiles
 
-A *profile* is a set of machine-specific settings such as executable paths, network addresses, and debugger configuration.
+A *profile* is a set of machine-specific settings such as executable paths, network addresses and debugger configuration.
 
 Multiple profiles can be created for a single project and swapped without restarting the IDE or exiting debug mode. This allows you to easily test the same kernel on a number of different platforms. Furthermore, profiles can be exported to a file and imported in other projects (on different workstations).
+
+### Profile Managing
+
+This is the profile managing interface that could be found in `Options -> Edit`
+
+![ProfileControlButtons](Resources/Manual/ProfileControlButtons.png)
+
+Description:
+1. Current profile name and dropdown for choosing current profile.
+2. `Add new profile` button.
+3. `Remove current profile` button.
+4. `Copy`: create new profile based on current one.
+5. `Import`: choose profile *.json* file and import all containing profiles.
+6. `Export`: create profile *.json* file that will represent all currently set profiles
 
 The following sections provide an overview of the properties that can be configured in a single profile:
 
@@ -45,7 +59,7 @@ Other chapters will reference these sections as needed.
 * **Autosave Source**: specifies whether the source files that are changed should be automatically saved before running remote commands (debug, disassemble, profile, etc.).
   - When set to **None**, no source files are saved automatically.
   - When set to **ActiveDocument**, only the active source file (currently selected in the editor) is automatically saved.
-  - When set to **ActiveDocuments**, all source files the are open in the editor are automatically saved.
+  - When set to **OpenDocuments**, all source files the are open in the editor are automatically saved.
   - When set to **ProjectDocuments**, all source files that belong to the current project are automatically saved.
   - When set to **SolutionDocuments**, all source file that belong to the solution are automatically saved.
 * **Additional Sources**: a semicolon-separated list of out-of-project paths that are copied to the remote machine (see **Deploy Directory**).
@@ -58,7 +72,7 @@ Other chapters will reference these sections as needed.
 * **Working Directory**: debugger working directory.
 * **Output Path**: path to the debug script output file (can be relative to **Working Directory**).
 * **Output Mode**: specifies how the debug script output file is parsed:
-  - **Text**: the first line is skipped, and each succeeding line is read as a hexadecimal string (*0x...*).
+  - **Text**: each line is read as a hexadecimal string (*0x...*).
   - **Binary**: 4-byte blocks are read as a single dword value.
 * **Run As Administrator**: specifies whether the `Executable` is run with administrator rights.
 * **Timeout**: debug script execution timeout (in seconds). Once reached, the debug process is terminated. Set to `0` to disable.
@@ -87,3 +101,6 @@ Other chapters will reference these sections as needed.
 * **Viewer Arguments**: command-line arguments for **Viewer Executable**.
 * **Local Copy Path**: path to the file on local machine to copy profiler output file.
 * **Run As Admin**: specifies whether the `Executable` is run with administrator rights.
+
+## Remote Debugging Tools
+
