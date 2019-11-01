@@ -139,7 +139,7 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
         [JsonIgnore]
-        public OutputFile ValidWatchesFile => new OutputFile(WorkingDirectory, ValidWatchesFilePath, false);
+        public OutputFile ValidWatchesFile => new OutputFile(WorkingDirectory, ValidWatchesFilePath);
 
         public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new DebuggerProfileOptions(
