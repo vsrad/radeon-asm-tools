@@ -15,8 +15,6 @@ namespace VSRAD.Syntax.Guide
 {
     internal sealed class IndentGuide
     {
-        public static bool IsEnabled;
-
         private readonly IWpfTextView _wpfTextView;
         private readonly IParserManager _parserManager;
         private readonly IAdornmentLayer _layer;
@@ -40,6 +38,7 @@ namespace VSRAD.Syntax.Guide
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
             _wpfTextView.LayoutChanged += UpdateIndentGuides;
+            _parserManager.UpdateParserHandler += async (sender, args) => { await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(); UpdateIndentGuides(sender, args); };
         }
 
         private void CanvasRemoved(object tag, UIElement element)
@@ -134,7 +133,7 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        private void UpdateIndentGuides(object actualParser, object _)
+        private void UpdateIndentGuides(object sender, object args)
         {
             _currentParser = _parserManager.ActualParser;
 
