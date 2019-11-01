@@ -43,7 +43,7 @@ namespace VSRAD.DebugServer.Handlers
             using (var stream = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read, _bufferSize, FileOptions.SequentialScan))
             {
                 byte[] buffer = new byte[_command.ByteCount];
-                stream.Seek(_command.ByteOffset, SeekOrigin.Begin);
+                stream.Seek(_command.ByteOffset + _command.OutputOffset, SeekOrigin.Begin);
                 int read = await stream.ReadAsync(buffer, 0, _command.ByteCount);
                 byte[] data = new byte[read];
                 Array.Copy(buffer, data, read);
@@ -56,7 +56,8 @@ namespace VSRAD.DebugServer.Handlers
             using (var stream = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read, _bufferSize, FileOptions.SequentialScan))
             using (var reader = new StreamReader(stream))
             {
-                reader.ReadLine();
+                for (int i = 0; i < _command.OutputOffset; i++)
+                    reader.ReadLine();
 
                 var values = new List<uint>();
                 var offset = (_command.ByteOffset % 4 == 0)

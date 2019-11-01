@@ -109,7 +109,7 @@ namespace VSRAD.Package.Server
 
         private async Task<uint[]> FetchGroupAsync(uint groupIndex)
         {
-            int byteOffset = (int)((4 * groupIndex * GroupSize * _recordSize) + _outputOffset);
+            int byteOffset = (int)(4 * groupIndex * GroupSize * _recordSize);
             int byteCount = (int)(4 * GroupSize * _recordSize);
             var response = await _channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
@@ -117,7 +117,8 @@ namespace VSRAD.Package.Server
                     FilePath = _outputFile.Path,
                     BinaryOutput = _outputFile.BinaryOutput,
                     ByteOffset = byteOffset,
-                    ByteCount = byteCount
+                    ByteCount = byteCount,
+                    OutputOffset = _outputOffset
                 }).ConfigureAwait(false);
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
