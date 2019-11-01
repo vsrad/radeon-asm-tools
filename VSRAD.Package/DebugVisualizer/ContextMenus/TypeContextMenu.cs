@@ -16,7 +16,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, FontColorChanged fontColorChanged)
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, FontColorChanged fontColorChanged, Action processCopy)
         {
             _table = table;
 
@@ -37,11 +37,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 avgprChanged(_currentRow, _avgprButton.Checked);
             });
 
+            var copy = new MenuItem("Copy", (s, e) => processCopy());
+
             var menuItems = typeItems.Concat(new[]
             {
                 new MenuItem("-"),
                 fontColorSubmenu,
                 new MenuItem("-"),
+                copy
                 //_avgprButton
             });
 
