@@ -193,6 +193,9 @@
     <CommandPlacement guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0100">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
+	<CommandPlacement guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0100">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
   </CommandPlacements>
 
   <Symbols>
