@@ -57,7 +57,7 @@ namespace VSRAD.Package.ProjectSystem
             if (_debugSession == null)
                 throw new InvalidOperationException($"{nameof(RegisterEngine)} must only be called by the engine, and the engine must be launched via {nameof(DebuggerLaunchProvider)}");
 
-            ThreadHelper.JoinableTaskFactory.Run(_deployManager.ClearSynchronizedFilesAsync);
+            VSPackage.TaskFactory.Run(_deployManager.ClearSynchronizedFilesAsync);
             DebugInProgress = true;
             return _debugSession;
         }

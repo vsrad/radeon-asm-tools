@@ -153,7 +153,7 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task DeployOnlyIfCopyFilesEnabled()
+        public async Task DeployOnlyIfCopyFilesEnabledAsync()
         {
             TestHelper.InitializePackageTaskFactory();
             var channel = new MockCommunicationChannel();

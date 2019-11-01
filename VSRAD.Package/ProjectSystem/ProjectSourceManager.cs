@@ -91,10 +91,9 @@ namespace VSRAD.Package.ProjectSystem
         {
             var dte = GetDTE();
 
-            Array activeSolutionProjects = dte.ActiveSolutionProjects as Array;
-            if (activeSolutionProjects != null && activeSolutionProjects.Length > 0)
+            if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
             {
-                EnvDTE.Project activeProject = activeSolutionProjects.GetValue(0) as EnvDTE.Project;
+                var activeProject = activeSolutionProjects.GetValue(0) as EnvDTE.Project;
 
                 foreach (ProjectItem item in activeProject.ProjectItems)
                     SaveDocumentsRecursively(item);

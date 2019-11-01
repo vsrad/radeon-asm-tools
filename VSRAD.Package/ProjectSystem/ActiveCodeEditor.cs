@@ -46,7 +46,7 @@ namespace VSRAD.Package.ProjectSystem
 
         uint IActiveCodeEditor.GetCurrentLine()
         {
-            GetActiveTextView().GetCaretPos(out var line, out var column);
+            GetActiveTextView().GetCaretPos(out var line, out _);
             return (uint)line;
         }
 
