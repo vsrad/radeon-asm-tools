@@ -132,6 +132,9 @@ namespace VSRAD.Package.Options
         [Description("Debugger Timeout (seconds), 0 - timeout disabled"), DisplayName("Timeout")]
         [DefaultValue(DefaultOptionValues.DebuggerTimeoutSecs)]
         public int TimeoutSecs { get; }
+        [Description("")]
+        [DefaultValue(DefaultOptionValues.OutputOffset)]
+        public int OutputOffset { get; }
 
         [JsonIgnore]
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
@@ -144,13 +147,14 @@ namespace VSRAD.Package.Options
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerArguments),
                 workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerWorkingDirectory),
                 outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerOutputPath),
+                outputOffset: OutputOffset,
                 binaryOutput: BinaryOutput,
                 runAsAdmin: RunAsAdmin,
                 timeoutSecs: TimeoutSecs,
                 parseValidWatches: ParseValidWatches,
                 validWatchesFilePath: ValidWatchesFilePath);
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath)
+        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, int outputOffset = 0)
         {
             Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
             Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
@@ -161,6 +165,7 @@ namespace VSRAD.Package.Options
             TimeoutSecs = timeoutSecs;
             ParseValidWatches = parseValidWatches;
             ValidWatchesFilePath = validWatchesFilePath;
+            OutputOffset = outputOffset;
         }
     }
 

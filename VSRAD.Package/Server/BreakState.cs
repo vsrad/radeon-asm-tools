@@ -40,8 +40,9 @@ namespace VSRAD.Package.Server
         private readonly uint _outputDwordCount;
         private readonly uint _recordSize;
         private readonly ICommunicationChannel _channel;
+        private readonly int _outputOffset;
 
-        public BreakState(Options.OutputFile outputFile, DateTime outputTimestamp, uint outputByteCount, ReadOnlyCollection<string> watches, ICommunicationChannel channel)
+        public BreakState(Options.OutputFile outputFile, DateTime outputTimestamp, uint outputByteCount, int outputOffset, ReadOnlyCollection<string> watches, ICommunicationChannel channel)
         {
             _outputFile = outputFile;
             _outputTimestamp = outputTimestamp;
@@ -49,6 +50,7 @@ namespace VSRAD.Package.Server
             _recordSize = 1 /* hidden */ + (uint)watches.Count;
             Watches = watches;
             _channel = channel;
+            _outputOffset = outputOffset;
         }
 
         public uint[] System { get; } = new uint[512];
@@ -107,7 +109,7 @@ namespace VSRAD.Package.Server
 
         private async Task<uint[]> FetchGroupAsync(uint groupIndex)
         {
-            int byteOffset = (int)(4 * groupIndex * GroupSize * _recordSize);
+            int byteOffset = (int)((4 * groupIndex * GroupSize * _recordSize) + _outputOffset);
             int byteCount = (int)(4 * GroupSize * _recordSize);
             var response = await _channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange

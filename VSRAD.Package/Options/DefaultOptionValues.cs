@@ -23,6 +23,7 @@ namespace VSRAD.Package.Options
         public const string DebuggerValidWatchesFilePath = "";
         public const bool DebuggerRunAsAdmin = false;
         public const int DebuggerTimeoutSecs = 0;
+        public const int OutputOffset = 0;
         #endregion
         #region Disassembler
         public const string DisassemblerExecutable = "";
