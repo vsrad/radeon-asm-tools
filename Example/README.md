@@ -31,8 +31,9 @@ cd build
 cmake ..
 make
 ```
-3. Navigate to the `VectorAddProjectExample/common/debugger/DebugServerLinux64` directory
-4. Launch the debug server with `chmod +x RadeonAsmDebugServer && ./RadeonAsmDebugServer`
+3. Downlad latest [release](https://github.com/vsrad/radeon-asm-tools/releases) and transfer `DebugServerLinux64` directory to the remote machine
+4. Navigate to the `/path-to-debug-server/DebugServerLinux64` directory
+5. Launch the debug server with `chmod +x RadeonAsmDebugServer && ./RadeonAsmDebugServer`
 
 ### Host machine
 
