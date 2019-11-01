@@ -6,8 +6,6 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package
 {
-    public delegate void MessageBoxFactory(string message, string title, OLEMSGICON icon);
-
     public readonly struct Error
     {
         public bool Critical { get; }
@@ -24,7 +22,8 @@ namespace VSRAD.Package
 
     public static class Errors
     {
-        public static MessageBoxFactory CreateMessageBox = DefaultMessageBoxFactory;
+        public static void Show(Error error) =>
+            CreateMessageBox(error.Message, error.Title, error.Critical ? OLEMSGICON.OLEMSGICON_CRITICAL : OLEMSGICON.OLEMSGICON_WARNING);
 
         public static void ShowCritical(string message, string title = "RAD Debugger") =>
             CreateMessageBox(message, title, OLEMSGICON.OLEMSGICON_CRITICAL);
@@ -32,7 +31,7 @@ namespace VSRAD.Package
         public static void ShowWarning(string message, string title = "RAD Debugger") =>
             CreateMessageBox(message, title, OLEMSGICON.OLEMSGICON_WARNING);
 
-        private static void DefaultMessageBoxFactory(string message, string title, OLEMSGICON icon)
+        private static void CreateMessageBox(string message, string title, OLEMSGICON icon)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             VsShellUtilities.ShowMessageBox(ServiceProvider.GlobalProvider, message, title, icon,
