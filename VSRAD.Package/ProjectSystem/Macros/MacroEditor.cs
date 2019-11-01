@@ -24,7 +24,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
         }
 
-        public string EvaluatedValue => VSPackage.TaskFactory.Run(() => _evaluator.GetMacroValueAsync(_macroValue));
+        public string EvaluatedValue => VSPackage.TaskFactory.Run(() => _evaluator.EvaluateAsync(_macroValue));
 
         public Dictionary<string, string> MacroPreviewList { get; set; } = new Dictionary<string, string>();
 
@@ -50,6 +50,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 MacroPreviewList = await GetEnvironmentMacrosAsync(projectProperties, channel);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 RaisePropertyChanged(nameof(MacroPreviewList));
+                RaisePropertyChanged(nameof(EvaluatedValue));
             });
 
         private async Task<Dictionary<string, string>> GetEnvironmentMacrosAsync(IProjectProperties properties, ICommunicationChannel channel)
@@ -69,6 +70,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
             {
                 var remoteEnv = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.EnvironmentVariablesListed>(
                     new DebugServer.IPC.Commands.ListEnvironmentVariables()).ConfigureAwait(false);
+
+                _evaluator.SetRemoteMacroPreviewList(remoteEnv.Variables);
 
                 foreach (var entry in remoteEnv.Variables)
                     macros["$ENVR(" + entry.Key + ")"] = entry.Value;

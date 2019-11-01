@@ -60,6 +60,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         Task<string> GetMacroValueAsync(string name);
         Task<string> EvaluateAsync(string src);
+        void SetRemoteMacroPreviewList(IReadOnlyDictionary<string, string> macros);
     }
 
     public sealed class MacroEvaluationException : Exception { public MacroEvaluationException(string message) : base(message) { } }
@@ -73,6 +74,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         private readonly Options.ProfileOptions _profileOptions;
         private readonly Dictionary<string, string> _macroCache;
+
+        private IReadOnlyDictionary<string, string> _remoteMacroPreviewList;
 
         public MacroEvaluator(
             IProject project,
@@ -160,10 +163,17 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case "ENV":
                     return Task.FromResult(Environment.GetEnvironmentVariable(macroName));
                 case "ENVR":
-                    return Task.FromResult(macroMatch.Value); // TODO: Fetch remote environment variables from server and display them in macro editor
+                    if (_remoteMacroPreviewList != null && _remoteMacroPreviewList.TryGetValue(macroName, out var macroValue))
+                        return Task.FromResult(macroValue);
+                    return Task.FromResult(macroMatch.Value);
                 default:
                     return GetMacroValueAsync(macroName, recursionStartName);
             }
+        }
+
+        public void SetRemoteMacroPreviewList(IReadOnlyDictionary<string, string> macros)
+        {
+            _remoteMacroPreviewList = macros;
         }
     }
 }
