@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
@@ -79,23 +80,18 @@ namespace VSRAD.Package.Server
             return true;
         }
 
-        public async Task<bool> ChangeGroupAsync(uint groupIndex, uint groupSize)
+        public async Task<Result<bool>> ChangeGroupAsync(uint groupIndex, uint groupSize)
         {
             GroupSize = groupSize;
-            if (_valuesByGroup.TryGetValue(groupIndex, out var values))
+            if (!_valuesByGroup.TryGetValue(groupIndex, out var values))
             {
-                _groupIndex = groupIndex;
-                SetSystemFromGroup(values);
-                return true;
+                var fetchResult = await FetchGroupAsync(groupIndex).ConfigureAwait(false);
+                if (!fetchResult.TryGetResult(out values, out var error))
+                    return error;
+                _valuesByGroup[groupIndex] = values;
             }
-
-            values = await FetchGroupAsync(groupIndex).ConfigureAwait(false);
-            if (values == null) return false;
-
-            SetSystemFromGroup(values);
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            _valuesByGroup[groupIndex] = values;
             _groupIndex = groupIndex;
+            SetSystemFromGroup(values);
             return true;
         }
 
@@ -107,7 +103,7 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private async Task<uint[]> FetchGroupAsync(uint groupIndex)
+        private async Task<Result<uint[]>> FetchGroupAsync(uint groupIndex)
         {
             int byteOffset = (int)(4 * groupIndex * GroupSize * _recordSize);
             int byteCount = (int)(4 * GroupSize * _recordSize);
@@ -122,23 +118,14 @@ namespace VSRAD.Package.Server
                 }).ConfigureAwait(false);
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
-            {
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                Errors.ShowWarning("Output file could not be opened.");
-                return null;
-            }
+                return new Error("Output file could not be opened.");
+
             if (response.Timestamp != _outputTimestamp)
-            {
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                Errors.ShowWarning("Output file has changed since the last debugger execution.");
-                return null;
-            }
+                return new Error("Output file has changed since the last debugger execution.");
+
             if (response.Data.Length < byteCount)
-            {
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                Errors.ShowWarning($"Group #{groupIndex} is incomplete: expected to read {byteCount} bytes but the output file contains {response.Data.Length}.");
-                return null;
-            }
+                return new Error($"Group #{groupIndex} is incomplete: expected to read {byteCount} bytes but the output file contains {response.Data.Length}.");
+
             uint[] data = new uint[response.Data.Length / 4];
             Buffer.BlockCopy(response.Data, 0, data, 0, response.Data.Length);
             return data;

@@ -123,14 +123,19 @@ namespace VSRAD.Package.DebugVisualizer
             headerControl.OnPendingDataRequest(coordinates);
             VSPackage.TaskFactory.RunAsync(async () =>
             {
-                var success = await _breakState.ChangeGroupAsync(groupIndex, headerControl.GroupSize);
+                var result = await _breakState.ChangeGroupAsync(groupIndex, headerControl.GroupSize);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                if (success)
+                if (result.TryGetResult(out _, out var error))
+                {
                     foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                         SetRowContentsFromBreakState(row);
+                }
                 else
+                {
+                    Errors.Show(error);
                     foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                         EraseRowData(row);
+                }
 
                 ApplyColumnStyling();
                 RowStyling.ResetRowStyling(_table.DataRows);
