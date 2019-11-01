@@ -192,6 +192,7 @@ namespace VSRAD.Package.Server
                 return new BreakState(outputFile,
                     metadataResponse.Timestamp,
                     (uint)metadataResponse.ByteCount,
+                    _project.Options.Profile.Debugger.OutputOffset,
                     watches, _channel);
             }
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();

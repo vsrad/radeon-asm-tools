@@ -144,5 +144,56 @@ namespace VSRAD.DebugServerTests.Handlers
             Assert.Equal(FetchStatus.FileNotFound, response.Status);
             Assert.Equal(Array.Empty<byte>(), response.Data);
         }
+
+        [Fact]
+        public async void OutputOffsetTestAsync()
+        {
+            var tmpFile = Path.GetTempFileName();
+            var byteData = new byte[8] { 90, 85, 80, 70, 40, 10, 0, 0 };
+
+            await File.WriteAllBytesAsync(tmpFile, byteData);
+
+            var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
+                new FetchResultRange
+                {
+                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    ByteOffset = 1,
+                    ByteCount = 666,
+                    BinaryOutput = true,
+                    OutputOffset = 4
+                });
+            Assert.Equal(FetchStatus.Successful, response.Status);
+            Assert.Equal(new byte[3] { 10, 0, 0 }, response.Data);
+
+            var stringData = new string[]
+            {
+                "<...-Restricted accesы: do not proceed without special permission-...>",
+                "<...-Property of NERV corporation. All rights reserved-...>",
+                "<...-EVA00 logfile-...>",
+                "<...-System state snapshot 11/01/1996 00:00:15-...>",
+                "0x00000016",
+                "0x00000022",
+                "0x00000064",
+                "0x00000044",
+                "0x00000000",
+                "0x00000055",
+                "0x00000077",
+                "0x00000014",
+            };
+
+            await File.WriteAllLinesAsync(tmpFile, stringData);
+
+            response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
+               new FetchResultRange
+               {
+                   FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                   ByteOffset = 4,
+                   ByteCount = 8,
+                   BinaryOutput = false,
+                   OutputOffset = 4
+               });
+            Assert.Equal(FetchStatus.Successful, response.Status);
+            Assert.Equal(new byte[8] { 34, 0, 0, 0, 100, 0, 0, 0 }, response.Data);
+        }
     }
 }

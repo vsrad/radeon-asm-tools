@@ -115,6 +115,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         public int ByteOffset { get; set; }
 
         public int ByteCount { get; set; }
+        public int OutputOffset { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -122,7 +123,8 @@ namespace VSRAD.DebugServer.IPC.Commands
             $"FilePath = {string.Join(", ", FilePath)}",
             $"BinaryOutput = {BinaryOutput}",
             $"ByteOffset = {ByteOffset}",
-            $"ByteCount = {ByteCount}"
+            $"ByteCount = {ByteCount}",
+            $"OutputOffset = {OutputOffset}"
         });
 
         public static FetchResultRange Deserialize(IPCReader reader) => new FetchResultRange
@@ -130,7 +132,8 @@ namespace VSRAD.DebugServer.IPC.Commands
             FilePath = reader.ReadLengthPrefixedStringArray(),
             BinaryOutput = reader.ReadBoolean(),
             ByteOffset = reader.ReadInt32(),
-            ByteCount = reader.ReadInt32()
+            ByteCount = reader.ReadInt32(),
+            OutputOffset = reader.ReadInt32()
         };
 
         public void Serialize(IPCWriter writer)
@@ -139,6 +142,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(BinaryOutput);
             writer.Write(ByteOffset);
             writer.Write(ByteCount);
+            writer.Write(OutputOffset);
         }
     }
 
