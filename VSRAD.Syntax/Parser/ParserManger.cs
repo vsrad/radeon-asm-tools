@@ -8,6 +8,7 @@ namespace VSRAD.Syntax.Parser
 {
     public interface IParserManager
     {
+        int TabSize { get; set; }
         IBaseParser ActualParser { get; }
         event EventHandler UpdateParserHandler;
         string[] KeyWordStartPatterns { get; }
@@ -34,6 +35,7 @@ namespace VSRAD.Syntax.Parser
         private object _updateLock;
         private ITextSnapshot _actualSnapshot;
         private CancellationTokenSource _lastCancellationTokenSource;
+        private int _tabSize;
 
         public ParserManger()
         {
@@ -54,6 +56,12 @@ namespace VSRAD.Syntax.Parser
         public bool EnableManyLineDecloration { get; private set; }
         public Dictionary<string, Regex> VariableDefinitionRegulars { get; private set; }
         public IBaseParser ActualParser { get; private set; }
+        public int TabSize
+        {
+            get { return _tabSize; }
+            set { _tabSize = value; OnBufferChanged(null, null); }
+        }
+
         public event EventHandler UpdateParserHandler;
 
 
@@ -87,6 +95,7 @@ namespace VSRAD.Syntax.Parser
             this.VariableDefinitionRegulars = variableDefinitRegex;
             _initialized = true;
             _textBuffer.Changed += OnBufferChanged;
+            _tabSize = 4;
 
             this.OnBufferChanged(null, null);
         }

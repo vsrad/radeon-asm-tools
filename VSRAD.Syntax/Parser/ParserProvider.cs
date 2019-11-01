@@ -19,6 +19,8 @@ namespace VSRAD.Syntax.Parser
                 .Properties
                 .GetOrCreateSingletonProperty(() => new ParserManger());
 
+            parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
+
             parserManager.Initialize(textView.TextBuffer,
                 Constants.asm1Start.Concat(Constants.preprocessorStart).ToArray(),
                 Constants.asm1End.Concat(Constants.preprocessorEnd).ToArray(),
@@ -35,6 +37,7 @@ namespace VSRAD.Syntax.Parser
 
             // TODO fix this
             parserManager.UpdateParserHandler += async (sender, args) => await FunctionList.FunctionListControl.UpdateFunctionListAsync(sender);
+            textView.Options.OptionChanged += (sender, args) => parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
         }
     }
 
@@ -50,6 +53,8 @@ namespace VSRAD.Syntax.Parser
                 .TextBuffer
                 .Properties
                 .GetOrCreateSingletonProperty(() => new ParserManger());
+
+            parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
 
             parserManager.Initialize(textView.TextBuffer,
                 Constants.asm2Start.Concat(Constants.preprocessorStart).ToArray(),
@@ -67,6 +72,7 @@ namespace VSRAD.Syntax.Parser
 
             // TODO fix this
             parserManager.UpdateParserHandler += async (sender, args) => await FunctionList.FunctionListControl.UpdateFunctionListAsync(sender);
+            textView.Options.OptionChanged += (sender, args) => parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
         }
     }
 }

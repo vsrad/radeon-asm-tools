@@ -89,7 +89,7 @@ namespace VSRAD.Syntax.Parser
                             var startCommentBlock = new SnapshotPoint(currentSnapshot, startManyLineCommentIndex);
                             var endCommentBlock = new SnapshotPoint(currentSnapshot, endIndex);
                             var newCommentBlock = new BaseBlock(currentTreeBlock, BlockType.Comment, startCommentBlock);
-                            newCommentBlock.SetBlockReady(endCommentBlock);
+                            newCommentBlock.SetBlockReady(endCommentBlock, endCommentBlock);
                             if (newCommentBlock.BlockReady)
                             {
                                 newCommentBlock.AddToken(newCommentBlock.BlockSpan, Tokens.TokenType.Comment);
@@ -147,7 +147,8 @@ namespace VSRAD.Syntax.Parser
             {
                 if (text.Contains(parserManager.DeclorationEndPattern))
                 {
-                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken));
+                    var spaceStart = GetSpaceStart(text);
+                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, spaceStart));
                     startFindManyLineDeclorationEnd = false;
                     var functionArgsText = text.Substring(0, text.IndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
@@ -173,10 +174,11 @@ namespace VSRAD.Syntax.Parser
             {
                 var functionMatch = parserManager.FunctionNameRegular.Match(text);
                 var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length));
+                var spaceStart = GetSpaceStart(text);
 
                 if (!parserManager.EnableManyLineDecloration)
                 {
-                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken));
+                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
                     currentRootBlock.FunctionTokens.Add(functionToken);
 
                     var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=' }, StringSplitOptions.RemoveEmptyEntries);
@@ -192,7 +194,7 @@ namespace VSRAD.Syntax.Parser
                     {
                         if (text.Contains(parserManager.DeclorationEndPattern))
                         {
-                            currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken));
+                            currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
                             currentRootBlock.FunctionTokens.Add(functionToken);
 
                             var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.IndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
@@ -218,7 +220,7 @@ namespace VSRAD.Syntax.Parser
                     }
                     else
                     {
-                        currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, functionToken.SymbolSpan.End, functionToken));
+                        currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, functionToken.SymbolSpan.End, functionToken, spaceStart));
                         currentRootBlock.FunctionTokens.Add(functionToken);
                     }
                 }
@@ -244,14 +246,10 @@ namespace VSRAD.Syntax.Parser
             {
                 if (cmpText.StartsWith(startPattern, StringComparison.Ordinal))
                 {
-<<<<<<< HEAD
-                    var blockActualStart = new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(startPattern) + startPattern.Length);
-=======
                     var spaceStart = GetSpaceStart(text);
                     var blockActualStart = new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(startPattern, StringComparison.Ordinal) + startPattern.Length);
->>>>>>> 7c503a4... Syntax: я скорость, я - молния Mc'Queen
                     var blockStart = new SnapshotPoint(currentSnapshot, indexStartLine + text.Length);
-                    currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, startBlock: blockStart, blockActualStart: blockActualStart);
+                    currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, startBlock: blockStart, spaceStart, blockActualStart: blockActualStart);
                     return;
                 }
             }
@@ -260,12 +258,8 @@ namespace VSRAD.Syntax.Parser
             {
                 if (cmpText.StartsWith(endPattern, StringComparison.Ordinal))
                 {
-<<<<<<< HEAD
-                    currentTreeBlock.SetBlockReady(new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(endPattern) + endPattern.Length));
-=======
                     var endBlock = new SnapshotPoint(currentSnapshot, indexStartLine + text.IndexOf(endPattern, StringComparison.Ordinal) + endPattern.Length);
                     currentTreeBlock.SetBlockReady(endBlock: endBlock, actualEndBlock: endBlock);
->>>>>>> 7c503a4... Syntax: я скорость, я - молния Mc'Queen
                     if (currentTreeBlock.BlockReady)
                         currentListBlock.Add(currentTreeBlock);
                     if (currentTreeBlock.Parrent != null)
@@ -278,13 +272,14 @@ namespace VSRAD.Syntax.Parser
             {
                 if (cmpText.StartsWith(middlePattern, StringComparison.Ordinal))
                 {
-                    currentTreeBlock.SetBlockReady(currentSnapshot.GetLineFromLineNumber(currentLine.LineNumber - 1).End);
+                    currentTreeBlock.SetBlockReady(currentSnapshot.GetLineFromLineNumber(currentLine.LineNumber - 1).End, currentLine.Start);
                     if (currentTreeBlock.BlockReady)
                         currentListBlock.Add(currentTreeBlock);
                     if (currentTreeBlock.Parrent != null)
                     {
+                        var spaceStart = GetSpaceStart(text);
                         currentTreeBlock = currentTreeBlock.Parrent;
-                        currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length));
+                        currentTreeBlock = currentTreeBlock.AddChildren(BlockType.Loops, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), spaceStart);
                         return;
                     }
                 }
@@ -326,6 +321,19 @@ namespace VSRAD.Syntax.Parser
             }
 
             return null;
+        }
+
+        private int GetSpaceStart(string text)
+        {
+            int spaceStart = 0;
+            foreach (var ch in text)
+            {
+                if (ch == ' ') spaceStart++;
+                else if (ch == '\t') spaceStart += parserManager.TabSize;
+                else break;
+            }
+
+            return spaceStart;
         }
     }
 }

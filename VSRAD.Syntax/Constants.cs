@@ -1403,5 +1403,10 @@ namespace VSRAD.Syntax
         {
         };
         #endregion
+
+        /*
+         * Indent guide adornment layer
+         */
+        internal const string IndentGuideAdornmentLayerName = "RadeonAsmIndentGuide";
     }
 }

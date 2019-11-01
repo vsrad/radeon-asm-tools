@@ -7,7 +7,7 @@ namespace VSRAD.Syntax.Parser.Blocks
 {
     public class BaseBlock : IBaseBlock
     {
-        public BaseBlock(IBaseBlock parrent, BlockType blockType, SnapshotPoint blockStart, SnapshotPoint blockActualStart = default)
+        public BaseBlock(IBaseBlock parrent, BlockType blockType, SnapshotPoint blockStart, int spaceStart = 0, SnapshotPoint blockActualStart = default)
         {
             this.Parrent = parrent;
             this.BlockType = blockType;
@@ -15,9 +15,11 @@ namespace VSRAD.Syntax.Parser.Blocks
             this.BlockActualStart = (blockActualStart != default) ? blockActualStart : blockStart;
             this.Children = new List<IBaseBlock>();
             this.Tokens = new List<IBaseToken>();
+            this.SpaceStart = spaceStart;
         }
 
         public bool BlockReady { get; protected set; } = false;
+        public int SpaceStart { get; protected set; }
         public SnapshotSpan BlockSpan { get; protected set; }
         public IList<IBaseBlock> Children { get; }
         public virtual IList<IBaseToken> Tokens { get; }
@@ -26,12 +28,13 @@ namespace VSRAD.Syntax.Parser.Blocks
 
         private SnapshotPoint BlockStart { get; set; }
         private SnapshotPoint BlockActualStart { get; set; }
+        private SnapshotPoint BlockActualEnd { get; set; }
 
         public SnapshotSpan BlockActualSpan { get; set; }
 
-        public IBaseBlock AddChildren(BlockType blockType, SnapshotPoint startBlock, SnapshotPoint actualStart = default)
+        public IBaseBlock AddChildren(BlockType blockType, SnapshotPoint startBlock, int spaceStart, SnapshotPoint actualStart = default)
         {
-            var children = new BaseBlock(this, blockType, startBlock, actualStart);
+            var children = new BaseBlock(this, blockType, startBlock, spaceStart, actualStart);
             Children.Add(children);
             return children;
         }
@@ -97,11 +100,12 @@ namespace VSRAD.Syntax.Parser.Blocks
             return listElements;
         }
 
-        public virtual void SetBlockReady(SnapshotPoint endBlock)
+        public virtual void SetBlockReady(SnapshotPoint endBlock, SnapshotPoint actualEndBlock)
         {
             if (this.BlockStart.Snapshot != null && this.BlockStart.Snapshot.Equals(endBlock.Snapshot) && this.BlockStart < endBlock)
             {
                 this.BlockSpan = new SnapshotSpan(this.BlockStart, endBlock);
+                this.BlockActualEnd = actualEndBlock;
                 SetActualSpan();
                 this.BlockReady = true;
             }
@@ -109,7 +113,7 @@ namespace VSRAD.Syntax.Parser.Blocks
 
         public virtual void SetActualSpan()
         {
-            this.BlockActualSpan = new SnapshotSpan(BlockActualStart, BlockSpan.End);
+            this.BlockActualSpan = new SnapshotSpan(BlockActualStart, BlockActualEnd);
         }
     }
 }
