@@ -74,6 +74,11 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
+        public void WindowFocusLost()
+        {
+            _table.HostWindowDeactivated();
+        }
+
         public void ApplyColumnStyling()
         {
             var scrollingOffset = _table.HorizontalScrollingOffset;
