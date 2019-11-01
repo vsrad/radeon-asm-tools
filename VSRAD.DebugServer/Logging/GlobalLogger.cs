@@ -15,7 +15,7 @@ namespace VSRAD.DebugServer.Logging
             var assembly = Assembly.GetEntryAssembly();
             _executableName = Path.GetFileNameWithoutExtension(assembly.Location);
             _assemblyName = assembly.GetName().Name;
-            _assemblyVersion = assembly.GetName().Version.ToString(2);
+            _assemblyVersion = assembly.GetName().Version.ToString(3);
         }
 
         public static void ServerStarted(CliOptions options)

@@ -8,7 +8,7 @@ To build extension you should use one of four project build options:
 * `Debug` - debug version with *Radeon asm* support
 * `Release` - release version with *Radeon asm* support
 
-> For example, for the `Release` build option, the `RadeonAsmSyntax-4.1.0.vsix` extension installer will be located in the ***path to project location\VSRAD.Syntax\bin\Release*** directory.
+> For example, for the `Release` build option, the `RadeonAsmSyntax.vsix` extension installer will be located in the ***path to project location\VSRAD.Syntax\bin\Release*** directory.
 
 ## Plugin features
 

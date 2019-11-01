@@ -4,6 +4,8 @@ xcopy /E "VSRAD.DebugServer\bin\release\netcoreapp2.2\win-x64\publish" "Release\
 xcopy /E "VSRAD.DebugServer\bin\release\netcoreapp2.2\linux-x64\publish" "Release\DebugServerLinux64\"
 :: RadeonAsmDebugger.vsix
 copy "VSRAD.Package\bin\Release\RadeonAsmDebugger.vsix" "Release\"
+:: RadeonAsmSyntax.vsix
+copy "VSRAD.Syntax\bin\Release\RadeonAsmSyntax.vsix" "Release\"
 :: Changelog and Readme
 copy "CHANGELOG.md" "Release\"
 copy "README.md" "Release\"

@@ -43,7 +43,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>VSRAD.Syntax</RootNamespace>
-    <AssemblyName>RadeonAsmSyntax-4.1.0</AssemblyName>
+    <AssemblyName>RadeonAsmSyntax</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
     <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
