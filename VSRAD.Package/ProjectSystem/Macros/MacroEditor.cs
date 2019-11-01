@@ -1,58 +1,82 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.ProjectSystem.Properties;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
+using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading.Tasks;
+using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
-    [Export]
-    [AppliesTo(Constants.ProjectCapability)]
-    public sealed class MacroEditor
+    public sealed class MacroEditor : DefaultNotifyPropertyChanged
     {
-        private readonly UnconfiguredProject _unconfiguredProject;
-        private readonly IProject _project;
+        public string MacroName { get; }
 
-        [ImportingConstructor]
-        public MacroEditor(UnconfiguredProject unconfiguredProject, IProject project)
+        private string _macroValue;
+        public string MacroValue
         {
-            _unconfiguredProject = unconfiguredProject;
-            _project = project;
+            get => _macroValue;
+            set
+            {
+                SetField(ref _macroValue, value);
+                RaisePropertyChanged(nameof(EvaluatedValue));
+            }
         }
 
-        public async Task<string> EditAsync(string macroName, string currentValue, Options.ProfileOptions profileOptions)
+        public string EvaluatedValue => VSPackage.TaskFactory.Run(() => _evaluator.EvaluateAsync(_macroValue));
+
+        public Dictionary<string, string> MacroPreviewList { get; set; } = new Dictionary<string, string>();
+
+        private string _macroPreviewFilter;
+        public string MacroPreviewFilter
         {
-            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            var propertiesProvider = configuredProject.GetService<IProjectPropertiesProvider>("ProjectPropertiesProvider");
-            var projectProperties = propertiesProvider.GetCommonProperties();
-
-            var evaluator = new MacroEvaluator(_project, projectProperties,
-                values: new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0)),
-                profileOptionsOverride: profileOptions);
-            var environmentMacros = await GetEnvironmentMacrosAsync(projectProperties, evaluator);
-
-            string evaluatorDelegate(string value) => VSPackage.TaskFactory.Run(() => evaluator.EvaluateAsync(value));
-
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-            var editorWindow = new MacroEditorWindow(macroName, currentValue, environmentMacros, evaluatorDelegate);
-            editorWindow.ShowDialog();
-
-            return editorWindow.Value;
+            get => _macroPreviewFilter;
+            set => SetField(ref _macroPreviewFilter, value);
         }
 
-        private async Task<Dictionary<string, string>> GetEnvironmentMacrosAsync(IProjectProperties properties, MacroEvaluator evaluator)
-        {
-            var macros = new Dictionary<string, string>();
+        private readonly IMacroEvaluator _evaluator;
 
-            var vsMacroNames = await properties.GetPropertyNamesAsync();
+        public MacroEditor(string macroName, string macroValue, IMacroEvaluator evaluator)
+        {
+            MacroName = macroName;
+            MacroValue = macroValue;
+            _evaluator = evaluator;
+        }
+
+        public void LoadPreviewListInBackground(IProjectProperties projectProperties, ICommunicationChannel channel) =>
+            VSPackage.TaskFactory.RunAsync(async () =>
+            {
+                MacroPreviewList = await GetEnvironmentMacrosAsync(projectProperties, channel);
+                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                RaisePropertyChanged(nameof(MacroPreviewList));
+                RaisePropertyChanged(nameof(EvaluatedValue));
+            });
+
+        private async Task<Dictionary<string, string>> GetEnvironmentMacrosAsync(IProjectProperties properties, ICommunicationChannel channel)
+        {
+            var vsMacroNames = await properties.GetPropertyNamesAsync().ConfigureAwait(false);
             var radMacroNames = typeof(RadMacros).GetConstantValues<string>();
 
+            var macros = new Dictionary<string, string>();
+
             foreach (var macroName in vsMacroNames.Union(radMacroNames))
-                macros["$(" + macroName + ")"] = await evaluator.GetMacroValueAsync(macroName);
+                macros["$(" + macroName + ")"] = await _evaluator.GetMacroValueAsync(macroName).ConfigureAwait(false);
+
+            foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
+                macros["$ENV(" + (string)entry.Key + ")"] = (string)entry.Value;
+
+            try
+            {
+                var remoteEnv = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.EnvironmentVariablesListed>(
+                    new DebugServer.IPC.Commands.ListEnvironmentVariables()).ConfigureAwait(false);
+
+                _evaluator.SetRemoteMacroPreviewList(remoteEnv.Variables);
+
+                foreach (var entry in remoteEnv.Variables)
+                    macros["$ENVR(" + entry.Key + ")"] = entry.Value;
+            }
+            catch (Exception) { } // Ignore remote environment fetch failures
 
             return macros;
         }

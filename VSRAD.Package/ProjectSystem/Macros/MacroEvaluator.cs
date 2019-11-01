@@ -1,9 +1,10 @@
 using Microsoft.VisualStudio.ProjectSystem.Properties;
-using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
@@ -59,17 +60,22 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         Task<string> GetMacroValueAsync(string name);
         Task<string> EvaluateAsync(string src);
+        void SetRemoteMacroPreviewList(IReadOnlyDictionary<string, string> macros);
     }
 
     public sealed class MacroEvaluationException : Exception { public MacroEvaluationException(string message) : base(message) { } }
 
     public sealed class MacroEvaluator : IMacroEvaluator
     {
+        private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);
+
         private readonly IProject _project;
         private readonly IProjectProperties _projectProperties;
 
         private readonly Options.ProfileOptions _profileOptions;
         private readonly Dictionary<string, string> _macroCache;
+
+        private IReadOnlyDictionary<string, string> _remoteMacroPreviewList;
 
         public MacroEvaluator(
             IProject project,
@@ -146,48 +152,28 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, null);
 
-        public async Task<string> EvaluateAsync(string src, string recursionStartName)
+        private Task<string> EvaluateAsync(string src, string recursionStartName) =>
+            _macroRegex.ReplaceAsync(src, (m) => ReplaceMacroMatchAsync(m, recursionStartName));
+
+        private Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
         {
-            var evaluated = new StringBuilder();
-
-            // https://dotnetfiddle.net/4YG3Ox
-            int c = 0;
-            while (c < src.Length)
+            var macroName = macroMatch.Groups[2].Value;
+            switch (macroMatch.Groups[1].Value)
             {
-                var macroStart = src.IndexOf('$', c, src.Length - c - 1);
-                if (macroStart == -1 || src.Length - macroStart <= 3)
-                {
-                    evaluated.Append(src, c, src.Length - c);
-                    break;
-                }
-
-                var macroEnd = src[macroStart + 1] == '(' ? src.IndexOf(')', macroStart + 3) : -1;
-                if (macroEnd == -1)
-                {
-                    evaluated.Append(src, c, macroStart + 1 - c);
-                    c = macroStart + 1;
-                    continue;
-                }
-
-                var macroNameStart = macroStart + 2; // skip $(
-                var macroNameLength = macroEnd - macroNameStart;
-
-                var imbalancedMacroStart = src.IndexOf('$', macroNameStart, macroNameLength);
-                if (imbalancedMacroStart != -1)
-                {
-                    evaluated.Append(src, c, imbalancedMacroStart - c);
-                    c = imbalancedMacroStart;
-                    continue;
-                }
-
-                var macroName = src.Substring(macroNameStart, macroNameLength);
-                var macroValue = await GetMacroValueAsync(macroName, recursionStartName);
-                evaluated.Append(src, c, macroStart - c);
-                evaluated.Append(macroValue);
-                c = macroEnd + 1;
+                case "ENV":
+                    return Task.FromResult(Environment.GetEnvironmentVariable(macroName));
+                case "ENVR":
+                    if (_remoteMacroPreviewList != null && _remoteMacroPreviewList.TryGetValue(macroName, out var macroValue))
+                        return Task.FromResult(macroValue);
+                    return Task.FromResult(macroMatch.Value);
+                default:
+                    return GetMacroValueAsync(macroName, recursionStartName);
             }
+        }
 
-            return evaluated.ToString();
+        public void SetRemoteMacroPreviewList(IReadOnlyDictionary<string, string> macros)
+        {
+            _remoteMacroPreviewList = macros;
         }
     }
 }

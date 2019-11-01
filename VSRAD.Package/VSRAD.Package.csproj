@@ -148,6 +148,7 @@
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -172,7 +173,7 @@
     <Compile Include="Options\ProfileOptions.cs" />
     <Compile Include="Options\ProjectOptions.cs" />
     <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
-    <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditManager.cs" />
     <Compile Include="ProjectSystem\OutputWindow.cs" />
     <Compile Include="ProjectSystem\Profiles\PropertyPageEditorWrapper.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">
@@ -230,6 +231,7 @@
     <Compile Include="Utils\ProjectSystemExtensions.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\DeployUtils.cs" />
+    <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\Win32Control.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />

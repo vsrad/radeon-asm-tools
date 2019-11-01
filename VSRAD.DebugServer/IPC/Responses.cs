@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace VSRAD.DebugServer.IPC.Responses
@@ -13,6 +14,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case 0: return ExecutionCompleted.Deserialize(reader);
                 case 1: return MetadataFetched.Deserialize(reader);
                 case 2: return ResultRangeFetched.Deserialize(reader);
+                case 3: return EnvironmentVariablesListed.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {responseType}");
         }
@@ -25,6 +27,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ExecutionCompleted _: responseType = 0; break;
                 case MetadataFetched _: responseType = 1; break;
                 case ResultRangeFetched _: responseType = 2; break;
+                case EnvironmentVariablesListed _: responseType = 3; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write(responseType);
@@ -133,6 +136,25 @@ namespace VSRAD.DebugServer.IPC.Responses
             writer.Write(Timestamp);
             writer.Write((byte)Status);
         }
+    }
+
+    public sealed class EnvironmentVariablesListed : IResponse
+    {
+        public IReadOnlyDictionary<string, string> Variables { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "EnvironmentVariablesListed",
+            $"Variables = <{Variables.Count} items>",
+        });
+
+        public static EnvironmentVariablesListed Deserialize(IPCReader reader) => new EnvironmentVariablesListed
+        {
+            Variables = reader.ReadLengthPrefixedStringDict()
+        };
+
+        public void Serialize(IPCWriter writer) =>
+            writer.WriteLengthPrefixedDict(Variables);
     }
 
     public enum ExecutionStatus : byte

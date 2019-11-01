@@ -57,7 +57,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        public ProfileOptionsWindow(Macros.MacroEditor macroEditor, ProjectOptions projectOptions)
+        public ProfileOptionsWindow(Macros.MacroEditManager macroEditor, ProjectOptions projectOptions)
         {
             _projectOptions = projectOptions;
             DataContext = new Context(_projectOptions, SaveChanges, RemoveProfile);

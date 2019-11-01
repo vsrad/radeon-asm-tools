@@ -1,5 +1,7 @@
 ﻿using System.IO;
 using System;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace VSRAD.DebugServer.IPC
 {
@@ -19,6 +21,16 @@ namespace VSRAD.DebugServer.IPC
             Write(data);
         }
 
+        public void WriteLengthPrefixedDict(IReadOnlyDictionary<string, string> dictionary)
+        {
+            Write7BitEncodedInt(dictionary.Count);
+            foreach (var entry in dictionary)
+            {
+                Write(entry.Key);
+                Write(entry.Value);
+            }
+        }
+
         public void Write(DateTime timestamp) =>
             Write(timestamp.ToBinary());
     }
@@ -26,6 +38,7 @@ namespace VSRAD.DebugServer.IPC
     public sealed class IPCReader : BinaryReader
     {
         public IPCReader(Stream stream) : base(stream) { }
+        private static readonly Regex envMacroRegex = new Regex(@"\$ENVR\(([^)]+)\)", RegexOptions.Compiled);
 
         public string[] ReadLengthPrefixedStringArray()
         {
@@ -42,7 +55,28 @@ namespace VSRAD.DebugServer.IPC
             return ReadBytes(length);
         }
 
+        public Dictionary<string, string> ReadLengthPrefixedStringDict()
+        {
+            var count = Read7BitEncodedInt();
+            var dict = new Dictionary<string, string>(count);
+            for (int i = 0; i < count; ++i)
+                dict[ReadString()] = ReadString();
+            return dict;
+        }
+
         public DateTime ReadDateTime() =>
             DateTime.FromBinary(ReadInt64());
+
+        public override string ReadString()
+        {
+            var rawString = base.ReadString();
+            foreach(Match m in envMacroRegex.Matches(rawString))
+            {
+                var envName = m.Groups[1].Value;
+                var envValue = Environment.GetEnvironmentVariable(envName);
+                rawString = rawString.Replace(m.Value, envValue);
+            }
+            return rawString;
+        }
     }
 }
