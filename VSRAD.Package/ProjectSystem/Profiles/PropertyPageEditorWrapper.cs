@@ -13,7 +13,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public delegate void ProfileNameChangedDelegate();
 
         private readonly Grid _propertyPageGrid;
-        private readonly Macros.MacroEditor _macroEditor;
+        private readonly Macros.MacroEditManager _macroEditor;
         private readonly GetPropertyValueDelegate _getValue;
         private readonly SetPropertyValueDelegate _setValue;
         private readonly UpdateDescriptionDelegate _updateDescription;
@@ -28,7 +28,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public PropertyPageEditorWrapper(
             Grid propertyPageGrid,
-            Macros.MacroEditor macroEditor,
+            Macros.MacroEditManager macroEditor,
             GetPropertyValueDelegate getValue,
             SetPropertyValueDelegate setValue,
             UpdateDescriptionDelegate updateDescription,
@@ -134,17 +134,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private FrameworkElement EditorWithMacroButton(TextBox editor, string macro)
         {
             var macroButton = new Button { Content = "Edit..." };
-            macroButton.Click += async (sender, args) =>
-            {
-                try
-                {
-                    editor.Text = await _macroEditor.EditAsync(macro, editor.Text, _getProfileOptions());
-                }
-                catch (Macros.MacroEvaluationException e)
-                {
-                    Errors.ShowWarning(e.Message);
-                }
-            };
+            macroButton.Click += (sender, args) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+                editor.Text = await _macroEditor.EditAsync(macro, editor.Text, _getProfileOptions()));
 
             var grid = new Grid();
             grid.RowDefinitions.Add(new RowDefinition());

@@ -46,12 +46,12 @@ namespace VSRAD.Package.ToolWindows
         }
 
         private readonly ProjectOptions _projectOptions;
-        private readonly MacroEditor _macroEditor;
+        private readonly MacroEditManager _macroEditor;
 
         public OptionsControl(IToolWindowIntegration integration)
         {
             _projectOptions = integration.ProjectOptions;
-            _macroEditor = integration.GetExport<MacroEditor>();
+            _macroEditor = integration.GetExport<MacroEditManager>();
             DataContext = new Context(integration.ProjectOptions, integration.GetExport<ICommunicationChannelManager>());
             InitializeComponent();
             ColoringRegionsGrid.PreviewMouseWheel += (s, e) =>
