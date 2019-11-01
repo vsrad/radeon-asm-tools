@@ -5,19 +5,22 @@ using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
+using VSRAD.PackageTests;
 using Xunit;
 
-namespace VSRAD.PackageTests.Server
+namespace VSGCN.PackageTests.Server
 {
     public class RemoteCommandExecutorTests
     {
         [Fact]
-        public async Task ExecuteRemoteTestAsync()
+        public async Task SuccessfulRunTestAsync()
         {
             var channel = new MockCommunicationChannel();
             var (outputWindow, outputWriterMock) = MockOutputWindow();
             var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow);
 
+            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
+                (command) => Assert.Equal(new[] { "file", "path" }, command.FilePath));
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
             {
                 Status = ExecutionStatus.Completed,
@@ -30,59 +33,47 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal("exec", command.Executable);
                 Assert.Equal("args", command.Arguments);
             });
+            var data = new byte[] { 0xca, 0xfe, 0xde, 0xad };
+            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = data },
+                (command) => Assert.Equal(new[] { "file", "path" }, command.FilePath));
 
-            await executor.ExecuteRemoteAsync(new Execute { Executable = "exec", Arguments = "args" });
+            var result = await executor.ExecuteWithResultAsync(new Execute { Executable = "exec", Arguments = "args" }, new[] { "file", "path" });
+            Assert.True(result.TryGetResult(out var resultData, out _));
+            Assert.Equal(data, resultData);
+
             outputWriterMock.Verify((w) => w.PrintMessageAsync(
                 "[Test] Captured stdout", "test stdout"), Times.Once);
             outputWriterMock.Verify((w) => w.PrintMessageAsync(
                 "[Test] Captured stderr", "test stderr"), Times.Once);
-
-            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch });
-            var exception = await Assert.ThrowsAsync<RemoteCommandExecutor.ExecutionFailedException>(() =>
-                executor.ExecuteRemoteAsync(new Execute()));
-            Assert.Equal(RemoteCommandExecutor.ErrorCouldNotLaunch, exception.Message);
-            outputWriterMock.Verify((w) => w.PrintMessageAsync("[Test] No stdout/stderr captured", null), Times.Once);
-
-            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 666 });
-            exception = await Assert.ThrowsAsync<RemoteCommandExecutor.ExecutionFailedException>(() =>
-                executor.ExecuteRemoteAsync(new Execute()));
-            Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(666), exception.Message);
-
-            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.TimedOut });
-            exception = await Assert.ThrowsAsync<RemoteCommandExecutor.ExecutionFailedException>(() =>
-                executor.ExecuteRemoteAsync(new Execute()));
-            Assert.Equal(RemoteCommandExecutor.ErrorTimedOut, exception.Message);
-
-            Assert.True(channel.AllInteractionsHandled);
         }
 
         [Fact]
-        public async Task GetMetadataTestAsync()
+        public async Task ExecutionErrorTestAsync()
         {
-            var time = DateTime.MaxValue;
-
             var channel = new MockCommunicationChannel();
             var (outputWindow, outputWriterMock) = MockOutputWindow();
             var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow);
 
-            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched
-            {
-                ByteCount = 1101,
-                Status = FetchStatus.Successful,
-                Timestamp = time
-            },
-            (command) =>
-            {
-                Assert.Equal(new[] { @"WHO:\CARES" }, command.FilePath);
-                Assert.True(command.BinaryOutput);
-            });
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch });
 
-            var (actualTime, dwordCount) = (await executor.FetchMetadataAsync(new[] { @"WHO:\CARES" }, true)).Value;
-            Assert.Equal(actualTime, time);
-            Assert.Equal(1101, dwordCount);
+            var result = await executor.ExecuteWithResultAsync(new Execute(), new[] { "h" });
+            Assert.False(result.TryGetResult(out _, out var error));
+            Assert.Equal("RAD Test", error.Title);
+            Assert.Equal(RemoteCommandExecutor.ErrorCouldNotLaunch, error.Message);
+            outputWriterMock.Verify((w) => w.PrintMessageAsync("[Test] No stdout/stderr captured", null), Times.Once);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
-            Assert.Null(await executor.FetchMetadataAsync(new[] { "nonexistent" }, true));
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 666 });
+            result = await executor.ExecuteWithResultAsync(new Execute(), new[] { "h" });
+            Assert.False(result.TryGetResult(out _, out error));
+            Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(666), error.Message);
+
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.TimedOut });
+            result = await executor.ExecuteWithResultAsync(new Execute(), new[] { "h" });
+            Assert.False(result.TryGetResult(out _, out error));
+            Assert.Equal(RemoteCommandExecutor.ErrorTimedOut, error.Message);
 
             Assert.True(channel.AllInteractionsHandled);
         }
@@ -90,34 +81,24 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task FetchResultTestAsync()
         {
-            var time = DateTime.MaxValue;
-
             var channel = new MockCommunicationChannel();
-            var (outputWindow, outputWriterMock) = MockOutputWindow();
+            var (outputWindow, _) = MockOutputWindow();
             var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow);
 
-            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched
-            {
-                Data = new byte[] { 11, 01, 11, 10 },
-                Status = FetchStatus.Successful,
-                Timestamp = DateTime.MaxValue
-            },
-            (command) =>
-            {
-                Assert.Equal(new[] { @"F:\Is\Pressed\For", "Us" }, command.FilePath);
-                Assert.Equal(4, command.ByteCount);
-                Assert.True(command.BinaryOutput);
-                Assert.Equal(0, command.ByteOffset);
-            });
-
-            var (actualTime, data) = await executor.FetchResultAsync(new[] { @"F:\Is\Pressed\For", "Us" }, true, 4);
-            Assert.Equal(time, actualTime);
-            Assert.Equal(new byte[] { 11, 01, 11, 10 }, data);
-
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound });
-            var exception = await Assert.ThrowsAsync<RemoteCommandExecutor.ExecutionFailedException>(() =>
-                executor.FetchResultAsync(new[] { "nonexistent" }, true, 4));
-            Assert.Equal(RemoteCommandExecutor.ErrorFileNotCreated, exception.Message);
+            var result = await executor.ExecuteWithResultAsync(new Execute(), new[] { @"F:\Is\Pressed\For", "Us" });
+            Assert.False(result.TryGetResult(out _, out var error));
+            Assert.Equal(RemoteCommandExecutor.ErrorFileNotCreated, error.Message);
+
+            var timestamp = DateTime.Now;
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
+            result = await executor.ExecuteWithResultAsync(new Execute(), new[] { @"F:\Is\Pressed\For", "Us" });
+            Assert.False(result.TryGetResult(out _, out error));
+            Assert.Equal(RemoteCommandExecutor.ErrorFileHasNotChanged, error.Message);
 
             Assert.True(channel.AllInteractionsHandled);
         }

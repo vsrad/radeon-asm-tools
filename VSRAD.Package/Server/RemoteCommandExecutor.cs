@@ -3,18 +3,14 @@ using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
     public sealed class RemoteCommandExecutor
     {
-        public sealed class ExecutionFailedException : Exception
-        {
-            public ExecutionFailedException(string message) : base(message) { }
-        }
-
         public const string ErrorTimedOut =
-            "Timeout has been exceeded. The process is terminated.";
+            "Execution timeout has been exceeded. The process is terminated.";
         public const string ErrorFileHasNotChanged =
             "Output file has not changed as a result of running the command.";
         public const string ErrorFileNotCreated =
@@ -35,68 +31,61 @@ namespace VSRAD.Package.Server
             _outputWriter = outputWindow.GetExecutionResultPane();
         }
 
-        public async Task ExecuteRemoteAsync(Execute command)
+        public Task<Result<byte[]>> ExecuteWithResultAsync(Execute command, string[] filepath) =>
+            ExecuteWithResultAsync(command, filepath, true, 0, 0);
+
+        public async Task<Result<byte[]>> ExecuteWithResultAsync(Execute command, string[] filepath, bool binaryOutput, int byteCount, int byteOffset)
         {
-            var response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command).ConfigureAwait(false);
-            await _outputWriter.PrintExecutionResultAsync(_outputTag, response).ConfigureAwait(false);
-            if (response.Status == ExecutionStatus.Completed && response.ExitCode == 0) return;
-            switch (response.Status)
+            var initialMetadata = await _channel.SendWithReplyAsync<MetadataFetched>(
+                new FetchMetadata { FilePath = filepath, BinaryOutput = binaryOutput }).ConfigureAwait(false);
+            var initialTimestamp = initialMetadata.Timestamp;
+
+            var executionResult = await ExecuteAsync(command).ConfigureAwait(false);
+            if (executionResult.TryGetResult(out _, out var error))
+                return await FetchResultAsync(filepath, binaryOutput, byteCount, byteOffset, initialTimestamp);
+            else
+                return error;
+        }
+
+        public async Task<Result<bool>> ExecuteAsync(Execute command)
+        {
+            var result = await _channel.SendWithReplyAsync<ExecutionCompleted>(command).ConfigureAwait(false);
+
+            var stdout = result.Stdout.TrimEnd('\r', '\n');
+            var stderr = result.Stderr.TrimEnd('\r', '\n');
+
+            if (stdout.Length == 0 && stderr.Length == 0)
             {
+                await _outputWriter.PrintMessageAsync($"[{_outputTag}] No stdout/stderr captured").ConfigureAwait(false);
+            }
+            else
+            {
+                await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stdout", stdout).ConfigureAwait(false);
+                await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stderr", stderr).ConfigureAwait(false);
+            }
+
+            switch (result.Status)
+            {
+                case ExecutionStatus.Completed when result.ExitCode == 0:
+                    return true;
                 case ExecutionStatus.Completed:
-                    throw new ExecutionFailedException(ErrorNonZeroExitCode(response.ExitCode));
+                    return new Error(ErrorNonZeroExitCode(result.ExitCode), title: "RAD " + _outputTag);
                 case ExecutionStatus.TimedOut:
-                    throw new ExecutionFailedException(ErrorTimedOut);
-                case ExecutionStatus.CouldNotLaunch:
-                    throw new ExecutionFailedException(ErrorCouldNotLaunch);
+                    return new Error(ErrorTimedOut, title: "RAD " + _outputTag);
+                default:
+                    return new Error(ErrorCouldNotLaunch, title: "RAD " + _outputTag);
             }
         }
 
-        public async Task<(DateTime timestamp, int byteCount)?> FetchMetadataAsync(string[] filePath, bool bin)
-        {
-            var response = await _channel.SendWithReplyAsync<MetadataFetched>(
-                new FetchMetadata
-                {
-                    BinaryOutput = bin,
-                    FilePath = filePath
-                })
-                .ConfigureAwait(false);
-
-            if (response.Status != FetchStatus.Successful) return null;
-
-            return (response.Timestamp, response.ByteCount);
-        }
-
-        public async Task<(DateTime, byte[])> FetchResultAsync(string[] filepath, bool binaryOutput, int byteCount, int byteOffset = 0)
+        private async Task<Result<byte[]>> FetchResultAsync(string[] filepath, bool binaryOutput, int byteCount, int byteOffset, DateTime initialTimestamp)
         {
             var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                new FetchResultRange
-                {
-                    FilePath = filepath,
-                    BinaryOutput = binaryOutput,
-                    ByteCount = byteCount,
-                    ByteOffset = byteOffset
-                })
-                .ConfigureAwait(false);
-
+                new FetchResultRange { FilePath = filepath, BinaryOutput = binaryOutput, ByteCount = byteCount, ByteOffset = byteOffset }).ConfigureAwait(false);
             if (response.Status != FetchStatus.Successful)
-                throw new ExecutionFailedException(ErrorFileNotCreated);
-
-            return (response.Timestamp, response.Data);
-        }
-
-        public Task<byte[]> ExecuteAndFetchFileWithTimestampCheckingAsync(Execute command, string[] filepath) =>
-            ExecuteAndFetchResultWithTimestampCheckingAsync(command, filepath, true, 0, 0);
-
-        public async Task<byte[]> ExecuteAndFetchResultWithTimestampCheckingAsync(Execute command, string[] filepath, bool binaryOutput, int byteCount, int byteOffset)
-        {
-            var initialMetadata = await FetchMetadataAsync(filepath, binaryOutput).ConfigureAwait(false);
-            await ExecuteRemoteAsync(command).ConfigureAwait(false);
-            var (newTimestamp, data) = await FetchResultAsync(filepath, binaryOutput, byteCount, byteOffset).ConfigureAwait(false);
-
-            if (initialMetadata?.timestamp == newTimestamp)
-                throw new ExecutionFailedException(ErrorFileHasNotChanged);
-
-            return data;
+                return new Error(ErrorFileNotCreated);
+            if (response.Timestamp == initialTimestamp)
+                return new Error(ErrorFileHasNotChanged);
+            return response.Data;
         }
     }
 }
