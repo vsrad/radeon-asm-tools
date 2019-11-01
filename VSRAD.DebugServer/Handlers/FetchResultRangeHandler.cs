@@ -59,7 +59,9 @@ namespace VSRAD.DebugServer.Handlers
                 reader.ReadLine();
 
                 var values = new List<uint>();
-                var offset = (_command.ByteOffset % 4 == 0) ? 0 : _command.ByteOffset - (4 - _command.ByteOffset % 4);
+                var offset = (_command.ByteOffset % 4 == 0)
+                    ? _command.ByteOffset
+                    : _command.ByteOffset - (4 - _command.ByteOffset % 4);
                 var read = 0;
                 for (; read < offset + _command.ByteCount; read += 4)
                 {
