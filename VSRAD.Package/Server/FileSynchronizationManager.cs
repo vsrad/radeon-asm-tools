@@ -113,6 +113,9 @@ namespace VSRAD.Package.Server
                 deployTasks.Add(_channel.SendAsync(new Deploy() { Data = additionalArchive, Destination = options.DeployDirectory }));
             }
 
+            // synchronize local
+            ((Project)_project).SaveOptions();
+
             await Task.WhenAll(deployTasks);
 
             deployItemsPack.UnsyncedProjectItems.Clear();
