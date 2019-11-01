@@ -142,7 +142,7 @@ namespace VSRAD.Syntax.FunctionList
         private void OnInitializedFunctionList(object sender, object args)
         {
             if (Package.Instance != null)
-                this.FunctionListSortState = Package.Instance.OptionPage.sortOptions;
+                this.FunctionListSortState = Package.Instance.OptionPage.SortOptions;
         }
 
         private void FunctionListWindow_MouseRightButtonDown(object sender, MouseButtonEventArgs e)

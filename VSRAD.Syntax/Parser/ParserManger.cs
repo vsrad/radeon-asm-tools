@@ -30,9 +30,9 @@ namespace VSRAD.Syntax.Parser
 
     internal class ParserManger : IParserManager
     {
+        private readonly object _updateLock;
         private ITextBuffer _textBuffer;
         private bool _initialized;
-        private object _updateLock;
         private ITextSnapshot _actualSnapshot;
         private CancellationTokenSource _lastCancellationTokenSource;
         private int _tabSize;
@@ -127,11 +127,13 @@ namespace VSRAD.Syntax.Parser
         public void ParseSync()
         {
             var actualSnapshot = _textBuffer.CurrentSnapshot;
-            var cancellationTokenSource = new CancellationTokenSource();
-            var parser = new BaseParser(this, actualSnapshot);
+            using (var cancellationTokenSource = new CancellationTokenSource())
+            {
+                var parser = new BaseParser(this, actualSnapshot);
 
-            parser.Parse(cancellationTokenSource.Token);
-            UpdateParser(parser);
+                parser.Parse(cancellationTokenSource.Token);
+                UpdateParser(parser);
+            }
         }
     }
 }

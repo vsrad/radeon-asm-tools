@@ -9,13 +9,13 @@ namespace VSRAD.Syntax.Options
         [DisplayName("Function list default sort option")]
         [Description("Set default sort option for Function List")]
         [DefaultValue(SortState.ByName)]
-        public SortState sortOptions { get; set; } = SortState.ByName;
+        public SortState SortOptions { get; set; } = SortState.ByName;
 
         [Category("Syntax highlight")]
         [DisplayName("Indent guide lines")]
         [Description("Enable/disable indent guide lines")]
         [DefaultValue(true)]
-        public bool isEnabledIndentGuides { get; set; } = true;
+        public bool IsEnabledIndentGuides { get; set; } = true;
 
         public enum SortState
         {
@@ -32,7 +32,7 @@ namespace VSRAD.Syntax.Options
         protected override void OnApply(PageApplyEventArgs e)
         {
             base.OnApply(e);
-            FunctionList.FunctionListControl.OnChangeOptions(sortOptions);
+            FunctionList.FunctionListControl.OnChangeOptions(SortOptions);
         }
     }
 }

@@ -26,14 +26,14 @@ namespace VSRAD.Syntax.Parser
     {
         private readonly IParserManager parserManager;
         private readonly ITextSnapshot currentSnapshot;
+        private readonly RootBlock currentRootBlock;
+        private readonly List<IBaseToken> argumentTokens;
+        private readonly IList<IBaseBlock> currentListBlock;
         private int indexStartLine;
-        private RootBlock currentRootBlock;
         private IBaseBlock currentTreeBlock;
         private bool startFindManyLineDeclorationEnd;
-        private List<IBaseToken> argumentTokens;
         private ITextSnapshotLine currentLine;
         private FunctionToken currentFunctionToken;
-        private IList<IBaseBlock> currentListBlock;
 
         public ITextSnapshot CurrentSnapshot { get; private set; }
         public IBaseBlock RootBlock { get; private set; }

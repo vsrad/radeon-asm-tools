@@ -60,7 +60,7 @@ namespace VSRAD.Syntax.Guide
 
         private void SetupIndentGuides()
         {
-            if (!Package.Instance.OptionPage.isEnabledIndentGuides)
+            if (!Package.Instance.OptionPage.IsEnabledIndentGuides)
             {
                 foreach (var oldIndentGuide in _currentAdornments)
                 {
