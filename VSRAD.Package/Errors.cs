@@ -8,6 +8,20 @@ namespace VSRAD.Package
 {
     public delegate void MessageBoxFactory(string message, string title, OLEMSGICON icon);
 
+    public readonly struct Error
+    {
+        public bool Critical { get; }
+        public string Message { get; }
+        public string Title { get; }
+
+        public Error(string message, bool critical = false, string title = "RAD Debugger")
+        {
+            Critical = critical;
+            Message = message;
+            Title = title;
+        }
+    }
+
     public static class Errors
     {
         public static MessageBoxFactory CreateMessageBox = DefaultMessageBoxFactory;
