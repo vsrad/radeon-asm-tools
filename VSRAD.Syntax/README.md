@@ -14,30 +14,36 @@ To build extension you should use one of four project build options:
 
 ### Syntax highlight
 #### Radeon asm syntax options
-> * Radeon asm extra keywords
-> * Radeon asm function argument
-> * Radeon asm function name
-> * Radeon asm identifier dark theme
-> * Radeon asm identifier light theme
-> * Radeon asm instructions
-> * Radeon asm labels
+* Radeon asm extra keywords
+* Radeon asm function argument
+* Radeon asm function name
+* Radeon asm identifier dark theme
+* Radeon asm identifier light theme
+* Radeon asm instructions
+* Radeon asm labels
 <p align="center">
   <img src="docs/syntax_highlight.PNG" width="49%" height="250px" title="Syntax highlight">
   <img src="docs/syntax_highlight_options.PNG" width="49%" height="250px" title="Syntax highlight options">
 </p>
 
+### Indent guide lines
+<p align="center">
+  <img src="docs/indent_guide.PNG" width="49%" height="250px" title="Syntax highlight">
+  <img src="docs/indent_guide_options.PNG" width="49%" height="250px" title="Syntax highlight options">
+</p>
+
 ### Outlining regions 
 ![Outlining regions](docs/outlining.PNG)
 ### Function list
-> * Tool window location is `View -> Other Windows -> Radeon Asm Function List`
-> * The function list is filtered by text in search field.
-> * Use *Up* or *Down* in order to scroll through the function list.
-> * Use *Line* or *Name* buttons to sort function list by line number or function name.
-> * Click *RMB* to **Show/Hide** line number column.
-> * Use *clear hotkey* to clear the search field. To 
->> To set clear special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Clear" and set shortcut keys`.
-> * *Enter*, *redirect hotkey* or *click on the function in list* redirect to a function in code.
->> To set redirect special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Select" and set shortcut keys`.
+* Tool window location is `View -> Other Windows -> Radeon Asm Function List`
+* The function list is filtered by text in search field.
+* Use *Up* or *Down* in order to scroll through the function list.
+* Use *Line* or *Name* buttons to sort function list by line number or function name.
+* Click *RMB* to **Show/Hide** line number column.
+* Use *clear hotkey* to clear the search field. To 
+  > To set clear special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Clear" and set shortcut keys`.
+* *Enter*, *redirect hotkey* or *click on the function in list* redirect to a function in code.
+  > To set redirect special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Select" and set shortcut keys`.
 
 <p align="center">
   <img src="docs/function_list.PNG" width="49%" height="250px" title="Function list">
@@ -57,6 +63,6 @@ To build extension you should use one of four project build options:
 ![Peek/GoTo definition](docs/peek_goto_definition_show.PNG)
 
 ### Identifier highlight
-> Highlighting an element in its scope
+* Highlighting an element in its scope
 
 ![Peek/GoTo definition](docs/identifier_highlight.PNG)
