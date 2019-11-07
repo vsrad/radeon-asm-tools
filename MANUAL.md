@@ -123,3 +123,8 @@ Debugging process is performed in seven steps:
 5. Modidfied code executing
 6. Breakpoint logic saves all needed data to a file and terminates code execution
 7. `DebugServer` sends the data obtained to the host machine for visualization inside `Visual Studio`
+
+It must be noted that every debugger invocation starts execution of the code from the beginning (for example,
+every `Step Into` will perform all seven steps mentioned above with incremented breakpoint line number) due to
+the impossibility of continuing code execution from arbitrary state. But this is not an issue because execution
+usually doesn't take long (< 1sec.).
