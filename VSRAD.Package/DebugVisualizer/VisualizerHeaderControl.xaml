@@ -67,7 +67,7 @@
                 <local:NumberInput Value="{Binding DataContext.GroupIndex.GroupSize, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="64" Maximum="512" Step="64" Width="38" Height="24"/>
             </StackPanel>
-            <Label Content="{Binding Status, Mode=OneWay}" Height="26"/>
+            <Label Content="{Binding Status, Mode=OneWay}" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
         </WrapPanel>
         <Grid>
             <Grid.ColumnDefinitions>
