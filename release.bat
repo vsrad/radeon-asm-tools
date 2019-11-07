@@ -1,3 +1,8 @@
+:: Publish DebugServer
+cd VSRAD.DebugServer
+dotnet publish -r win-x64 -c release --self-contained false
+dotnet publish -r linux-x64 -c release --self-contained false
+cd ..
 :: DebugServer
 mkdir Release
 xcopy /E "VSRAD.DebugServer\bin\release\netcoreapp2.2\win-x64\publish" "Release\DebugServerW64\"

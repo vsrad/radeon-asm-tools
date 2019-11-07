@@ -49,8 +49,7 @@ select *Properties*.
 
 1. Select *Release* in the *Solution Configurations* dropdown.
 2. Build the entire solution (*Build* -> *Build Solution*).
-3. Run `publish.bat` in the `VSRAD.DebugServer` directory.
-4. Run `release.bat` in the repository root.
+3. Run `release.bat` in the repository root.
 
 The release script creates a directory (`Release`) with the installation script
 (`install.bat`), the extension package (`RadeonAsmDebugger.vsix`), and debug server
