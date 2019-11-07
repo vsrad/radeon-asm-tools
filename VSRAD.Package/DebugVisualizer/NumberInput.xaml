@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              mc:Ignorable="d" 
              d:DesignHeight="24" d:DesignWidth="200" MinHeight="24">
     <UserControl.Resources>
@@ -26,9 +27,9 @@
         <SolidColorBrush x:Key="Button.Disabled.Foreground" Color="#FF838383"/>
         <Style x:Key="BaseButtonStyle" TargetType="{x:Type ButtonBase}">
             <Setter Property="FocusVisualStyle" Value="{StaticResource FocusVisual}"/>
-            <Setter Property="Background" Value="{StaticResource Button.Static.Background}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource Button.Static.Border}"/>
-            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+            <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -41,11 +42,10 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="Button.IsDefaulted" Value="true">
-                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="true">
-                                <Setter Property="Background" TargetName="border" Value="{StaticResource Button.MouseOver.Background}"/>
-                                <Setter Property="BorderBrush" TargetName="border" Value="{StaticResource Button.MouseOver.Border}"/>
+                                <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverBackgroundEndKey}}"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="true">
                                 <Setter Property="Background" TargetName="border" Value="{StaticResource Button.Pressed.Background}"/>
@@ -66,11 +66,6 @@
         </Style>
     </UserControl.Resources>
     <DockPanel LastChildFill="True">
-        <DockPanel.Style>
-            <Style TargetType="DockPanel">
-                <Setter Property="Background" Value="White"/>
-            </Style>
-        </DockPanel.Style>
         <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" KeyboardNavigation.TabNavigation="None">
             <RepeatButton Click="Increment" Height="12" Width="12" Margin="0" Style="{DynamicResource NumberInputButton}">
                 <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6">
@@ -93,6 +88,9 @@
             </RepeatButton>
         </StackPanel>
         <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" KeyDown="EndEditOnKeyDown"
-                 VerticalContentAlignment="Center" Height="24"/>
+                 VerticalContentAlignment="Center" Height="24"
+                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
     </DockPanel>
 </UserControl>

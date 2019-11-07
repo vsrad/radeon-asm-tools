@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              mc:Ignorable="d"
              d:DesignHeight="140" d:DesignWidth="700">
     <UserControl.ContextMenu>
@@ -36,15 +37,15 @@
     <StackPanel>
         <StackPanel.Style>
             <Style TargetType="StackPanel">
-                <Setter Property="Background" Value="White"/>
+                <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
             </Style>
         </StackPanel.Style>
         <WrapPanel>
-            <Label Content="Counter:" Height="26" Width="68"/>
+            <Label Content="Counter:" Height="26" Width="68" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <local:NumberInput Value="{Binding DataContext.Options.DebuggerOptions.Counter, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
                                Width="60" Height="24" />
             <StackPanel Orientation="Horizontal">
-                <Label Content="Group #:" Height="26"/>
+                <Label Content="Group #:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                 <local:NumberInput Value="{Binding DataContext.GroupIndex.X, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
                 <local:NumberInput Value="{Binding DataContext.GroupIndex.Y, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
@@ -53,7 +54,7 @@
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <Label Content="Groups:" Height="26" Style="{StaticResource NDRange3DLabel}"/>  
+                <Label Content="Groups:" Height="26" Style="{StaticResource NDRange3DLabel}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                 <local:NumberInput Value="{Binding DataContext.GroupIndex.DimX, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
                 <local:NumberInput Value="{Binding DataContext.GroupIndex.DimY, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
@@ -62,7 +63,7 @@
                                    Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <Label Content="Group size:" Height="26"/>
+                <Label Content="Group size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                 <local:NumberInput Value="{Binding DataContext.GroupIndex.GroupSize, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="64" Maximum="512" Step="64" Width="38" Height="24"/>
             </StackPanel>
@@ -111,15 +112,24 @@
                     </RowDefinition.Style>
                 </RowDefinition>
             </Grid.RowDefinitions>
-            <Label Grid.Row="0" Grid.Column="0" Content="Columns:"/>
-            <Label Grid.Row="1" Grid.Column="0" Content="App args:"/>
-            <Label Grid.Row="2" Grid.Column="0" Content="Break args:"/>
+            <Label Grid.Row="0" Grid.Column="0" Content="Columns:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Grid.Row="1" Grid.Column="0" Content="App args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Grid.Row="2" Grid.Column="0" Content="Break args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <TextBox Text="{Binding Options.VisualizerColumnStyling.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"/>
+                     Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
+                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
             <TextBox Text="{Binding Options.DebuggerOptions.AppArgs, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center"/>
+                     Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
+                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
             <TextBox Text="{Binding Options.DebuggerOptions.BreakArgs, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"/>
+                     Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
+                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
         </Grid>
     </StackPanel>
 </UserControl>

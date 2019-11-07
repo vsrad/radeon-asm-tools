@@ -9,20 +9,20 @@
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
-        <ObjectDataProvider x:Key="VisualizerColorValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-            <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="viz:ColumnHighlightColor"/>
-            </ObjectDataProvider.MethodParameters>
-        </ObjectDataProvider>
-        <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
+        <ResourceDictionary>
+            <ObjectDataProvider x:Key="VisualizerColorValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="viz:ColumnHighlightColor"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
+            <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ControlStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer x:Name="ControlScrollViewer" VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <StackPanel.Style>
-                <Style TargetType="StackPanel">
-                    <Setter Property="Background" Value="White"/>
-                </Style>
-            </StackPanel.Style>
             <WrapPanel Margin="4,8,4,4">
                 <Label Content="Profile:" Margin="4,0,0,4"/>
                 <ComboBox ItemsSource="{Binding ProfileNames}" SelectedItem="{Binding Options.ActiveProfile, Mode=TwoWay}"
