@@ -39,7 +39,7 @@ Description:
 3. `Remove current profile` button.
 4. `Copy`: create new profile based on current one.
 5. `Import`: choose profile *.json* file and import all containing profiles.
-6. `Export`: create profile *.json* file that will represent all currently set profiles
+6. `Export`: create profile *.json* file that will represent all currently set profiles.
 
 The following sections provide an overview of the properties that can be configured in a single profile:
 
@@ -104,3 +104,22 @@ Other chapters will reference these sections as needed.
 
 ## Remote Debugging Tools
 
+**Radeon Asm Debugger Extension** provides tools for kernel debugging using remote machine.
+
+### Prerequisities
+
+* **Visual Studio 2017** or **2019** with installed extension on host machine
+* `DebugServer` running on remote machine
+* Internet connection between host and remote machines
+
+### Basic concepts
+
+Debugging process is performed in seven steps:
+
+1. Copying source files from host machine to remote
+2. Sending information about breakpoint location to `DebugServer`
+3. Running debug scripts on remote machine
+4. Inserting breakpoint logic to the source code
+5. Modidfied code executing
+6. Breakpoint logic saves all needed data to a file and terminates code execution
+7. `DebugServer` sends the data obtained to the host machine for visualization inside `Visual Studio`
