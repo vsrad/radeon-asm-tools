@@ -4,12 +4,11 @@ using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
+using System.IO;
+using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.Server;
-using System.Linq;
-using System.IO;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -70,6 +69,8 @@ namespace VSRAD.Package.ProjectSystem
         public void DeregisterEngine()
         {
             DebugInProgress = false;
+            ExecutionCompleted = null; // unsubscribe event listeners on the debug engine (VSRAD.Deborgar) side
+            RerunRequested = null;     // otherwise we'd get ghost debug sessions
             _debugSession = null;
         }
 
