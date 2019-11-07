@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Threading;
-using Moq;
+﻿using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using VSRAD.Package;
 
@@ -20,21 +18,6 @@ namespace VSRAD.PackageTests
 
             var jtc = new JoinableTaskContext();
             VSPackage.TaskFactory = jtc.Factory;
-        }
-
-        public static (Queue<string> errors, Queue<string> warnings) SetupGlobalErrorMessageSink()
-        {
-            var errorMessages = new Queue<string>();
-            var warningMessages = new Queue<string>();
-            var mock = new Mock<MessageBoxFactory>();
-            mock.Setup((m) => m(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<OLEMSGICON>()))
-                .Callback((string message, string title, OLEMSGICON icon) =>
-                {
-                    if (icon == OLEMSGICON.OLEMSGICON_CRITICAL) errorMessages.Enqueue(message);
-                    else if (icon == OLEMSGICON.OLEMSGICON_WARNING) warningMessages.Enqueue(message);
-                });
-            Errors.CreateMessageBox = mock.Object;
-            return (errorMessages, warningMessages);
         }
     }
 }

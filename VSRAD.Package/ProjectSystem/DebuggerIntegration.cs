@@ -4,29 +4,33 @@ using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
+using System.IO;
+using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.Server;
-using System.Linq;
 
 namespace VSRAD.Package.ProjectSystem
 {
+    public delegate void DebugBreakEntered(BreakState breakState);
+
     [Export]
     [AppliesTo(Constants.ProjectCapability)]
-    public sealed class DebuggerIntegration
+    public sealed class DebuggerIntegration : IEngineIntegration
     {
+        public event Action RerunRequested;
+        public event ExecutionCompleted ExecutionCompleted;
+        public event DebugBreakEntered BreakEntered;
+
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
 
-        public event DebugBreakEntered BreakEntered;
-
         public bool DebugInProgress { get; private set; } = false;
 
-        private Tuple<string, uint> _debugRunToLine;
+        private (string file, uint line)? _debugRunToLine;
         private DebugSession _debugSession;
         private IProject _project;
 
@@ -59,22 +63,23 @@ namespace VSRAD.Package.ProjectSystem
 
             VSPackage.TaskFactory.Run(_deployManager.ClearSynchronizedFilesAsync);
             DebugInProgress = true;
-            return _debugSession;
+            return this;
         }
 
         public void DeregisterEngine()
         {
             DebugInProgress = false;
+            ExecutionCompleted = null; // unsubscribe event listeners on the debug engine (VSRAD.Deborgar) side
+            RerunRequested = null;     // otherwise we'd get ghost debug sessions
             _debugSession = null;
         }
 
         internal void CreateDebugSession() =>
-            _debugSession = new DebugSession(_project, _codeEditor, _channel, _deployManager, _outputWindow,
-                _project.Options.DebuggerOptions.GetWatchSnapshot, PopRunToLineIfSet, BreakEntered);
+            _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow);
 
         internal void Rerun()
         {
-            _debugSession.RequestRerun();
+            RerunRequested();
             Launch();
         }
 
@@ -84,7 +89,7 @@ namespace VSRAD.Package.ProjectSystem
 
             var projectFile = _project.GetRelativePath(_codeEditor.GetAbsoluteSourcePath());
             var line = _codeEditor.GetCurrentLine();
-            _debugRunToLine = new Tuple<string, uint>(projectFile, line);
+            _debugRunToLine = (projectFile, line);
 
             Launch();
         }
@@ -100,11 +105,41 @@ namespace VSRAD.Package.ProjectSystem
                 dte.Debugger.Go();
         }
 
-        internal bool PopRunToLineIfSet(string projectFile, out uint runToLine)
+        void IEngineIntegration.ExecuteToLine(uint breakLine)
         {
-            if (_debugRunToLine != null && _debugRunToLine.Item1 == projectFile)
+            var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
             {
-                runToLine = _debugRunToLine.Item2;
+                var result = await _debugSession.ExecuteToLineAsync(breakLine, watches);
+                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                if (result.TryGetResult(out var breakState, out var error))
+                {
+                    ExecutionCompleted(success: true);
+                    BreakEntered(breakState);
+                }
+                else
+                {
+                    ExecutionCompleted(success: false);
+                    Errors.Show(error);
+                }
+            },
+            exceptionCallbackOnMainThread: () => ExecutionCompleted(success: false));
+        }
+
+        string IEngineIntegration.GetActiveProjectFile() =>
+            _project.GetRelativePath(_codeEditor.GetAbsoluteSourcePath());
+
+        uint IEngineIntegration.GetFileLineCount(string projectFilePath) =>
+            (uint)File.ReadLines(_project.GetAbsolutePath(projectFilePath)).Count();
+
+        string IEngineIntegration.GetProjectRelativePath(string path) =>
+            _project.GetRelativePath(path);
+
+        bool IEngineIntegration.PopRunToLineIfSet(string file, out uint runToLine)
+        {
+            if (_debugRunToLine.HasValue && _debugRunToLine.Value.file == file)
+            {
+                runToLine = _debugRunToLine.Value.line;
                 _debugRunToLine = null;
                 return true;
             }

@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
-using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using Task = System.Threading.Tasks.Task;
 
@@ -93,12 +92,15 @@ namespace VSRAD.Package.Commands
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var byteCount = 2 /* system + watch */ * 512 * 4 /* dwords -> bytes */;
-            var bytes = await executor.ExecuteAndFetchResultWithTimestampCheckingAsync(
+            var result = await executor.ExecuteWithResultAsync(
                 command, options.RemoteOutputFile.Path, options.RemoteOutputFile.BinaryOutput,
                 byteCount, byteOffset: 0).ConfigureAwait(false);
 
+            if (!result.TryGetResult(out var data, out var error))
+                throw new Exception(error.Message);
+
             var bytesFetched = new uint[1024];
-            Buffer.BlockCopy(bytes, 0, bytesFetched, 0, bytes.Length);
+            Buffer.BlockCopy(data, 0, bytesFetched, 0, data.Length);
 
             var values = new uint[512];
             for (uint valueIdx = 0, dwordIdx = 1 /* skip system */;

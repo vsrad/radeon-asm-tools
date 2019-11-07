@@ -47,10 +47,12 @@ namespace VSRAD.Package.Commands
             {
                 await _deployManager.SynchronizeRemoteAsync();
                 var executor = new RemoteCommandExecutor("Disassembly", _channel, _outputWindow);
+                var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile.Path);
 
-                var data = await executor.ExecuteAndFetchFileWithTimestampCheckingAsync(command, options.RemoteOutputFile.Path);
+                if (!result.TryGetResult(out var data, out var error))
+                    throw new System.Exception(error.Message);
+
                 File.WriteAllBytes(options.LocalOutputCopyPath, data);
-
                 OpenFileInEditor(options.LocalOutputCopyPath, options.LineMarker);
             }
             finally

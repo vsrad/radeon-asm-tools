@@ -63,11 +63,11 @@
     <Compile Include="DebugVisualizer\ColumnStylingTests.cs" />
     <Compile Include="DebugVisualizer\GroupIndexSelectorTests.cs" />
     <Compile Include="MockCommunicationChannel.cs" />
-    <Compile Include="ProjectSystem\DebuggerIntegrationTests.cs" />
     <Compile Include="ProjectSystem\MacroEvaluatorTests.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileTransferManagerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\BreakStateTests.cs" />
+    <Compile Include="Server\DebugSessionTests.cs" />
     <Compile Include="Server\DeployManagerTests.cs" />
     <Compile Include="Server\RemoteCommandExecutorTests.cs" />
     <Compile Include="TestHelper.cs" />
