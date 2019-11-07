@@ -48,10 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IPCBuildResult.cs" />
     <Compile Include="SourceValidationBuild.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SourceValidationMessageParser.cs" />
     <Compile Include="SourceValidationProcess.cs" />
+    <Compile Include="IPCBridge.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
