@@ -19,10 +19,5 @@ namespace VSRAD.PackageTests
             var jtc = new JoinableTaskContext();
             VSPackage.TaskFactory = jtc.Factory;
         }
-
-        public static (Queue<string> errors, Queue<string> warnings) SetupGlobalErrorMessageSink()
-        {
-            throw new System.NotImplementedException();
-        }
     }
 }

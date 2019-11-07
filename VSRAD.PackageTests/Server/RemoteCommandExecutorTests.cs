@@ -5,10 +5,9 @@ using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
-using VSRAD.PackageTests;
 using Xunit;
 
-namespace VSGCN.PackageTests.Server
+namespace VSRAD.PackageTests.Server
 {
     public class RemoteCommandExecutorTests
     {
