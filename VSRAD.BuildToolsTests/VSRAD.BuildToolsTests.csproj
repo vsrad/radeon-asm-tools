@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="IPCBridgeTests.cs" />
     <Compile Include="RemoteBuildStderrParserTests.cs" />
+    <Compile Include="RemoteBuildTaskTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VSRAD.BuildTools\VSRAD.BuildTools.csproj">
