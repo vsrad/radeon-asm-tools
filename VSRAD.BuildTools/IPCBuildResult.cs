@@ -6,6 +6,8 @@ namespace VSRAD.BuildTools
 {
     public sealed class IPCBuildResult
     {
+        public const string ServerErrorBuildSkipped = "2057AA22-AFD2-480F-AC16-6912F3077E0D";
+
         public int ExitCode { get; set; }
         public string Stdout { get; set; }
         public string Stderr { get; set; }

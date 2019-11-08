@@ -56,8 +56,7 @@ namespace VSRAD.Package.BuildTools
                     byte[] message;
                     try
                     {
-                        await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
-                        var buildResult = await BuildAsync(_project, executor).ConfigureAwait(false);
+                        var buildResult = await BuildAsync(_project, _deployManager, executor).ConfigureAwait(false);
                         if (buildResult.TryGetResult(out var result, out var error))
                             message = result.ToArray();
                         else
@@ -72,11 +71,16 @@ namespace VSRAD.Package.BuildTools
                 }
         }
 
-        private static async Task<Result<IPCBuildResult>> BuildAsync(IProject project, RemoteCommandExecutor executor)
+        private static async Task<Result<IPCBuildResult>> BuildAsync(IProject project, IFileSynchronizationManager deployManager, RemoteCommandExecutor executor)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await project.GetMacroEvaluatorAsync(default);
             var options = await project.Options.Profile.Build.EvaluateAsync(evaluator);
+
+            if (string.IsNullOrEmpty(options.Executable))
+                return new IPCBuildResult { ServerError = IPCBuildResult.ServerErrorBuildSkipped };
+
+            await deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var command = new Execute
             {

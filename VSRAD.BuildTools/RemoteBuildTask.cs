@@ -30,6 +30,11 @@ namespace VSRAD.BuildTools
 
         private bool CheckBuildResult(IPCBuildResult result)
         {
+            if (result.ServerError == IPCBuildResult.ServerErrorBuildSkipped)
+            {
+                Log.LogMessage(MessageImportance.High, "Build skipped (executable is not set)");
+                return true;
+            }
             if (result.ServerError != null)
             {
                 Log.LogError(ServerErrorPrefix + result.ServerError);
