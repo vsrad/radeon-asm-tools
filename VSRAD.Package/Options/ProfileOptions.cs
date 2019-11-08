@@ -123,7 +123,7 @@ namespace VSRAD.Package.Options
         [Description("Parse Valid Watches File"), DisplayName("Parse Valid Watches File")]
         [DefaultValue(DefaultOptionValues.DebuggerParseValidWatches)]
         public bool ParseValidWatches { get; }
-        [Description("Path to file that contains list of valid watches"), DisplayName("Valid Watchws File Path")]
+        [Description("Path to file that contains list of valid watches"), DisplayName("Valid Watches File Path")]
         [DefaultValue(DefaultOptionValues.DebuggerValidWatchesFilePath)]
         public string ValidWatchesFilePath { get; }
         [Description("Debugger Run As Administrator"), DisplayName("Run As Administrator")]
@@ -132,7 +132,7 @@ namespace VSRAD.Package.Options
         [Description("Debugger Timeout (seconds), 0 - timeout disabled"), DisplayName("Timeout")]
         [DefaultValue(DefaultOptionValues.DebuggerTimeoutSecs)]
         public int TimeoutSecs { get; }
-        [Description("")]
+        [Description("Output file offset: bytes if output mode is binary, lines if output mode is text"), DisplayName("Output Offset")]
         [DefaultValue(DefaultOptionValues.OutputOffset)]
         public int OutputOffset { get; }
 
