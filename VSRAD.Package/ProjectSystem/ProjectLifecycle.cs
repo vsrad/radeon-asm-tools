@@ -58,6 +58,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             ((Project)_project).SaveOptions();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            BuildServer.OnProjectUnloading();
             GetPackage().ProjectUnloaded();
         }
 

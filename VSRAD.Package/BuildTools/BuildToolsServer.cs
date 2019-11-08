@@ -2,6 +2,7 @@
 using System;
 using System.ComponentModel.Composition;
 using System.IO.Pipes;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.BuildTools;
 using VSRAD.DebugServer.IPC.Commands;
@@ -19,6 +20,7 @@ namespace VSRAD.Package.BuildTools
 
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowManager _outputWindow;
+        private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
 
         private IProject _project;
 
@@ -32,33 +34,39 @@ namespace VSRAD.Package.BuildTools
         public void SetProjectOnLoad(IProject project)
         {
             _project = project;
-            VSPackage.TaskFactory.RunAsync(RunServerAsync);
+            VSPackage.TaskFactory.RunAsync(RunServerLoopAsync);
         }
 
-        public async Task RunServerAsync()
+        public void OnProjectUnloading()
         {
-            using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
-            {
-                await server.WaitForConnectionAsync();
+            _serverLoopCts.Cancel();
+        }
 
-                var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
-
-                byte[] message;
-                try
+        public async Task RunServerLoopAsync()
+        {
+            while (!_serverLoopCts.Token.IsCancellationRequested)
+                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 {
-                    var buildResult = await BuildAsync(_project, executor);
-                    if (buildResult.TryGetResult(out var result, out var error))
-                        message = result.ToArray();
-                    else
-                        message = new IPCBuildResult { ServerError = error.Message }.ToArray();
-                }
-                catch (Exception e)
-                {
-                    message = new IPCBuildResult { ServerError = e.Message }.ToArray();
-                }
+                    await server.WaitForConnectionAsync(_serverLoopCts.Token);
 
-                await server.WriteAsync(message, 0, message.Length);
-            }
+                    var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
+
+                    byte[] message;
+                    try
+                    {
+                        var buildResult = await BuildAsync(_project, executor);
+                        if (buildResult.TryGetResult(out var result, out var error))
+                            message = result.ToArray();
+                        else
+                            message = new IPCBuildResult { ServerError = error.Message }.ToArray();
+                    }
+                    catch (Exception e)
+                    {
+                        message = new IPCBuildResult { ServerError = e.Message }.ToArray();
+                    }
+
+                    await server.WriteAsync(message, 0, message.Length);
+                }
         }
 
         private static async Task<Result<IPCBuildResult>> BuildAsync(IProject project, RemoteCommandExecutor executor)
