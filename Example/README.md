@@ -40,10 +40,7 @@ make
 1. Open `DebuggerProjectExample` in Visual Studio
 2. Go to *Tools* -> *RAD Debug* -> *Options*
 3. Click the *Edit* button in the opened window to edit the active debug profile
-4. In the *General* tab, set *Deploy Directory* to the absolute path
-to `VectorAddProjectExample/gfx9` on the remote machine
-and *Remote Machine* to the remote machine network address
-5. In the *Debugger* tab, set *Working Directory* to the absolute path
+4. In the *Debugger* tab, set *Working Directory* to the absolute path
 to `VectorAddProjectExample` on the remote machine
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 7. Open `fp32_v_add.s` in *Solution Explorer*
