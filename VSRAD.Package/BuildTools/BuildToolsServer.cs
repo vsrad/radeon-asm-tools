@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Threading;
+using System;
 using System.ComponentModel.Composition;
 using System.IO.Pipes;
 using System.Threading.Tasks;
@@ -32,7 +32,7 @@ namespace VSRAD.Package.BuildTools
         public void SetProjectOnLoad(IProject project)
         {
             _project = project;
-            VSPackage.TaskFactory.RunAsync(RunServerAsync, JoinableTaskCreationOptions.LongRunning);
+            VSPackage.TaskFactory.RunAsync(RunServerAsync);
         }
 
         public async Task RunServerAsync()
@@ -42,13 +42,20 @@ namespace VSRAD.Package.BuildTools
                 await server.WaitForConnectionAsync();
 
                 var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
-                var buildResult = await BuildAsync(_project, executor);
 
                 byte[] message;
-                if (buildResult.TryGetResult(out var result, out var error))
-                    message = result.ToArray();
-                else
-                    message = new IPCBuildResult { ExitCode = 0, Stdout = "", Stderr = "" }.ToArray();
+                try
+                {
+                    var buildResult = await BuildAsync(_project, executor);
+                    if (buildResult.TryGetResult(out var result, out var error))
+                        message = result.ToArray();
+                    else
+                        message = new IPCBuildResult { ServerError = error.Message }.ToArray();
+                }
+                catch (Exception e)
+                {
+                    message = new IPCBuildResult { ServerError = e.Message }.ToArray();
+                }
 
                 await server.WriteAsync(message, 0, message.Length);
             }
