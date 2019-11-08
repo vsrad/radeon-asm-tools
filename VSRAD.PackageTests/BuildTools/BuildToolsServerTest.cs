@@ -28,8 +28,8 @@ namespace VSRAD.Package.BuildTools
             var output = new Mock<IOutputWindowManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer();
-            var serverTask = server.RunAsync(project, channel.Object, output.Object);
+            var server = new BuildToolsServer(channel.Object, output.Object);
+            server.SetProjectOnLoad(project); // starts the server
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
             {
@@ -46,6 +46,7 @@ namespace VSRAD.Package.BuildTools
             });
 
             VSRAD.BuildTools.IPCBuildResult message = null;
+            var tcs = new TaskCompletionSource<bool>();
 
             new Thread(() =>
             {
@@ -53,9 +54,10 @@ namespace VSRAD.Package.BuildTools
                 client.Connect();
                 message = VSRAD.BuildTools.IPCBuildResult.Read(client);
                 client.Close();
+                tcs.SetResult(true);
             }).Start();
 
-            await serverTask;
+            await tcs.Task;
 
             Assert.Equal(0, message.ExitCode);
             Assert.Equal("day of flight", message.Stdout);

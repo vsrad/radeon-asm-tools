@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Threading;
 using System.ComponentModel.Composition;
 using System.IO.Pipes;
 using System.Threading.Tasks;
@@ -10,28 +11,38 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.BuildTools
 {
-    public interface IBuildToolsServer
-    {
-        Task RunAsync(IProject project, ICommunicationChannel channel, IOutputWindowManager outputWindow);
-    }
-
-    [Export(typeof(IBuildToolsServer))]
+    [Export]
     [AppliesTo(Constants.ProjectCapability)]
-    public sealed class BuildToolsServer : IBuildToolsServer
+    public sealed class BuildToolsServer
     {
         public string PipeName { get; } = "1.buildpipe";
 
-        [ImportingConstructor]
-        public BuildToolsServer() { }
+        private readonly ICommunicationChannel _channel;
+        private readonly IOutputWindowManager _outputWindow;
 
-        public async Task RunAsync(IProject project, ICommunicationChannel channel, IOutputWindowManager outputWindow)
+        private IProject _project;
+
+        [ImportingConstructor]
+        public BuildToolsServer(ICommunicationChannel channel, IOutputWindowManager outputWindow)
+        {
+            _channel = channel;
+            _outputWindow = outputWindow;
+        }
+
+        public void SetProjectOnLoad(IProject project)
+        {
+            _project = project;
+            VSPackage.TaskFactory.RunAsync(RunServerAsync, JoinableTaskCreationOptions.LongRunning);
+        }
+
+        public async Task RunServerAsync()
         {
             using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
             {
                 await server.WaitForConnectionAsync();
 
-                var executor = new RemoteCommandExecutor("Build", channel, outputWindow);
-                var buildResult = await BuildAsync(project, executor);
+                var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
+                var buildResult = await BuildAsync(_project, executor);
 
                 byte[] message;
                 if (buildResult.TryGetResult(out var result, out var error))
@@ -43,7 +54,7 @@ namespace VSRAD.Package.BuildTools
             }
         }
 
-        private async Task<Result<IPCBuildResult>> BuildAsync(IProject project, RemoteCommandExecutor executor)
+        private static async Task<Result<IPCBuildResult>> BuildAsync(IProject project, RemoteCommandExecutor executor)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await project.GetMacroEvaluatorAsync(default);
