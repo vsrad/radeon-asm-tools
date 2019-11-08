@@ -50,7 +50,7 @@ namespace VSRAD.Package.Server
             return dataResult.Data;
         }
 
-        public async Task<Result<ExecutionCompleted>> ExecuteAsync(Execute command)
+        public async Task<Result<ExecutionCompleted>> ExecuteAsync(Execute command, bool checkExitCode = true)
         {
             var result = await _channel.SendWithReplyAsync<ExecutionCompleted>(command).ConfigureAwait(false);
 
@@ -69,7 +69,7 @@ namespace VSRAD.Package.Server
 
             switch (result.Status)
             {
-                case ExecutionStatus.Completed when result.ExitCode == 0:
+                case ExecutionStatus.Completed when result.ExitCode == 0 || !checkExitCode:
                     return result;
                 case ExecutionStatus.Completed:
                     return new Error(ErrorNonZeroExitCode(result.ExitCode), title: "RAD " + _outputTag);

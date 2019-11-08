@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Composition;
+using VSRAD.Package.BuildTools;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
 
@@ -30,9 +31,10 @@ namespace VSRAD.Package.ProjectSystem
 
         [Import]
         private EditorExtensions.QuickInfoEvaluateSelectedState QuickInfoState { get; set; }
-
         [Import]
         private DebuggerIntegration Debugger { get; set; }
+        [Import]
+        private BuildToolsServer BuildServer { get; set; }
 
         [Export(typeof(IToolWindowIntegration))]
         private IToolWindowIntegration ToolWindowIntegration { get; set; }
@@ -44,6 +46,7 @@ namespace VSRAD.Package.ProjectSystem
             ((Project)_project).Load();
             QuickInfoState.SetProjectOnLoad(_project);
             Debugger.SetProjectOnLoad(_project);
+            BuildServer.SetProjectOnLoad(_project);
 
             var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
             ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
@@ -55,6 +58,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             _project.SaveOptions();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            BuildServer.OnProjectUnloading();
             GetPackage().ProjectUnloaded();
         }
 

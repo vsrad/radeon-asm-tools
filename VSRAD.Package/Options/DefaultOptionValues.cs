@@ -43,5 +43,10 @@ namespace VSRAD.Package.Options
         public const string ProfilerLocalOutputCopyPath = "";
         public const bool ProfilerRunAsAdmin = false;
         #endregion
+        #region Build
+        public const string BuildExecutable = "";
+        public const string BuildArguments = "";
+        public const string BuildWorkingDirectory = "";
+        #endregion
     }
 }

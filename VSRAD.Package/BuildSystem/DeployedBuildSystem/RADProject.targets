@@ -48,15 +48,11 @@
   <Target Name="Run">
   </Target>
 
-  <UsingTask TaskName="VSRAD.BuildTools.SourceValidationBuild"
+  <UsingTask TaskName="VSRAD.BuildTools.RemoteBuildTask"
              AssemblyFile="$(MSBuildUserExtensionsPath)\VSRAD\VSRAD.BuildTools.dll"/>
 
   <Target Name="Build">
-    <SourceValidationBuild ProjectRoot="$(MSBuildProjectDirectory)"
-                           StartFile="%(SourceFile.Identity)"
-                           BuildToolExe="$(BuildToolExe)"
-                           BuildToolExeArguments="$(BuildToolExeArguments)"
-                           BuildToolEnvironmentVariables="$(BuildToolEnvironmentVariables)"/>
+    <RemoteBuildTask ProjectDir="$(MSBuildProjectDirectory)" />
   </Target>
 
   <Target Name="Rebuild">

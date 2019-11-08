@@ -7,7 +7,6 @@ using Xunit;
 
 namespace VSRAD.PackageTests.Server
 {
-    [Collection("Sequential")]
     public class BreakStateTests
     {
         [Fact]
