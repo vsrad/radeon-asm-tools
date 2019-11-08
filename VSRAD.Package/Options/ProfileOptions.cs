@@ -39,12 +39,15 @@ namespace VSRAD.Package.Options
         public DisassemblerProfileOptions Disassembler { get; }
         public ProfilerProfileOptions Profiler { get; }
 
-        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null)
+        public ProfilerBuildOptions Build { get; }
+
+        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, ProfilerBuildOptions build = null)
         {
             General = general ?? new GeneralProfileOptions();
             Debugger = debugger ?? new DebuggerProfileOptions();
             Disassembler = disassembler ?? new DisassemblerProfileOptions();
             Profiler = profiler ?? new ProfilerProfileOptions();
+            Build = build ?? new ProfilerBuildOptions();
         }
 
         public object Clone()
@@ -264,6 +267,33 @@ namespace VSRAD.Package.Options
             ViewerArguments = viewerArguments;
             LocalOutputCopyPath = localOutputCopyPath;
             RunAsAdmin = runAsAdmin;
+        }
+    }
+
+    public sealed class ProfilerBuildOptions
+    {
+        [Macro(RadMacros.BuildExecutable), Description("Executable")]
+        [DefaultValue(DefaultOptionValues.BuildExecutable)]
+        public string Executable { get; }
+        [Macro(RadMacros.BuildArguments), Description("Build Arguments"), DisplayName("Arguments")]
+        [DefaultValue(DefaultOptionValues.BuildArguments)]
+        public string Arguments { get; }
+        [Macro(RadMacros.BuildWorkingDirectory), Description("Build Working Directory"), DisplayName("Working Directory")]
+        [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
+        public string WorkingDirectory { get; }
+
+        public async Task<ProfilerBuildOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
+            new ProfilerBuildOptions(
+                executable: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildExecutable),
+                arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildArguments),
+                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildWorkingDirectory)
+            );
+
+        public ProfilerBuildOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory)
+        {
+            Executable = executable;
+            Arguments = arguments;
+            WorkingDirectory = workingDirectory;
         }
     }
 

@@ -54,6 +54,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string DebugAppArgs = "RadDebugAppArgs";
         public const string DebugBreakArgs = "RadDebugBreakArgs";
         public const string Counter = "RadCounter";
+
+        public const string BuildExecutable = "RadBuildExe";
+        public const string BuildArguments = "RadBuildArgs";
+        public const string BuildWorkingDirectory = "RadBuildWorkDir";
     }
 
     public interface IMacroEvaluator
@@ -139,6 +143,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.ProfilerViewerExecutable: unevaluated = _profileOptions.Profiler.ViewerExecutable; break;
                 case RadMacros.ProfilerViewerArguments: unevaluated = _profileOptions.Profiler.ViewerArguments; break;
                 case RadMacros.ProfilerLocalPath: unevaluated = _profileOptions.Profiler.LocalOutputCopyPath; break;
+
+                case RadMacros.BuildExecutable: unevaluated = _profileOptions.Build.Executable; break;
+                case RadMacros.BuildArguments: unevaluated = _profileOptions.Build.Arguments; break;
             }
 
             if (unevaluated != null)
