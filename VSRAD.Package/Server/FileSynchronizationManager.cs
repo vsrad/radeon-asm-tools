@@ -78,45 +78,40 @@ namespace VSRAD.Package.Server
 
             if (!options.CopySources) return;
 
-            var deployTasks = new List<Task>();
-            byte[] projectSourceArchive;
+            var additionalPaths = options.AdditionalSources.GetPathsSemicolonSeparated();
+
+            IEnumerable<DeployItem> deployItems;
             DeployItemsPack deployItemsPack;
 
             if (_unsyncedFiles.TryGetValue(options.DeployDirectory, out var unsynced))
             {
-                if (unsynced.UnsyncedProjectItems.Count != 0)
-                {
-                    projectSourceArchive = _filePacker.PackItems(unsynced.UnsyncedProjectItems);
-                    deployTasks.Add(_channel.SendAsync(new Deploy() { Data = projectSourceArchive, Destination = options.DeployDirectory }));
-                }
+                var additionalItems = unsynced.DeployItemTracker.GetDeployItems(additionalPaths, _project.RootPath);
+                deployItems = additionalItems.Concat(unsynced.UnsyncedProjectItems);
                 deployItemsPack = unsynced;
             }
             else
             {
-                projectSourceArchive = _filePacker.PackDirectory(_project.RootPath);
-                deployTasks.Add(_channel.SendAsync(new Deploy() { Data = projectSourceArchive, Destination = options.DeployDirectory }));
+                var deployPaths = additionalPaths.Append(_project.RootPath);
+
+                IDeployItemTracker deployItemTracker = new DeployItemTracker();
+                deployItems = deployItemTracker.GetDeployItems(deployPaths, _project.RootPath);
 
                 deployItemsPack = new DeployItemsPack()
                 {
-                    DeployItemTracker = new DeployItemTracker(),
+                    DeployItemTracker = deployItemTracker,
                     UnsyncedProjectItems = new HashSet<DeployItem>(),
                 };
                 _unsyncedFiles[options.DeployDirectory] = deployItemsPack;
             }
 
-            var additionalPaths = options.AdditionalSources.GetPathsSemicolonSeparated();
-            var additionalDeployItems = deployItemsPack.DeployItemTracker.GetDeployItems(additionalPaths, _project.RootPath);
-
-            if (additionalDeployItems.Count() != 0)
+            if (deployItems.Count() != 0)
             {
-                byte[] additionalArchive = _filePacker.PackItems(additionalDeployItems);
-                deployTasks.Add(_channel.SendAsync(new Deploy() { Data = additionalArchive, Destination = options.DeployDirectory }));
+                var projectSourceArchive = _filePacker.PackItems(deployItems);
+                await _channel.SendAsync(new Deploy() { Data = projectSourceArchive, Destination = options.DeployDirectory });
             }
 
             // synchronize local
             _project.SaveOptions();
-
-            await Task.WhenAll(deployTasks);
 
             deployItemsPack.UnsyncedProjectItems.Clear();
         }

@@ -15,8 +15,6 @@ namespace VSRAD.Package.Server
         IEnumerable<DeployItem> GetDeployItems(IEnumerable<string> paths, string projectPath);
     }
 
-    [Export(typeof(IDeployItemTracker))]
-    [AppliesTo(Constants.ProjectCapability)]
     internal sealed class DeployItemTracker : IDeployItemTracker
     {
         private Dictionary<string, DeployItem> CurrentDeployItems = new Dictionary<string, DeployItem>();
@@ -29,7 +27,11 @@ namespace VSRAD.Package.Server
             var additionalDirectoryPaths = paths.GetDirectoriesPaths();
 
             foreach (var filePath in additionalFilesPaths)
-                actualDeployItems.Add(filePath, GetFileItem(filePath, projectPath));
+            {
+                var item = GetFileItem(filePath, projectPath);
+                if (item != null)
+                    actualDeployItems.Add(filePath, item);
+            }
 
             foreach (var directoryPath in additionalDirectoryPaths)
                 UpdateItemsInDirectoryRecursively(actualDeployItems, directoryPath, directoryPath);
@@ -61,7 +63,11 @@ namespace VSRAD.Package.Server
         private void UpdateItemsInDirectoryRecursively(Dictionary<string, DeployItem> actualDeployItems, string dir, string rootPath)
         {
             foreach (var filePath in Directory.EnumerateFiles(dir))
-                actualDeployItems.Add(filePath, GetFileItem(filePath, rootPath));
+            {
+                var item = GetFileItem(filePath, rootPath);
+                if (item != null)
+                    actualDeployItems.Add(filePath, item);
+            }
 
             foreach (var subdir in Directory.EnumerateDirectories(dir))
                 UpdateItemsInDirectoryRecursively(actualDeployItems, subdir, rootPath);
@@ -73,6 +79,8 @@ namespace VSRAD.Package.Server
                 return deployItemFromDict;
             else
             {
+                if (filePath.Contains(".radproj")) return null;
+
                 var newDeployItem = new DeployItem();
                 newDeployItem.ActualPath = filePath;
                 newDeployItem.MakeArchivePath(rootPath);
