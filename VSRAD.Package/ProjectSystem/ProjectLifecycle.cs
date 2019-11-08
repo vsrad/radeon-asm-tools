@@ -53,7 +53,7 @@ namespace VSRAD.Package.ProjectSystem
             var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
             ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
 
-            VSPackage.TaskFactory.RunAsync(_buildToolsServer.RunAsync, JoinableTaskCreationOptions.LongRunning);
+            //VSPackage.TaskFactory.RunAsync(_buildToolsServer.RunAsync, JoinableTaskCreationOptions.LongRunning);
 
             await GetPackage().ProjectLoadedAsync(ToolWindowIntegration);
         }

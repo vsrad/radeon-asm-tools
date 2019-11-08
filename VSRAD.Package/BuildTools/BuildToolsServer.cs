@@ -1,56 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO.Pipes;
+﻿using Microsoft.VisualStudio.ProjectSystem;
 using System.ComponentModel.Composition;
-using Microsoft.VisualStudio.ProjectSystem;
-using System.Diagnostics;
+using System.IO.Pipes;
+using System.Threading.Tasks;
+using VSRAD.BuildTools;
+using VSRAD.DebugServer.IPC.Commands;
+using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.BuildTools
 {
     public interface IBuildToolsServer
     {
-        Task RunAsync();
+        Task RunAsync(IProject project, ICommunicationChannel channel, IOutputWindowManager outputWindow);
     }
 
     [Export(typeof(IBuildToolsServer))]
     [AppliesTo(Constants.ProjectCapability)]
-    class BuildToolsServer : IBuildToolsServer
+    public sealed class BuildToolsServer : IBuildToolsServer
     {
-        private string _pipeName;
+        public string PipeName { get; } = "1.buildpipe";
 
         [ImportingConstructor]
-        public BuildToolsServer()
-        {
-            _pipeName = "1.buildpipe";
-        }
+        public BuildToolsServer() { }
 
-        public async Task RunAsync()
+        public async Task RunAsync(IProject project, ICommunicationChannel channel, IOutputWindowManager outputWindow)
         {
-            using (var server = new NamedPipeServerStream(_pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+            using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
             {
                 await server.WaitForConnectionAsync();
 
-                Build();
+                var executor = new RemoteCommandExecutor("Build", channel, outputWindow);
+                var buildResult = await BuildAsync(project, executor);
+
+                byte[] message;
+                if (buildResult.TryGetResult(out var result, out var error))
+                    message = result.ToArray();
+                else
+                    message = new IPCBuildResult { ExitCode = 0, Stdout = "", Stderr = "" }.ToArray();
+
+                await server.WriteAsync(message, 0, message.Length);
             }
         }
 
-        private void Build()
+        private async Task<Result<IPCBuildResult>> BuildAsync(IProject project, RemoteCommandExecutor executor)
         {
-            var processInfo = new ProcessStartInfo("cmd.exe", "/c ..\\release.bat");
-            processInfo.CreateNoWindow = true;
-            processInfo.UseShellExecute = false;
-            var process = Process.Start(processInfo);
-            process.WaitForExit();
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            var evaluator = await project.GetMacroEvaluatorAsync(default);
+            var options = await project.Options.Profile.Build.EvaluateAsync(evaluator); // TODO: Build options
 
-            var exitcode = process.ExitCode;
-            var stdout = process.StandardOutput.ReadToEnd();
-            var stderr = process.StandardError.ReadToEnd();
+            var response = await executor.ExecuteAsync(new Execute
+            {
+                Executable = options.Executable,
+                Arguments = options.Arguments,
+                WorkingDirectory = options.WorkingDirectory
+            });
+            if (!response.TryGetResult(out var result, out var error))
+                return error;
 
-            process.Close();
+            return new IPCBuildResult { ExitCode = result.ExitCode, Stdout = result.Stdout, Stderr = result.Stderr };
         }
-        
     }
 }
