@@ -18,7 +18,10 @@ namespace VSRAD.BuildTools
                 server.Close();
             }).Start();
             var bridge = new IPCBridge("vsrad-build-testpipe");
-            // TODO: run and compare messages
+            var result = bridge.Build();
+            Assert.Equal(1, result.ExitCode);
+            Assert.Equal("out", result.Stdout);
+            Assert.Equal("err", result.Stderr);
         }
     }
 }
