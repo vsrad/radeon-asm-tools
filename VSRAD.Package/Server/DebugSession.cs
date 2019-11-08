@@ -55,7 +55,7 @@ namespace VSRAD.Package.Server
                     WorkingDirectory = options.RemoteOutputFile.Directory
                 }).ConfigureAwait(false);
 
-            if (!executionResult.TryGetResult(out _, out var error))
+            if (!executionResult.TryGetResult(out var resultData, out var error))
                 return error;
 
             if (options.ParseValidWatches)
@@ -65,7 +65,7 @@ namespace VSRAD.Package.Server
                     return error;
             }
 
-            return await CreateBreakStateAsync(options.RemoteOutputFile, initOutputTimestamp, watches);
+            return await CreateBreakStateAsync(options.RemoteOutputFile, initOutputTimestamp, watches, resultData.ExecutionTime);
         }
 
         private async Task<Result<ReadOnlyCollection<string>>> GetValidWatchesAsync(DateTime initValidWatchesTimestamp, Options.OutputFile validWatchesFile)
@@ -88,7 +88,7 @@ namespace VSRAD.Package.Server
             return Array.AsReadOnly(validWatches);
         }
 
-        private async Task<Result<BreakState>> CreateBreakStateAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches)
+        private async Task<Result<BreakState>> CreateBreakStateAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches, long execElapsedMilliseconds)
         {
             var metadataResponse = await GetMetadataAsync(output).ConfigureAwait(false);
             if (metadataResponse.Status != FetchStatus.Successful)
@@ -98,7 +98,7 @@ namespace VSRAD.Package.Server
 
             _timer.Stop();
             return new BreakState(output, metadataResponse.Timestamp, (uint)metadataResponse.ByteCount,
-                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds);
+                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds, execElapsedMilliseconds);
         }
 
         private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>
