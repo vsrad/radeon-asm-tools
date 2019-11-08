@@ -20,15 +20,17 @@ namespace VSRAD.Package.BuildTools
 
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowManager _outputWindow;
+        private readonly IFileSynchronizationManager _deployManager;
         private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
 
         private IProject _project;
 
         [ImportingConstructor]
-        public BuildToolsServer(ICommunicationChannel channel, IOutputWindowManager outputWindow)
+        public BuildToolsServer(ICommunicationChannel channel, IOutputWindowManager outputWindow, IFileSynchronizationManager deployManager)
         {
             _channel = channel;
             _outputWindow = outputWindow;
+            _deployManager = deployManager;
         }
 
         public void SetProjectOnLoad(IProject project)
@@ -47,14 +49,15 @@ namespace VSRAD.Package.BuildTools
             while (!_serverLoopCts.Token.IsCancellationRequested)
                 using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                 {
-                    await server.WaitForConnectionAsync(_serverLoopCts.Token);
+                    await server.WaitForConnectionAsync(_serverLoopCts.Token).ConfigureAwait(false);
 
                     var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
                     byte[] message;
                     try
                     {
-                        var buildResult = await BuildAsync(_project, executor);
+                        await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
+                        var buildResult = await BuildAsync(_project, executor).ConfigureAwait(false);
                         if (buildResult.TryGetResult(out var result, out var error))
                             message = result.ToArray();
                         else

@@ -7,6 +7,7 @@ using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 using VSRAD.PackageTests;
 using Xunit;
 
@@ -27,9 +28,10 @@ namespace VSRAD.Package.BuildTools
             projectRoot: @"C:\Users\CFF");
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();
+            var deployManager = new Mock<IFileSynchronizationManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(channel.Object, output.Object);
+            var server = new BuildToolsServer(channel.Object, output.Object, deployManager.Object);
             server.SetProjectOnLoad(project); // starts the server
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
@@ -59,7 +61,9 @@ namespace VSRAD.Package.BuildTools
             }).Start();
 
             await tcs.Task;
+            deployManager.Verify((d) => d.SynchronizeRemoteAsync(), Times.Once);
 
+            Assert.Null(message.ServerError);
             Assert.Equal(0, message.ExitCode);
             Assert.Equal("day of flight", message.Stdout);
             Assert.Equal("coming soon", message.Stderr);
