@@ -54,11 +54,11 @@ namespace VSRAD.BuildTools
                             endLineNumber: 0, endColumnNumber: 0);
                         break;
                     case RemoteBuildStderrParser.MessageKind.Note:
-                        Log.LogMessage(subcategory: null, code: null, helpKeyword: null,
-                            message: message.Text, file: message.SourceFile,
+                        Log.LogWarning(
+                            subcategory: null, warningCode: null, helpKeyword: null,
+                            message: "note: " + message.Text, file: message.SourceFile,
                             lineNumber: message.Line, columnNumber: message.Column,
-                            endLineNumber: 0, endColumnNumber: 0,
-                            importance: MessageImportance.Normal);
+                            endLineNumber: 0, endColumnNumber: 0);
                         break;
                 }
 
