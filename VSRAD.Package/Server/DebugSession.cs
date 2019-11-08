@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -15,6 +16,8 @@ namespace VSRAD.Package.Server
         private readonly IFileSynchronizationManager _fileSynchronizationManager;
         private readonly RemoteCommandExecutor _remoteExecutor;
 
+        private Stopwatch _timer;
+
         public DebugSession(
             IProject project,
             ICommunicationChannel channel,
@@ -25,10 +28,12 @@ namespace VSRAD.Package.Server
             _channel = channel;
             _fileSynchronizationManager = fileSynchronizationManager;
             _remoteExecutor = new RemoteCommandExecutor("Debugger", channel, outputWindowManager);
+            _timer = new Stopwatch();
         }
 
         public async Task<Result<BreakState>> ExecuteToLineAsync(uint breakLine, ReadOnlyCollection<string> watches)
         {
+            _timer.Restart();
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLine).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
             var outputFile = options.RemoteOutputFile;
@@ -91,8 +96,9 @@ namespace VSRAD.Package.Server
             if (metadataResponse.Timestamp == initOutputTimestamp)
                 return new Error($"Output file ({output.Path}) was not modified.", title: "Data may be stale");
 
+            _timer.Stop();
             return new BreakState(output, metadataResponse.Timestamp, (uint)metadataResponse.ByteCount,
-                _project.Options.Profile.Debugger.OutputOffset, watches, _channel);
+                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds);
         }
 
         private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>
