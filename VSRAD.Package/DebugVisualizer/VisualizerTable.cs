@@ -49,6 +49,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             RowHeadersVisible = true;
             AllowUserToResizeColumns = false;
             EditMode = DataGridViewEditMode.EditProgrammatically;
