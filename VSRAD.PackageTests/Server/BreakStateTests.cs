@@ -15,7 +15,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var breakState = new BreakState(new Package.Options.OutputFile("/home/kyubey/projects", "log.tar", true),
-                default, outputByteCount: 4096, outputOffset: 0, watches: new ReadOnlyCollection<string>(new[] { "h" }), channel.Object);
+                default, outputByteCount: 4096, outputOffset: 0, watches: new ReadOnlyCollection<string>(new[] { "h" }), channel.Object, 666, 333);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful },
             (command) =>
