@@ -140,7 +140,7 @@ namespace VSRAD.Package.DebugVisualizer
                 ApplyColumnStyling();
                 RowStyling.ResetRowStyling(_table.DataRows);
                 RowStyling.GreyOutUnevaluatedWatches(_breakState.Watches, _table.DataRows);
-                headerControl.OnDataRequestCompleted(_breakState.GetGroupCount(headerControl.GroupSize));
+                headerControl.OnDataRequestCompleted(_breakState.GetGroupCount(headerControl.GroupSize), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds);
             });
         }
 

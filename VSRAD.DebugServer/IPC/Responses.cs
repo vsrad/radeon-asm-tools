@@ -50,13 +50,16 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public string Stderr { get; set; } = "";
 
+        public long ExecutionTime { get; set; } = -1;
+
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "ExecutionCompleted",
             $"Status = {Status}",
             $"ExitCode = {ExitCode}",
             $"Stdout = <{Stdout.Length} chars>",
-            $"Stderr = <{Stderr.Length} chars>"
+            $"Stderr = <{Stderr.Length} chars>",
+            $"ExecutionTime = {ExecutionTime}",
         });
 
         public static ExecutionCompleted Deserialize(IPCReader reader) => new ExecutionCompleted
@@ -64,7 +67,8 @@ namespace VSRAD.DebugServer.IPC.Responses
             Status = (ExecutionStatus)reader.ReadByte(),
             ExitCode = reader.ReadInt32(),
             Stdout = reader.ReadString(),
-            Stderr = reader.ReadString()
+            Stderr = reader.ReadString(),
+            ExecutionTime = reader.ReadInt64(),
         };
 
         public void Serialize(IPCWriter writer)
@@ -73,6 +77,7 @@ namespace VSRAD.DebugServer.IPC.Responses
             writer.Write(ExitCode);
             writer.Write(Stdout);
             writer.Write(Stderr);
+            writer.Write(ExecutionTime);
         }
     }
 

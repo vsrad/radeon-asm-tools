@@ -11,6 +11,10 @@ namespace VSRAD.Package.Server
         public ReadOnlyCollection<string> Watches { get; }
 
         private uint _groupSize = 512;
+
+        public readonly long TotalElapsedMilliseconds;
+        public readonly long ExecElapsedMilliseconds;
+
         public uint GroupSize
         {
             get => _groupSize;
@@ -43,7 +47,7 @@ namespace VSRAD.Package.Server
         private readonly ICommunicationChannel _channel;
         private readonly int _outputOffset;
 
-        public BreakState(Options.OutputFile outputFile, DateTime outputTimestamp, uint outputByteCount, int outputOffset, ReadOnlyCollection<string> watches, ICommunicationChannel channel)
+        public BreakState(Options.OutputFile outputFile, DateTime outputTimestamp, uint outputByteCount, int outputOffset, ReadOnlyCollection<string> watches, ICommunicationChannel channel, long totalElapsedMilliseconds, long execElapsedMilliseconds)
         {
             _outputFile = outputFile;
             _outputTimestamp = outputTimestamp;
@@ -52,6 +56,8 @@ namespace VSRAD.Package.Server
             Watches = watches;
             _channel = channel;
             _outputOffset = outputOffset;
+            TotalElapsedMilliseconds = totalElapsedMilliseconds;
+            ExecElapsedMilliseconds = execElapsedMilliseconds;
         }
 
         public uint[] System { get; } = new uint[512];
