@@ -189,6 +189,10 @@
     </Groups>
   </Commands>
 
+  <KeyBindings>
+    <KeyBinding guid="guidCmdSetSelection" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
+  </KeyBindings>
+
   <CommandPlacements>
     <CommandPlacement guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0100">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
