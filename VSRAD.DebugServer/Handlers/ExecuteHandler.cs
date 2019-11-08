@@ -47,6 +47,7 @@ namespace VSRAD.DebugServer.Handlers
 
             var (stdoutTask, stderrTask) = InitializeOutputCapture(process);
 
+            var stopWatch = Stopwatch.StartNew();
             try
             {
                 process.Start();
@@ -71,12 +72,15 @@ namespace VSRAD.DebugServer.Handlers
             }
 
             await processExitedTcs.Task;
+            stopWatch.Stop();
+
+            var executionTimeMilliseconds = stopWatch.ElapsedMilliseconds;
             var status = _stoppedByTimeout ? ExecutionStatus.TimedOut : ExecutionStatus.Completed;
 
             var stdout = await stdoutTask;
             var stderr = await stderrTask;
 
-            return new ExecutionCompleted { Status = status, ExitCode = process.ExitCode, Stdout = stdout, Stderr = stderr };
+            return new ExecutionCompleted { Status = status, ExitCode = process.ExitCode, Stdout = stdout, Stderr = stderr, ExecutionTime = executionTimeMilliseconds };
         }
 
         private (Task<string> stdout, Task<string> stderr) InitializeOutputCapture(Process process)
