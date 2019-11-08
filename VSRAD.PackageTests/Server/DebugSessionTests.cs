@@ -1,5 +1,6 @@
 ﻿using Moq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using VSRAD.DebugServer.IPC.Commands;
@@ -19,7 +20,11 @@ namespace VSRAD.Package.ProjectSystem.Tests
         public async Task SuccessfulRunTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var project = CreateProject(workingDirectory: "/glitch/city", outputPath: "va11");
+            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>()
+            {
+                { RadMacros.DebuggerWorkingDirectory, "/glitch/city" },
+                { RadMacros.DebuggerOutputPath, "va11" }
+            });
 
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
@@ -44,7 +49,11 @@ namespace VSRAD.Package.ProjectSystem.Tests
         public async Task NonZeroExitCodeTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var project = CreateProject(workingDirectory: "/glitch/city", outputPath: "va11");
+            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>()
+            {
+                { RadMacros.DebuggerWorkingDirectory, "/glitch/city" },
+                { RadMacros.DebuggerOutputPath, "va11" }
+            });
 
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
@@ -59,21 +68,6 @@ namespace VSRAD.Package.ProjectSystem.Tests
             Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(33), error.Message);
 
             Assert.True(channel.AllInteractionsHandled);
-        }
-
-        private static IProject CreateProject(string workingDirectory, string outputPath)
-        {
-            var mock = new Mock<IProject>(MockBehavior.Strict);
-            var options = new Options.ProjectOptions();
-            options.AddProfile("Default", new Options.ProfileOptions());
-            mock.Setup((p) => p.Options).Returns(options);
-
-            var macros = new Mock<IMacroEvaluator>();
-            macros.Setup((e) => e.GetMacroValueAsync(RadMacros.DebuggerWorkingDirectory)).Returns(Task.FromResult(workingDirectory));
-            macros.Setup((e) => e.GetMacroValueAsync(RadMacros.DebuggerOutputPath)).Returns(Task.FromResult(outputPath));
-
-            mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint>(), It.IsAny<string[]>())).Returns(Task.FromResult(macros.Object));
-            return mock.Object;
         }
     }
 }
