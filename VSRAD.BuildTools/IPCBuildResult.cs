@@ -9,16 +9,25 @@ namespace VSRAD.BuildTools
         public int ExitCode { get; set; }
         public string Stdout { get; set; }
         public string Stderr { get; set; }
+        public string ServerError { get; set; }
 
         public static IPCBuildResult Read(Stream stream)
         {
             using (var reader = new BinaryReader(stream))
-                return new IPCBuildResult
-                {
-                    ExitCode = reader.ReadInt32(),
-                    Stdout = reader.ReadString(),
-                    Stderr = reader.ReadString()
-                };
+            {
+                if (reader.ReadBoolean()) // success
+                    return new IPCBuildResult
+                    {
+                        ExitCode = reader.ReadInt32(),
+                        Stdout = reader.ReadString(),
+                        Stderr = reader.ReadString()
+                    };
+                else
+                    return new IPCBuildResult
+                    {
+                        ServerError = reader.ReadString()
+                    };
+            }
         }
 
         public byte[] ToArray()
@@ -26,9 +35,18 @@ namespace VSRAD.BuildTools
             using (var memStream = new MemoryStream())
             using (var writer = new BinaryWriter(memStream))
             {
-                writer.Write(ExitCode);
-                writer.Write(Stdout);
-                writer.Write(Stderr);
+                if (ServerError == null)
+                {
+                    writer.Write(true); // success
+                    writer.Write(ExitCode);
+                    writer.Write(Stdout);
+                    writer.Write(Stderr);
+                }
+                else
+                {
+                    writer.Write(false); // success
+                    writer.Write(ServerError);
+                }
 
                 return memStream.ToArray();
             }

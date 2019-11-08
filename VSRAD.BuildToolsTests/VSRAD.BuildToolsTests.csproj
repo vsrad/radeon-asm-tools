@@ -52,7 +52,6 @@
     <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IPCBridgeTests.cs" />
     <Compile Include="RemoteBuildStderrParserTests.cs" />
     <Compile Include="RemoteBuildTaskTests.cs" />
   </ItemGroup>

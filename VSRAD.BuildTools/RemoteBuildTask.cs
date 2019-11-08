@@ -7,6 +7,7 @@ namespace VSRAD.BuildTools
     public sealed class RemoteBuildTask : Task
     {
         public const string TimeoutError = "Failed to connect to the IDE build server. Ensure the project you're attempting to build is open in Visual Studio.";
+        public const string ServerErrorPrefix = "Build server error: ";
 
         [Required]
         public string ProjectDir { get; set; }
@@ -18,9 +19,7 @@ namespace VSRAD.BuildTools
             try
             {
                 var result = bridge.Build();
-
-                LogBuildResult(result);
-                return result.ExitCode == 0;
+                return CheckBuildResult(result);
             }
             catch (TimeoutException)
             {
@@ -29,8 +28,14 @@ namespace VSRAD.BuildTools
             }
         }
 
-        private void LogBuildResult(IPCBuildResult result)
+        private bool CheckBuildResult(IPCBuildResult result)
         {
+            if (result.ServerError != null)
+            {
+                Log.LogError(ServerErrorPrefix + result.ServerError);
+                return false;
+            }
+
             foreach (var message in RemoteBuildStderrParser.ExtractMessages(result.Stderr))
                 switch (message.Kind)
                 {
@@ -51,6 +56,7 @@ namespace VSRAD.BuildTools
                 }
 
             Log.LogMessage(MessageImportance.High, $"Build finished with exit code {result.ExitCode}");
+            return result.ExitCode == 0;
         }
     }
 }
