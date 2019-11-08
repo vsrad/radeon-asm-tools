@@ -53,6 +53,13 @@ namespace VSRAD.BuildTools
                             lineNumber: message.Line, columnNumber: message.Column,
                             endLineNumber: 0, endColumnNumber: 0);
                         break;
+                    case RemoteBuildStderrParser.MessageKind.Note:
+                        Log.LogMessage(subcategory: null, code: null, helpKeyword: null,
+                            message: message.Text, file: message.SourceFile,
+                            lineNumber: message.Line, columnNumber: message.Column,
+                            endLineNumber: 0, endColumnNumber: 0,
+                            importance: MessageImportance.Normal);
+                        break;
                 }
 
             Log.LogMessage(MessageImportance.High, $"Build finished with exit code {result.ExitCode}");

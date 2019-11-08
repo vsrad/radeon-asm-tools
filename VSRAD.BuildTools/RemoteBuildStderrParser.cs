@@ -8,9 +8,20 @@ namespace VSRAD.BuildTools
     public static class RemoteBuildStderrParser
     {
         private static readonly Regex ClangErrorRegex = new Regex(
-            @"(?<file>[^:]+):(?<line>\d+):(?<col>\d+):\s*(?<type>error|warning):\s(?<text>.+)", RegexOptions.Compiled);
+            @"(?<file>[^:]+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note):\s(?<text>.+)", RegexOptions.Compiled);
 
-        public enum MessageKind { Error, Warning }
+        public enum MessageKind { Error, Warning, Note }
+
+        public static MessageKind MessageKindFromString(string kind)
+        {
+            switch (kind)
+            {
+                case "error": return MessageKind.Error;
+                case "warning": return MessageKind.Warning;
+                case "note": return MessageKind.Note;
+                default: throw new ArgumentException();
+            }
+        }
 
         public sealed class Message
         {
@@ -33,7 +44,7 @@ namespace VSRAD.BuildTools
                     if (match.Success)
                         messages.AddLast(new Message
                         {
-                            Kind = match.Groups["type"].Value == "error" ? MessageKind.Error : MessageKind.Warning,
+                            Kind = MessageKindFromString(match.Groups["kind"].Value),
                             Text = match.Groups["text"].Value,
                             SourceFile = match.Groups["file"].Value,
                             Line = int.Parse(match.Groups["line"].Value),

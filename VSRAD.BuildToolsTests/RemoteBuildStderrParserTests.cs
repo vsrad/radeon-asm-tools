@@ -13,6 +13,10 @@ input.s:267:27: error: expected absolute expression
 <stdin>:392:25: warning: not a valid operand.
       s_add_u32         s[loop_xss], s[loop_x], 1
                         ^
+host.c:4:2: warning: implicitly declaring library function 'printf' with type 'int (const char *, ...)'
+        printf(""h"");
+        ^
+host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
 ";
 
         [Fact]
@@ -35,6 +39,20 @@ input.s:267:27: error: expected absolute expression
             Assert.Equal(@"not a valid operand.
       s_add_u32         s[loop_xss], s[loop_x], 1
                         ^", messages[1].Text);
+
+            Assert.Equal(MessageKind.Warning, messages[2].Kind);
+            Assert.Equal(4, messages[2].Line);
+            Assert.Equal(2, messages[2].Column);
+            Assert.Equal("host.c", messages[2].SourceFile);
+            Assert.Equal(@"implicitly declaring library function 'printf' with type 'int (const char *, ...)'
+        printf(""h"");
+        ^", messages[2].Text);
+
+            Assert.Equal(MessageKind.Note, messages[3].Kind);
+            Assert.Equal(4, messages[3].Line);
+            Assert.Equal(2, messages[3].Column);
+            Assert.Equal("host.c", messages[3].SourceFile);
+            Assert.Equal(@"include the header<stdio.h> or explicitly provide a declaration for 'printf'", messages[3].Text);
         }
     }
 }
