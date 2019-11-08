@@ -73,14 +73,15 @@ namespace VSRAD.Package.BuildTools
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await project.GetMacroEvaluatorAsync(default);
-            var options = await project.Options.Profile.Build.EvaluateAsync(evaluator); // TODO: Build options
+            var options = await project.Options.Profile.Build.EvaluateAsync(evaluator);
 
-            var response = await executor.ExecuteAsync(new Execute
+            var command = new Execute
             {
                 Executable = options.Executable,
                 Arguments = options.Arguments,
                 WorkingDirectory = options.WorkingDirectory
-            });
+            };
+            var response = await executor.ExecuteAsync(command, checkExitCode: false);
             if (!response.TryGetResult(out var result, out var error))
                 return error;
 

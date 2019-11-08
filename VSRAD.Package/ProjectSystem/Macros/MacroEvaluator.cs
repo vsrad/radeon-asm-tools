@@ -146,6 +146,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
                 case RadMacros.BuildExecutable: unevaluated = _profileOptions.Build.Executable; break;
                 case RadMacros.BuildArguments: unevaluated = _profileOptions.Build.Arguments; break;
+                case RadMacros.BuildWorkingDirectory: unevaluated = _profileOptions.Build.WorkingDirectory; break;
             }
 
             if (unevaluated != null)
