@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 
@@ -8,18 +9,24 @@ namespace VSRAD.DebugServer
     {
         private readonly uint _clientId;
         private readonly bool _verbose;
+        private readonly Stopwatch _timer;
 
         public ClientLogger(uint clientId, bool verbose)
         {
             _clientId = clientId;
             _verbose = verbose;
+            _timer = new Stopwatch();
         }
 
         public void ConnectionEstablished(EndPoint clientEndpoint) =>
             Print($"Connection with {clientEndpoint} has been established.");
 
-        public void CommandReceived(IPC.Commands.ICommand c) =>
+        public void CommandReceived(IPC.Commands.ICommand c)
+        {
             Print($"Command received: {c}");
+            if (_verbose)
+                _timer.Restart();
+        }
 
         public void ResponseSent(IPC.Responses.IResponse r, int bytesSent) =>
             Print($"Sent response ({bytesSent} bytes): {r}");
@@ -29,7 +36,7 @@ namespace VSRAD.DebugServer
             if (e is IOException)
                 Print("Connection has been terminated.");
             else
-                Print("An exception has occurred while processing the command. Connection has been terminated."+ Environment.NewLine + e.ToString());
+                Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
         }
 
         public void ExecutionStarted()
@@ -47,6 +54,14 @@ namespace VSRAD.DebugServer
         {
             if (_verbose)
                 Console.WriteLine($"#{_clientId} stderr> " + output);
+        }
+
+        public void CommandProcessed()
+        {
+            if (!_verbose) return;
+
+            _timer.Stop();
+            Console.WriteLine($"Time Elapsed: {_timer.ElapsedMilliseconds}ms");
         }
 
         private void Print(string message) =>

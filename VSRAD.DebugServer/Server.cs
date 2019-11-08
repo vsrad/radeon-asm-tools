@@ -57,6 +57,7 @@ namespace VSRAD.DebugServer
                         var bytesSent = await client.SendResponseAsync(response).ConfigureAwait(false);
                         clientLog.ResponseSent(response, bytesSent);
                     }
+                    clientLog.CommandProcessed();
                 }
                 catch (Exception e)
                 {
