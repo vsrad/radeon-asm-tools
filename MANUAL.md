@@ -7,7 +7,7 @@ The extension provides the following features:
 * [Remote debugging tools](#remote-debugging-tools)
 * Disassembling tools
 * Profiling tools
-* Data visualization tools
+* [Data visualization tools](#data-visualization-tools)
 * [Shortcuts](#shortcuts)
 
 ## Project Template
@@ -129,6 +129,60 @@ It must be noted that every debugger invocation starts execution of the code fro
 every `Step Into` will perform all seven steps mentioned above with incremented breakpoint line number) due to
 the impossibility of continuing code execution from arbitrary state. But this is not an issue because execution
 usually doesn't take long (< 1sec.).
+
+### Usage
+
+Once you configured your [profile](#profiles) and added [watches to watchlist](#watches-and-watchlist) you can
+start debugging (*F5*).
+
+At first debugger will be in break state, so you can place your breakpoints and press *F11* or `Continue` button
+to run debugger.
+
+### Watches and watchlist
+
+In order to evaluate variable you should place it in *Watch list*, so debugger will compute it's value on the
+next invocation. There is several ways to do it:
+* Open [Debug Visualizer](#data-visualization-tools) and type variable name inside the `Name` cell of the
+last empty row of `Visualizer Table`.
+* Select text that represents variable name, click on selection with LMB and select `Add To Watches`.
+* Click on variable name with LMB and select `Add To Watches`
+
+If you want to add to watches some array range:
+* Select text that represents array name, click on selection with LMB, find `Add To Watches As Array` in context
+menu and select `From` and `To` parameters.
+* Click on array name with LMB, find `Add To Watches As Array` in context menu and select `From` and `To` parameters.
+
+`Add Selection As Array` pastes to *Watch list* several variables represented as array range.
+
+If selected text is `a`, `From` is `5` and `To` is `7` then
+```
+a[5]
+a[6]
+a[7]
+```
+will be added to *Watch list*.
+
+Multidimentional arrays are also supported.
+
+If selected text is `a[0]`, `From` is `5` and `To` is `7` then
+```
+a[0][5]
+a[0][6]
+a[0][7]
+```
+will be added to *Watch list*.
+
+Relative addressation:
+
+If selected text is `a[i]`, `From` is `5` and `To` is `7` then
+```
+a[i+5]
+a[i+6]
+a[i+7]
+```
+will be added to *Watch list*.
+
+## Data visualization tools
 
 ## Shortcuts
 
