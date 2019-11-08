@@ -8,6 +8,7 @@ The extension provides the following features:
 * Disassembling tools
 * Profiling tools
 * Data visualization tools
+* [Shortcuts](#shortcuts)
 
 ## Project Template
 
@@ -128,3 +129,15 @@ It must be noted that every debugger invocation starts execution of the code fro
 every `Step Into` will perform all seven steps mentioned above with incremented breakpoint line number) due to
 the impossibility of continuing code execution from arbitrary state. But this is not an issue because execution
 usually doesn't take long (< 1sec.).
+
+## Shortcuts
+
+*Can be customized in `Tools->Options->Keyboard`*
+
+* `Alt+A`: **Add To Watches**
+
+`View->Toolbars->Rad Debug` to enable toolbar that contains:
+* `Launch Remote Profiling`
+* `Open Visualizer`
+* `Options`
+* `Disassemble File`
