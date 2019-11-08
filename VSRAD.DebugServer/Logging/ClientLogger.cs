@@ -61,7 +61,7 @@ namespace VSRAD.DebugServer
             if (!_verbose) return;
 
             _timer.Stop();
-            Console.WriteLine($"Time Elapsed: {_timer.ElapsedMilliseconds}ms");
+            Console.WriteLine($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
         }
 
         private void Print(string message) =>
