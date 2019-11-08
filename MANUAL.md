@@ -77,7 +77,7 @@ Other chapters will reference these sections as needed.
   - **Binary**: 4-byte blocks are read as a single dword value.
 * **Run As Administrator**: specifies whether the `Executable` is run with administrator rights.
 * **Timeout**: debug script execution timeout (in seconds). Once reached, the debug process is terminated. Set to `0` to disable.
-* **Parse Valid Watches File**: specifies whether the file specified in **Valid Watches File Path** should be used to filter vald watches.
+* **Parse Valid Watches File**: specifies whether the file specified in **Valid Watches File Path** should be used to filter valid watches.
 * **Valid Watches File Path**: path to the file with valid watch names on the remote machine.
 * **Output Offset**: `int` number, that indicates
   - if **Output Mode** is `binary`: amount of bytes to skip.
