@@ -92,9 +92,7 @@ namespace VSRAD.Package.Commands
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var byteCount = 2 /* system + watch */ * 512 * 4 /* dwords -> bytes */;
-            var result = await executor.ExecuteWithResultAsync(
-                command, options.RemoteOutputFile.Path, options.RemoteOutputFile.BinaryOutput,
-                byteCount, byteOffset: 0).ConfigureAwait(false);
+            var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile, byteCount).ConfigureAwait(false);
 
             if (!result.TryGetResult(out var data, out var error))
                 throw new Exception(error.Message);

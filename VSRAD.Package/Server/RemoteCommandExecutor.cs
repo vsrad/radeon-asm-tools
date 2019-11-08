@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
@@ -31,23 +30,27 @@ namespace VSRAD.Package.Server
             _outputWriter = outputWindow.GetExecutionResultPane();
         }
 
-        public Task<Result<byte[]>> ExecuteWithResultAsync(Execute command, string[] filepath) =>
-            ExecuteWithResultAsync(command, filepath, true, 0, 0);
-
-        public async Task<Result<byte[]>> ExecuteWithResultAsync(Execute command, string[] filepath, bool binaryOutput, int byteCount, int byteOffset)
+        public async Task<Result<byte[]>> ExecuteWithResultAsync(Execute command, Options.OutputFile output, int byteCount = 0)
         {
             var initialMetadata = await _channel.SendWithReplyAsync<MetadataFetched>(
-                new FetchMetadata { FilePath = filepath, BinaryOutput = binaryOutput }).ConfigureAwait(false);
+                new FetchMetadata { FilePath = output.Path, BinaryOutput = output.BinaryOutput }).ConfigureAwait(false);
             var initialTimestamp = initialMetadata.Timestamp;
 
             var executionResult = await ExecuteAsync(command).ConfigureAwait(false);
-            if (executionResult.TryGetResult(out _, out var error))
-                return await FetchResultAsync(filepath, binaryOutput, byteCount, byteOffset, initialTimestamp);
-            else
+            if (!executionResult.TryGetResult(out _, out var error))
                 return error;
+
+            var dataResult = await _channel.SendWithReplyAsync<ResultRangeFetched>(
+                new FetchResultRange { FilePath = output.Path, BinaryOutput = output.BinaryOutput, ByteCount = byteCount }).ConfigureAwait(false);
+            if (dataResult.Status != FetchStatus.Successful)
+                return new Error(ErrorFileNotCreated);
+            if (dataResult.Timestamp == initialTimestamp)
+                return new Error(ErrorFileHasNotChanged);
+
+            return dataResult.Data;
         }
 
-        public async Task<Result<bool>> ExecuteAsync(Execute command)
+        public async Task<Result<ExecutionCompleted>> ExecuteAsync(Execute command)
         {
             var result = await _channel.SendWithReplyAsync<ExecutionCompleted>(command).ConfigureAwait(false);
 
@@ -67,7 +70,7 @@ namespace VSRAD.Package.Server
             switch (result.Status)
             {
                 case ExecutionStatus.Completed when result.ExitCode == 0:
-                    return true;
+                    return result;
                 case ExecutionStatus.Completed:
                     return new Error(ErrorNonZeroExitCode(result.ExitCode), title: "RAD " + _outputTag);
                 case ExecutionStatus.TimedOut:
@@ -75,17 +78,6 @@ namespace VSRAD.Package.Server
                 default:
                     return new Error(ErrorCouldNotLaunch, title: "RAD " + _outputTag);
             }
-        }
-
-        private async Task<Result<byte[]>> FetchResultAsync(string[] filepath, bool binaryOutput, int byteCount, int byteOffset, DateTime initialTimestamp)
-        {
-            var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                new FetchResultRange { FilePath = filepath, BinaryOutput = binaryOutput, ByteCount = byteCount, ByteOffset = byteOffset }).ConfigureAwait(false);
-            if (response.Status != FetchStatus.Successful)
-                return new Error(ErrorFileNotCreated);
-            if (response.Timestamp == initialTimestamp)
-                return new Error(ErrorFileHasNotChanged);
-            return response.Data;
         }
     }
 }

@@ -3,6 +3,7 @@ using System;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using Xunit;
@@ -36,7 +37,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = data },
                 (command) => Assert.Equal(new[] { "file", "path" }, command.FilePath));
 
-            var result = await executor.ExecuteWithResultAsync(new Execute { Executable = "exec", Arguments = "args" }, new[] { "file", "path" });
+            var result = await executor.ExecuteWithResultAsync(new Execute { Executable = "exec", Arguments = "args" }, new OutputFile("file", "path"));
             Assert.True(result.TryGetResult(out var resultData, out _));
             Assert.Equal(data, resultData);
 
@@ -56,7 +57,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch });
 
-            var result = await executor.ExecuteWithResultAsync(new Execute(), new[] { "h" });
+            var result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile("", "h"));
             Assert.False(result.TryGetResult(out _, out var error));
             Assert.Equal("RAD Test", error.Title);
             Assert.Equal(RemoteCommandExecutor.ErrorCouldNotLaunch, error.Message);
@@ -64,13 +65,13 @@ namespace VSRAD.PackageTests.Server
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 666 });
-            result = await executor.ExecuteWithResultAsync(new Execute(), new[] { "h" });
+            result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile("", "h"));
             Assert.False(result.TryGetResult(out _, out error));
             Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(666), error.Message);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.TimedOut });
-            result = await executor.ExecuteWithResultAsync(new Execute(), new[] { "h" });
+            result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile("", "h"));
             Assert.False(result.TryGetResult(out _, out error));
             Assert.Equal(RemoteCommandExecutor.ErrorTimedOut, error.Message);
 
@@ -87,7 +88,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound });
-            var result = await executor.ExecuteWithResultAsync(new Execute(), new[] { @"F:\Is\Pressed\For", "Us" });
+            var result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"));
             Assert.False(result.TryGetResult(out _, out var error));
             Assert.Equal(RemoteCommandExecutor.ErrorFileNotCreated, error.Message);
 
@@ -95,7 +96,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
-            result = await executor.ExecuteWithResultAsync(new Execute(), new[] { @"F:\Is\Pressed\For", "Us" });
+            result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"));
             Assert.False(result.TryGetResult(out _, out error));
             Assert.Equal(RemoteCommandExecutor.ErrorFileHasNotChanged, error.Message);
 
