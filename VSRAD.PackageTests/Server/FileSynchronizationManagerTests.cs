@@ -26,6 +26,7 @@ namespace VSRAD.PackageTests.Server
             var packer = new Mock<IDeployFilePacker>();
             var project = new Mock<IProject>(MockBehavior.Strict);
             project.Setup((p) => p.RootPath).Returns(_projectRoot);
+            project.Setup((p) => p.SaveOptions());
             var projectSourceManager = new Mock<IProjectSourceManager>();
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
             evaluator.Setup((e) => e.GetMacroValueAsync(RadMacros.DeployDirectory)).Returns(Task.FromResult(_deployDirectory));
@@ -48,6 +49,7 @@ namespace VSRAD.PackageTests.Server
                 });
 
             await deployManager.SynchronizeRemoteAsync();
+            project.Verify((p) => p.SaveOptions(), Times.Once);
             packer.Verify((p) => p.PackDirectory(_projectRoot), Times.Once);
             packer.VerifyNoOtherCalls();
             await deployManager.SynchronizeRemoteAsync();
@@ -63,6 +65,7 @@ namespace VSRAD.PackageTests.Server
             var packer = new Mock<IDeployFilePacker>();
             var project = new Mock<IProject>(MockBehavior.Strict);
             project.Setup((p) => p.RootPath).Returns(_projectRoot);
+            project.Setup((p) => p.SaveOptions());
             var projectSourceManager = new Mock<IProjectSourceManager>();
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
             evaluator.Setup((e) => e.GetMacroValueAsync(RadMacros.DeployDirectory)).Returns(Task.FromResult(_deployDirectory));
@@ -110,6 +113,7 @@ namespace VSRAD.PackageTests.Server
             var packer = new Mock<IDeployFilePacker>();
             var project = new Mock<IProject>(MockBehavior.Strict);
             project.Setup((p) => p.RootPath).Returns(_projectRoot);
+            project.Setup((p) => p.SaveOptions());
             var projectSourceManager = new Mock<IProjectSourceManager>();
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
             evaluator.Setup((e) => e.GetMacroValueAsync(RadMacros.DeployDirectory)).Returns(Task.FromResult(_deployDirectory));

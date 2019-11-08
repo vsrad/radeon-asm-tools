@@ -114,7 +114,7 @@ namespace VSRAD.Package.Server
             }
 
             // synchronize local
-            ((Project)_project).SaveOptions();
+            _project.SaveOptions();
 
             await Task.WhenAll(deployTasks);
 

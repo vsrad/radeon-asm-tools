@@ -69,8 +69,9 @@ namespace VSRAD.DebugServerTests.Handlers
                     FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
                     ByteOffset = 6,
                     ByteCount = 8,
+                    OutputOffset = 1,
                     BinaryOutput = false
-                });
+                }); ;
             Assert.Equal(FetchStatus.Successful, response.Status);
             Assert.Equal(timestamp, response.Timestamp);
             Assert.Equal(byteData, response.Data);

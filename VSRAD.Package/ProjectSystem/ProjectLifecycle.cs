@@ -53,7 +53,7 @@ namespace VSRAD.Package.ProjectSystem
 
         private async Task ProjectUnloadingAsync(object sender, EventArgs args)
         {
-            ((Project)_project).SaveOptions();
+            _project.SaveOptions();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             GetPackage().ProjectUnloaded();
         }

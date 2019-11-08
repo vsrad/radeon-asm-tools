@@ -22,6 +22,7 @@ namespace VSRAD.Package.ProjectSystem
         string GetRelativePath(string absoluteFilePath);
         string GetAbsolutePath(string projectRelativePath);
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint breakLine = 0, string[] watchesOverride = null);
+        void SaveOptions();
     }
 
     [Export(typeof(IProject))]
