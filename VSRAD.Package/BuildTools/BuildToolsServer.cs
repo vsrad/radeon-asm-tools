@@ -15,7 +15,7 @@ namespace VSRAD.Package.BuildTools
     [AppliesTo(Constants.ProjectCapability)]
     public sealed class BuildToolsServer
     {
-        public string PipeName { get; } = "1.buildpipe";
+        public string PipeName => IPCBuildResult.GetIPCPipeName(_project.RootPath);
 
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowManager _outputWindow;

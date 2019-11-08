@@ -9,15 +9,16 @@ namespace VSRAD.BuildTools
         [Fact]
         public void ConnectionTest()
         {
+            var pipeName = IPCBuildResult.GetIPCPipeName(@"C:\One\One");
             new Thread(() =>
             {
-                var server = new NamedPipeServerStream("vsrad-build-testpipe", PipeDirection.Out, 1);
+                var server = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1);
                 server.WaitForConnection();
                 var message = new IPCBuildResult { ExitCode = 1, Stdout = "out", Stderr = "err" }.ToArray();
                 server.Write(message, 0, message.Length);
                 server.Close();
             }).Start();
-            var bridge = new IPCBridge("vsrad-build-testpipe");
+            var bridge = new IPCBridge(@"C:\One\One");
             var result = bridge.Build();
             Assert.Equal(1, result.ExitCode);
             Assert.Equal("out", result.Stdout);

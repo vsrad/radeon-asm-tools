@@ -1,4 +1,6 @@
 ﻿using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace VSRAD.BuildTools
 {
@@ -29,6 +31,15 @@ namespace VSRAD.BuildTools
                 writer.Write(Stderr);
 
                 return memStream.ToArray();
+            }
+        }
+
+        public static string GetIPCPipeName(string project)
+        {
+            using (var sha512 = new System.Security.Cryptography.SHA512Managed())
+            {
+                var hash = sha512.ComputeHash(Encoding.UTF8.GetBytes(project));
+                return "vsrad-" + string.Join("", hash.Select((b) => b.ToString("x2")));
             }
         }
     }

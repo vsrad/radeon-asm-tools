@@ -23,7 +23,8 @@ namespace VSRAD.Package.BuildTools
                 { RadMacros.BuildExecutable, "nemu" },
                 { RadMacros.BuildArguments, "--sleep 10" },
                 { RadMacros.BuildWorkingDirectory, "/old/home" }
-            });
+            },
+            projectRoot: @"C:\Users\CFF");
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);

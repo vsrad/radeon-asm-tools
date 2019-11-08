@@ -24,12 +24,13 @@ namespace VSRAD.PackageTests
             VSPackage.TaskFactory = jtc.Factory;
         }
 
-        public static IProject MakeProjectWithProfile(Dictionary<string, string> macros)
+        public static IProject MakeProjectWithProfile(Dictionary<string, string> macros, string projectRoot = "")
         {
             var mock = new Mock<IProject>(MockBehavior.Strict);
             var options = new Package.Options.ProjectOptions();
             options.AddProfile("Default", new Package.Options.ProfileOptions());
             mock.Setup((p) => p.Options).Returns(options);
+            mock.Setup((m) => m.RootPath).Returns(projectRoot);
 
             var evaluator = new Mock<IMacroEvaluator>();
             foreach (var macro in macros)
