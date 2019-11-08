@@ -66,19 +66,22 @@ namespace VSRAD.Package.Options
 
     public sealed class GeneralProfileOptions
     {
-        [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory"), Description("Remote Deploy Directory")]
+        [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
+        [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
         [DefaultValue(DefaultOptionValues.DeployDirectory)]
         public string DeployDirectory { get; }
-        [DisplayName("Remote Machine Address"), Description("Remote Machine Address")]
+        [DisplayName("Remote Machine Address")]
+        [Description("IP address of the remote machine.To debug kernels locally, start the debug server on your local machine and enter `127.0.0.1` in this field.")]
         [DefaultValue(DefaultOptionValues.RemoteMachineAdredd)]
         public string RemoteMachine { get; }
-        [Description("Port")]
+        [Description("Port on the remote machine the debug server is listening on. (When started without arguments, the server listens on port `9339`)")]
         [DefaultValue(DefaultOptionValues.Port)]
         public int Port { get; }
-        [Description("Debugger autosave source"), DisplayName("Autosave Source")]
+        [DisplayName("Autosave Source")]
+        [Description("specifies whether the source files that are changed should be automatically saved before running remote commands (debug, disassemble, profile, etc.). See user manual for more details.")]
         [DefaultValue(DefaultOptionValues.AutosaveSource)]
         public DocumentSaveType AutosaveSource { get; }
-        [Description("Copy files to remote machine"), DisplayName("Copy Sources to Remote")]
+        [Description("Enables or disables remote deployment."), DisplayName("Copy Sources to Remote")]
         [DefaultValue(DefaultOptionValues.CopySources)]
         public bool CopySources { get; }
         [Description("Semicolon-separated list of additional files/directories to copy on remote machine"), DisplayName("Additional Sources")]
@@ -105,28 +108,36 @@ namespace VSRAD.Package.Options
 
     public sealed class DebuggerProfileOptions
     {
-        [Macro(RadMacros.DebuggerExecutable), Description("Debugger Executable")]
+        [Macro(RadMacros.DebuggerExecutable)]
+        [Description("Path to the debugger executable on the remote machine.")]
         [DefaultValue(DefaultOptionValues.DebuggerExecutable)]
         public string Executable { get; }
-        [Macro(RadMacros.DebuggerArguments), Description("Debugger Arguments")]
+        [Macro(RadMacros.DebuggerArguments)]
+        [Description("Command-line arguments for Executable.")]
         [DefaultValue(DefaultOptionValues.DebuggerArguments)]
         public string Arguments { get; }
-        [Macro(RadMacros.DebuggerWorkingDirectory), Description("Debugger Working Directory"), DisplayName("Working Directory")]
+        [Macro(RadMacros.DebuggerWorkingDirectory), DisplayName("Working Directory")]
+        [Description("Debugger working directory.")]
         [DefaultValue(DefaultOptionValues.DebuggerWorkingDirectory)]
         public string WorkingDirectory { get; }
-        [Macro(RadMacros.DebuggerOutputPath), Description("The path to the debug script output file."), DisplayName("Output Path")]
+        [Macro(RadMacros.DebuggerOutputPath), DisplayName("Output Path")]
+        [Description("Path to the debug script output file (can be relative to Working Directory).")]
         [DefaultValue(DefaultOptionValues.DebuggerOutputPath)]
         public string OutputPath { get; }
-        [Description("Debugger Output Mode"), DisplayName("Output Mode"), BooleanDisplayValues("Binary", "Text")]
+        [DisplayName("Output Mode"), BooleanDisplayValues("Binary", "Text")]
+        [Description("Specifies how the debug script output file is parsed: 'Text': each line is read as a hexadecimal string (0x...), 'Binary': 4-byte blocks are read as a single dword value.")]
         [DefaultValue(DefaultOptionValues.DebuggerBinaryOutput)]
         public bool BinaryOutput { get; }
-        [Description("Parse Valid Watches File"), DisplayName("Parse Valid Watches File")]
+        [DisplayName("Parse Valid Watches File")]
+        [Description("Specifies whether the file specified in Valid Watches File Path should be used to filter valid watches.")]
         [DefaultValue(DefaultOptionValues.DebuggerParseValidWatches)]
         public bool ParseValidWatches { get; }
-        [Description("Path to file that contains list of valid watches"), DisplayName("Valid Watches File Path")]
+        [DisplayName("Valid Watches File Path")]
+        [Description("Path to the file with valid watch names on the remote machine.")]
         [DefaultValue(DefaultOptionValues.DebuggerValidWatchesFilePath)]
         public string ValidWatchesFilePath { get; }
-        [Description("Debugger Run As Administrator"), DisplayName("Run As Administrator")]
+        [DisplayName("Run As Administrator")]
+        [Description("Specifies whether the `Executable` is run with administrator rights.")]
         [DefaultValue(DefaultOptionValues.DebuggerRunAsAdmin)]
         public bool RunAsAdmin { get; }
         [Description("Debugger Timeout (seconds), 0 - timeout disabled"), DisplayName("Timeout")]
@@ -171,22 +182,28 @@ namespace VSRAD.Package.Options
 
     public sealed class DisassemblerProfileOptions
     {
-        [Macro(RadMacros.DisassemblerExecutable), Description("Disassembler Executable")]
+        [Macro(RadMacros.DisassemblerExecutable)]
+        [Description("Path to the disassembler executable on the remote machine.")]
         [DefaultValue(DefaultOptionValues.DisassemblerExecutable)]
         public string Executable { get; }
-        [Macro(RadMacros.DisassemblerArguments), Description("Disassembler Executable Arguments"), DisplayName("Arguments")]
+        [Macro(RadMacros.DisassemblerArguments), DisplayName("Arguments")]
+        [Description("Command-line arguments for Executable.")]
         [DefaultValue(DefaultOptionValues.DisassemblerArguments)]
         public string Arguments { get; }
-        [Macro(RadMacros.DisassemblerWorkingDirectory), Description("Disassembler Working Directory"), DisplayName("Working Directory")]
+        [Macro(RadMacros.DisassemblerWorkingDirectory), DisplayName("Working Directory")]
+        [Description("Disassembler Working Directory")]
         [DefaultValue(DefaultOptionValues.DisassemblerWorkingDirectory)]
         public string WorkingDirectory { get; }
-        [Macro(RadMacros.DisassemblerOutputPath), Description("Disassembler Output Path"), DisplayName("Output Path")]
+        [Macro(RadMacros.DisassemblerOutputPath), DisplayName("Output Path")]
+        [Description("Path to the disassembler script output file (can be relative to Working Directory).")]
         [DefaultValue(DefaultOptionValues.DisassemblerOutputPath)]
         public string OutputPath { get; }
-        [Macro(RadMacros.DisassemblerLocalPath), Description("Disassembler Local Path"), DisplayName("Local Path")]
+        [Macro(RadMacros.DisassemblerLocalPath), DisplayName("Local Path")]
+        [Description("Path to the file on local machine to copy disassembler output file.")]
         [DefaultValue(DefaultOptionValues.DisassemblerLocalOutputCopyPath)]
         public string LocalOutputCopyPath { get; }
-        [Description("Disassembler Line Marker"), DisplayName("Line Marker")]
+        [DisplayName("Line Marker")]
+        [Description("Disassembler will search this line in output file and place the cursor on it if this line exists.")]
         [DefaultValue(DefaultOptionValues.DisassemblerLineMaker)]
         public string LineMarker { get; }
 
@@ -215,28 +232,36 @@ namespace VSRAD.Package.Options
 
     public sealed class ProfilerProfileOptions
     {
-        [Macro(RadMacros.ProfilerExecutable), Description("Executable")]
+        [Macro(RadMacros.ProfilerExecutable)]
+        [Description("Path to the profiler executable on the remote machine.")]
         [DefaultValue(DefaultOptionValues.ProfilerExecutable)]
         public string Executable { get; }
-        [Macro(RadMacros.ProfilerArguments), Description("Profiler Arguments"), DisplayName("Arguments")]
+        [Macro(RadMacros.ProfilerArguments), DisplayName("Arguments")]
+        [Description("Command-line arguments for Executable.")]
         [DefaultValue(DefaultOptionValues.ProfilerArguments)]
         public string Arguments { get; }
-        [Macro(RadMacros.ProfilerWorkingDirectory), Description("Profiler Working Directory"), DisplayName("Working Directory")]
+        [Macro(RadMacros.ProfilerWorkingDirectory), DisplayName("Working Directory")]
+        [Description("Profiler Working Directory")]
         [DefaultValue(DefaultOptionValues.ProfilerWorkingDirectory)]
         public string WorkingDirectory { get; }
-        [Macro(RadMacros.ProfilerOutputPath), Description("Profiler Output Path"), DisplayName("Output Path")]
+        [Macro(RadMacros.ProfilerOutputPath), DisplayName("Output Path")]
+        [Description("Path to the profiler script output file (can be relative to Working Directory).")]
         [DefaultValue(DefaultOptionValues.ProfilerOutputPath)]
         public string OutputPath { get; }
-        [Macro(RadMacros.ProfilerViewerExecutable), Description("Profiler Viewer Executable"), DisplayName("Viewer Executable")]
+        [Macro(RadMacros.ProfilerViewerExecutable), DisplayName("Viewer Executable")]
+        [Description("Path to the viewer executable on the local machine.")]
         [DefaultValue(DefaultOptionValues.ProfilerViewerExecutable)]
         public string ViewerExecutable { get; }
-        [Macro(RadMacros.ProfilerViewerArguments), Description("Profiler Viewer Arguments"), DisplayName("Viewer Arguments")]
+        [Macro(RadMacros.ProfilerViewerArguments), DisplayName("Viewer Arguments")]
+        [Description("Command-line arguments for Viewer Executable.")]
         [DefaultValue(DefaultOptionValues.ProfilerViewerArguments)]
         public string ViewerArguments { get; }
-        [Macro(RadMacros.ProfilerLocalPath), Description("Profiler Local Copy Path"), DisplayName("Local Copy Path")]
+        [Macro(RadMacros.ProfilerLocalPath), DisplayName("Local Copy Path")]
+        [Description("Path to the file on local machine to copy profiler output file.")]
         [DefaultValue(DefaultOptionValues.ProfilerLocalOutputCopyPath)]
         public string LocalOutputCopyPath { get; }
-        [Description("Profiler Run As Admin"), DisplayName("Run As Admin")]
+        [DisplayName("Run As Admin")]
+        [Description("Specifies whether the `Executable` is run with administrator rights.")]
         [DefaultValue(DefaultOptionValues.ProfilerRunAsAdmin)]
         public bool RunAsAdmin { get; }
 
