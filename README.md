@@ -47,10 +47,10 @@ select *Properties*.
 
 ### Assembling a Release
 
-1. Select *Release* in the *Solution Configurations* dropdown.
-2. Build the entire solution (*Build* -> *Build Solution*).
-3. Run `release.bat` in the repository root.
+1. Right-click on `VSRAD.Build` in *Solution Explorer* and select *Set as StartUp Project*.
+2. Select *Release* in the *Solution Configurations* dropdown.
+3. Build the entire solution (*Build* -> *Build Solution*).
 
-The release script creates a directory (`Release`) with the installation script
+The release build creates a directory (`Release`) with the installation script
 (`install.bat`), the extension package (`RadeonAsmDebugger.vsix`), and debug server
 binaries for Windows and Linux.

@@ -1,3 +1,4 @@
+cd %~dp0
 :: Publish DebugServer
 cd VSRAD.DebugServer
 dotnet publish -r win-x64 -c release --self-contained false
