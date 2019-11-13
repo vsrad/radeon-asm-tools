@@ -1,10 +1,10 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#" #>
-<#@ assembly name="System.Core" #>
-<#@ import namespace="System.Linq" #>
-<#@ import namespace="System.Text" #>
-<#@ import namespace="System.Collections.Generic" #>
-<#@ output extension=".vsct" #>
-<?xml version="1.0" encoding="utf-8"?>
+﻿<#@ template debug="false" hostspecific="false" language="C#"
+#><#@ assembly name="System.Core"
+#><#@ import namespace="System.Linq"
+#><#@ import namespace="System.Text"
+#><#@ import namespace="System.Collections.Generic"
+#><#@ output extension=".vsct"
+#><?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
