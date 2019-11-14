@@ -307,18 +307,26 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
         public string WorkingDirectory { get; }
 
+        [Macro(RadMacros.BuildPreprocessedSource)]
+        [Description(@"Path of preprocessed source on a target machine. Used to map line numbers in the compiler's output to original sources. Linemarkers should start with '//# ' or '# '")]
+        [DisplayName("Preprocessed Source")]
+        [DefaultValue(DefaultOptionValues.PreprocessedSource)]
+        public string PreprocessedSource { get; }
+
         public async Task<BuildProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new BuildProfileOptions(
                 executable: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildExecutable),
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildArguments),
-                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildWorkingDirectory)
+                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildWorkingDirectory),
+                preprocessedSource: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildPreprocessedSource)
             );
 
-        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory)
+        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory, string preprocessedSource = DefaultOptionValues.PreprocessedSource)
         {
             Executable = executable;
             Arguments = arguments;
             WorkingDirectory = workingDirectory;
+            PreprocessedSource = preprocessedSource;
         }
     }
 
