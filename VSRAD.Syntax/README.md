@@ -10,6 +10,15 @@ To build extension you should use one of four project build options:
 
 > For example, for the `Release` build option, the `RadeonAsmSyntax.vsix` extension installer will be located in the ***path to project location\VSRAD.Syntax\bin\Release*** directory.
 
+## Debugging
+
+1. Right-click on `VSRAD.Syntax` in *Solution Explorer* and select *Set as StartUp Project*.
+2. Right-click on `VSRAD.Syntax` in *Solution Explorer* and
+select *Properties*.
+4. Navigate to the *Debug* tab in the project properties editor.
+5. Choose *Start external program* as the *Start action* and enter the path to your Visual Studio executable (`<Visual Studio installation path>\Common7\IDE\devenv.exe`).
+6. Close the project properties editor and start debugging by pressing F5.
+
 ## Plugin features
 
 ### Syntax highlight
