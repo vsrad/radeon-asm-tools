@@ -2,8 +2,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
@@ -26,13 +28,17 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public string EvaluatedValue => VSPackage.TaskFactory.Run(() => _evaluator.EvaluateAsync(_macroValue));
 
-        public Dictionary<string, string> MacroPreviewList { get; set; } = new Dictionary<string, string>();
+        public ICollectionView MacroListView { get; private set; } = new ListCollectionView(new List<KeyValuePair<string, string>>());
 
-        private string _macroPreviewFilter;
+        private string _macroPreviewFilter = "$(rad";
         public string MacroPreviewFilter
         {
             get => _macroPreviewFilter;
-            set => SetField(ref _macroPreviewFilter, value);
+            set
+            {
+                SetField(ref _macroPreviewFilter, value);
+                MacroListView.Refresh();
+            }
         }
 
         private readonly IMacroEvaluator _evaluator;
@@ -47,11 +53,20 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public void LoadPreviewListInBackground(IProjectProperties projectProperties, ICommunicationChannel channel) =>
             VSPackage.TaskFactory.RunAsync(async () =>
             {
-                MacroPreviewList = await GetEnvironmentMacrosAsync(projectProperties, channel);
+                var macros = await GetEnvironmentMacrosAsync(projectProperties, channel);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                RaisePropertyChanged(nameof(MacroPreviewList));
+                MacroListView = new ListCollectionView(macros.ToList()) { Filter = FilterMacro };
+                RaisePropertyChanged(nameof(MacroListView));
                 RaisePropertyChanged(nameof(EvaluatedValue));
             });
+
+        private bool FilterMacro(object macro)
+        {
+            var macroData = (KeyValuePair<string, string>)macro;
+            return string.IsNullOrEmpty(MacroPreviewFilter)
+                || macroData.Key.IndexOf(MacroPreviewFilter, StringComparison.OrdinalIgnoreCase) != -1
+                || macroData.Value.IndexOf(MacroPreviewFilter, StringComparison.OrdinalIgnoreCase) != -1;
+        }
 
         private async Task<Dictionary<string, string>> GetEnvironmentMacrosAsync(IProjectProperties properties, ICommunicationChannel channel)
         {

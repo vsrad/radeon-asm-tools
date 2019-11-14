@@ -29,10 +29,10 @@
                  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
         <TextBox Grid.Column="1" Margin="10,10,10,10" Height="27"
                  VerticalAlignment="Top" HorizontalAlignment="Stretch"
-                 Text="{Binding MacroPreviewFilter, UpdateSourceTrigger=PropertyChanged}"
-                 TextChanged="MacroFilterChanged"/>
-        <ListView Grid.Column="1" x:Name="listMacros"
-                  ItemsSource="{Binding MacroPreviewList}"
+                 Text="{Binding MacroPreviewFilter, UpdateSourceTrigger=PropertyChanged}"/>
+        <ListView Grid.Column="1"
+                  ItemsSource="{Binding MacroListView}"
+                  MouseDoubleClick="InsertMacro"
                   ScrollViewer.CanContentScroll="True" Margin="10,44,10,10">
             <ListView.View>
                 <GridView>
