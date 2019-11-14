@@ -60,7 +60,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < _targetColumnIndex);
             }
             _columnOffset = _columnX + _initOffset;
-            Cursor.Current = Cursors.NoMoveHoriz;
+
             _operationStarted = false;
             return true;
         }
