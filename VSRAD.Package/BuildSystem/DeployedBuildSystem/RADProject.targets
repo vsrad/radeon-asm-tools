@@ -56,5 +56,6 @@
   </Target>
 
   <Target Name="Rebuild">
+    <RemoteBuildTask ProjectDir="$(MSBuildProjectDirectory)" />
   </Target>
 </Project>
