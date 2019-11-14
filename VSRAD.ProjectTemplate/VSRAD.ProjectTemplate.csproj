@@ -56,6 +56,7 @@
   <ItemGroup>
     <None Include="RADProject.radproj" />
     <Content Include="start.s" />
+    <None Include="RADProject.radproj.user.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="RADProject.ico" />
