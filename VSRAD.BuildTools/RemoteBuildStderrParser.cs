@@ -38,15 +38,17 @@ namespace VSRAD.BuildTools
         {
             var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             int[] result = new int[lines.Length];
-            int originalSourceLine = 0;
+            int originalSourceLine = 1;
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
+                
                 if (line.StartsWith("#") || line.StartsWith("//#"))
+                {
                     originalSourceLine = int.Parse(LineNumRegex.Match(line).Value);
-                else
-                    originalSourceLine++;
-                result[i] = originalSourceLine;
+                    continue;
+                }
+                result[i] = originalSourceLine++;
             }
             return result;
         }

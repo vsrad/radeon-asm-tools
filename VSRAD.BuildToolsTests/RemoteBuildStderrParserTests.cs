@@ -71,7 +71,7 @@ int main() {
         public void PreprocessMapLinesTest()
         {
             var lineMapping = MapLines(Preprocessed);
-            Assert.Equal(new int[] { 1, 2, 3, 16, 17, 55, 56 }, lineMapping);
+            Assert.Equal(new int[] { 1, 2, 3, 4, 0, 16, 17, 0, 55, 56, 57 }, lineMapping);
         }
     }
 }
