@@ -34,7 +34,7 @@ namespace VSRAD.BuildTools
             public int Column { get; set; }
         }
 
-        private static int[] MapLines(string preprocessed)
+        public static int[] MapLines(string preprocessed)
         {
             var lines = preprocessed.Split(Environment.NewLine.ToCharArray());
             int[] result = new int[lines.Length];
