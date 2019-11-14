@@ -99,7 +99,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
             result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"));
             Assert.False(result.TryGetResult(out _, out error));
-            Assert.Equal(RemoteCommandExecutor.ErrorFileHasNotChanged, error.Message);
+            Assert.Equal(RemoteCommandExecutor.ErrorFileUnchanged, error.Message);
 
             Assert.True(channel.AllInteractionsHandled);
         }
