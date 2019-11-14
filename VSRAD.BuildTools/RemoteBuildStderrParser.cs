@@ -38,7 +38,7 @@ namespace VSRAD.BuildTools
         {
             var lines = preprocessed.Split(Environment.NewLine.ToCharArray());
             int[] result = new int[lines.Length];
-            int curr_iterator = 0;
+            int curr_iterator = 1;
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
@@ -85,7 +85,7 @@ namespace VSRAD.BuildTools
 
             foreach (var message in messages)
             {
-                // change line
+                message.Line = ppLines[message.Line - 1];
             }
 
             return messages;
