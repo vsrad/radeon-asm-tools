@@ -41,7 +41,7 @@ namespace VSRAD.BuildTools
                 return false;
             }
 
-            foreach (var message in RemoteBuildStderrParser.ExtractMessages(result.Stderr))
+            foreach (var message in RemoteBuildStderrParser.ExtractMessages(result.Stderr, result.PreprocessedSource))
                 switch (message.Kind)
                 {
                     case RemoteBuildStderrParser.MessageKind.Error:

@@ -10,6 +10,8 @@ namespace VSRAD.BuildTools
         private static readonly Regex ClangErrorRegex = new Regex(
             @"(?<file>[^:]+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note):\s(?<text>.+)", RegexOptions.Compiled);
 
+        private static readonly Regex LineNumRegex = new Regex(@"\d+", RegexOptions.Compiled);
+
         public enum MessageKind { Error, Warning, Note }
 
         public static MessageKind MessageKindFromString(string kind)
@@ -32,7 +34,24 @@ namespace VSRAD.BuildTools
             public int Column { get; set; }
         }
 
-        public static IEnumerable<Message> ExtractMessages(string stderr)
+        private static int[] MapLines(string preprocessed)
+        {
+            var lines = preprocessed.Split(Environment.NewLine.ToCharArray());
+            int[] result = new int[lines.Length];
+            int curr_iterator = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (line.StartsWith("#") || line.StartsWith("//#"))
+                    curr_iterator = int.Parse(LineNumRegex.Match(line).Value);
+                else
+                    curr_iterator++;
+                result[i] = curr_iterator;
+            }
+            return result;
+        }
+
+        private static ICollection<Message> ParseStdErr(string stderr)
         {
             var messages = new LinkedList<Message>();
             using (var reader = new StringReader(stderr))
@@ -54,6 +73,21 @@ namespace VSRAD.BuildTools
                         messages.Last.Value.Text += Environment.NewLine + line;
                 }
             }
+            return messages;
+        }
+
+        public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed)
+        {
+            var messages = ParseStdErr(stderr);
+            if (messages.Count == 0) return messages;
+
+            var ppLines = MapLines(preprocessed);
+
+            foreach (var message in messages)
+            {
+                // change line
+            }
+
             return messages;
         }
     }

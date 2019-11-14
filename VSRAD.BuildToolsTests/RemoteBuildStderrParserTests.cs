@@ -22,7 +22,7 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
         [Fact]
         public void ClangErrorTest()
         {
-            var messages = ExtractMessages(ClangErrorString).ToList();
+            var messages = ExtractMessages(ClangErrorString, "").ToList();
 
             Assert.Equal(MessageKind.Error, messages[0].Kind);
             Assert.Equal(27, messages[0].Column);
