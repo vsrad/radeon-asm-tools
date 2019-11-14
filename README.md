@@ -42,8 +42,7 @@ where `port` is a TCP port number the server will listen on.
 select *Properties*.
 4. Navigate to the *Debug* tab in the project properties editor.
 5. Choose *Start external program* as the *Start action* and enter the path to your Visual Studio executable (`<Visual Studio installation path>\Common7\IDE\devenv.exe`).
-6. Enter `/RootSuffix Exp` in the *Command line arguments* field.
-7. Close the project properties editor and start debugging by pressing F5.
+6. Close the project properties editor and start debugging by pressing F5.
 
 ### Assembling a Release
 
