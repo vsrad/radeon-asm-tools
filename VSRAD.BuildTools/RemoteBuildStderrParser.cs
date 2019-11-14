@@ -36,22 +36,22 @@ namespace VSRAD.BuildTools
 
         public static int[] MapLines(string preprocessed)
         {
-            var lines = preprocessed.Split(Environment.NewLine.ToCharArray());
+            var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             int[] result = new int[lines.Length];
-            int curr_iterator = 1;
+            int originalSourceLine = 0;
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
                 if (line.StartsWith("#") || line.StartsWith("//#"))
-                    curr_iterator = int.Parse(LineNumRegex.Match(line).Value);
+                    originalSourceLine = int.Parse(LineNumRegex.Match(line).Value);
                 else
-                    curr_iterator++;
-                result[i] = curr_iterator;
+                    originalSourceLine++;
+                result[i] = originalSourceLine;
             }
             return result;
         }
 
-        private static ICollection<Message> ParseStdErr(string stderr)
+        private static ICollection<Message> ParseStderr(string stderr)
         {
             var messages = new LinkedList<Message>();
             using (var reader = new StringReader(stderr))
@@ -78,14 +78,14 @@ namespace VSRAD.BuildTools
 
         public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed)
         {
-            var messages = ParseStdErr(stderr);
-            if (messages.Count == 0) return messages;
+            var messages = ParseStderr(stderr);
 
-            var ppLines = MapLines(preprocessed);
-
-            foreach (var message in messages)
+            if (messages.Count > 0 && !string.IsNullOrEmpty(preprocessed))
             {
-                message.Line = ppLines[message.Line - 1];
+                var ppLines = MapLines(preprocessed);
+
+                foreach (var message in messages)
+                    message.Line = ppLines[message.Line - 1];
             }
 
             return messages;
