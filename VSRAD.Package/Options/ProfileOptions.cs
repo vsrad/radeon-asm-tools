@@ -38,7 +38,6 @@ namespace VSRAD.Package.Options
         public DebuggerProfileOptions Debugger { get; }
         public DisassemblerProfileOptions Disassembler { get; }
         public ProfilerProfileOptions Profiler { get; }
-
         public BuildProfileOptions Build { get; }
 
         public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null)
@@ -307,11 +306,13 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
         public string WorkingDirectory { get; }
 
-        [Macro(RadMacros.BuildPreprocessedSource)]
-        [Description(@"Path of preprocessed source on a target machine. Used to map line numbers in the compiler's output to original sources. Linemarkers should start with '//# ' or '# '")]
-        [DisplayName("Preprocessed Source")]
-        [DefaultValue(DefaultOptionValues.PreprocessedSource)]
+        [Macro(RadMacros.BuildPreprocessedSource), DisplayName("Preprocessed Source")]
+        [Description(@"Path to the preprocessed source on the remote machine. Used to map line numbers in the compiler's output to original sources. Linemarkers should start with '//# ' or '# '")]
+        [DefaultValue(DefaultOptionValues.BuildPreprocessedSource)]
         public string PreprocessedSource { get; }
+
+        [JsonIgnore]
+        public OutputFile PreprocessedSourceFile => new OutputFile(WorkingDirectory, PreprocessedSource, binaryOutput: true);
 
         public async Task<BuildProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new BuildProfileOptions(
@@ -321,7 +322,7 @@ namespace VSRAD.Package.Options
                 preprocessedSource: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildPreprocessedSource)
             );
 
-        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory, string preprocessedSource = DefaultOptionValues.PreprocessedSource)
+        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory, string preprocessedSource = DefaultOptionValues.BuildPreprocessedSource)
         {
             Executable = executable;
             Arguments = arguments;

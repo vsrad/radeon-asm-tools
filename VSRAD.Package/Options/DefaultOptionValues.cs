@@ -24,7 +24,6 @@ namespace VSRAD.Package.Options
         public const bool DebuggerRunAsAdmin = false;
         public const int DebuggerTimeoutSecs = 0;
         public const int OutputOffset = 0;
-        public const string PreprocessedSource = "";
         #endregion
         #region Disassembler
         public const string DisassemblerExecutable = "";
@@ -48,6 +47,7 @@ namespace VSRAD.Package.Options
         public const string BuildExecutable = "";
         public const string BuildArguments = "";
         public const string BuildWorkingDirectory = "";
+        public const string BuildPreprocessedSource = "preprocessed_source.build.tmp";
         #endregion
     }
 }
