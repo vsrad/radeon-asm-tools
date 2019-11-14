@@ -380,7 +380,7 @@ namespace VSRAD.Package.DebugVisualizer
         protected override void OnMouseMove(MouseEventArgs e)
         {
             Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), this, e.X)
-                ? Cursors.NoMoveHoriz : Cursors.Default;
+                ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))
                 base.OnMouseMove(e);
         }
