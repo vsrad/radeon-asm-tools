@@ -197,7 +197,7 @@ $loopcounter
 
 		s_mov_b32 s[dbg_stmp], exec_lo
 		s_mov_b32 s[dbg_counter], exec_hi
-		v_mov_b32       v[v_save], 0x777
+		v_mov_b32       v[v_save], 0x7777777
 		v_writelane_b32 v[v_save], s[s_srd+0], 1
 		v_writelane_b32 v[v_save], s[s_srd+1], 2
 		v_writelane_b32 v[v_save], s[s_srd+2], 3

@@ -32,7 +32,7 @@
         "NDRange3D": false,
         "LaneGrouping": 4,
         "CheckMagicNumber": true,
-        "MagicNumber": "0x777",
+        "MagicNumber": "0x7777777",
         "ShowAppArgs": false,
         "ShowBrkArgs": false
     },

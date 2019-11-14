@@ -44,7 +44,7 @@ namespace VSRAD.Package.Options
             set => SetField(ref _checkMagicNumber, value);
         }
 
-        private int _magicNumber = 2004318071; // Default value, do not change
+        private int _magicNumber = 0x7777777; // Default value, do not change
         [JsonConverter(typeof(MagicNumberConverter))]
         public int MagicNumber
         {
