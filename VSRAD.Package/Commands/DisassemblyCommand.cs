@@ -49,8 +49,9 @@ namespace VSRAD.Package.Commands
                 var executor = new RemoteCommandExecutor("Disassembly", _channel, _outputWindow);
                 var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
 
-                if (!result.TryGetResult(out var data, out var error))
+                if (!result.TryGetResult(out var execResult, out var error))
                     throw new System.Exception(error.Message);
+                var (_, data) = execResult;
 
                 File.WriteAllBytes(options.LocalOutputCopyPath, data);
                 OpenFileInEditor(options.LocalOutputCopyPath, options.LineMarker);

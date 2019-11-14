@@ -30,14 +30,14 @@ namespace VSRAD.Package.Server
             _outputWriter = outputWindow.GetExecutionResultPane();
         }
 
-        public async Task<Result<byte[]>> ExecuteWithResultAsync(Execute command, Options.OutputFile output, int byteCount = 0)
+        public async Task<Result<(ExecutionCompleted, byte[])>> ExecuteWithResultAsync(Execute command, Options.OutputFile output, int byteCount = 0)
         {
             var initialMetadata = await _channel.SendWithReplyAsync<MetadataFetched>(
                 new FetchMetadata { FilePath = output.Path, BinaryOutput = output.BinaryOutput }).ConfigureAwait(false);
             var initialTimestamp = initialMetadata.Timestamp;
 
             var executionResult = await ExecuteAsync(command).ConfigureAwait(false);
-            if (!executionResult.TryGetResult(out _, out var error))
+            if (!executionResult.TryGetResult(out var execution, out var error))
                 return error;
 
             var dataResult = await _channel.SendWithReplyAsync<ResultRangeFetched>(
@@ -47,7 +47,7 @@ namespace VSRAD.Package.Server
             if (dataResult.Timestamp == initialTimestamp)
                 return new Error(ErrorFileHasNotChanged);
 
-            return dataResult.Data;
+            return (execution, dataResult.Data);
         }
 
         public async Task<Result<ExecutionCompleted>> ExecuteAsync(Execute command, bool checkExitCode = true)

@@ -94,8 +94,9 @@ namespace VSRAD.Package.Commands
             var byteCount = 2 /* system + watch */ * 512 * 4 /* dwords -> bytes */;
             var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile, byteCount).ConfigureAwait(false);
 
-            if (!result.TryGetResult(out var data, out var error))
+            if (!result.TryGetResult(out var execResult, out var error))
                 throw new Exception(error.Message);
+            var (_, data) = execResult;
 
             var bytesFetched = new uint[1024];
             Buffer.BlockCopy(data, 0, bytesFetched, 0, data.Length);
