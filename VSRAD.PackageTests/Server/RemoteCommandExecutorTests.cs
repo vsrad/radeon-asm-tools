@@ -39,7 +39,8 @@ namespace VSRAD.PackageTests.Server
 
             var result = await executor.ExecuteWithResultAsync(new Execute { Executable = "exec", Arguments = "args" }, new OutputFile("file", "path"));
             Assert.True(result.TryGetResult(out var resultData, out _));
-            Assert.Equal(data, resultData);
+            Assert.Equal(data, resultData.Item2);
+            Assert.Equal("test stdout", resultData.Item1.Stdout);
 
             outputWriterMock.Verify((w) => w.PrintMessageAsync(
                 "[Test] Captured stdout", "test stdout"), Times.Once);
@@ -98,7 +99,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
             result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"));
             Assert.False(result.TryGetResult(out _, out error));
-            Assert.Equal(RemoteCommandExecutor.ErrorFileHasNotChanged, error.Message);
+            Assert.Equal(RemoteCommandExecutor.ErrorFileUnchanged, error.Message);
 
             Assert.True(channel.AllInteractionsHandled);
         }

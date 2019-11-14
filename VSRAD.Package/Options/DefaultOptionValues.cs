@@ -47,6 +47,7 @@ namespace VSRAD.Package.Options
         public const string BuildExecutable = "";
         public const string BuildArguments = "";
         public const string BuildWorkingDirectory = "";
+        public const string BuildPreprocessedSource = "preprocessed_source.build.tmp";
         #endregion
     }
 }

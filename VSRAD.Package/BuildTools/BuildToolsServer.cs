@@ -2,10 +2,12 @@
 using System;
 using System.ComponentModel.Composition;
 using System.IO.Pipes;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.BuildTools;
 using VSRAD.DebugServer.IPC.Commands;
+using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -16,6 +18,9 @@ namespace VSRAD.Package.BuildTools
     [AppliesTo(Constants.ProjectCapability)]
     public sealed class BuildToolsServer
     {
+        public const string ErrorPreprocessorFileNotCreated = "Preprocessor output file is missing.";
+        public const string ErrorPreprocessorFileUnchanged = "Preprocessor output file is unchanged after running the command.";
+
         public string PipeName => IPCBuildResult.GetIPCPipeName(_project.RootPath);
 
         private readonly ICommunicationChannel _channel;
@@ -51,12 +56,11 @@ namespace VSRAD.Package.BuildTools
                 {
                     await server.WaitForConnectionAsync(_serverLoopCts.Token).ConfigureAwait(false);
 
-                    var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
                     byte[] message;
                     try
                     {
-                        var buildResult = await BuildAsync(_project, _deployManager, executor).ConfigureAwait(false);
+                        var buildResult = await BuildAsync().ConfigureAwait(false);
                         if (buildResult.TryGetResult(out var result, out var error))
                             message = result.ToArray();
                         else
@@ -71,16 +75,17 @@ namespace VSRAD.Package.BuildTools
                 }
         }
 
-        private static async Task<Result<IPCBuildResult>> BuildAsync(IProject project, IFileSynchronizationManager deployManager, RemoteCommandExecutor executor)
+        private async Task<Result<IPCBuildResult>> BuildAsync()
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            var evaluator = await project.GetMacroEvaluatorAsync(default);
-            var options = await project.Options.Profile.Build.EvaluateAsync(evaluator);
+            var evaluator = await _project.GetMacroEvaluatorAsync(default);
+            var options = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
+            var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
             if (string.IsNullOrEmpty(options.Executable))
                 return new IPCBuildResult { ServerError = IPCBuildResult.ServerErrorBuildSkipped };
 
-            await deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
+            await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var command = new Execute
             {
@@ -88,11 +93,31 @@ namespace VSRAD.Package.BuildTools
                 Arguments = options.Arguments,
                 WorkingDirectory = options.WorkingDirectory
             };
-            var response = await executor.ExecuteAsync(command, checkExitCode: false);
-            if (!response.TryGetResult(out var result, out var error))
-                return error;
 
-            return new IPCBuildResult { ExitCode = result.ExitCode, Stdout = result.Stdout, Stderr = result.Stderr };
+            ExecutionCompleted result;
+            string preprocessed = "";
+            if (string.IsNullOrEmpty(options.PreprocessedSource))
+            {
+                var response = await executor.ExecuteAsync(command, checkExitCode: false);
+                if (!response.TryGetResult(out result, out var error))
+                    return error;
+            }
+            else
+            {
+                var response = await executor.ExecuteWithResultAsync(command, options.PreprocessedSourceFile, checkExitCode: false);
+                if (!response.TryGetResult(out var resultData, out var error))
+                    switch (error.Message)
+                    {
+                        case RemoteCommandExecutor.ErrorFileNotCreated: return new Error(ErrorPreprocessorFileNotCreated);
+                        case RemoteCommandExecutor.ErrorFileUnchanged: return new Error(ErrorPreprocessorFileUnchanged);
+                        default: return error;
+                    }
+
+                result = resultData.Item1;
+                preprocessed = Encoding.UTF8.GetString(resultData.Item2);
+            }
+
+            return new IPCBuildResult { ExitCode = result.ExitCode, Stdout = result.Stdout, Stderr = result.Stderr, PreprocessedSource = preprocessed };
         }
     }
 }

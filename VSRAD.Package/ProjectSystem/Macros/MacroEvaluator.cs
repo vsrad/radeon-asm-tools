@@ -58,6 +58,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string BuildExecutable = "RadBuildExe";
         public const string BuildArguments = "RadBuildArgs";
         public const string BuildWorkingDirectory = "RadBuildWorkDir";
+        public const string BuildPreprocessedSource = "RadBuildPpSource";
     }
 
     public interface IMacroEvaluator
@@ -147,6 +148,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.BuildExecutable: unevaluated = _profileOptions.Build.Executable; break;
                 case RadMacros.BuildArguments: unevaluated = _profileOptions.Build.Arguments; break;
                 case RadMacros.BuildWorkingDirectory: unevaluated = _profileOptions.Build.WorkingDirectory; break;
+                case RadMacros.BuildPreprocessedSource: unevaluated = _profileOptions.Build.PreprocessedSource; break;
             }
 
             if (unevaluated != null)

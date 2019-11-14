@@ -12,6 +12,7 @@ namespace VSRAD.BuildTools
         public string Stdout { get; set; }
         public string Stderr { get; set; }
         public string ServerError { get; set; }
+        public string PreprocessedSource { get; set; } = "";
 
         public static IPCBuildResult Read(Stream stream)
         {
@@ -22,7 +23,8 @@ namespace VSRAD.BuildTools
                     {
                         ExitCode = reader.ReadInt32(),
                         Stdout = reader.ReadString(),
-                        Stderr = reader.ReadString()
+                        Stderr = reader.ReadString(),
+                        PreprocessedSource = reader.ReadString()
                     };
                 else
                     return new IPCBuildResult
@@ -43,6 +45,7 @@ namespace VSRAD.BuildTools
                     writer.Write(ExitCode);
                     writer.Write(Stdout);
                     writer.Write(Stderr);
+                    writer.Write(PreprocessedSource);
                 }
                 else
                 {

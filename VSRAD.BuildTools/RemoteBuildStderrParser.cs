@@ -10,6 +10,8 @@ namespace VSRAD.BuildTools
         private static readonly Regex ClangErrorRegex = new Regex(
             @"(?<file>[^:]+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note):\s(?<text>.+)", RegexOptions.Compiled);
 
+        private static readonly Regex LineNumRegex = new Regex(@"\d+", RegexOptions.Compiled);
+
         public enum MessageKind { Error, Warning, Note }
 
         public static MessageKind MessageKindFromString(string kind)
@@ -32,7 +34,26 @@ namespace VSRAD.BuildTools
             public int Column { get; set; }
         }
 
-        public static IEnumerable<Message> ExtractMessages(string stderr)
+        public static int[] MapLines(string preprocessed)
+        {
+            var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            int[] result = new int[lines.Length];
+            int originalSourceLine = 1;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                
+                if (line.StartsWith("#") || line.StartsWith("//#"))
+                {
+                    originalSourceLine = int.Parse(LineNumRegex.Match(line).Value);
+                    continue;
+                }
+                result[i] = originalSourceLine++;
+            }
+            return result;
+        }
+
+        private static ICollection<Message> ParseStderr(string stderr)
         {
             var messages = new LinkedList<Message>();
             using (var reader = new StringReader(stderr))
@@ -54,6 +75,21 @@ namespace VSRAD.BuildTools
                         messages.Last.Value.Text += Environment.NewLine + line;
                 }
             }
+            return messages;
+        }
+
+        public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed)
+        {
+            var messages = ParseStderr(stderr);
+
+            if (messages.Count > 0 && !string.IsNullOrEmpty(preprocessed))
+            {
+                var ppLines = MapLines(preprocessed);
+
+                foreach (var message in messages)
+                    message.Line = ppLines[message.Line - 1];
+            }
+
             return messages;
         }
     }
