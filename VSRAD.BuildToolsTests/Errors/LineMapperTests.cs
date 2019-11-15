@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Linq;
+using VSRAD.BuildTools.Errors;
 using Xunit;
 using static VSRAD.BuildTools.Errors.LineMapper;
 using static VSRAD.BuildTools.Errors.Parser;
@@ -34,14 +35,13 @@ int main(int argc, char** argv)
 ";
 
 
-        public const string Preprocessed = @"
-int main() {
+        public const string Preprocessed = @"int main() {
     int a = 1 + 1;
     int b = 2 + 2;
-# 16 'source.c'
+# 16 ""source.c""
     int c = 3 + 3;
     int d = 4 + 4;
-# 55 'source.c'
+# 55 ""source1.c""
     int f = 0xDEAD;
 }
 ";
@@ -67,7 +67,10 @@ int main() {
         public void PreprocessMapLinesTest()
         {
             var lineMapping = MapLines(Preprocessed);
-            Assert.Equal(new int[] { 1, 2, 3, 4, 0, 16, 17, 0, 55, 56, 57 }, lineMapping);
+            Assert.Equal(new LineMarker[] {
+                new LineMarker { PpLine = 3, SourceLine = 16, SourceFile = "source.c" },
+                new LineMarker { PpLine = 6, SourceLine = 55, SourceFile = "source1.c" }
+            }, lineMapping);
         }
 
         [Fact]
