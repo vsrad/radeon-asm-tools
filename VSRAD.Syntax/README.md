@@ -21,8 +21,7 @@ select *Properties*.
 
 ## Plugin features
 
-### Syntax highlight
-#### Radeon asm syntax options
+### Radeon asm syntax options
 * Radeon asm extra keywords
 * Radeon asm function argument
 * Radeon asm function name
@@ -31,18 +30,26 @@ select *Properties*.
 * Radeon asm instructions
 * Radeon asm labels
 <p align="center">
-  <img src="docs/syntax_highlight.PNG" width="49%" height="250px" title="Syntax highlight">
-  <img src="docs/syntax_highlight_options.PNG" width="49%" height="250px" title="Syntax highlight options">
+  <img src="docs/syntax_highlight.PNG" width="49%" height="450px" title="Syntax highlight">
+  <img src="docs/syntax_highlight_options.PNG" width="49%" height="450px" title="Syntax highlight options">
 </p>
 
 ### Indent guide lines
 <p align="center">
-  <img src="docs/indent_guide.PNG" width="49%" height="250px" title="Syntax highlight">
-  <img src="docs/indent_guide_options.PNG" width="49%" height="250px" title="Syntax highlight options">
+  <img src="docs/indent_guide.PNG" width="49%" height="450px" title="Syntax highlight">
+  <img src="docs/indent_guide_options.PNG" width="49%" height="450px" title="Syntax highlight options">
+</p>
+
+### Error highlight (only with debugger extension)
+<p align="center">
+  <img src="docs/error_highlight.PNG" title="Error highlight">
 </p>
 
 ### Outlining regions 
-![Outlining regions](docs/outlining.PNG)
+<p align="center">
+  <img src="docs/outlining.PNG" title="Outlining regions">
+</p>
+
 ### Function list
 * Tool window location is `View -> Other Windows -> Radeon Asm Function List`
 * The function list is filtered by text in search field.
@@ -55,12 +62,12 @@ select *Properties*.
   > To set redirect special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Select" and set shortcut keys`.
 
 <p align="center">
-  <img src="docs/function_list.PNG" width="49%" height="250px" title="Function list">
-  <img src="docs/function_list_search.PNG" width="49%" height="250px" title="Function list search field">
+  <img src="docs/function_list.PNG" width="49%" height="450px" title="Function list">
+  <img src="docs/function_list_search.PNG" width="49%" height="450px" title="Function list search field">
 </p>
 <p align="center">
-  <img src="docs/function_list_show_hide.PNG" width="49%" height="250px" title="Function list show/hide">
-  <img src="docs/funtion_list_options.PNG" width="49%" height="250px" title="Function list options">
+  <img src="docs/function_list_show_hide.PNG" width="49%" height="450px" title="Function list show/hide">
+  <img src="docs/funtion_list_options.PNG" width="49%" height="450px" title="Function list options">
 </p>
 
 ### Code navigation
@@ -69,9 +76,16 @@ select *Properties*.
 * Navigation to `variable` (variable definition is explicit `.set` or implicit `vaiable_name = 0x01`)
 * Navigation to `macro argument`
 
-![Peek/GoTo definition](docs/peek_goto_definition_show.PNG)
+<p align="center">
+  <img src="docs/peek_goto_definition_show.PNG" title="Peek/GoTo definition">
+</p>
 
 ### Identifier highlight
 * Highlighting an element in its scope
 
-![Peek/GoTo definition](docs/identifier_highlight.PNG)
+<p align="center">
+  <img src="docs/identifier_highlight.PNG" title="Indentifier highlight">
+</p>
+
+### Other features
+* Comment/Uncomment block
