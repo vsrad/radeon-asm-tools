@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Errors\LineMapper.cs" />
     <Compile Include="Errors\Message.cs" />
     <Compile Include="IPCBuildResult.cs" />
     <Compile Include="RemoteBuildTask.cs" />

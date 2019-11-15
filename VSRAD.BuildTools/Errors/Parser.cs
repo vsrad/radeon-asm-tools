@@ -7,15 +7,13 @@ namespace VSRAD.BuildTools.Errors
 {
     public static class Parser
     {
-        private static readonly Regex LineNumRegex = new Regex(@"\d+", RegexOptions.Compiled);
-
         public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed)
         {
             var messages = ParseStderr(stderr);
 
             if (messages.Count > 0 && !string.IsNullOrEmpty(preprocessed))
             {
-                var ppLines = MapLines(preprocessed);
+                var ppLines = LineMapper.MapLines(preprocessed);
 
                 foreach (var message in messages)
                     message.Line = ppLines[message.Line - 1];
@@ -54,25 +52,6 @@ namespace VSRAD.BuildTools.Errors
                 }
             }
             return messages;
-        }
-
-        public static int[] MapLines(string preprocessed)
-        {
-            var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            int[] result = new int[lines.Length];
-            int originalSourceLine = 1;
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var line = lines[i];
-
-                if (line.StartsWith("#") || line.StartsWith("//#"))
-                {
-                    originalSourceLine = int.Parse(LineNumRegex.Match(line).Value);
-                    continue;
-                }
-                result[i] = originalSourceLine++;
-            }
-            return result;
         }
 
         private static readonly Regex ClangErrorRegex = new Regex(
