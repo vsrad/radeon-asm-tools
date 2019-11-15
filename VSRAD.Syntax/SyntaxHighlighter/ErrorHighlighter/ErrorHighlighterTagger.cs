@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
+namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 {
     internal class ErrorHighlighterTagger : ITagger<IErrorTag>
     {
