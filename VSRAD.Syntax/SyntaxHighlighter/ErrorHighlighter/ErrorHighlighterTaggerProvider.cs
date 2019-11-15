@@ -12,10 +12,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 {
     [Export(typeof(IViewTaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
-    [TagType(typeof(ErrorSpanTag))]
+    [TagType(typeof(IErrorTag))]
     internal sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
     {
-        public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, IReadOnlyList<(int line, int column, string message)>> errors);
+        public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, List<(int line, int column, string message)>> errors);
 
         public event ErrorsUpdateDelegate ErrorsUpdated;
 
@@ -43,7 +43,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
                 errors[error.FileName].Add((error.Line, error.Column, error.Description));
             }
-            ErrorsUpdated?.Invoke((IReadOnlyDictionary<string, IReadOnlyList<(int line, int column, string message)>>)errors);
+            ErrorsUpdated?.Invoke(errors);
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
@@ -51,7 +51,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             if (textView.TextBuffer != buffer)
                 return null;
 
-            return new ErrorHighlighterTagger(textView, buffer) as ITagger<T>;
+            return new ErrorHighlighterTagger(this, textView, buffer) as ITagger<T>;
         }
     }
 }
