@@ -15,7 +15,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     [TagType(typeof(ErrorSpanTag))]
     internal sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
     {
-        public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, IReadOnlyList<(int line, int column)>> errors);
+        public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, IReadOnlyList<(int line, int column, string message)>> errors);
 
         public event ErrorsUpdateDelegate ErrorsUpdated;
 
@@ -32,18 +32,18 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
         private void ProjectBuildDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
         {
-            var errors = new Dictionary<string, List<(int line, int column)>>();
+            var errors = new Dictionary<string, List<(int line, int column, string message)>>();
             var errorList = _dte.ToolWindows.ErrorList.ErrorItems;
             for (int i = 1; i <= errorList.Count; i++)
             {
                 var error = errorList.Item(i);
 
                 if (!errors.ContainsKey(error.FileName))
-                    errors[error.FileName] = new List<(int line, int column)>();
+                    errors[error.FileName] = new List<(int line, int column, string message)>();
 
-                errors[error.FileName].Add((error.Line, error.Column));
+                errors[error.FileName].Add((error.Line, error.Column, error.Description));
             }
-            ErrorsUpdated?.Invoke((IReadOnlyDictionary<string, IReadOnlyList<(int line, int column)>>)errors);
+            ErrorsUpdated?.Invoke((IReadOnlyDictionary<string, IReadOnlyList<(int line, int column, string message)>>)errors);
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
