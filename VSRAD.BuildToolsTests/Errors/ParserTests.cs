@@ -1,12 +1,15 @@
 ﻿using System.Linq;
 using Xunit;
-using static VSRAD.BuildTools.RemoteBuildStderrParser;
+using static VSRAD.BuildTools.Errors.Parser;
 
-namespace VSRAD.BuildTools
+namespace VSRAD.BuildTools.Errors
 {
-    public class RemoteBuildStderrParserTests
+    public class ParserTests
     {
-        public const string ClangErrorString = @"
+        [Fact]
+        public void ClangErrorTest()
+        {
+            var messages = ExtractMessages(@"
 input.s:267:27: error: expected absolute expression
       s_sub_u32         s[loop_xss], s[loop_x], 1
                           ^
@@ -17,24 +20,7 @@ host.c:4:2: warning: implicitly declaring library function 'printf' with type 'i
         printf(""h"");
         ^
 host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
-";
-
-        public const string Preprocessed = @"
-int main() {
-    int a = 1 + 1;
-    int b = 2 + 2;
-# 16 'source.c'
-    int c = 3 + 3;
-    int d = 4 + 4;
-# 55 'source.c'
-    int f = 0xDEAD;
-}
-";
-
-        [Fact]
-        public void ClangErrorTest()
-        {
-            var messages = ExtractMessages(ClangErrorString, "").ToList();
+", "").ToList();
 
             Assert.Equal(MessageKind.Error, messages[0].Kind);
             Assert.Equal(27, messages[0].Column);
@@ -68,10 +54,37 @@ int main() {
         }
 
         [Fact]
-        public void PreprocessMapLinesTest()
+        public void ScriptErrorTest()
         {
-            var lineMapping = MapLines(Preprocessed);
-            Assert.Equal(new int[] { 1, 2, 3, 4, 0, 16, 17, 0, 55, 56, 57 }, lineMapping);
+            var messages = ExtractMessages(@"
+*E,fatal: undefined reference to 'printf' (<stdin>:3)
+*W,undefined: 1 undefined references found
+*E,syntax error (<stdin>:12): at symbol 'printf'
+    parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
+    did you really mean to use the scope resolution op here?
+*E,fatal (auth.c:35): Uncaught error: Undefined variable: user
+", "").ToList();
+
+            Assert.Equal(MessageKind.Error, messages[0].Kind);
+            Assert.Equal(3, messages[0].Line);
+            Assert.Equal("<stdin>", messages[0].SourceFile);
+            Assert.Equal("fatal: undefined reference to 'printf'", messages[0].Text);
+
+            Assert.Equal(MessageKind.Warning, messages[1].Kind);
+            Assert.Null(messages[1].SourceFile);
+            Assert.Equal("undefined: 1 undefined references found", messages[1].Text);
+
+            Assert.Equal(MessageKind.Error, messages[2].Kind);
+            Assert.Equal(12, messages[2].Line);
+            Assert.Equal("<stdin>", messages[2].SourceFile);
+            Assert.Equal(@"syntax error: at symbol 'printf'
+    parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
+    did you really mean to use the scope resolution op here?", messages[2].Text);
+
+            Assert.Equal(MessageKind.Error, messages[3].Kind);
+            Assert.Equal(35, messages[3].Line);
+            Assert.Equal("auth.c", messages[3].SourceFile);
+            Assert.Equal("fatal: Uncaught error: Undefined variable: user", messages[3].Text);
         }
     }
 }

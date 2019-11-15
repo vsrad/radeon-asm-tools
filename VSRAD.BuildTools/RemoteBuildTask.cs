@@ -41,24 +41,24 @@ namespace VSRAD.BuildTools
                 return false;
             }
 
-            foreach (var message in RemoteBuildStderrParser.ExtractMessages(result.Stderr, result.PreprocessedSource))
+            foreach (var message in Errors.Parser.ExtractMessages(result.Stderr, result.PreprocessedSource))
                 switch (message.Kind)
                 {
-                    case RemoteBuildStderrParser.MessageKind.Error:
+                    case Errors.MessageKind.Error:
                         Log.LogError(
                             subcategory: null, errorCode: null, helpKeyword: null,
                             message: message.Text, file: message.SourceFile,
                             lineNumber: message.Line, columnNumber: message.Column,
                             endLineNumber: 0, endColumnNumber: 0);
                         break;
-                    case RemoteBuildStderrParser.MessageKind.Warning:
+                    case Errors.MessageKind.Warning:
                         Log.LogWarning(
                             subcategory: null, warningCode: null, helpKeyword: null,
                             message: message.Text, file: message.SourceFile,
                             lineNumber: message.Line, columnNumber: message.Column,
                             endLineNumber: 0, endColumnNumber: 0);
                         break;
-                    case RemoteBuildStderrParser.MessageKind.Note:
+                    case Errors.MessageKind.Note:
                         Log.LogWarning(
                             subcategory: null, warningCode: null, helpKeyword: null,
                             message: "note: " + message.Text, file: message.SourceFile,
