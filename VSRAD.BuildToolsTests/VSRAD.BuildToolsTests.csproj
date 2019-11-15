@@ -52,7 +52,7 @@
     <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="RemoteBuildStderrParserTests.cs" />
+    <Compile Include="Errors\ParserTests.cs" />
     <Compile Include="RemoteBuildTaskTests.cs" />
   </ItemGroup>
   <ItemGroup>

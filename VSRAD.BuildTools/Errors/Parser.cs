@@ -3,22 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace VSRAD.BuildTools
+namespace VSRAD.BuildTools.Errors
 {
-    public static class RemoteBuildStderrParser
+    public static class Parser
     {
         private static readonly Regex LineNumRegex = new Regex(@"\d+", RegexOptions.Compiled);
-
-        public enum MessageKind { Error, Warning, Note }
-
-        public sealed class Message
-        {
-            public MessageKind Kind { get; set; }
-            public string Text { get; set; }
-            public string SourceFile { get; set; }
-            public int Line { get; set; }
-            public int Column { get; set; }
-        }
 
         public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed)
         {

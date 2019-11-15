@@ -1,10 +1,10 @@
 ﻿using System.Linq;
 using Xunit;
-using static VSRAD.BuildTools.RemoteBuildStderrParser;
+using static VSRAD.BuildTools.Errors.Parser;
 
-namespace VSRAD.BuildTools
+namespace VSRAD.BuildTools.Errors
 {
-    public class RemoteBuildStderrParserTests
+    public class ParserTests
     {
         public const string ClangErrorString = @"
 input.s:267:27: error: expected absolute expression
