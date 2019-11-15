@@ -8,20 +8,19 @@ namespace VSRAD.BuildToolsTests.Errors
     public class LineMapperTests
     {
         public const string ErrString = @"
-test.c:5:10: error: invalid digit 'a' in octal constant
+test.c:12:10: error: invalid digit 'a' in octal constant
  return 0asdfshgmgmg
          ^
 1 error generated.
 ";
 
-        public const string PpString = @"
-# 1 ""test.c""
-# 1 ""<built-in>""
-# 1 ""<command-line>""
-# 31 ""<command-line>""
-# 1 ""/usr/include/stdc-predef.h"" 1 3 4
-# 32 ""<command-line>"" 2
-# 1 ""test.c""
+        public const string PpString = @"//# 1 ""test.c""
+//# 1 ""<built-in>""
+//# 1 ""<command-line>""
+//# 31 ""<command-line>""
+//# 1 ""/usr/include/stdc-predef.h"" 1 3 4
+//# 32 ""<command-line>"" 2
+//# 1 ""test.c""
 
 
 int main(int argc, char** argv)
@@ -49,7 +48,6 @@ int main() {
         [Fact]
         public void PreprocessMapLinesTest()
         {
-
             var lineMapping = MapLines(Preprocessed);
             Assert.Equal(new int[] { 1, 2, 3, 4, 0, 16, 17, 0, 55, 56, 57 }, lineMapping);
         }
