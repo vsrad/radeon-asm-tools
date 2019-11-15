@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
     [Export(typeof(IViewTaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
-    [TagType(typeof(ErrorSpanTag))]
+    [TagType(typeof(IErrorTag))]
     internal sealed class ErrorHighliterTaggerProvider : IViewTaggerProvider
     {
         [ImportingConstructor]

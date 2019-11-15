@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
@@ -7,17 +8,7 @@ using System.Threading;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
-    internal class ErrorSpanTag : TextMarkerTag
-    {
-        private static string GetColorFormat()
-        {
-            return "syntax error";
-        }
-
-        public ErrorSpanTag() : base(GetColorFormat()) { }
-    }
-
-    internal class ErrorHighlighterTagger : ITagger<ErrorSpanTag>
+    internal class ErrorHighlighterTagger : ITagger<IErrorTag>
     {
         private readonly ITextView view;
         private readonly ITextBuffer buffer;
@@ -55,10 +46,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             }
         }
 
-        public IEnumerable<ITagSpan<ErrorSpanTag>> GetTags(NormalizedSnapshotSpanCollection spans)
+        public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
             var currentWord = new SnapshotSpan(buffer.CurrentSnapshot, 0, 4);
-            yield return new TagSpan<ErrorSpanTag>(currentWord, new ErrorSpanTag());
+            yield return new TagSpan<IErrorTag>(currentWord, new ErrorTag(PredefinedErrorTypeNames.SyntaxError));
         }
     }
 }
