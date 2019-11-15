@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -13,19 +14,32 @@ namespace VSRAD.BuildTools
         public string Stderr { get; set; }
         public string ServerError { get; set; }
         public string PreprocessedSource { get; set; } = "";
+        public string[] ProjectSourcePaths { get; set; } = new string[] { };
 
         public static IPCBuildResult Read(Stream stream)
         {
             using (var reader = new BinaryReader(stream))
             {
                 if (reader.ReadBoolean()) // success
-                    return new IPCBuildResult
+                {
+                    var buildResult = new IPCBuildResult
                     {
                         ExitCode = reader.ReadInt32(),
                         Stdout = reader.ReadString(),
                         Stderr = reader.ReadString(),
-                        PreprocessedSource = reader.ReadString()
+                        PreprocessedSource = reader.ReadString(),
                     };
+
+                    var count = reader.ReadUInt32();
+                    buildResult.ProjectSourcePaths = new string[count];
+                    for (var i = 0; i < count; i++)
+                    {
+                        var projectSourcePath = reader.ReadString();
+                        buildResult.ProjectSourcePaths[i] = projectSourcePath;
+                    }
+
+                    return buildResult;
+                }
                 else
                     return new IPCBuildResult
                     {
@@ -46,6 +60,9 @@ namespace VSRAD.BuildTools
                     writer.Write(Stdout);
                     writer.Write(Stderr);
                     writer.Write(PreprocessedSource);
+                    writer.Write(ProjectSourcePaths.Length);
+                    foreach (var sourcePath in ProjectSourcePaths)
+                        writer.Write(sourcePath);
                 }
                 else
                 {
