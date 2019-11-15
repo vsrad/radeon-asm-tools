@@ -34,11 +34,13 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
         private readonly SVsServiceProvider _serviceProvider;
+        private readonly IProject _project;
 
         [ImportingConstructor]
-        public ProjectSourceManager(SVsServiceProvider serviceProvider)
+        public ProjectSourceManager(SVsServiceProvider serviceProvider, IProject project)
         {
-            this._serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider;
+            _project = project;
         }
 
         public Task SaveDocumentsAsync(DocumentSaveType type)
@@ -81,9 +83,27 @@ namespace VSRAD.Package.ProjectSystem
             _ = GetDTE().ItemOperations.PromptToSave;
         }
 
-        public Task<IEnumerable<string>> ListProjectDocumentsAsync()
+        public async Task<IEnumerable<string>> ListProjectDocumentsAsync()
         {
-            throw new NotImplementedException();
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+
+            var dte = GetDTE();
+            var result = new List<string>();
+
+            foreach (EnvDTE.Project project in dte.Solution.Projects)
+                foreach (ProjectItem item in project.ProjectItems)
+                    ListProjectDocumentsRecursively(item, result);
+
+            return result;
+        }
+
+        private void ListProjectDocumentsRecursively(ProjectItem projItem, List<string> documents)
+        {
+            foreach (ProjectItem item in projItem.ProjectItems)
+                ListProjectDocumentsRecursively(item, documents);
+
+            if (projItem.ProjectItems.Count == 0)
+                documents.Add(_project.GetRelativePath(projItem.Document.FullName));
         }
 
         private void SaveSolutionDocuments()
