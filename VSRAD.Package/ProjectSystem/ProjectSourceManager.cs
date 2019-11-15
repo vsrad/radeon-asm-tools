@@ -3,7 +3,9 @@ using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -24,6 +26,7 @@ namespace VSRAD.Package.ProjectSystem
         Task SaveSolutionSourceAsync();
         Task SaveActiveDocumentAsync();
         Task SaveDocumentsAsync(DocumentSaveType type);
+        Task<IEnumerable<string>> ListProjectDocumentsAsync();
     }
 
     [Export(typeof(IProjectSourceManager))]
@@ -76,6 +79,11 @@ namespace VSRAD.Package.ProjectSystem
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             _ = GetDTE().ItemOperations.PromptToSave;
+        }
+
+        public Task<IEnumerable<string>> ListProjectDocumentsAsync()
+        {
+            throw new NotImplementedException();
         }
 
         private void SaveSolutionDocuments()

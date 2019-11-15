@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,7 +14,7 @@ namespace VSRAD.BuildTools
         public string Stderr { get; set; }
         public string ServerError { get; set; }
         public string PreprocessedSource { get; set; } = "";
-        public string[] ProjectSourcePaths { get; set; } = new string[] { };
+        public string[] ProjectSourcePaths { get; set; } = Array.Empty<string>();
 
         public static IPCBuildResult Read(Stream stream)
         {
