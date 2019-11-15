@@ -27,13 +27,16 @@ namespace VSRAD.Package.BuildTools
                 { RadMacros.BuildExecutable, "nemu" },
                 { RadMacros.BuildArguments, "--sleep 10" },
                 { RadMacros.BuildWorkingDirectory, "/old/home" }
-            }, projectRoot: @"C:\Users\CFF");
+            }, projectRoot: @"C:\Users\CFF\Repos\H");
+            var projectSources = new[] { @"C:\Users\CFF\Repos\H\include\test.h", @"C:\Users\CFF\Repos\H\test.c" };
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();
             var deployManager = new Mock<IFileSynchronizationManager>();
+            var sourceManager = new Mock<IProjectSourceManager>();
+            sourceManager.Setup((s) => s.ListProjectDocumentsAsync()).Returns(Task.FromResult<IEnumerable<string>>(projectSources));
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(channel.Object, output.Object, deployManager.Object);
+            var server = new BuildToolsServer(channel.Object, output.Object, sourceManager.Object, deployManager.Object);
             server.SetProjectOnLoad(project); // starts the server
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
@@ -57,6 +60,7 @@ namespace VSRAD.Package.BuildTools
             Assert.Equal(0, message.ExitCode);
             Assert.Equal("day of flight", message.Stdout);
             Assert.Equal("coming soon", message.Stderr);
+            Assert.Equal(projectSources, message.ProjectSourcePaths);
         }
 
         [Fact]
@@ -70,10 +74,11 @@ namespace VSRAD.Package.BuildTools
             }, projectRoot: @"C:\Users\CFF\Preprocess");
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();
+            var sourceManager = new Mock<IProjectSourceManager>();
             var deployManager = new Mock<IFileSynchronizationManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(channel.Object, output.Object, deployManager.Object);
+            var server = new BuildToolsServer(channel.Object, output.Object, sourceManager.Object, deployManager.Object);
             server.SetProjectOnLoad(project); // starts the server
 
             var timestamp = DateTime.Now;
@@ -101,10 +106,11 @@ namespace VSRAD.Package.BuildTools
             }, projectRoot: @"C:\Users\CFF\Errors");
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();
+            var sourceManager = new Mock<IProjectSourceManager>();
             var deployManager = new Mock<IFileSynchronizationManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(channel.Object, output.Object, deployManager.Object);
+            var server = new BuildToolsServer(channel.Object, output.Object, sourceManager.Object, deployManager.Object);
             server.SetProjectOnLoad(project); // starts the server
 
             var timestamp = DateTime.Now;
