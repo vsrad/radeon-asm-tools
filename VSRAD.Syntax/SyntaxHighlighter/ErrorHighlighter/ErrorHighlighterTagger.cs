@@ -76,12 +76,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
                     }
                     else
                     {
-                        try
-                        {
-                            var (indexStart, lenght) = GetExtentOnPosition(buffer, new SnapshotPoint(view.TextSnapshot, snapshotLine.Start + column));
-                            errorSpan = new SnapshotSpan(view.TextSnapshot, snapshotLine.Start + indexStart, lenght);
-                        }
-                        catch (IndexOutOfRangeException) { continue; }
+                        var (start, lenght) = GetExtentOnLine(snapshotLine, column - 1);
+                        errorSpan = new SnapshotSpan(view.TextSnapshot, start + snapshotLine.Start, lenght);
                     }
 
                     errorSnapshotList.Add((errorSpan, message));
@@ -104,16 +100,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             }
         }
 
-        private static (int indexStart, int lenght) GetExtentOnPosition(ITextBuffer textBuffer, SnapshotPoint position)
+        private static (int start, int lenght) GetExtentOnLine(ITextSnapshotLine line, int index)
         {
-            var line = textBuffer.CurrentSnapshot.GetLineFromPosition(position);
+            if (index < 0 || index > line.Length) throw new ArgumentOutOfRangeException("Invalid index in line");
             var lineText = line.GetText();
-            var caretIndex = position - line.Start;
 
             // check actual word with open and close brackets
             foreach (Match match in _activeWordWithBracketsRegular.Matches(lineText))
             {
-                if (match.Index <= caretIndex && (match.Index + match.Length) >= caretIndex)
+                if (match.Index <= index && (match.Index + match.Length) >= index)
                 {
                     return (match.Index, match.Length);
                 }
@@ -121,7 +116,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
             // check left side of caret postion
             int indexStart;
-            for (indexStart = caretIndex - 1; indexStart >= 0; indexStart--)
+            for (indexStart = index - 1; indexStart >= 0; indexStart--)
             {
                 var ch = lineText[indexStart];
                 if (!(char.IsLetterOrDigit(ch) || ch == '_' || ch == '$' || ch == '\\' | ch == '.'))
@@ -136,7 +131,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
             // check right side of caret position
             int indexEnd;
-            for (indexEnd = caretIndex; indexEnd < lineText.Length; indexEnd++)
+            for (indexEnd = index; indexEnd < lineText.Length; indexEnd++)
             {
                 var ch = lineText[indexEnd];
                 if (!(char.IsLetterOrDigit(ch) || ch == '_' || ch == '$' || ch == '\\' | ch == '.'))
