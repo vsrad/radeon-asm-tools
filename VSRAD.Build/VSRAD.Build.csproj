@@ -37,6 +37,7 @@
   </PropertyGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>call "$(ProjectDir)..\release.bat"</PostBuildEvent>
+    <PostBuildEvent>call "$(ProjectDir)..\publish.bat" $(ConfigurationName)
+if $(ConfigurationName) == Debug echo 'Warning: you publish debug build' 1&gt;&amp;2</PostBuildEvent>
   </PropertyGroup>
 </Project>
