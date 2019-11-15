@@ -30,14 +30,14 @@ select *Properties*.
 * Radeon asm instructions
 * Radeon asm labels
 <p align="center">
-  <img src="docs/syntax_highlight.PNG" width="49%" height="450px" title="Syntax highlight">
-  <img src="docs/syntax_highlight_options.PNG" width="49%" height="450px" title="Syntax highlight options">
+  <img src="docs/syntax_highlight.PNG" width="49%" height="250px" title="Syntax highlight">
+  <img src="docs/syntax_highlight_options.PNG" width="49%" height="250px" title="Syntax highlight options">
 </p>
 
 ### Indent guide lines
 <p align="center">
-  <img src="docs/indent_guide.PNG" width="49%" height="450px" title="Syntax highlight">
-  <img src="docs/indent_guide_options.PNG" width="49%" height="450px" title="Syntax highlight options">
+  <img src="docs/indent_guide.PNG" width="49%" height="250px" title="Syntax highlight">
+  <img src="docs/indent_guide_options.PNG" width="49%" height="250px" title="Syntax highlight options">
 </p>
 
 ### Error highlight (only with debugger extension)
@@ -62,12 +62,12 @@ select *Properties*.
   > To set redirect special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Select" and set shortcut keys`.
 
 <p align="center">
-  <img src="docs/function_list.PNG" width="49%" height="450px" title="Function list">
-  <img src="docs/function_list_search.PNG" width="49%" height="450px" title="Function list search field">
+  <img src="docs/function_list.PNG" width="49%" height="250px" title="Function list">
+  <img src="docs/function_list_search.PNG" width="49%" height="250px" title="Function list search field">
 </p>
 <p align="center">
-  <img src="docs/function_list_show_hide.PNG" width="49%" height="450px" title="Function list show/hide">
-  <img src="docs/funtion_list_options.PNG" width="49%" height="450px" title="Function list options">
+  <img src="docs/function_list_show_hide.PNG" width="49%" height="250px" title="Function list show/hide">
+  <img src="docs/funtion_list_options.PNG" width="49%" height="250px" title="Function list options">
 </p>
 
 ### Code navigation
