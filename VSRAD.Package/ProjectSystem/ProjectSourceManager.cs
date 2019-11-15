@@ -99,10 +99,10 @@ namespace VSRAD.Package.ProjectSystem
 
         private void ListProjectDocumentsRecursively(ProjectItem projItem, List<string> documents)
         {
-            foreach (ProjectItem item in projItem.ProjectItems)
-                ListProjectDocumentsRecursively(item, documents);
-
-            if (projItem.ProjectItems.Count == 0)
+            if (projItem.ProjectItems != null)
+                foreach (ProjectItem item in projItem.ProjectItems)
+                    ListProjectDocumentsRecursively(item, documents);
+            if (projItem.Document != null)
                 documents.Add(_project.GetRelativePath(projItem.Document.FullName));
         }
 
