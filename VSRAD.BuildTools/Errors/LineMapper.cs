@@ -1,27 +1,38 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace VSRAD.BuildTools.Errors
 {
+    public struct LineMarker
+    {
+        public int PpLine;
+        public int SourceLine;
+        public string SourceFile;
+    }
+
     public static class LineMapper
     {
-        private static readonly Regex LineNumRegex = new Regex(@"\d+", RegexOptions.Compiled);
+        private static readonly Regex LineMarkerRegex = new Regex(@"(?<line>\d+)\s+\""(?<file>.*)\""", RegexOptions.Compiled);
 
-        public static int[] MapLines(string preprocessed)
+        public static List<LineMarker> MapLines(string preprocessed)
         {
             var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            int[] result = new int[lines.Length];
-            int originalSourceLine = 1;
+            var result = new List<LineMarker>(); ;
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
 
                 if (line.StartsWith("#") || line.StartsWith("//#"))
                 {
-                    originalSourceLine = int.Parse(LineNumRegex.Match(line).Value);
-                    continue;
+                    var match = LineMarkerRegex.Match(line);
+                    result.Add(new LineMarker
+                    {
+                        PpLine = i + 1,
+                        SourceLine = int.Parse(match.Groups["line"].Value),
+                        SourceFile = match.Groups["file"].Value
+                    });
                 }
-                result[i] = originalSourceLine++;
             }
             return result;
         }
