@@ -25,5 +25,29 @@ namespace VSRAD.BuildTools.Errors
             }
             return result;
         }
+
+        public static string MapSourceToHost(string remotePath, string[] projectPaths)
+        {
+            var remotePathArray = remotePath.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
+            Array.Reverse(remotePathArray);
+            string probablePath = "";
+            int longestMatch = -1;
+            foreach (var path in projectPaths)
+            {
+                var pathArray = path.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
+                Array.Reverse(pathArray);
+                int matchCount = 0;
+
+                while (matchCount < pathArray.Length && matchCount < remotePathArray.Length && remotePathArray[matchCount] == pathArray[matchCount])
+                    matchCount++;
+
+                if (matchCount > longestMatch)
+                {
+                    probablePath = path;
+                    longestMatch = matchCount;
+                }
+            }
+            return probablePath;
+        }
     }
 }

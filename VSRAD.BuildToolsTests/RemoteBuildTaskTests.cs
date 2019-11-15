@@ -17,7 +17,7 @@ namespace VSRAD.BuildToolsTests
             {
                 var server = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1);
                 server.WaitForConnection();
-                var message = new IPCBuildResult { ExitCode = 0, Stdout = "out", Stderr = "err" }.ToArray();
+                var message = new IPCBuildResult { ExitCode = 0, Stdout = "out", Stderr = "err", ProjectSourcePaths = new string[] { "luke.s", "lea.s" } }.ToArray();
                 server.Write(message, 0, message.Length);
                 server.Close();
             }).Start();

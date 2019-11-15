@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Xunit;
 using static VSRAD.BuildTools.Errors.LineMapper;
 using static VSRAD.BuildTools.Errors.Parser;
@@ -45,6 +46,23 @@ int main() {
 }
 ";
 
+        public static readonly string[] ProjectPaths = new[] {
+            @"code/EVA00/main.c",
+            @"code/EVA00/sensors_controller.c",
+            @"code/EVA00/pilot_controller.c",
+            @"code/EVA00/motors_controller.c",
+            @"code/EVA00/battery_controller.c",
+            @"code/EVA00/connection_controller.c",
+            @"code/EVA01/main.c",
+            @"code/EVA01/sensors_controller.c",
+            @"code/EVA01/pilot_controller.c",
+            @"code/EVA01/motors_controller.c",
+            @"code/EVA01/battery_controller.c",
+            @"code/EVA01/connection_controller.c",
+        };
+
+        public const string RemotePath = @"MAIN_MODULE\EVA00\pilot_controller.c";
+
         [Fact]
         public void PreprocessMapLinesTest()
         {
@@ -55,8 +73,15 @@ int main() {
         [Fact]
         public void ParseErrorsWithPreprocessedTest()
         {
-            var messages = ExtractMessages(ErrString, PpString);
+            var messages = ExtractMessages(ErrString, PpString, Array.Empty<string>());
             Assert.Equal(5, messages.First().Line);
+        }
+
+        [Fact]
+        public void HostSourcePathMappingTest()
+        {
+            var hostSource = MapSourceToHost(RemotePath, ProjectPaths);
+            Assert.Equal(@"code/EVA00/pilot_controller.c", hostSource);
         }
     }
 }

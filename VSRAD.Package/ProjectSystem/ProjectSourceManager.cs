@@ -3,7 +3,11 @@ using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Threading.Tasks;
+using VSRAD.Package.Utils;
+using System.Linq;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -24,6 +28,7 @@ namespace VSRAD.Package.ProjectSystem
         Task SaveSolutionSourceAsync();
         Task SaveActiveDocumentAsync();
         Task SaveDocumentsAsync(DocumentSaveType type);
+        Task<IEnumerable<string>> ListProjectFilesAsync();
     }
 
     [Export(typeof(IProjectSourceManager))]
@@ -31,11 +36,13 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
         private readonly SVsServiceProvider _serviceProvider;
+        private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
-        public ProjectSourceManager(SVsServiceProvider serviceProvider)
+        public ProjectSourceManager(SVsServiceProvider serviceProvider, UnconfiguredProject unconfiguredProject)
         {
-            this._serviceProvider = serviceProvider;
+            _serviceProvider = serviceProvider;
+            _unconfiguredProject = unconfiguredProject;
         }
 
         public Task SaveDocumentsAsync(DocumentSaveType type)
@@ -76,6 +83,15 @@ namespace VSRAD.Package.ProjectSystem
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             _ = GetDTE().ItemOperations.PromptToSave;
+        }
+
+        public async Task<IEnumerable<string>> ListProjectFilesAsync()
+        {
+            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
+            var itemsProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
+            var sourceItems = await itemsProvider.GetItemsAsync();
+            var files = sourceItems.Select((i) => i.EvaluatedIncludeAsRelativePath).ToArray();
+            return files;
         }
 
         private void SaveSolutionDocuments()
