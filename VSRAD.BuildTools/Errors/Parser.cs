@@ -72,35 +72,32 @@ namespace VSRAD.BuildTools.Errors
         }
 
         private static readonly Regex ScriptErrorRegex = new Regex(
-            @"\*(?<kind>[EW]),(?<code>\w+)(?>\s\((?<file>[\w<>]+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
+            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>[^:]+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
 
         private static readonly Regex ScriptErrorLocationInTextRegex = new Regex(
-            @"\((?<file>[\w<>]+):(?<line>\d+)\)", RegexOptions.Compiled);
+            @"(?<text>.+)\s\((?<file>[^:]+):(?<line>\d+)\)", RegexOptions.Compiled);
 
         private static Message ParseScriptMessage(string header)
         {
             var match = ScriptErrorRegex.Match(header);
             if (!match.Success) return null;
-            var message = new Message
-            {
-                Kind = ParseMessageKind(match.Groups["kind"].Value),
-                Text = match.Groups["text"].Value
-            };
-            if (match.Groups["file"].Success)
+
+            var code = match.Groups["code"].Value;
+            var textAndMaybeLocation = match.Groups["text"].Value;
+
+            var message = new Message { Kind = ParseMessageKind(match.Groups["kind"].Value) };
+
+            if (!match.Groups["file"].Success)
+                match = ScriptErrorLocationInTextRegex.Match(textAndMaybeLocation);
+
+            if (match.Success)
             {
                 message.SourceFile = match.Groups["file"].Value;
                 message.Line = int.Parse(match.Groups["line"].Value);
             }
-            else
-            {
-                match = ScriptErrorLocationInTextRegex.Match(message.Text);
-                if (match.Success)
-                {
-                    message.SourceFile = match.Groups["file"].Value;
-                    message.Line = int.Parse(match.Groups["line"].Value);
-                    message.Text = match.Groups["text"].Value;
-                }
-            }
+
+            message.Text = code + ": " + (match.Success ? match.Groups["text"].Value : textAndMaybeLocation);
+
             return message;
         }
 
