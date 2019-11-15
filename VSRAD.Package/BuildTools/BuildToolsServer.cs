@@ -86,7 +86,7 @@ namespace VSRAD.Package.BuildTools
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
-            var projectSources = await _sourceManager.ListProjectDocumentsAsync();
+            var projectSources = await _sourceManager.ListProjectFilesAsync();
             var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
             if (string.IsNullOrEmpty(options.Executable))

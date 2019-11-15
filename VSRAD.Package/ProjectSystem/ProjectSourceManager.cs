@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
+using VSRAD.Package.Utils;
+using System.Linq;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -26,7 +28,7 @@ namespace VSRAD.Package.ProjectSystem
         Task SaveSolutionSourceAsync();
         Task SaveActiveDocumentAsync();
         Task SaveDocumentsAsync(DocumentSaveType type);
-        Task<IEnumerable<string>> ListProjectDocumentsAsync();
+        Task<IEnumerable<string>> ListProjectFilesAsync();
     }
 
     [Export(typeof(IProjectSourceManager))]
@@ -34,13 +36,13 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
         private readonly SVsServiceProvider _serviceProvider;
-        private readonly IProject _project;
+        private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
-        public ProjectSourceManager(SVsServiceProvider serviceProvider, IProject project)
+        public ProjectSourceManager(SVsServiceProvider serviceProvider, UnconfiguredProject unconfiguredProject)
         {
             _serviceProvider = serviceProvider;
-            _project = project;
+            _unconfiguredProject = unconfiguredProject;
         }
 
         public Task SaveDocumentsAsync(DocumentSaveType type)
@@ -83,27 +85,13 @@ namespace VSRAD.Package.ProjectSystem
             _ = GetDTE().ItemOperations.PromptToSave;
         }
 
-        public async Task<IEnumerable<string>> ListProjectDocumentsAsync()
+        public async Task<IEnumerable<string>> ListProjectFilesAsync()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-            var dte = GetDTE();
-            var result = new List<string>();
-
-            foreach (EnvDTE.Project project in dte.Solution.Projects)
-                foreach (ProjectItem item in project.ProjectItems)
-                    ListProjectDocumentsRecursively(item, result);
-
-            return result;
-        }
-
-        private void ListProjectDocumentsRecursively(ProjectItem projItem, List<string> documents)
-        {
-            if (projItem.ProjectItems != null)
-                foreach (ProjectItem item in projItem.ProjectItems)
-                    ListProjectDocumentsRecursively(item, documents);
-            if (projItem.Document != null)
-                documents.Add(_project.GetRelativePath(projItem.Document.FullName));
+            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
+            var itemsProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
+            var sourceItems = await itemsProvider.GetItemsAsync();
+            var files = sourceItems.Select((i) => i.EvaluatedIncludeAsRelativePath).ToArray();
+            return files;
         }
 
         private void SaveSolutionDocuments()

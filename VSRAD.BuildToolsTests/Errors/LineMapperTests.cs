@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Xunit;
 using static VSRAD.BuildTools.Errors.LineMapper;
 using static VSRAD.BuildTools.Errors.Parser;
@@ -72,14 +73,14 @@ int main() {
         [Fact]
         public void ParseErrorsWithPreprocessedTest()
         {
-            var messages = ExtractMessages(ErrString, PpString);
+            var messages = ExtractMessages(ErrString, PpString, Array.Empty<string>());
             Assert.Equal(5, messages.First().Line);
         }
 
         [Fact]
         public void HostSourcePathMappingTest()
         {
-            var hostSource = HostSourcePathMapping(RemotePath, ProjectPaths);
+            var hostSource = MapSourceToHost(RemotePath, ProjectPaths);
             Assert.Equal(@"code/EVA00/pilot_controller.c", hostSource);
         }
     }

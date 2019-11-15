@@ -41,7 +41,7 @@ namespace VSRAD.BuildTools
                 return false;
             }
 
-            foreach (var message in Errors.Parser.ExtractMessages(result.Stderr, result.PreprocessedSource))
+            foreach (var message in Errors.Parser.ExtractMessages(result.Stderr, result.PreprocessedSource, result.ProjectSourcePaths))
                 switch (message.Kind)
                 {
                     case Errors.MessageKind.Error:

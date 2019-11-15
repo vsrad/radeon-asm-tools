@@ -33,7 +33,7 @@ namespace VSRAD.Package.BuildTools
             var output = new Mock<IOutputWindowManager>();
             var deployManager = new Mock<IFileSynchronizationManager>();
             var sourceManager = new Mock<IProjectSourceManager>();
-            sourceManager.Setup((s) => s.ListProjectDocumentsAsync()).Returns(Task.FromResult<IEnumerable<string>>(projectSources));
+            sourceManager.Setup((s) => s.ListProjectFilesAsync()).Returns(Task.FromResult<IEnumerable<string>>(projectSources));
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
             var server = new BuildToolsServer(channel.Object, output.Object, sourceManager.Object, deployManager.Object);

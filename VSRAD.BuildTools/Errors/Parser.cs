@@ -7,17 +7,19 @@ namespace VSRAD.BuildTools.Errors
 {
     public static class Parser
     {
-        public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed)
+        public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed, string[] projectSources)
         {
             var messages = ParseStderr(stderr);
 
             if (messages.Count > 0 && !string.IsNullOrEmpty(preprocessed))
             {
                 var ppLines = LineMapper.MapLines(preprocessed);
-
                 foreach (var message in messages)
                     message.Line = ppLines[message.Line - 1];
             }
+
+            foreach (var message in messages)
+                message.SourceFile = LineMapper.MapSourceToHost(message.SourceFile, projectSources);
 
             return messages;
         }

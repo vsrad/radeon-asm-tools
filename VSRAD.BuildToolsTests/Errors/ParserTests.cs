@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Xunit;
 using static VSRAD.BuildTools.Errors.Parser;
 
@@ -20,7 +21,7 @@ host.c:4:2: warning: implicitly declaring library function 'printf' with type 'i
         printf(""h"");
         ^
 host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
-", "").ToList();
+", "", Array.Empty<string>()).ToList();
 
             Assert.Equal(MessageKind.Error, messages[0].Kind);
             Assert.Equal(27, messages[0].Column);
@@ -63,7 +64,7 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?
 *E,fatal (auth.c:35): Uncaught error: Undefined variable: user
-", "").ToList();
+", "", Array.Empty<string>()).ToList();
 
             Assert.Equal(MessageKind.Error, messages[0].Kind);
             Assert.Equal(3, messages[0].Line);
