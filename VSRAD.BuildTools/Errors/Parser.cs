@@ -15,7 +15,16 @@ namespace VSRAD.BuildTools.Errors
             {
                 var ppLines = LineMapper.MapLines(preprocessed);
                 foreach (var message in messages)
-                    message.Line = ppLines[message.Line - 1];
+                {
+                    var messageLine = message.Line;
+                    foreach (var marker in ppLines)
+                    {
+                        if (marker.PpLine > messageLine) break;
+
+                        message.Line = marker.SourceLine + messageLine - marker.PpLine;
+                        message.SourceFile = marker.SourceFile;
+                    }
+                }
             }
 
             foreach (var message in messages)

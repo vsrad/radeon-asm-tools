@@ -9,29 +9,34 @@ namespace VSRAD.BuildToolsTests.Errors
 {
     public class LineMapperTests
     {
-        public const string ErrString = @"
-test.c:12:10: error: invalid digit 'a' in octal constant
- return 0asdfshgmgmg
+        public const string ErrString = @"code.c:13:8: error: use of undeclared identifier 'ia'
+return ia;
+       ^
+test.c:16:10: error: invalid suffix 'uigyuigyuiguyi' on integer constant
+ return 0uigyuigyuiguyi;
          ^
-1 error generated.
+2 errors generated.
 ";
 
-        public const string PpString = @"//# 1 ""test.c""
-//# 1 ""<built-in>""
-//# 1 ""<command-line>""
-//# 31 ""<command-line>""
-//# 1 ""/usr/include/stdc-predef.h"" 1 3 4
-//# 32 ""<command-line>"" 2
-//# 1 ""test.c""
+        public const string PpString = @"# 1 ""test.c""
+# 1 ""<built-in>""
+# 1 ""<command-line>""
+# 31 ""<command-line>""
+# 1 ""/usr/include/stdc-predef.h"" 1 3 4
+# 32 ""<command-line>"" 2
+# 1 ""test.c""
 
 
 int main(int argc, char** argv)
         {
+# 1 ""code.c"" 1
+            int i = 3 + 3;
+            return ia;
+# 5 ""test.c"" 2
 
-            return 0asdfshgmgmg
+            return 0uigyuigyuiguyi;
 
-}
-
+        }
 ";
 
 
@@ -68,16 +73,19 @@ int main(int argc, char** argv)
         {
             var lineMapping = MapLines(Preprocessed);
             Assert.Equal(new LineMarker[] {
-                new LineMarker { PpLine = 3, SourceLine = 16, SourceFile = "source.c" },
-                new LineMarker { PpLine = 6, SourceLine = 55, SourceFile = "source1.c" }
+                new LineMarker { PpLine = 4, SourceLine = 16, SourceFile = "source.c" },
+                new LineMarker { PpLine = 7, SourceLine = 55, SourceFile = "source1.c" }
             }, lineMapping);
         }
 
         [Fact]
         public void ParseErrorsWithPreprocessedTest()
         {
-            var messages = ExtractMessages(ErrString, PpString, Array.Empty<string>());
-            Assert.Equal(5, messages.First().Line);
+            var messages = ExtractMessages(ErrString, PpString, new string[] { "source.c", "code.c" });
+            Assert.Equal(2, messages.First().Line);
+            Assert.Equal("code.c", messages.First().SourceFile);
+            Assert.Equal(6, messages.Last().Line);
+            Assert.Equal("source.c", messages.Last().SourceFile);
         }
 
         [Fact]

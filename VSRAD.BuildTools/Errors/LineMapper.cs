@@ -28,7 +28,7 @@ namespace VSRAD.BuildTools.Errors
                     var match = LineMarkerRegex.Match(line);
                     result.Add(new LineMarker
                     {
-                        PpLine = i,
+                        PpLine = i + 1,
                         SourceLine = int.Parse(match.Groups["line"].Value),
                         SourceFile = match.Groups["file"].Value
                     });
