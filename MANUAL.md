@@ -8,7 +8,7 @@ The extension provides the following features:
 * Disassembling tools
 * Profiling tools
 * [Data visualization tools](#data-visualization-tools)
-* [Shortcuts](#shortcuts)
+* [Shortcuts and toolbar](#Shortcuts-and-toolbar)
 
 ## Project Template
 
@@ -48,6 +48,7 @@ The following sections provide an overview of the properties that can be configu
 * [Debugger](#debugger-properties)
 * [Disassembler](#disassembler-properties)
 * [Profiler](#profiler-properties)
+* [Build](#build-properties)
 
 Other chapters will reference these sections as needed.
 
@@ -102,6 +103,13 @@ Other chapters will reference these sections as needed.
 * **Viewer Arguments**: command-line arguments for **Viewer Executable**.
 * **Local Copy Path**: path to the file on local machine to copy profiler output file.
 * **Run As Admin**: specifies whether the `Executable` is run with administrator rights.
+
+### Build Properties
+
+* **Executable**: path to the build executable on the remote machine.
+* **Arguments**: command-line arguments for **Executable**.
+* **Working Directory**: build working directory.
+* **Preprocessed Source**: path to the preprocessed source. When using a separate preprocessing step during the build, compiler error messages may refer to incorrect line numbers in the original source file. When specified, # linemarkers are extracted from the file and used to update locations in error messages.
 
 ## Remote Debugging Tools
 
@@ -184,11 +192,15 @@ will be added to *Watch list*.
 
 ## Data visualization tools
 
-## Shortcuts
+## Shortcuts and toolbar
 
-*Can be customized in `Tools->Options->Keyboard`*
+*Can be customized in `Tools->Options->Keyboard->find command in command explorer`*
 
-* `Alt+A`: **Add To Watches**
+* Command: **EditorContextMenus.CodeWindow.AddToWatches** Default shotrcut: `Alt+A`
+* Command: **Tools.LaunchRemoteProfiling** Default shortcut: `None`
+* Command: **Tools.OpenVisualizer** Default shortcut: `None`
+* Command: **Tools.Options** Default shortcut: `None`
+* Command: **Tools.Disassemblefile** Default shortcut: `None`
 
 `View->Toolbars->Rad Debug` to enable toolbar that contains:
 * `Launch Remote Profiling`
