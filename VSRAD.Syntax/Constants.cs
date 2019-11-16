@@ -1376,7 +1376,7 @@ namespace VSRAD.Syntax
         };
         #endregion
 
-        internal const string FileExtensionAsm2 = null;
+        internal const string FileExtensionAsm2 = ".asm2";
         internal const string RadeonAsm2SyntaxContentType = "RadeonAsm2Syntax";
 
         #region syntax constants
