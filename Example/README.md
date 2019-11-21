@@ -43,12 +43,22 @@ make
 4. In the *Debugger* tab, set *Working Directory* to the absolute path
 to `VectorAddProjectExample` on the remote machine
 6. Press *Apply* to save the changes and *OK* to close the profile editor
-7. Open `fp32_v_add.s` in *Solution Explorer*
-8. Set a breakpoint on line 79
-9. Start debugging by pressing F5 (alternatively, clicking on the *RAD Debugger* button with a green arrow)
-10. Go to *Tools* -> *RAD Debug* -> *Open Visualizer* to open debug visualizer. You should
+
+### Start debugger
+1. Open `fp32_v_add.s` in *Solution Explorer*
+2. Set a breakpoint on line 79
+3. Start debugging by pressing F5 (alternatively, clicking on the *RAD Debugger* button with a green arrow)
+4. Go to *Tools* -> *RAD Debug* -> *Open Visualizer* to open debug visualizer. You should
 see the values of watched VGPRs:
 ![Visualizer output](docs/visualizer-output.PNG)
+
+### Build your shader
+1. Open `fp32_v_add.s` in *Solution Explorer*
+2. Click *Build* -> *Build DebuggerProjectExample* or *Ctrl+B*
+3. It should build your kernel. Go to `VectorAddProjectExample` directory on your remote machine and check `fp32_v_add_build.co` object file is exist.
+
+You can set your build options *Tools* -> *RAD Debug* -> *Options* -> *Build*
+![Build options](docs/build-options.PNG)
 
 ## Notes and Remarks
 
