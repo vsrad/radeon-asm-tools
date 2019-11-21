@@ -44,6 +44,18 @@ make
 to `VectorAddProjectExample` on the remote machine
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 
+### Build your shader
+1. Open `fp32_v_add.s` in *Solution Explorer*
+2. Click *Build* -> *Build DebuggerProjectExample* or *Ctrl+B* shortcut
+3. It should build your kernel. Go to `VectorAddProjectExample` directory on your remote machine and check `fp32_v_add_build.co` object file is exist
+
+* **Note:** if *Executable* field is empty then build process will be skipped and succeeded result automatically
+
+* You can set your build options *Tools* -> *RAD Debug* -> *Options* -> *Build*
+    ![Build options](docs/build-options.PNG)
+* Build errors will be in the standard output window (highlighting errors will only appear if RadeonAsmSyntax is installed)
+    ![Build errors](docs/build-errors.PNG)
+
 ### Start debugger
 1. Open `fp32_v_add.s` in *Solution Explorer*
 2. Set a breakpoint on line 79
@@ -52,13 +64,8 @@ to `VectorAddProjectExample` on the remote machine
 see the values of watched VGPRs:
 ![Visualizer output](docs/visualizer-output.PNG)
 
-### Build your shader
-1. Open `fp32_v_add.s` in *Solution Explorer*
-2. Click *Build* -> *Build DebuggerProjectExample* or *Ctrl+B*
-3. It should build your kernel. Go to `VectorAddProjectExample` directory on your remote machine and check `fp32_v_add_build.co` object file is exist.
-
-You can set your build options *Tools* -> *RAD Debug* -> *Options* -> *Build*
-![Build options](docs/build-options.PNG)
+* You can set your debug options *Tools* -> *RAD Debug* -> *Options* -> *Debugger*
+    ![Debugger options](docs/debug-options.PNG)
 
 ## Notes and Remarks
 
