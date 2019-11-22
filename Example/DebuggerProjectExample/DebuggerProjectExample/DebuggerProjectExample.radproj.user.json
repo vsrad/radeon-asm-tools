@@ -54,7 +54,7 @@
       "Debugger": {
         "Executable": "bash",
         "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDebugWorkDir)/gfx9/fp32_v_add.s -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
-        "WorkingDirectory": "/home/stud/VectorAddProjectExample",
+        "WorkingDirectory": "/radeon-asm-tools/Example/VectorAddProjectExample",
         "OutputPath": "$(RadDebugWorkDir)/tmp_dir/debug_result",
         "BinaryOutput": true,
         "ParseValidWatches": false,
