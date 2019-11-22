@@ -54,6 +54,7 @@ to `VectorAddProjectExample` on the remote machine (`/radeon-asm-tools/Example/V
 3. It should build your kernel. Go to `VectorAddProjectExample` directory on your remote machine and check `fp32_v_add_build.co` object file is exist
 
 * **Note:** if *Executable* field is empty then build process will be skipped and succeeded result automatically
+* **Note:** `/radeon-asm-tools/Example/VectorAddProjectExample` path where you can find code object file using **Docker image** (execute `docker exec -it containerIdOrName bash` to go into container)
 
 * You can set your build options *Tools* -> *RAD Debug* -> *Options* -> *Build*
     ![Build options](docs/build-options.PNG)
