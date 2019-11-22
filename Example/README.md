@@ -2,9 +2,20 @@
 
 ## Prerequisites
 
-### Remote Machine
+* Visual Studio 2017/2019
+* [RadeonAsmDebugger Extension for Visual Studio](../README.md#Installation)
 
-The following software needs to be installed on the machine where the kernels will run:
+## Building and Running
+
+### Remote machine: build using Docker
+
+1. Transfer [Dockerfile](Dockerfile) on your remote machine
+2. Build docker image with `docker build -t "radeon-asm-tools:example" /path-to-dockerfile/Dockerfile`
+3. Run doker container with `docker run -p 9339:9339 -it --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video radeon-asm-tools:example ./RadeonAsmDebugServer`
+
+### Remote machine: build on your machine
+
+#### Prerequisites
 
 * [ROCm Platform](https://rocm.github.io/ROCmInstall.html)
 * [.NET Core 2.2 Runtime](https://dotnet.microsoft.com/download/dotnet-core/2.2)
@@ -13,14 +24,7 @@ The following software needs to be installed on the machine where the kernels wi
 sudo apt-get -y install cmake libboost-program-options-dev liblist-moreutils-perl
 ```
 
-### Host Machine
-
-* Visual Studio 2017/2019
-* [RadeonAsmDebugger Extension for Visual Studio](../README.md#Installation)
-
-## Building and Running
-
-### Remote Machine
+#### Build application and run Debug Server
 
 1. Transfer the `VectorAddProjectExample` directory to the remote machine
 2. Create a build directory and run `cmake` followed by `make` there:
@@ -41,7 +45,7 @@ make
 2. Go to *Tools* -> *RAD Debug* -> *Options*
 3. Click the *Edit* button in the opened window to edit the active debug profile
 4. In the *Debugger* tab, set *Working Directory* to the absolute path
-to `VectorAddProjectExample` on the remote machine
+to `VectorAddProjectExample` on the remote machine (`/radeon-asm-tools/Example/VectorAddProjectExample` path using **Docker container**)
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 
 ### Build your shader
