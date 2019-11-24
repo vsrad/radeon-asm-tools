@@ -9,14 +9,14 @@ namespace VSRAD.DebugServer.Handlers
     public sealed class DeployHandler : IHandler
     {
         private readonly ClientLogger _log;
-        private readonly string _destiination;
+        private readonly string _destination;
         private readonly byte[] _archive;
 
         public DeployHandler(IPC.Commands.Deploy command, ClientLogger log)
         {
             _log = log;
             _archive = command.Data;
-            _destiination = command.Destination;
+            _destination = command.Destination;
         }
 
         public Task<IResponse> RunAsync()
@@ -28,7 +28,7 @@ namespace VSRAD.DebugServer.Handlers
             var deployItems = archive.Entries.Select(entry => entry.FullName).ToArray();
             _log.DeployItemsReceived(deployItems);
 
-            archive.ExtractToDirectory(_destiination, overwriteFiles: true);
+            archive.ExtractToDirectory(_destination, overwriteFiles: true);
             File.Delete(tempFile);
 
             return Task.FromResult<IResponse>(null);
