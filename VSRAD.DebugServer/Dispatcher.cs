@@ -19,7 +19,7 @@ namespace VSRAD.DebugServer
                 case FetchResultRange fetchResultRange:
                     return new FetchResultRangeHandler(fetchResultRange).RunAsync();
                 case Deploy deploy:
-                    return new DeployHandler(deploy).RunAsync();
+                    return new DeployHandler(deploy, clientLog).RunAsync();
                 case ListEnvironmentVariables listEnvironmentVariables:
                     return new ListEnvironmentVariablesHandler(listEnvironmentVariables).RunAsync();
                 default:

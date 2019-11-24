@@ -56,6 +56,17 @@ namespace VSRAD.DebugServer
                 Console.WriteLine($"#{_clientId} stderr> " + output);
         }
 
+        public void DeployItemsReceived(string[] outputPaths)
+        {
+            if (!_verbose) return;
+
+            Console.WriteLine("Deploy Items:");
+            for (var i = 0; i < outputPaths.Length; i++)
+            {
+                Console.WriteLine("-- " + outputPaths[i]);
+            }
+        }
+
         public void CommandProcessed()
         {
             if (!_verbose) return;
