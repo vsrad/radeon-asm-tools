@@ -92,9 +92,9 @@ namespace VSRAD.Package.Server
         {
             var metadataResponse = await GetMetadataAsync(output).ConfigureAwait(false);
             if (metadataResponse.Status != FetchStatus.Successful)
-                return new Error($"Output file ({output.Path}) could not be found.", title: "Output file is missing");
+                return new Error($"Output file ({output.File}) could not be found.", title: "Output file is missing");
             if (metadataResponse.Timestamp == initOutputTimestamp)
-                return new Error($"Output file ({output.Path}) was not modified.", title: "Data may be stale");
+                return new Error($"Output file ({output.File}) was not modified.", title: "Data may be stale");
 
             _timer.Stop();
             return new BreakState(output, metadataResponse.Timestamp, (uint)metadataResponse.ByteCount,
