@@ -25,7 +25,7 @@ namespace VSRAD.DebugServer.Handlers
             File.WriteAllBytes(tempFile, _archive);
 
             var archive = ZipFile.Open(tempFile, ZipArchiveMode.Read);
-            var deployItems = archive.Entries.Select(entry => entry.FullName).ToArray();
+            var deployItems = archive.Entries.Select(entry => _destination + Path.DirectorySeparatorChar + entry.FullName).ToArray();
             _log.DeployItemsReceived(deployItems);
 
             archive.ExtractToDirectory(_destination, overwriteFiles: true);
