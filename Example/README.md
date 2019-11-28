@@ -9,9 +9,7 @@
 
 ### Remote machine: build using Docker
 
-1. Transfer [Dockerfile](Dockerfile) on your remote machine
-2. Build docker image with `docker build -t "radeon-asm-tools:example" /path-to-dockerfile/Dockerfile`
-3. Run doker container with `docker run -p 9339:9339 -it --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video radeon-asm-tools:example ./RadeonAsmDebugServer`
+- Run doker container with: `docker run -p 9339:9339 -it --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video vsrad/rocm-example ./RadeonAsmDebugServer`
 
 ### Remote machine: build on your machine
 
