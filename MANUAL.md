@@ -8,7 +8,7 @@ The extension provides the following features:
 * Disassembling tools
 * Profiling tools
 * [Data visualization tools](#data-visualization-tools)
-* [Shortcuts and toolbar](#Shortcuts-and-toolbar)
+* [Shortcuts and toolbar](#shortcuts-and-toolbar)
 
 ## Project Template
 
@@ -26,7 +26,9 @@ You can find it by selecting `Radeon Asm` in the *Languages* dropdown.
 
 A *profile* is a set of machine-specific settings such as executable paths, network addresses and debugger configuration.
 
-Multiple profiles can be created for a single project and swapped without restarting the IDE or exiting debug mode. This allows you to easily test the same kernel on a number of different platforms. Furthermore, profiles can be exported to a file and imported in other projects (on different workstations).
+Multiple profiles can be created for a single project and swapped without restarting the IDE or exiting debug mode. This
+allows you to easily test the same kernel on a number of different platforms. Furthermore, profiles can be exported to a
+file and imported in other projects (on different workstations).
 
 ### Profile Managing
 
@@ -56,15 +58,19 @@ Other chapters will reference these sections as needed.
 
 * **Profile Name**: name of the current profile.
 * **Deploy Directory**: directory on the remote machine where the project is deployed before starting the debugger.
-* **Remote Machine Address**: IP address of the remote machine. To debug kernels locally, start the debug server on your local machine and enter `127.0.0.1` in this field.
-* **Port**: port on the remote machine the debug server is listening on. (When started without arguments, the server listens on port `9339`)
-* **Autosave Source**: specifies whether the source files that are changed should be automatically saved before running remote commands (debug, disassemble, profile, etc.).
+* **Remote Machine Address**: IP address of the remote machine. To debug kernels locally, start the debug server on your
+local machine and enter `127.0.0.1` in this field.
+* **Port**: port on the remote machine the debug server is listening on. (When started without arguments, the server
+listens on port `9339`)
+* **Autosave Source**: specifies whether the source files that are changed should be automatically saved before running
+remote commands (debug, disassemble, profile, etc.).
   - When set to **None**, no source files are saved automatically.
   - When set to **ActiveDocument**, only the active source file (currently selected in the editor) is automatically saved.
   - When set to **OpenDocuments**, all source files the are open in the editor are automatically saved.
   - When set to **ProjectDocuments**, all source files that belong to the current project are automatically saved.
   - When set to **SolutionDocuments**, all source file that belong to the solution are automatically saved.
-* **Additional Sources**: a semicolon-separated list of out-of-project paths that are copied to the remote machine (see **Deploy Directory**).
+* **Additional Sources**: a semicolon-separated list of out-of-project paths that are copied to the remote machine
+(see **Deploy Directory**).
 * **Copy Sources to Remote**: enables or disables remote deployment.
 
 ### Debugger Properties
@@ -77,8 +83,10 @@ Other chapters will reference these sections as needed.
   - **Text**: each line is read as a hexadecimal string (*0x...*).
   - **Binary**: 4-byte blocks are read as a single dword value.
 * **Run As Administrator**: specifies whether the `Executable` is run with administrator rights.
-* **Timeout**: debug script execution timeout (in seconds). Once reached, the debug process is terminated. Set to `0` to disable.
-* **Parse Valid Watches File**: specifies whether the file specified in **Valid Watches File Path** should be used to filter valid watches.
+* **Timeout**: debug script execution timeout (in seconds). Once reached, the debug process is terminated. Set to `0`
+to disable.
+* **Parse Valid Watches File**: specifies whether the file specified in **Valid Watches File Path** should be used to
+filter valid watches.
 * **Valid Watches File Path**: path to the file with valid watch names on the remote machine.
 * **Output Offset**: `int` number, that indicates
   - if **Output Mode** is `binary`: amount of bytes to skip.
@@ -109,7 +117,9 @@ Other chapters will reference these sections as needed.
 * **Executable**: path to the build executable on the remote machine.
 * **Arguments**: command-line arguments for **Executable**.
 * **Working Directory**: build working directory.
-* **Preprocessed Source**: path to the preprocessed source. When using a separate preprocessing step during the build, compiler error messages may refer to incorrect line numbers in the original source file. When specified, # linemarkers are extracted from the file and used to update locations in error messages.
+* **Preprocessed Source**: path to the preprocessed source. When using a separate preprocessing step during the build,
+compiler error messages may refer to incorrect line numbers in the original source file. When specified, # linemarkers
+are extracted from the file and used to update locations in error messages.
 
 ## Remote Debugging Tools
 
@@ -123,28 +133,20 @@ Other chapters will reference these sections as needed.
 
 ### Basic concepts
 
-Debugging process is performed in seven steps:
+Debugging process is composed of seven steps:
 
-1. Copying source files from host machine to remote
-2. Sending information about breakpoint location to `DebugServer`
-3. Running debug scripts on remote machine
-4. Inserting breakpoint logic to the source code
-5. Modidfied code executing
-6. Breakpoint logic saves all needed data to a file and terminates code execution
-7. `DebugServer` sends the data obtained to the host machine for visualization inside `Visual Studio`
+1. The VS extension connects to Debug Server and transfers kernel source files, which are copied to the remote working directory.
+2. The VS extension sends the breakpoint info (line number, watched registers, optional target hit count) to Debug Server.
+3. Debug Server invokes the plug injection script with the specified breakpoint info.
+4. The plug is injected in the kernel source code at the target line.
+5. The kernel is compiled and run until the breakpoint, when the plug dumps watched registers and aborts execution.
+6. The kernel runner (user application) dumps the buffer to a file.
+7. Debug Server sends the data to the VS extension, which parses it and displays in the watch list.
 
 It must be noted that every debugger invocation starts execution of the code from the beginning (for example,
 every `Step Into` will perform all seven steps mentioned above with incremented breakpoint line number) due to
 the impossibility of continuing code execution from arbitrary state. But this is not an issue because execution
 usually doesn't take long (< 1sec.).
-
-### Usage
-
-Once you configured your [profile](#profiles) and added [watches to watchlist](#watches-and-watchlist) you can
-start debugging (*F5*).
-
-At first debugger will be in break state, so you can place your breakpoints and press *F11* or `Continue` button
-to run debugger.
 
 ### Watches and watchlist
 
@@ -189,6 +191,14 @@ a[i+6]
 a[i+7]
 ```
 will be added to *Watch list*.
+
+### Usage
+
+Once you configured your [profile](#profiles) and added [watches to watchlist](#watches-and-watchlist) you can
+start debugging (*F5*).
+
+At first debugger will be in break state, so you can place your breakpoints and press *F11* or `Continue` button
+to run debugger.
 
 ## Data visualization tools
 
