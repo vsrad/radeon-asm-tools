@@ -4,6 +4,7 @@ The extension provides the following features:
 
 * [Project template](#project-template)
 * [Profiles](#profiles)
+* [Macroses](#macroses)
 * [Remote debugging tools](#remote-debugging-tools)
 * Disassembling tools
 * Profiling tools
@@ -16,7 +17,7 @@ To use the tools described below, you must first create a new
 `Radeon Asm Project`.
 
 After [installing the extension](README.md#installation), you should see
-the project template in the *Create a new project* dialog:
+the new project template in the *Create a new project* dialog:
 
 ![Template](Resources/Manual/ProjTemplate.PNG)
 
@@ -121,6 +122,8 @@ filter valid watches.
 compiler error messages may refer to incorrect line numbers in the original source file. When specified, # linemarkers
 are extracted from the file and used to update locations in error messages.
 
+## Macroses
+
 ## Remote Debugging Tools
 
 **Radeon Asm Debugger Extension** provides tools for kernel debugging using remote machine.
@@ -197,10 +200,46 @@ will be added to *Watch list*.
 Once you configured your [profile](#profiles) and added [watches to watchlist](#watches-and-watchlist) you can
 start debugging (*F5*).
 
-At first debugger will be in break state, so you can place your breakpoints and press *F11* or `Continue` button
-to run debugger.
+At first debugger will be in break state (if you don't have placed breakpoints), so you can place your breakpoints
+and press *F11* or `Continue` button to run debugger.
 
 ## Data visualization tools
+
+Extension also provides an convinient interfaces for visualization of data obtained during debug session.
+
+`Visualizer table` is the major feature in this area. It is a table with [watches](#watches-and-watchlist) as rows
+and lanes as columns.
+
+So, every cell represents a specific value of the variable executed by a certain thread (in
+case of SGPR all threads will obviously display one value).
+
+`Visualizer table` looks like this:
+
+![VisualizerTable](Resources/Manual/VisualizerTable.png)
+
+There is a lot of features designed to improve user experience.
+
+* `Columns`: Textbox in the second line from the top. Defines which columns should be displayed or hidden in the `Visualizer table`.
+
+    *Format*
+
+    Use any non-numeric character to separate individual column numbers, use `-` to define range.
+    ```
+    1:5-8
+    ```
+    will include columns 1, 5, 6, 7 and 8. All spaces in columns visualization will be marked with thicker black column
+    separator.
+
+* `App Args`: Shortcut for `Arguments` from [Debugger Properties](#debugger-properties).
+
+* `Break Args`: Shortcut for `$(RadDebugBreakArgs)` [macro](#macroses).
+
+* `Counter`: Indicates the number of breakpoint hits to be skipped (can be used for breakpoints in loops).
+
+* `Group # and Group Size`: Indicates number of group to display and size of one group
+
+* `Status label`: Indicates amount of groups fetched during last debug invocation, it's timestamp, time spended on whole debug cycle (including
+deploy etc.) and time spended on execution of shader itself.
 
 ## Shortcuts and toolbar
 
