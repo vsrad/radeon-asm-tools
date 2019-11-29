@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 
 namespace VSRAD.DebugServer
@@ -31,10 +31,8 @@ namespace VSRAD.DebugServer
         public void ResponseSent(IPC.Responses.IResponse r, int bytesSent) =>
             Print($"Sent response ({bytesSent} bytes): {r}");
 
-        public void FatalClientException(Exception e)
-        {
+        public void FatalClientException(Exception e) =>
             Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
-        }
 
         public void ExecutionStarted()
         {
@@ -58,10 +56,8 @@ namespace VSRAD.DebugServer
             if (!_verbose) return;
 
             Console.WriteLine("Deploy Items:");
-            for (var i = 0; i < outputPaths.Length; i++)
-            {
-                Console.WriteLine("-- " + outputPaths[i]);
-            }
+            foreach (var path in outputPaths)
+                Console.WriteLine("-- " + path);
         }
 
         public void CommandProcessed()
