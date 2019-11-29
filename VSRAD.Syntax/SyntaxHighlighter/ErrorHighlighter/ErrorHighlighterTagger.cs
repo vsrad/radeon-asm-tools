@@ -70,7 +70,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
                     var snapshotLine = view.TextSnapshot.GetLineFromLineNumber(line - 1);
                     SnapshotSpan errorSpan;
 
-                    if (column == 0)
+                    if (column == 1)
                     {
                         errorSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
                     }
