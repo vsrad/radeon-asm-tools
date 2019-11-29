@@ -21,6 +21,7 @@ namespace VSRAD.BuildTools
         public bool Skipped { get; set; }
         public bool Successful { get; set; }
         public string ServerError { get; set; } = "";
+        public int ExitCode { get; set; }
         public Message[] ErrorMessages { get; set; } = Array.Empty<Message>();
 
         public byte[] ToArray()
@@ -31,6 +32,7 @@ namespace VSRAD.BuildTools
                 writer.Write(Skipped);
                 writer.Write(Successful);
                 writer.Write(ServerError);
+                writer.Write(ExitCode);
                 writer.Write(ErrorMessages.Length);
                 foreach (var message in ErrorMessages)
                 {
@@ -52,7 +54,8 @@ namespace VSRAD.BuildTools
                 {
                     Skipped = reader.ReadBoolean(),
                     Successful = reader.ReadBoolean(),
-                    ServerError = reader.ReadString()
+                    ServerError = reader.ReadString(),
+                    ExitCode = reader.ReadInt32()
                 };
                 var messages = new Message[reader.ReadInt32()];
                 for (int m = 0; m < messages.Length; ++m)
