@@ -82,10 +82,18 @@
         "RunAsAdmin": false
       },
       "Build": {
+        "RunPreprocessor": false,
+        "RunDisassembler": false,
         "Executable": "/opt/rocm/opencl/bin/x86_64/clang",
         "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
-        "WorkingDirectory": "$(RadDebugWorkDir)",
-        "PreprocessedSource": ""
+        "WorkingDirectory": "$(RadDebugWorkDir)"
+      },
+      "Preprocessor": {
+        "Executable": "",
+        "Arguments": "",
+        "WorkingDirectory": "$(RadDeployDir)",
+        "OutputPath": "",
+        "LocalOutputCopyPath": ""
       }
     }
   }
