@@ -325,7 +325,7 @@ namespace VSRAD.Package.Options
                 workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorWorkingDirectory),
                 outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorOutputPath),
                 localOutputCopyPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorLocalPath)
-                );
+            );
 
         public PreprocessorProfileOptions(string executable = DefaultOptionValues.PreprocessorExecutable, string arguments = DefaultOptionValues.PreprocessorArguments, string workingDirectory = DefaultOptionValues.PreprocessorWorkingDirectory, string outputPath = DefaultOptionValues.PreprocessorOutputPath, string localOutputCopyPath = DefaultOptionValues.PreprocessorLocalOutputCopyPath)
         {

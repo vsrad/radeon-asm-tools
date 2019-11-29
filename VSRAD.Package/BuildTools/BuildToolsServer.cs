@@ -87,55 +87,63 @@ namespace VSRAD.Package.BuildTools
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var buildOptions = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
+            var preprocessorOptions = await _project.Options.Profile.Preprocessor.EvaluateAsync(evaluator);
             var disassemblerOptions = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
+            bool runFinalStep = !string.IsNullOrEmpty(buildOptions.Executable);
 
-            if (string.IsNullOrEmpty(buildOptions.Executable))
+            if (!buildOptions.RunPreprocessor && !buildOptions.RunDisassembler && !runFinalStep)
                 return new IPCBuildResult { Skipped = true };
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
             var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
-            var ppResult = await RunPreprocessorAsync(executor, buildOptions);
-            if (!ppResult.TryGetResult(out var ppData, out var error))
-                return error;
-            var (ppSource, ppExitCode, ppMessages) = ppData;
-
-            if (ppExitCode != 0 || ppMessages.Any())
-                return new IPCBuildResult { ExitCode = ppExitCode, ErrorMessages = ppMessages.ToArray() };
-
-            var disasmCommand = new Execute
+            string preprocessedSource = null;
+            if (buildOptions.RunPreprocessor)
             {
-                Executable = disassemblerOptions.Executable,
-                Arguments = disassemblerOptions.Arguments,
-                WorkingDirectory = disassemblerOptions.WorkingDirectory
-            };
-            var disasmResult = await RunStepAsync(executor, disasmCommand, ppSource);
-            if (!disasmResult.TryGetResult(out var disasmData, out error))
-                return error;
-            var (disasmExitCode, disasmMessages) = disasmData;
-
-            if (disasmExitCode != 0 || disasmMessages.Any())
-                return new IPCBuildResult { ExitCode = disasmExitCode, ErrorMessages = disasmMessages.ToArray() };
-
-            var customStepCommand = new Execute
+                var ppResult = await RunPreprocessorAsync(executor, preprocessorOptions);
+                if (!ppResult.TryGetResult(out var ppData, out var error))
+                    return new Error("Preprocessor: " + error.Message);
+                var (ppSource, ppExitCode, ppMessages) = ppData;
+                if (ppExitCode != 0 || ppMessages.Any())
+                    return new IPCBuildResult { ExitCode = ppExitCode, ErrorMessages = ppMessages.ToArray() };
+                preprocessedSource = ppSource;
+            }
+            if (buildOptions.RunDisassembler)
             {
-                Executable = buildOptions.Executable,
-                Arguments = buildOptions.Arguments,
-                WorkingDirectory = buildOptions.WorkingDirectory
-            };
-            var customStepResult = await RunStepAsync(executor, customStepCommand, ppSource);
-            if (!customStepResult.TryGetResult(out var customStepData, out error))
-                return error;
-            var (customStepExitCode, customStepMessages) = customStepData;
-
-            return new IPCBuildResult { ExitCode = customStepExitCode, ErrorMessages = customStepMessages.ToArray() };
+                var disasmCommand = new Execute
+                {
+                    Executable = disassemblerOptions.Executable,
+                    Arguments = disassemblerOptions.Arguments,
+                    WorkingDirectory = disassemblerOptions.WorkingDirectory
+                };
+                var disasmResult = await RunStepAsync(executor, disasmCommand, preprocessedSource);
+                if (!disasmResult.TryGetResult(out var disasmData, out var error))
+                    return new Error("Disassembler: " + error.Message);
+                var (disasmExitCode, disasmMessages) = disasmData;
+                if (disasmExitCode != 0 || disasmMessages.Any())
+                    return new IPCBuildResult { ExitCode = disasmExitCode, ErrorMessages = disasmMessages.ToArray() };
+            }
+            if (runFinalStep)
+            {
+                var finalStepCommand = new Execute
+                {
+                    Executable = buildOptions.Executable,
+                    Arguments = buildOptions.Arguments,
+                    WorkingDirectory = buildOptions.WorkingDirectory
+                };
+                var finalStepResult = await RunStepAsync(executor, finalStepCommand, preprocessedSource);
+                if (!finalStepResult.TryGetResult(out var finalStepData, out var error))
+                    return new Error("Final step: " + error.Message);
+                var (finalStepExitCode, finalStepMessages) = finalStepData;
+                return new IPCBuildResult { ExitCode = finalStepExitCode, ErrorMessages = finalStepMessages.ToArray() };
+            }
+            return new IPCBuildResult();
         }
 
-        private async Task<Result<(string, int, IEnumerable<Message>)>> RunPreprocessorAsync(RemoteCommandExecutor executor, Options.BuildProfileOptions options)
+        private async Task<Result<(string, int, IEnumerable<Message>)>> RunPreprocessorAsync(RemoteCommandExecutor executor, Options.PreprocessorProfileOptions options)
         {
-            throw new NotImplementedException();
             var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory };
-            var response = await executor.ExecuteWithResultAsync(command, default, checkExitCode: false);
+            var response = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile, checkExitCode: false);
             if (!response.TryGetResult(out var result, out var error))
                 return error;
 
