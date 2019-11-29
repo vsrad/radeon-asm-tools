@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace VSRAD.BuildTools.Errors
+namespace VSRAD.Package.BuildTools.Errors
 {
     public struct LineMarker
     {

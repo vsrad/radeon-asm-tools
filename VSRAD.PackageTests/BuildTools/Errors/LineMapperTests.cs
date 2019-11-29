@@ -1,11 +1,10 @@
-using System;
 using System.Linq;
-using VSRAD.BuildTools.Errors;
+using VSRAD.Package.BuildTools.Errors;
 using Xunit;
-using static VSRAD.BuildTools.Errors.LineMapper;
-using static VSRAD.BuildTools.Errors.Parser;
+using static VSRAD.Package.BuildTools.Errors.LineMapper;
+using static VSRAD.Package.BuildTools.Errors.Parser;
 
-namespace VSRAD.BuildToolsTests.Errors
+namespace VSRAD.PackageTests.BuildTools.Errors
 {
     public class LineMapperTests
     {

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Linq;
 using Xunit;
-using static VSRAD.BuildTools.Errors.Parser;
+using static VSRAD.BuildTools.IPCBuildResult;
+using static VSRAD.Package.BuildTools.Errors.Parser;
 
-namespace VSRAD.BuildTools.Errors
+namespace VSRAD.PackageTests.BuildTools.Errors
 {
     public class ParserTests
     {

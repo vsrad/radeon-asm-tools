@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using static VSRAD.BuildTools.IPCBuildResult;
 
-namespace VSRAD.BuildTools.Errors
+namespace VSRAD.Package.BuildTools.Errors
 {
     public static class Parser
     {

@@ -90,7 +90,7 @@ namespace VSRAD.Package.BuildTools
             var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
             if (string.IsNullOrEmpty(options.Executable))
-                return new IPCBuildResult { ServerError = IPCBuildResult.ServerErrorBuildSkipped };
+                return new IPCBuildResult { Skipped = true };
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
@@ -127,10 +127,10 @@ namespace VSRAD.Package.BuildTools
             return new IPCBuildResult
             {
                 ExitCode = result.ExitCode,
-                Stdout = result.Stdout,
-                Stderr = result.Stderr,
-                PreprocessedSource = preprocessed,
-                ProjectSourcePaths = projectSources.ToArray()
+                //Stdout = result.Stdout,
+                //Stderr = result.Stderr,
+                //PreprocessedSource = preprocessed,
+                //ProjectSourcePaths = projectSources.ToArray()
             };
         }
     }
