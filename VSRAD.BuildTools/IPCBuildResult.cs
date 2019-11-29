@@ -19,7 +19,6 @@ namespace VSRAD.BuildTools
         }
 
         public bool Skipped { get; set; }
-        public bool Successful { get; set; }
         public string ServerError { get; set; } = "";
         public int ExitCode { get; set; }
         public Message[] ErrorMessages { get; set; } = Array.Empty<Message>();
@@ -30,7 +29,6 @@ namespace VSRAD.BuildTools
             using (var writer = new BinaryWriter(memStream))
             {
                 writer.Write(Skipped);
-                writer.Write(Successful);
                 writer.Write(ServerError);
                 writer.Write(ExitCode);
                 writer.Write(ErrorMessages.Length);
@@ -53,7 +51,6 @@ namespace VSRAD.BuildTools
                 var buildResult = new IPCBuildResult
                 {
                     Skipped = reader.ReadBoolean(),
-                    Successful = reader.ReadBoolean(),
                     ServerError = reader.ReadString(),
                     ExitCode = reader.ReadInt32()
                 };

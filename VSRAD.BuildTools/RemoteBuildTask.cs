@@ -68,7 +68,7 @@ namespace VSRAD.BuildTools
                 }
 
             Log.LogMessage(MessageImportance.High, $"Build finished with exit code {result.ExitCode}");
-            return result.Successful;
+            return result.ExitCode == 0 && result.ErrorMessages.Length == 0;
         }
     }
 }
