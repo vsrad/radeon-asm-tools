@@ -24,11 +24,13 @@ namespace VSRAD.DebugServer.Handlers
             var tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             File.WriteAllBytes(tempFile, _archive);
 
-            var archive = ZipFile.Open(tempFile, ZipArchiveMode.Read);
-            var deployItems = archive.Entries.Select(entry => _destination + Path.DirectorySeparatorChar + entry.FullName).ToArray();
-            _log.DeployItemsReceived(deployItems);
+            using (var archive = ZipFile.Open(tempFile, ZipArchiveMode.Read))
+            {
+                var deployItems = archive.Entries.Select(entry => _destination + Path.DirectorySeparatorChar + entry.FullName);
+                _log.DeployItemsReceived(deployItems);
 
-            archive.ExtractToDirectory(_destination, overwriteFiles: true);
+                archive.ExtractToDirectory(_destination, overwriteFiles: true);
+            }
             File.Delete(tempFile);
 
             return Task.FromResult<IResponse>(null);

@@ -53,7 +53,7 @@ namespace VSRAD.DebugServer
                 Console.WriteLine($"#{_clientId} stderr> " + output);
         }
 
-        public void DeployItemsReceived(string[] outputPaths)
+        public void DeployItemsReceived(IEnumerable<string> outputPaths)
         {
             if (!_verbose) return;
 
