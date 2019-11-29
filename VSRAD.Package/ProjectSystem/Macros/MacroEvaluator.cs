@@ -155,6 +155,12 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.BuildArguments: unevaluated = _profileOptions.Build.Arguments; break;
                 case RadMacros.BuildWorkingDirectory: unevaluated = _profileOptions.Build.WorkingDirectory; break;
                 //case RadMacros.BuildPreprocessoredSource: unevaluated = _profileOptions.Build.PreprocessoredSource; break;
+
+                case RadMacros.PreprocessorExecutable: unevaluated = _profileOptions.Preprocessor.Executable; break;
+                case RadMacros.PreprocessorArguments: unevaluated = _profileOptions.Preprocessor.Arguments; break;
+                case RadMacros.PreprocessorWorkingDirectory: unevaluated = _profileOptions.Preprocessor.WorkingDirectory; break;
+                case RadMacros.PreprocessorOutputPath: unevaluated = _profileOptions.Preprocessor.OutputPath; break;
+                case RadMacros.PreprocessorLocalPath: unevaluated = _profileOptions.Preprocessor.LocalOutputCopyPath; break;
             }
 
             if (unevaluated != null)
