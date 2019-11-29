@@ -35,19 +35,17 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public string DisplayName { get; }
         public string Description { get; }
         public string Macro { get; }
-        public string TrueString { get; }
-        public string FalseString { get; }
+        public (string True, string False)? BinaryChoice { get; }
         public GetValueDelegate GetValue { get; }
 
         public string FullDescription => Macro != null ? ("$(" + Macro + ")" + Environment.NewLine + Description) : Description;
 
-        public Property(string displayName, string description, string macro, string trueString, string falseString, GetValueDelegate getValue)
+        public Property(string displayName, string description, string macro, (string True, string False)? binaryChoice, GetValueDelegate getValue)
         {
             DisplayName = displayName;
             Description = description;
             Macro = macro;
-            TrueString = trueString;
-            FalseString = falseString;
+            BinaryChoice = binaryChoice;
             GetValue = getValue;
         }
     }
@@ -104,18 +102,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 .ToList();
         }
 
-        private static Property ReflectProperty(PropertyInfo propertyInfo)
-        {
-            var boolDisplayAttr = propertyInfo.GetCustomAttribute<BooleanDisplayValuesAttribute>();
-
-            return new Property(
+        private static Property ReflectProperty(PropertyInfo propertyInfo) =>
+            new Property(
                 displayName: propertyInfo.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName ?? propertyInfo.Name,
                 description: propertyInfo.GetCustomAttribute<DescriptionAttribute>()?.Description,
                 macro: propertyInfo.GetCustomAttribute<MacroAttribute>()?.MacroName,
-                trueString: boolDisplayAttr?.True ?? "True",
-                falseString: boolDisplayAttr?.False ?? "False",
+                binaryChoice: propertyInfo.GetCustomAttribute<BinaryChoiceAttribute>()?.Choice,
                 getValue: propertyInfo.GetValue
             );
-        }
     }
 }

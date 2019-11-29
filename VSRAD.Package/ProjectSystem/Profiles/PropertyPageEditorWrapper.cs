@@ -110,12 +110,17 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     intBox.PreviewTextInput += (s, e) => e.Handled = !int.TryParse(e.Text, out _);
                     intBox.TextChanged += (s, e) => _setValue(page, property, int.TryParse(intBox.Text, out var res) ? res : 0);
                     return intBox;
+                case bool boolValue when property.BinaryChoice != null:
+                    var optBox = new ComboBox();
+                    optBox.SelectionChanged += (s, e) => _setValue(page, property, optBox.SelectedIndex == 0);
+                    optBox.Items.Add(property.BinaryChoice.Value.True);
+                    optBox.Items.Add(property.BinaryChoice.Value.False);
+                    optBox.SelectedItem = boolValue ? property.BinaryChoice.Value.True : property.BinaryChoice.Value.False;
+                    return optBox;
                 case bool boolValue:
-                    var boolBox = new ComboBox();
-                    boolBox.SelectionChanged += (s, e) => _setValue(page, property, boolBox.SelectedIndex == 0);
-                    boolBox.Items.Add(property.TrueString);
-                    boolBox.Items.Add(property.FalseString);
-                    boolBox.SelectedItem = boolValue ? property.TrueString : property.FalseString;
+                    var boolBox = new CheckBox();
+                    boolBox.Checked += (s, e) => _setValue(page, property, true);
+                    boolBox.Unchecked += (s, e) => _setValue(page, property, false);
                     return boolBox;
                 case object _ when value.GetType().IsEnum:
                     var enumBox = new ComboBox();
@@ -125,7 +130,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     enumBox.SelectionChanged += (s, e) => _setValue(page, property, Enum.Parse(type, enumBox.SelectedItem.ToString()));
                     return enumBox;
                 default:
-                    var textBox = new TextBox { Text = value != null ? value.ToString() : "" };
+                    var textBox = new TextBox { Text = value?.ToString() ?? "" };
                     textBox.TextChanged += (s, e) => _setValue(page, property, textBox.Text);
                     return property.Macro != null ? EditorWithMacroButton(textBox, property.Macro) : textBox;
             }

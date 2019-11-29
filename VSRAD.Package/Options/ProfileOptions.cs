@@ -20,15 +20,13 @@ namespace VSRAD.Package.Options
     }
 
     [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BooleanDisplayValuesAttribute : Attribute
+    public sealed class BinaryChoiceAttribute : Attribute
     {
-        public string True { get; }
-        public string False { get; }
+        public (string True, string False) Choice { get; }
 
-        public BooleanDisplayValuesAttribute(string trueString, string falseString)
+        public BinaryChoiceAttribute(string trueString, string falseString)
         {
-            True = trueString;
-            False = falseString;
+            Choice = (trueString, falseString);
         }
     }
 
@@ -126,7 +124,7 @@ namespace VSRAD.Package.Options
         [Description("Path to the debug script output file (can be relative to Working Directory).")]
         [DefaultValue(DefaultOptionValues.DebuggerOutputPath)]
         public string OutputPath { get; }
-        [DisplayName("Output Mode"), BooleanDisplayValues("Binary", "Text")]
+        [DisplayName("Output Mode"), BinaryChoice("Binary", "Text")]
         [Description("Specifies how the debug script output file is parsed: 'Text': each line is read as a hexadecimal string (0x...), 'Binary': 4-byte blocks are read as a single dword value.")]
         [DefaultValue(DefaultOptionValues.DebuggerBinaryOutput)]
         public bool BinaryOutput { get; }
