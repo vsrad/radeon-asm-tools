@@ -33,10 +33,7 @@ namespace VSRAD.DebugServer
 
         public void FatalClientException(Exception e)
         {
-            if (e is IOException)
-                Print("Connection has been terminated.");
-            else
-                Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
+            Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
         }
 
         public void ExecutionStarted()
