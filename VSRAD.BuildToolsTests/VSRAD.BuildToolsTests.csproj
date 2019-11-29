@@ -52,8 +52,6 @@
     <Reference Include="System.Configuration" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Errors\LineMapperTests.cs" />
-    <Compile Include="Errors\ParserTests.cs" />
     <Compile Include="RemoteBuildTaskTests.cs" />
   </ItemGroup>
   <ItemGroup>

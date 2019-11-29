@@ -1,7 +1,6 @@
 ﻿using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using System;
-using System.Linq;
 
 namespace VSRAD.BuildTools
 {
@@ -31,36 +30,35 @@ namespace VSRAD.BuildTools
 
         private bool CheckBuildResult(IPCBuildResult result)
         {
-            if (result.ServerError == IPCBuildResult.ServerErrorBuildSkipped)
+            if (result.Skipped)
             {
                 Log.LogMessage(MessageImportance.High, "Build skipped (executable is not set)");
                 return true;
             }
-            if (result.ServerError != null)
+            if (!string.IsNullOrEmpty(result.ServerError))
             {
                 Log.LogError(ServerErrorPrefix + result.ServerError);
                 return false;
             }
 
-            var errors = Errors.Parser.ExtractMessages(result.Stderr, result.PreprocessedSource, result.ProjectSourcePaths);
-            foreach (var message in errors)
+            foreach (var message in result.ErrorMessages)
                 switch (message.Kind)
                 {
-                    case Errors.MessageKind.Error:
+                    case IPCBuildResult.MessageKind.Error:
                         Log.LogError(
                             subcategory: null, errorCode: null, helpKeyword: null,
                             message: message.Text, file: message.SourceFile,
                             lineNumber: message.Line, columnNumber: message.Column,
                             endLineNumber: 0, endColumnNumber: 0);
                         break;
-                    case Errors.MessageKind.Warning:
+                    case IPCBuildResult.MessageKind.Warning:
                         Log.LogWarning(
                             subcategory: null, warningCode: null, helpKeyword: null,
                             message: message.Text, file: message.SourceFile,
                             lineNumber: message.Line, columnNumber: message.Column,
                             endLineNumber: 0, endColumnNumber: 0);
                         break;
-                    case Errors.MessageKind.Note:
+                    case IPCBuildResult.MessageKind.Note:
                         Log.LogWarning(
                             subcategory: null, warningCode: null, helpKeyword: null,
                             message: "note: " + message.Text, file: message.SourceFile,
@@ -70,7 +68,7 @@ namespace VSRAD.BuildTools
                 }
 
             Log.LogMessage(MessageImportance.High, $"Build finished with exit code {result.ExitCode}");
-            return result.ExitCode == 0 && errors.Count() == 0;
+            return result.ExitCode == 0 && result.ErrorMessages.Length == 0;
         }
     }
 }

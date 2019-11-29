@@ -1,11 +1,11 @@
-using System;
 using System.Linq;
-using VSRAD.BuildTools.Errors;
+using VSRAD.Package.BuildTools.Errors;
 using Xunit;
-using static VSRAD.BuildTools.Errors.LineMapper;
-using static VSRAD.BuildTools.Errors.Parser;
+using static VSRAD.Package.BuildTools.BuildErrorProcessor;
+using static VSRAD.Package.BuildTools.Errors.LineMapper;
+using static VSRAD.Package.BuildTools.Errors.Parser;
 
-namespace VSRAD.BuildToolsTests.Errors
+namespace VSRAD.PackageTests.BuildTools.Errors
 {
     public class LineMapperTests
     {
@@ -81,7 +81,8 @@ int main(int argc, char** argv)
         [Fact]
         public void ParseErrorsWithPreprocessedTest()
         {
-            var messages = ExtractMessages(ErrString, PpString, new string[] { "source.c", "code.c" });
+            var messages = ParseStderr(ErrString);
+            UpdateErrorLocations(messages, PpString, new string[] { "source.c", "code.c" });
             Assert.Equal(2, messages.First().Line);
             Assert.Equal("code.c", messages.First().SourceFile);
             Assert.Equal(6, messages.Last().Line);

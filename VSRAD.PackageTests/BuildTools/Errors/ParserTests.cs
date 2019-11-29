@@ -1,16 +1,16 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Xunit;
-using static VSRAD.BuildTools.Errors.Parser;
+using static VSRAD.BuildTools.IPCBuildResult;
+using static VSRAD.Package.BuildTools.Errors.Parser;
 
-namespace VSRAD.BuildTools.Errors
+namespace VSRAD.PackageTests.BuildTools.Errors
 {
     public class ParserTests
     {
         [Fact]
         public void ClangErrorTest()
         {
-            var messages = ExtractMessages(@"
+            var messages = ParseStderr(@"
 input.s:267:27: error: expected absolute expression
       s_sub_u32         s[loop_xss], s[loop_x], 1
                           ^
@@ -21,7 +21,7 @@ host.c:4:2: warning: implicitly declaring library function 'printf' with type 'i
         printf(""h"");
         ^
 host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
-", "", Array.Empty<string>()).ToList();
+").ToList();
 
             Assert.Equal(MessageKind.Error, messages[0].Kind);
             Assert.Equal(27, messages[0].Column);
@@ -57,14 +57,14 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
         [Fact]
         public void ScriptErrorTest()
         {
-            var messages = ExtractMessages(@"
+            var messages = ParseStderr(@"
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
 *W,undefined: 1 undefined references found
 *E,syntax error (<stdin>:12): at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?
 *E,fatal (auth.c:35): Uncaught error: Undefined variable: user
-", "", Array.Empty<string>()).ToList();
+").ToArray();
 
             Assert.Equal(MessageKind.Error, messages[0].Kind);
             Assert.Equal(3, messages[0].Line);

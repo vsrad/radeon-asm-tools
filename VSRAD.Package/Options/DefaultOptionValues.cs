@@ -44,10 +44,11 @@ namespace VSRAD.Package.Options
         public const bool ProfilerRunAsAdmin = false;
         #endregion
         #region Build
+        public const bool BuildRunPreprocessor = true;
+        public const bool BuildRunDisassembler = true;
         public const string BuildExecutable = "";
         public const string BuildArguments = "";
         public const string BuildWorkingDirectory = "";
-        public const string PreprocessedOutputFile = "";
         #endregion
         #region Preprocessor
         public const string PreprocessorExecutable = "";

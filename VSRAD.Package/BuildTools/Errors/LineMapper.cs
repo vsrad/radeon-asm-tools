@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace VSRAD.BuildTools.Errors
+namespace VSRAD.Package.BuildTools.Errors
 {
     public struct LineMarker
     {
@@ -37,7 +37,7 @@ namespace VSRAD.BuildTools.Errors
             return result;
         }
 
-        public static string MapSourceToHost(string remotePath, string[] projectPaths)
+        public static string MapSourceToHost(string remotePath, IEnumerable<string> projectPaths)
         {
             var remotePathArray = remotePath.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
             Array.Reverse(remotePathArray);

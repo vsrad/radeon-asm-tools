@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO.Pipes;
 using System.Linq;
@@ -8,10 +9,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.BuildTools;
 using VSRAD.DebugServer.IPC.Commands;
-using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
+using static VSRAD.BuildTools.IPCBuildResult;
 
 namespace VSRAD.Package.BuildTools
 {
@@ -26,8 +27,8 @@ namespace VSRAD.Package.BuildTools
 
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowManager _outputWindow;
-        private readonly IProjectSourceManager _sourceManager;
         private readonly IFileSynchronizationManager _deployManager;
+        private readonly IBuildErrorProcessor _errorProcessor;
         private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
 
         private IProject _project;
@@ -36,12 +37,12 @@ namespace VSRAD.Package.BuildTools
         public BuildToolsServer(
             ICommunicationChannel channel,
             IOutputWindowManager outputWindow,
-            IProjectSourceManager sourceManager,
+            IBuildErrorProcessor errorProcessor,
             IFileSynchronizationManager deployManager)
         {
             _channel = channel;
             _outputWindow = outputWindow;
-            _sourceManager = sourceManager;
+            _errorProcessor = errorProcessor;
             _deployManager = deployManager;
         }
 
@@ -85,53 +86,81 @@ namespace VSRAD.Package.BuildTools
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
-            var options = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
-            var projectSources = await _sourceManager.ListProjectFilesAsync();
-            var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
+            var buildOptions = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
+            var preprocessorOptions = await _project.Options.Profile.Preprocessor.EvaluateAsync(evaluator);
+            var disassemblerOptions = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
+            bool runFinalStep = !string.IsNullOrEmpty(buildOptions.Executable);
 
-            if (string.IsNullOrEmpty(options.Executable))
-                return new IPCBuildResult { ServerError = IPCBuildResult.ServerErrorBuildSkipped };
+            if (!buildOptions.RunPreprocessor && !buildOptions.RunDisassembler && !runFinalStep)
+                return new IPCBuildResult { Skipped = true };
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
+            var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
-            var command = new Execute
+            string preprocessedSource = null;
+            if (buildOptions.RunPreprocessor)
             {
-                Executable = options.Executable,
-                Arguments = options.Arguments,
-                WorkingDirectory = options.WorkingDirectory
-            };
-
-            ExecutionCompleted result;
-            string preprocessed = "";
-            if (string.IsNullOrEmpty(options.PreprocessedSource))
-            {
-                var response = await executor.ExecuteAsync(command, checkExitCode: false);
-                if (!response.TryGetResult(out result, out var error))
-                    return error;
+                var ppResult = await RunPreprocessorAsync(executor, preprocessorOptions);
+                if (!ppResult.TryGetResult(out var ppData, out var error))
+                    return new Error("Preprocessor: " + error.Message);
+                var (ppSource, ppExitCode, ppMessages) = ppData;
+                if (ppExitCode != 0 || ppMessages.Any())
+                    return new IPCBuildResult { ExitCode = ppExitCode, ErrorMessages = ppMessages.ToArray() };
+                preprocessedSource = ppSource;
             }
-            else
+            if (buildOptions.RunDisassembler)
             {
-                var response = await executor.ExecuteWithResultAsync(command, options.PreprocessedSourceFile, checkExitCode: false);
-                if (!response.TryGetResult(out var resultData, out var error))
-                    switch (error.Message)
-                    {
-                        case RemoteCommandExecutor.ErrorFileNotCreated: return new Error(ErrorPreprocessorFileNotCreated);
-                        case RemoteCommandExecutor.ErrorFileUnchanged: return new Error(ErrorPreprocessorFileUnchanged);
-                        default: return error;
-                    }
-
-                result = resultData.Item1;
-                preprocessed = Encoding.UTF8.GetString(resultData.Item2);
+                var disasmCommand = new Execute
+                {
+                    Executable = disassemblerOptions.Executable,
+                    Arguments = disassemblerOptions.Arguments,
+                    WorkingDirectory = disassemblerOptions.WorkingDirectory
+                };
+                var disasmResult = await RunStepAsync(executor, disasmCommand, preprocessedSource);
+                if (!disasmResult.TryGetResult(out var disasmData, out var error))
+                    return new Error("Disassembler: " + error.Message);
+                var (disasmExitCode, disasmMessages) = disasmData;
+                if (disasmExitCode != 0 || disasmMessages.Any())
+                    return new IPCBuildResult { ExitCode = disasmExitCode, ErrorMessages = disasmMessages.ToArray() };
             }
-
-            return new IPCBuildResult
+            if (runFinalStep)
             {
-                ExitCode = result.ExitCode,
-                Stdout = result.Stdout,
-                Stderr = result.Stderr,
-                PreprocessedSource = preprocessed,
-                ProjectSourcePaths = projectSources.ToArray()
-            };
+                var finalStepCommand = new Execute
+                {
+                    Executable = buildOptions.Executable,
+                    Arguments = buildOptions.Arguments,
+                    WorkingDirectory = buildOptions.WorkingDirectory
+                };
+                var finalStepResult = await RunStepAsync(executor, finalStepCommand, preprocessedSource);
+                if (!finalStepResult.TryGetResult(out var finalStepData, out var error))
+                    return new Error("Final step: " + error.Message);
+                var (finalStepExitCode, finalStepMessages) = finalStepData;
+                return new IPCBuildResult { ExitCode = finalStepExitCode, ErrorMessages = finalStepMessages.ToArray() };
+            }
+            return new IPCBuildResult();
+        }
+
+        private async Task<Result<(string, int, IEnumerable<Message>)>> RunPreprocessorAsync(RemoteCommandExecutor executor, Options.PreprocessorProfileOptions options)
+        {
+            var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory };
+            var response = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile, checkExitCode: false);
+            if (!response.TryGetResult(out var result, out var error))
+                return error;
+
+            var preprocessedSource = Encoding.UTF8.GetString(result.Item2);
+            var messages = await _errorProcessor.ExtractMessagesAsync(result.Item1.Stderr, null);
+
+            return (preprocessedSource, result.Item1.ExitCode, messages);
+        }
+
+        private async Task<Result<(int, IEnumerable<Message>)>> RunStepAsync(RemoteCommandExecutor executor, Execute command, string preprocessed)
+        {
+            var response = await executor.ExecuteAsync(command, checkExitCode: false);
+            if (!response.TryGetResult(out var result, out var error))
+                return error;
+
+            var messages = await _errorProcessor.ExtractMessagesAsync(result.Stderr, preprocessed);
+            return (result.ExitCode, messages);
         }
     }
 }

@@ -40,7 +40,7 @@ namespace VSRAD.Package.Commands
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
-            var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory, RunAsAdministrator = false };
+            var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory };
 
             await SetStatusBarTextAsync("RAD Debug: Disassembling...");
             try

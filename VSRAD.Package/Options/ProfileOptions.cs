@@ -325,7 +325,7 @@ namespace VSRAD.Package.Options
                 workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorWorkingDirectory),
                 outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorOutputPath),
                 localOutputCopyPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorLocalPath)
-                );
+            );
 
         public PreprocessorProfileOptions(string executable = DefaultOptionValues.PreprocessorExecutable, string arguments = DefaultOptionValues.PreprocessorArguments, string workingDirectory = DefaultOptionValues.PreprocessorWorkingDirectory, string outputPath = DefaultOptionValues.PreprocessorOutputPath, string localOutputCopyPath = DefaultOptionValues.PreprocessorLocalOutputCopyPath)
         {
@@ -339,36 +339,38 @@ namespace VSRAD.Package.Options
 
     public sealed class BuildProfileOptions
     {
-        [Macro(RadMacros.BuildExecutable), Description("Executable")]
+        [Description("Run preprocessor as the first build step"), DisplayName("Run Preprocessor")]
+        [DefaultValue(DefaultOptionValues.BuildRunPreprocessor)]
+        public bool RunPreprocessor { get; }
+        [Description("Run disassembler as the next build step"), DisplayName("Run Disassembler")]
+        [DefaultValue(DefaultOptionValues.BuildRunDisassembler)]
+        public bool RunDisassembler { get; }
+        [Macro(RadMacros.BuildExecutable), DisplayName("Final Build Step Executable")]
         [DefaultValue(DefaultOptionValues.BuildExecutable)]
         public string Executable { get; }
-        [Macro(RadMacros.BuildArguments), Description("Build Arguments"), DisplayName("Arguments")]
+        [Macro(RadMacros.BuildArguments), DisplayName("Final Build Step Arguments")]
         [DefaultValue(DefaultOptionValues.BuildArguments)]
         public string Arguments { get; }
-        [Macro(RadMacros.BuildWorkingDirectory), Description("Build Working Directory"), DisplayName("Working Directory")]
+        [Macro(RadMacros.BuildWorkingDirectory), DisplayName("Final Build Step Working Directory")]
         [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
         public string WorkingDirectory { get; }
-        [Description(""), DisplayName("pp")]
-        [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
-        public string PreprocessedSource { get; }
-
-
-        [JsonIgnore]
-        public OutputFile PreprocessedSourceFile => new OutputFile(WorkingDirectory, PreprocessedSource, binaryOutput: true);
 
         public async Task<BuildProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new BuildProfileOptions(
+                runPreprocessor: RunPreprocessor,
+                runDisassembler: RunDisassembler,
                 executable: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildExecutable),
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildArguments),
                 workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildWorkingDirectory)
             );
 
-        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory, string preprocessedSource = "")
+        public BuildProfileOptions(bool runPreprocessor = DefaultOptionValues.BuildRunPreprocessor, bool runDisassembler = DefaultOptionValues.BuildRunDisassembler, string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory)
         {
+            RunPreprocessor = runPreprocessor;
+            RunDisassembler = runDisassembler;
             Executable = executable;
             Arguments = arguments;
             WorkingDirectory = workingDirectory;
-            PreprocessedSource = preprocessedSource;
         }
     }
 
