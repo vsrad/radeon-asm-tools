@@ -37,7 +37,7 @@ namespace VSRAD.Package.BuildTools.Errors
             return result;
         }
 
-        public static string MapSourceToHost(string remotePath, string[] projectPaths)
+        public static string MapSourceToHost(string remotePath, IEnumerable<string> projectPaths)
         {
             var remotePathArray = remotePath.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
             Array.Reverse(remotePathArray);

@@ -8,36 +8,9 @@ namespace VSRAD.Package.BuildTools.Errors
 {
     public static class Parser
     {
-        public static IEnumerable<Message> ExtractMessages(string stderr, string preprocessed, string[] projectSources)
-        {
-            var messages = ParseStderr(stderr);
-
-            if (messages.Count > 0 && !string.IsNullOrEmpty(preprocessed))
-            {
-                var ppLines = LineMapper.MapLines(preprocessed);
-                foreach (var message in messages)
-                {
-                    var messageLine = message.Line;
-                    foreach (var marker in ppLines)
-                    {
-                        if (marker.PpLine > messageLine) break;
-
-                        message.Line = marker.SourceLine + messageLine - marker.PpLine;
-                        message.SourceFile = marker.SourceFile;
-                    }
-                }
-            }
-
-            foreach (var message in messages)
-                if (message.SourceFile != null)
-                    message.SourceFile = LineMapper.MapSourceToHost(message.SourceFile, projectSources);
-
-            return messages;
-        }
-
         private enum ErrorFormat { Clang, Script, Undefined };
 
-        private static ICollection<Message> ParseStderr(string stderr)
+        public static ICollection<Message> ParseStderr(string stderr)
         {
             var messages = new LinkedList<Message>();
             var format = ErrorFormat.Undefined;

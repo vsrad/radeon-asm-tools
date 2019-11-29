@@ -122,6 +122,7 @@
     <Compile Include="..\VSRAD.DebugServer\IPC\StreamExtensions.cs">
       <Link>Server\IPC\StreamExtensions.cs</Link>
     </Compile>
+    <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
     <Compile Include="BuildTools\Errors\Parser.cs" />
     <Compile Include="Colors.cs" />
