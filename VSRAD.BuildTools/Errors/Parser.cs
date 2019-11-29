@@ -28,7 +28,8 @@ namespace VSRAD.BuildTools.Errors
             }
 
             foreach (var message in messages)
-                message.SourceFile = LineMapper.MapSourceToHost(message.SourceFile, projectSources);
+                if (message.SourceFile != null)
+                    message.SourceFile = LineMapper.MapSourceToHost(message.SourceFile, projectSources);
 
             return messages;
         }

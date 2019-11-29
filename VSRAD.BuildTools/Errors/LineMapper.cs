@@ -41,7 +41,7 @@ namespace VSRAD.BuildTools.Errors
         {
             var remotePathArray = remotePath.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
             Array.Reverse(remotePathArray);
-            string probablePath = "";
+            string probablePath = remotePath;
             int longestMatch = -1;
             foreach (var path in projectPaths)
             {
