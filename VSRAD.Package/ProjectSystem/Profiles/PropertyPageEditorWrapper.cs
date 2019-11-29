@@ -118,7 +118,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     optBox.SelectedItem = boolValue ? property.BinaryChoice.Value.True : property.BinaryChoice.Value.False;
                     return optBox;
                 case bool boolValue:
-                    var boolBox = new CheckBox();
+                    var boolBox = new CheckBox() { IsChecked = boolValue };
                     boolBox.Checked += (s, e) => _setValue(page, property, true);
                     boolBox.Unchecked += (s, e) => _setValue(page, property, false);
                     return boolBox;
