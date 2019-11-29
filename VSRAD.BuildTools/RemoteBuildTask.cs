@@ -1,6 +1,7 @@
 ﻿using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using System;
+using System.Linq;
 
 namespace VSRAD.BuildTools
 {
@@ -41,7 +42,8 @@ namespace VSRAD.BuildTools
                 return false;
             }
 
-            foreach (var message in Errors.Parser.ExtractMessages(result.Stderr, result.PreprocessedSource, result.ProjectSourcePaths))
+            var errors = Errors.Parser.ExtractMessages(result.Stderr, result.PreprocessedSource, result.ProjectSourcePaths);
+            foreach (var message in errors)
                 switch (message.Kind)
                 {
                     case Errors.MessageKind.Error:
@@ -68,7 +70,7 @@ namespace VSRAD.BuildTools
                 }
 
             Log.LogMessage(MessageImportance.High, $"Build finished with exit code {result.ExitCode}");
-            return result.ExitCode == 0;
+            return result.ExitCode == 0 && errors.Count() == 0;
         }
     }
 }
