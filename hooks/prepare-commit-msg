@@ -6,7 +6,7 @@ STAGED_FILES=$(git diff --name-only --cached)
 
 RELEASE_COMMIT_MSG_PATTERN="^prepare \d{4}\.\d{2}\.\d{2}$"
 
-if [[ $COMMIT_MSG == prepare* ]]; then
+if [[ $COMMIT_MSG == prepare\ \d* ]]; then
   if [[ ! $COMMIT_MSG =~ $RELEASE_COMMIT_MSG_PATTERN ]]; then
     echo "Error: invalid release commit message pattern: 'prepare xxxx.xx.xx'"
     exit 1
@@ -17,6 +17,11 @@ if [[ $COMMIT_MSG == prepare* ]]; then
 fi
 
 for file in $STAGED_FILES; do
+  
+  if [[ $file == hooks/* ]]; then
+    echo "[git hooks] $COMMIT_MSG" > $COMMIT_FILE
+    exit 0
+  fi
 
   # check is manual editing
   if [[ $file == "MANUAL.md" ]] || [[ $file == Resources/Manual/* ]]; then
