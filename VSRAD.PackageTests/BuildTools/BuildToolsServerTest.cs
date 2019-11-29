@@ -70,7 +70,7 @@ namespace VSRAD.Package.BuildTools
             var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() {
                 { RadMacros.BuildExecutable, "kuu" },
                 { RadMacros.BuildWorkingDirectory, "/home/old" },
-                { RadMacros.BuildPreprocessedSource, "preprocessed_source.build.tmp" }
+                //{ RadMacros.BuildPreprocessedSource, "preprocessed_source.build.tmp" }
             }, projectRoot: @"C:\Users\CFF\Preprocess");
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();
@@ -102,7 +102,7 @@ namespace VSRAD.Package.BuildTools
             TestHelper.InitializePackageTaskFactory();
             var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() {
                 { RadMacros.BuildExecutable, "kuu" },
-                { RadMacros.BuildPreprocessedSource, "preprocessed_source.build.tmp" }
+                //{ RadMacros.BuildPreprocessedSource, "preprocessed_source.build.tmp" }
             }, projectRoot: @"C:\Users\CFF\Errors");
             var channel = new MockCommunicationChannel();
             var output = new Mock<IOutputWindowManager>();

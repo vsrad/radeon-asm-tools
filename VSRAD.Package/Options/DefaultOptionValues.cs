@@ -47,7 +47,14 @@ namespace VSRAD.Package.Options
         public const string BuildExecutable = "";
         public const string BuildArguments = "";
         public const string BuildWorkingDirectory = "";
-        public const string BuildPreprocessedSource = "preprocessed_source.build.tmp";
+        public const string PreprocessedOutputFile = "";
+        #endregion
+        #region Preprocessor
+        public const string PreprocessorExecutable = "";
+        public const string PreprocessorArguments = "";
+        public const string PreprocessorWorkingDirectory = "$(" + RadMacros.DeployDirectory + ")";
+        public const string PreprocessorOutputPath = "";
+        public const string PreprocessorLocalOutputCopyPath = "";
         #endregion
     }
 }

@@ -130,6 +130,7 @@
     <Compile Include="Commands\DisassemblyCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
+    <Compile Include="Commands\PreprocessCommand.cs" />
     <Compile Include="Commands\ProfileCommand.cs" />
     <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />

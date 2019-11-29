@@ -58,7 +58,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string BuildExecutable = "RadBuildExe";
         public const string BuildArguments = "RadBuildArgs";
         public const string BuildWorkingDirectory = "RadBuildWorkDir";
-        public const string BuildPreprocessedSource = "RadBuildPpSource";
+        public const string PreprocessedFilePath = "";
+
+        public const string PreprocessorExecutable = "RadPpExe";
+        public const string PreprocessorArguments = "RadPpArgs";
+        public const string PreprocessorWorkingDirectory = "RadPpDir";
+        public const string PreprocessorOutputPath = "RadPpOutputPath";
+        public const string PreprocessorLocalPath = "RadDPpLocalCopyPath";
     }
 
     public interface IMacroEvaluator
@@ -148,7 +154,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.BuildExecutable: unevaluated = _profileOptions.Build.Executable; break;
                 case RadMacros.BuildArguments: unevaluated = _profileOptions.Build.Arguments; break;
                 case RadMacros.BuildWorkingDirectory: unevaluated = _profileOptions.Build.WorkingDirectory; break;
-                case RadMacros.BuildPreprocessedSource: unevaluated = _profileOptions.Build.PreprocessedSource; break;
+                //case RadMacros.BuildPreprocessoredSource: unevaluated = _profileOptions.Build.PreprocessoredSource; break;
+
+                case RadMacros.PreprocessorExecutable: unevaluated = _profileOptions.Preprocessor.Executable; break;
+                case RadMacros.PreprocessorArguments: unevaluated = _profileOptions.Preprocessor.Arguments; break;
+                case RadMacros.PreprocessorWorkingDirectory: unevaluated = _profileOptions.Preprocessor.WorkingDirectory; break;
+                case RadMacros.PreprocessorOutputPath: unevaluated = _profileOptions.Preprocessor.OutputPath; break;
+                case RadMacros.PreprocessorLocalPath: unevaluated = _profileOptions.Preprocessor.LocalOutputCopyPath; break;
             }
 
             if (unevaluated != null)

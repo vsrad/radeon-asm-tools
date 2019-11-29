@@ -38,13 +38,16 @@ namespace VSRAD.Package.Options
         public ProfilerProfileOptions Profiler { get; }
         public BuildProfileOptions Build { get; }
 
-        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null)
+        public PreprocessorProfileOptions Preprocessor { get; }
+
+        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null, PreprocessorProfileOptions preprocessor = null)
         {
             General = general ?? new GeneralProfileOptions();
             Debugger = debugger ?? new DebuggerProfileOptions();
             Disassembler = disassembler ?? new DisassemblerProfileOptions();
             Profiler = profiler ?? new ProfilerProfileOptions();
             Build = build ?? new BuildProfileOptions();
+            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
         }
 
         public object Clone()
@@ -71,7 +74,7 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.DeployDirectory)]
         public string DeployDirectory { get; }
         [DisplayName("Remote Machine Address")]
-        [Description("IP address of the remote machine.To debug kernels locally, start the debug server on your local machine and enter `127.0.0.1` in this field.")]
+        [Description("IP address of the remote machine. To debug kernels locally, start the debug server on your local machine and enter `127.0.0.1` in this field.")]
         [DefaultValue(DefaultOptionValues.RemoteMachineAdredd)]
         public string RemoteMachine { get; }
         [Description("Port on the remote machine the debug server is listening on. (When started without arguments, the server listens on port `9339`)")]
@@ -292,6 +295,48 @@ namespace VSRAD.Package.Options
         }
     }
 
+    public sealed class PreprocessorProfileOptions
+    {
+        [Macro(RadMacros.PreprocessorExecutable), Description("Executeble")]
+        [DefaultValue(DefaultOptionValues.PreprocessorExecutable)]
+        public string Executable { get; }
+        [Macro(RadMacros.PreprocessorArguments), Description("Preprocessor Arguments"), DisplayName("Arguments")]
+        [DefaultValue(DefaultOptionValues.BuildArguments)]
+        public string Arguments { get; }
+        [Macro(RadMacros.PreprocessorWorkingDirectory), Description("Preprocessor Working Directory"), DisplayName("Working Directory")]
+        [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
+        public string WorkingDirectory { get; }
+        [Macro(RadMacros.PreprocessorOutputPath), DisplayName("Output Path")]
+        [Description("Path to the Preprocessor script output file (can be relative to Working Directory).")]
+        [DefaultValue(DefaultOptionValues.PreprocessorOutputPath)]
+        public string OutputPath { get; }
+        [Macro(RadMacros.PreprocessorLocalPath), DisplayName("Local Path")]
+        [Description("Path to the file on local machine to copy Preprocessor output file.")]
+        [DefaultValue(DefaultOptionValues.PreprocessorLocalOutputCopyPath)]
+        public string LocalOutputCopyPath { get; }
+
+        [JsonIgnore]
+        public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, binaryOutput: true);
+
+        public async Task<PreprocessorProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
+            new PreprocessorProfileOptions(
+                executable: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorExecutable),
+                arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorArguments),
+                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorWorkingDirectory),
+                outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorOutputPath),
+                localOutputCopyPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorLocalPath)
+                );
+
+        public PreprocessorProfileOptions(string executable = DefaultOptionValues.PreprocessorExecutable, string arguments = DefaultOptionValues.PreprocessorArguments, string workingDirectory = DefaultOptionValues.PreprocessorWorkingDirectory, string outputPath = DefaultOptionValues.PreprocessorOutputPath, string localOutputCopyPath = DefaultOptionValues.PreprocessorLocalOutputCopyPath)
+        {
+            Executable = executable;
+            Arguments = arguments;
+            WorkingDirectory = workingDirectory;
+            OutputPath = outputPath;
+            LocalOutputCopyPath = localOutputCopyPath;
+        }
+    }
+
     public sealed class BuildProfileOptions
     {
         [Macro(RadMacros.BuildExecutable), Description("Executable")]
@@ -303,11 +348,10 @@ namespace VSRAD.Package.Options
         [Macro(RadMacros.BuildWorkingDirectory), Description("Build Working Directory"), DisplayName("Working Directory")]
         [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
         public string WorkingDirectory { get; }
-
-        [Macro(RadMacros.BuildPreprocessedSource), DisplayName("Preprocessed Source")]
-        [Description(@"Path to the preprocessed source on the remote machine. Used to map line numbers in the compiler's output to original sources. Linemarkers should start with '//# ' or '# '")]
-        [DefaultValue(DefaultOptionValues.BuildPreprocessedSource)]
+        [Description(""), DisplayName("pp")]
+        [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
         public string PreprocessedSource { get; }
+
 
         [JsonIgnore]
         public OutputFile PreprocessedSourceFile => new OutputFile(WorkingDirectory, PreprocessedSource, binaryOutput: true);
@@ -316,11 +360,10 @@ namespace VSRAD.Package.Options
             new BuildProfileOptions(
                 executable: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildExecutable),
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildArguments),
-                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildWorkingDirectory),
-                preprocessedSource: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildPreprocessedSource)
+                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.BuildWorkingDirectory)
             );
 
-        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory, string preprocessedSource = DefaultOptionValues.BuildPreprocessedSource)
+        public BuildProfileOptions(string executable = DefaultOptionValues.BuildExecutable, string arguments = DefaultOptionValues.BuildArguments, string workingDirectory = DefaultOptionValues.BuildWorkingDirectory, string preprocessedSource = "")
         {
             Executable = executable;
             Arguments = arguments;

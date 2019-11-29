@@ -79,6 +79,15 @@
           <ButtonText>Disassemble file</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidCmdSetPreprocess" id="PreprocessCommandId" priority="0x0200" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="preprocessIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Preprocess file</ButtonText>
+        </Strings>
+      </Button>
       <Button guid="guidCmdSetVisualizer" id="VisualizerOptionsCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="optionsIcon" />
@@ -147,7 +156,7 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, bmpPicStrikethrough" />
     </Bitmaps>
 
     <Groups>
@@ -163,6 +172,9 @@
         <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
       </Group>
       <Group guid="guidCmdSetDisassembly" id="StandardToolbarGroup" priority="0xF000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
+      </Group>
+      <Group guid="guidCmdSetPreprocess" id="StandardToolbarGroup" priority="0xF000">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
       </Group>
       <!-- Editor context menu -->
@@ -225,6 +237,11 @@
       <IDSymbol value="4128" name="StandardToolbarGroup" />
     </GuidSymbol>
 
+    <GuidSymbol name="guidCmdSetPreprocess" value="{7D6BA5AC-29C2-4E44-BD92-376A7A62FCA1}">
+      <IDSymbol name="PreprocessCommandId" value="0x0100" />
+      <IDSymbol value="4128" name="StandardToolbarGroup" />
+    </GuidSymbol>
+
     <GuidSymbol name="guidCmdSetFRTC" value="{cefc8250-7cd1-46c1-b4f6-46a0a22a1c81}">
       <IDSymbol value="0x0100" name="ForceRunToCursorCommandId" />
       <IDSymbol value="4128" name="EditorContextMenuFRTCGroup" />
@@ -265,7 +282,7 @@
       <IDSymbol name="visualizerIcon" value="2" />
       <IDSymbol name="optionsIcon" value="3" />
       <IDSymbol name="disassemblyIcon" value="4" />
-      <IDSymbol name="bmpPicArrows" value="5" />
+      <IDSymbol name="preprocessIcon" value="5" />
       <IDSymbol name="bmpPicStrikethrough" value="6" />
     </GuidSymbol>
   </Symbols>
