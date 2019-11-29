@@ -43,10 +43,10 @@ int main(int argc, char** argv)
         public const string Preprocessed = @"int main() {
     int a = 1 + 1;
     int b = 2 + 2;
-# 16 ""source.c""
+  # 16 ""source.c""
     int c = 3 + 3;
     int d = 4 + 4;
-# 55 ""source1.c""
+   //# 55 ""source1.c""
     int f = 0xDEAD;
 }
 ";

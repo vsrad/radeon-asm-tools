@@ -13,7 +13,7 @@ namespace VSRAD.BuildTools.Errors
 
     public static class LineMapper
     {
-        private static readonly Regex LineMarkerRegex = new Regex(@"(?<line>\d+)\s+\""(?<file>.*)\""", RegexOptions.Compiled);
+        private static readonly Regex LineMarkerRegex = new Regex(@"^\s*(//)?#\s+(?<line>\d+)\s+\""(?<file>.*)\""", RegexOptions.Compiled);
 
         public static List<LineMarker> MapLines(string preprocessed)
         {
@@ -22,10 +22,10 @@ namespace VSRAD.BuildTools.Errors
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
+                var match = LineMarkerRegex.Match(line);
 
-                if (line.StartsWith("#") || line.StartsWith("//#"))
+                if (match.Success)
                 {
-                    var match = LineMarkerRegex.Match(line);
                     result.Add(new LineMarker
                     {
                         PpLine = i + 1,
