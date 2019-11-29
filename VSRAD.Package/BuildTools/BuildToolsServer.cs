@@ -133,8 +133,9 @@ namespace VSRAD.Package.BuildTools
 
         private async Task<Result<(string, int, IEnumerable<Message>)>> RunPreprocessorAsync(RemoteCommandExecutor executor, Options.BuildProfileOptions options)
         {
+            throw new NotImplementedException();
             var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory };
-            var response = await executor.ExecuteWithResultAsync(command, options.PreprocessedSourceFile, checkExitCode: false);
+            var response = await executor.ExecuteWithResultAsync(command, default, checkExitCode: false);
             if (!response.TryGetResult(out var result, out var error))
                 return error;
 

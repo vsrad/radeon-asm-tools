@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.VisualStudio.ProjectSystem;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
@@ -11,7 +12,9 @@ namespace VSRAD.Package.BuildTools
         Task<IEnumerable<Message>> ExtractMessagesAsync(string output, string preprocessedSource);
     }
 
-    public sealed class BuildErrorProcessor
+    [Export(typeof(IBuildErrorProcessor))]
+    [AppliesTo(Constants.ProjectCapability)]
+    public sealed class BuildErrorProcessor : IBuildErrorProcessor
     {
         private readonly IProjectSourceManager _sourceManager;
 
