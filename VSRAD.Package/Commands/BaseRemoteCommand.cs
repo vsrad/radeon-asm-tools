@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
+﻿using EnvDTE;
+using Microsoft;
+using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
@@ -15,7 +17,7 @@ namespace VSRAD.Package.Commands
 
         private IVsStatusbar _statusBar;
 
-        public BaseRemoteCommand(int commandId, SVsServiceProvider serviceProvider)
+        protected BaseRemoteCommand(int commandId, SVsServiceProvider serviceProvider)
         {
             _commandId = commandId;
             _serviceProvider = serviceProvider;
@@ -60,6 +62,14 @@ namespace VSRAD.Package.Commands
 
             _statusBar?.FreezeOutput(0);
             _statusBar?.Clear();
+        }
+
+        protected void OpenFileInEditor(string path)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+            Assumes.Present(dte);
+            dte.ItemOperations.OpenFile(path);
         }
     }
 }

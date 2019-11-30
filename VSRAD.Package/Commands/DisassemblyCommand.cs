@@ -1,5 +1,4 @@
-﻿using EnvDTE;
-using Microsoft;
+﻿using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.TextManager.Interop;
@@ -62,16 +61,12 @@ namespace VSRAD.Package.Commands
             }
         }
 
-        private void OpenFileInEditor(string localOutputPath, string lineMarker)
+        private void OpenFileInEditor(string path, string lineMarker)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-            Assumes.Present(dte);
-
-            dte.ItemOperations.OpenFile(localOutputPath);
+            OpenFileInEditor(path);
             if (string.IsNullOrEmpty(lineMarker)) return;
 
-            var lineNumber = GetMarkedLineNumber(localOutputPath, lineMarker);
+            var lineNumber = GetMarkedLineNumber(path, lineMarker);
 
             var textManager = _serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
             Assumes.Present(textManager);

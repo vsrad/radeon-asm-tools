@@ -51,6 +51,7 @@ namespace VSRAD.Package.Commands
                 var (_, data) = execResult;
 
                 File.WriteAllBytes(options.LocalOutputCopyPath, data);
+                OpenFileInEditor(options.LocalOutputCopyPath);
             }
             finally
             {
