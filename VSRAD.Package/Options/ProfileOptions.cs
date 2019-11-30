@@ -34,20 +34,19 @@ namespace VSRAD.Package.Options
     {
         public GeneralProfileOptions General { get; }
         public DebuggerProfileOptions Debugger { get; }
+        public PreprocessorProfileOptions Preprocessor { get; }
         public DisassemblerProfileOptions Disassembler { get; }
         public ProfilerProfileOptions Profiler { get; }
         public BuildProfileOptions Build { get; }
 
-        public PreprocessorProfileOptions Preprocessor { get; }
-
-        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null, PreprocessorProfileOptions preprocessor = null)
+        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, PreprocessorProfileOptions preprocessor = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null)
         {
             General = general ?? new GeneralProfileOptions();
             Debugger = debugger ?? new DebuggerProfileOptions();
+            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
             Disassembler = disassembler ?? new DisassemblerProfileOptions();
             Profiler = profiler ?? new ProfilerProfileOptions();
             Build = build ?? new BuildProfileOptions();
-            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
         }
 
         public object Clone()
