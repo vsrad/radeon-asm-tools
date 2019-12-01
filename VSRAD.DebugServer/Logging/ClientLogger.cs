@@ -34,6 +34,9 @@ namespace VSRAD.DebugServer
         public void FatalClientException(Exception e) =>
             Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
 
+        public void CliendDisconnected() =>
+            Print("client has been disconnected");
+
         public void ExecutionStarted()
         {
             if (_verbose) Console.WriteLine("===");

@@ -59,6 +59,12 @@ namespace VSRAD.DebugServer
                     }
                     clientLog.CommandProcessed();
                 }
+                catch (ConnectionFailedException)
+                {
+                    client.Disconnect();
+                    clientLog.CliendDisconnected();
+                    break;
+                }
                 catch (Exception e)
                 {
                     client.Disconnect();

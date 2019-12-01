@@ -26,7 +26,7 @@ namespace VSRAD.DebugServer
         {
             var message = await _socket.GetStream().ReadSerializedMessageAsync<ICommand>().ConfigureAwait(false);
 
-            if (message == null) throw new IOException();
+            if (message == null) throw new ConnectionFailedException();
 
             return message;
         }
