@@ -6,6 +6,7 @@ using Task = System.Threading.Tasks.Task;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Shell;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Collapse
 {
@@ -21,10 +22,9 @@ namespace VSRAD.Syntax.Collapse
         {
             this.buffer = buffer;
             this.parserManager = parserManager;
-
             this.currentSpans = new List<Span>();
 
-            this.parserManager.UpdateParserHandler += async (sender, args) => await ParserCompletedAsync();
+            this.parserManager.ParserUpdatedEvent += async (sender, args) => await ParserCompletedAsync();
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -47,17 +47,17 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void UpdateTagSpans(ITextSnapshot textSnapshot)
+        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot)
         {
             if (currentParser.CurrentSnapshot != textSnapshot)
                 return;
 
             var newSpanElements = currentParser.ListBlock.Select(block => block.BlockSpan.Span).ToList();
 
-            NormalizedSpanCollection oldSpanCollection = new NormalizedSpanCollection(currentSpans);
-            NormalizedSpanCollection newSpanCollection = new NormalizedSpanCollection(newSpanElements);
+            var oldSpanCollection = new NormalizedSpanCollection(currentSpans);
+            var newSpanCollection = new NormalizedSpanCollection(newSpanElements);
 
-            NormalizedSpanCollection removed = NormalizedSpanCollection.Difference(oldSpanCollection, newSpanCollection);
+            var removed = NormalizedSpanCollection.Difference(oldSpanCollection, newSpanCollection);
 
             int changeStart = int.MaxValue;
             int changeEnd = -1;
@@ -80,35 +80,35 @@ namespace VSRAD.Syntax.Collapse
                 changeEnd = Math.Max(changeEnd, newSpanElements[newSpanElements.Count - 1].End);
             }
 
-            currentSpans.Clear();
-            currentSpans = newSpanElements;
-            currentSnapshot = textSnapshot;
-
             try
             {
-                this.TagsChanged?.Invoke(this,
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                currentSpans.Clear();
+                currentSpans = newSpanElements;
+                currentSnapshot = textSnapshot;
+
+                TagsChanged?.Invoke(this,
                     new SnapshotSpanEventArgs(
                         new SnapshotSpan(currentSnapshot, Span.FromBounds(changeStart, changeEnd))));
             }
             catch (ArgumentOutOfRangeException e)
             {
-                ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
+                Error.LogError(e);
             }
         }
 
-        void BufferChanged(object sender, TextContentChangedEventArgs e)
+        private void BufferChanged(object sender, TextContentChangedEventArgs e)
         {
             if (e.After != buffer.CurrentSnapshot)
                 return;
-            this.UpdateTagSpans(buffer.CurrentSnapshot);
+            Task.Run(() => ParserCompletedAsync());
         }
 
-        async Task ParserCompletedAsync()
+        private Task ParserCompletedAsync()
         {
             currentParser = parserManager.ActualParser;
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            this.UpdateTagSpans(buffer.CurrentSnapshot);
+            return UpdateTagSpansAsync(buffer.CurrentSnapshot);
         }
 
         internal class TagSpan : ITagSpan<IOutliningRegionTag>

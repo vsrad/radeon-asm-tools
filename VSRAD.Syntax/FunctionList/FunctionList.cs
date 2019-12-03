@@ -4,22 +4,26 @@ using System;
 using System.ComponentModel.Design;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
+using Microsoft;
+using Task = System.Threading.Tasks.Task;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.FunctionList
 {
     [Guid(Constants.FunctionListToolWindowPaneGuid)]
     public class FunctionList : ToolWindowPane
     {
+        private const string CaptionName = "Function list";
+
         public static FunctionList Instance { get; private set; }
-        internal const string CaptionName = "Function list";
         private IVsTextManager _textManager;
         private IVsEditorAdaptersFactoryService _editorAdaptorFactory;
         private DTE _dte;
+        private FunctionListControl FunctionListControl => (FunctionListControl)Content;
 
         public FunctionList() : base(null)
         {
@@ -28,19 +32,26 @@ namespace VSRAD.Syntax.FunctionList
 
         protected override void Initialize()
         {
-            ThreadPool.QueueUserWorkItem(InitializeComponent);
-
-            var commandService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            Content = new FunctionListControl(commandService);
-        }
-
-        private void InitializeComponent(object value)
-        {
             _textManager = GetService(typeof(VsTextManagerClass)) as IVsTextManager;
             _dte = GetService(typeof(DTE)) as DTE;
             _editorAdaptorFactory = (this.Package as Package).GetMEFComponent<IVsEditorAdaptersFactoryService>();
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+
+            var commandService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
+            Content = new FunctionListControl(commandService);
+
+            try
+            {
+                var activeView = GetActiveTextView();
+                var parserManager = activeView.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
+                Task.Run(() => UpdateFunctionListAsync(parserManager.ActualParser));
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+            }
+
             Instance = this;
         }
 
@@ -65,20 +76,49 @@ namespace VSRAD.Syntax.FunctionList
                         {
                             var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
                             var parserManager = textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                            ThreadHelper.JoinableTaskFactory.Run(() => FunctionListControl.UpdateFunctionListAsync(parserManager.ActualParser));
+                            Task.Run(() => UpdateFunctionListAsync(parserManager.ActualParser));
                         }
                     }
                 }
             }
         }
 
-        public IWpfTextView GetWpfTextView()
+        public IWpfTextView GetActiveTextView()
         {
-            if (_textManager == null || _editorAdaptorFactory == null)
-                return null;
+            Assumes.Present(_textManager);
+            Assumes.Present(_editorAdaptorFactory);
 
             _textManager.GetActiveView(1, null, out var textViewCurrent);
-            return (textViewCurrent != null) ? _editorAdaptorFactory.GetWpfTextView(textViewCurrent) : null;
+            return _editorAdaptorFactory.GetWpfTextView(textViewCurrent);
+        }
+
+        private Task UpdateFunctionListAsync(object sender)
+        {
+            try
+            {
+                var parser = (BaseParser)sender;
+                var updatedFunctions = parser.GetFunctionBlocks();
+                return FunctionListControl.UpdateFunctionListAsync(updatedFunctions);
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+                return Task.CompletedTask;
+            }
+        }
+
+        public static void TryUpdateSortOptions(Options.OptionPage.SortState options)
+        {
+            if (Instance != null)
+                Instance.FunctionListControl.ChangeSortOptions(options);
+        }
+
+        public static Task TryUpdateFunctionListAsync(object sender)
+        {
+            if (Instance != null)
+                return Instance.UpdateFunctionListAsync(sender);
+
+            return Task.CompletedTask;
         }
     }
 }

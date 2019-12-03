@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.Parser
     {
         int TabSize { get; set; }
         IBaseParser ActualParser { get; }
-        event EventHandler UpdateParserHandler;
+        event EventHandler ParserUpdatedEvent;
         string[] KeyWordStartPatterns { get; }
         string[] KeyWordEndPatterns { get; }
         string[] KeyWordMiddlePatterns { get; }
@@ -62,7 +62,7 @@ namespace VSRAD.Syntax.Parser
             set { _tabSize = value; OnBufferChanged(null, null); }
         }
 
-        public event EventHandler UpdateParserHandler;
+        public event EventHandler ParserUpdatedEvent;
 
 
         public void Initialize(
@@ -120,7 +120,7 @@ namespace VSRAD.Syntax.Parser
                     return;
 
                 ActualParser = parser;
-                UpdateParserHandler?.Invoke(ActualParser, null);
+                ParserUpdatedEvent?.Invoke(ActualParser, null);
             }
         }
 

@@ -36,7 +36,7 @@ namespace VSRAD.Syntax.Parser
                 Constants.asm1VariableDefinition);
 
             // TODO fix this
-            parserManager.UpdateParserHandler += async (sender, args) => await FunctionList.FunctionListControl.UpdateFunctionListAsync(sender);
+            parserManager.ParserUpdatedEvent += async (sender, args) => await FunctionList.FunctionList.TryUpdateFunctionListAsync(sender);
             textView.Options.OptionChanged += (sender, args) => parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
         }
     }
@@ -71,7 +71,7 @@ namespace VSRAD.Syntax.Parser
                 Constants.asm2VariableDefinition);
 
             // TODO fix this
-            parserManager.UpdateParserHandler += async (sender, args) => await FunctionList.FunctionListControl.UpdateFunctionListAsync(sender);
+            parserManager.ParserUpdatedEvent += async (sender, args) => await FunctionList.FunctionList.TryUpdateFunctionListAsync(sender);
             textView.Options.OptionChanged += (sender, args) => parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
         }
     }

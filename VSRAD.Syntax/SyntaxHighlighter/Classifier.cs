@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             this._classificationTypeRegistry = registry;
             this._textBuffer = textBuffer;
             this._parserManager = _textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-            _parserManager.UpdateParserHandler += OnParserComplete;
+            _parserManager.ParserUpdatedEvent += OnParserComplete;
             this._stringPattern = new Regex("\\\"(.*?)\\\"");
             this._multiLineComment = new List<IBaseBlock>();
             this.ExtraKeywords = Constants.preprocessorStart
