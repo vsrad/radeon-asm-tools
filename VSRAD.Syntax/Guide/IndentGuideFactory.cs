@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.Guide
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name(Constants.IndentGuideAdornmentLayerName)]
-        [Order(After = PredefinedAdornmentLayers.Selection, Before = PredefinedAdornmentLayers.Text)]
+        [Order(After = PredefinedAdornmentLayers.DifferenceChanges, Before = PredefinedAdornmentLayers.Text)]
         [TextViewRole(PredefinedTextViewRoles.Document)]
         public AdornmentLayerDefinition editorAdornmentLayer = null;
 
