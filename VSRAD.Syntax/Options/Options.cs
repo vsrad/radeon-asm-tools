@@ -32,7 +32,7 @@ namespace VSRAD.Syntax.Options
         protected override void OnApply(PageApplyEventArgs e)
         {
             base.OnApply(e);
-            FunctionList.FunctionListControl.OnChangeOptions(SortOptions);
+            FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
         }
     }
 }

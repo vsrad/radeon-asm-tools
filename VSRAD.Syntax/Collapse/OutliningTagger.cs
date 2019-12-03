@@ -23,7 +23,7 @@ namespace VSRAD.Syntax.Collapse
             this.parserManager = parserManager;
             this.currentSpans = new List<Span>();
 
-            this.parserManager.UpdateParserHandler += async (sender, args) => await ParserCompletedAsync();
+            this.parserManager.ParserUpdatedEvent += async (sender, args) => await ParserCompletedAsync();
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;

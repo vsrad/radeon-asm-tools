@@ -81,6 +81,7 @@
     <Compile Include="FunctionList\Commands\SelectItemCommand.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
+    <Compile Include="Helpers\Error.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />

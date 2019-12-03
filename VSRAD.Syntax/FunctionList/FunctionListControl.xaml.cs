@@ -12,17 +12,16 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
+using Microsoft;
 
 namespace VSRAD.Syntax.FunctionList
 {
     public partial class FunctionListControl : UserControl
     {
-        public static FunctionListControl Instance { get; private set; }
         private readonly OleMenuCommandService commandService;
         private bool isHideLineNumber = false;
         private SortState FunctionListSortState = SortState.ByName;
-
-        public IList<IBaseBlock> Functions { get; private set; }
+        private IList<IBaseBlock> Functions;
 
         public FunctionListControl(OleMenuCommandService service)
         {
@@ -32,73 +31,41 @@ namespace VSRAD.Syntax.FunctionList
             this.InitializeComponent();
             this.commandService = service;
             this.Loaded += OnInitializedFunctionList;
-            FunctionListControl.Instance = this;
         }
 
-        public void ReloadFunctionList()
+        public async Task UpdateFunctionListAsync(IList<IBaseBlock> newFunctions)
         {
-            var functionList = this.Functions;
-            if (functionList != null)
-                AddFunctionsToView(functionList);
-        }
-
-        private void ByNumber_Click(object sender, RoutedEventArgs e)
-        {
-            switch (FunctionListSortState)
+            try
             {
-                case SortState.ByLine:
-                    FunctionListSortState = SortState.ByLineDescending;
-                    break;
-                default:
-                    FunctionListSortState = SortState.ByLine;
-                    break;
-            }
-            ReloadFunctionList();
-        }
+                Functions = newFunctions;
 
-        private void ByName_Click(object sender, RoutedEventArgs e)
-        {
-            switch (FunctionListSortState)
-            {
-                case SortState.ByName:
-                    FunctionListSortState = SortState.ByNameDescending;
-                    break;
-                default:
-                    FunctionListSortState = SortState.ByName;
-                    break;
-            }
-            ReloadFunctionList();
-        }
-
-        private void FunctionsName_MouseDoubleClick(object sender, MouseButtonEventArgs e) => GoToSelectedItem();
-
-        internal static async Task UpdateFunctionListAsync(object sender)
-        {
-            if (sender == null)
-                return;
-
-            IList<IBaseBlock> newFunctions = (sender as BaseParser).GetFunctionBlocks();
-            if (FunctionListControl.Instance != null && newFunctions != null)
-            {
-                FunctionListControl.Instance.Functions = newFunctions;
-
-                var shownFunctions = FunctionListControl.Instance.SearchByNameFilter(newFunctions);
+                var shownFunctions = SearchByNameFilter(newFunctions);
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                FunctionListControl.Instance.AddFunctionsToView(shownFunctions);
-                FunctionListControl.Instance.ResizeFunctionListColumns();
+                AddFunctionsToView(shownFunctions);
+                ResizeFunctionListColumns();
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
             }
         }
 
-        internal static void OnChangeOptions(SortState option)
+        public void ChangeSortOptions(SortState option)
         {
-            if (FunctionListControl.Instance != null)
+            try
             {
-                FunctionListControl.Instance.FunctionListSortState = option;
-                FunctionListControl.Instance.ReloadFunctionList();
+                FunctionListSortState = option;
+                ReloadFunctionList();
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
             }
         }
+
+        private void ReloadFunctionList() => AddFunctionsToView(Functions);
 
         private void AddFunctionsToView(IEnumerable<IBaseBlock> functionList)
         {
@@ -140,10 +107,37 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         private void OnInitializedFunctionList(object sender, object args)
+            => FunctionListSortState = Package.Instance.OptionPage.SortOptions;
+
+        private void ByNumber_Click(object sender, RoutedEventArgs e)
         {
-            if (Package.Instance != null)
-                this.FunctionListSortState = Package.Instance.OptionPage.SortOptions;
+            switch (FunctionListSortState)
+            {
+                case SortState.ByLine:
+                    FunctionListSortState = SortState.ByLineDescending;
+                    break;
+                default:
+                    FunctionListSortState = SortState.ByLine;
+                    break;
+            }
+            ReloadFunctionList();
         }
+
+        private void ByName_Click(object sender, RoutedEventArgs e)
+        {
+            switch (FunctionListSortState)
+            {
+                case SortState.ByName:
+                    FunctionListSortState = SortState.ByNameDescending;
+                    break;
+                default:
+                    FunctionListSortState = SortState.ByName;
+                    break;
+            }
+            ReloadFunctionList();
+        }
+
+        private void FunctionsName_MouseDoubleClick(object sender, MouseButtonEventArgs e) => GoToSelectedItem();
 
         private void FunctionListWindow_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -202,8 +196,15 @@ namespace VSRAD.Syntax.FunctionList
 
         public void GoToSelectedItem()
         {
-            if (functions.SelectedItem is FunctionBlock function)
-                FunctionList.Instance?.GetWpfTextView()?.ChangeCaretPosition(function.FunctionToken.Line);
+            try
+            {
+                var function = functions.SelectedItem as FunctionBlock;
+                FunctionList.Instance.GetActiveTextView().ChangeCaretPosition(function.FunctionToken.Line);
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+            }
         }
 
         private void FunctionListContentGridOnLoad(object sender, RoutedEventArgs e) => functionListContentGrid.Focus();

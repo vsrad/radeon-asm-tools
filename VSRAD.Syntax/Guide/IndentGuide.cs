@@ -10,6 +10,8 @@ using System.Linq;
 using System.Windows.Shapes;
 using System.Collections.Generic;
 using System.Windows.Media;
+using Task = System.Threading.Tasks.Task;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Guide
 {
@@ -37,8 +39,8 @@ namespace VSRAD.Syntax.Guide
             _layer = _wpfTextView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
-            _wpfTextView.LayoutChanged += UpdateIndentGuides;
-            _parserManager.UpdateParserHandler += async (sender, args) => { await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(); UpdateIndentGuides(sender, args); };
+            _wpfTextView.LayoutChanged += async (sender, args) => await UpdateIndentGuidesAsync(sender, args);
+            _parserManager.ParserUpdatedEvent += async (sender, args) => await UpdateIndentGuidesAsync(sender, args);
         }
 
         private void CanvasRemoved(object tag, UIElement element)
@@ -46,39 +48,41 @@ namespace VSRAD.Syntax.Guide
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
         }
 
-        private void UpdateIndentGuides()
+        private async Task CleanupIndentGuidesAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            foreach (var oldIndentGuide in _currentAdornments)
+            {
+                _canvas.Children.Remove(oldIndentGuide);
+            }
+            _currentAdornments = new List<Line>();
+        }
+
+        private async Task SetupIndentGuidesAsync()
         {
             try
             {
-                SetupIndentGuides();
+                if (Package.Instance == null || !Package.Instance.OptionPage.IsEnabledIndentGuides)
+                {
+                    await CleanupIndentGuidesAsync();
+                    return;
+                }
+
+                var firstVisibleLine = _wpfTextView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
+                var lastVisibleLine = _wpfTextView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
+
+                var newSpanElements = _currentParser.ListBlock.Where(block => block.BlockType != BlockType.Root && block.BlockType != BlockType.Comment && IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine));
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
+
+                ClearAndUpdateCurrentGuides(updatedIndentGuides);
             }
             catch (Exception e)
             {
-                ActivityLog.LogError(Constants.RadeonAsmSyntaxContentType, e.Message);
+                Error.LogError(e);
             }
-        }
-
-        private void SetupIndentGuides()
-        {
-            if (!Package.Instance.OptionPage.IsEnabledIndentGuides)
-            {
-                foreach (var oldIndentGuide in _currentAdornments)
-                {
-                    _canvas.Children.Remove(oldIndentGuide);
-                }
-                _currentAdornments = new List<Line>();
-
-                return;
-            }
-            _canvas.Visibility = Visibility.Visible;
-
-            var firstVisibleLine = _wpfTextView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
-            var lastVisibleLine = _wpfTextView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
-
-            var newSpanElements = _currentParser.ListBlock.Where(block => block.BlockType != BlockType.Root && block.BlockType != BlockType.Comment && IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine));
-            var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
-
-            ClearAndUpdateCurrentGuides(updatedIndentGuides);
         }
 
         private bool IsInVisualBuffer(IBaseBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
@@ -93,6 +97,7 @@ namespace VSRAD.Syntax.Guide
 
         private IEnumerable<Line> GetUpdatedIndentGuides(IEnumerable<IBaseBlock> blocks, double horizontalOffset, double spaceWidth)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             foreach (var block in blocks)
             {
                 var span = block.BlockActualSpan;
@@ -120,6 +125,9 @@ namespace VSRAD.Syntax.Guide
 
         private void ClearAndUpdateCurrentGuides(IEnumerable<Line> newIndentGuides)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            _canvas.Visibility = Visibility.Visible;
+
             foreach (var oldIndentGuide in _currentAdornments)
             {
                 _canvas.Children.Remove(oldIndentGuide);
@@ -133,11 +141,11 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        private void UpdateIndentGuides(object sender, object args)
+        private Task UpdateIndentGuidesAsync(object sender, object args)
         {
             _currentParser = _parserManager.ActualParser;
 
-            UpdateIndentGuides();
+            return SetupIndentGuidesAsync();
         }
     }
 }
