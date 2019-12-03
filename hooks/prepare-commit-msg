@@ -1,10 +1,10 @@
-#!C:/Program\ Files/Git/usr/bin/sh.exe
+#!/usr/bin/env bash
 
 COMMIT_FILE=$1
 COMMIT_MSG=$(cat $1)
 STAGED_FILES=$(git diff --name-only --cached)
 
-RELEASE_COMMIT_MSG_PATTERN="^prepare \d{4}\.\d{2}\.\d{2}$"
+RELEASE_COMMIT_MSG_PATTERN="^prepare\s+\d{4}\.\d{2}\.\d{2}$"
 
 if [[ $COMMIT_MSG == prepare\ [0-9]* ]]; then
   if [[ ! $COMMIT_MSG =~ $RELEASE_COMMIT_MSG_PATTERN ]]; then
