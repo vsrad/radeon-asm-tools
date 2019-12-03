@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.Guide
@@ -27,7 +28,7 @@ namespace VSRAD.Syntax.Guide
             }
             catch (Exception e)
             {
-                ActivityLog.LogError(Constants.RadeonAsmSyntaxContentType, e.Message);
+                Error.LogError(e);
             }
         }
 

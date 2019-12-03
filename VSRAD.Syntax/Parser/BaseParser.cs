@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Parser
 {
@@ -60,7 +61,7 @@ namespace VSRAD.Syntax.Parser
             }
             catch (Exception e)
             {
-                ActivityLog.LogError(Constants.RadeonAsmSyntaxContentType, e.Message);
+                Error.LogError(e);
             }
         }
 
@@ -129,7 +130,7 @@ namespace VSRAD.Syntax.Parser
                 }
                 catch (Exception e)
                 {
-                    ActivityLog.LogError("RadeonAsmSyntax - BaseParser", e.Message);
+                    Error.LogError(e, "Parser");
                 }
                 indexStartLine += line.LengthIncludingLineBreak;
             }

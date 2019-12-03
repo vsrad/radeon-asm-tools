@@ -6,6 +6,7 @@ using Task = System.Threading.Tasks.Task;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Shell;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Collapse
 {
@@ -93,7 +94,7 @@ namespace VSRAD.Syntax.Collapse
             }
             catch (ArgumentOutOfRangeException e)
             {
-                ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
+                Error.LogError(e);
             }
         }
 
