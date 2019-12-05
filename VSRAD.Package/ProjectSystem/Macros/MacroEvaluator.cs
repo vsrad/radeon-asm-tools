@@ -160,6 +160,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.PreprocessorWorkingDirectory: unevaluated = _profileOptions.Preprocessor.WorkingDirectory; break;
                 case RadMacros.PreprocessorOutputPath: unevaluated = _profileOptions.Preprocessor.OutputPath; break;
                 case RadMacros.PreprocessorLocalPath: unevaluated = _profileOptions.Preprocessor.LocalOutputCopyPath; break;
+                case RadMacros.PreprocessorLineMarker: unevaluated = _profileOptions.Preprocessor.LineMarker; break;
             }
 
             if (unevaluated != null)
