@@ -63,7 +63,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string PreprocessorArguments = "RadPpArgs";
         public const string PreprocessorWorkingDirectory = "RadPpDir";
         public const string PreprocessorOutputPath = "RadPpOutputPath";
-        public const string PreprocessorLocalPath = "RadDPpLocalCopyPath";
+        public const string PreprocessorLocalPath = "RadPpLocalCopyPath";
+        public const string PreprocessorLineMarker = "RadPpLineMarker";
     }
 
     public interface IMacroEvaluator
@@ -159,6 +160,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.PreprocessorWorkingDirectory: unevaluated = _profileOptions.Preprocessor.WorkingDirectory; break;
                 case RadMacros.PreprocessorOutputPath: unevaluated = _profileOptions.Preprocessor.OutputPath; break;
                 case RadMacros.PreprocessorLocalPath: unevaluated = _profileOptions.Preprocessor.LocalOutputCopyPath; break;
+                case RadMacros.PreprocessorLineMarker: unevaluated = _profileOptions.Preprocessor.LineMarker; break;
             }
 
             if (unevaluated != null)
