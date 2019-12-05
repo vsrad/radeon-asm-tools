@@ -57,6 +57,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             {
                 var nameControl = new TextBlock { Text = property.DisplayName, IsEnabled = false };
                 nameControl.Height = 22.0;
+                nameControl.Padding = new Thickness(0, 3, 0, 0);
                 nameControl.Margin = new Thickness(5);
                 var valueControl = GetPropertyValueControl(selectedPage, property);
                 valueControl.VerticalAlignment = VerticalAlignment.Center;
