@@ -16,6 +16,14 @@ namespace VSRAD.Package.Server
 {
     public interface ICommunicationChannel
     {
+        event Action ConnectionStateChanged;
+
+        ServerConnectionOptions ConnectionOptions { get; }
+
+        ClientState ConnectionState { get; }
+
+        void ForceDisconnect();
+
         Task SendAsync(ICommand command);
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
@@ -28,36 +36,23 @@ namespace VSRAD.Package.Server
         Connected
     }
 
-    public interface ICommunicationChannelManager
-    {
-        event Action ConnectionStateChanged;
-
-        void ForceDisconnect();
-
-        (string connectionInfo, ClientState state) ChannelState { get; }
-    }
-
     [Export(typeof(ICommunicationChannel))]
-    [Export(typeof(ICommunicationChannelManager))]
     [AppliesTo(Constants.ProjectCapability)]
-    public sealed class CommunicationChannel : ICommunicationChannel, ICommunicationChannelManager
+    public sealed class CommunicationChannel : ICommunicationChannel
     {
         public event Action ConnectionStateChanged;
+        public ServerConnectionOptions ConnectionOptions => _project.Options.Profile.General.Connection;
 
-        public (string connectionInfo, ClientState state) ChannelState => (ConnectionOptions.ToString(), State);
-
-        private ClientState __state = ClientState.Disconnected;
-        private ClientState State
+        private ClientState _state = ClientState.Disconnected;
+        public ClientState ConnectionState
         {
-            get => __state;
+            get => _state;
             set
             {
-                __state = value;
+                _state = value;
                 ConnectionStateChanged?.Invoke();
             }
         }
-
-        private ServerConnectionOptions ConnectionOptions => _project.Options.Profile.General.Connection;
 
         private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
 
@@ -119,14 +114,14 @@ namespace VSRAD.Package.Server
         {
             _connection?.Close();
             _connection = null;
-            State = ClientState.Disconnected;
+            ConnectionState = ClientState.Disconnected;
         }
 
         private async Task EstablishServerConnectionAsync()
         {
             if (_connection != null && _connection.Connected) return;
 
-            State = ClientState.Connecting;
+            ConnectionState = ClientState.Connecting;
 
             var client = new TcpClient();
             try
@@ -136,12 +131,12 @@ namespace VSRAD.Package.Server
                 {
                     await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
                     _connection = client;
-                    State = ClientState.Connected;
+                    ConnectionState = ClientState.Connected;
                 }
             }
             catch (Exception)
             {
-                State = ClientState.Disconnected;
+                ConnectionState = ClientState.Disconnected;
                 throw new Exception($"Unable to establish connection to a debug server at {ConnectionOptions}");
             }
         }

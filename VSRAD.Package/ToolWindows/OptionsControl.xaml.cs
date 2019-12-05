@@ -24,24 +24,24 @@ namespace VSRAD.Package.ToolWindows
 
             public ICommand DisconnectCommand { get; }
 
-            private readonly ICommunicationChannelManager _channelManager;
+            private readonly ICommunicationChannel _channel;
 
-            public Context(ProjectOptions options, ICommunicationChannelManager channel)
+            public Context(ProjectOptions options, ICommunicationChannel channel)
             {
                 Options = options;
                 Options.Profiles.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(Options.Profiles.Keys)) RaisePropertyChanged(nameof(ProfileNames)); };
-                _channelManager = channel;
-                _channelManager.ConnectionStateChanged += ConnectionStateChanged;
-                DisconnectCommand = new WpfDelegateCommand((_) => _channelManager.ForceDisconnect(), isEnabled: false);
+                _channel = channel;
+                _channel.ConnectionStateChanged += ConnectionStateChanged;
+                DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: false);
                 ConnectionStateChanged();
             }
 
             private void ConnectionStateChanged()
             {
-                DisconnectLabel = _channelManager.ChannelState.state == ClientState.Connected ? "Disconnect"
-                                : _channelManager.ChannelState.state == ClientState.Connecting ? "Connecting..." : "Disconnected";
-                ConnectionInfo = _channelManager.ChannelState.connectionInfo;
-                ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channelManager.ChannelState.state == ClientState.Connected;
+                DisconnectLabel = _channel.ConnectionState == ClientState.Connected ? "Disconnect"
+                                : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
+                ConnectionInfo = _channel.ConnectionOptions.ToString();
+                ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;
             }
         }
 
@@ -52,7 +52,7 @@ namespace VSRAD.Package.ToolWindows
         {
             _projectOptions = integration.ProjectOptions;
             _macroEditor = integration.GetExport<MacroEditManager>();
-            DataContext = new Context(integration.ProjectOptions, integration.GetExport<ICommunicationChannelManager>());
+            DataContext = new Context(integration.ProjectOptions, integration.GetExport<ICommunicationChannel>());
             InitializeComponent();
             ColoringRegionsGrid.PreviewMouseWheel += (s, e) =>
             {

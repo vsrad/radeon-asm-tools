@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
