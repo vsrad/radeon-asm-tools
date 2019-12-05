@@ -56,6 +56,7 @@ namespace VSRAD.Package.Options
         public const string PreprocessorWorkingDirectory = "$(" + RadMacros.DeployDirectory + ")";
         public const string PreprocessorOutputPath = "";
         public const string PreprocessorLocalOutputCopyPath = "";
+        public const string PreprocessorLineMarker = "";
         #endregion
     }
 }

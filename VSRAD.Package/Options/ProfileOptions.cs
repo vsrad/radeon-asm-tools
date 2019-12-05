@@ -314,6 +314,10 @@ namespace VSRAD.Package.Options
         [Description("Path to the file on local machine to copy Preprocessor output file.")]
         [DefaultValue(DefaultOptionValues.PreprocessorLocalOutputCopyPath)]
         public string LocalOutputCopyPath { get; }
+        [Macro(RadMacros.PreprocessorLineMarker), DisplayName("Line Marker")]
+        [Description("Preprocessor will search this line in output file and place the cursor on it if this line exists.")]
+        [DefaultValue(DefaultOptionValues.PreprocessorLocalOutputCopyPath)]
+        public string LineMarker { get; }
 
         [JsonIgnore]
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, binaryOutput: true);
@@ -324,16 +328,18 @@ namespace VSRAD.Package.Options
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorArguments),
                 workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorWorkingDirectory),
                 outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorOutputPath),
-                localOutputCopyPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorLocalPath)
+                localOutputCopyPath: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorLocalPath),
+                lineMarker: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorLineMarker)
             );
 
-        public PreprocessorProfileOptions(string executable = DefaultOptionValues.PreprocessorExecutable, string arguments = DefaultOptionValues.PreprocessorArguments, string workingDirectory = DefaultOptionValues.PreprocessorWorkingDirectory, string outputPath = DefaultOptionValues.PreprocessorOutputPath, string localOutputCopyPath = DefaultOptionValues.PreprocessorLocalOutputCopyPath)
+        public PreprocessorProfileOptions(string executable = DefaultOptionValues.PreprocessorExecutable, string arguments = DefaultOptionValues.PreprocessorArguments, string workingDirectory = DefaultOptionValues.PreprocessorWorkingDirectory, string outputPath = DefaultOptionValues.PreprocessorOutputPath, string localOutputCopyPath = DefaultOptionValues.PreprocessorLocalOutputCopyPath, string lineMarker = DefaultOptionValues.PreprocessorLineMarker)
         {
             Executable = executable;
             Arguments = arguments;
             WorkingDirectory = workingDirectory;
             OutputPath = outputPath;
             LocalOutputCopyPath = localOutputCopyPath;
+            LineMarker = lineMarker;
         }
     }
 
