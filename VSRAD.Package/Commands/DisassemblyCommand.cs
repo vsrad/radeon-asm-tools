@@ -3,9 +3,7 @@ using EnvDTE80;
 using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.TextManager.Interop;
 using System.ComponentModel.Composition;
-using System.IO;
 using VSRAD.Package.ProjectSystem;
 using Task = System.Threading.Tasks.Task;
 
@@ -39,7 +37,7 @@ namespace VSRAD.Package.Commands
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE2;
             Assumes.Present(dte);
             dte.ExecuteCommand("Build.BuildSolution");
-            dte.Events.BuildEvents.OnBuildProjConfigDone += (string project, string projectConfig, string platform, string solutionConfig, bool success) =>
+            dte.Events.BuildEvents.OnBuildDone += (vsBuildScope scope, vsBuildAction action) =>
                 OpenFileInEditor(options.LocalOutputCopyPath, options.LineMarker);
         }
     }
