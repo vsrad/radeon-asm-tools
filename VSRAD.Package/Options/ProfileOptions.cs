@@ -34,20 +34,19 @@ namespace VSRAD.Package.Options
     {
         public GeneralProfileOptions General { get; }
         public DebuggerProfileOptions Debugger { get; }
+        public PreprocessorProfileOptions Preprocessor { get; }
         public DisassemblerProfileOptions Disassembler { get; }
         public ProfilerProfileOptions Profiler { get; }
         public BuildProfileOptions Build { get; }
 
-        public PreprocessorProfileOptions Preprocessor { get; }
-
-        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null, PreprocessorProfileOptions preprocessor = null)
+        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, PreprocessorProfileOptions preprocessor = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null)
         {
             General = general ?? new GeneralProfileOptions();
             Debugger = debugger ?? new DebuggerProfileOptions();
+            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
             Disassembler = disassembler ?? new DisassemblerProfileOptions();
             Profiler = profiler ?? new ProfilerProfileOptions();
             Build = build ?? new BuildProfileOptions();
-            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
         }
 
         public object Clone()
@@ -131,6 +130,9 @@ namespace VSRAD.Package.Options
         [Description("Specifies how the debug script output file is parsed: 'Text': each line is read as a hexadecimal string (0x...), 'Binary': 4-byte blocks are read as a single dword value.")]
         [DefaultValue(DefaultOptionValues.DebuggerBinaryOutput)]
         public bool BinaryOutput { get; }
+        [Description("Output file offset: bytes if output mode is binary, lines if output mode is text"), DisplayName("Output Offset")]
+        [DefaultValue(DefaultOptionValues.OutputOffset)]
+        public int OutputOffset { get; }
         [DisplayName("Parse Valid Watches File")]
         [Description("Specifies whether the file specified in Valid Watches File Path should be used to filter valid watches.")]
         [DefaultValue(DefaultOptionValues.DebuggerParseValidWatches)]
@@ -146,9 +148,6 @@ namespace VSRAD.Package.Options
         [Description("Debugger Timeout (seconds), 0 - timeout disabled"), DisplayName("Timeout")]
         [DefaultValue(DefaultOptionValues.DebuggerTimeoutSecs)]
         public int TimeoutSecs { get; }
-        [Description("Output file offset: bytes if output mode is binary, lines if output mode is text"), DisplayName("Output Offset")]
-        [DefaultValue(DefaultOptionValues.OutputOffset)]
-        public int OutputOffset { get; }
 
         [JsonIgnore]
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
@@ -168,18 +167,18 @@ namespace VSRAD.Package.Options
                 parseValidWatches: ParseValidWatches,
                 validWatchesFilePath: ValidWatchesFilePath);
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, int outputOffset = 0)
+        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath)
         {
             Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
             Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
             WorkingDirectory = workingDirectory;
             OutputPath = outputPath;
             BinaryOutput = binaryOutput;
+            OutputOffset = outputOffset;
             RunAsAdmin = runAsAdmin;
             TimeoutSecs = timeoutSecs;
             ParseValidWatches = parseValidWatches;
             ValidWatchesFilePath = validWatchesFilePath;
-            OutputOffset = outputOffset;
         }
     }
 

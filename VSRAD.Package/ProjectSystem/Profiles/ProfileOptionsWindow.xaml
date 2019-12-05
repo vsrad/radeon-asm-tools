@@ -50,12 +50,14 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <Grid x:Name="PropertiesGrid" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="0,8,8,8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-        </Grid>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="0,8,8,8">
+            <Grid x:Name="PropertiesGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+            </Grid>
+        </ScrollViewer>
         <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,0,8,8">
             <Separator Height="10" DockPanel.Dock="Top"/>
             <TextBlock x:Name="DescriptionTextBlock" TextWrapping="Wrap"/>
