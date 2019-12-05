@@ -3,8 +3,10 @@ using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Immutable;
+using System.IO;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
@@ -64,12 +66,34 @@ namespace VSRAD.Package.Commands
             _statusBar?.Clear();
         }
 
-        protected void OpenFileInEditor(string path)
+        protected void OpenFileInEditor(string path, string lineMarker = null)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
             Assumes.Present(dte);
             dte.ItemOperations.OpenFile(path);
+
+            if (string.IsNullOrEmpty(lineMarker)) return;
+
+            var lineNumber = GetMarkedLineNumber(path, lineMarker);
+
+            var textManager = _serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
+            Assumes.Present(textManager);
+
+            textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
+            activeView.SetCaretPos(lineNumber, 0);
+        }
+
+        private int GetMarkedLineNumber(string file, string lineMarker)
+        {
+            var lineNumber = 0;
+            foreach (var line in File.ReadLines(file))
+            {
+                if (line == lineMarker)
+                    return lineNumber;
+                ++lineNumber;
+            }
+            return 0;
         }
     }
 }
