@@ -1,12 +1,12 @@
-﻿using Microsoft;
+﻿using EnvDTE;
+using EnvDTE80;
+using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System.ComponentModel.Composition;
 using System.IO;
-using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Server;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
@@ -16,22 +16,16 @@ namespace VSRAD.Package.Commands
     internal sealed class DisassemblyCommand : BaseRemoteCommand
     {
         private readonly IProject _project;
-        private readonly IFileSynchronizationManager _deployManager;
-        private readonly IOutputWindowManager _outputWindow;
-        private readonly ICommunicationChannel _channel;
+        private readonly BuildTools.BuildToolsServer _buildServer;
 
         [ImportingConstructor]
         public DisassemblyCommand(
             IProject project,
-            IFileSynchronizationManager deployManager,
-            IOutputWindowManager outputWindow,
-            ICommunicationChannel channel,
+            BuildTools.BuildToolsServer buildServer,
             SVsServiceProvider serviceProvider) : base(Constants.DisassembleCommandId, serviceProvider)
         {
             _project = project;
-            _deployManager = deployManager;
-            _outputWindow = outputWindow;
-            _channel = channel;
+            _buildServer = buildServer;
         }
 
         public override async Task RunAsync()
@@ -39,26 +33,14 @@ namespace VSRAD.Package.Commands
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
-            var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory };
 
-            await SetStatusBarTextAsync("RAD Debug: Disassembling...");
-            try
-            {
-                await _deployManager.SynchronizeRemoteAsync();
-                var executor = new RemoteCommandExecutor("Disassembly", _channel, _outputWindow);
-                var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
+            _buildServer.OverrideStepsForNextBuild(BuildTools.BuildSteps.Disassembler);
 
-                if (!result.TryGetResult(out var execResult, out var error))
-                    throw new System.Exception(error.Message);
-                var (_, data) = execResult;
-
-                File.WriteAllBytes(options.LocalOutputCopyPath, data);
+            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE2;
+            Assumes.Present(dte);
+            dte.ExecuteCommand("Build.BuildSolution");
+            dte.Events.BuildEvents.OnBuildProjConfigDone += (string project, string projectConfig, string platform, string solutionConfig, bool success) =>
                 OpenFileInEditor(options.LocalOutputCopyPath, options.LineMarker);
-            }
-            finally
-            {
-                await ClearStatusBarAsync();
-            }
         }
     }
 }
