@@ -16,6 +16,15 @@ using static VSRAD.BuildTools.IPCBuildResult;
 
 namespace VSRAD.Package.BuildTools
 {
+    [Flags]
+    public enum BuildSteps
+    {
+        Skip = 1,
+        Preprocessor = 2,
+        Disassembler = 4,
+        FinalStep = 8
+    }
+
     [Export]
     [AppliesTo(Constants.ProjectCapability)]
     public sealed class BuildToolsServer
@@ -32,6 +41,7 @@ namespace VSRAD.Package.BuildTools
         private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
 
         private IProject _project;
+        private BuildSteps? _buildStepsOverride;
 
         [ImportingConstructor]
         public BuildToolsServer(
@@ -55,6 +65,11 @@ namespace VSRAD.Package.BuildTools
         public void OnProjectUnloading()
         {
             _serverLoopCts.Cancel();
+        }
+
+        public void OverrideStepsForNextBuild(BuildSteps steps)
+        {
+            _buildStepsOverride = steps;
         }
 
         public async Task RunServerLoopAsync()
@@ -82,6 +97,23 @@ namespace VSRAD.Package.BuildTools
                 }
         }
 
+        private BuildSteps GetBuildSteps(Options.BuildProfileOptions buildOptions)
+        {
+            if (_buildStepsOverride is BuildSteps overriddenSteps)
+            {
+                _buildStepsOverride = null;
+                return overriddenSteps;
+            }
+            var steps = BuildSteps.Skip;
+            if (buildOptions.RunPreprocessor)
+                steps |= BuildSteps.Preprocessor;
+            if (buildOptions.RunDisassembler)
+                steps |= BuildSteps.Disassembler;
+            if (!string.IsNullOrEmpty(buildOptions.Executable))
+                steps |= BuildSteps.FinalStep;
+            return steps;
+        }
+
         private async Task<Result<IPCBuildResult>> BuildAsync()
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
@@ -89,16 +121,16 @@ namespace VSRAD.Package.BuildTools
             var buildOptions = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
             var preprocessorOptions = await _project.Options.Profile.Preprocessor.EvaluateAsync(evaluator);
             var disassemblerOptions = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
-            bool runFinalStep = !string.IsNullOrEmpty(buildOptions.Executable);
+            var buildSteps = GetBuildSteps(buildOptions);
 
-            if (!buildOptions.RunPreprocessor && !buildOptions.RunDisassembler && !runFinalStep)
+            if (buildSteps == BuildSteps.Skip)
                 return new IPCBuildResult { Skipped = true };
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
             var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
             string preprocessedSource = null;
-            if (buildOptions.RunPreprocessor)
+            if ((buildSteps & BuildSteps.Preprocessor) == BuildSteps.Preprocessor)
             {
                 var ppResult = await RunPreprocessorAsync(executor, preprocessorOptions);
                 if (!ppResult.TryGetResult(out var ppData, out var error))
@@ -108,7 +140,7 @@ namespace VSRAD.Package.BuildTools
                     return new IPCBuildResult { ExitCode = ppExitCode, ErrorMessages = ppMessages.ToArray() };
                 preprocessedSource = ppSource;
             }
-            if (buildOptions.RunDisassembler)
+            if ((buildSteps & BuildSteps.Disassembler) == BuildSteps.Disassembler)
             {
                 var disasmCommand = new Execute
                 {
@@ -123,7 +155,7 @@ namespace VSRAD.Package.BuildTools
                 if (disasmExitCode != 0 || disasmMessages.Any())
                     return new IPCBuildResult { ExitCode = disasmExitCode, ErrorMessages = disasmMessages.ToArray() };
             }
-            if (runFinalStep)
+            if ((buildSteps & BuildSteps.FinalStep) == BuildSteps.FinalStep)
             {
                 var finalStepCommand = new Execute
                 {
