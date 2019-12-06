@@ -42,6 +42,13 @@ namespace VSRAD.Package.Server
         void ForceDisconnect();
     }
 
+    public sealed class ConnectionRefusedException : System.IO.IOException
+    {
+        public ConnectionRefusedException(ServerConnectionOptions connection) :
+            base($"Unable to establish connection to a debug server at {connection}")
+        { }
+    }
+
     public enum ClientState
     {
         Disconnected,
@@ -163,7 +170,7 @@ namespace VSRAD.Package.Server
             catch (Exception)
             {
                 ConnectionState = ClientState.Disconnected;
-                throw new Exception($"Unable to establish connection to a debug server at {ConnectionOptions}");
+                throw new ConnectionRefusedException(ConnectionOptions);
             }
         }
     }
