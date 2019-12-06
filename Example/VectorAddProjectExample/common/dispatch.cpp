@@ -277,7 +277,7 @@ bool Dispatch::LoadCodeObjectFromFile(const std::string& filename)
               std::istreambuf_iterator<char>());
 
 */
-  hsa_status_t status = hsa_code_object_deserialize(ptr, size, NULL, &code_object);
+  hsa_status_t status = hsa_code_object_reader_create_from_memory(ptr, size, &co_reader);
   if (status != HSA_STATUS_SUCCESS) { return HsaError("Failed to deserialize code object", status); }
   return true;
 }
@@ -303,7 +303,7 @@ bool Dispatch::SetupExecutable()
   if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_create failed", status); }
 
   // Load code object
-  status = hsa_executable_load_code_object(executable, agent, code_object, NULL);
+  status = hsa_executable_load_agent_code_object(executable, agent, co_reader, NULL, NULL);
   if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_load_code_object failed", status); }
 
   // Freeze executable

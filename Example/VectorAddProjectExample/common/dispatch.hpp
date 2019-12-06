@@ -90,7 +90,7 @@ private:
   uint32_t group_dynamic_size;
   void *kernarg;
   size_t kernarg_offset;
-  hsa_code_object_t code_object;
+  hsa_code_object_reader_t co_reader;
   hsa_executable_t executable;
 
   bool Init();
