@@ -70,28 +70,20 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         private async Task<Dictionary<string, string>> GetEnvironmentMacrosAsync(IProjectProperties properties, ICommunicationChannel channel)
         {
-            var vsMacroNames = await properties.GetPropertyNamesAsync().ConfigureAwait(false);
             var radMacroNames = typeof(RadMacros).GetConstantValues<string>();
+            var vsMacroNames = await properties.GetPropertyNamesAsync().ConfigureAwait(false);
+            var remoteEnvironment = await channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
 
             var macros = new Dictionary<string, string>();
 
-            foreach (var macroName in vsMacroNames.Union(radMacroNames))
+            foreach (var macroName in radMacroNames.Union(vsMacroNames))
                 macros["$(" + macroName + ")"] = await _evaluator.GetMacroValueAsync(macroName).ConfigureAwait(false);
 
             foreach (DictionaryEntry entry in Environment.GetEnvironmentVariables())
                 macros["$ENV(" + (string)entry.Key + ")"] = (string)entry.Value;
 
-            try
-            {
-                var remoteEnv = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.EnvironmentVariablesListed>(
-                    new DebugServer.IPC.Commands.ListEnvironmentVariables()).ConfigureAwait(false);
-
-                _evaluator.SetRemoteMacroPreviewList(remoteEnv.Variables);
-
-                foreach (var entry in remoteEnv.Variables)
-                    macros["$ENVR(" + entry.Key + ")"] = entry.Value;
-            }
-            catch (Exception) { } // Ignore remote environment fetch failures
+            foreach (var entry in remoteEnvironment)
+                macros["$ENVR(" + entry.Key + ")"] = entry.Value;
 
             return macros;
         }

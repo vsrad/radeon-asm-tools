@@ -30,9 +30,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var propertiesProvider = configuredProject.GetService<IProjectPropertiesProvider>("ProjectPropertiesProvider");
             var projectProperties = propertiesProvider.GetCommonProperties();
 
-            var evaluator = new MacroEvaluator(_project, projectProperties,
-                values: new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0)),
-                profileOptionsOverride: profileOptions);
+            var remoteEnv = await _channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
+            var transients = new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0));
+
+            var evaluator = new MacroEvaluator(_project, projectProperties, transients, remoteEnv, profileOptions);
 
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 

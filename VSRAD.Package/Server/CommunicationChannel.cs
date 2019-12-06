@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Net.Sockets;
 using System.Threading;
@@ -14,6 +15,16 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
+    public readonly struct ConnectedRemoteState
+    {
+        public IReadOnlyDictionary<string, string> RemoteEnvironment { get; }
+
+        public ConnectedRemoteState(IReadOnlyDictionary<string, string> remoteEnvironment)
+        {
+            RemoteEnvironment = remoteEnvironment;
+        }
+    }
+
     public interface ICommunicationChannel
     {
         event Action ConnectionStateChanged;
@@ -22,11 +33,13 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        void ForceDisconnect();
-
         Task SendAsync(ICommand command);
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
+
+        Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
+
+        void ForceDisconnect();
     }
 
     public enum ClientState
@@ -60,6 +73,7 @@ namespace VSRAD.Package.Server
         private readonly IProject _project;
 
         private TcpClient _connection;
+        private IReadOnlyDictionary<string, string> _remoteEnvironment;
 
         [ImportingConstructor]
         public CommunicationChannel(SVsServiceProvider provider, IProject project)
@@ -110,10 +124,22 @@ namespace VSRAD.Package.Server
             }
         }
 
+        public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()
+        {
+            if (_remoteEnvironment == null)
+            {
+                await EstablishServerConnectionAsync().ConfigureAwait(false);
+                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables());
+                _remoteEnvironment = environment.Variables;
+            }
+            return _remoteEnvironment;
+        }
+
         public void ForceDisconnect()
         {
             _connection?.Close();
             _connection = null;
+            _remoteEnvironment = null;
             ConnectionState = ClientState.Disconnected;
         }
 
