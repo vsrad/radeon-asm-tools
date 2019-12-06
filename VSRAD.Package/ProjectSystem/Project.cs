@@ -96,7 +96,7 @@ namespace VSRAD.Package.ProjectSystem
 
             var remoteEnvironment = await channel.GetRemoteEnvironmentAsync();
 
-            return new MacroEvaluator(this, properties, transients, remoteEnvironment);
+            return new MacroEvaluator(properties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
         }
         #endregion
     }

@@ -42,7 +42,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 remoteEnvironment = new Dictionary<string, string>();
             }
 
-            var evaluator = new MacroEvaluator(_project, projectProperties, transients, remoteEnvironment, profileOptions);
+            var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, profileOptions);
 
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 

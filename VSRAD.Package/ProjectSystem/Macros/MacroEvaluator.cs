@@ -79,7 +79,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);
 
-        private readonly IProject _project;
         private readonly IProjectProperties _projectProperties;
         private readonly IReadOnlyDictionary<string, string> _remoteEnvironment;
 
@@ -87,16 +86,15 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private readonly Dictionary<string, string> _macroCache;
 
         public MacroEvaluator(
-            IProject project,
             IProjectProperties projectProperties,
             MacroEvaluatorTransientValues values,
             IReadOnlyDictionary<string, string> remoteEnvironment,
-            Options.ProfileOptions profileOptionsOverride = null)
+            Options.DebuggerOptions debuggerOptions,
+            Options.ProfileOptions profileOptions)
         {
-            _project = project;
             _projectProperties = projectProperties;
             _remoteEnvironment = remoteEnvironment;
-            _profileOptions = profileOptionsOverride ?? _project.Options.Profile;
+            _profileOptions = profileOptions;
 
             // Properties that are macros but do not contain macros themselves
             _macroCache = new Dictionary<string, string>
@@ -105,12 +103,12 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 { RadMacros.ActiveSourceFileLine, values.ActiveSourceFile.line.ToString() },
                 { RadMacros.Watches, values.WatchesOverride != null
                     ? string.Join(":", values.WatchesOverride)
-                    : string.Join(":", _project.Options.DebuggerOptions.GetWatchSnapshot()) },
-                { RadMacros.AWatches, string.Join(":", _project.Options.DebuggerOptions.GetAWatchSnapshot()) },
+                    : string.Join(":", debuggerOptions.GetWatchSnapshot()) },
+                { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
                 { RadMacros.BreakLine, values.BreakLine.ToString() },
-                { RadMacros.DebugAppArgs, _project.Options.DebuggerOptions.AppArgs },
-                { RadMacros.DebugBreakArgs, _project.Options.DebuggerOptions.BreakArgs },
-                { RadMacros.Counter, _project.Options.DebuggerOptions.Counter.ToString() }
+                { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
+                { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
+                { RadMacros.Counter, debuggerOptions.Counter.ToString() }
             };
         }
 
