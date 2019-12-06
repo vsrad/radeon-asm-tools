@@ -1,13 +1,9 @@
 # Radeon Asm Debugger Extension for Visual Studio
 
-## Syntax Highlighting
-
-See [Radeon Asm Syntax Highlight Extension](VSRAD.Syntax).
-
 ## Installation
 
 1. Download the installation archive attached to the latest git tag and unpack it in a temporary directory.
-2. Install `RadeonAsmSyntax.vsix` (optionally, documentation is available [here](https://github.com/vsrad/radeon-asm-tools#syntax-highlighting))
+2. Install `RadeonAsmSyntax.vsix` (optionally, documentation is available [here](https://github.com/vsrad/radeon-asm-tools/tree/master/VSRAD.Syntax#visual-studio-radeon-asm-syntax-highlight-extension))
 3. Install `RadeonAsmDebugger.vsix`.
 4. Run the `install.bat` script.
 5. Transfer `DebugServerW64`/`DebugServerLinux64` to your remote machines.
