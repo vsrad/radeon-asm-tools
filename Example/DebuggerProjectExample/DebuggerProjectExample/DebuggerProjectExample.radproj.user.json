@@ -57,11 +57,19 @@
         "WorkingDirectory": "/radeon-asm-tools/Example/VectorAddProjectExample",
         "OutputPath": "$(RadDebugWorkDir)/tmp_dir/debug_result",
         "BinaryOutput": true,
+        "OutputOffset": 0,
         "ParseValidWatches": false,
         "ValidWatchesFilePath": "",
         "RunAsAdmin": false,
-        "TimeoutSecs": 0,
-        "OutputOffset": 0
+        "TimeoutSecs": 0
+      },
+      "Preprocessor": {
+        "Executable": "",
+        "Arguments": "",
+        "WorkingDirectory": "$(RadDeployDir)",
+        "OutputPath": "",
+        "LocalOutputCopyPath": "",
+        "LineMarker": ""
       },
       "Disassembler": {
         "Executable": "",
@@ -87,13 +95,6 @@
         "Executable": "/opt/rocm/opencl/bin/x86_64/clang",
         "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
         "WorkingDirectory": "$(RadDebugWorkDir)"
-      },
-      "Preprocessor": {
-        "Executable": "",
-        "Arguments": "",
-        "WorkingDirectory": "$(RadDeployDir)",
-        "OutputPath": "",
-        "LocalOutputCopyPath": ""
       }
     }
   }
