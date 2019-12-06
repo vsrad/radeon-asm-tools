@@ -177,17 +177,15 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         private Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
         {
-            var macroName = macroMatch.Groups[2].Value;
+            var macro = macroMatch.Groups[2].Value;
             switch (macroMatch.Groups[1].Value)
             {
                 case "ENV":
-                    return Task.FromResult(Environment.GetEnvironmentVariable(macroName));
+                    return Task.FromResult(Environment.GetEnvironmentVariable(macro));
                 case "ENVR":
-                    if (_remoteEnvironment.TryGetValue(macroName, out var macroValue))
-                        return Task.FromResult(macroValue);
-                    return Task.FromResult(macroMatch.Value);
+                    return Task.FromResult(_remoteEnvironment.TryGetValue(macro, out var value) ? value : "");
                 default:
-                    return GetMacroValueAsync(macroName, recursionStartName);
+                    return GetMacroValueAsync(macro, recursionStartName);
             }
         }
     }

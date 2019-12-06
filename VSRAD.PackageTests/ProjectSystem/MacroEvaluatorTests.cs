@@ -60,6 +60,9 @@ namespace VSRAD.Package.ProjectSystem.Tests
             var evaluator = new MacroEvaluator(props.Object, default, remoteEnv, new Options.DebuggerOptions(), new Options.ProfileOptions());
             var result = await evaluator.EvaluateAsync("Local: $ENV(PATH), Remote: $ENVR(PATH), Break at: $ENVR(MAMI_BREAKPOINT)");
             Assert.Equal($"Local: {localPath}, Remote: /usr/bin:/root/soulgems, Break at: head", result);
+
+            result = await evaluator.EvaluateAsync("Local: $ENV(HOPEFULLY_NON_EXISTENT_VAR), Remote: $ENVR(HOPEFULLY_NON_EXISTENT_VAR)");
+            Assert.Equal("Local: , Remote: ", result);
         }
 
         [Fact]
