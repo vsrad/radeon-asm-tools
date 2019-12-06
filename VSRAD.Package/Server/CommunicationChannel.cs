@@ -15,16 +15,6 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
-    public readonly struct ConnectedRemoteState
-    {
-        public IReadOnlyDictionary<string, string> RemoteEnvironment { get; }
-
-        public ConnectedRemoteState(IReadOnlyDictionary<string, string> remoteEnvironment)
-        {
-            RemoteEnvironment = remoteEnvironment;
-        }
-    }
-
     public interface ICommunicationChannel
     {
         event Action ConnectionStateChanged;
