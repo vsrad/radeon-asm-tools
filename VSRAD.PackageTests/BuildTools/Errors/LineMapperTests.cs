@@ -90,6 +90,22 @@ int main(int argc, char** argv)
         }
 
         [Fact]
+        public void EmptyLineTest()
+        {
+            var messages = ParseStderr(@"
+*E,fatal: undefined reference to 'printf' (<stdin>:3)
+*W,undefined: 1 undefined references found
+*E,syntax error (<stdin>:12): at symbol 'printf'
+    parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
+    did you really mean to use the scope resolution op here?
+*E,fatal (auth.c:35): Uncaught error: Undefined variable: user
+").ToArray();
+            UpdateErrorLocations(messages, PpString, new string[] { "source.c", "code.c" });
+            Assert.Equal(0, messages[1].Line);
+
+        }
+
+        [Fact]
         public void HostSourcePathMappingTest()
         {
             var hostSource = MapSourceToHost(RemotePath, ProjectPaths);

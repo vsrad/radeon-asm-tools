@@ -44,6 +44,10 @@ namespace VSRAD.Package.BuildTools
                 foreach (var message in messages)
                 {
                     var messageLine = message.Line;
+                    // if message do not contain line than do
+                    // not try to map it with markers
+                    if (messageLine == 0)
+                        continue;
                     foreach (var marker in ppLines)
                     {
                         if (marker.PpLine > messageLine) break;
