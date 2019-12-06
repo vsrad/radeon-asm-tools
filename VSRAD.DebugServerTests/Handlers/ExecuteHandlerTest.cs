@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using Xunit;
@@ -35,32 +34,6 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var tmpContents = File.ReadAllText(tmpFile);
             Assert.Equal("command ran successfully\r\n", tmpContents);
-        }
-
-        [Fact]
-        public async void RunCommandWithEnvVariable()
-        {
-            Environment.SetEnvironmentVariable("PILOT_NAME", "ShinjiIkari");
-
-            var response = await Helper.DispatchCommandAsync<Execute, ExecutionCompleted>(
-                new Execute
-                {
-                    Executable = "python.exe",
-                    Arguments = $"-c \"print('pilot name: $ENVR(PILOT_NAME)')\""
-                });
-            Assert.Equal(ExecutionStatus.Completed, response.Status);
-            Assert.Equal(0, response.ExitCode);
-            Assert.Equal("pilot name: ShinjiIkari\r\n", response.Stdout);
-
-            response = await Helper.DispatchCommandAsync<Execute, ExecutionCompleted>(
-                new Execute
-                {
-                    Executable = "python.exe",
-                    Arguments = $"-c \"print('pilot name: $ENVR(I_DONT_EXIST)')\""
-                });
-            Assert.Equal(ExecutionStatus.Completed, response.Status);
-            Assert.Equal(0, response.ExitCode);
-            Assert.Equal("pilot name: \r\n", response.Stdout);
         }
 
         [Fact]

@@ -71,7 +71,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         Task<string> GetMacroValueAsync(string name);
         Task<string> EvaluateAsync(string src);
-        void SetRemoteMacroPreviewList(IReadOnlyDictionary<string, string> macros);
     }
 
     public sealed class MacroEvaluationException : Exception { public MacroEvaluationException(string message) : base(message) { } }
@@ -80,23 +79,22 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);
 
-        private readonly IProject _project;
         private readonly IProjectProperties _projectProperties;
+        private readonly IReadOnlyDictionary<string, string> _remoteEnvironment;
 
         private readonly Options.ProfileOptions _profileOptions;
         private readonly Dictionary<string, string> _macroCache;
 
-        private IReadOnlyDictionary<string, string> _remoteMacroPreviewList;
-
         public MacroEvaluator(
-            IProject project,
             IProjectProperties projectProperties,
             MacroEvaluatorTransientValues values,
-            Options.ProfileOptions profileOptionsOverride = null)
+            IReadOnlyDictionary<string, string> remoteEnvironment,
+            Options.DebuggerOptions debuggerOptions,
+            Options.ProfileOptions profileOptions)
         {
-            _project = project;
             _projectProperties = projectProperties;
-            _profileOptions = profileOptionsOverride ?? _project.Options.Profile;
+            _remoteEnvironment = remoteEnvironment;
+            _profileOptions = profileOptions;
 
             // Properties that are macros but do not contain macros themselves
             _macroCache = new Dictionary<string, string>
@@ -105,12 +103,12 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 { RadMacros.ActiveSourceFileLine, values.ActiveSourceFile.line.ToString() },
                 { RadMacros.Watches, values.WatchesOverride != null
                     ? string.Join(":", values.WatchesOverride)
-                    : string.Join(":", _project.Options.DebuggerOptions.GetWatchSnapshot()) },
-                { RadMacros.AWatches, string.Join(":", _project.Options.DebuggerOptions.GetAWatchSnapshot()) },
+                    : string.Join(":", debuggerOptions.GetWatchSnapshot()) },
+                { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
                 { RadMacros.BreakLine, values.BreakLine.ToString() },
-                { RadMacros.DebugAppArgs, _project.Options.DebuggerOptions.AppArgs },
-                { RadMacros.DebugBreakArgs, _project.Options.DebuggerOptions.BreakArgs },
-                { RadMacros.Counter, _project.Options.DebuggerOptions.Counter.ToString() }
+                { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
+                { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
+                { RadMacros.Counter, debuggerOptions.Counter.ToString() }
             };
         }
 
@@ -179,23 +177,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         private Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
         {
-            var macroName = macroMatch.Groups[2].Value;
+            var macro = macroMatch.Groups[2].Value;
             switch (macroMatch.Groups[1].Value)
             {
                 case "ENV":
-                    return Task.FromResult(Environment.GetEnvironmentVariable(macroName));
+                    return Task.FromResult(Environment.GetEnvironmentVariable(macro));
                 case "ENVR":
-                    if (_remoteMacroPreviewList != null && _remoteMacroPreviewList.TryGetValue(macroName, out var macroValue))
-                        return Task.FromResult(macroValue);
-                    return Task.FromResult(macroMatch.Value);
+                    return Task.FromResult(_remoteEnvironment.TryGetValue(macro, out var value) ? value : "");
                 default:
-                    return GetMacroValueAsync(macroName, recursionStartName);
+                    return GetMacroValueAsync(macro, recursionStartName);
             }
-        }
-
-        public void SetRemoteMacroPreviewList(IReadOnlyDictionary<string, string> macros)
-        {
-            _remoteMacroPreviewList = macros;
         }
     }
 }

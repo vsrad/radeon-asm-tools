@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
@@ -70,7 +71,7 @@ namespace VSRAD.Package.ProjectSystem
             Path.Combine(RootPath, projectRelativePath);
 
         #region MacroEvaluator
-        private (IActiveCodeEditor, IProjectProperties)? _macroEvaluatorDependencies;
+        private (IActiveCodeEditor, ICommunicationChannel, IProjectProperties)? _macroEvaluatorDependencies;
 
         public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint breakLine = 0, string[] watchesOverride = null)
         {
@@ -80,20 +81,23 @@ namespace VSRAD.Package.ProjectSystem
             {
                 var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
                 var activeCodeEditor = configuredProject.GetExport<IActiveCodeEditor>();
+                var communicationChannel = configuredProject.GetExport<ICommunicationChannel>();
 
                 var propertiesProvider = configuredProject.GetService<IProjectPropertiesProvider>("ProjectPropertiesProvider");
                 var projectProperties = propertiesProvider.GetCommonProperties();
 
-                _macroEvaluatorDependencies = (activeCodeEditor, projectProperties);
+                _macroEvaluatorDependencies = (activeCodeEditor, communicationChannel, projectProperties);
             }
-            var (codeEditor, properties) = _macroEvaluatorDependencies.Value;
+            var (codeEditor, channel, properties) = _macroEvaluatorDependencies.Value;
+
             var file = GetRelativePath(codeEditor.GetAbsoluteSourcePath());
             var line = codeEditor.GetCurrentLine();
             var transients = new MacroEvaluatorTransientValues(activeSourceFile: (file, line), breakLine: breakLine, watchesOverride: watchesOverride);
 
-            return new MacroEvaluator(this, properties, transients);
+            var remoteEnvironment = await channel.GetRemoteEnvironmentAsync();
+
+            return new MacroEvaluator(properties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
         }
         #endregion
-
     }
 }

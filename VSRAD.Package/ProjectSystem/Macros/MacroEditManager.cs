@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
 using VSRAD.Package.Server;
@@ -29,10 +30,19 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
             var propertiesProvider = configuredProject.GetService<IProjectPropertiesProvider>("ProjectPropertiesProvider");
             var projectProperties = propertiesProvider.GetCommonProperties();
+            var transients = new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0));
 
-            var evaluator = new MacroEvaluator(_project, projectProperties,
-                values: new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0)),
-                profileOptionsOverride: profileOptions);
+            IReadOnlyDictionary<string, string> remoteEnvironment;
+            try
+            {
+                remoteEnvironment = await _channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
+            }
+            catch (ConnectionRefusedException)
+            {
+                remoteEnvironment = new Dictionary<string, string>();
+            }
+
+            var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, profileOptions);
 
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
