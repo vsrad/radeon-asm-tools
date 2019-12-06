@@ -19,16 +19,17 @@ namespace VSRAD.Package.BuildTools.Errors
         {
             var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var result = new List<LineMarker>(); ;
-            for (int i = 0; i < lines.Length; i++)
+            for (int i = 1; i <= lines.Length; i++)
             {
-                var line = lines[i];
+                var line = lines[i - 1];
                 var match = LineMarkerRegex.Match(line);
 
                 if (match.Success)
                 {
                     result.Add(new LineMarker
                     {
-                        PpLine = i + 1,
+                        //  +1 for next line after marker
+                        PpLine = i + 1, 
                         SourceLine = int.Parse(match.Groups["line"].Value),
                         SourceFile = match.Groups["file"].Value
                     });

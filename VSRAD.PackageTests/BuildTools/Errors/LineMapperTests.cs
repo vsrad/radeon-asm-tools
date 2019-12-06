@@ -9,10 +9,10 @@ namespace VSRAD.PackageTests.BuildTools.Errors
 {
     public class LineMapperTests
     {
-        public const string ErrString = @"code.c:13:8: error: use of undeclared identifier 'ia'
+        public const string ErrString = @"code.c:14:8: error: use of undeclared identifier 'ia'
 return ia;
        ^
-test.c:16:10: error: invalid suffix 'uigyuigyuiguyi' on integer constant
+test.c:17:10: error: invalid suffix 'uigyuigyuiguyi' on integer constant
  return 0uigyuigyuiguyi;
          ^
 2 errors generated.
@@ -73,8 +73,8 @@ int main(int argc, char** argv)
         {
             var lineMapping = MapLines(Preprocessed);
             Assert.Equal(new LineMarker[] {
-                new LineMarker { PpLine = 4, SourceLine = 16, SourceFile = "source.c" },
-                new LineMarker { PpLine = 7, SourceLine = 55, SourceFile = "source1.c" }
+                new LineMarker { PpLine = 5, SourceLine = 16, SourceFile = "source.c" },
+                new LineMarker { PpLine = 8, SourceLine = 55, SourceFile = "source1.c" }
             }, lineMapping);
         }
 
@@ -87,6 +87,22 @@ int main(int argc, char** argv)
             Assert.Equal("code.c", messages.First().SourceFile);
             Assert.Equal(6, messages.Last().Line);
             Assert.Equal("source.c", messages.Last().SourceFile);
+        }
+
+        [Fact]
+        public void EmptyLineTest()
+        {
+            var messages = ParseStderr(@"
+*E,fatal: undefined reference to 'printf' (<stdin>:3)
+*W,undefined: 1 undefined references found
+*E,syntax error (<stdin>:12): at symbol 'printf'
+    parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
+    did you really mean to use the scope resolution op here?
+*E,fatal (auth.c:35): Uncaught error: Undefined variable: user
+").ToArray();
+            UpdateErrorLocations(messages, PpString, new string[] { "source.c", "code.c" });
+            Assert.Equal(0, messages[1].Line);
+
         }
 
         [Fact]
