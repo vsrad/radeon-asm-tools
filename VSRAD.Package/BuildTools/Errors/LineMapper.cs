@@ -28,7 +28,9 @@ namespace VSRAD.Package.BuildTools.Errors
                 {
                     result.Add(new LineMarker
                     {
-                        PpLine = i + 1,
+                        // +1 because of line-numeration from 1
+                        // and +1 for next line after marker
+                        PpLine = i + 2, 
                         SourceLine = int.Parse(match.Groups["line"].Value),
                         SourceFile = match.Groups["file"].Value
                     });
