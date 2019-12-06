@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Moq;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.ProjectSystem.Macros;
 using Xunit;
 
@@ -26,33 +28,12 @@ namespace VSRAD.Package.ProjectSystem.Tests
         }
 
         [Fact]
-        public async Task GetMacroValueRecursiveTestAsync()
-        {
-            var props = new Mock<IProjectProperties>();
-
-            var profileOptions = new Options.ProfileOptions(debugger: new Options.DebuggerProfileOptions(
-                executable: $"/opt/rocm/debug_exe $({RadMacros.DebuggerArguments})",
-                arguments: $"--exec $({RadMacros.DebuggerExecutable})"));
-
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new Options.DebuggerOptions(), profileOptions);
-            var exception = await Assert.ThrowsAsync<MacroEvaluationException>(
-                () => _ = evaluator.GetMacroValueAsync(RadMacros.DebuggerExecutable));
-            Assert.Equal($"Unable to evaluate $({RadMacros.DebuggerExecutable}): the macro refers to itself.", exception.Message);
-        }
-
-        [Fact]
         public async Task TransientValuesTestAsync()
         {
             var props = new Mock<IProjectProperties>();
-
             var debuggerOptions = new Options.DebuggerOptions
             {
-                Watches = new List<DebugVisualizer.Watch>
-                {
-                    new DebugVisualizer.Watch("a", DebugVisualizer.VariableType.Hex, false),
-                    new DebugVisualizer.Watch("c", DebugVisualizer.VariableType.Hex, false),
-                    new DebugVisualizer.Watch("tide", DebugVisualizer.VariableType.Hex, false)
-                }
+                Watches = new List<Watch> { new Watch("a", VariableType.Hex, false), new Watch("c", VariableType.Hex, false), new Watch("tide", VariableType.Hex, false) }
             };
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, debuggerOptions, new Options.ProfileOptions());
@@ -70,12 +51,39 @@ namespace VSRAD.Package.ProjectSystem.Tests
         }
 
         [Fact]
+        public async Task EnvironmentVariablesTestAsync()
+        {
+            var props = new Mock<IProjectProperties>();
+            var remoteEnv = new Dictionary<string, string>() { { "MAMI_BREAKPOINT", "head" }, { "PATH", "/usr/bin:/root/soulgems" } };
+            var localPath = Environment.GetEnvironmentVariable("PATH");
+
+            var evaluator = new MacroEvaluator(props.Object, default, remoteEnv, new Options.DebuggerOptions(), new Options.ProfileOptions());
+            var result = await evaluator.EvaluateAsync("Local: $ENV(PATH), Remote: $ENVR(PATH), Break at: $ENVR(MAMI_BREAKPOINT)");
+            Assert.Equal($"Local: {localPath}, Remote: /usr/bin:/root/soulgems, Break at: head", result);
+        }
+
+        [Fact]
         public async Task EmptyMacroNameTestAsync()
         {
             var props = new Mock<IProjectProperties>(MockBehavior.Strict); // fails the test if called
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new Options.DebuggerOptions(), new Options.ProfileOptions());
             Assert.Equal("$()", await evaluator.EvaluateAsync("$()"));
             Assert.Equal("", await evaluator.EvaluateAsync(""));
+        }
+
+        [Fact]
+        public async Task RecursiveMacroHandlingTestAsync()
+        {
+            var props = new Mock<IProjectProperties>();
+
+            var profileOptions = new Options.ProfileOptions(debugger: new Options.DebuggerProfileOptions(
+                executable: $"/opt/rocm/debug_exe $({RadMacros.DebuggerArguments})",
+                arguments: $"--exec $({RadMacros.DebuggerExecutable})"));
+
+            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new Options.DebuggerOptions(), profileOptions);
+            var exception = await Assert.ThrowsAsync<MacroEvaluationException>(
+                () => _ = evaluator.GetMacroValueAsync(RadMacros.DebuggerExecutable));
+            Assert.Equal($"Unable to evaluate $({RadMacros.DebuggerExecutable}): the macro refers to itself.", exception.Message);
         }
 
         [Fact]
