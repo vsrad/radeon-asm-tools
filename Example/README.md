@@ -42,7 +42,8 @@ make
 1. Open `DebuggerProjectExample` in Visual Studio
 2. Go to *Tools* -> *RAD Debug* -> *Options*
 3. Click the *Edit* button in the opened window to edit the active debug profile
-4. In the *Debugger* tab, set *Working Directory* to the absolute path
+4. In the *General* tab, set *Remote Machine Address* to the IP address of your remote machine
+5. In the *Debugger* tab, set *Working Directory* to the absolute path
 to `VectorAddProjectExample` on the remote machine (`/radeon-asm-tools/Example/VectorAddProjectExample` path using **Docker container**)
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 
