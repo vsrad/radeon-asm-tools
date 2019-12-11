@@ -40,4 +40,8 @@
     <PostBuildEvent>call "$(ProjectDir)..\publish.bat" $(ConfigurationName)
 if $(ConfigurationName) == Debug echo 'Warning: you publish debug build' 1&gt;&amp;2</PostBuildEvent>
   </PropertyGroup>
+  <!-- https://developercommunity.visualstudio.com/content/problem/632128/build-events-not-being-run-if-the-project-is-up-to-2.html -->
+  <ItemGroup>
+    <UpToDateCheckInput Include="../VSRAD.Package/Resources/*.png" />
+  </ItemGroup>
 </Project>
