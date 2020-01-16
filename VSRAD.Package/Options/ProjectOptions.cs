@@ -89,7 +89,7 @@ namespace VSRAD.Package.Options
             }
             catch (SystemException e)
             {
-                Errors.ShowCritical(e.Message);
+                Errors.ShowWarning("Project options could not be saved: " + e.Message);
             }
         }
         #endregion
