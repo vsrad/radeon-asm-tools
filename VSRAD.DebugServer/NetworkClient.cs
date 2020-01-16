@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -24,12 +25,19 @@ namespace VSRAD.DebugServer
 
         public async Task<ICommand> ReceiveCommandAsync()
         {
-            var message = await _socket.GetStream().ReadSerializedMessageAsync<ICommand>().ConfigureAwait(false);
+            try
+            {
+                var message = await _socket.GetStream().ReadSerializedMessageAsync<ICommand>().ConfigureAwait(false);
+                if (message == null) throw new ConnectionFailedException();
 
-            if (message == null) throw new ConnectionFailedException();
-
-            return message;
+                return message;
+            }
+            catch (IOException e) when (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset)
+            {
+                throw new ConnectionFailedException();
+            }
         }
+        
 
         public Task<int> SendResponseAsync(IPC.Responses.IResponse response) =>
              _socket.GetStream().WriteSerializedMessageAsync(response);
