@@ -8,23 +8,14 @@ namespace VSRAD.DebugServer
 {
     public static class Dispatcher
     {
-        public static Task<IResponse> DispatchAsync(ICommand command, ClientLogger clientLog)
+        public static Task<IResponse> DispatchAsync(ICommand command, ClientLogger clientLog) => command switch
         {
-            switch (command)
-            {
-                case Execute execute:
-                    return new ExecuteHandler(execute, clientLog).RunAsync();
-                case FetchMetadata fetchMetadata:
-                    return new FetchMetadataHandler(fetchMetadata).RunAsync();
-                case FetchResultRange fetchResultRange:
-                    return new FetchResultRangeHandler(fetchResultRange).RunAsync();
-                case Deploy deploy:
-                    return new DeployHandler(deploy, clientLog).RunAsync();
-                case ListEnvironmentVariables listEnvironmentVariables:
-                    return new ListEnvironmentVariablesHandler(listEnvironmentVariables).RunAsync();
-                default:
-                    throw new ArgumentException($"Unknown command type {command.GetType()}");
-            }
-        }
+            Execute e => new ExecuteHandler(e, clientLog).RunAsync(),
+            FetchMetadata fm => new FetchMetadataHandler(fm).RunAsync(),
+            FetchResultRange frr => new FetchResultRangeHandler(frr).RunAsync(),
+            Deploy d => new DeployHandler(d, clientLog).RunAsync(),
+            ListEnvironmentVariables lev => new ListEnvironmentVariablesHandler(lev).RunAsync(),
+            _ => throw new ArgumentException($"Unknown command type {command.GetType()}"),
+        };
     }
 }

@@ -17,23 +17,19 @@ namespace VSRAD.DebugServerTests.Handlers
             var logger = new ClientLogger(0, false);
             var response = await Dispatcher.DispatchAsync(command, logger);
 
-            using (var stream = new MemoryStream())
-            {
-                await stream.WriteSerializedMessageAsync(response);
-                stream.Position = 0;
-                // Test response serialization
-                return (TR)await stream.ReadSerializedMessageAsync<IResponse>();
-            }
+            using var stream = new MemoryStream();
+            await stream.WriteSerializedMessageAsync(response);
+            stream.Position = 0;
+            // Test response serialization
+            return (TR)await stream.ReadSerializedMessageAsync<IResponse>();
         }
 
         public static async Task<T> WithSerializationAsync<T>(this T command) where T : ICommand
         {
-            using (var stream = new MemoryStream())
-            {
-                await stream.WriteSerializedMessageAsync(command);
-                stream.Position = 0;
-                return (T)await stream.ReadSerializedMessageAsync<ICommand>();
-            }
+            using var stream = new MemoryStream();
+            await stream.WriteSerializedMessageAsync(command);
+            stream.Position = 0;
+            return (T)await stream.ReadSerializedMessageAsync<ICommand>();
         }
     }
 }

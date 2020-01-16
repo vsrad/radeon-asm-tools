@@ -43,51 +43,50 @@ namespace VSRAD.DebugServerTests
             var server = new Server(IPAddress.Any, 13337);
             _ = server.LoopAsync();
 
-            using (var client1 = new TcpClient("127.0.0.1", 13337))
-            using (var client2 = new TcpClient("127.0.0.1", 13337))
-            using (var client3 = new TcpClient("127.0.0.1", 13337))
-            using (var stream1 = client1.GetStream())
-            using (var stream2 = client2.GetStream())
-            using (var stream3 = client3.GetStream())
+            using var client1 = new TcpClient("127.0.0.1", 13337);
+            using var client2 = new TcpClient("127.0.0.1", 13337);
+            using var client3 = new TcpClient("127.0.0.1", 13337);
+            using var stream1 = client1.GetStream();
+            using var stream2 = client2.GetStream();
+            using var stream3 = client3.GetStream();
+
+            await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute
             {
-                await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute
-                {
-                    Executable = "python.exe",
-                    Arguments = $"-c \"from time import sleep; sleep(0.2); print('h')"
-                }).ConfigureAwait(false);
-                // This command should finish executing faster than the first one, but its result should arrive later
-                // because commands are executed sequentially
-                await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.FetchMetadata
-                {
-                    FilePath = new[] { @"N:\owhere" }
-                }).ConfigureAwait(false);
+                Executable = "python.exe",
+                Arguments = $"-c \"from time import sleep; sleep(0.2); print('h')"
+            }).ConfigureAwait(false);
+            // This command should finish executing faster than the first one, but its result should arrive later
+            // because commands are executed sequentially
+            await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.FetchMetadata
+            {
+                FilePath = new[] { @"N:\owhere" }
+            }).ConfigureAwait(false);
 
-                var response1 = (ExecutionCompleted)await stream1.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
-                Assert.Equal(ExecutionStatus.Completed, response1.Status);
-                Assert.Equal("h\r\n", response1.Stdout);
+            var response1 = (ExecutionCompleted)await stream1.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
+            Assert.Equal(ExecutionStatus.Completed, response1.Status);
+            Assert.Equal("h\r\n", response1.Stdout);
 
-                var response2 = (MetadataFetched)await stream1.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
-                Assert.Equal(FetchStatus.FileNotFound, response2.Status);
+            var response2 = (MetadataFetched)await stream1.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
+            Assert.Equal(FetchStatus.FileNotFound, response2.Status);
 
-                // This command contains invalid archive data and should trigger an exception;
-                // however, the global execution lock should be released so subsequent commands can be processed.
-                await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Deploy
-                {
-                    Destination = "the wired",
-                    Data = new byte[] { 0xBE, 0xEF } // invalid archive data should trigger an exception
-                }).ConfigureAwait(false);
-                await stream2.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.FetchResultRange
-                {
-                    FilePath = new[] { @"H:\what" }
-                }).ConfigureAwait(false);
-                var responseAfterException = (ResultRangeFetched)await stream2.ReadSerializedMessageAsync<IResponse>();
-                Assert.Equal(FetchStatus.FileNotFound, responseAfterException.Status);
+            // This command contains invalid archive data and should trigger an exception;
+            // however, the global execution lock should be released so subsequent commands can be processed.
+            await stream1.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Deploy
+            {
+                Destination = "the wired",
+                Data = new byte[] { 0xBE, 0xEF } // invalid archive data should trigger an exception
+            }).ConfigureAwait(false);
+            await stream2.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.FetchResultRange
+            {
+                FilePath = new[] { @"H:\what" }
+            }).ConfigureAwait(false);
+            var responseAfterException = (ResultRangeFetched)await stream2.ReadSerializedMessageAsync<IResponse>();
+            Assert.Equal(FetchStatus.FileNotFound, responseAfterException.Status);
 
-                await stream2.WriteAsync(new byte[] { 0, 0, 0, 0 }); // invalid command should not affect other clients
-                await stream3.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute()).ConfigureAwait(false);
-                var response = (ExecutionCompleted)await stream3.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
-                Assert.Equal(ExecutionStatus.CouldNotLaunch, response.Status);
-            }
+            await stream2.WriteAsync(new byte[] { 0, 0, 0, 0 }); // invalid command should not affect other clients
+            await stream3.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute()).ConfigureAwait(false);
+            var response = (ExecutionCompleted)await stream3.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
+            Assert.Equal(ExecutionStatus.CouldNotLaunch, response.Status);
         }
     }
 }
