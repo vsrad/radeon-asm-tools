@@ -27,7 +27,7 @@ where `port` is a TCP port number the server will listen on.
 
 ### Prerequisites
 
-* [.NET Core 2.2 SDK](https://dotnet.microsoft.com/download/dotnet-core/2.2)
+* [.NET Core 3.1 SDK](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 * [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 * Visual Studio 2017/2019 with *.NET desktop development* and *Visual Studio extension development* workloads and *Modeling SDK* (available in the *Individual components* tab in Visual Studio Installer)
 

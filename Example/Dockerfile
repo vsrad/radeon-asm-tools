@@ -20,13 +20,13 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-ins
 
 ENV PATH "${PATH}:/opt/rocm/bin"
 
-# .NET core runtime 2.2 packages
+# .NET core runtime 3.1 packages
 RUN apt-get update && apt-get install -y wget \
   apt-transport-https && \
   wget -q https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
   dpkg -i packages-microsoft-prod.deb && \
   apt-get update && apt-get install -y apt-transport-https && \
-  apt-get update && apt-get install -y aspnetcore-runtime-2.2
+  apt-get update && apt-get install -y aspnetcore-runtime-3.1
 
 # compile example application
 RUN git clone https://github.com/vsrad/radeon-asm-tools.git && \

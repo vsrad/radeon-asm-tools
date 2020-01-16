@@ -16,7 +16,7 @@
 #### Prerequisites
 
 * [ROCm Platform](https://rocm.github.io/ROCmInstall.html)
-* [.NET Core 2.2 Runtime](https://dotnet.microsoft.com/download/dotnet-core/2.2)
+* [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 * CMake and additional script dependencies:
 ```sh
 sudo apt-get -y install cmake libboost-program-options-dev liblist-moreutils-perl

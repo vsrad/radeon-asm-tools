@@ -8,8 +8,8 @@ dotnet publish -r linux-x64 -c %config% --self-contained false
 cd ..
 :: DebugServer
 mkdir %config%
-xcopy /E /Y "VSRAD.DebugServer\bin\%config%\netcoreapp2.2\win-x64\publish" "%config%\DebugServerW64\"
-xcopy /E /Y "VSRAD.DebugServer\bin\%config%\netcoreapp2.2\linux-x64\publish" "%config%\DebugServerLinux64\"
+xcopy /E /Y "VSRAD.DebugServer\bin\%config%\netcoreapp3.1\win-x64\publish" "%config%\DebugServerW64\"
+xcopy /E /Y "VSRAD.DebugServer\bin\%config%\netcoreapp3.1\linux-x64\publish" "%config%\DebugServerLinux64\"
 :: RadeonAsmDebugger.vsix
 copy /Y "VSRAD.Package\bin\%config%\RadeonAsmDebugger.vsix" "%config%\"
 :: RadeonAsmSyntax.vsix
