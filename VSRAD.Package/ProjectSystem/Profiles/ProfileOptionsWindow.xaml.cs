@@ -50,8 +50,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             get
             {
+
                 if (_propertyValues.TryGetValue(_projectOptions.ActiveProfile, out var values)) return values;
-                values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.Profile);
+                values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.ActiveProfile, _projectOptions.Profile);
                 _propertyValues[_projectOptions.ActiveProfile] = values;
                 return values;
             }
