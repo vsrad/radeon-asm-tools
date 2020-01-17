@@ -69,7 +69,7 @@ to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` i
 
 * To configure build options, navigate to *Tools* -> *RAD Debug* -> *Options* -> *Build*
     ![Build options](docs/build-options.PNG)
-* Build errors are displayed in the standard output window (and highighted in the code if the `RadeonAsmSyntax` extension is installed)
+* Build errors are displayed in the standard output window (and highlighted in the code if the `RadeonAsmSyntax` extension is installed)
     ![Build errors](docs/build-errors.PNG)
 
 ### Launch the Debugger
