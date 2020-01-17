@@ -14,8 +14,7 @@ xcopy /E /Y "VSRAD.DebugServer\bin\%config%\netcoreapp3.1\linux-x64\publish" "%c
 copy /Y "VSRAD.Package\bin\%config%\RadeonAsmDebugger.vsix" "%config%\"
 :: RadeonAsmSyntax.vsix
 copy /Y "VSRAD.Syntax\bin\%config%\RadeonAsmSyntax.vsix" "%config%\"
-:: Changelog and Readme
-copy /Y "CHANGELOG.md" "%config%\"
+:: Readme
 copy /Y "README.md" "%config%\"
 :: VSGRAD.BuildTools.dll
 copy /Y "VSRAD.BuildTools\bin\%config%\VSRAD.BuildTools.dll" "%config%\"
