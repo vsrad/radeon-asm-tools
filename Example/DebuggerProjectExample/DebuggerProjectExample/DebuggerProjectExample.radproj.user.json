@@ -54,7 +54,7 @@
       "Debugger": {
         "Executable": "bash",
         "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDeployDir)/$(RadActiveSourceFile) -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
-        "WorkingDirectory": "/radeon-asm-tools/Example/VectorAddProjectExample",
+        "WorkingDirectory": "/VectorAddProjectExample",
         "OutputPath": "$(RadDebugWorkDir)/tmp_dir/debug_result",
         "BinaryOutput": true,
         "OutputOffset": 0,

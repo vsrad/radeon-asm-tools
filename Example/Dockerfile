@@ -1,47 +1,48 @@
 FROM ubuntu:16.04
 
-# dev tools, application dependencies and ROCm packages
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl && \
+RUN apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates && \
+  # add ROCm repository
   curl -sL http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | apt-key add - && \
   sh -c 'echo deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main > /etc/apt/sources.list.d/rocm.list' && \
-  apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  sudo \
+  # add .NET Core repository (required for Debug Server)
+  curl -O https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb && \
+  dpkg -i packages-microsoft-prod.deb && \
+  rm packages-microsoft-prod.deb && \
+  # install development tools, dependencies, and ROCm
+  apt-get update && \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   libelf1 \
   libnuma-dev \
   build-essential \
   liblist-moreutils-perl \
   libboost-program-options-dev \
   cmake \
-  git \
   unzip \
-  rocm-dev && \
+  rocm-dev \
+  dotnet-runtime-3.1 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-ENV PATH "${PATH}:/opt/rocm/bin"
+ENV PATH "${PATH}:/opt/rocm/bin:/opt/rocm/opencl/bin/x86_64"
 
-# .NET core runtime 3.1 packages
-RUN apt-get update && apt-get install -y wget \
-  apt-transport-https && \
-  wget -q https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-  dpkg -i packages-microsoft-prod.deb && \
-  apt-get update && apt-get install -y apt-transport-https && \
-  apt-get update && apt-get install -y aspnetcore-runtime-3.1
+ENV RAD_VERSION 2020.01.16
 
 # compile example application
-RUN git clone https://github.com/vsrad/radeon-asm-tools.git && \
-  cd radeon-asm-tools/Example/VectorAddProjectExample && \
+RUN curl -L https://github.com/vsrad/radeon-asm-tools/archive/${RAD_VERSION}.zip -o source.zip && \
+  unzip source.zip "radeon-asm-tools-${RAD_VERSION}/Example/VectorAddProjectExample/*" && \
+  mv radeon-asm-tools-${RAD_VERSION}/Example/VectorAddProjectExample . && \
+  rm -r source.zip radeon-asm-tools-${RAD_VERSION} && \
+  cd VectorAddProjectExample && \
   mkdir build && \
   cd build && \
   cmake .. && \
   make
 
-WORKDIR /
-
 # download Debug Server
-RUN wget https://github.com/vsrad/radeon-asm-tools/releases/download/19.11.15/Release.zip && \
-  unzip Release.zip && \
+RUN curl -LO https://github.com/vsrad/radeon-asm-tools/releases/download/${RAD_VERSION}/Release.zip && \
+  unzip -j Release.zip 'Release/DebugServerLinux64/*' -d DebugServerLinux64 && \
   rm Release.zip && \
-  chmod +x Release/DebugServerLinux64/RadeonAsmDebugServer
+  chmod +x DebugServerLinux64/RadeonAsmDebugServer
 
-WORKDIR Release/DebugServerLinux64
+WORKDIR /DebugServerLinux64

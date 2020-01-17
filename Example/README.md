@@ -7,11 +7,19 @@
 
 ## Building and Running
 
-### Remote machine: build using Docker
+### Remote Machine (Docker)
 
-- Run doker container with: `docker run -p 9339:9339 -it --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video vsrad/rocm-example ./RadeonAsmDebugServer`
+To run the example application without attaching debugger:
+```
+docker run --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video -w /VectorAddProjectExample/gfx9 vsrad/rocm-example ../build/gfx9/fp32_v_add
+```
 
-### Remote machine: build on your machine
+To launch Debug Server:
+```
+docker run -p 9339:9339 -it --device=/dev/kfd --device=/dev/dri --security-opt seccomp=unconfined --group-add video vsrad/rocm-example ./RadeonAsmDebugServer
+```
+
+### Remote Machine (Manual)
 
 #### Prerequisites
 
@@ -22,7 +30,7 @@
 sudo apt-get -y install cmake libboost-program-options-dev liblist-moreutils-perl
 ```
 
-#### Build application and run Debug Server
+#### Build the Example Application
 
 1. Transfer the `VectorAddProjectExample` directory to the remote machine
 2. Create a build directory and run `cmake` followed by `make` there:
@@ -33,9 +41,12 @@ cd build
 cmake ..
 make
 ```
-3. Downlad latest [release](https://github.com/vsrad/radeon-asm-tools/releases) and transfer `DebugServerLinux64` directory to the remote machine
-4. Navigate to the `/path-to-debug-server/DebugServerLinux64` directory
-5. Launch the debug server with `chmod +x RadeonAsmDebugServer && ./RadeonAsmDebugServer`
+
+#### Launch Debug Server
+
+1. Downlad the latest [release](https://github.com/vsrad/radeon-asm-tools/releases) and transfer the `DebugServerLinux64` directory to the remote machine
+2. Navigate to `DebugServerLinux64` on the remote machine
+3. Launch the server with `chmod +x RadeonAsmDebugServer && ./RadeonAsmDebugServer`
 
 ### Host machine
 
@@ -44,23 +55,25 @@ make
 3. Click the *Edit* button in the opened window to edit the active debug profile
 4. In the *General* tab, set *Remote Machine Address* to the IP address of your remote machine
 5. In the *Debugger* tab, set *Working Directory* to the absolute path
-to `VectorAddProjectExample` on the remote machine (`/radeon-asm-tools/Example/VectorAddProjectExample` path using **Docker container**)
+to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` in the **Docker container**)
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 
 ### Build your shader
+
 1. Open `fp32_v_add.s` in *Solution Explorer*
-2. Click *Build* -> *Build DebuggerProjectExample* or *Ctrl+B* shortcut
-3. It should build your kernel. Go to `VectorAddProjectExample` directory on your remote machine and check `fp32_v_add_build.co` object file is exist
+2. Click *Build* -> *Build DebuggerProjectExample* or press *Ctrl+B*
+3. Check that the object file `VectorAddProjectExample/fp32_v_add_build.co` is created on the remote machine
 
-* **Note:** if *Executable* field is empty then build process will be skipped and succeeded result automatically
-* **Note:** `/radeon-asm-tools/Example/VectorAddProjectExample` path where you can find code object file using **Docker image** (execute `docker exec -it containerIdOrName bash` to go into container)
+* **Note:** if the build executable is not set in the profile options, the build will be skipped (and marked as successful)
+* **Note:** when using Docker, the code object can be found at `/VectorAddProjectExample` (execute `docker exec -it containerIdOrName bash` to enter the container)
 
-* You can set your build options *Tools* -> *RAD Debug* -> *Options* -> *Build*
+* To configure build options, navigate to *Tools* -> *RAD Debug* -> *Options* -> *Build*
     ![Build options](docs/build-options.PNG)
-* Build errors will be in the standard output window (highlighting errors will only appear if RadeonAsmSyntax is installed)
+* Build errors are displayed in the standard output window (and highighted in the code if the `RadeonAsmSyntax` extension is installed)
     ![Build errors](docs/build-errors.PNG)
 
-### Start debugger
+### Launch the Debugger
+
 1. Open `fp32_v_add.s` in *Solution Explorer*
 2. Set a breakpoint on line 79
 3. Start debugging by pressing F5 (alternatively, clicking on the *RAD Debugger* button with a green arrow)
