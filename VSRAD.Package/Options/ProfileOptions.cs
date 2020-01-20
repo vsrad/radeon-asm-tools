@@ -70,7 +70,6 @@ namespace VSRAD.Package.Options
     {
         [JsonIgnore]
         [Description("The name of current profile."), DisplayName("Profile Name")]
-        [DefaultValue("DEFAULT")]   // TODO
         public string ProfileName { get; }
 
         [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
