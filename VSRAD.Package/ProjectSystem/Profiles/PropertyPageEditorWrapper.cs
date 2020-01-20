@@ -19,12 +19,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private readonly UpdateDescriptionDelegate _updateDescription;
         private readonly GetProfileOptionsDelegate _getProfileOptions;
 
-        private TextBox _profileNameBox = null;
-        public string EditedProfileName
-        {
-            get => _profileNameBox?.Text;
-        }
-
         public PropertyPageEditorWrapper(
             Grid propertyPageGrid,
             Macros.MacroEditManager macroEditor,
@@ -76,9 +70,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     else
                         _updateDescription("");
                 };
-
-                if (property.DisplayName == "Profile Name")
-                    _profileNameBox = (TextBox)valueControl;
 
                 _propertyPageGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 int propertyIndex = _propertyPageGrid.RowDefinitions.Count - 1;
