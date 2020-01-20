@@ -68,6 +68,10 @@ namespace VSRAD.Package.Options
 
     public sealed class GeneralProfileOptions
     {
+        [JsonIgnore]
+        [Description("The name of current profile."), DisplayName("Profile Name")]
+        public string ProfileName { get; }
+
         [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
         [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
         [DefaultValue(DefaultOptionValues.DeployDirectory)]
@@ -94,11 +98,12 @@ namespace VSRAD.Package.Options
         public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
 
         public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
-            new GeneralProfileOptions(deployDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DeployDirectory),
+            new GeneralProfileOptions(profileName: ProfileName, deployDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DeployDirectory),
                 remoteMachine: RemoteMachine, port: Port, autosaveSource: AutosaveSource, copySources: CopySources, additionalSources: AdditionalSources);
 
-        public GeneralProfileOptions(string deployDirectory = null, string remoteMachine = DefaultOptionValues.RemoteMachineAdredd, int port = DefaultOptionValues.Port, DocumentSaveType autosaveSource = DefaultOptionValues.AutosaveSource, string additionalSources = DefaultOptionValues.AdditionalSources, bool copySources = DefaultOptionValues.CopySources)
+        public GeneralProfileOptions(string profileName = "", string deployDirectory = null, string remoteMachine = DefaultOptionValues.RemoteMachineAdredd, int port = DefaultOptionValues.Port, DocumentSaveType autosaveSource = DefaultOptionValues.AutosaveSource, string additionalSources = DefaultOptionValues.AdditionalSources, bool copySources = DefaultOptionValues.CopySources)
         {
+            ProfileName = profileName;
             DeployDirectory = deployDirectory ?? DefaultOptionValues.DeployDirectory;
             RemoteMachine = remoteMachine;
             Port = port;

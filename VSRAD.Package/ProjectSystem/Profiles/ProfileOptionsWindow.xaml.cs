@@ -51,7 +51,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             get
             {
                 if (_propertyValues.TryGetValue(_projectOptions.ActiveProfile, out var values)) return values;
-                values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.Profile);
+                values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.ActiveProfile, _projectOptions.Profile);
                 _propertyValues[_projectOptions.ActiveProfile] = values;
                 return values;
             }
@@ -70,8 +70,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     SelectedPropertyValues[page][property] = value;
                 },
                 updateDescription: (description) => DescriptionTextBlock.Text = description,
-                getProfileOptions: () => _projectOptions.Profile,
-                profileNameChanged: () => ((Context)DataContext).UnsavedChanges = true
+                getProfileOptions: () => _projectOptions.Profile
                 );
             _projectOptions.PropertyChanged += (s, e) =>
             {
@@ -94,10 +93,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void SaveChanges()
         {
-            EditProfileName(_pageEditor.EditedProfileName);
             var profileUpdate = _propertyValues.Select((profileKv) =>
                 new KeyValuePair<string, ProfileOptions>(profileKv.Key, ProfileOptionsReflector.ConstructProfileOptions(profileKv.Value)));
-            _projectOptions.UpdateProfiles(profileUpdate);
+            _projectOptions.UpdateProfiles(profileUpdate, (name) => AskProfileName("Rename", ProfileNameWindow.NameConflictMessage(name), name));
+            _propertyValues.Clear();
             ((Context)DataContext).UnsavedChanges = false;
         }
 
@@ -133,26 +132,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             _propertyValues.Remove(_projectOptions.ActiveProfile);
             _projectOptions.RemoveProfile(_projectOptions.ActiveProfile);
-        }
-
-        private void EditProfileName(string newName)
-        {
-            var oldName = _projectOptions.ActiveProfile;
-            if (string.IsNullOrWhiteSpace(newName) || newName == oldName) return;
-
-            var profile = _projectOptions.Profile;
-
-            if (_projectOptions.Profiles.Keys.Contains(newName))
-                newName = AskProfileName("Rename", ProfileNameWindow.NameConflictMessage(newName), newName);
-            if (newName == null) return;
-
-            _propertyValues[newName] = _propertyValues[oldName];
-
-            _propertyValues.Remove(oldName);
-
-            _projectOptions.UpdateProfiles(new[] { new KeyValuePair<string, ProfileOptions>(newName, profile) }); // overwrite the profile under the new name if it exists
-            _projectOptions.RemoveProfile(oldName);
-            _projectOptions.ActiveProfile = newName;
         }
 
         private void CreateNewProfile(string dialogTitle, string dialogLabel, ProfileOptions profileOptions)

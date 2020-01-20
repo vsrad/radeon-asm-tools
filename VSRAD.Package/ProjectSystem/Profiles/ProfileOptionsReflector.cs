@@ -63,13 +63,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             return (ProfileOptions)constructor.Invoke(pages.ToArray());
         }
 
-        public static Dictionary<PropertyPage, Dictionary<Property, object>> GetPropertyValues(ProfileOptions profile)
+        public static Dictionary<PropertyPage, Dictionary<Property, object>> GetPropertyValues(string profileName, ProfileOptions profile)
         {
             var propertyValues = new Dictionary<PropertyPage, Dictionary<Property, object>>();
             foreach (var page in ProfileOptionsReflector.PropertyPages.Value)
             {
                 var pageInstance = page.GetValue(profile);
-                propertyValues[page] = page.Properties.ToDictionary((p) => p, (p) => p.GetValue(pageInstance));
+                propertyValues[page] = page.Properties.ToDictionary((p) => p, (p) =>
+                {
+                    if (p.DisplayName == "Profile Name")
+                        return profileName;
+                    return p.GetValue(pageInstance);
+                });
             }
             return propertyValues;
         }
@@ -96,7 +101,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var constructor = pagePropertyType.GetFullConstructor();
 
             return properties
-                .Where((p) => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
+                .Where((p) => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)) || p.Name == "ProfileName")
                 .OrderBy((p) => p.GetConstructorParameterPosition(constructor))
                 .Select(ReflectProperty)
                 .ToList();

@@ -40,14 +40,23 @@ namespace VSRAD.Package.Options
             ActiveProfile = name;
         }
 
-        public void UpdateProfiles(IEnumerable<KeyValuePair<string, ProfileOptions>> updates)
+        public delegate string ResolveImportNameConflict(string profileName);
+        public void UpdateProfiles(IEnumerable<KeyValuePair<string, ProfileOptions>> updates, ResolveImportNameConflict nameConflictResolver)
         {
             var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
-            foreach (var updateKv in updates)
+            foreach (var updateKv in updates.ToList())
             {
-                writeableProfiles[updateKv.Key] = updateKv.Value;
-                if (updateKv.Key == ActiveProfile)
-                    RaisePropertyChanged(nameof(ActiveProfile));
+                var oldName = updateKv.Key;
+                var newName = updateKv.Value.General.ProfileName;
+                if (oldName != newName && Profiles.Keys.Contains(newName))
+                    newName = nameConflictResolver(newName);
+                if (string.IsNullOrWhiteSpace(newName))
+                    newName = oldName;
+                writeableProfiles[newName] = updateKv.Value;
+                if (oldName != newName)
+                    writeableProfiles.Remove(oldName);
+                if (oldName == ActiveProfile)
+                    ActiveProfile = newName;
             }
         }
 

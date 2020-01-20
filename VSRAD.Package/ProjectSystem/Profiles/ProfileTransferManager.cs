@@ -1,14 +1,14 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using VSRAD.Package.Options;
+using static VSRAD.Package.Options.ProjectOptions;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
     public sealed class ProfileTransferManager
     {
-        public delegate string ResolveImportNameConflict(string profileName);
-
         private readonly ProjectOptions _projectOptions;
         private readonly ResolveImportNameConflict _nameConflictResolver;
 
@@ -22,7 +22,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             File.WriteAllText(targetPath, JsonConvert.SerializeObject(_projectOptions.Profiles, Formatting.Indented));
 
         public void Import(string sourcePath) =>
-            _projectOptions.UpdateProfiles(EnumerateInFile(sourcePath));
+            _projectOptions.UpdateProfiles(EnumerateInFile(sourcePath), _nameConflictResolver);
 
         private IEnumerable<KeyValuePair<string, ProfileOptions>> EnumerateInFile(string path)
         {
