@@ -50,7 +50,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             get
             {
-
                 if (_propertyValues.TryGetValue(_projectOptions.ActiveProfile, out var values)) return values;
                 values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.ActiveProfile, _projectOptions.Profile);
                 _propertyValues[_projectOptions.ActiveProfile] = values;
@@ -71,8 +70,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     SelectedPropertyValues[page][property] = value;
                 },
                 updateDescription: (description) => DescriptionTextBlock.Text = description,
-                getProfileOptions: () => _projectOptions.Profile,
-                profileNameChanged: () => ((Context)DataContext).UnsavedChanges = true
+                getProfileOptions: () => _projectOptions.Profile
                 );
             _projectOptions.PropertyChanged += (s, e) =>
             {

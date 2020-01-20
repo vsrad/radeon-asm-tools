@@ -18,7 +18,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private readonly SetPropertyValueDelegate _setValue;
         private readonly UpdateDescriptionDelegate _updateDescription;
         private readonly GetProfileOptionsDelegate _getProfileOptions;
-        private readonly ProfileNameChangedDelegate _profileNameChanged;
 
         private TextBox _profileNameBox = null;
         public string EditedProfileName
@@ -32,8 +31,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             GetPropertyValueDelegate getValue,
             SetPropertyValueDelegate setValue,
             UpdateDescriptionDelegate updateDescription,
-            GetProfileOptionsDelegate getProfileOptions,
-            ProfileNameChangedDelegate profileNameChanged)
+            GetProfileOptionsDelegate getProfileOptions)
         {
             _propertyPageGrid = propertyPageGrid;
             _macroEditor = macroEditor;
@@ -41,17 +39,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _setValue = setValue;
             _updateDescription = updateDescription;
             _getProfileOptions = getProfileOptions;
-            _profileNameChanged = profileNameChanged;
         }
 
         public void SetupPropertyPageGrid(PropertyPage selectedPage, string profileName, bool updateProfileName = false)
         {
             _propertyPageGrid.RowDefinitions.Clear();
             _propertyPageGrid.Children.Clear();
-
-            //var isGeneral = selectedPage.DisplayName == "General";
-            //if (isGeneral)
-            //    SetupProfileName(profileName, updateProfileName);
 
             foreach (var property in selectedPage.Properties)
             {
@@ -62,6 +55,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     Padding = new Thickness(0, 3, 0, 0),
                     Margin = new Thickness(5)
                 };
+
                 nameControl.IsMouseDirectlyOverChanged += (sender, args) =>
                 {
                     if (nameControl.IsMouseDirectlyOver)
@@ -83,6 +77,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                         _updateDescription("");
                 };
 
+                if (property.DisplayName == "Profile Name")
+                    _profileNameBox = (TextBox)valueControl;
+
                 _propertyPageGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 int propertyIndex = _propertyPageGrid.RowDefinitions.Count - 1;
 
@@ -96,32 +93,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 _propertyPageGrid.Children.Add(valueControl);
             }
         }
-
-        /*
-        private void SetupProfileName(string profileName, bool updateName)
-        {
-            var nameControl = new TextBlock { Text = "Profile Name:" };
-            nameControl.Margin = new Thickness(5);
-            var valueControl = new TextBox
-            {
-                Text = updateName ? profileName : _profileNameBox?.Text ?? profileName
-            };
-            valueControl.Margin = new Thickness(5);
-            valueControl.TextChanged += (s, e) => _profileNameChanged();
-            _profileNameBox = valueControl;
-
-            _propertyPageGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            Grid.SetRow(nameControl, 0);
-            Grid.SetColumn(nameControl, 0);
-
-            Grid.SetRow(valueControl, 0);
-            Grid.SetColumn(valueControl, 1);
-
-            _propertyPageGrid.Children.Add(nameControl);
-            _propertyPageGrid.Children.Add(valueControl);
-        }
-        */
 
         private FrameworkElement GetPropertyValueControl(PropertyPage page, Property property)
         {
