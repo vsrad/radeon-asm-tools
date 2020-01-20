@@ -84,13 +84,13 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.Port)]
         public int Port { get; }
         [DisplayName("Autosave Source")]
-        [Description("specifies whether the source files that are changed should be automatically saved before running remote commands (debug, disassemble, profile, etc.). See user manual for more details.")]
+        [Description("Specifies whether the source files that are changed should be automatically saved before running remote commands (debug, disassemble, profile, etc.).")]
         [DefaultValue(DefaultOptionValues.AutosaveSource)]
         public DocumentSaveType AutosaveSource { get; }
-        [Description("Enables or disables remote deployment."), DisplayName("Copy Sources to Remote")]
+        [Description("Toggles remote deployment."), DisplayName("Copy Sources to Remote")]
         [DefaultValue(DefaultOptionValues.CopySources)]
         public bool CopySources { get; }
-        [Description("Semicolon-separated list of additional files/directories to copy on remote machine"), DisplayName("Additional Sources")]
+        [Description("Semicolon-separated list of of out-of-project paths to deploy on remote machine"), DisplayName("Additional Sources")]
         [DefaultValue(DefaultOptionValues.AdditionalSources)]
         public string AdditionalSources { get; }
 
@@ -120,7 +120,7 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.DebuggerExecutable)]
         public string Executable { get; }
         [Macro(RadMacros.DebuggerArguments)]
-        [Description("Command-line arguments for Executable.")]
+        [Description("Arguments for Executable.")]
         [DefaultValue(DefaultOptionValues.DebuggerArguments)]
         public string Arguments { get; }
         [Macro(RadMacros.DebuggerWorkingDirectory), DisplayName("Working Directory")]
@@ -194,7 +194,7 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.DisassemblerExecutable)]
         public string Executable { get; }
         [Macro(RadMacros.DisassemblerArguments), DisplayName("Arguments")]
-        [Description("Command-line arguments for Executable.")]
+        [Description("Arguments for Executable.")]
         [DefaultValue(DefaultOptionValues.DisassemblerArguments)]
         public string Arguments { get; }
         [Macro(RadMacros.DisassemblerWorkingDirectory), DisplayName("Working Directory")]
@@ -244,7 +244,7 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.ProfilerExecutable)]
         public string Executable { get; }
         [Macro(RadMacros.ProfilerArguments), DisplayName("Arguments")]
-        [Description("Command-line arguments for Executable.")]
+        [Description("Arguments for Executable.")]
         [DefaultValue(DefaultOptionValues.ProfilerArguments)]
         public string Arguments { get; }
         [Macro(RadMacros.ProfilerWorkingDirectory), DisplayName("Working Directory")]
@@ -260,14 +260,14 @@ namespace VSRAD.Package.Options
         [DefaultValue(DefaultOptionValues.ProfilerViewerExecutable)]
         public string ViewerExecutable { get; }
         [Macro(RadMacros.ProfilerViewerArguments), DisplayName("Viewer Arguments")]
-        [Description("Command-line arguments for Viewer Executable.")]
+        [Description("Arguments for Viewer Executable.")]
         [DefaultValue(DefaultOptionValues.ProfilerViewerArguments)]
         public string ViewerArguments { get; }
         [Macro(RadMacros.ProfilerLocalPath), DisplayName("Local Copy Path")]
         [Description("Path to the file on local machine to copy profiler output file.")]
         [DefaultValue(DefaultOptionValues.ProfilerLocalOutputCopyPath)]
         public string LocalOutputCopyPath { get; }
-        [DisplayName("Run As Admin")]
+        [DisplayName("Run As Administrator")]
         [Description("Specifies whether the `Executable` is run with administrator rights.")]
         [DefaultValue(DefaultOptionValues.ProfilerRunAsAdmin)]
         public bool RunAsAdmin { get; }
@@ -301,10 +301,10 @@ namespace VSRAD.Package.Options
 
     public sealed class PreprocessorProfileOptions
     {
-        [Macro(RadMacros.PreprocessorExecutable), Description("Executeble")]
+        [Macro(RadMacros.PreprocessorExecutable), Description("Path to the preprocessor executable on the remote machine")]
         [DefaultValue(DefaultOptionValues.PreprocessorExecutable)]
         public string Executable { get; }
-        [Macro(RadMacros.PreprocessorArguments), Description("Preprocessor Arguments"), DisplayName("Arguments")]
+        [Macro(RadMacros.PreprocessorArguments), Description("Arguments for Executable"), DisplayName("Arguments")]
         [DefaultValue(DefaultOptionValues.BuildArguments)]
         public string Arguments { get; }
         [Macro(RadMacros.PreprocessorWorkingDirectory), Description("Preprocessor Working Directory"), DisplayName("Working Directory")]
@@ -349,19 +349,22 @@ namespace VSRAD.Package.Options
 
     public sealed class BuildProfileOptions
     {
-        [Description("Run preprocessor as the first build step"), DisplayName("Run Preprocessor")]
+        [Description("Run preprocessor as the first build step."), DisplayName("Run Preprocessor")]
         [DefaultValue(DefaultOptionValues.BuildRunPreprocessor)]
         public bool RunPreprocessor { get; }
-        [Description("Run disassembler as the next build step"), DisplayName("Run Disassembler")]
+        [Description("Run disassembler as the next build step."), DisplayName("Run Disassembler")]
         [DefaultValue(DefaultOptionValues.BuildRunDisassembler)]
         public bool RunDisassembler { get; }
         [Macro(RadMacros.BuildExecutable), DisplayName("Final Build Step Executable")]
+        [Description("Path to final build step executable on remote machine. Leave empty to skip third build step.")]
         [DefaultValue(DefaultOptionValues.BuildExecutable)]
         public string Executable { get; }
         [Macro(RadMacros.BuildArguments), DisplayName("Final Build Step Arguments")]
+        [Description("Final Build Step Executable arguments.")]
         [DefaultValue(DefaultOptionValues.BuildArguments)]
         public string Arguments { get; }
         [Macro(RadMacros.BuildWorkingDirectory), DisplayName("Final Build Step Working Directory")]
+        [Description("Final build step working directory")]
         [DefaultValue(DefaultOptionValues.BuildWorkingDirectory)]
         public string WorkingDirectory { get; }
 
