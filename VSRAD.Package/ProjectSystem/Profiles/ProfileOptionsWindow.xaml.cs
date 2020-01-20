@@ -93,10 +93,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void SaveChanges()
         {
-            EditProfileName(_pageEditor.EditedProfileName);
             var profileUpdate = _propertyValues.Select((profileKv) =>
                 new KeyValuePair<string, ProfileOptions>(profileKv.Key, ProfileOptionsReflector.ConstructProfileOptions(profileKv.Value)));
-            _projectOptions.UpdateProfiles(profileUpdate);
+            _projectOptions.UpdateProfiles(profileUpdate, (name) => AskProfileName("Rename", ProfileNameWindow.NameConflictMessage(name), name));
+            _propertyValues.Clear();
             ((Context)DataContext).UnsavedChanges = false;
         }
 
@@ -132,26 +132,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             _propertyValues.Remove(_projectOptions.ActiveProfile);
             _projectOptions.RemoveProfile(_projectOptions.ActiveProfile);
-        }
-
-        private void EditProfileName(string newName)
-        {
-            var oldName = _projectOptions.ActiveProfile;
-            if (string.IsNullOrWhiteSpace(newName) || newName == oldName) return;
-
-            var profile = _projectOptions.Profile;
-
-            if (_projectOptions.Profiles.Keys.Contains(newName))
-                newName = AskProfileName("Rename", ProfileNameWindow.NameConflictMessage(newName), newName);
-            if (newName == null) return;
-
-            _propertyValues[newName] = _propertyValues[oldName];
-
-            _propertyValues.Remove(oldName);
-
-            _projectOptions.UpdateProfiles(new[] { new KeyValuePair<string, ProfileOptions>(newName, profile) }); // overwrite the profile under the new name if it exists
-            _projectOptions.RemoveProfile(oldName);
-            _projectOptions.ActiveProfile = newName;
         }
 
         private void CreateNewProfile(string dialogTitle, string dialogLabel, ProfileOptions profileOptions)

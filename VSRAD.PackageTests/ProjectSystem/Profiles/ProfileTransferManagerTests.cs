@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using VSRAD.Package.Options;
 using Xunit;
+using static VSRAD.Package.Options.ProjectOptions;
 
 namespace VSRAD.Package.ProjectSystem.Profiles.Tests
 {
@@ -22,7 +23,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles.Tests
         public void TransferTest()
         {
             var options = CreateTestOptions();
-            var nameResolver = new Mock<ProfileTransferManager.ResolveImportNameConflict>(MockBehavior.Strict);
+            var nameResolver = new Mock<ResolveImportNameConflict>(MockBehavior.Strict);
             nameResolver.Setup((n) => n("haruko")).Returns("haruhara").Verifiable();
 
             var manager = new ProfileTransferManager(options, nameResolver.Object);
@@ -34,7 +35,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles.Tests
             File.Delete(tmpFile);
 
             options.UpdateProfiles(new Dictionary<string, ProfileOptions>
-                { { "haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "space")) } });
+                { { "haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "space")) } }, nameResolver.Object);
 
             nameResolver.Verify();
             Assert.Equal(3, options.Profiles.Count);
@@ -47,7 +48,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles.Tests
         public void ImportSkipConflictingNameTest()
         {
             var options = CreateTestOptions();
-            var nameResolver = new Mock<ProfileTransferManager.ResolveImportNameConflict>(MockBehavior.Strict);
+            var nameResolver = new Mock<ResolveImportNameConflict>(MockBehavior.Strict);
             nameResolver.Setup((n) => n("haruko")).Returns((string)null).Verifiable();
 
             var manager = new ProfileTransferManager(options, nameResolver.Object);
@@ -59,7 +60,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles.Tests
             File.Delete(tmpFile);
 
             options.UpdateProfiles(new Dictionary<string, ProfileOptions>
-                { { "haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "space")) } });
+                { { "haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "space")) } }, nameResolver.Object);
 
             nameResolver.Verify();
             Assert.Equal(2, options.Profiles.Count);
