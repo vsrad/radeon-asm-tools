@@ -35,6 +35,7 @@ namespace VSRAD.Syntax.Parser
         private bool startFindManyLineDeclorationEnd;
         private ITextSnapshotLine currentLine;
         private FunctionToken currentFunctionToken;
+        private int currentFunctionSpaceStart;
 
         public ITextSnapshot CurrentSnapshot { get; private set; }
         public IBaseBlock RootBlock { get; private set; }
@@ -148,8 +149,7 @@ namespace VSRAD.Syntax.Parser
             {
                 if (text.Contains(parserManager.DeclorationEndPattern))
                 {
-                    var spaceStart = GetSpaceStart(text);
-                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, spaceStart));
+                    currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, currentFunctionSpaceStart));
                     startFindManyLineDeclorationEnd = false;
                     var functionArgsText = text.Substring(0, text.IndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
@@ -208,6 +208,7 @@ namespace VSRAD.Syntax.Parser
                         else
                         {
                             currentFunctionToken = functionToken;
+                            currentFunctionSpaceStart = spaceStart;
                             startFindManyLineDeclorationEnd = true;
                             var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(', '\\' }, StringSplitOptions.RemoveEmptyEntries);
                             argumentTokens.Clear();
