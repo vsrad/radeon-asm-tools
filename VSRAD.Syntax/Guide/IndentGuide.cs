@@ -101,6 +101,10 @@ namespace VSRAD.Syntax.Guide
             foreach (var block in blocks)
             {
                 var span = block.BlockActualSpan;
+
+                if (span.Snapshot != _wpfTextView.TextSnapshot)
+                    yield break;
+
                 var viewLineStart = _wpfTextView.GetTextViewLineContainingBufferPosition(span.Start);
                 var viewLineEnd = _wpfTextView.GetTextViewLineContainingBufferPosition(span.End);
 
@@ -108,7 +112,6 @@ namespace VSRAD.Syntax.Guide
 
                 var indentStart = block.SpaceStart;
                 var leftOffset = indentStart * spaceWidth + horizontalOffset;
-                var brush = Brushes.White;
 
                 yield return new Line()
                 {
