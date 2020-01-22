@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
@@ -132,12 +133,20 @@ namespace VSRAD.Package.BuildTools
             string preprocessedSource = null;
             if ((buildSteps & BuildSteps.Preprocessor) == BuildSteps.Preprocessor)
             {
-                var ppResult = await RunPreprocessorAsync(executor, preprocessorOptions);
+                var ppCommand = new Execute
+                {
+                    Executable = preprocessorOptions.Executable,
+                    Arguments = preprocessorOptions.Arguments,
+                    WorkingDirectory = preprocessorOptions.WorkingDirectory
+                };
+                var ppResult = await RunOutputStepAsync(executor, ppCommand, preprocessorOptions.RemoteOutputFile);
                 if (!ppResult.TryGetResult(out var ppData, out var error))
                     return new Error("Preprocessor: " + error.Message);
                 var (ppSource, ppExitCode, ppMessages) = ppData;
                 if (ppExitCode != 0 || ppMessages.Any())
                     return new IPCBuildResult { ExitCode = ppExitCode, ErrorMessages = ppMessages.ToArray() };
+                if (!string.IsNullOrEmpty(preprocessorOptions.LocalOutputCopyPath))
+                    File.WriteAllText(preprocessorOptions.LocalOutputCopyPath, ppSource);
                 preprocessedSource = ppSource;
             }
             if ((buildSteps & BuildSteps.Disassembler) == BuildSteps.Disassembler)
@@ -148,12 +157,14 @@ namespace VSRAD.Package.BuildTools
                     Arguments = disassemblerOptions.Arguments,
                     WorkingDirectory = disassemblerOptions.WorkingDirectory
                 };
-                var disasmResult = await RunStepAsync(executor, disasmCommand, preprocessedSource);
+                var disasmResult = await RunOutputStepAsync(executor, disasmCommand, disassemblerOptions.RemoteOutputFile);
                 if (!disasmResult.TryGetResult(out var disasmData, out var error))
                     return new Error("Disassembler: " + error.Message);
-                var (disasmExitCode, disasmMessages) = disasmData;
+                var (disasmSource, disasmExitCode, disasmMessages) = disasmData;
                 if (disasmExitCode != 0 || disasmMessages.Any())
                     return new IPCBuildResult { ExitCode = disasmExitCode, ErrorMessages = disasmMessages.ToArray() };
+                if (!string.IsNullOrEmpty(disassemblerOptions.LocalOutputCopyPath))
+                    File.WriteAllText(disassemblerOptions.LocalOutputCopyPath, disasmSource);
             }
             if ((buildSteps & BuildSteps.FinalStep) == BuildSteps.FinalStep)
             {
@@ -172,10 +183,10 @@ namespace VSRAD.Package.BuildTools
             return new IPCBuildResult();
         }
 
-        private async Task<Result<(string, int, IEnumerable<Message>)>> RunPreprocessorAsync(RemoteCommandExecutor executor, Options.PreprocessorProfileOptions options)
+        private async Task<Result<(string, int, IEnumerable<Message>)>> RunOutputStepAsync(
+            RemoteCommandExecutor executor, Execute command, Options.OutputFile remoteOutputFile)
         {
-            var command = new Execute { Executable = options.Executable, Arguments = options.Arguments, WorkingDirectory = options.WorkingDirectory };
-            var response = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile, checkExitCode: false);
+            var response = await executor.ExecuteWithResultAsync(command, remoteOutputFile, checkExitCode: false);
             if (!response.TryGetResult(out var result, out var error))
                 return error;
 
