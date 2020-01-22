@@ -75,12 +75,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _projectOptions.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(_projectOptions.ActiveProfile))
-                    _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage, _projectOptions.ActiveProfile, true);
+                    _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
             };
             ((Context)DataContext).PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(Context.SelectedPage))
-                    _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage, _projectOptions.ActiveProfile);
+                    _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
             };
             ((Context)DataContext).SelectedPage = ((Context)DataContext).Pages.First();
             OkButton.Click += (s, e) =>

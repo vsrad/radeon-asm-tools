@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
@@ -19,6 +21,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private readonly UpdateDescriptionDelegate _updateDescription;
         private readonly GetProfileOptionsDelegate _getProfileOptions;
 
+        private PropertyPage _selectedPage;
+
         public PropertyPageEditorWrapper(
             Grid propertyPageGrid,
             Macros.MacroEditManager macroEditor,
@@ -33,10 +37,23 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _setValue = setValue;
             _updateDescription = updateDescription;
             _getProfileOptions = getProfileOptions;
+            _propertyPageGrid.MouseMove += DisplayDescription;
+            _propertyPageGrid.MouseLeave += (s, e) => _updateDescription("");
         }
 
-        public void SetupPropertyPageGrid(PropertyPage selectedPage, string profileName, bool updateProfileName = false)
+        private void DisplayDescription(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (e.Source is UIElement element)
+            {
+                int index = Grid.GetRow(element);
+                _updateDescription(_selectedPage.Properties[index].FullDescription);
+            }
+        }
+
+        public void SetupPropertyPageGrid(PropertyPage selectedPage)
+        {
+            _selectedPage = selectedPage;
+
             _propertyPageGrid.RowDefinitions.Clear();
             _propertyPageGrid.Children.Clear();
 
@@ -50,26 +67,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     Margin = new Thickness(5)
                 };
 
-                nameControl.IsMouseDirectlyOverChanged += (sender, args) =>
-                {
-                    if (nameControl.IsMouseDirectlyOver)
-                        _updateDescription(property.FullDescription);
-                    else
-                        _updateDescription("");
-                };
-
                 var valueControl = GetPropertyValueControl(selectedPage, property);
                 valueControl.VerticalAlignment = VerticalAlignment.Center;
                 valueControl.Margin = new Thickness(5);
-                valueControl.GotFocus += (sender, args) => _updateDescription(property.FullDescription);
-                valueControl.LostFocus += (sender, args) => _updateDescription("");
-                valueControl.IsMouseDirectlyOverChanged += (sender, args) =>
-                {
-                    if (valueControl.IsMouseDirectlyOver)
-                        _updateDescription(property.FullDescription);
-                    else
-                        _updateDescription("");
-                };
 
                 _propertyPageGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                 int propertyIndex = _propertyPageGrid.RowDefinitions.Count - 1;
