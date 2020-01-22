@@ -1,44 +1,30 @@
-﻿using EnvDTE;
-using EnvDTE80;
-using Microsoft;
-using Microsoft.VisualStudio.ProjectSystem;
+﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Composition;
+using System.Threading.Tasks;
+using VSRAD.Package.BuildTools;
 using VSRAD.Package.ProjectSystem;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.DisassemblyCommandSet)]
     [AppliesTo(Constants.ProjectCapability)]
-    internal sealed class DisassemblyCommand : BaseRemoteCommand
+    internal sealed class DisassemblyCommand : BaseBuildWithPreviewCommand
     {
         private readonly IProject _project;
-        private readonly BuildTools.BuildToolsServer _buildServer;
 
         [ImportingConstructor]
-        public DisassemblyCommand(
-            IProject project,
-            BuildTools.BuildToolsServer buildServer,
-            SVsServiceProvider serviceProvider) : base(Constants.DisassembleCommandId, serviceProvider)
+        public DisassemblyCommand(IProject project, BuildToolsServer buildServer, SVsServiceProvider serviceProvider)
+            : base(BuildSteps.Disassembler, buildServer, Constants.PreprocessCommandId, serviceProvider)
         {
             _project = project;
-            _buildServer = buildServer;
         }
 
-        public override async Task RunAsync()
+        protected override async Task<(string localPath, string lineMarker)> ConfigurePreviewAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
-
-            _buildServer.OverrideStepsForNextBuild(BuildTools.BuildSteps.Disassembler);
-
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE2;
-            Assumes.Present(dte);
-            dte.ExecuteCommand("Build.BuildSolution");
-            dte.Events.BuildEvents.OnBuildDone += (vsBuildScope scope, vsBuildAction action) =>
-                OpenFileInEditor(options.LocalOutputCopyPath, options.LineMarker);
+            return (options.LocalOutputCopyPath, options.LineMarker);
         }
     }
 }
