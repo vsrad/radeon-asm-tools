@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
@@ -6,6 +7,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
@@ -13,12 +15,12 @@ namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.ToolWindowCommandSet)]
     [AppliesTo(Constants.ProjectCapability)]
-    internal sealed class ToolWindowCommand : IAsyncCommandGroupHandler
+    internal sealed class ToolWindowCommand : BaseCommand
     {
         [Import]
         internal SVsServiceProvider ServiceProvider = null;
 
-        public Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
         {
             switch (commandId)
             {
@@ -31,14 +33,22 @@ namespace VSRAD.Package.Commands
             }
         }
 
-        public async Task<bool> TryHandleCommandAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, long commandExecuteOptions, IntPtr variantArgIn, IntPtr variantArgOut)
+        public async override Task<bool> RunAsync(long commandId)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             if (commandId == Constants.ToolWindowFunctionListCommandId)
             {
-                DTE dte = (DTE)ServiceProvider.GetService(typeof(DTE));
-                dte?.ExecuteCommand("View.FunctionList");
+                try
+                {
+                    var dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+                    Assumes.Present(dte);
+                    dte.ExecuteCommand("View.FunctionList");
+                }
+                catch (COMException)
+                {
+                    Errors.ShowCritical("Install RadeonAsmSyntax extension to get this functionality.", title: "Function list is not available");
+                }
                 return true;
             }
 

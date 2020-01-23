@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -33,8 +34,10 @@ namespace VSRAD.Package.Commands
             _channel = channel;
         }
 
-        public override async Task RunAsync()
+        public override async Task<bool> RunAsync(long commandId)
         {
+            if (commandId != _commandId) return false;
+
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.Profiler.EvaluateAsync(evaluator);
@@ -61,6 +64,7 @@ namespace VSRAD.Package.Commands
             {
                 await ClearStatusBarAsync();
             }
+            return true;
         }
     }
 }

@@ -12,10 +12,10 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    public abstract class BaseRemoteCommand : IAsyncCommandGroupHandler
+    public abstract class BaseRemoteCommand : BaseCommand
     {
         protected readonly SVsServiceProvider _serviceProvider;
-        private readonly int _commandId;
+        protected readonly int _commandId;
 
         private IVsStatusbar _statusBar;
 
@@ -25,23 +25,12 @@ namespace VSRAD.Package.Commands
             _serviceProvider = serviceProvider;
         }
 
-        public abstract Task RunAsync();
-
-        public Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
         {
             var status = commandId == _commandId
                 ? new CommandStatusResult(true, commandText, CommandStatus.Supported | CommandStatus.Enabled)
                 : CommandStatusResult.Unhandled;
             return Task.FromResult(status);
-        }
-
-        public Task<bool> TryHandleCommandAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, long commandExecuteOptions, IntPtr variantArgIn, IntPtr variantArgOut)
-        {
-            if (commandId != _commandId) return Task.FromResult(false);
-
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunAsync);
-
-            return Task.FromResult(true);
         }
 
         protected async Task SetStatusBarTextAsync(string text)

@@ -12,7 +12,7 @@ namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.AddToWatchesCommandSet)]
     [AppliesTo(Constants.ProjectCapability)]
-    public sealed class AddToWatchesCommand : IAsyncCommandGroupHandler
+    public sealed class AddToWatchesCommand : BaseCommand
     {
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
@@ -24,7 +24,7 @@ namespace VSRAD.Package.Commands
             _codeEditor = codeEditor;
         }
 
-        public Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
         {
             if (commandId == Constants.MenuCommandId)
             {
@@ -33,13 +33,10 @@ namespace VSRAD.Package.Commands
             return Task.FromResult(CommandStatusResult.Unhandled);
         }
 
-        public async Task<bool> TryHandleCommandAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, long commandExecuteOptions, IntPtr variantArgIn, IntPtr variantArgOut)
+        public async override Task<bool> RunAsync(long commandId)
         {
-            if (commandId != Constants.MenuCommandId)
-            {
-                return false;
-            }
-
+            if (commandId != Constants.MenuCommandId) return false;
+            
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var activeWord = _codeEditor.GetActiveWord();
             if (!string.IsNullOrWhiteSpace(activeWord))

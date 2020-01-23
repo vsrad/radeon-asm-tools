@@ -31,8 +31,10 @@ namespace VSRAD.Package.Commands
 
         protected abstract Task<(string localPath, string lineMarker)> ConfigurePreviewAsync();
 
-        public override async Task RunAsync()
+        public override async Task<bool> RunAsync(long commandId)
         {
+            if (commandId != _commandId) return false;
+
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             if (_buildEvents == null)
             {
@@ -42,6 +44,8 @@ namespace VSRAD.Package.Commands
             _ongoingRun = await ConfigurePreviewAsync();
             _buildServer.OverrideStepsForNextBuild(_buildSteps);
             _dte.ExecuteCommand("Build.BuildSolution");
+
+            return true;
         }
 
         private void OnBuildFinished(string project, string projectConfig, string platform, string solutionConfig, bool success)

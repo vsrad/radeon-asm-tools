@@ -41,11 +41,13 @@ namespace VSRAD.Package.Commands
             _channel = channel;
         }
 
-        public override async Task RunAsync()
+        public override async Task<bool> RunAsync(long commandId)
         {
+            if (commandId != _commandId) return false;
+
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var activeWord = _codeEditor.GetActiveWord();
-            if (string.IsNullOrWhiteSpace(activeWord)) return;
+            if (string.IsNullOrWhiteSpace(activeWord)) return true;
 
             var breakLine = _codeEditor.GetCurrentLine() + 1;
             var watchName = activeWord.Trim();
@@ -74,6 +76,7 @@ namespace VSRAD.Package.Commands
             {
                 await ClearStatusBarAsync();
             }
+            return true;
         }
 
         private async Task<uint[]> RunAsync(DebuggerProfileOptions options)

@@ -10,7 +10,7 @@ namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.ForceRunToCursorCommandSet)]
     [AppliesTo(Constants.ProjectCapability)]
-    internal sealed class ForceRunToCursorCommand : IAsyncCommandGroupHandler
+    internal sealed class ForceRunToCursorCommand : BaseCommand
     {
         private readonly ProjectSystem.DebuggerIntegration _debugger;
 
@@ -20,7 +20,7 @@ namespace VSRAD.Package.Commands
             _debugger = debugger;
         }
 
-        public Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
         {
             if (commandId == Constants.MenuCommandId)
             {
@@ -29,12 +29,9 @@ namespace VSRAD.Package.Commands
             return Task.FromResult(CommandStatusResult.Unhandled);
         }
 
-        public async Task<bool> TryHandleCommandAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, long commandExecuteOptions, IntPtr variantArgIn, IntPtr variantArgOut)
+        public async override Task<bool> RunAsync(long commandId)
         {
-            if (commandId != Constants.MenuCommandId)
-            {
-                return false;
-            }
+            if (commandId != Constants.MenuCommandId) return false;
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             _debugger.RunToCurrentLine();

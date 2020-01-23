@@ -13,7 +13,7 @@ namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.AddArrayToWatchesCommandSet)]
     [AppliesTo(Constants.ProjectCapability)]
-    public sealed class AddArrayToWatchesCommand : IAsyncCommandGroupHandler
+    public sealed class AddArrayToWatchesCommand : BaseCommand
     {
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
@@ -25,7 +25,7 @@ namespace VSRAD.Package.Commands
             _codeEditor = codeEditor;
         }
 
-        public Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
         {
             var fromHeader = commandId == Constants.AddArrayToWatchesFromHeaderId;
             var toHeader = commandId >= Constants.AddArrayToWatchesToHeaderOffset
@@ -37,7 +37,7 @@ namespace VSRAD.Package.Commands
             return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
         }
 
-        public async Task<bool> TryHandleCommandAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, long commandExecuteOptions, IntPtr variantArgIn, IntPtr variantArgOut)
+        public async override Task<bool> RunAsync(long commandId)
         {
             if (commandId < Constants.AddArrayToWatchesToIdOffset) return true;
 
