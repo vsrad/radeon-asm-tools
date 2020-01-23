@@ -62,10 +62,9 @@ namespace VSRAD.PackageTests.Server
             var deployedItems = ReadZipItems(archive);
             Assert.Equal(new HashSet<string> { "source.txt", "Include/include.txt" }, deployedItems);
 
+            // does not redeploy when nothing is changed 
             archive = null;
             channel.ThenExpect<Deploy>((deploy) => archive = deploy.Data);
-
-            // does not redeploy when nothing is changed
             await syncer.SynchronizeRemoteAsync();
             Assert.Null(archive);
 
@@ -94,6 +93,20 @@ namespace VSRAD.PackageTests.Server
             Assert.NotNull(archive);
             var deployedItems = ReadZipItems(archive);
             var expectedItems = new HashSet<string> { "source.txt", "Include/include.txt", "separate.txt", "notice.txt", "Nested/message.txt" };
+            Assert.Equal(expectedItems, deployedItems);
+
+            // does not redeploy when nothing is changed
+            archive = null;
+            channel.ThenExpect<Deploy>((deploy) => archive = deploy.Data);
+            await syncer.SynchronizeRemoteAsync();
+            Assert.Null(archive);
+
+            // profile changed
+            channel.RaiseConnectionStateChanged();
+
+            await syncer.SynchronizeRemoteAsync();
+            Assert.NotNull(archive);
+            deployedItems = ReadZipItems(archive);
             Assert.Equal(expectedItems, deployedItems);
         }
 

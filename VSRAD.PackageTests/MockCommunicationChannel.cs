@@ -23,6 +23,8 @@ namespace VSRAD.PackageTests
 
         public bool AllInteractionsHandled => _replyInteractions.Count == 0 && _nonReplyInteractions.Count == 0;
 
+        public void RaiseConnectionStateChanged() => _mock.Raise((m) => m.ConnectionStateChanged += null);
+
         public MockCommunicationChannel()
         {
             _mock = new Mock<ICommunicationChannel>();
