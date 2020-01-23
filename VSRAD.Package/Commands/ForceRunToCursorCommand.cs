@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
-using System;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
@@ -23,20 +22,17 @@ namespace VSRAD.Package.Commands
         public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
         {
             if (commandId == Constants.MenuCommandId)
-            {
                 return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
-            }
             return Task.FromResult(CommandStatusResult.Unhandled);
         }
 
-        public async override Task<bool> RunAsync(long commandId)
+        public async override Task RunAsync(long commandId)
         {
-            if (commandId != Constants.MenuCommandId) return false;
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            _debugger.RunToCurrentLine();
-
-            return true;
+            if (commandId == Constants.MenuCommandId)
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                _debugger.RunToCurrentLine();
+            }
         }
     }
 }

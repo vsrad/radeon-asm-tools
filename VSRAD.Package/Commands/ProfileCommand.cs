@@ -34,10 +34,8 @@ namespace VSRAD.Package.Commands
             _channel = channel;
         }
 
-        public override async Task<bool> RunAsync(long commandId)
+        public override async Task RunAsync(long commandId)
         {
-            if (commandId != _commandId) return false;
-
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.Profiler.EvaluateAsync(evaluator);
@@ -64,7 +62,6 @@ namespace VSRAD.Package.Commands
             {
                 await ClearStatusBarAsync();
             }
-            return true;
         }
     }
 }

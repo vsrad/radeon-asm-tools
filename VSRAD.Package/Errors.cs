@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using System;
-using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package
@@ -44,37 +43,20 @@ namespace VSRAD.Package
 #endif
         }
 
-        public static async Task<T> HandleErrorAsync<T>(Func<Task<T>> method, T returnOnError, Action exceptionCallbackOnMainThread = null)
-        {
-            try
-            {
-                return await method();
-            }
-            catch (Exception e)
-            {
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                exceptionCallbackOnMainThread?.Invoke();
-                ShowException(e);
-                return returnOnError;
-            }
-        }
-
-        public static async Task HandleErrorAsync(Func<Task> method, Action exceptionCallbackOnMainThread = null)
-        {
-            try
-            {
-                await method();
-            }
-            catch (Exception e)
-            {
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                exceptionCallbackOnMainThread?.Invoke();
-                ShowException(e);
-            }
-        }
-
         public static void RunAsyncWithErrorHandling(this JoinableTaskFactory taskFactory, Func<Task> method, Action exceptionCallbackOnMainThread = null) =>
-            taskFactory.RunAsync(() => HandleErrorAsync(method, exceptionCallbackOnMainThread));
+            taskFactory.RunAsync(async () =>
+            {
+                try
+                {
+                    await method();
+                }
+                catch (Exception e)
+                {
+                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                    exceptionCallbackOnMainThread?.Invoke();
+                    ShowException(e);
+                }
+            });
 
         private static void CreateMessageBox(string message, string title, OLEMSGICON icon)
         {

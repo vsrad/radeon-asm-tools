@@ -71,29 +71,4 @@ namespace VSRAD.Package.ProjectSystem
             _pane.OutputStringThreadSafe(message);
         }
     }
-
-    public static class OutputWindowExtensions
-    {
-        public static OutputWindowWriter CreateExecutionResultWriter(SVsServiceProvider serviceProvider)
-        {
-            return new OutputWindowWriter(serviceProvider,
-                Constants.OutputPaneExecutionResultGuid, Constants.OutputPaneExecutionResultTitle);
-        }
-
-        public static async Task PrintExecutionResultAsync(this IOutputWindowWriter writer, string tag, ExecutionCompleted result)
-        {
-            var stdout = result.Stdout.TrimEnd('\r', '\n');
-            var stderr = result.Stderr.TrimEnd('\r', '\n');
-
-            if (stdout.Length == 0 && stderr.Length == 0)
-            {
-                await writer.PrintMessageAsync($"[{tag}] No stdout/stderr captured").ConfigureAwait(false);
-            }
-            else
-            {
-                await writer.PrintMessageAsync($"[{tag}] Captured stdout", stdout).ConfigureAwait(false);
-                await writer.PrintMessageAsync($"[{tag}] Captured stderr", stderr).ConfigureAwait(false);
-            }
-        }
-    }
 }

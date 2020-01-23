@@ -33,9 +33,10 @@ namespace VSRAD.Package.Commands
             return Task.FromResult(CommandStatusResult.Unhandled);
         }
 
-        public async override Task<bool> RunAsync(long commandId)
+        public async override Task RunAsync(long commandId)
         {
-            if (commandId != Constants.MenuCommandId) return false;
+            if (commandId != Constants.MenuCommandId)
+                return;
             
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var activeWord = _codeEditor.GetActiveWord();
@@ -44,8 +45,6 @@ namespace VSRAD.Package.Commands
                 var watchName = activeWord.Trim();
                 _toolIntegration.AddWatchFromEditor(watchName);
             }
-
-            return true;
         }
     }
 }

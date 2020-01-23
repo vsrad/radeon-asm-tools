@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
-using System;
 using System.Collections.Immutable;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
@@ -37,14 +36,16 @@ namespace VSRAD.Package.Commands
             return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
         }
 
-        public async override Task<bool> RunAsync(long commandId)
+        public async override Task RunAsync(long commandId)
         {
-            if (commandId < Constants.AddArrayToWatchesToIdOffset) return true;
+            if (commandId < Constants.AddArrayToWatchesToIdOffset)
+                return;
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var watchName = _codeEditor.GetActiveWord()?.Trim();
 
-            if (string.IsNullOrEmpty(watchName)) return true;
+            if (string.IsNullOrEmpty(watchName))
+                return;
 
             var fromIndex = (commandId - Constants.AddArrayToWatchesToIdOffset) / Constants.AddArrayToWatchesToFromOffset;
             var toIndex = (commandId - Constants.AddArrayToWatchesToIdOffset) % Constants.AddArrayToWatchesToFromOffset;
@@ -52,8 +53,6 @@ namespace VSRAD.Package.Commands
 
             foreach (var watch in arrayRangeWatch)
                 _toolIntegration.AddWatchFromEditor(watch);
-
-            return true;
         }
     }
 }
