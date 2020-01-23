@@ -5,9 +5,9 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.Utils;
-using System.Linq;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -23,10 +23,6 @@ namespace VSRAD.Package.ProjectSystem
 
     public interface IProjectSourceManager
     {
-        Task SaveActiveSourceAsync();
-        Task SaveProjectSourceAsync();
-        Task SaveSolutionSourceAsync();
-        Task SaveActiveDocumentAsync();
         Task SaveDocumentsAsync(DocumentSaveType type);
         Task<IEnumerable<string>> ListProjectFilesAsync();
     }
@@ -45,44 +41,32 @@ namespace VSRAD.Package.ProjectSystem
             _unconfiguredProject = unconfiguredProject;
         }
 
-        public Task SaveDocumentsAsync(DocumentSaveType type)
+        public async Task SaveDocumentsAsync(DocumentSaveType type)
         {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+            Assumes.Present(dte);
             switch (type)
             {
                 case DocumentSaveType.ActiveDocument:
-                    return SaveActiveDocumentAsync();
+                    if (dte.ActiveDocument?.Saved == false)
+                        dte.ActiveDocument.Save();
+                    break;
                 case DocumentSaveType.OpenDocuments:
-                    return SaveActiveSourceAsync();
+                    dte.Documents.SaveAll();
+                    break;
                 case DocumentSaveType.ProjectDocuments:
-                    return SaveProjectSourceAsync();
+                    if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
+                        if (activeSolutionProjects.GetValue(0) is EnvDTE.Project activeProject)
+                            foreach (ProjectItem item in activeProject.ProjectItems)
+                                SaveDocumentsRecursively(item);
+                    break;
                 case DocumentSaveType.SolutionDocuments:
-                default:
-                    return Task.CompletedTask;
+                    foreach (EnvDTE.Project project in dte.Solution.Projects)
+                        foreach (ProjectItem item in project.ProjectItems)
+                            SaveDocumentsRecursively(item);
+                    break;
             }
-        }
-
-        public async Task SaveProjectSourceAsync()
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            SaveProjectDocuments();
-        }
-
-        public async Task SaveSolutionSourceAsync()
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            SaveSolutionDocuments();
-        }
-
-        public async Task SaveActiveDocumentAsync()
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            SaveActiveDocument();
-        }
-
-        public async Task SaveActiveSourceAsync()
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            _ = GetDTE().ItemOperations.PromptToSave;
         }
 
         public async Task<IEnumerable<string>> ListProjectFilesAsync()
@@ -94,50 +78,16 @@ namespace VSRAD.Package.ProjectSystem
             return files;
         }
 
-        private void SaveSolutionDocuments()
-        {
-            var dte = GetDTE();
-
-            foreach (EnvDTE.Project project in dte.Solution.Projects)
-                foreach (ProjectItem item in project.ProjectItems)
-                    SaveDocumentsRecursively(item);
-        }
-
-        private void SaveProjectDocuments()
-        {
-            var dte = GetDTE();
-
-            if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
-            {
-                var activeProject = activeSolutionProjects.GetValue(0) as EnvDTE.Project;
-
-                foreach (ProjectItem item in activeProject.ProjectItems)
-                    SaveDocumentsRecursively(item);
-            }
-        }
-
         private void SaveDocumentsRecursively(ProjectItem projectItem)
         {
-            if (projectItem.Document != null)
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (projectItem.Document?.Saved == false)
                 projectItem.Document.Save();
 
             if (projectItem.ProjectItems != null)
                 foreach (ProjectItem subItem in projectItem.ProjectItems)
                     SaveDocumentsRecursively(subItem);
-        }
-
-        private void SaveActiveDocument()
-        {
-            var dte = GetDTE();
-            dte.ActiveDocument?.Save();
-        }
-
-        private DTE GetDTE()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-            Assumes.Present(dte);
-            return dte;
         }
     }
 }
