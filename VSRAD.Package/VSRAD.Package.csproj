@@ -172,8 +172,6 @@
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
-    <Compile Include="Server\DeployItem.cs" />
-    <Compile Include="Server\DeployItemTracker.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
@@ -229,7 +227,6 @@
     <Compile Include="ProjectSystem\Project.cs" />
     <Compile Include="ProvideDebugEngineAttribute.cs" />
     <Compile Include="ProvideDebugPortSupplierAttribute.cs" />
-    <Compile Include="Server\DeployFilePacker.cs" />
     <Compile Include="Server\FileSynchronizationManager.cs" />
     <Compile Include="Server\RemoteCommandExecutor.cs" />
     <Compile Include="ToolWindows\BaseToolWindow.cs" />
