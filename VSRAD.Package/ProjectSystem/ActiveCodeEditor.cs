@@ -39,7 +39,7 @@ namespace VSRAD.Package.ProjectSystem
 
         string IActiveCodeEditor.GetAbsoluteSourcePath()
         {
-            ThreadHelper.ThrowIfOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             var textBuffer = GetTextViewFromVsTextView(GetActiveTextView()).TextBuffer;
             _textDocumentService.TryGetTextDocument(textBuffer, out var document);
             return document.FilePath;
@@ -47,14 +47,14 @@ namespace VSRAD.Package.ProjectSystem
 
         uint IActiveCodeEditor.GetCurrentLine()
         {
-            ThreadHelper.ThrowIfOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             GetActiveTextView().GetCaretPos(out var line, out _);
             return (uint)line;
         }
 
         string IActiveCodeEditor.GetActiveWord()
         {
-            ThreadHelper.ThrowIfOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             GetActiveTextView().GetSelectedText(out var activeWord);
             if (activeWord.Length == 0)
             {
