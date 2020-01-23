@@ -12,9 +12,9 @@ namespace VSRAD.Package.Utils
         public event PropertyChangedEventHandler PropertyChanged;
 
         /* https://stackoverflow.com/a/1316417 */
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null, bool raiseIfEqual = false)
         {
-            if (EqualityComparer<T>.Default.Equals(field, value))
+            if (!raiseIfEqual && EqualityComparer<T>.Default.Equals(field, value))
                 return false;
 
             field = value;

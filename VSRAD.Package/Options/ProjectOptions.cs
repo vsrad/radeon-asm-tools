@@ -20,7 +20,7 @@ namespace VSRAD.Package.Options
 
         #region Profiles
         private string _activeProfile = "Default";
-        public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value); } }
+        public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
         [JsonIgnore]
         public ProfileOptions Profile => Profiles[ActiveProfile];
