@@ -2,18 +2,18 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
     public interface IFileSynchronizationManager
     {
         Task SynchronizeRemoteAsync();
-        Task ClearSynchronizedFilesAsync();
     }
 
     [Export(typeof(IFileSynchronizationManager))]
@@ -21,49 +21,23 @@ namespace VSRAD.Package.Server
     public sealed class FileSynchronizationManager : IFileSynchronizationManager
     {
         private readonly ICommunicationChannel _channel;
-        private readonly IDeployFilePacker _filePacker;
         private readonly IProject _project;
         private readonly IProjectSourceManager _projectSourceManager;
-        private readonly Dictionary<string, DeployItemsPack> _unsyncedFiles = new Dictionary<string, DeployItemsPack>();
+
+        private readonly Dictionary<string, DateTime> _fileTracker = new Dictionary<string, DateTime>();
 
         [ImportingConstructor]
-        public FileSynchronizationManager(ICommunicationChannel channel,
-            IDeployFilePacker filePacker,
-            IProjectEvents projectEvents,
+        public FileSynchronizationManager(
+            ICommunicationChannel channel,
             IProject project,
             IProjectSourceManager projectSourceManager)
         {
             _channel = channel;
-            _filePacker = filePacker;
             _project = project;
             _projectSourceManager = projectSourceManager;
 
-            projectEvents.SourceFileChanged += SourceFileChanged;
-        }
-
-        private void SourceFileChanged(string file)
-        {
-            foreach (var items in _unsyncedFiles.Values)
-            {
-                var fileItem = new DeployItem();
-                fileItem.ActualPath = file;
-                fileItem.MakeArchivePath(_project.RootPath);
-                items.UnsyncedProjectItems.Add(fileItem);
-            }
-        }
-
-        public async Task ClearSynchronizedFilesAsync()
-        {
-            var evaluator = await _project.GetMacroEvaluatorAsync(default);
-            var options = await _project.Options.Profile.General.EvaluateAsync(evaluator);
-
-            if (string.IsNullOrWhiteSpace(options.DeployDirectory))
-                return;
-
-            if (_unsyncedFiles.TryGetValue(options.DeployDirectory, out _))
-            {
-                _unsyncedFiles.Remove(options.DeployDirectory);
-            }
+            // Redeploy all files on connection state change
+            _channel.ConnectionStateChanged += _fileTracker.Clear;
         }
 
         public async Task SynchronizeRemoteAsync()
@@ -71,55 +45,81 @@ namespace VSRAD.Package.Server
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.General.EvaluateAsync(evaluator);
 
+            await _projectSourceManager.SaveDocumentsAsync(options.AutosaveSource);
+            _project.SaveOptions();
+
+            if (!options.CopySources)
+                return;
             if (string.IsNullOrWhiteSpace(options.DeployDirectory))
                 throw new Exception("The project cannot be deployed: remote directory is not specified. Set it in project properties.");
 
-            await _projectSourceManager.SaveDocumentsAsync(options.AutosaveSource);
+            var deployItems = EnumerateDeployItems(options);
+            if (!deployItems.Any())
+                return;
 
-            if (!options.CopySources) return;
+            var archive = PackDeployItems(deployItems);
+            await _channel.SendAsync(new Deploy { Data = archive, Destination = options.DeployDirectory });
 
-            var additionalPaths = options.AdditionalSources.GetPathsSemicolonSeparated();
+            foreach (var (localPath, _) in deployItems)
+                _fileTracker[localPath] = File.GetLastWriteTime(localPath);
+        }
 
-            IEnumerable<DeployItem> deployItems;
-            DeployItemsPack deployItemsPack;
-
-            if (_unsyncedFiles.TryGetValue(options.DeployDirectory, out var unsynced))
+        private IEnumerable<(string localPath, string archivePath)> EnumerateDeployItems(Options.GeneralProfileOptions profile)
+        {
+            foreach (var path in profile.AdditionalSources.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Append(_project.RootPath))
             {
-                var additionalItems = unsynced.DeployItemTracker.GetDeployItems(additionalPaths, _project.RootPath);
-                deployItems = additionalItems.Concat(unsynced.UnsyncedProjectItems);
-                deployItemsPack = unsynced;
+                foreach (var (localPath, archivePath) in EnumerateFilePaths(path, path))
+                {
+                    // Skip project settings
+                    if (localPath.Contains(".radproj"))
+                        continue;
+
+                    // Skip files that haven't been modified since the last deployment
+                    if (_fileTracker.TryGetValue(localPath, out var lastWriteTime))
+                        if (lastWriteTime == File.GetLastWriteTime(localPath))
+                            continue;
+
+                    yield return (localPath, archivePath);
+                }
+            }
+        }
+
+        private static IEnumerable<(string localPath, string archivePath)> EnumerateFilePaths(string path, string rootPath)
+        {
+            if ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)
+            {
+                foreach (var file in Directory.EnumerateFiles(path))
+                    yield return (file, MakeArchivePath(file, rootPath));
+
+                foreach (var directory in Directory.EnumerateDirectories(path))
+                    foreach (var file in EnumerateFilePaths(directory, rootPath))
+                        yield return file;
             }
             else
             {
-                var deployPaths = additionalPaths.Append(_project.RootPath);
-
-                IDeployItemTracker deployItemTracker = new DeployItemTracker();
-                deployItems = deployItemTracker.GetDeployItems(deployPaths, _project.RootPath);
-
-                deployItemsPack = new DeployItemsPack()
-                {
-                    DeployItemTracker = deployItemTracker,
-                    UnsyncedProjectItems = new HashSet<DeployItem>(),
-                };
-                _unsyncedFiles[options.DeployDirectory] = deployItemsPack;
+                yield return (path, MakeArchivePath(path, rootPath));
             }
-
-            if (deployItems.Count() != 0)
-            {
-                var projectSourceArchive = _filePacker.PackItems(deployItems);
-                await _channel.SendAsync(new Deploy() { Data = projectSourceArchive, Destination = options.DeployDirectory });
-            }
-
-            // synchronize local
-            _project.SaveOptions();
-
-            deployItemsPack.UnsyncedProjectItems.Clear();
         }
 
-        private struct DeployItemsPack
+        private static string MakeArchivePath(string file, string rootPath)
         {
-            public IDeployItemTracker DeployItemTracker { get; set; }
-            public HashSet<DeployItem> UnsyncedProjectItems;
+            if (file == rootPath)
+                return Path.GetFileName(file);
+            if (!rootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                rootPath += Path.DirectorySeparatorChar;
+            return file.Replace(rootPath, "");
+        }
+
+        private static byte[] PackDeployItems(IEnumerable<(string localPath, string archivePath)> items)
+        {
+            using (var memStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, false))
+                    foreach (var (localPath, archivePath) in items)
+                        archive.CreateEntryFromFile(localPath, archivePath.Replace('\\', '/'), CompressionLevel.Optimal);
+
+                return memStream.ToArray();
+            }
         }
     }
 }

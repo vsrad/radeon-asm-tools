@@ -76,6 +76,11 @@
     <Compile Include="Server\RemoteCommandExecutorTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />
+    <Content Include="Server\Fixtures\separate.txt" />
+    <Content Include="Server\Fixtures\Project\Include\include.txt" />
+    <Content Include="Server\Fixtures\Project\source.txt" />
+    <Content Include="Server\Fixtures\AdditionalSources\notice.txt" />
+    <Content Include="Server\Fixtures\AdditionalSources\Nested\message.txt" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
