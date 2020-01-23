@@ -66,7 +66,7 @@ namespace VSRAD.Package.Server
 
         private IEnumerable<(string localPath, string archivePath)> EnumerateDeployItems(Options.GeneralProfileOptions profile)
         {
-            foreach (var path in profile.AdditionalSources.Split(';').Append(_project.RootPath))
+            foreach (var path in profile.AdditionalSources.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Append(_project.RootPath))
             {
                 foreach (var (localPath, archivePath) in EnumerateFilePaths(path, path))
                 {
