@@ -60,8 +60,21 @@ namespace VSRAD.PackageTests.Server
 
             Assert.NotNull(archive);
             var deployedItems = ReadZipItems(archive);
-            var expectedItems = new HashSet<string> { "source.txt", "Include/include.txt" };
-            Assert.Equal(expectedItems, deployedItems);
+            Assert.Equal(new HashSet<string> { "source.txt", "Include/include.txt" }, deployedItems);
+
+            archive = null;
+            channel.ThenExpect<Deploy>((deploy) => archive = deploy.Data);
+
+            // does not redeploy when nothing is changed
+            await syncer.SynchronizeRemoteAsync();
+            Assert.Null(archive);
+
+            File.SetLastWriteTime($@"{_projectRoot}\source.txt", DateTime.Now);
+
+            await syncer.SynchronizeRemoteAsync();
+            Assert.NotNull(archive);
+            deployedItems = ReadZipItems(archive);
+            Assert.Equal(new HashSet<string> { "source.txt" }, deployedItems);
         }
 
         [Fact]
