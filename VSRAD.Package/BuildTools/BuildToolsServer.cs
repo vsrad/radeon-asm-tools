@@ -60,7 +60,7 @@ namespace VSRAD.Package.BuildTools
         public void SetProjectOnLoad(IProject project)
         {
             _project = project;
-            VSPackage.TaskFactory.RunAsync(RunServerLoopAsync);
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
         }
 
         public void OnProjectUnloading()
@@ -76,25 +76,32 @@ namespace VSRAD.Package.BuildTools
         public async Task RunServerLoopAsync()
         {
             while (!_serverLoopCts.Token.IsCancellationRequested)
-                using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
+                try
                 {
-                    await server.WaitForConnectionAsync(_serverLoopCts.Token).ConfigureAwait(false);
-
-                    byte[] message;
-                    try
+                    using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                     {
-                        var buildResult = await BuildAsync().ConfigureAwait(false);
-                        if (buildResult.TryGetResult(out var result, out var error))
-                            message = result.ToArray();
-                        else
-                            message = new IPCBuildResult { ServerError = error.Message }.ToArray();
-                    }
-                    catch (Exception e)
-                    {
-                        message = new IPCBuildResult { ServerError = e.Message }.ToArray();
-                    }
+                        await server.WaitForConnectionAsync(_serverLoopCts.Token).ConfigureAwait(false);
 
-                    await server.WriteAsync(message, 0, message.Length);
+                        byte[] message;
+                        try
+                        {
+                            var buildResult = await BuildAsync().ConfigureAwait(false);
+                            if (buildResult.TryGetResult(out var result, out var error))
+                                message = result.ToArray();
+                            else
+                                message = new IPCBuildResult { ServerError = error.Message }.ToArray();
+                        }
+                        catch (Exception e)
+                        {
+                            message = new IPCBuildResult { ServerError = e.Message }.ToArray();
+                        }
+
+                        await server.WriteAsync(message, 0, message.Length);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Package.Errors.ShowException(e);
                 }
         }
 
@@ -139,15 +146,17 @@ namespace VSRAD.Package.BuildTools
                     Arguments = preprocessorOptions.Arguments,
                     WorkingDirectory = preprocessorOptions.WorkingDirectory
                 };
-                var ppResult = await RunOutputStepAsync(executor, ppCommand, preprocessorOptions.RemoteOutputFile);
-                if (!ppResult.TryGetResult(out var ppData, out var error))
+                var ppResult = await executor.ExecuteWithResultAsync(ppCommand, preprocessorOptions.RemoteOutputFile, checkExitCode: false);
+                if (!ppResult.TryGetResult(out var ppResponse, out var error))
                     return new Error("Preprocessor: " + error.Message);
-                var (ppSource, ppExitCode, ppMessages) = ppData;
-                if (ppExitCode != 0 || ppMessages.Any())
-                    return new IPCBuildResult { ExitCode = ppExitCode, ErrorMessages = ppMessages.ToArray() };
+                var (ppStatus, ppData) = ppResponse;
+                if (ppData != null)
+                    preprocessedSource = Encoding.UTF8.GetString(ppData);
+                var ppMessages = await _errorProcessor.ExtractMessagesAsync(ppStatus.Stderr, preprocessedSource);
+                if (ppStatus.ExitCode != 0 || ppMessages.Any())
+                    return new IPCBuildResult { ExitCode = ppStatus.ExitCode, ErrorMessages = ppMessages.ToArray() };
                 if (!string.IsNullOrEmpty(preprocessorOptions.LocalOutputCopyPath))
-                    File.WriteAllText(preprocessorOptions.LocalOutputCopyPath, ppSource);
-                preprocessedSource = ppSource;
+                    File.WriteAllText(preprocessorOptions.LocalOutputCopyPath, preprocessedSource);
             }
             if ((buildSteps & BuildSteps.Disassembler) == BuildSteps.Disassembler)
             {
@@ -157,14 +166,15 @@ namespace VSRAD.Package.BuildTools
                     Arguments = disassemblerOptions.Arguments,
                     WorkingDirectory = disassemblerOptions.WorkingDirectory
                 };
-                var disasmResult = await RunOutputStepAsync(executor, disasmCommand, disassemblerOptions.RemoteOutputFile);
-                if (!disasmResult.TryGetResult(out var disasmData, out var error))
+                var disasmResult = await executor.ExecuteWithResultAsync(disasmCommand, disassemblerOptions.RemoteOutputFile, checkExitCode: false);
+                if (!disasmResult.TryGetResult(out var disasmResponse, out var error))
                     return new Error("Disassembler: " + error.Message);
-                var (disasmSource, disasmExitCode, disasmMessages) = disasmData;
-                if (disasmExitCode != 0 || disasmMessages.Any())
-                    return new IPCBuildResult { ExitCode = disasmExitCode, ErrorMessages = disasmMessages.ToArray() };
-                if (!string.IsNullOrEmpty(disassemblerOptions.LocalOutputCopyPath))
-                    File.WriteAllText(disassemblerOptions.LocalOutputCopyPath, disasmSource);
+                var (disasmStatus, disasmData) = disasmResponse;
+                var disasmMessages = await _errorProcessor.ExtractMessagesAsync(disasmStatus.Stderr, preprocessedSource);
+                if (disasmResult == null || disasmMessages.Any())
+                    return new IPCBuildResult { ExitCode = disasmStatus.ExitCode, ErrorMessages = disasmMessages.ToArray() };
+                if (!string.IsNullOrEmpty(disassemblerOptions.LocalOutputCopyPath) && disasmData != null)
+                    File.WriteAllBytes(disassemblerOptions.LocalOutputCopyPath, disasmData);
             }
             if ((buildSteps & BuildSteps.FinalStep) == BuildSteps.FinalStep)
             {
@@ -181,19 +191,6 @@ namespace VSRAD.Package.BuildTools
                 return new IPCBuildResult { ExitCode = finalStepExitCode, ErrorMessages = finalStepMessages.ToArray() };
             }
             return new IPCBuildResult();
-        }
-
-        private async Task<Result<(string, int, IEnumerable<Message>)>> RunOutputStepAsync(
-            RemoteCommandExecutor executor, Execute command, Options.OutputFile remoteOutputFile)
-        {
-            var response = await executor.ExecuteWithResultAsync(command, remoteOutputFile, checkExitCode: false);
-            if (!response.TryGetResult(out var result, out var error))
-                return error;
-
-            var preprocessedSource = Encoding.UTF8.GetString(result.Item2);
-            var messages = await _errorProcessor.ExtractMessagesAsync(result.Item1.Stderr, null);
-
-            return (preprocessedSource, result.Item1.ExitCode, messages);
         }
 
         private async Task<Result<(int, IEnumerable<Message>)>> RunStepAsync(RemoteCommandExecutor executor, Execute command, string preprocessed)
