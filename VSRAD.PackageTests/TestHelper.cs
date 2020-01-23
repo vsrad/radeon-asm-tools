@@ -32,11 +32,11 @@ namespace VSRAD.PackageTests
             sta.Join();
         }
 
-        public static IProject MakeProjectWithProfile(Dictionary<string, string> macros, string projectRoot = "")
+        public static IProject MakeProjectWithProfile(Dictionary<string, string> macros, string projectRoot = "", Package.Options.ProfileOptions profile = null)
         {
             var mock = new Mock<IProject>(MockBehavior.Strict);
             var options = new Package.Options.ProjectOptions();
-            options.AddProfile("Default", new Package.Options.ProfileOptions());
+            options.AddProfile("Default", profile ?? new Package.Options.ProfileOptions());
             mock.Setup((p) => p.Options).Returns(options);
             mock.Setup((m) => m.RootPath).Returns(projectRoot);
 

@@ -1,7 +1,9 @@
 ﻿using Moq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Pipes;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
@@ -28,18 +30,13 @@ namespace VSRAD.Package.BuildTools
                 { RadMacros.BuildArguments, "--sleep 10" },
                 { RadMacros.BuildWorkingDirectory, "/old/home" }
             }, projectRoot: @"C:\Users\CFF\Repos\H");
-            var projectSources = new[] { @"C:\Users\CFF\Repos\H\include\test.h", @"C:\Users\CFF\Repos\H\test.c" };
             var channel = new MockCommunicationChannel();
-            var output = new Mock<IOutputWindowManager>();
             var deployManager = new Mock<IFileSynchronizationManager>();
             var errorProcessor = new Mock<IBuildErrorProcessor>(MockBehavior.Strict);
-            output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
             errorProcessor
                 .Setup((e) => e.ExtractMessagesAsync("stderr", It.IsAny<string>()))
                 .Returns(Task.FromResult<IEnumerable<Message>>(Array.Empty<Message>()));
-
-            var server = new BuildToolsServer(channel.Object, output.Object, errorProcessor.Object, deployManager.Object);
-            server.SetProjectOnLoad(project); // starts the server
+            var server = StartBuildServer(project, channel.Object, deployManager.Object, errorProcessor.Object);
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
             {
@@ -64,71 +61,65 @@ namespace VSRAD.Package.BuildTools
             Assert.Empty(message.ErrorMessages);
         }
 
-        //[Fact]
-        //public async Task PreprocessorTestAsync()
-        //{
-        //    TestHelper.InitializePackageTaskFactory();
-        //    var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() {
-        //        { RadMacros.BuildExecutable, "kuu" },
-        //        { RadMacros.BuildWorkingDirectory, "/home/old" },
-        //        { RadMacros.BuildPreprocessedSource, "preprocessed_source.build.tmp" }
-        //    }, projectRoot: @"C:\Users\CFF\Preprocess");
-        //    var channel = new MockCommunicationChannel();
-        //    var output = new Mock<IOutputWindowManager>();
+        [Fact]
+        public async Task PreprocessorTestAsync()
+        {
+            var preprocessorLocalFile = Path.GetTempFileName();
 
-        //    var deployManager = new Mock<IFileSynchronizationManager>();
-        //    output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
+            TestHelper.InitializePackageTaskFactory();
+            var project = TestHelper.MakeProjectWithProfile(
+                new Dictionary<string, string>() {
+                    { RadMacros.PreprocessorExecutable, "kuu" },
+                    { RadMacros.PreprocessorArguments, "--away" },
+                    { RadMacros.PreprocessorWorkingDirectory, "/home/old" },
+                    { RadMacros.PreprocessorOutputPath, "preprocessed_source.build.tmp" },
+                    { RadMacros.PreprocessorLocalPath, preprocessorLocalFile }
+                },
+                projectRoot: @"C:\Users\CFF\Preprocess",
+                profile: new Options.ProfileOptions(build: new Options.BuildProfileOptions(runPreprocessor: true)));
+            var channel = new MockCommunicationChannel();
+            var server = StartBuildServer(project, channel.Object);
 
-        //    var server = new BuildToolsServer(channel.Object, output.Object, sourceManager.Object, deployManager.Object);
-        //    server.SetProjectOnLoad(project); // starts the server
+            var timestamp = DateTime.Now;
+            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp }, (command) =>
+            {
+                Assert.Equal("/home/old", command.FilePath[0]);
+                Assert.Equal("preprocessed_source.build.tmp", command.FilePath[1]);
+            });
+            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
+            { Status = ExecutionStatus.Completed, ExitCode = 0 },
+            (command) =>
+            {
+                Assert.Equal("kuu", command.Executable);
+                Assert.Equal("--away", command.Arguments);
+                Assert.Equal("/home/old", command.WorkingDirectory);
+            });
+            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched
+            { Timestamp = timestamp.AddSeconds(1), Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("#define H") }, (_) => { });
 
-        //    var timestamp = DateTime.Now;
-        //    channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp }, (command) =>
-        //    {
-        //        Assert.Equal("/home/old", command.FilePath[0]);
-        //        Assert.Equal("preprocessed_source.build.tmp", command.FilePath[1]);
-        //    });
-        //    channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (_) => { });
-        //    channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched
-        //    { Timestamp = timestamp.AddSeconds(1), Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("#define H") }, (_) => { });
+            var message = await FetchResultOnClientAsync(server);
 
-        //    var message = await FetchResultOnClientAsync(server);
-        //    Assert.Null(message.ServerError);
-        //    Assert.Equal("#define H", message.PreprocessedSource);
-        //}
+            Assert.False(message.Skipped);
+            Assert.Equal("", message.ServerError);
+            Assert.Equal(0, message.ExitCode);
+            Assert.Empty(message.ErrorMessages);
 
-        //[Fact]
-        //public async Task PreprocessorErrorTestAsync()
-        //{
-        //    TestHelper.InitializePackageTaskFactory();
-        //    var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() {
-        //        { RadMacros.BuildExecutable, "kuu" },
-        //        { RadMacros.BuildPreprocessedSource, "preprocessed_source.build.tmp" }
-        //    }, projectRoot: @"C:\Users\CFF\Errors");
-        //    var channel = new MockCommunicationChannel();
-        //    var output = new Mock<IOutputWindowManager>();
-        //    var sourceManager = new Mock<IProjectSourceManager>();
-        //    var deployManager = new Mock<IFileSynchronizationManager>();
-        //    output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
+            Assert.Equal("#define H", File.ReadAllText(preprocessorLocalFile));
+            File.Delete(preprocessorLocalFile);
+        }
 
-        //    var server = new BuildToolsServer(channel.Object, output.Object, sourceManager.Object, deployManager.Object);
-        //    server.SetProjectOnLoad(project); // starts the server
+        private static BuildToolsServer StartBuildServer(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager = null, IBuildErrorProcessor errorProcessor = null)
+        {
+            deployManager = deployManager ?? new Mock<IFileSynchronizationManager>().Object;
+            errorProcessor = errorProcessor ?? new Mock<IBuildErrorProcessor>().Object;
 
-        //    var timestamp = DateTime.Now;
-        //    channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp }, (_) => { });
-        //    channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (_) => { });
-        //    channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = timestamp }, (_) => { });
+            var output = new Mock<IOutputWindowManager>();
+            output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-        //    var message = await FetchResultOnClientAsync(server);
-        //    Assert.Equal(BuildToolsServer.ErrorPreprocessorFileUnchanged, message.ServerError);
-
-        //    channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound }, (_) => { });
-        //    channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (_) => { });
-        //    channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.FileNotFound }, (_) => { });
-
-        //    message = await FetchResultOnClientAsync(server);
-        //    Assert.Equal(BuildToolsServer.ErrorPreprocessorFileNotCreated, message.ServerError);
-        //}
+            var server = new BuildToolsServer(channel, output.Object, errorProcessor, deployManager);
+            server.SetProjectOnLoad(project); // starts the server
+            return server;
+        }
 
         private static async Task<VSRAD.BuildTools.IPCBuildResult> FetchResultOnClientAsync(BuildToolsServer server)
         {
