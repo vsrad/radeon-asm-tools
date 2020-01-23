@@ -1,8 +1,12 @@
 ﻿using Moq;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -13,19 +17,22 @@ namespace VSRAD.PackageTests.Server
 {
     public class FileSynchronizationManagerTests
     {
-        private const string _projectRoot = @"C:\Users\Mami\repos\Teapot";
-        private const string _deployDirectory = "/home/kyubey/projects";
-        private const string _deployDirectorySecond = @"C:\Users\Mami\repos\TeapotSecond";
+        private static readonly string _fixturesDir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\Server\Fixtures";
+        private static readonly string _projectRoot = _fixturesDir + @"\Project";
 
-        private const DocumentSaveType _autosaveType = DocumentSaveType.SolutionDocuments;
+        private const string _deployDirectory = "/home/kyubey/projects";
 
         [Fact]
         public async Task SynchronizeProjectTestAsync()
         {
             var channel = new MockCommunicationChannel();
             var sourceManager = new Mock<IProjectSourceManager>(MockBehavior.Strict);
-            sourceManager.Setup((m) => m.SaveDocumentsAsync(_autosaveType)).Returns(Task.CompletedTask).Verifiable();
-            var (project, syncer) = MakeProjectWithSyncer(channel.Object, sourceManager.Object, copySources: false);
+            sourceManager
+                .Setup((m) => m.SaveDocumentsAsync(DocumentSaveType.SolutionDocuments))
+                .Returns(Task.CompletedTask).Verifiable();
+            var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
+                copySources: false, autosaveSource: DocumentSaveType.SolutionDocuments),
+                channel.Object, sourceManager.Object);
             project.Setup((p) => p.SaveOptions()).Verifiable();
 
             await syncer.SynchronizeRemoteAsync();
@@ -34,7 +41,38 @@ namespace VSRAD.PackageTests.Server
             project.Verify(); // saves project options
         }
 
-        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(ICommunicationChannel channel, IProjectSourceManager sourceManager, bool copySources)
+        [Fact]
+        public async Task DeployFilesTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
+                deployDirectory: _deployDirectory, copySources: true,
+                additionalSources: $@"{_fixturesDir}\AdditionalSources;{_fixturesDir}\separate.txt"), channel.Object);
+            project.Setup((p) => p.SaveOptions());
+
+            byte[] archive = null;
+            channel.ThenExpect<Deploy>((deploy) =>
+            {
+                Assert.Equal(_deployDirectory, deploy.Destination);
+                archive = deploy.Data;
+            });
+
+            await syncer.SynchronizeRemoteAsync();
+
+            Assert.NotNull(archive);
+            var tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            File.WriteAllBytes(tempFile, archive);
+
+            using (var zip = ZipFile.Open(tempFile, ZipArchiveMode.Read))
+            {
+                var expectedItems = new HashSet<string> { "source.txt", "Include/include.txt", "separate.txt", "notice.txt", "Nested/message.txt" };
+                var deployedItems = zip.Entries.Select(entry => entry.FullName).ToHashSet();
+                Assert.Equal(expectedItems, deployedItems);
+            }
+            File.Delete(tempFile);
+        }
+
+        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(GeneralProfileOptions generalOptions, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
         {
             TestHelper.InitializePackageTaskFactory();
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
@@ -45,11 +83,10 @@ namespace VSRAD.PackageTests.Server
             project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
 
             var options = new ProjectOptions();
-            options.AddProfile("Default", new ProfileOptions(general: new GeneralProfileOptions(
-                deployDirectory: _deployDirectory, copySources: copySources, autosaveSource: _autosaveType)));
+            options.AddProfile("Default", new ProfileOptions(general: generalOptions));
             project.Setup((p) => p.Options).Returns(options);
 
-            return (project, new FileSynchronizationManager(channel, project.Object, sourceManager));
+            return (project, new FileSynchronizationManager(channel, project.Object, sourceManager ?? new Mock<IProjectSourceManager>().Object));
         }
     }
 }
