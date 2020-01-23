@@ -17,58 +17,39 @@ namespace VSRAD.PackageTests.Server
         private const string _deployDirectory = "/home/kyubey/projects";
         private const string _deployDirectorySecond = @"C:\Users\Mami\repos\TeapotSecond";
 
+        private const DocumentSaveType _autosaveType = DocumentSaveType.SolutionDocuments;
+
         [Fact]
-        public async Task DeployOnlyIfCopyFilesEnabledAsync()
+        public async Task SynchronizeProjectTestAsync()
         {
-            TestHelper.InitializePackageTaskFactory();
             var channel = new MockCommunicationChannel();
-            var events = new Mock<IProjectEvents>();
-            var packer = new Mock<IDeployFilePacker>();
-            var project = new Mock<IProject>(MockBehavior.Strict);
-            project.Setup((p) => p.RootPath).Returns(_projectRoot);
-            var projectSourceManager = new Mock<IProjectSourceManager>();
-            var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
-            evaluator.Setup((e) => e.GetMacroValueAsync(RadMacros.DeployDirectory)).Returns(Task.FromResult(_deployDirectory));
-            project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
-            var options = new ProjectOptions();
-            options.AddProfile("Default", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "vespa", deployDirectory: "C:\\Hello\\World", copySources: false)));
-            project.Setup((p) => p.Options).Returns(options);
+            var sourceManager = new Mock<IProjectSourceManager>(MockBehavior.Strict);
+            sourceManager.Setup((m) => m.SaveDocumentsAsync(_autosaveType)).Returns(Task.CompletedTask).Verifiable();
+            var (project, syncer) = MakeProjectWithSyncer(channel.Object, sourceManager.Object, copySources: false);
+            project.Setup((p) => p.SaveOptions()).Verifiable();
 
-            var deployManager = new FileSynchronizationManager(channel.Object, packer.Object, events.Object, project.Object, projectSourceManager.Object);
+            await syncer.SynchronizeRemoteAsync();
 
-            channel.ThenExpect<DebugServer.IPC.Commands.Deploy>();
-            await deployManager.SynchronizeRemoteAsync();
-            packer.VerifyNoOtherCalls();
+            sourceManager.Verify(); // saves project documents
+            project.Verify(); // saves project options
         }
 
-        [Fact]
-        public async Task SaveUserJsonOnRunAsync()
+        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(ICommunicationChannel channel, IProjectSourceManager sourceManager, bool copySources)
         {
-            int saveOptionsCount = 0;
             TestHelper.InitializePackageTaskFactory();
-            var channel = new MockCommunicationChannel();
-            var events = new Mock<IProjectEvents>();
-            var packer = new Mock<IDeployFilePacker>();
-            var project = new Mock<IProject>(MockBehavior.Strict);
-            project.Setup((p) => p.RootPath).Returns(_projectRoot);
-            project.Setup((p) => p.SaveOptions()).Callback(() => saveOptionsCount++);
-            var projectSourceManager = new Mock<IProjectSourceManager>();
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
             evaluator.Setup((e) => e.GetMacroValueAsync(RadMacros.DeployDirectory)).Returns(Task.FromResult(_deployDirectory));
+
+            var project = new Mock<IProject>(MockBehavior.Strict);
+            project.Setup((p) => p.RootPath).Returns(_projectRoot);
             project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
+
             var options = new ProjectOptions();
-            options.AddProfile("Default", new ProfileOptions());
+            options.AddProfile("Default", new ProfileOptions(general: new GeneralProfileOptions(
+                deployDirectory: _deployDirectory, copySources: copySources, autosaveSource: _autosaveType)));
             project.Setup((p) => p.Options).Returns(options);
 
-            var deployManager = new FileSynchronizationManager(channel.Object, packer.Object, events.Object, project.Object, projectSourceManager.Object);
-
-            channel.ThenExpect<DebugServer.IPC.Commands.Deploy>();
-            await deployManager.SynchronizeRemoteAsync();
-            Assert.Equal(1, saveOptionsCount);
-
-            channel.ThenExpect<DebugServer.IPC.Commands.Deploy>();
-            await deployManager.SynchronizeRemoteAsync();
-            Assert.Equal(2, saveOptionsCount);
+            return (project, new FileSynchronizationManager(channel, project.Object, sourceManager));
         }
     }
 }

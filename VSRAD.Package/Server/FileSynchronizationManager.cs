@@ -27,8 +27,8 @@ namespace VSRAD.Package.Server
         private readonly Dictionary<string, DateTime> _fileTracker = new Dictionary<string, DateTime>();
 
         [ImportingConstructor]
-        public FileSynchronizationManager(ICommunicationChannel channel,
-            IProjectEvents projectEvents,
+        public FileSynchronizationManager(
+            ICommunicationChannel channel,
             IProject project,
             IProjectSourceManager projectSourceManager)
         {
@@ -84,7 +84,7 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private IEnumerable<(string localPath, string archivePath)> EnumerateFilePaths(string path, string rootPath)
+        private static IEnumerable<(string localPath, string archivePath)> EnumerateFilePaths(string path, string rootPath)
         {
             if ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)
             {
