@@ -19,8 +19,9 @@ namespace VSRAD.Package
         public const string ProjectCapability = "RADProject";
 
         public const int MenuCommandId = 0x0100;
-        public const int VisualizerWindowCommandId = 0x0100;
-        public const int VisualizerOptionsCommandId = 0x0101;
+        public const int ToolWindowVisualizerCommandId = 0x0100;
+        public const int ToolWindowOptionsCommandId = 0x0101;
+        public const int ToolWindowFunctionListCommandId = 0x0102;
         public const int ProfileCommandId = 0x0100;
         public const int DisassembleCommandId = 0x0100;
         public const int PreprocessCommandId = 0x0100;
@@ -30,7 +31,7 @@ namespace VSRAD.Package
         public const int AddArrayToWatchesToIdOffset = 0x1400;
         public const int AddArrayToWatchesToFromOffset = 0x100;
         public const int AddArrayToWatchesToHeaderOffset = 0x1200;
-        public const string VisualizerCommandSet = "03c8f3ba-2e44-4159-ac37-b08fc295a0cc";
+        public const string ToolWindowCommandSet = "03c8f3ba-2e44-4159-ac37-b08fc295a0cc";
         public const string ForceRunToCursorCommandSet = "cefc8250-7cd1-46c1-b4f6-46a0a22a1c81";
         public const string AddToWatchesCommandSet = "8560BD12-1D31-40BA-B300-1A31FC901E93";
         public const string AddArrayToWatchesCommandSet = "A03BE90E-E3E1-47F8-815B-387605FDCB73";

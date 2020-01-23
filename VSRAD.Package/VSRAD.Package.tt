@@ -61,15 +61,6 @@
           <ButtonText>Launch Remote Profiling</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetVisualizer" id="VisualizerWindowCommandId" priority="1" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="visualizerIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Open Visualizer</ButtonText>
-        </Strings>
-      </Button>
       <Button guid="guidCmdSetDisassembly" id="DisassemblyCommandId" priority="0x0100" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="disassemblyIcon" />
@@ -88,13 +79,32 @@
           <ButtonText>Preprocess file</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetVisualizer" id="VisualizerOptionsCommandId" priority="2" type="Button">
+      <!-- Tool window commands -->
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowVisualizerCommandId" priority="1" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Open Visualizer</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="optionsIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Options</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowFunctionListCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="funcListIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Function List</ButtonText>
         </Strings>
       </Button>
       <!-- Editor context menu -->
@@ -156,7 +166,7 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, funcListIcon" />
     </Bitmaps>
 
     <Groups>
@@ -227,9 +237,10 @@
       <IDSymbol name="ToolsMenuGroup" value="0x0600" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidCmdSetVisualizer" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
-      <IDSymbol name="VisualizerWindowCommandId" value="0x0100" />
-      <IDSymbol name="VisualizerOptionsCommandId" value="0x0101" />
+    <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
+      <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
+      <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
+      <IDSymbol name="ToolWindowFunctionListCommandId" value="0x0102" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetDisassembly" value="{03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE}">
@@ -283,7 +294,7 @@
       <IDSymbol name="optionsIcon" value="3" />
       <IDSymbol name="disassemblyIcon" value="4" />
       <IDSymbol name="preprocessIcon" value="5" />
-      <IDSymbol name="bmpPicStrikethrough" value="6" />
+      <IDSymbol name="funcListIcon" value="6" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

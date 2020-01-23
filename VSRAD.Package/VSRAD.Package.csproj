@@ -130,7 +130,7 @@
     <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
     <Compile Include="Commands\BaseBuildWithPreviewCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
-    <Compile Include="Commands\DebugVisualizerCommand.cs" />
+    <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\DisassemblyCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
