@@ -7,7 +7,7 @@ namespace VSRAD.Package.ToolWindows
 {
     public abstract class BaseToolWindow : ToolWindowPane
     {
-        private EnvDTE.WindowEvents WindowEvents { get; set; }
+        private EnvDTE.WindowEvents _windowEvents;
 
         private readonly UIElement _projectStateMissingMessage = new TextBlock
         {
@@ -44,22 +44,19 @@ namespace VSRAD.Package.ToolWindows
 
         public override void OnToolWindowCreated()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
-            var events = (EnvDTE80.Events2)dte.Events;
-            WindowEvents = events.WindowEvents;
-            WindowEvents.WindowActivated += OnWindowFocusLost;
+            _windowEvents = dte.Events.WindowEvents;
+            _windowEvents.WindowActivated += OnWindowFocusLost;
         }
 
         protected virtual void OnWindowFocusLost() { }
 
         private void OnWindowFocusLost(EnvDTE.Window _, EnvDTE.Window lostFocus)
         {
-            if (lostFocus == null) return;
-
-            if (lostFocus.Caption == Caption)
-            {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (lostFocus?.Caption == Caption)
                 OnWindowFocusLost();
-            }
         }
     }
 }

@@ -49,6 +49,7 @@ namespace VSRAD.Package.Commands
 
         private void OnBuildFinished(string project, string projectConfig, string platform, string solutionConfig, bool success)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (_ongoingRun != null && success)
                 OpenFileInEditor(_ongoingRun.Value.localPath, _ongoingRun.Value.lineMarker);
             _ongoingRun = null;

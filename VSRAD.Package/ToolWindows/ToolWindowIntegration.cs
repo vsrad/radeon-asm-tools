@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Composition;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ToolWindows
@@ -51,6 +51,7 @@ namespace VSRAD.Package.ToolWindows
 
         void IToolWindowIntegration.RerunDebug()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (DebugInProgress) _debugger.Rerun();
         }
 
