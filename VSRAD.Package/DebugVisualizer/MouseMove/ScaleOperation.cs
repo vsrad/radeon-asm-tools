@@ -33,15 +33,17 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
+            _firstVisibleColumn = _table.DataColumns.First(x => x.Visible == true).Index;
+
             if (hit.Type != DataGridViewHitTestType.ColumnHeader
                 || hit.ColumnIndex < VisualizerTable.DataColumnOffset
-                || (Math.Abs(e.X - hit.ColumnX) > _maxDistanceFromDivider
+                || (((Math.Abs(e.X - hit.ColumnX) > _maxDistanceFromDivider)
+                    || hit.ColumnIndex == _firstVisibleColumn) // disable scalling on the left edge of the first element
                     && Math.Abs(e.X - (hit.ColumnX + _table.DataColumns[0].Width)) > _maxDistanceFromDivider))
                 return false;
 
             var invisibleColumns = _table.DataColumns.Where(c => c.Visible == false);
 
-            _firstVisibleColumn = _table.DataColumns.First(x => x.Visible == true).Index;
             _lastVisibleColumn = _table.DataColumns.Last(c => c.Visible == true).Index;
 
             _invisibleColumnsCount = invisibleColumns.Count();
@@ -68,7 +70,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, VisualizerTable table, int x) =>
             hit.Type == DataGridViewHitTestType.ColumnHeader &&
             hit.ColumnIndex >= VisualizerTable.DataColumnOffset &&
-            (Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider
+            ((Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider
+             && hit.ColumnIndex != table.DataColumns.First(c => c.Visible == true).Index) // disable scalling on the left edge of the first element
              || Math.Abs(x - (hit.ColumnX + table.DataColumns[0].Width)) <= _maxDistanceFromDivider);
 
         public bool HandleMouseMove(MouseEventArgs e)
