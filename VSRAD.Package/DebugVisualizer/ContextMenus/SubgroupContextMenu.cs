@@ -56,6 +56,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             var fitWidth = new MenuItem("Fit Width", (s, e) =>
                 _table.ColumnResizeController.FitWidth(_targetColumnIndex, _columnRelStart));
 
+            var hideThis = new MenuItem("Hide This", (s, e) => _table.HideColumns(_clickedColumnIndex));
+
             var menuItems = new[] { new MenuItem("Keep First") { Enabled = false } }
                 .Concat(keepFirst)
                 .Append(new MenuItem("-"))
@@ -64,7 +66,9 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 .Append(new MenuItem("-"))
                 .Append(highlightThis)
                 .Append(new MenuItem("-"))
-                .Append(fitWidth);
+                .Append(fitWidth)
+                .Append(new MenuItem("-"))
+                .Append(hideThis);
 
             return new ContextMenu(menuItems.ToArray());
         }

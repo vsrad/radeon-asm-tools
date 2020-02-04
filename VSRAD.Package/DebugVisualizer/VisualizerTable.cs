@@ -98,6 +98,23 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersHeight = headerHeight;
         }
 
+        public void HideColumns(int clickedColumnIndex)
+        {
+            var selectedColumns = SelectedColumns
+                .Cast<DataGridViewColumn>()
+                .Select(x => x.Index - DataColumnOffset)
+                .Where(x => x >= 0)
+                .Append(clickedColumnIndex - DataColumnOffset);
+
+            _stylingOptions.VisibleColumns =
+                ColumnSelector.FromIndexes(
+                    ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns)
+                    .Where(x => !selectedColumns.Contains(x))
+                );
+
+            ClearSelection();
+        }
+
         private void ProcessCopy()
         {
             ProcessInsertKey(Keys.Control | Keys.C);
