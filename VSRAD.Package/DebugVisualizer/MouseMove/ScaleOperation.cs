@@ -111,14 +111,11 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var scrollingOffset = _initOffset + _targetColumnIndex * fullDiff;
 
             // Computing first and last column width
-            var firstColumnWidth = _table.Columns[_firstVisibleColumn].Width;
             var realColumnOffset = (_targetColumnIndex - 1) * width;
             var fullRealWidth = (_table.Columns.Count - _targetColumnIndex - _invisibleColumnsCount - 2) * width;
             var lastScreenBegin = (_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset;
 
-            if (firstColumnWidth <= width)
-                _table.Columns[_firstVisibleColumn].Width = width;
-            else if (scrollingOffset <= 0)
+            if (scrollingOffset <= 0)
                 _table.Columns[_firstVisibleColumn].Width = Math.Abs(_columnX - realColumnOffset) - 1;
             else
                 _table.Columns[_firstVisibleColumn].Width = width;
