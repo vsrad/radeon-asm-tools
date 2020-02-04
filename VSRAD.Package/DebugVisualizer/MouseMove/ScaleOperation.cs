@@ -49,17 +49,17 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _invisibleColumnsCount = invisibleColumns.Count();
             _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < hit.ColumnIndex);
 
-            _targetColumnIndex = hit.ColumnIndex - _invisibleColumnsBeforeTargetCount - 1;
+            _targetColumnIndex = Math.Max(hit.ColumnIndex - _invisibleColumnsBeforeTargetCount - 1, 0);
 
             _lastX = _initX = Cursor.Position.X;
-            _initWidth = _table.Columns[_targetColumnIndex].Width;
+            _initWidth = _table.Columns[Math.Max(_targetColumnIndex, VisualizerTable.DataColumnOffset)].Width;
             _initOffset = _table.HorizontalScrollingOffset;
             _columnX = hit.ColumnX - _table.ReservedColumnsOffset;
             if (Math.Abs(e.X - hit.ColumnX) <= _maxDistanceFromDivider)
             {
                 _targetColumnIndex -= 1;
                 _columnX -= _initWidth;
-                _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < _targetColumnIndex);
+                _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < hit.ColumnIndex - 1);
             }
             _columnOffset = _columnX + _initOffset;
 
@@ -111,16 +111,16 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var scrollingOffset = _initOffset + _targetColumnIndex * fullDiff;
 
             // Computing first and last column width
-            var realColumnOffset = (_targetColumnIndex - 1) * width;
+            var realColumnOffset = Math.Abs((_targetColumnIndex - 1) * width);
             var fullRealWidth = (_table.Columns.Count - _targetColumnIndex - _invisibleColumnsCount - 2) * width;
-            var lastScreenBegin = (_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset;
+            var lastScreenBegin = Math.Max((_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset, 0);
 
             if (scrollingOffset <= 0)
-                _table.Columns[_firstVisibleColumn].Width = Math.Abs(_columnX - realColumnOffset) - 1;
+                _table.Columns[_firstVisibleColumn].Width = Math.Max(Math.Abs(_columnX - realColumnOffset) - 1, width);
             else
                 _table.Columns[_firstVisibleColumn].Width = width;
 
-            if (realColumnOffset != _columnOffset && scrollingOffset >= lastScreenBegin)
+            if (realColumnOffset != _columnOffset && scrollingOffset > lastScreenBegin)
             {
                 var newWidth = Math.Abs(_table.Width - _columnX - fullRealWidth - _table.ReservedColumnsOffset);
                 _table.Columns[_lastVisibleColumn].Width = newWidth;
@@ -128,7 +128,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             else
                 _table.Columns[_lastVisibleColumn].Width = width;
 
-            if (_table.Columns[_lastVisibleColumn].Width <= width)
+            if (_table.Columns[_lastVisibleColumn].Width < width)
                 _table.Columns[_lastVisibleColumn].Width = width;
 
             // BugFix
