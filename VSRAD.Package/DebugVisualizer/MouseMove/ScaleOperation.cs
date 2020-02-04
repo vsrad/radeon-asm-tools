@@ -33,6 +33,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
+            if (!_table.DataColumns.Any(x => x.Visible == true)) return false;
+
             _firstVisibleColumn = _table.DataColumns.First(x => x.Visible == true).Index;
 
             if (hit.Type != DataGridViewHitTestType.ColumnHeader
