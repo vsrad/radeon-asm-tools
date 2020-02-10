@@ -193,10 +193,11 @@ namespace VSRAD.Syntax.Parser
                 var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length));
                 var spaceStart = GetSpaceStart(text);
 
+                currentRootBlock.FunctionTokens.Add(functionToken);
+
                 if (!parserManager.EnableManyLineDecloration)
                 {
                     currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
-                    currentRootBlock.FunctionTokens.Add(functionToken);
 
                     var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
@@ -212,7 +213,6 @@ namespace VSRAD.Syntax.Parser
                         if (text.Contains(parserManager.DeclorationEndPattern))
                         {
                             currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
-                            currentRootBlock.FunctionTokens.Add(functionToken);
 
                             var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.IndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (var functionArgText in functionArgsText)
@@ -239,7 +239,6 @@ namespace VSRAD.Syntax.Parser
                     else
                     {
                         currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, functionToken.SymbolSpan.End, functionToken, spaceStart));
-                        currentRootBlock.FunctionTokens.Add(functionToken);
                     }
                 }
                 return;
