@@ -104,14 +104,30 @@ namespace VSRAD.Syntax.Parser
                     {
                         if (cmpLineText.StartsWith(parserManager.ManyLineCommentStartPattern, StringComparison.Ordinal))
                         {
-                            currentLineIsManyLineComment = true;
-                            var index = lineText.IndexOf(parserManager.ManyLineCommentStartPattern, StringComparison.Ordinal);
-                            startManyLineCommentIndex = line.Start + index;
+                            var startIndex = lineText.IndexOf(parserManager.ManyLineCommentStartPattern, StringComparison.Ordinal);
+                            startManyLineCommentIndex = line.Start + startIndex;
+                            if (cmpLineText.Contains(parserManager.ManyLineCommentEndPattern))
+                            {
+                                var endIndex = line.Start + lineText.IndexOf(parserManager.ManyLineCommentEndPattern, StringComparison.Ordinal) + parserManager.ManyLineCommentEndPattern.Length;
+                                var startCommentBlock = new SnapshotPoint(currentSnapshot, startManyLineCommentIndex);
+                                var endCommentBlock = new SnapshotPoint(currentSnapshot, endIndex);
+                                var newCommentBlock = new BaseBlock(currentTreeBlock, BlockType.Comment, startCommentBlock);
+                                newCommentBlock.SetBlockReady(endCommentBlock, endCommentBlock);
+                                if (newCommentBlock.BlockReady)
+                                {
+                                    newCommentBlock.AddToken(newCommentBlock.BlockSpan, TokenType.Comment);
+                                    currentTreeBlock.Children.Add(newCommentBlock);
+                                    currentListBlock.Add(newCommentBlock);
+                                }
+                            }
+                            else
+                            {
+                                var substring = lineText.Substring(0, startIndex);
+                                cmpLineText = substring.TrimStart();
 
-                            var substring = lineText.Substring(0, index);
-                            cmpLineText = substring.TrimStart();
-
-                            ParseBlocks(substring, cmpLineText);
+                                ParseBlocks(substring, cmpLineText);
+                                currentLineIsManyLineComment = true;
+                            }
                         }
                         else if (cmpLineText.Contains(parserManager.OneLineCommentPattern))
                         {
