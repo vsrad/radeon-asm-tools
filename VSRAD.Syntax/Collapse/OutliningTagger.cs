@@ -52,7 +52,9 @@ namespace VSRAD.Syntax.Collapse
             if (currentParser.CurrentSnapshot != textSnapshot)
                 return;
 
-            var newSpanElements = currentParser.ListBlock.Select(block => block.BlockSpan.Span).ToList();
+            var newSpanElements = currentParser.ListBlock
+                                    .Where(block => block.BlockSpan.Start.GetContainingLine().LineNumber != block.BlockSpan.End.GetContainingLine().LineNumber)
+                                    .Select(block => block.BlockSpan.Span).ToList();
 
             var oldSpanCollection = new NormalizedSpanCollection(currentSpans);
             var newSpanCollection = new NormalizedSpanCollection(newSpanElements);

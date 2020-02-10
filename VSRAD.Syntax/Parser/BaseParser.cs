@@ -122,12 +122,12 @@ namespace VSRAD.Syntax.Parser
                             }
                             else
                             {
-                                var substring = lineText.Substring(0, startIndex);
-                                cmpLineText = substring.TrimStart();
-
-                                ParseBlocks(substring, cmpLineText);
                                 currentLineIsManyLineComment = true;
                             }
+
+                            var substring = lineText.Substring(0, startIndex);
+                            cmpLineText = substring.TrimStart();
+                            ParseBlocks(substring, cmpLineText);
                         }
                         else if (cmpLineText.Contains(parserManager.OneLineCommentPattern))
                         {
