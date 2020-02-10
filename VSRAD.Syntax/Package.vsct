@@ -25,6 +25,16 @@
     <Buttons>
       <Button guid="guidExtensionPackageCmdSet" id="FunctionListCommandId" priority="0x0100" type="Button">
         <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"/>
+        <Icon guid="guidImages" id="functionListIcon"/>
+        <Strings>
+          <ButtonText>Radeon Asm Function List</ButtonText>
+          <LocCanonicalName>FunctionList</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <Button guid="guidExtensionPackageCmdSet" id="FunctionListCommandId" priority="0x9999" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
+        <Icon guid="guidImages" id="functionListIcon"/>
         <Strings>
           <ButtonText>Radeon Asm Function List</ButtonText>
           <LocCanonicalName>FunctionList</LocCanonicalName>
@@ -59,6 +69,12 @@
       </Button>
 
     </Buttons>
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <Bitmap guid="guidImages" href="Resources\CommandIcons.png" usedList="functionListIcon" />
+    </Bitmaps>
+    
   </Commands>
 
   <KeyBindings>
@@ -87,6 +103,16 @@
       <IDSymbol name="FunctionListMenu" value="0x1000"/>
       <IDSymbol name="FunctionListGroup" value="0x1100"/>
       <IDSymbol name="cmdidShowHideLineNumber" value="0x102"/>
+    </GuidSymbol>
+
+    <!-- VSRAD tool bar menu -->
+    <GuidSymbol name="guidCmdSetToolsMenu" value="{E57C1D19-4B4F-4824-8C4B-3B08C52348B7}">
+      <IDSymbol name="ToolsMenuId" value="0x1021" />
+      <IDSymbol name="ToolsMenuGroup" value="0x0600" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidImages" value="{D0DBB6F5-765C-4582-8CE3-F412F0830FA1}">
+      <IDSymbol name="functionListIcon" value="1" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

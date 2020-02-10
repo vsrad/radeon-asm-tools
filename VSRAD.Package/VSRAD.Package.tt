@@ -98,15 +98,6 @@
           <ButtonText>Options</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowFunctionListCommandId" priority="3" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="funcListIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Function List</ButtonText>
-        </Strings>
-      </Button>
       <!-- Editor context menu -->
       <Button guid="guidCmdSetFRTC" id="ForceRunToCursorCommandId" priority="0x0100" type="Button">
         <Parent guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" />
@@ -166,7 +157,7 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, funcListIcon" />
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon" />
     </Bitmaps>
 
     <Groups>
@@ -240,7 +231,6 @@
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
       <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
       <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
-      <IDSymbol name="ToolWindowFunctionListCommandId" value="0x0102" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetDisassembly" value="{03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE}">
@@ -294,7 +284,6 @@
       <IDSymbol name="optionsIcon" value="3" />
       <IDSymbol name="disassemblyIcon" value="4" />
       <IDSymbol name="preprocessIcon" value="5" />
-      <IDSymbol name="funcListIcon" value="6" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

@@ -21,7 +21,6 @@ namespace VSRAD.Package
         public const int MenuCommandId = 0x0100;
         public const int ToolWindowVisualizerCommandId = 0x0100;
         public const int ToolWindowOptionsCommandId = 0x0101;
-        public const int ToolWindowFunctionListCommandId = 0x0102;
         public const int ProfileCommandId = 0x0100;
         public const int DisassembleCommandId = 0x0100;
         public const int PreprocessCommandId = 0x0100;
