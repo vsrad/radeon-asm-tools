@@ -29,6 +29,7 @@ namespace VSRAD.Package.DebugVisualizer
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += ApplyColumnStyling;
+            integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
 
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,
@@ -42,6 +43,16 @@ namespace VSRAD.Package.DebugVisualizer
             };
             tableHost.Setup(_table);
             RestoreSavedState();
+        }
+
+        private void DebuggerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.DebuggerOptions.Counter):
+                    ColumnStyling.GrayOutColumns(_table.DataColumns, (uint)_table.GroupSize);
+                    break;
+            }
         }
 
         private void RestoreSavedState()
