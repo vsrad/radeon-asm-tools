@@ -465,19 +465,33 @@
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <!-- https://github.com/Microsoft/VSProjectSystem/issues/234#issuecomment-525065410 -->
   <Import Project="$(UserProfile)\.nuget\packages\microsoft.visualstudio.projectsystem.sdk.tools\15.8.243\build\Microsoft.VisualStudio.ProjectSystem.Sdk.Tools.targets" Condition="!$(PrepareResourceNamesDependsOn.Contains('GenerateRuleSourceFromXaml'))" />
-  <!-- TODO: This copies the build authoring to a well-known location so that on the machine this project builds on,
-       the projects created by the 3rd party consumer can open and build. But the real 3rd party consumer will not
-       have run this step so they won't be able to open their projects. 
-       To ship, the project type author must create an MSI that places these files in a well-known location on the
-       customer machine and update the project template to point at that location.-->
-  <Target Name="AfterBuild">
+  <!-- See VSRAD.ProjectTempalte/RADProject.radproj. CPS props are copied to $(LocalAppData) on every build to simplify extension development -->
+  <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
     <ItemGroup>
       <BuildSystemToCopy Include="BuildSystem\DeployedBuildSystem\**\*" />
       <RulesToCopy Include="BuildSystem\Rules\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(BuildSystemToCopy)" DestinationFiles="@(BuildSystemToCopy->'$(LocalAppData)\CustomProjectSystems\RADProject\%(RecursiveDir)%(FileName)%(Extension)')" />
-    <Copy SourceFiles="@(RulesToCopy)" DestinationFiles="@(RulesToCopy->'$(LocalAppData)\CustomProjectSystems\RADProject\Rules\%(RecursiveDir)%(FileName)%(Extension)')" />
+    <Copy SourceFiles="@(BuildSystemToCopy)" DestinationFiles="@(BuildSystemToCopy->'$(LocalAppData)\VSRAD\%(RecursiveDir)%(FileName)%(Extension)')" />
+    <Copy SourceFiles="@(RulesToCopy)" DestinationFiles="@(RulesToCopy->'$(LocalAppData)\VSRAD\Rules\%(RecursiveDir)%(FileName)%(Extension)')" />
   </Target>
+  <!-- When installed as a VSIX, CPS props are copied to $(MSBuildExtensionsPath). This requires AllUsers=true in VSIX manifest. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <VSIXSourceItem Include="BuildSystem\DeployedBuildSystem\**">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\Rules\**">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD\Rules</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="..\VSRAD.BuildTools\bin\$(Configuration)\VSRAD.BuildTools.dll">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD</VSIXSubPath>
+    </VSIXSourceItem>
+  </ItemGroup>
   <PropertyGroup>
     <TransformOnBuild>true</TransformOnBuild>
   </PropertyGroup>

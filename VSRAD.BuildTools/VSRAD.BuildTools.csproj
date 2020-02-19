@@ -54,11 +54,11 @@
     <Compile Include="IPCBridge.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="AfterBuild">
+  <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
     <ItemGroup>
       <AssemblyToCopy Include="$(OutputPath)\*.dll" />
     </ItemGroup>
-    <Message Text="Copying the assembly to $(MSBuildUserExtensionsPath)\VSRAD" Importance="high" />
-    <Copy SourceFiles="@(AssemblyToCopy)" DestinationFiles="@(AssemblyToCopy->'$(MSBuildUserExtensionsPath)\VSRAD\%(FileName)%(Extension)')" />
+    <Message Text="Copying the assembly to $(LocalAppData)\VSRAD" Importance="high" />
+    <Copy SourceFiles="@(AssemblyToCopy)" DestinationFiles="@(AssemblyToCopy->'$(LocalAppData)\VSRAD\%(FileName)%(Extension)')" />
   </Target>
 </Project>
