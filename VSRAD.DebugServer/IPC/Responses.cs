@@ -162,6 +162,7 @@ namespace VSRAD.DebugServer.IPC.Responses
             writer.WriteLengthPrefixedDict(Variables);
     }
 
+#pragma warning disable CA1028 // Using byte for enum storage because it is transferred over the wire
     public enum ExecutionStatus : byte
     {
         Completed = 0,
@@ -174,4 +175,5 @@ namespace VSRAD.DebugServer.IPC.Responses
         Successful = 0,
         FileNotFound = 1
     }
+#pragma warning restore CA1028
 }

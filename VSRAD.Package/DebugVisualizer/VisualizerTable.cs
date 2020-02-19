@@ -71,13 +71,13 @@ namespace VSRAD.Package.DebugVisualizer
 
             ColumnResizeController = new ColumnResizeController(this);
 
-            new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
+            _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
                 new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColorClicked)
             });
-            new CustomTableGraphics(this);
+            _ = new CustomTableGraphics(this);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this);
             _selectionController = new SelectionController(this);

@@ -105,7 +105,7 @@ namespace VSRAD.Package.Server
         {
             if (file == rootPath)
                 return Path.GetFileName(file);
-            if (!rootPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+            if (!rootPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
                 rootPath += Path.DirectorySeparatorChar;
             return file.Replace(rootPath, "");
         }

@@ -4,11 +4,24 @@ using System.Text.RegularExpressions;
 
 namespace VSRAD.Package.BuildTools.Errors
 {
-    public struct LineMarker
+    public struct LineMarker : IEquatable<LineMarker>
     {
-        public int PpLine;
-        public int SourceLine;
-        public string SourceFile;
+        public int PpLine { get; }
+        public int SourceLine { get; }
+        public string SourceFile { get; }
+
+        public LineMarker(int ppLine, int sourceLine, string sourceFile)
+        {
+            PpLine = ppLine;
+            SourceLine = sourceLine;
+            SourceFile = sourceFile;
+        }
+
+        public bool Equals(LineMarker m) => PpLine == m.PpLine && SourceLine == m.SourceLine && SourceFile == m.SourceFile;
+        public override bool Equals(object o) => o is LineMarker m && Equals(m);
+        public override int GetHashCode() => (PpLine, SourceLine, SourceFile).GetHashCode();
+        public static bool operator ==(LineMarker left, LineMarker right) => left.Equals(right);
+        public static bool operator !=(LineMarker left, LineMarker right) => !(left == right);
     }
 
     public static class LineMapper
@@ -18,22 +31,18 @@ namespace VSRAD.Package.BuildTools.Errors
         public static List<LineMarker> MapLines(string preprocessed)
         {
             var lines = preprocessed.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            var result = new List<LineMarker>(); ;
+            var result = new List<LineMarker>();
             for (int i = 1; i <= lines.Length; i++)
             {
                 var line = lines[i - 1];
                 var match = LineMarkerRegex.Match(line);
 
                 if (match.Success)
-                {
-                    result.Add(new LineMarker
-                    {
+                    result.Add(new LineMarker(
                         //  +1 for next line after marker
-                        PpLine = i + 1, 
-                        SourceLine = int.Parse(match.Groups["line"].Value),
-                        SourceFile = match.Groups["file"].Value
-                    });
-                }
+                        ppLine: i + 1,
+                        sourceLine: int.Parse(match.Groups["line"].Value),
+                        sourceFile: match.Groups["file"].Value));
             }
             return result;
         }

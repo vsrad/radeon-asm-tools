@@ -39,7 +39,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
                 return true;
             }
 
-            formattedValue = new string[0];
+            formattedValue = System.Array.Empty<string>();
             return false;
         }
     }
