@@ -7,7 +7,9 @@ using System.Linq;
 
 namespace VSRAD.Package.Utils
 {
+#pragma warning disable CA1710
     public interface IObservableReadOnlyDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>, INotifyCollectionChanged, INotifyPropertyChanged { }
+#pragma warning restore CA1710
 
     // Adapted from http://blogs.microsoft.co.il/shimmy/2010/12/26/observabledictionarylttkey-tvaluegt-c/
     public class ObservableDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IObservableReadOnlyDictionary<TKey, TValue>

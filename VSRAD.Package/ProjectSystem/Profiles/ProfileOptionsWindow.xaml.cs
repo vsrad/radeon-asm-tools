@@ -15,7 +15,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             public ProjectOptions Options { get; }
 
-            public List<PropertyPage> Pages => ProfileOptionsReflector.PropertyPages.Value;
+            public static List<PropertyPage> Pages => ProfileOptionsReflector.PropertyPages.Value;
 
             private PropertyPage _selectedPage;
             public PropertyPage SelectedPage { get => _selectedPage; set => SetField(ref _selectedPage, value); }
@@ -82,7 +82,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 if (e.PropertyName == nameof(Context.SelectedPage))
                     _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
             };
-            ((Context)DataContext).SelectedPage = ((Context)DataContext).Pages.First();
+            ((Context)DataContext).SelectedPage = Context.Pages.First();
             OkButton.Click += (s, e) =>
             {
                 SaveChanges();

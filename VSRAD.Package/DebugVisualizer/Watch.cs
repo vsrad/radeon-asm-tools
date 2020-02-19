@@ -3,7 +3,7 @@ using Newtonsoft.Json.Converters;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public readonly struct Watch
+    public readonly struct Watch : System.IEquatable<Watch>
     {
         public string Name { get; }
 
@@ -19,5 +19,11 @@ namespace VSRAD.Package.DebugVisualizer
             Type = type;
             IsAVGPR = isAVGPR;
         }
+
+        public bool Equals(Watch w) => Name == w.Name && Type == w.Type && IsAVGPR == w.IsAVGPR;
+        public override bool Equals(object o) => o is Watch w && Equals(w);
+        public override int GetHashCode() => (Name, Type, IsAVGPR).GetHashCode();
+        public static bool operator ==(Watch left, Watch right) => left.Equals(right);
+        public static bool operator !=(Watch left, Watch right) => !(left == right);
     }
 }

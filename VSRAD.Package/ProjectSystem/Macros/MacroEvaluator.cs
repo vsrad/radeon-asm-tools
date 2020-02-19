@@ -8,7 +8,9 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
+#pragma warning disable CA1815 // Not overriding equals because the struct is only used to pass arguments
     public readonly struct MacroEvaluatorTransientValues
+#pragma warning restore CA1815
     {
         public (string filename, uint line) ActiveSourceFile { get; }
         public uint BreakLine { get; }

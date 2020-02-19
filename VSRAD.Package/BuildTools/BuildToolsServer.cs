@@ -127,7 +127,7 @@ namespace VSRAD.Package.BuildTools
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var buildOptions = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
-            var preprocessorOptions = await _project.Options.Profile.Preprocessor.EvaluateAsync(evaluator);
+            var preprocessorOptions = await Options.PreprocessorProfileOptions.EvaluateAsync(evaluator);
             var disassemblerOptions = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
             var buildSteps = GetBuildSteps(buildOptions);
 

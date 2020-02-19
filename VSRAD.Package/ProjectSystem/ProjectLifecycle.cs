@@ -59,7 +59,7 @@ namespace VSRAD.Package.ProjectSystem
             _project.SaveOptions();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             BuildServer.OnProjectUnloading();
-            GetPackage().ProjectUnloaded();
+            VSPackage.ProjectUnloaded();
         }
 
         private VSPackage GetPackage()

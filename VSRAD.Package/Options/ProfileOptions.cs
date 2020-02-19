@@ -326,7 +326,7 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, binaryOutput: true);
 
-        public async Task<PreprocessorProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
+        public static async Task<PreprocessorProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new PreprocessorProfileOptions(
                 executable: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorExecutable),
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.PreprocessorArguments),
@@ -387,7 +387,7 @@ namespace VSRAD.Package.Options
         }
     }
 
-    public readonly struct ServerConnectionOptions
+    public readonly struct ServerConnectionOptions : IEquatable<ServerConnectionOptions>
     {
         public string RemoteMachine { get; }
         public int Port { get; }
@@ -399,9 +399,15 @@ namespace VSRAD.Package.Options
         }
 
         public override string ToString() => $"{RemoteMachine}:{Port}";
+
+        public bool Equals(ServerConnectionOptions s) => RemoteMachine == s.RemoteMachine && Port == s.Port;
+        public override bool Equals(object o) => o is ServerConnectionOptions s && Equals(s);
+        public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
+        public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
+        public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
     }
 
-    public readonly struct OutputFile
+    public readonly struct OutputFile : IEquatable<OutputFile>
     {
         public string Directory { get; }
         public string File { get; }
@@ -414,5 +420,11 @@ namespace VSRAD.Package.Options
             File = file;
             BinaryOutput = binaryOutput;
         }
+
+        public bool Equals(OutputFile o) => Directory == o.Directory && File == o.File && BinaryOutput == o.BinaryOutput;
+        public override bool Equals(object o) => o is OutputFile f && Equals(f);
+        public override int GetHashCode() => (Directory, File, BinaryOutput).GetHashCode();
+        public static bool operator ==(OutputFile left, OutputFile right) => left.Equals(right);
+        public static bool operator !=(OutputFile left, OutputFile right) => !(left == right);
     }
 }

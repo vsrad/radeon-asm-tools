@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             foreach (MenuItem item in _menu.MenuItems)
                 item.Checked = false;
 
-            var selectedWatch = _table.GetRowWatchState(_table.Rows[hit.RowIndex]);
+            var selectedWatch = VisualizerTable.GetRowWatchState(_table.Rows[hit.RowIndex]);
             _menu.MenuItems[(int)selectedWatch.Type].Checked = true;
             _avgprButton.Enabled = _currentRow != 0 || !_table.ShowSystemRow;
             _avgprButton.Checked = selectedWatch.IsAVGPR;

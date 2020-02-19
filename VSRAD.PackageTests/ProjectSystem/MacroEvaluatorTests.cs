@@ -31,10 +31,9 @@ namespace VSRAD.Package.ProjectSystem.Tests
         public async Task TransientValuesTestAsync()
         {
             var props = new Mock<IProjectProperties>();
-            var debuggerOptions = new Options.DebuggerOptions
-            {
-                Watches = new List<Watch> { new Watch("a", VariableType.Hex, false), new Watch("c", VariableType.Hex, false), new Watch("tide", VariableType.Hex, false) }
-            };
+            var debuggerOptions = new Options.DebuggerOptions(
+                new List<Watch> { new Watch("a", VariableType.Hex, false), new Watch("c", VariableType.Hex, false), new Watch("tide", VariableType.Hex, false) }
+            );
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, debuggerOptions, new Options.ProfileOptions());
             var result = await evaluator.GetMacroValueAsync(RadMacros.Watches);

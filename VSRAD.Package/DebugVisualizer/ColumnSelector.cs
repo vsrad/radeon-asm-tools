@@ -107,7 +107,7 @@ namespace VSRAD.Package.DebugVisualizer
                         regionIndexes.Remove(columnIndex);
                 region.Selector = FromIndexes(regionIndexes);
             }
-            var emptyRegions = regions.Where(x => x.Selector == "").ToList();
+            var emptyRegions = regions.Where(x => string.IsNullOrEmpty(x.Selector)).ToList();
             foreach (var emptyRegion in emptyRegions)
                 regions.Remove(emptyRegion);
         }

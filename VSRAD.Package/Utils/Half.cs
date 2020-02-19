@@ -10,19 +10,12 @@ namespace VSRAD.Package.Utils
 {
     class Half
     {
-
-        private const int FP16_SIGN_SHIFT = 15;
         private const int FP16_SIGN_MASK = 0x8000;
         private const int FP16_EXPONENT_SHIFT = 10;
         private const int FP16_EXPONENT_MASK = 0x1f;
         private const int FP16_SIGNIFICAND_MASK = 0x3ff;
         private const int FP16_EXPONENT_BIAS = 15;
-        private const int FP16_COMBINED = 0x7fff;
-        private const int FP16_EXPONENT_MAX = 0x7c00;
-        private const int FP32_SIGN_SHIFT = 31;
         private const int FP32_EXPONENT_SHIFT = 23;
-        private const int FP32_EXPONENT_MASK = 0xff;
-        private const int FP32_SIGNIFICAND_MASK = 0x7fffff;
         private const int FP32_EXPONENT_BIAS = 127;
         private const int FP32_QNAN_MASK = 0x400000;
         private const uint FP32_DENORMAL_MAGIC = 126 << 23;

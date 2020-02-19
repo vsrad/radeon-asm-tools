@@ -242,7 +242,7 @@
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
     <Compile Include="Utils\StringUtils.cs" />
-    <Compile Include="Utils\Win32Control.cs" />
+    <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
     <Compile Include="VSLanguageInfo.cs" />
     <Compile Include="VSPackage.cs" />

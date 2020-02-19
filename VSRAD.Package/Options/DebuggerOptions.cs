@@ -12,7 +12,7 @@ namespace VSRAD.Package.Options
     public sealed class DebuggerOptions : DefaultNotifyPropertyChanged
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
-        public List<Watch> Watches { get; set; } = new List<Watch>();
+        public List<Watch> Watches { get; } = new List<Watch>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Select(w => w.Name).Distinct().ToList());
@@ -28,6 +28,9 @@ namespace VSRAD.Package.Options
 
         private string _breakArgs = "";
         public string BreakArgs { get => _breakArgs; set => SetField(ref _breakArgs, value); }
+
+        public DebuggerOptions() { }
+        public DebuggerOptions(List<Watch> watches) => Watches = watches;
     }
 
     public sealed class BackwardsCompatibilityWatchConverter : JsonConverter

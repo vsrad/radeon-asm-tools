@@ -78,6 +78,8 @@ namespace VSRAD.Package.ProjectSystem
 
         internal void Rerun()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             RerunRequested();
             Launch();
         }

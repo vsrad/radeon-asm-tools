@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace VSRAD.Package.Utils
 {
-    public static class Win32Control
+    public static class NativeMethods
     {
         /* https://stackoverflow.com/a/487757 */
         [DllImport("user32.dll")]
@@ -13,12 +13,12 @@ namespace VSRAD.Package.Utils
 
         public static void SuspendDrawing(this Control control)
         {
-            SendMessage(control.Handle, WM_SETREDRAW, false, 0);
+            _ = SendMessage(control.Handle, WM_SETREDRAW, false, 0);
         }
 
         public static void ResumeDrawing(this Control control)
         {
-            SendMessage(control.Handle, WM_SETREDRAW, true, 0);
+            _ = SendMessage(control.Handle, WM_SETREDRAW, true, 0);
             control.Refresh();
         }
     }

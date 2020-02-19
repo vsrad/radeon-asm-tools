@@ -51,7 +51,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.RowIndex == _table.NewWatchRowIndex) return;
 
-            var selectedWatch = _table.GetRowWatchState(_table.Rows[e.RowIndex]);
+            var selectedWatch = VisualizerTable.GetRowWatchState(_table.Rows[e.RowIndex]);
             if (selectedWatch.IsAVGPR)
             {
                 var highlightedRect = new Rectangle(e.RowBounds.Left + 3, e.RowBounds.Top + 3, _table.RowHeadersWidth - 6, e.RowBounds.Height - 6);

@@ -23,7 +23,7 @@ namespace VSRAD.Package.Commands
         protected override async Task<(string localPath, string lineMarker)> ConfigurePreviewAsync()
         {
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
-            var options = await _project.Options.Profile.Preprocessor.EvaluateAsync(evaluator);
+            var options = await Options.PreprocessorProfileOptions.EvaluateAsync(evaluator);
             return (options.LocalOutputCopyPath, options.LineMarker);
         }
     }

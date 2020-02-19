@@ -36,7 +36,8 @@ namespace VSRAD.Package.DebugVisualizer
                 groupSizeGetter: () => (int)headerControl.GroupSize);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
-                _integration.ProjectOptions.DebuggerOptions.Watches = newWatchState;
+                _integration.ProjectOptions.DebuggerOptions.Watches.Clear();
+                _integration.ProjectOptions.DebuggerOptions.Watches.AddRange(newWatchState);
                 if (invalidatedRows != null)
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
@@ -126,7 +127,8 @@ namespace VSRAD.Package.DebugVisualizer
             _table.RemoveNewWatchRow();
             _table.AppendVariableRow(new Watch(watchName, VariableType.Hex, isAVGPR: false));
             _table.PrepareNewWatchRow();
-            _integration.ProjectOptions.DebuggerOptions.Watches = _table.GetCurrentWatchState();
+            _integration.ProjectOptions.DebuggerOptions.Watches.Clear();
+            _integration.ProjectOptions.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
         }
 
         private void GroupSelectionChanged(uint groupIndex, string coordinates)
@@ -172,7 +174,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void EraseRowData(System.Windows.Forms.DataGridViewRow row)
+        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row)
         {
             for (int i = 0; i < VisualizerTable.DataColumnCount; ++i)
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
