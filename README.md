@@ -41,6 +41,17 @@ select *Properties*.
 5. Choose *Start external program* as the *Start action* and enter the path to your Visual Studio executable (`<Visual Studio installation path>\Common7\IDE\devenv.exe`).
 6. Close the project properties editor and start debugging by pressing F5.
 
+#### Known Issues
+
+If you encounter a *load failed* error for `VSRAD.Package`:
+
+1. Go to *Tools* -> *NuGet Package Manager* -> *Package Manager Console*.
+2. Run the following:
+    ```
+    Install-Package Microsoft.VisualStudio.ProjectSystem.Sdk.Tools -Version 15.8.243
+    ```
+3. Right-click on `VSRAD.Package` in *Solution Explorer* and select *Reload Project*.
+
 ### Assembling a Release
 
 1. Right-click on `VSRAD.Build` in *Solution Explorer* and select *Set as StartUp Project*.
