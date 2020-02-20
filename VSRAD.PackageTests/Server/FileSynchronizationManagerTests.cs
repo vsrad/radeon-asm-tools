@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.Options;
@@ -127,19 +126,11 @@ namespace VSRAD.PackageTests.Server
             return (project, new FileSynchronizationManager(channel, project.Object, sourceManager ?? new Mock<IProjectSourceManager>().Object));
         }
 
-        private static HashSet<string> ReadZipItems(byte[] archive)
+        private static HashSet<string> ReadZipItems(byte[] zipBytes)
         {
-            var tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            File.WriteAllBytes(tempFile, archive);
-            try
-            {
-                using (var zip = ZipFile.Open(tempFile, ZipArchiveMode.Read))
-                    return zip.Entries.Select(entry => entry.FullName).ToHashSet();
-            }
-            finally
-            {
-                File.Delete(tempFile);
-            }
+            using (var stream = new MemoryStream(zipBytes))
+            using (var archive = new ZipArchive(stream))
+                return archive.Entries.Select(entry => entry.FullName).ToHashSet();
         }
     }
 }

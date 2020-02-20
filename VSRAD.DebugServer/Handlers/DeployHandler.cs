@@ -21,17 +21,13 @@ namespace VSRAD.DebugServer.Handlers
 
         public Task<IResponse> RunAsync()
         {
-            var tempFile = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-            File.WriteAllBytes(tempFile, _archive);
+            using var stream = new MemoryStream(_archive);
+            using var archive = new ZipArchive(stream);
 
-            using (var archive = ZipFile.Open(tempFile, ZipArchiveMode.Read))
-            {
-                var deployItems = archive.Entries.Select(entry => _destination + Path.DirectorySeparatorChar + entry.FullName);
-                _log.DeployItemsReceived(deployItems);
+            var deployItems = archive.Entries.Select(entry => _destination + Path.DirectorySeparatorChar + entry.FullName);
+            _log.DeployItemsReceived(deployItems);
 
-                archive.ExtractToDirectory(_destination, overwriteFiles: true);
-            }
-            File.Delete(tempFile);
+            archive.ExtractToDirectory(_destination, overwriteFiles: true);
 
             return Task.FromResult<IResponse>(null);
         }
