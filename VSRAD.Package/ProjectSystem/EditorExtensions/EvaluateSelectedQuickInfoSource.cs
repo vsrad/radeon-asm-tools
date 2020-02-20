@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Language.Intellisense;
+﻿#if false
+using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Text;
@@ -127,3 +128,4 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         }
     }
 }
+#endif

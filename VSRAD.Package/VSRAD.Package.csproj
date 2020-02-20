@@ -407,12 +407,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Imaging.Interop.14.0.DesignTime">
       <Version>14.3.26930</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Language">
-      <Version>15.8.525</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Language.StandardClassification">
-      <Version>15.8.525</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.OLE.Interop">
       <Version>7.10.6071</Version>
     </PackageReference>
