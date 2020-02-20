@@ -102,7 +102,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
         private static (int start, int lenght) GetExtentOnLine(ITextSnapshotLine line, int index)
         {
-            if (index < 0 || index > line.Length) throw new ArgumentOutOfRangeException("Invalid index in line");
+            if (index < 0 || index > line.Length) throw new ArgumentOutOfRangeException(nameof(index), index, "Invalid index in line");
             var lineText = line.GetText();
 
             // check actual word with open and close brackets

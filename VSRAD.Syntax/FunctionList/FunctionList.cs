@@ -45,7 +45,7 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var activeView = GetActiveTextView();
                 var parserManager = activeView.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                Task.Run(() => UpdateFunctionListAsync(parserManager.ActualParser));
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(parserManager.ActualParser));
             }
             catch (Exception e)
             {
@@ -57,7 +57,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)
         {
-            if (GotFocus.Kind.Equals("Document"))
+            if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
             {
                 var openWindowPath = Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
 
@@ -76,7 +76,7 @@ namespace VSRAD.Syntax.FunctionList
                         {
                             var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
                             var parserManager = textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                            Task.Run(() => UpdateFunctionListAsync(parserManager.ActualParser));
+                            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(parserManager.ActualParser));
                         }
                     }
                 }

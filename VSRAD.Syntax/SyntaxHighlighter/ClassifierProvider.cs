@@ -12,7 +12,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 #pragma warning disable 649
 
         [Import]
-        private IClassificationTypeRegistryService classificationRegistry = null;
+        private readonly IClassificationTypeRegistryService classificationRegistry = null;
 
         public IClassifier GetClassifier(ITextBuffer buffer)
         {
@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 #pragma warning disable 649
 
         [Import]
-        private IClassificationTypeRegistryService classificationRegistry = null;
+        private readonly IClassificationTypeRegistryService classificationRegistry = null;
 
         public IClassifier GetClassifier(ITextBuffer buffer)
         {

@@ -8,7 +8,7 @@ namespace VSRAD.Syntax.Helpers
 {
     public static class TextViewExtension
     {
-        public static double OffsetLineFromTextView = 60.0;
+        private const double OffsetLineFromTextView = 60.0;
 
         public static void ChangeCaretPosition(this IWpfTextView textView, ITextSnapshotLine line)
         {
@@ -57,11 +57,11 @@ namespace VSRAD.Syntax.Helpers
             {
                 if (comment)
                 {
-                    CommentRegion(textView, mappedStart.Value, mappedEnd.Value);
+                    CommentRegion(mappedStart.Value, mappedEnd.Value);
                 }
                 else
                 {
-                    UncommentRegion(textView, mappedStart.Value, mappedEnd.Value);
+                    UncommentRegion(mappedStart.Value, mappedEnd.Value);
                 }
 
                 if (textView.TextSnapshot.IsRadeonAsmAsm2ContentType())
@@ -84,7 +84,7 @@ namespace VSRAD.Syntax.Helpers
             );
         }
 
-        private static void CommentRegion(ITextView view, SnapshotPoint start, SnapshotPoint end)
+        private static void CommentRegion(SnapshotPoint start, SnapshotPoint end)
         {
             var snapshot = start.Snapshot;
 
@@ -131,7 +131,7 @@ namespace VSRAD.Syntax.Helpers
             return -1;
         }
 
-        private static void UncommentRegion(ITextView view, SnapshotPoint start, SnapshotPoint end)
+        private static void UncommentRegion(SnapshotPoint start, SnapshotPoint end)
         {
             var snapshot = start.Snapshot;
 

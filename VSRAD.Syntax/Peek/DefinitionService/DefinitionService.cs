@@ -121,7 +121,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return extent;
         }
 
-        private void NavigateToFunction(IBaseToken token)
+        private static void NavigateToFunction(IBaseToken token)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             if (token == null) return;
@@ -163,7 +163,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return (textViewCurrent != null) ? _adaptersFactoryService.GetWpfTextView(textViewCurrent) : null;
         }
 
-        private bool FindNavigationTokenInBlock(IBaseBlock currentBlock, string text, out IBaseToken outToken)
+        private static bool FindNavigationTokenInBlock(IBaseBlock currentBlock, string text, out IBaseToken outToken)
         {
             if (currentBlock.BlockSpan.Snapshot.IsRadeonAsm2ContentType())
             {
@@ -171,7 +171,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
                 {
                     foreach (var token in currentBlock.Tokens)
                     {
-                        if (token.TokenName.TrimStart('.').Equals(text))
+                        if (token.TokenName.TrimStart('.') == text)
                         {
                             outToken = token;
                             return true;
@@ -190,7 +190,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
                 while (currentBlock != null)
                 {
-                    var argToken = currentBlock.Tokens.FirstOrDefault(token => (token.TokenType == TokenType.Argument) && token.TokenName.Equals(text));
+                    var argToken = currentBlock.Tokens.FirstOrDefault(token => (token.TokenType == TokenType.Argument) && token.TokenName == text);
                     if (argToken != null)
                     {
                         outToken = argToken;
@@ -207,7 +207,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
                     foreach (var token in codeBlock.Tokens)
                     {
-                        if (token.TokenName.TrimStart('.').Equals(text))
+                        if (token.TokenName.TrimStart('.') == text)
                         {
                             outToken = token;
                             return true;
@@ -220,13 +220,13 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return false;
         }
 
-        private bool FindNavigationTokenInFunctionList(IBaseParser parser, string text, out IBaseToken functionToken)
+        private static bool FindNavigationTokenInFunctionList(IBaseParser parser, string text, out IBaseToken functionToken)
         {
             var functionTokens = (parser.RootBlock as RootBlock).FunctionTokens;
 
             foreach (var token in functionTokens)
             {
-                if (token.TokenName.TrimStart('.').Equals(text))
+                if (token.TokenName.TrimStart('.') == text)
                 {
                     functionToken = token;
                     return true;
@@ -257,7 +257,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
                 var docFileName = Regex.Match(documentName.GetText(), "\"(.+)\"").Groups[1].Value;
                 var extension = Path.GetExtension(docFileName);
 
-                if (extension.Equals(Constants.FileExtensionInc) || extension.Equals(Constants.FileExtensionS))
+                if (extension.Equals(Constants.FileExtensionInc, StringComparison.OrdinalIgnoreCase) || extension.Equals(Constants.FileExtensionS, StringComparison.OrdinalIgnoreCase))
                 {
                     var pathToDocument = Path.GetFullPath(Path.Combine(dirPath, docFileName));
                     var document = _textDocumentFactoryService.CreateAndLoadTextDocument(pathToDocument, contentType);
@@ -285,7 +285,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
                     foreach (var token in tokens)
                     {
-                        if (token.TokenName.TrimStart('.').Equals(text))
+                        if (token.TokenName.TrimStart('.') == text)
                         {
                             outToken = token;
                             return true;

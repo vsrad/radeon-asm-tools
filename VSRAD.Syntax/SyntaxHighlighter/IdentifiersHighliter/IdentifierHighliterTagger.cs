@@ -37,7 +37,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
         private readonly DefinitionService DefinitionService;
         private readonly ParserManger parserManager;
-        private object updateLock = new object();
+        private readonly object updateLock = new object();
         private NormalizedSnapshotSpanCollection WordSpans { get; set; }
         private SnapshotSpan? CurrentWord { get; set; }
         private SnapshotPoint RequestedPoint { get; set; }
