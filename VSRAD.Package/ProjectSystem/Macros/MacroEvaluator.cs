@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -82,7 +83,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);
 
         private readonly IProjectProperties _projectProperties;
-        private readonly IReadOnlyDictionary<string, string> _remoteEnvironment;
+        private readonly AsyncLazy<IReadOnlyDictionary<string, string>> _remoteEnvironment;
 
         private readonly Options.ProfileOptions _profileOptions;
         private readonly Dictionary<string, string> _macroCache;
@@ -90,7 +91,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public MacroEvaluator(
             IProjectProperties projectProperties,
             MacroEvaluatorTransientValues values,
-            IReadOnlyDictionary<string, string> remoteEnvironment,
+            AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnvironment,
             Options.DebuggerOptions debuggerOptions,
             Options.ProfileOptions profileOptions)
         {
@@ -177,17 +178,18 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private Task<string> EvaluateAsync(string src, string recursionStartName) =>
             _macroRegex.ReplaceAsync(src, (m) => ReplaceMacroMatchAsync(m, recursionStartName));
 
-        private Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
+        private async Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
         {
             var macro = macroMatch.Groups[2].Value;
             switch (macroMatch.Groups[1].Value)
             {
                 case "ENV":
-                    return Task.FromResult(Environment.GetEnvironmentVariable(macro));
+                    return Environment.GetEnvironmentVariable(macro);
                 case "ENVR":
-                    return Task.FromResult(_remoteEnvironment.TryGetValue(macro, out var value) ? value : "");
+                    var env = await _remoteEnvironment.GetValueAsync();
+                    return env.TryGetValue(macro, out var value) ? value : "";
                 default:
-                    return GetMacroValueAsync(macro, recursionStartName);
+                    return await GetMacroValueAsync(macro, recursionStartName);
             }
         }
     }

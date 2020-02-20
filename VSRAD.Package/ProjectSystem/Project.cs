@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Microsoft.VisualStudio.Threading;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
@@ -92,9 +94,11 @@ namespace VSRAD.Package.ProjectSystem
 
             var file = GetRelativePath(codeEditor.GetAbsoluteSourcePath());
             var line = codeEditor.GetCurrentLine();
-            var transients = new MacroEvaluatorTransientValues(activeSourceFile: (file, line), breakLine: breakLine, watchesOverride: watchesOverride);
+            var transients = new MacroEvaluatorTransientValues(
+                activeSourceFile: (file, line), breakLine: breakLine, watchesOverride: watchesOverride);
 
-            var remoteEnvironment = await channel.GetRemoteEnvironmentAsync();
+            var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(
+                channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
 
             return new MacroEvaluator(properties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
         }

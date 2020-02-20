@@ -1,17 +1,28 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Microsoft.VisualStudio.Threading;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.PackageTests;
 using Xunit;
 
 namespace VSRAD.Package.ProjectSystem.Tests
 {
     public class MacroEvaluatorTests
     {
-        private static readonly IReadOnlyDictionary<string, string> EmptyRemoteEnv = new Dictionary<string, string>();
+        private static readonly AsyncLazy<IReadOnlyDictionary<string, string>> EmptyRemoteEnv = GetRemoteEnv();
+
+        private static AsyncLazy<IReadOnlyDictionary<string, string>> GetRemoteEnv(Dictionary<string, string> vars = null)
+        {
+            vars = vars ?? new Dictionary<string, string>();
+#pragma warning disable VSTHRD012 // There's no need to provide a JoinableTaskFactory for a completed task
+            return new AsyncLazy<IReadOnlyDictionary<string, string>>(() =>
+                Task.FromResult((IReadOnlyDictionary<string, string>)vars));
+#pragma warning restore VSTHRD012
+        }
 
         [Fact]
         public async Task ProjectPropertiesTestAsync()
@@ -53,7 +64,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
         public async Task EnvironmentVariablesTestAsync()
         {
             var props = new Mock<IProjectProperties>();
-            var remoteEnv = new Dictionary<string, string>() { { "MAMI_BREAKPOINT", "head" }, { "PATH", "/usr/bin:/root/soulgems" } };
+            var remoteEnv = GetRemoteEnv(new Dictionary<string, string>() { { "MAMI_BREAKPOINT", "head" }, { "PATH", "/usr/bin:/root/soulgems" } });
             var localPath = Environment.GetEnvironmentVariable("PATH");
 
             var evaluator = new MacroEvaluator(props.Object, default, remoteEnv, new Options.DebuggerOptions(), new Options.ProfileOptions());

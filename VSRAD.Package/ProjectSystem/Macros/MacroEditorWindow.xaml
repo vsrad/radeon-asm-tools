@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
         mc:Ignorable="d"
-        Title="{Binding MacroName}"
+        Title="{Binding Status}"
         Height="300" Width="800"
         Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
         Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">

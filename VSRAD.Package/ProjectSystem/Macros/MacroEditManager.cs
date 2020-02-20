@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
@@ -32,22 +33,24 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var projectProperties = propertiesProvider.GetCommonProperties();
             var transients = new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0));
 
-            IReadOnlyDictionary<string, string> remoteEnvironment;
-            try
+            var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(async () =>
             {
-                remoteEnvironment = await _channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
-            }
-            catch (ConnectionRefusedException)
-            {
-                remoteEnvironment = new Dictionary<string, string>();
-            }
+                try
+                {
+                    return await _channel.GetRemoteEnvironmentAsync().ConfigureAwait(false);
+                }
+                catch (ConnectionRefusedException)
+                {
+                    return new Dictionary<string, string>();
+                }
+            }, VSPackage.TaskFactory);
 
             var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, profileOptions);
 
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
             var editor = new MacroEditor(macroName, currentValue, evaluator);
-            editor.LoadPreviewListInBackground(projectProperties, _channel);
+            editor.LoadPreviewListInBackground(projectProperties, remoteEnvironment);
 
             var editorWindow = new MacroEditorWindow(editor);
             editorWindow.ShowDialog();
