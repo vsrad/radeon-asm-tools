@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="ba666db81-7abd-4a75-b906-895d8cc0616e" Version="2020.01.23" Language="en-US" Publisher="Tim Labushev, Ivan Sarzhevskiy, Gleb Larochkin" />
+        <Identity Id="ba666db81-7abd-4a75-b906-895d8cc0616e" Version="2020.02.20" Language="en-US" Publisher="Tim Labushev, Ivan Sarzhevskiy, Gleb Larochkin" />
         <DisplayName>Radeon Asm Debugger</DisplayName>
         <Description xml:space="preserve">Debugging tools for Radeon Asm projects</Description>
     </Metadata>
