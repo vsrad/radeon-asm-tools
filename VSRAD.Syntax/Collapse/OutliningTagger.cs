@@ -104,7 +104,7 @@ namespace VSRAD.Syntax.Collapse
         {
             if (e.After != buffer.CurrentSnapshot)
                 return;
-            Task.Run(() => ParserCompletedAsync());
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => ParserCompletedAsync());
         }
 
         private Task ParserCompletedAsync()

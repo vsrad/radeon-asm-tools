@@ -72,8 +72,8 @@ namespace VSRAD.Package.Options
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.String)
-                if (((string)reader.Value).StartsWith("0x"))
-                    return int.Parse(((string)reader.Value).Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                if (((string)reader.Value).StartsWith("0x", StringComparison.Ordinal))
+                    return int.Parse(((string)reader.Value).Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                 else
                     return int.Parse((string)reader.Value);
             else

@@ -48,7 +48,7 @@ namespace VSRAD.Syntax.Peek
 
             return _peekResultFactory.Create(
                 displayInfo,
-                default(ImageMoniker),
+                default,
                 filePath,
                 startLineIndex,
                 0,

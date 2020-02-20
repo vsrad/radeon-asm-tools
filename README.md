@@ -5,8 +5,7 @@
 1. Download the installation archive attached to the latest git tag and unpack it in a temporary directory.
 2. Install `RadeonAsmSyntax.vsix` (optionally, documentation is available [here](https://github.com/vsrad/radeon-asm-tools/tree/master/VSRAD.Syntax#visual-studio-radeon-asm-syntax-highlight-extension))
 3. Install `RadeonAsmDebugger.vsix`.
-4. Run the `install.bat` script.
-5. Transfer `DebugServerW64`/`DebugServerLinux64` to your remote machines.
+4. Transfer `DebugServerW64`/`DebugServerLinux64` to your remote machines.
 
 ## Usage
 
@@ -40,6 +39,17 @@ select *Properties*.
 4. Navigate to the *Debug* tab in the project properties editor.
 5. Choose *Start external program* as the *Start action* and enter the path to your Visual Studio executable (`<Visual Studio installation path>\Common7\IDE\devenv.exe`).
 6. Close the project properties editor and start debugging by pressing F5.
+
+#### Known Issues
+
+If you encounter a *load failed* error for `VSRAD.Package`:
+
+1. Go to *Tools* -> *NuGet Package Manager* -> *Package Manager Console*.
+2. Run the following:
+    ```
+    Install-Package Microsoft.VisualStudio.ProjectSystem.Sdk.Tools -Version 15.8.243
+    ```
+3. Right-click on `VSRAD.Package` in *Solution Explorer* and select *Reload Project*.
 
 ### Assembling a Release
 

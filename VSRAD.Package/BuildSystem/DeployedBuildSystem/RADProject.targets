@@ -49,7 +49,7 @@
   </Target>
 
   <UsingTask TaskName="VSRAD.BuildTools.RemoteBuildTask"
-             AssemblyFile="$(MSBuildUserExtensionsPath)\VSRAD\VSRAD.BuildTools.dll"/>
+             AssemblyFile="$(MSBuildThisFileDirectory)\VSRAD.BuildTools.dll"/>
 
   <Target Name="Build">
     <RemoteBuildTask ProjectDir="$(MSBuildProjectDirectory)" />

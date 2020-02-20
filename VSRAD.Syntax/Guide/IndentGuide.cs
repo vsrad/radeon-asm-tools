@@ -39,8 +39,8 @@ namespace VSRAD.Syntax.Guide
             _layer = _wpfTextView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
-            _wpfTextView.LayoutChanged += async (sender, args) => await UpdateIndentGuidesAsync(sender, args);
-            _parserManager.ParserUpdatedEvent += async (sender, args) => await UpdateIndentGuidesAsync(sender, args);
+            _wpfTextView.LayoutChanged += async (sender, args) => await UpdateIndentGuidesAsync();
+            _parserManager.ParserUpdatedEvent += async (sender, args) => await UpdateIndentGuidesAsync();
         }
 
         private void CanvasRemoved(object tag, UIElement element)
@@ -85,7 +85,7 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        private bool IsInVisualBuffer(IBaseBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
+        private static bool IsInVisualBuffer(IBaseBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
             bool isOnStart = block.BlockSpan.Start <= lastVisibleLine.End;
             bool isOnEnd = block.BlockSpan.End >= firstVisibleLine.End;
@@ -144,7 +144,7 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        private Task UpdateIndentGuidesAsync(object sender, object args)
+        private Task UpdateIndentGuidesAsync()
         {
             _currentParser = _parserManager.ActualParser;
 

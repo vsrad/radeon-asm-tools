@@ -94,7 +94,7 @@ namespace VSRAD.Package.BuildTools.Errors
                 case "E": case "error": return MessageKind.Error;
                 case "W": case "warning": return MessageKind.Warning;
                 case "note": return MessageKind.Note;
-                default: throw new ArgumentException();
+                default: throw new ArgumentException(kind, nameof(kind));
             }
         }
     }

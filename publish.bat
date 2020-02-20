@@ -16,9 +16,3 @@ copy /Y "VSRAD.Package\bin\%config%\RadeonAsmDebugger.vsix" "%config%\"
 copy /Y "VSRAD.Syntax\bin\%config%\RadeonAsmSyntax.vsix" "%config%\"
 :: Readme
 copy /Y "README.md" "%config%\"
-:: VSGRAD.BuildTools.dll
-copy /Y "VSRAD.BuildTools\bin\%config%\VSRAD.BuildTools.dll" "%config%\"
-:: RADProject
-xcopy /E /Y "%LOCALAPPDATA%\CustomProjectSystems\RADProject" "%config%\RADProject\"
-:: install.bat
-copy "install.bat" "%config%\"

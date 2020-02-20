@@ -13,8 +13,8 @@ namespace VSRAD.Package.Utils
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var magicNumber = value.ToString();
-            if (magicNumber.StartsWith("0x") && int.TryParse(
-                magicNumber.Replace("0x", ""), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int converted))
+            if (magicNumber.StartsWith("0x", StringComparison.Ordinal) && int.TryParse(
+                magicNumber.Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int converted))
             {
                 _enteredDecimal = false;
                 _enteredLeadingZero = false;
@@ -22,7 +22,7 @@ namespace VSRAD.Package.Utils
             }
             if (int.TryParse(magicNumber, out converted))
             {
-                _enteredLeadingZero = magicNumber.StartsWith("0");
+                _enteredLeadingZero = magicNumber.StartsWith("0", StringComparison.Ordinal);
                 _enteredDecimal = true;
                 return converted;
             }

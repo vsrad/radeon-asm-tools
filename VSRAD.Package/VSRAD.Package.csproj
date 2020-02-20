@@ -37,7 +37,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet />
+    <CodeAnalysisRuleSet>VSRAD.Package.ruleset</CodeAnalysisRuleSet>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -48,7 +48,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <CodeAnalysisRuleSet />
+    <CodeAnalysisRuleSet>VSRAD.Package.ruleset</CodeAnalysisRuleSet>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -242,7 +242,7 @@
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
     <Compile Include="Utils\StringUtils.cs" />
-    <Compile Include="Utils\Win32Control.cs" />
+    <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
     <Compile Include="VSLanguageInfo.cs" />
     <Compile Include="VSPackage.cs" />
@@ -272,6 +272,7 @@
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
+    <None Include="VSRAD.Package.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
@@ -392,6 +393,11 @@
     <PackageReference Include="Microsoft.Build.Tasks.Core">
       <Version>15.9.20</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers">
+      <Version>2.9.6</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Composition">
       <Version>15.8.117</Version>
     </PackageReference>
@@ -400,12 +406,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Imaging.Interop.14.0.DesignTime">
       <Version>14.3.26930</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Language">
-      <Version>15.8.525</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Language.StandardClassification">
-      <Version>15.8.525</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.OLE.Interop">
       <Version>7.10.6071</Version>
@@ -465,19 +465,33 @@
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <!-- https://github.com/Microsoft/VSProjectSystem/issues/234#issuecomment-525065410 -->
   <Import Project="$(UserProfile)\.nuget\packages\microsoft.visualstudio.projectsystem.sdk.tools\15.8.243\build\Microsoft.VisualStudio.ProjectSystem.Sdk.Tools.targets" Condition="!$(PrepareResourceNamesDependsOn.Contains('GenerateRuleSourceFromXaml'))" />
-  <!-- TODO: This copies the build authoring to a well-known location so that on the machine this project builds on,
-       the projects created by the 3rd party consumer can open and build. But the real 3rd party consumer will not
-       have run this step so they won't be able to open their projects. 
-       To ship, the project type author must create an MSI that places these files in a well-known location on the
-       customer machine and update the project template to point at that location.-->
-  <Target Name="AfterBuild">
+  <!-- See VSRAD.ProjectTempalte/RADProject.radproj. CPS props are copied to $(LocalAppData) on every build to simplify extension development -->
+  <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
     <ItemGroup>
       <BuildSystemToCopy Include="BuildSystem\DeployedBuildSystem\**\*" />
       <RulesToCopy Include="BuildSystem\Rules\**\*" />
     </ItemGroup>
-    <Copy SourceFiles="@(BuildSystemToCopy)" DestinationFiles="@(BuildSystemToCopy->'$(LocalAppData)\CustomProjectSystems\RADProject\%(RecursiveDir)%(FileName)%(Extension)')" />
-    <Copy SourceFiles="@(RulesToCopy)" DestinationFiles="@(RulesToCopy->'$(LocalAppData)\CustomProjectSystems\RADProject\Rules\%(RecursiveDir)%(FileName)%(Extension)')" />
+    <Copy SourceFiles="@(BuildSystemToCopy)" DestinationFiles="@(BuildSystemToCopy->'$(LocalAppData)\VSRAD\%(RecursiveDir)%(FileName)%(Extension)')" />
+    <Copy SourceFiles="@(RulesToCopy)" DestinationFiles="@(RulesToCopy->'$(LocalAppData)\VSRAD\Rules\%(RecursiveDir)%(FileName)%(Extension)')" />
   </Target>
+  <!-- When installed as a VSIX, CPS props are copied to $(MSBuildExtensionsPath). This requires AllUsers=true in VSIX manifest. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <VSIXSourceItem Include="BuildSystem\DeployedBuildSystem\**">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\Rules\**">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD\Rules</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="..\VSRAD.BuildTools\bin\$(Configuration)\VSRAD.BuildTools.dll">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD</VSIXSubPath>
+    </VSIXSourceItem>
+  </ItemGroup>
   <PropertyGroup>
     <TransformOnBuild>true</TransformOnBuild>
   </PropertyGroup>

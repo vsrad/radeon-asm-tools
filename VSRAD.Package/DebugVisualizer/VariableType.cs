@@ -2,7 +2,9 @@
 {
     public enum VariableType
     {
+#pragma warning disable CA1720 // Identifier contains type name
         Hex, Float, Uint, Int, Half, Bin
+#pragma warning restore CA1720 // Identifier contains type name
     };
 
     public static class VariableTypeUtils

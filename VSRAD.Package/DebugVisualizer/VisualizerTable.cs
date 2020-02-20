@@ -71,13 +71,13 @@ namespace VSRAD.Package.DebugVisualizer
 
             ColumnResizeController = new ColumnResizeController(this);
 
-            new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
+            _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
                 new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColorClicked)
             });
-            new CustomTableGraphics(this);
+            _ = new CustomTableGraphics(this);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this);
             _selectionController = new SelectionController(this);
@@ -191,7 +191,7 @@ namespace VSRAD.Package.DebugVisualizer
         public List<Watch> GetCurrentWatchState() =>
             DataRows.Select(GetRowWatchState).Where(w => !string.IsNullOrEmpty(w.Name)).ToList();
 
-        public Watch GetRowWatchState(DataGridViewRow row) => new Watch(
+        public static Watch GetRowWatchState(DataGridViewRow row) => new Watch(
             name: row.Cells[NameColumnIndex].Value?.ToString(),
             type: VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString()),
             isAVGPR: (bool)row.HeaderCell.Tag);
@@ -308,7 +308,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void LockWatchRowForEditing(DataGridViewRow row, bool canBeRemoved = true)
+        private static void LockWatchRowForEditing(DataGridViewRow row, bool canBeRemoved = true)
         {
             row.Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
         }
@@ -341,7 +341,7 @@ namespace VSRAD.Package.DebugVisualizer
                     BeginEdit(false);
                     return true;
                 }
-                if (CurrentCell?.Value?.ToString() != "" && CurrentCell?.RowIndex == NewWatchRowIndex)
+                if (!string.IsNullOrEmpty(CurrentCell?.Value?.ToString()) && CurrentCell?.RowIndex == NewWatchRowIndex)
                 {
                     EndEdit();
                     return true;

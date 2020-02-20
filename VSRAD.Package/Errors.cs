@@ -6,7 +6,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package
 {
-    public readonly struct Error
+    public readonly struct Error : IEquatable<Error>
     {
         public bool Critical { get; }
         public string Message { get; }
@@ -18,6 +18,12 @@ namespace VSRAD.Package
             Message = message;
             Title = title;
         }
+
+        public bool Equals(Error e) => Critical == e.Critical && Message == e.Message && Title == e.Title;
+        public override bool Equals(object o) => o is Error e && Equals(e);
+        public override int GetHashCode() => (Critical, Message, Title).GetHashCode();
+        public static bool operator ==(Error left, Error right) => left.Equals(right);
+        public static bool operator !=(Error left, Error right) => !(left == right);
     }
 
     public static class Errors

@@ -76,7 +76,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 var textLine = line.GetText();
                 if (textLine.Contains("//"))
                 {
-                    var index = textLine.IndexOf("//");
+                    var index = textLine.IndexOf("//", StringComparison.Ordinal);
                     var indexStart = line.Start + index;
 
                     AddClassificationSpan(PredefinedClassificationTypeNames.Comments, snapshot, indexStart, line.End - indexStart, spans);
@@ -114,7 +114,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 {
                     classificationTypeName = null;
                     string word = words[ii];
-                    int pos = textLine.IndexOf(word);
+                    int pos = textLine.IndexOf(word, StringComparison.Ordinal);
                     wordStart += pos;
 
                     if (words.Length == 1 && word.EndsWith(":", StringComparison.Ordinal))

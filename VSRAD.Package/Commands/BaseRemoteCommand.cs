@@ -73,7 +73,7 @@ namespace VSRAD.Package.Commands
             activeView.SetCaretPos(lineNumber, 0);
         }
 
-        private int GetMarkedLineNumber(string file, string lineMarker)
+        private static int GetMarkedLineNumber(string file, string lineMarker)
         {
             var lineNumber = 0;
             foreach (var line in File.ReadLines(file))

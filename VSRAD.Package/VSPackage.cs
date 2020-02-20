@@ -60,7 +60,7 @@ namespace VSRAD.Package
             EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
 
-        public void ProjectUnloaded()
+        public static void ProjectUnloaded()
         {
             VisualizerToolWindow.OnProjectUnloaded();
             OptionsToolWindow.OnProjectUnloaded();

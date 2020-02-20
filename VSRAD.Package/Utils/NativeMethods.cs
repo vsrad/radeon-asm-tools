@@ -4,21 +4,21 @@ using System.Windows.Forms;
 
 namespace VSRAD.Package.Utils
 {
-    public static class Win32Control
+    public static class NativeMethods
     {
         /* https://stackoverflow.com/a/487757 */
         [DllImport("user32.dll")]
-        private static extern int SendMessage(IntPtr hWnd, Int32 wMsg, bool wParam, Int32 lParam);
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint wMsg, UIntPtr wParam, IntPtr lParam);
         private const int WM_SETREDRAW = 11;
 
         public static void SuspendDrawing(this Control control)
         {
-            SendMessage(control.Handle, WM_SETREDRAW, false, 0);
+            _ = SendMessage(control.Handle, WM_SETREDRAW, UIntPtr.Zero, IntPtr.Zero);
         }
 
         public static void ResumeDrawing(this Control control)
         {
-            SendMessage(control.Handle, WM_SETREDRAW, true, 0);
+            _ = SendMessage(control.Handle, WM_SETREDRAW, new UIntPtr(1), IntPtr.Zero);
             control.Refresh();
         }
     }
