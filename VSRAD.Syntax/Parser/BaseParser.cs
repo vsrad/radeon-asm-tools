@@ -189,8 +189,9 @@ namespace VSRAD.Syntax.Parser
 
             if (cmpText.StartsWith(parserManager.KeyWordFunctionPattern, StringComparison.Ordinal))
             {
+                var description = GetDescription();
                 var functionMatch = parserManager.FunctionNameRegular.Match(text);
-                var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length));
+                var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length), description);
                 var spaceStart = GetSpaceStart(text);
 
                 currentRootBlock.FunctionTokens.Add(functionToken);
@@ -251,8 +252,9 @@ namespace VSRAD.Syntax.Parser
                     var variableMatch = variableDefinition.Value.Match(text);
                     if (variableMatch.Success)
                     {
+                        var description = GetDescription();
                         var indexStart = indexStartLine + variableMatch.Groups[1].Index;
-                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups[1].Length));
+                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups[1].Length), description);
                         currentTreeBlock.Tokens.Add(varToken);
                     }
                 }
@@ -351,6 +353,17 @@ namespace VSRAD.Syntax.Parser
             }
 
             return spaceStart;
+        }
+
+        private string GetDescription()
+        {
+            var description = "";
+            var token = currentTreeBlock.Tokens.LastOrDefault();
+
+            if (token != default && token.TokenType == TokenType.Comment && (token.Line.LineNumber == currentLine.LineNumber || token.Line.LineNumber == currentLine.LineNumber - 1))
+                description = token.TokenName.Trim('/', '*');
+
+            return description;
         }
     }
 }

@@ -50,14 +50,16 @@ namespace VSRAD.Syntax.QuickInfo
 
         private static ContainerElement GetNavigationTokenContainerElement(IBaseToken token)
         {
+            if (token == null)
+                return null;
             switch (token.TokenType)
             {
                 case TokenType.Argument:
                     return GetContainerElement("function argument", "", token.TokenName, PredefinedClassificationTypeNames.SymbolDefinition);
                 case TokenType.Function:
-                    return GetContainerElement("function", "", token.TokenName, SyntaxHighlighter.PredefinedClassificationTypeNames.Functions);
+                    return GetContainerElement("function", ((IDescriptionToken)token).Description, token.TokenName, SyntaxHighlighter.PredefinedClassificationTypeNames.Functions);
                 case TokenType.Variable:
-                    return GetContainerElement("local variable", "", token.TokenName, PredefinedClassificationTypeNames.SymbolDefinition);
+                    return GetContainerElement("local variable", ((IDescriptionToken)token).Description, token.TokenName, PredefinedClassificationTypeNames.SymbolDefinition);
                 default:
                     return null;
             }
