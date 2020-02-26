@@ -119,6 +119,8 @@
     <Compile Include="FunctionList\FunctionListControl.xaml.cs">
       <DependentUpon>FunctionListControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="QuickInfo\QuickInfoSource.cs" />
+    <Compile Include="QuickInfo\QuickInfoSourceProvider.cs" />
     <Compile Include="SyntaxHighlighter\Classifier.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierClassificationDefinition.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierProvider.cs" />

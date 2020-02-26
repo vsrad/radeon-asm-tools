@@ -114,6 +114,12 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return null;
         }
 
+        public TextExtent GetTextExtent(ITextBuffer textBuffer, SnapshotPoint snapshotPoint)
+        {
+            var _navigator = _navigatorService.GetTextStructureNavigator(textBuffer);
+            return _navigator.GetExtentOfWord(snapshotPoint);
+        }
+
         public TextExtent GetTextExtentOnCursor(IWpfTextView view)
         {
             var _navigator = _navigatorService.GetTextStructureNavigator(view.TextBuffer);
