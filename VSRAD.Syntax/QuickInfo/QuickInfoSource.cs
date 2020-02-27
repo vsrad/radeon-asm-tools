@@ -109,12 +109,14 @@ namespace VSRAD.Syntax.QuickInfo
             if (functionBlock == null) 
                 return null;
 
-            var funKeyword = functionBlock.BlockSpan.Snapshot.IsRadeonAsmContentType() ? Constants.asm1FunctionKeyword : Constants.asm2FunctionKeyword;
+            var funKeyword = functionBlock.BlockSpan.Snapshot.IsRadeonAsm2ContentType() ? Constants.asm2FunctionKeyword : Constants.asm1FunctionKeyword;
             var textRuns = new List<ClassifiedTextRun>()
             {
                 new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Keywords, $"{funKeyword} "),
                 new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Functions, $"{functionBlock.FunctionToken.TokenName} ")
             };
+            if (functionBlock.BlockSpan.Snapshot.IsRadeonAsm2ContentType())
+                textRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, "( "));
 
             var argTokenNames = functionBlock.GetArgumentTokens().Select(token => token.TokenName).ToList();
             for (var i = 0; i < argTokenNames.Count; i++)
@@ -122,6 +124,8 @@ namespace VSRAD.Syntax.QuickInfo
                 var name = (i != argTokenNames.Count - 1) ? $"{argTokenNames[i]}, " : argTokenNames[i];
                 textRuns.Add(new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Arguments, name));
             }
+            if (functionBlock.BlockSpan.Snapshot.IsRadeonAsm2ContentType())
+                textRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, " )"));
 
             var functionName = new ClassifiedTextElement(textRuns);
             return GetBasicContainerElement("function", functionName, ((IDescriptionToken)functionBlock.FunctionToken).Description);
