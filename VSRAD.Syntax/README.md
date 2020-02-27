@@ -87,5 +87,12 @@ select *Properties*.
   <img src="docs/identifier_highlight.PNG" title="Indentifier highlight">
 </p>
 
+### Quick info
+* Quick info for functions/variables/arguments showing comments in description
+
+<p align="center">
+  <img src="docs/quick_info.PNG" title="Quick info">
+</p>
+
 ### Other features
 * Comment/Uncomment block
