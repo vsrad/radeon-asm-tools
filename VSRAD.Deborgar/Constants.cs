@@ -5,7 +5,7 @@ namespace VSRAD.Deborgar
     public static class Constants
     {
         public const string DebugEngineName = "RAD";
-        public const string DebugEngineId = "8355452D-6D2F-41b0-89B8-BB2AA2529E94";
+        public const string DebugEngineId = "DEB00DEB-666F-41B0-89B8-BB2AA2529E94";
         public const string DebugEngineVendorId = "BE3E4337-D15A-4683-A5E4-0574F6C3BA78";
         public static readonly Guid DebugEngineGuid = new Guid(DebugEngineId);
 
