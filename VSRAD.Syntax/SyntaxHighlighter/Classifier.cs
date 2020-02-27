@@ -103,7 +103,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
                 if (currentFunction != null)
                 {
-                    funcArguments = currentFunction.Tokens.Where(token => token.TokenType == TokenType.Argument).Select(token => token.TokenName).ToList();
+                    funcArguments = currentFunction.GetArgumentTokens().Select(token => token.TokenName).ToList();
                     isNeedGetFunction = false;
                     functionEndPoint = currentFunction.BlockSpan.End;
                 }

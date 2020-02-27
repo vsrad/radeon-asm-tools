@@ -64,7 +64,7 @@ namespace VSRAD.Syntax.Helpers
                     UncommentRegion(mappedStart.Value, mappedEnd.Value);
                 }
 
-                if (textView.TextSnapshot.IsRadeonAsmAsm2ContentType())
+                if (textView.TextSnapshot.IsRadeonAsmOrAsm2ContentType())
                 {
                     UpdateSelection(textView, start, end);
                 }
@@ -79,7 +79,7 @@ namespace VSRAD.Syntax.Helpers
             return view.BufferGraph.MapDownToFirstMatch(
                point,
                PointTrackingMode.Positive,
-               SnapshotExtension.IsRadeonAsmAsm2ContentType,
+               SnapshotExtension.IsRadeonAsmOrAsm2ContentType,
                PositionAffinity.Successor
             );
         }

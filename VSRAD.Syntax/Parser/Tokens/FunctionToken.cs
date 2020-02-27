@@ -2,10 +2,13 @@
 
 namespace VSRAD.Syntax.Parser.Tokens
 {
-    class FunctionToken : BaseToken
+    class FunctionToken : BaseToken, IDescriptionToken
     {
-        public FunctionToken(SnapshotSpan symbolSpan) : base(symbolSpan, TokenType.Function)
+        public string Description { get; } = null;
+
+        public FunctionToken(SnapshotSpan symbolSpan, string description = "") : base(symbolSpan, TokenType.Function)
         {
+            Description = description;
         }
     }
 }

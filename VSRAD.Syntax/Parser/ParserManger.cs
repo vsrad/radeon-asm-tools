@@ -19,8 +19,8 @@ namespace VSRAD.Syntax.Parser
         string ManyLineCommentStartPattern { get; }
         string ManyLineCommentEndPattern { get; }
         string OneLineCommentPattern { get; }
-        string DeclorationStartPattern { get; }
-        string DeclorationEndPattern { get; }
+        string DeclarationStartPattern { get; }
+        string DeclarationEndPattern { get; }
         bool EnableManyLineDecloration { get; }
         Dictionary<string, Regex> VariableDefinitionRegulars { get; }
 
@@ -51,8 +51,8 @@ namespace VSRAD.Syntax.Parser
         public string ManyLineCommentStartPattern { get; private set; }
         public string ManyLineCommentEndPattern { get; private set; }
         public string OneLineCommentPattern { get; private set; }
-        public string DeclorationStartPattern { get; private set; }
-        public string DeclorationEndPattern { get; private set; }
+        public string DeclarationStartPattern { get; private set; }
+        public string DeclarationEndPattern { get; private set; }
         public bool EnableManyLineDecloration { get; private set; }
         public Dictionary<string, Regex> VariableDefinitionRegulars { get; private set; }
         public IBaseParser ActualParser { get; private set; }
@@ -89,8 +89,8 @@ namespace VSRAD.Syntax.Parser
             this.ManyLineCommentStartPattern = manyLineCommentStartPattern;
             this.ManyLineCommentEndPattern = manyLineCommentEndPattern;
             this.OneLineCommentPattern = oneLineCommentPattern;
-            this.DeclorationEndPattern = declorationEndPattern;
-            this.DeclorationStartPattern = declorationStartPattern;
+            this.DeclarationEndPattern = declorationEndPattern;
+            this.DeclarationStartPattern = declorationStartPattern;
             this.EnableManyLineDecloration = enableManyLineDecloration;
             this.VariableDefinitionRegulars = variableDefinitRegex;
             _initialized = true;

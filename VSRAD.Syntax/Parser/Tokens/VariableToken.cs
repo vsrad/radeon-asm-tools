@@ -2,10 +2,13 @@
 
 namespace VSRAD.Syntax.Parser.Tokens
 {
-    internal class VariableToken : BaseToken
+    internal class VariableToken : BaseToken, IDescriptionToken
     {
-        public VariableToken(SnapshotSpan symbolSpan) : base(symbolSpan, TokenType.Variable)
+        public string Description { get; } = null;
+
+        public VariableToken(SnapshotSpan symbolSpan, string description = "") : base(symbolSpan, TokenType.Variable)
         {
+            Description = description;
         }
     }
 }

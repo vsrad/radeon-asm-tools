@@ -20,7 +20,7 @@ namespace VSRAD.Syntax.Parser
         IBaseBlock GetBlockBySnapshotPoint(SnapshotPoint point);
         IBaseBlock GetBlockByToken(IBaseToken token);
         FunctionBlock GetFunctionByLine(ITextSnapshotLine line);
-        IList<IBaseBlock> GetFunctionBlocks();
+        IEnumerable<FunctionBlock> GetFunctionBlocks();
     }
 
     internal class BaseParser : IBaseParser
@@ -163,17 +163,18 @@ namespace VSRAD.Syntax.Parser
         {
             if (startFindManyLineDeclorationEnd)
             {
-                if (text.Contains(parserManager.DeclorationEndPattern))
+                if (text.Contains(parserManager.DeclarationEndPattern))
                 {
                     currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, currentFunctionSpaceStart));
                     startFindManyLineDeclorationEnd = false;
-                    var functionArgsText = text.Substring(0, text.IndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
+                    ((List<IBaseToken>)(currentTreeBlock as FunctionBlock)?.Tokens)?.AddRange(argumentTokens);
+
+                    var functionArgsText = text.Substring(0, text.LastIndexOf(parserManager.DeclarationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
                     {
                         var startIndex = text.IndexOf(functionArgText, StringComparison.Ordinal) + indexStartLine;
                         (currentTreeBlock as FunctionBlock)?.Tokens.Add(new ArgumentToken(new SnapshotSpan(currentSnapshot, startIndex, functionArgText.Length)));
                     }
-                    ((List<IBaseToken>)(currentTreeBlock as FunctionBlock)?.Tokens)?.AddRange(argumentTokens);
                 }
                 else
                 {
@@ -189,8 +190,9 @@ namespace VSRAD.Syntax.Parser
 
             if (cmpText.StartsWith(parserManager.KeyWordFunctionPattern, StringComparison.Ordinal))
             {
+                var description = GetDescription();
                 var functionMatch = parserManager.FunctionNameRegular.Match(text);
-                var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length));
+                var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length), description);
                 var spaceStart = GetSpaceStart(text);
 
                 currentRootBlock.FunctionTokens.Add(functionToken);
@@ -208,13 +210,13 @@ namespace VSRAD.Syntax.Parser
                 }
                 else
                 {
-                    if (text.Contains(parserManager.DeclorationStartPattern))
+                    if (text.Contains(parserManager.DeclarationStartPattern))
                     {
-                        if (text.Contains(parserManager.DeclorationEndPattern))
+                        if (text.Contains(parserManager.DeclarationEndPattern))
                         {
                             currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
 
-                            var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.IndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
+                            var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.LastIndexOf(parserManager.DeclarationEndPattern, StringComparison.Ordinal) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (var functionArgText in functionArgsText)
                             {
                                 var startIndex = text.IndexOf(functionArgText, StringComparison.Ordinal) + indexStartLine;
@@ -251,8 +253,9 @@ namespace VSRAD.Syntax.Parser
                     var variableMatch = variableDefinition.Value.Match(text);
                     if (variableMatch.Success)
                     {
+                        var description = GetDescription();
                         var indexStart = indexStartLine + variableMatch.Groups[1].Index;
-                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups[1].Length));
+                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups[1].Length), description);
                         currentTreeBlock.Tokens.Add(varToken);
                     }
                 }
@@ -303,9 +306,12 @@ namespace VSRAD.Syntax.Parser
             }
         }
 
-        public IList<IBaseBlock> GetFunctionBlocks()
+        public IEnumerable<FunctionBlock> GetFunctionBlocks()
         {
-            return currentListBlock.Where(block => block.BlockType == BlockType.Function).ToList();
+            return currentListBlock
+                .Where(block => block.BlockType == BlockType.Function)
+                .Cast<FunctionBlock>()
+                .ToList();
         }
 
         public FunctionBlock GetFunctionByLine(ITextSnapshotLine line)
@@ -351,6 +357,15 @@ namespace VSRAD.Syntax.Parser
             }
 
             return spaceStart;
+        }
+
+        private string GetDescription()
+        {
+            var token = currentTreeBlock.Tokens.LastOrDefault();
+            if (token != default && token.TokenType == TokenType.Comment && (token.Line.LineNumber == currentLine.LineNumber || token.Line.LineNumber == currentLine.LineNumber - 1))
+                return token.TokenName.Trim('/', '*', ' ');
+
+            return null;
         }
     }
 }

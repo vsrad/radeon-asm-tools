@@ -83,8 +83,10 @@
     <Compile Include="FunctionList\Commands\SelectItemCommand.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
+    <Compile Include="Helpers\BaseBlockExtension.cs" />
     <Compile Include="Helpers\Error.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
+    <Compile Include="Helpers\TextViewParserExtension.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />
     <Compile Include="Parser\Blocks\BaseBlock.cs" />
@@ -102,6 +104,7 @@
     <Compile Include="Parser\Tokens\BaseToken.cs" />
     <Compile Include="Parser\Tokens\FunctionToken.cs" />
     <Compile Include="Parser\Tokens\IBaseToken.cs" />
+    <Compile Include="Parser\Tokens\IDescriptionToken.cs" />
     <Compile Include="Parser\Tokens\TokenType.cs" />
     <Compile Include="Parser\Tokens\VariableToken.cs" />
     <Compile Include="Peek\DefinitionService\DefinitionService.cs" />
@@ -119,6 +122,8 @@
     <Compile Include="FunctionList\FunctionListControl.xaml.cs">
       <DependentUpon>FunctionListControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="QuickInfo\QuickInfoSource.cs" />
+    <Compile Include="QuickInfo\QuickInfoSourceProvider.cs" />
     <Compile Include="SyntaxHighlighter\Classifier.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierClassificationDefinition.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierProvider.cs" />

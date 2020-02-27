@@ -114,6 +114,12 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return null;
         }
 
+        public TextExtent GetTextExtent(ITextBuffer textBuffer, SnapshotPoint snapshotPoint)
+        {
+            var _navigator = _navigatorService.GetTextStructureNavigator(textBuffer);
+            return _navigator.GetExtentOfWord(snapshotPoint);
+        }
+
         public TextExtent GetTextExtentOnCursor(IWpfTextView view)
         {
             var _navigator = _navigatorService.GetTextStructureNavigator(view.TextBuffer);
@@ -165,7 +171,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
         private static bool FindNavigationTokenInBlock(IBaseBlock currentBlock, string text, out IBaseToken outToken)
         {
-            if (currentBlock.BlockSpan.Snapshot.IsRadeonAsm2ContentType())
+            if (currentBlock.IsRadeonAsm2ContentType())
             {
                 while (currentBlock != null)
                 {
@@ -184,7 +190,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
                 return false;
             }
 
-            if (currentBlock.BlockSpan.Snapshot.IsRadeonAsmContentType())
+            if (currentBlock.IsRadeonAsmContentType())
             {
                 var codeBlockStack = new Stack<IBaseBlock>();
 

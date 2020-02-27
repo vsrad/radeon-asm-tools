@@ -1,6 +1,7 @@
 ﻿using VSRAD.Syntax.Parser.Tokens;
 using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace VSRAD.Syntax.Parser.Blocks
 {
@@ -23,5 +24,8 @@ namespace VSRAD.Syntax.Parser.Blocks
         {
             BlockActualSpan = new SnapshotSpan(FunctionToken.SymbolSpan.Start, BlockSpan.End);
         }
+
+        public IEnumerable<IBaseToken> GetArgumentTokens() =>
+            Tokens.Where(token => token.TokenType == TokenType.Argument);
     }
 }
