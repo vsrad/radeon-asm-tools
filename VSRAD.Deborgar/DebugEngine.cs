@@ -50,10 +50,7 @@ namespace VSRAD.Deborgar
                     TerminationCallback();
                     break;
                 case AD7LoadCompleteEvent _:
-                    if (!_program.AnyBreakpointsSet)
-                        _callbacks.OnBreakComplete(); /* break on the first line without executing anything */
-                    else
-                        _program.Continue(thread: null);
+                    _program.Continue(thread: null);
                     break;
             }
             return VSConstants.S_OK;
