@@ -171,7 +171,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
         private static bool FindNavigationTokenInBlock(IBaseBlock currentBlock, string text, out IBaseToken outToken)
         {
-            if (currentBlock.BlockSpan.Snapshot.IsRadeonAsm2ContentType())
+            if (currentBlock.IsRadeonAsm2ContentType())
             {
                 while (currentBlock != null)
                 {
@@ -190,7 +190,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
                 return false;
             }
 
-            if (currentBlock.BlockSpan.Snapshot.IsRadeonAsmContentType())
+            if (currentBlock.IsRadeonAsmContentType())
             {
                 var codeBlockStack = new Stack<IBaseBlock>();
 
