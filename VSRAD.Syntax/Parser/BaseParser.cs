@@ -20,7 +20,7 @@ namespace VSRAD.Syntax.Parser
         IBaseBlock GetBlockBySnapshotPoint(SnapshotPoint point);
         IBaseBlock GetBlockByToken(IBaseToken token);
         FunctionBlock GetFunctionByLine(ITextSnapshotLine line);
-        IList<IBaseBlock> GetFunctionBlocks();
+        IEnumerable<FunctionBlock> GetFunctionBlocks();
     }
 
     internal class BaseParser : IBaseParser
@@ -163,13 +163,13 @@ namespace VSRAD.Syntax.Parser
         {
             if (startFindManyLineDeclorationEnd)
             {
-                if (text.Contains(parserManager.DeclorationEndPattern))
+                if (text.Contains(parserManager.DeclarationEndPattern))
                 {
                     currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, currentFunctionSpaceStart));
                     startFindManyLineDeclorationEnd = false;
                     ((List<IBaseToken>)(currentTreeBlock as FunctionBlock)?.Tokens)?.AddRange(argumentTokens);
 
-                    var functionArgsText = text.Substring(0, text.LastIndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
+                    var functionArgsText = text.Substring(0, text.LastIndexOf(parserManager.DeclarationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
                     {
                         var startIndex = text.IndexOf(functionArgText, StringComparison.Ordinal) + indexStartLine;
@@ -210,13 +210,13 @@ namespace VSRAD.Syntax.Parser
                 }
                 else
                 {
-                    if (text.Contains(parserManager.DeclorationStartPattern))
+                    if (text.Contains(parserManager.DeclarationStartPattern))
                     {
-                        if (text.Contains(parserManager.DeclorationEndPattern))
+                        if (text.Contains(parserManager.DeclarationEndPattern))
                         {
                             currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), functionToken, spaceStart));
 
-                            var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.LastIndexOf(parserManager.DeclorationEndPattern, StringComparison.Ordinal) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
+                            var functionArgsText = text.Substring(functionMatch.Index + functionMatch.Length, text.LastIndexOf(parserManager.DeclarationEndPattern, StringComparison.Ordinal) - functionMatch.Index - functionMatch.Length).Split(new char[] { ' ', '\t', ',', '=', '[', ']', '(' }, StringSplitOptions.RemoveEmptyEntries);
                             foreach (var functionArgText in functionArgsText)
                             {
                                 var startIndex = text.IndexOf(functionArgText, StringComparison.Ordinal) + indexStartLine;
@@ -306,9 +306,12 @@ namespace VSRAD.Syntax.Parser
             }
         }
 
-        public IList<IBaseBlock> GetFunctionBlocks()
+        public IEnumerable<FunctionBlock> GetFunctionBlocks()
         {
-            return currentListBlock.Where(block => block.BlockType == BlockType.Function).ToList();
+            return currentListBlock
+                .Where(block => block.BlockType == BlockType.Function)
+                .Cast<FunctionBlock>()
+                .ToList();
         }
 
         public FunctionBlock GetFunctionByLine(ITextSnapshotLine line)

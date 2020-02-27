@@ -14,9 +14,8 @@ namespace VSRAD.Syntax.Helpers
             if (parser == null)
                 return null;
 
-            return (FunctionBlock)parser.GetFunctionBlocks()
-                .Where(fb => ((FunctionBlock)fb).FunctionToken.TokenName == name)
-                .FirstOrDefault();
+            return parser.GetFunctionBlocks()
+                .FirstOrDefault(fb => fb.FunctionToken.TokenName == name);
         }
     }
 }

@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly OleMenuCommandService commandService;
         private bool isHideLineNumber = false;
         private SortState FunctionListSortState = SortState.ByName;
-        private IList<IBaseBlock> Functions;
+        private IList<FunctionBlock> Functions;
 
         public FunctionListControl(OleMenuCommandService service)
         {
@@ -33,11 +33,11 @@ namespace VSRAD.Syntax.FunctionList
             this.Loaded += OnInitializedFunctionList;
         }
 
-        public async Task UpdateFunctionListAsync(IList<IBaseBlock> newFunctions)
+        public async Task UpdateFunctionListAsync(IEnumerable<FunctionBlock> newFunctions)
         {
             try
             {
-                Functions = newFunctions;
+                Functions = newFunctions.ToList();
 
                 var shownFunctions = SearchByNameFilter(newFunctions);
 
@@ -67,36 +67,36 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ReloadFunctionList() => AddFunctionsToView(Functions);
 
-        private void AddFunctionsToView(IEnumerable<IBaseBlock> functionList)
+        private void AddFunctionsToView(IEnumerable<FunctionBlock> functionList)
         {
             switch (FunctionListSortState)
             {
                 case SortState.ByLine:
                     functionList = functionList
-                        .OrderBy(func => (func as FunctionBlock).FunctionToken.LineNumber)
+                        .OrderBy(func => func.FunctionToken.LineNumber)
                         .ToList();
                     break;
 
                 case SortState.ByName:
                     functionList = functionList
-                        .OrderBy(func => (func as FunctionBlock).FunctionToken.TokenName)
+                        .OrderBy(func => func.FunctionToken.TokenName)
                         .ToList();
                     break;
 
                 case SortState.ByLineDescending:
                     functionList = functionList
-                        .OrderByDescending(func => (func as FunctionBlock).FunctionToken.LineNumber)
+                        .OrderByDescending(func => func.FunctionToken.LineNumber)
                         .ToList();
                     break;
 
                 case SortState.ByNameDescending:
                     functionList = functionList
-                        .OrderByDescending(func => (func as FunctionBlock).FunctionToken.TokenName)
+                        .OrderByDescending(func => func.FunctionToken.TokenName)
                         .ToList();
                     break;
                 default:
                     functionList = functionList
-                        .OrderBy(func => (func as FunctionBlock).FunctionToken.LineNumber)
+                        .OrderBy(func => func.FunctionToken.LineNumber)
                         .ToList();
                     break;
             }
@@ -161,13 +161,13 @@ namespace VSRAD.Syntax.FunctionList
             ResizeFunctionListColumns();
         }
 
-        private IEnumerable<IBaseBlock> SearchByNameFilter(IEnumerable<IBaseBlock> functionList)
+        private IEnumerable<FunctionBlock> SearchByNameFilter(IEnumerable<FunctionBlock> functionList)
         {
             if (functionList == null)
-                return new List<IBaseBlock>();
+                return Enumerable.Empty<FunctionBlock>();
 
             return functionList
-                .Where(fun => (fun as FunctionBlock).FunctionToken.TokenName.Contains(Search.Text));
+                .Where(fun => fun.FunctionToken.TokenName.Contains(Search.Text));
         }
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
@@ -198,7 +198,7 @@ namespace VSRAD.Syntax.FunctionList
         {
             try
             {
-                var function = functions.SelectedItem as FunctionBlock;
+                var function = (FunctionBlock)functions.SelectedItem;
                 FunctionList.Instance.GetActiveTextView().ChangeCaretPosition(function.FunctionToken.Line);
             }
             catch (Exception e)
