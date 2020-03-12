@@ -18,7 +18,6 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.ProjectCapability)]
     public sealed class DebuggerIntegration : IEngineIntegration
     {
-        public event Action RerunRequested;
         public event ExecutionCompleted ExecutionCompleted;
         public event DebugBreakEntered BreakEntered;
 
@@ -68,21 +67,13 @@ namespace VSRAD.Package.ProjectSystem
         public void DeregisterEngine()
         {
             DebugInProgress = false;
-            ExecutionCompleted = null; // unsubscribe event listeners on the debug engine (VSRAD.Deborgar) side
-            RerunRequested = null;     // otherwise we'd get ghost debug sessions
             _debugSession = null;
+            // unsubscribe event listeners on the debug engine (VSRAD.Deborgar) side, otherwise we'd get ghost debug sessions
+            ExecutionCompleted = null;
         }
 
         internal void CreateDebugSession() =>
             _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow);
-
-        internal void Rerun()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            RerunRequested();
-            Launch();
-        }
 
         internal void RunToCurrentLine()
         {

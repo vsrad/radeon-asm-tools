@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Composition;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
@@ -16,7 +15,6 @@ namespace VSRAD.Package.ToolWindows
         event AddWatch AddWatch;
         event DebugBreakEntered BreakEntered;
 
-        void RerunDebug();
         T GetExport<T>();
         void AddWatchFromEditor(string watch);
     }
@@ -48,12 +46,6 @@ namespace VSRAD.Package.ToolWindows
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);
-
-        void IToolWindowIntegration.RerunDebug()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            if (DebugInProgress) _debugger.Rerun();
-        }
 
         public T GetExport<T>() => _configuredProject.GetExport<T>();
     }

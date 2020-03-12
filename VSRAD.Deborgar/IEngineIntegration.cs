@@ -12,7 +12,6 @@ namespace VSRAD.Deborgar
         uint GetFileLineCount(string projectFilePath);
         bool PopRunToLineIfSet(string file, out uint runToLine);
 
-        event Action RerunRequested;
         event ExecutionCompleted ExecutionCompleted;
     }
 }
