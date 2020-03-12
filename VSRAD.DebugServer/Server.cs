@@ -18,10 +18,19 @@ namespace VSRAD.DebugServer
             _verboseLogging = verboseLogging;
         }
 
+        public void HandleStdin()
+        {
+            while (true)
+            {
+                if (Console.KeyAvailable) Console.Read();
+            }
+        }
+
         public async Task LoopAsync()
         {
             _listener.Start();
             uint clientsCount = 0;
+            new Task(HandleStdin).Start();
             while (true)
             {
                 var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
