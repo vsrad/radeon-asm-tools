@@ -22,7 +22,7 @@ namespace VSRAD.DebugServer
         {
             while (true)
             {
-                if (Console.KeyAvailable) Console.Read();
+                Console.Read();
             }
         }
 
@@ -30,7 +30,7 @@ namespace VSRAD.DebugServer
         {
             _listener.Start();
             uint clientsCount = 0;
-            new Task(HandleStdin).Start();
+            new Thread(HandleStdin).Start();
             while (true)
             {
                 var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
