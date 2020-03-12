@@ -22,6 +22,7 @@ namespace VSRAD.Syntax.FunctionList
         private bool isHideLineNumber = false;
         private SortState FunctionListSortState = SortState.ByName;
         private IList<FunctionBlock> Functions;
+        private ListViewItem lastHighlightedItem;
 
         public FunctionListControl(OleMenuCommandService service)
         {
@@ -45,6 +46,25 @@ namespace VSRAD.Syntax.FunctionList
 
                 AddFunctionsToView(shownFunctions);
                 ResizeFunctionListColumns();
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+            }
+        }
+
+        public async Task HighlightCurrentFunctionAsync(FunctionBlock function)
+        {
+            try
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                if (lastHighlightedItem != null)
+                    lastHighlightedItem.IsSelected = false;
+
+                lastHighlightedItem = (ListViewItem)functions.ItemContainerGenerator.ContainerFromItem(function);
+                if (lastHighlightedItem != null)
+                    lastHighlightedItem.IsSelected = true;
             }
             catch (Exception e)
             {

@@ -23,6 +23,7 @@ namespace VSRAD.Syntax.FunctionList
         private IVsTextManager _textManager;
         private IVsEditorAdaptersFactoryService _editorAdaptorFactory;
         private DTE _dte;
+        private BaseParser parser;
         private FunctionListControl FunctionListControl => (FunctionListControl)Content;
 
         public FunctionList() : base(null)
@@ -96,7 +97,7 @@ namespace VSRAD.Syntax.FunctionList
         {
             try
             {
-                var parser = (BaseParser)sender;
+                parser = (BaseParser)sender;
                 var updatedFunctions = parser.GetFunctionBlocks();
                 return FunctionListControl.UpdateFunctionListAsync(updatedFunctions);
             }
@@ -105,6 +106,17 @@ namespace VSRAD.Syntax.FunctionList
                 Error.LogError(e);
                 return Task.CompletedTask;
             }
+        }
+
+        private Task HighlightCurrentFunctionAsync(ITextView textView)
+        {
+            var line = textView.Caret.Position.BufferPosition.GetContainingLine();
+
+            if (line == null)
+                return Task.CompletedTask;
+
+            var function = parser.GetFunctionByLine(line);
+            return FunctionListControl.HighlightCurrentFunctionAsync(function);
         }
 
         public static void TryUpdateSortOptions(Options.OptionPage.SortState options)
@@ -117,6 +129,14 @@ namespace VSRAD.Syntax.FunctionList
         {
             if (Instance != null)
                 return Instance.UpdateFunctionListAsync(sender);
+
+            return Task.CompletedTask;
+        }
+
+        public static Task TryHighlightCurrentFunctionAsync(CaretPositionChangedEventArgs args)
+        {
+            if (Instance != null)
+                return Instance.HighlightCurrentFunctionAsync(args.TextView);
 
             return Task.CompletedTask;
         }
