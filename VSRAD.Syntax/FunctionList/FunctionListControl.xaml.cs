@@ -42,10 +42,7 @@ namespace VSRAD.Syntax.FunctionList
 
                 var shownFunctions = SearchByNameFilter(newFunctions);
 
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                AddFunctionsToView(shownFunctions);
-                ResizeFunctionListColumns();
+                await AddFunctionsToViewAsync(shownFunctions);
             }
             catch (Exception e)
             {
@@ -77,7 +74,7 @@ namespace VSRAD.Syntax.FunctionList
             try
             {
                 FunctionListSortState = option;
-                ReloadFunctionList();
+                ThreadHelper.JoinableTaskFactory.RunAsync(ReloadFunctionListAsync);
             }
             catch (Exception e)
             {
@@ -85,45 +82,42 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private void ReloadFunctionList() => AddFunctionsToView(Functions);
+        private Task ReloadFunctionListAsync() => AddFunctionsToViewAsync(Functions);
 
-        private void AddFunctionsToView(IEnumerable<FunctionBlock> functionList)
+        private async Task AddFunctionsToViewAsync(IEnumerable<FunctionBlock> functionList)
         {
             switch (FunctionListSortState)
             {
                 case SortState.ByLine:
                     functionList = functionList
-                        .OrderBy(func => func.FunctionToken.LineNumber)
-                        .ToList();
+                        .OrderBy(func => func.FunctionToken.LineNumber);
                     break;
 
                 case SortState.ByName:
                     functionList = functionList
-                        .OrderBy(func => func.FunctionToken.TokenName)
-                        .ToList();
+                        .OrderBy(func => func.FunctionToken.TokenName, StringComparer.OrdinalIgnoreCase);
                     break;
 
                 case SortState.ByLineDescending:
                     functionList = functionList
-                        .OrderByDescending(func => func.FunctionToken.LineNumber)
-                        .ToList();
+                        .OrderByDescending(func => func.FunctionToken.LineNumber);
                     break;
 
                 case SortState.ByNameDescending:
                     functionList = functionList
-                        .OrderByDescending(func => func.FunctionToken.TokenName)
-                        .ToList();
+                        .OrderByDescending(func => func.FunctionToken.TokenName, StringComparer.OrdinalIgnoreCase);
                     break;
                 default:
                     functionList = functionList
-                        .OrderBy(func => func.FunctionToken.LineNumber)
-                        .ToList();
+                        .OrderBy(func => func.FunctionToken.LineNumber);
                     break;
             }
 
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             functions.Items.Clear();
             foreach (var func in functionList)
                 functions.Items.Add(func);
+            ResizeFunctionListColumns();
         }
 
         private void OnInitializedFunctionList(object sender, object args)
@@ -140,7 +134,7 @@ namespace VSRAD.Syntax.FunctionList
                     FunctionListSortState = SortState.ByLine;
                     break;
             }
-            ReloadFunctionList();
+            ThreadHelper.JoinableTaskFactory.RunAsync(ReloadFunctionListAsync);
         }
 
         private void ByName_Click(object sender, RoutedEventArgs e)
@@ -154,7 +148,7 @@ namespace VSRAD.Syntax.FunctionList
                     FunctionListSortState = SortState.ByName;
                     break;
             }
-            ReloadFunctionList();
+            ThreadHelper.JoinableTaskFactory.RunAsync(ReloadFunctionListAsync);
         }
 
         private void FunctionsName_MouseDoubleClick(object sender, MouseButtonEventArgs e) => GoToSelectedItem();
@@ -187,15 +181,13 @@ namespace VSRAD.Syntax.FunctionList
                 return Enumerable.Empty<FunctionBlock>();
 
             return functionList
-                .Where(fun => fun.FunctionToken.TokenName.Contains(Search.Text));
+                .Where(fun => fun.FunctionToken.TokenName.IndexOf(Search.Text, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
             var filteredFunctions = SearchByNameFilter(this.Functions);
-            AddFunctionsToView(filteredFunctions);
-
-            ResizeFunctionListColumns();
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddFunctionsToViewAsync(filteredFunctions));
         }
 
         private void ResizeFunctionListColumns()
