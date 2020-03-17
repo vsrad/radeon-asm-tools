@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using System.Linq;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Parser
 {
@@ -20,20 +21,7 @@ namespace VSRAD.Syntax.Parser
                 .GetOrCreateSingletonProperty(() => new ParserManger());
 
             parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
-
-            parserManager.Initialize(textView.TextBuffer,
-                Constants.asm1Start.Concat(Constants.preprocessorStart).ToArray(),
-                Constants.asm1End.Concat(Constants.preprocessorEnd).ToArray(),
-                Constants.asm1Middle.Concat(Constants.preprocessorMiddle).ToArray(),
-                Constants.asm1FunctionKeyword,
-                Constants.asm1FunctionDefinitionRegular,
-                Constants.asm1MultilineCommentStart,
-                Constants.asm1MultilineCommentEnd,
-                Constants.asm1CommentStart,
-                declorationStartPattern: null,
-                declorationEndPattern: null,
-                enableManyLineDecloration: false,
-                Constants.asm1VariableDefinition);
+            parserManager.InitializeAsm1(textView.TextBuffer);
 
             // TODO fix this
             parserManager.ParserUpdatedEvent += async (sender, args) => await FunctionList.FunctionList.TryUpdateFunctionListAsync(sender);
@@ -55,20 +43,7 @@ namespace VSRAD.Syntax.Parser
                 .GetOrCreateSingletonProperty(() => new ParserManger());
 
             parserManager.TabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
-
-            parserManager.Initialize(textView.TextBuffer,
-                Constants.asm2Start.Concat(Constants.preprocessorStart).ToArray(),
-                Constants.asm2End.Concat(Constants.preprocessorEnd).ToArray(),
-                Constants.asm2Middle.Concat(Constants.preprocessorMiddle).ToArray(),
-                Constants.asm2FunctionKeyword,
-                Constants.asm2FunctionDefinitionRegular,
-                Constants.asm2MultilineCommentStart,
-                Constants.asm2MultilineCommentEnd,
-                Constants.asm2CommentStart,
-                Constants.asm2FunctionDeclorationStartPattern,
-                Constants.asm2FunctionDefinitionEndPattern,
-                enableManyLineDecloration: true,
-                Constants.asm2VariableDefinition);
+            parserManager.InitializeAsm2(textView.TextBuffer);
 
             // TODO fix this
             parserManager.ParserUpdatedEvent += async (sender, args) => await FunctionList.FunctionList.TryUpdateFunctionListAsync(sender);

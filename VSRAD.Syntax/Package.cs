@@ -44,7 +44,7 @@ namespace VSRAD.Syntax
         {
             Instance = this;
             _componentModel = (await GetServiceAsync(typeof(SComponentModel))) as IComponentModel;
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            await OptionPage.ChangeExtensionsAndUpdateCurrentFileAsync();
             await FunctionListCommand.InitializeAsync(this);
             await ClearSearchFieldCommand.InitializeAsync(this);
             await SelectItemCommand.InitializeAsync(this);
