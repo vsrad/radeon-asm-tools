@@ -55,13 +55,13 @@ namespace VSRAD.Syntax.Options
 
         [Category("Syntax asm1 file extensions")]
         [DisplayName("Asm1 file extensions")]
-        [Description("Enable/disable indent guide lines")]
+        [Description("List of file extensions for the asm1 syntax")]
         [Editor(@"System.Windows.Forms.Design.StringCollectionEditor, System.Design, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", typeof(System.Drawing.Design.UITypeEditor))]
         public List<string> Asm1FileExtensions { get; set; }
 
         [Category("Syntax asm2 file extensions")]
         [DisplayName("Asm2 file extensions")]
-        [Description("Enable/disable indent guide lines")]
+        [Description("List of file extensions for the asm2 syntax")]
         [Editor(@"System.Windows.Forms.Design.StringCollectionEditor, System.Design, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", typeof(System.Drawing.Design.UITypeEditor))]
         public List<string> Asm2FileExtensions { get; set; }
 
