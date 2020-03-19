@@ -34,6 +34,12 @@ select *Properties*.
   <img src="docs/syntax_highlight_options.PNG" width="49%" height="250px" title="Syntax highlight options">
 </p>
 
+### File extensions
+User can define file extensions, which will be displayed as RadeonAsm1 syntax or RadeonAsm2 syntax.
+<p align="center">
+  <img src="docs/additional_file_extension_options.PNG" title="File extensions option">
+</p>
+
 ### Indent guide lines
 <p align="center">
   <img src="docs/indent_guide.PNG" width="49%" height="250px" title="Syntax highlight">
