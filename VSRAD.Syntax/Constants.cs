@@ -1379,30 +1379,56 @@ namespace VSRAD.Syntax
         internal const string asm1MultilineCommentStart = "/*";
         internal const string asm1MultilineCommentEnd = "*/";
         internal const string asm1FunctionKeyword = ".macro";
-        internal static readonly Regex asm1FunctionDefinitionRegular = new Regex(@"\.macro\s+([\w.]+)");
+        internal static readonly Regex asm1FunctionDefinitionRegular = new Regex(@"\.macro\s+(?<func_name>[\w.]+)");
         internal static readonly Dictionary<string, Regex> asm1VariableDefinition = new Dictionary<string, Regex>
         {
-            { ".set", new Regex(@"\.set\s+(\.?\w+)")},
-            { " = ", new Regex(@"(\.?\w+)\s+=[^=]")},
+            { ".set", new Regex(@"\.set\s+(?<var_name>\.?\w+)")},
+            { " = ", new Regex(@"(?<var_name>\.?\w+)\s+=[^=]")},
         };
         #endregion
 
         internal const string RadeonAsm2SyntaxContentType = "RadeonAsm2Syntax";
 
         #region syntax constants
-        internal static readonly string[] asm2Start = System.Array.Empty<string>();
-        internal static readonly string[] asm2Middle = System.Array.Empty<string>();
-        internal static readonly string[] asm2End = System.Array.Empty<string>();
-        internal static readonly string[] asm2Keywords = System.Array.Empty<string>();
-        internal const string asm2CommentStart = null;
-        internal const string asm2MultilineCommentStart = null;
-        internal const string asm2MultilineCommentEnd = null;
-        internal const string asm2FunctionKeyword = null;
-        internal static readonly Regex asm2FunctionDefinitionRegular = null;
-        internal const string asm2FunctionDeclorationStartPattern = null;
-        internal const string asm2FunctionDefinitionEndPattern = null;
+        internal static readonly string[] asm2Start =
+        {
+            "if",
+            "for",
+            "while",
+            "repeat",
+        };
+        internal static readonly string[] asm2Middle =
+        {
+            "elsif",
+            "else",
+        };
+        internal static readonly string[] asm2End =
+        {
+            "end",
+            "until",
+        };
+        internal static readonly string[] asm2Keywords =
+        {
+            "var",
+            "vmcnt",
+            "expcnt",
+            "lgkmcnt",
+            "hwreg",
+            "sendmsg",
+            "asic",
+            "type",
+            "assert",
+        };
+        internal const string asm2CommentStart = asm1CommentStart;
+        internal const string asm2MultilineCommentStart = asm1MultilineCommentStart;
+        internal const string asm2MultilineCommentEnd = asm1MultilineCommentEnd;
+        internal const string asm2FunctionKeyword = "function";
+        internal static readonly Regex asm2FunctionDefinitionRegular = new Regex(@"function\s+(?<func_name>[\w.]+)");
+        internal const string asm2FunctionDeclorationStartPattern = "(";
+        internal const string asm2FunctionDefinitionEndPattern = ")";
         internal static readonly Dictionary<string, Regex> asm2VariableDefinition = new Dictionary<string, Regex>
         {
+            { "var", new Regex(@"var\s+(?<var_name>\.?\w+)")},
         };
         #endregion
 

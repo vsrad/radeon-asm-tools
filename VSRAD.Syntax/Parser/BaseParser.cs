@@ -192,7 +192,7 @@ namespace VSRAD.Syntax.Parser
             {
                 var description = GetDescription();
                 var functionMatch = parserManager.FunctionNameRegular.Match(text);
-                var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups[1].Index, functionMatch.Groups[1].Length), description);
+                var functionToken = new FunctionToken(new SnapshotSpan(currentSnapshot, indexStartLine + functionMatch.Groups["func_name"].Index, functionMatch.Groups["func_name"].Length), description);
                 var spaceStart = GetSpaceStart(text);
 
                 currentRootBlock.FunctionTokens.Add(functionToken);
@@ -254,8 +254,8 @@ namespace VSRAD.Syntax.Parser
                     if (variableMatch.Success)
                     {
                         var description = GetDescription();
-                        var indexStart = indexStartLine + variableMatch.Groups[1].Index;
-                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups[1].Length), description);
+                        var indexStart = indexStartLine + variableMatch.Groups["var_name"].Index;
+                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
                         currentTreeBlock.Tokens.Add(varToken);
                     }
                 }
