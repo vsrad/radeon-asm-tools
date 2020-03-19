@@ -8,6 +8,20 @@ namespace VSRAD.Syntax.Parser
 {
     public interface IParserManager
     {
+        void Initialize(
+            ITextBuffer textBuffer,
+            string[] keyWordStartPatterns,
+            string[] keyWordEndPatterns,
+            string[] keyWordMiddlePatterns,
+            string keyWordFunctionPattern,
+            Regex functionNameRegular,
+            string manyLineCommentStartPattern,
+            string manyLineCommentEndPattern,
+            string oneLineCommentPattern,
+            string declorationStartPattern,
+            string declorationEndPattern,
+            bool enableManyLineDecloration,
+            Dictionary<string, Regex> variableDefinitRegex);
         int TabSize { get; set; }
         IBaseParser ActualParser { get; }
         event EventHandler ParserUpdatedEvent;
@@ -26,6 +40,7 @@ namespace VSRAD.Syntax.Parser
 
         void UpdateParser(IBaseParser parser);
         void ParseSync();
+        void Parse();
     }
 
     internal class ParserManger : IParserManager
@@ -59,7 +74,7 @@ namespace VSRAD.Syntax.Parser
         public int TabSize
         {
             get { return _tabSize; }
-            set { _tabSize = value; OnBufferChanged(null, null); }
+            set { _tabSize = value; Parse(); }
         }
 
         public event EventHandler ParserUpdatedEvent;
@@ -97,10 +112,15 @@ namespace VSRAD.Syntax.Parser
             _textBuffer.Changed += OnBufferChanged;
             _tabSize = 4;
 
-            this.OnBufferChanged(null, null);
+            Parse();
         }
 
         private void OnBufferChanged(object sender, TextContentChangedEventArgs e)
+        {
+            Parse();
+        }
+
+        public void Parse()
         {
             if (!_initialized || _textBuffer.CurrentSnapshot == _actualSnapshot)
                 return;

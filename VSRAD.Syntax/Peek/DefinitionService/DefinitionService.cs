@@ -31,6 +31,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
         public readonly IPeekBroker PeekBroker;
         private readonly ITextStructureNavigatorSelectorService _navigatorService;
         private readonly IContentTypeRegistryService _contentTypeRegistryService;
+        private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
         private readonly ITextSearchService2 _textSearchService;
         private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
         private readonly IVsTextManager _textManager;
@@ -42,6 +43,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             ITextDocumentFactoryService textDocumentFactoryService,
             ITextStructureNavigatorSelectorService navigatorService,
             IContentTypeRegistryService contentTypeRegistryService,
+            IFileExtensionRegistryService fileExtensionRegistryService,
             ITextSearchService2 textSearchService,
             IVsEditorAdaptersFactoryService adaptersFactoryService)
         {
@@ -49,6 +51,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             this.PeekBroker = peekBroker;
             this._navigatorService = navigatorService;
             this._contentTypeRegistryService = contentTypeRegistryService;
+            this._fileExtensionRegistryService = fileExtensionRegistryService;
             this._textSearchService = textSearchService;
             this._adaptersFactoryService = adaptersFactoryService;
             this._textManager = serviceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
@@ -263,27 +266,14 @@ namespace VSRAD.Syntax.Peek.DefinitionService
                 var docFileName = Regex.Match(documentName.GetText(), "\"(.+)\"").Groups[1].Value;
                 var extension = Path.GetExtension(docFileName);
 
-                if (extension.Equals(Constants.FileExtensionInc, StringComparison.OrdinalIgnoreCase) || extension.Equals(Constants.FileExtensionS, StringComparison.OrdinalIgnoreCase))
+                var extensionsAsm1 = _fileExtensionRegistryService.GetExtensionsForContentType(contentType);
+                if (extensionsAsm1.Contains(extension))
                 {
                     var pathToDocument = Path.GetFullPath(Path.Combine(dirPath, docFileName));
                     var document = _textDocumentFactoryService.CreateAndLoadTextDocument(pathToDocument, contentType);
                     var parserManager = document.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
 
-                    parserManager.Initialize(
-                        document.TextBuffer,
-                        Constants.asm1Start.Concat(Constants.preprocessorStart).ToArray(),
-                        Constants.asm1End.Concat(Constants.preprocessorEnd).ToArray(),
-                        Constants.asm1Middle.Concat(Constants.preprocessorMiddle).ToArray(),
-                        Constants.asm1FunctionKeyword,
-                        Constants.asm1FunctionDefinitionRegular,
-                        Constants.asm1MultilineCommentStart,
-                        Constants.asm1MultilineCommentEnd,
-                        Constants.asm1CommentStart,
-                        declorationStartPattern: null,
-                        declorationEndPattern: null,
-                        enableManyLineDecloration: false,
-                        Constants.asm1VariableDefinition);
-
+                    parserManager.InitializeAsm1(document.TextBuffer);
                     parserManager.ParseSync();
 
                     var rootBlock = parserManager.ActualParser.RootBlock;

@@ -28,6 +28,17 @@ namespace VSRAD.Syntax
         internal const string FileExtensionInc = ".inc";
         internal const string FileExtensionS = ".s";
         internal const string FileExtensionAsm1 = ".gas";
+        internal const string FileExtensionAsm2 = ".asm2";
+        internal static readonly List<string> DefaultFileExtensionAsm1 = new List<string>()
+        {
+            FileExtensionAsm1,
+            FileExtensionInc,
+            FileExtensionS
+        };
+        internal static readonly List<string> DefaultFileExtensionAsm2 = new List<string>()
+        {
+            FileExtensionAsm2
+        };
 
         /*
          * Content type definition
@@ -1376,7 +1387,6 @@ namespace VSRAD.Syntax
         };
         #endregion
 
-        internal const string FileExtensionAsm2 = ".asm2";
         internal const string RadeonAsm2SyntaxContentType = "RadeonAsm2Syntax";
 
         #region syntax constants

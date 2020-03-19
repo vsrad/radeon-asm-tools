@@ -86,6 +86,7 @@
     <Compile Include="Guide\IndentGuideFactory.cs" />
     <Compile Include="Helpers\BaseBlockExtension.cs" />
     <Compile Include="Helpers\Error.cs" />
+    <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
     <Compile Include="Package.cs" />
