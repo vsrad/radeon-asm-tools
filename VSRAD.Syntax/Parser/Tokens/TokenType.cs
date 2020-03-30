@@ -6,5 +6,6 @@
         Variable = 2,
         Argument = 3,
         Comment = 4,
+        Label = 5,
     }
 }

@@ -1385,6 +1385,7 @@ namespace VSRAD.Syntax
             { ".set", new Regex(@"\.set\s+(?<var_name>\.?\w+)")},
             { " = ", new Regex(@"(?<var_name>\.?\w+)\s+=[^=]")},
         };
+        internal static readonly Regex asm1LabelDefinitionRegular = new Regex(@"(?<label_name>[\w.]+):");
         #endregion
 
         internal const string RadeonAsm2SyntaxContentType = "RadeonAsm2Syntax";
@@ -1430,6 +1431,7 @@ namespace VSRAD.Syntax
         {
             { "var", new Regex(@"var\s+(?<var_name>\.?\w+)")},
         };
+        internal static readonly Regex asm2LabelDefinitionRegular = asm1LabelDefinitionRegular;
         #endregion
 
         /*

@@ -107,6 +107,7 @@
     <Compile Include="Parser\Tokens\FunctionToken.cs" />
     <Compile Include="Parser\Tokens\IBaseToken.cs" />
     <Compile Include="Parser\Tokens\IDescriptionToken.cs" />
+    <Compile Include="Parser\Tokens\LabelToken.cs" />
     <Compile Include="Parser\Tokens\TokenType.cs" />
     <Compile Include="Parser\Tokens\VariableToken.cs" />
     <Compile Include="Peek\DefinitionService\DefinitionService.cs" />

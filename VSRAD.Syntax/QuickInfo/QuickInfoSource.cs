@@ -65,6 +65,8 @@ namespace VSRAD.Syntax.QuickInfo
                     return GetFunctionContainerElement(functionBlock);
                 case TokenType.Variable:
                     return GetBasicContainerElement("local variable", token.TokenName, ((IDescriptionToken)token).Description, SyntaxHighlighter.PredefinedClassificationTypeNames.Keywords);
+                case TokenType.Label:
+                    return GetBasicContainerElement("label", token.TokenName, classificationTypeName: SyntaxHighlighter.PredefinedClassificationTypeNames.Labels);
                 default:
                     return null;
             }
