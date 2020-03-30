@@ -146,7 +146,14 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void ColumnSelectorChanged(string newSelector)
         {
-            _stylingOptions.VisibleColumns = newSelector;
+            var hiddenColumsIndexes = DataColumns
+                .Where(x => !x.Visible)
+                .Select(x => x.Index - DataColumnOffset)
+                .ToList();
+
+            var newIndexes = ColumnSelector.ToIndexes(newSelector);
+
+            _stylingOptions.VisibleColumns = ColumnSelector.FromIndexes(newIndexes.Except(hiddenColumsIndexes));
             ClearSelection();
         }
 
