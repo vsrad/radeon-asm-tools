@@ -111,5 +111,16 @@ namespace VSRAD.Package.DebugVisualizer
             foreach (var emptyRegion in emptyRegions)
                 regions.Remove(emptyRegion);
         }
+
+        public static string GetSelectorMultiplication(string currentSelector, string newSelector)
+        {
+            var currentIndexes = ToIndexes(currentSelector);
+            var newIndexes = ToIndexes(newSelector);
+
+            if (currentIndexes.All(i => newIndexes.Contains(i)))
+                return FromIndexes(newIndexes);
+            else
+                return FromIndexes(newIndexes.Intersect(currentIndexes));
+        }
     }
 }

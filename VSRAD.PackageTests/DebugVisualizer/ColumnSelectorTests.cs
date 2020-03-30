@@ -44,5 +44,49 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.Equal("30-32:34-36:38-41:43-45:51:53-55", highlightRegions[2].Selector);
             Assert.Equal(3, highlightRegions.Count);
         }
+
+        [Fact]
+        public void SelectorsMultiplicationTest()
+        {
+            var currentSelector = "0-511";
+
+            // keep first
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-255");
+            Assert.Equal("0-255", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-127:256-384");
+            Assert.Equal("0-127", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-63:128-191:256-319:384-447");
+            Assert.Equal("0-63", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-127");
+            Assert.Equal("0-127", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-255");
+            Assert.Equal("0-255", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-511");
+            Assert.Equal("0-511", currentSelector);
+
+            //keep last
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "256-511");
+            Assert.Equal("256-511", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "128-255:384-511");
+            Assert.Equal("384-511", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "64-127:192-255:320-383:448-511");
+            Assert.Equal("448-511", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "384-511");
+            Assert.Equal("384-511", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "256-511");
+            Assert.Equal("256-511", currentSelector);
+
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-511");
+            Assert.Equal("0-511", currentSelector);
+        }
     }
 }
