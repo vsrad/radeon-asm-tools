@@ -148,12 +148,16 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var hiddenColumsIndexes = DataColumns
                 .Where(x => !x.Visible)
-                .Select(x => x.Index - DataColumnOffset)
-                .ToList();
+                .Select(x => x.Index - DataColumnOffset);
 
+            var currentIndexes = ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns);
             var newIndexes = ColumnSelector.ToIndexes(newSelector);
 
-            _stylingOptions.VisibleColumns = ColumnSelector.FromIndexes(newIndexes.Except(hiddenColumsIndexes));
+            if (currentIndexes.All(i => newIndexes.Contains(i)))
+                _stylingOptions.VisibleColumns = ColumnSelector.FromIndexes(newIndexes);
+            else
+                _stylingOptions.VisibleColumns = ColumnSelector.FromIndexes(newIndexes.Except(hiddenColumsIndexes));
+
             ClearSelection();
         }
 
