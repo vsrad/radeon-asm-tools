@@ -85,7 +85,7 @@ namespace VSRAD.Syntax.Options
         {
             base.OnApply(e);
             FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
-            Task.Run(() => ChangeExtensionsAndUpdateCurrentFileAsync());
+            Task.Run(() => ChangeExtensionsAndUpdateConentTypesAsync());
         }
 
         public override void SaveSettingsToStorage()
@@ -132,7 +132,7 @@ namespace VSRAD.Syntax.Options
             ChangeExtensions(_asm2ContentType, Asm2FileExtensions);
         }
 
-        public async Task ChangeExtensionsAndUpdateCurrentFileAsync()
+        public async Task ChangeExtensionsAndUpdateConentTypesAsync()
         {
             try
             {
