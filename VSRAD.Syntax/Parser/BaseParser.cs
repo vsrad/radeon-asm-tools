@@ -260,7 +260,11 @@ namespace VSRAD.Syntax.Parser
                     {
                         var description = GetDescription();
                         var indexStart = indexStartLine + variableMatch.Groups["var_name"].Index;
-                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
+                        VariableToken varToken;
+                        if (currentTreeBlock.BlockType == BlockType.Root)
+                            varToken = new GlobalVariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
+                        else
+                            varToken = new LocalVariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
                         currentTreeBlock.Tokens.Add(varToken);
                     }
                 }

@@ -3,9 +3,10 @@
     public enum TokenType
     {
         Function = 1,
-        Variable = 2,
-        Argument = 3,
-        Comment = 4,
-        Label = 5,
+        GlobalVariable = 2,
+        LocalVariable = 3,
+        Argument = 4,
+        Comment = 5,
+        Label = 6,
     }
 }
