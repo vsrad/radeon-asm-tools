@@ -49,6 +49,11 @@
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
                                         Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                 </StackPanel>
+                <StackPanel>
+                    <Label Content="Visualizer Name Column Alignment:"/>
+                    <ComboBox SelectedValue="{Binding DataContext.Options.VisualizerAppearance.NameColumnAlignment, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Path=ContentAlignment}"/>
+                </StackPanel>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
             <DataGrid x:Name="ColoringRegionsGrid" ItemsSource="{Binding Options.VisualizerColumnStyling.HighlightRegions, UpdateSourceTrigger=PropertyChanged}"

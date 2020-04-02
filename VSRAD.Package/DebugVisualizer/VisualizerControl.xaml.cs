@@ -62,6 +62,8 @@ namespace VSRAD.Package.DebugVisualizer
             _table.Rows.Clear();
             _table.AppendVariableRow(new Watch("System", VariableType.Hex, isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
+            _table.NameColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment;
+            _table.DataColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment;
             foreach (var watch in _integration.ProjectOptions.DebuggerOptions.Watches)
                 _table.AppendVariableRow(watch);
             _table.PrepareNewWatchRow();
@@ -83,6 +85,13 @@ namespace VSRAD.Package.DebugVisualizer
                     if (_integration.ProjectOptions.VisualizerOptions.CheckMagicNumber)
                         ApplyColumnStyling();
                     break;
+                case nameof(Options.VisualizerAppearance.NameColumnAlignment):
+                case nameof(Options.VisualizerAppearance.DataColumnAlignment):
+                    _table.NameColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment;
+                    _table.DataColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment;
+                    _table.AlignmentChanged();
+                    break;
+
             }
         }
 

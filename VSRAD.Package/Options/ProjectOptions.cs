@@ -15,6 +15,9 @@ namespace VSRAD.Package.Options
         public VisualizerOptions VisualizerOptions { get; } =
             new VisualizerOptions();
 
+        public VisualizerAppearance VisualizerAppearance { get; } =
+            new VisualizerAppearance();
+
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
