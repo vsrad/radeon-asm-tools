@@ -1,11 +1,9 @@
-﻿using EnvDTE;
-using Microsoft;
-using Microsoft.VisualStudio.Editor;
+﻿using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Settings;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.TextManager.Interop;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
@@ -25,20 +23,16 @@ namespace VSRAD.Syntax.Options
         const string asm2CollectionPath = "Asm2CollectionFileExtensions";
         private readonly IContentTypeRegistryService _contentTypeRegistryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
-        private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
-        private readonly SVsServiceProvider _serviceProvider;
+        private readonly TextViewObserver _textViewObserver;
         private readonly IContentType _asm1ContentType;
         private readonly IContentType _asm2ContentType;
         private readonly CollectionConverter _converter;
-        private IVsTextManager _textManager;
-
 
         public OptionPage()
         {
             _contentTypeRegistryService = Package.Instance.GetMEFComponent<IContentTypeRegistryService>();
             _fileExtensionRegistryService = Package.Instance.GetMEFComponent<IFileExtensionRegistryService>();
-            _textEditorAdaptersFactoryService = Package.Instance.GetMEFComponent<IVsEditorAdaptersFactoryService>();
-            _serviceProvider = Package.Instance.GetMEFComponent<SVsServiceProvider>();
+            _textViewObserver = Package.Instance.GetMEFComponent<TextViewObserver>();
 
             _asm1ContentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
             _asm2ContentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
@@ -85,7 +79,7 @@ namespace VSRAD.Syntax.Options
         {
             base.OnApply(e);
             FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
-            Task.Run(() => ChangeExtensionsAndUpdateConentTypesAsync());
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeExtensionsAndUpdateConentTypesAsync());
         }
 
         public override void SaveSettingsToStorage()
@@ -139,13 +133,7 @@ namespace VSRAD.Syntax.Options
                 ChangeExtensions();
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-                Assumes.Present(dte);
-
-                if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
-                    if (activeSolutionProjects.GetValue(0) is Project activeProject)
-                        foreach (ProjectItem item in activeProject.ProjectItems)
-                            UpdateCurrentProjectFilesContentType(item);
+                UpdateOpenedTextViewContentType();
             }
             catch (Exception e)
             {
@@ -153,23 +141,22 @@ namespace VSRAD.Syntax.Options
             }
         }
 
-        private void UpdateCurrentProjectFilesContentType(ProjectItem projectItem)
+        private void UpdateOpenedTextViewContentType()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            var fullPath = projectItem.FileNames[1];
-            if (VsShellUtilities.IsDocumentOpen(_serviceProvider, fullPath, Guid.Empty, out _, out _, out var windowFrame))
+            foreach (var textView in _textViewObserver.TextViews)
             {
-                var textView = VsShellUtilities.GetTextView(windowFrame);
-                var wpfTextView = _textEditorAdaptersFactoryService.GetWpfTextView(textView);
+                UpdateTextViewContentType(textView);
+            }
+        }
 
-                var extension = System.IO.Path.GetExtension(fullPath);
+        private void UpdateTextViewContentType(IWpfTextView wpfTextView)
+        {
+            var path = wpfTextView.GetPath();
+            if (path != null)
+            {
+                var extension = System.IO.Path.GetExtension(path);
                 UpdateTextBufferContentType(wpfTextView.TextBuffer, extension);
             }
-
-            if (projectItem.ProjectItems != null)
-                foreach (ProjectItem subItem in projectItem.ProjectItems)
-                    UpdateCurrentProjectFilesContentType(subItem);
         }
 
         private void UpdateTextBufferContentType(ITextBuffer textBuffer, string fileExtension)

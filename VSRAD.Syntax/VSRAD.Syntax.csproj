@@ -89,6 +89,8 @@
     <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
+    <Compile Include="Options\TextViewObserver.cs" />
+    <Compile Include="Options\TextViewObserverProvider.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />
     <Compile Include="Parser\Blocks\BaseBlock.cs" />
