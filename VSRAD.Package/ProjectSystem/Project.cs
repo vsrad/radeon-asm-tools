@@ -55,6 +55,7 @@ namespace VSRAD.Package.ProjectSystem
             Options.PropertyChanged += (s, e) => SaveOptions();
             Options.DebuggerOptions.PropertyChanged += (s, e) => SaveOptions();
             Options.VisualizerOptions.PropertyChanged += (s, e) => SaveOptions();
+            Options.VisualizerAppearance.PropertyChanged += (s, e) => SaveOptions();
             Options.VisualizerColumnStyling.StylingChanged += SaveOptions;
             Loaded?.Invoke(Options);
         }

@@ -30,6 +30,7 @@ namespace VSRAD.Package.DebugVisualizer
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += ApplyColumnStyling;
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
+            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
 
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,

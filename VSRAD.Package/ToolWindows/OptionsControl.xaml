@@ -15,6 +15,11 @@
                     <x:Type TypeName="viz:ColumnHighlightColor"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
+            <ObjectDataProvider x:Key="ContentAlignment" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="viz:ContentAlignment"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ControlStyle.xaml"/>
@@ -51,8 +56,8 @@
                 </StackPanel>
                 <StackPanel>
                     <Label Content="Visualizer Name Column Alignment:"/>
-                    <ComboBox SelectedValue="{Binding DataContext.Options.VisualizerAppearance.NameColumnAlignment, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Path=ContentAlignment}"/>
+                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
                 </StackPanel>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
