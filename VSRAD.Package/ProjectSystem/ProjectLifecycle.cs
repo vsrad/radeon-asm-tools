@@ -46,7 +46,6 @@ namespace VSRAD.Package.ProjectSystem
             ((Project)_project).Load();
             QuickInfoState.SetProjectOnLoad(_project);
             Debugger.SetProjectOnLoad(_project);
-            BuildServer.SetProjectOnLoad(_project);
 
             var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
             ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
@@ -56,9 +55,8 @@ namespace VSRAD.Package.ProjectSystem
 
         private async Task ProjectUnloadingAsync(object sender, EventArgs args)
         {
-            _project.SaveOptions();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            BuildServer.OnProjectUnloading();
+            ((Project)_project).Unload();
             VSPackage.ProjectUnloaded();
         }
 
