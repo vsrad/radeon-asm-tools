@@ -143,6 +143,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
     <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
+    <Compile Include="DebugVisualizer\FontType.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
     </Compile>

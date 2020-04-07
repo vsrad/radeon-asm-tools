@@ -45,6 +45,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         private string _editedWatchName;
 
+        private Font _bold = new Font(DefaultFont, FontStyle.Bold);
+        private Font _regular = new Font(DefaultFont, FontStyle.Regular);
+
         public VisualizerTable(ColumnStylingOptions options, GetGroupSize groupSizeGetter) : base()
         {
             _stylingOptions = options;
@@ -245,8 +248,6 @@ namespace VSRAD.Package.DebugVisualizer
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
 
-            //Columns[0].DefaultCellStyle.Alignment = NameColumnAlignment.AsDataGridViewContentAlignment();
-
             var dataColumns = new List<DataGridViewColumn>(DataColumnCount);
             for (int i = 0; i < DataColumnCount; i++)
             {
@@ -256,17 +257,16 @@ namespace VSRAD.Package.DebugVisualizer
                     ReadOnly = true,
                     SortMode = DataGridViewColumnSortMode.NotSortable
                 });
-                //dataColumns[i].DefaultCellStyle.Alignment = DataColumnAlignment.AsDataGridViewContentAlignment();
                 Columns.Add(dataColumns[i]);
             }
             return dataColumns;
         }
 
         public void AlignmentChanged(
-            ContentAlignment nameColumnAlignment,
-            ContentAlignment dataColumnAlignment,
-            ContentAlignment nameHeaderAlignment,
-            ContentAlignment headersAlignment
+                ContentAlignment nameColumnAlignment,
+                ContentAlignment dataColumnAlignment,
+                ContentAlignment nameHeaderAlignment,
+                ContentAlignment headersAlignment
             )
         {
             Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
@@ -275,6 +275,21 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
                 column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
+            }
+        }
+
+        public void FontTypeChanged(
+                FontType nameColumnFont,
+                FontType nameHeaderFont,
+                FontType headersFont
+            )
+        {
+            Columns[0].DefaultCellStyle.Font = nameColumnFont == FontType.Bold ? _bold : _regular;
+            Columns[0].HeaderCell.Style.Font = nameHeaderFont == FontType.Bold ? _bold : _regular;
+            var hFont = headersFont == FontType.Bold ? _bold : _regular;
+            foreach (var column in DataColumns)
+            {
+                column.HeaderCell.Style.Font = hFont;
             }
         }
 

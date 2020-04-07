@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VSRAD.Package.DebugVisualizer;
+﻿using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
     public sealed class VisualizerAppearance : DefaultNotifyPropertyChanged
     {
+        #region alignment
         private ContentAlignment _nameColumnAlignment = ContentAlignment.Left;
         public ContentAlignment NameColumnAlignment
         {
@@ -37,5 +33,28 @@ namespace VSRAD.Package.Options
             get => _dataColumnAlignment;
             set => SetField(ref _dataColumnAlignment, value);
         }
+        #endregion
+        #region font
+        private FontType _nameColumnFont = FontType.Regular;
+        public FontType NameColumnFont
+        {
+            get => _nameColumnFont;
+            set => SetField(ref _nameColumnFont, value);
+        }
+
+        private FontType _nameHeaderFont = FontType.Regular;
+        public FontType NameHeaderFont
+        {
+            get => _nameHeaderFont;
+            set => SetField(ref _nameHeaderFont, value);
+        }
+
+        private FontType _headersFont = FontType.Regular;
+        public FontType HeadersFont
+        {
+            get => _headersFont;
+            set => SetField(ref _headersFont, value);
+        }
+        #endregion
     }
 }
