@@ -35,37 +35,31 @@ namespace VSRAD.Package.BuildTools
 
         public string PipeName => IPCBuildResult.GetIPCPipeName(_project.RootPath);
 
+        private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowManager _outputWindow;
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IBuildErrorProcessor _errorProcessor;
         private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
 
-        private IProject _project;
         private BuildSteps? _buildStepsOverride;
 
         [ImportingConstructor]
         public BuildToolsServer(
+            IProject project,
             ICommunicationChannel channel,
             IOutputWindowManager outputWindow,
             IBuildErrorProcessor errorProcessor,
             IFileSynchronizationManager deployManager)
         {
+            _project = project;
             _channel = channel;
             _outputWindow = outputWindow;
             _errorProcessor = errorProcessor;
             _deployManager = deployManager;
-        }
 
-        public void SetProjectOnLoad(IProject project)
-        {
-            _project = project;
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
-        }
-
-        public void OnProjectUnloading()
-        {
-            _serverLoopCts.Cancel();
+            _project.Loaded += (_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
+            _project.Unloaded += _serverLoopCts.Cancel;
         }
 
         public void OverrideStepsForNextBuild(BuildSteps steps)
