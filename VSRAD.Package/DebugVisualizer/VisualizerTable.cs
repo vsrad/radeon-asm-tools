@@ -27,8 +27,8 @@ namespace VSRAD.Package.DebugVisualizer
             set { if (Rows.Count > 0) Rows[0].Visible = value; }
         }
 
-        public ContentAlignment NameColumnAlignment = ContentAlignment.Left;
-        public ContentAlignment DataColumnAlignment = ContentAlignment.Left;
+        //public ContentAlignment NameColumnAlignment = ContentAlignment.Left;
+        //public ContentAlignment DataColumnAlignment = ContentAlignment.Left;
 
         public IReadOnlyList<DataGridViewColumn> DataColumns { get; }
         public IEnumerable<DataGridViewRow> DataRows => Rows
@@ -245,7 +245,7 @@ namespace VSRAD.Package.DebugVisualizer
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
 
-            Columns[0].DefaultCellStyle.Alignment = NameColumnAlignment.AsDataGridViewContentAlignment();
+            //Columns[0].DefaultCellStyle.Alignment = NameColumnAlignment.AsDataGridViewContentAlignment();
 
             var dataColumns = new List<DataGridViewColumn>(DataColumnCount);
             for (int i = 0; i < DataColumnCount; i++)
@@ -256,18 +256,25 @@ namespace VSRAD.Package.DebugVisualizer
                     ReadOnly = true,
                     SortMode = DataGridViewColumnSortMode.NotSortable
                 });
-                dataColumns[i].DefaultCellStyle.Alignment = DataColumnAlignment.AsDataGridViewContentAlignment();
+                //dataColumns[i].DefaultCellStyle.Alignment = DataColumnAlignment.AsDataGridViewContentAlignment();
                 Columns.Add(dataColumns[i]);
             }
             return dataColumns;
         }
 
-        public void AlignmentChanged()
+        public void AlignmentChanged(
+            ContentAlignment nameColumnAlignment,
+            ContentAlignment dataColumnAlignment,
+            ContentAlignment nameHeaderAlignment,
+            ContentAlignment headersAlignment
+            )
         {
-            Columns[0].DefaultCellStyle.Alignment = NameColumnAlignment.AsDataGridViewContentAlignment();
+            Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
+            Columns[0].HeaderCell.Style.Alignment = nameHeaderAlignment.AsDataGridViewContentAlignment();
             foreach (var column in DataColumns)
             {
-                column.DefaultCellStyle.Alignment = DataColumnAlignment.AsDataGridViewContentAlignment();
+                column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
+                column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
             }
         }
 

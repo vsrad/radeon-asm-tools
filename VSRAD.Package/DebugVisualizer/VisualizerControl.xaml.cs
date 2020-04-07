@@ -63,8 +63,12 @@ namespace VSRAD.Package.DebugVisualizer
             _table.Rows.Clear();
             _table.AppendVariableRow(new Watch("System", VariableType.Hex, isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
-            _table.NameColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment;
-            _table.DataColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment;
+            _table.AlignmentChanged(
+                    _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment,
+                    _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
+                    _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
+                    _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
+                );
             foreach (var watch in _integration.ProjectOptions.DebuggerOptions.Watches)
                 _table.AppendVariableRow(watch);
             _table.PrepareNewWatchRow();
@@ -88,9 +92,14 @@ namespace VSRAD.Package.DebugVisualizer
                     break;
                 case nameof(Options.VisualizerAppearance.NameColumnAlignment):
                 case nameof(Options.VisualizerAppearance.DataColumnAlignment):
-                    _table.NameColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment;
-                    _table.DataColumnAlignment = _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment;
-                    _table.AlignmentChanged();
+                case nameof(Options.VisualizerAppearance.NameHeaderAlignment):
+                case nameof(Options.VisualizerAppearance.HeadersAlignment):
+                    _table.AlignmentChanged(
+                        _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment,
+                        _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
+                        _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
+                        _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
+                    );
                     break;
 
             }

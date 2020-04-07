@@ -17,6 +17,20 @@ namespace VSRAD.Package.Options
             set => SetField(ref _nameColumnAlignment, value);
         }
 
+        private ContentAlignment _nameHeaderAlignment = ContentAlignment.Left;
+        public ContentAlignment NameHeaderAlignment
+        {
+            get => _nameHeaderAlignment;
+            set => SetField(ref _nameHeaderAlignment, value);
+        }
+
+        private ContentAlignment _headersAlignment = ContentAlignment.Left;
+        public ContentAlignment HeadersAlignment
+        {
+            get => _headersAlignment;
+            set => SetField(ref _headersAlignment, value);
+        }
+
         private ContentAlignment _dataColumnAlignment = ContentAlignment.Left;
         public ContentAlignment DataColumnAlignment
         {
