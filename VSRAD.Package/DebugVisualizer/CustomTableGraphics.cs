@@ -21,7 +21,8 @@ namespace VSRAD.Package.DebugVisualizer
         private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.ColumnIndex == -1) return;
-            if (_table.Columns[e.ColumnIndex].DividerWidth != _visibilitySpaceWidth) return;
+            var dgw = (DataGridView)sender;
+            if (dgw.Columns[e.ColumnIndex].Visible == dgw.Columns[e.ColumnIndex + 1].Visible) return;
 
             // We doing force paint of _visible_ part of cell.
             // Since we have frozen columns visible part of cell
