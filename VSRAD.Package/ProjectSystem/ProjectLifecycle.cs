@@ -34,6 +34,8 @@ namespace VSRAD.Package.ProjectSystem
         [Import]
         private DebuggerIntegration Debugger { get; set; }
         [Import]
+        private BreakpointIntegration Breakpoints { get; set; }
+        [Import]
         private BuildToolsServer BuildServer { get; set; }
 
         [Export(typeof(IToolWindowIntegration))]
