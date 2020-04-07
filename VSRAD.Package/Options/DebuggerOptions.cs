@@ -29,6 +29,9 @@ namespace VSRAD.Package.Options
         private string _breakArgs = "";
         public string BreakArgs { get => _breakArgs; set => SetField(ref _breakArgs, value); }
 
+        private ContinueMode _continueMode = ContinueMode.RoundRobin;
+        public ContinueMode ContinueMode { get => _continueMode; set => SetField(ref _continueMode, value); }
+
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
     }

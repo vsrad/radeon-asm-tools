@@ -160,6 +160,7 @@
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
+    <Compile Include="Utils\ContinueMode.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

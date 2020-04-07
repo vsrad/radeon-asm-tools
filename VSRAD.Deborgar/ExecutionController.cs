@@ -27,7 +27,9 @@ namespace VSRAD.Deborgar.Server
             if (!_engineIntegration.PopRunToLineIfSet(file, out var breakLine))
             {
                 var prevBreakLine = _stepState.TryGetValue(file, out var prevState) ? prevState.breakLine : 0;
-                breakLine = breakpointManager.GetNextBreakpointLine(file, prevBreakLine);
+                breakLine = _engineIntegration.RerunOnContinue()
+                    ? prevBreakLine
+                    : breakpointManager.GetNextBreakpointLine(file, prevBreakLine);
             }
             _stepState[file] = (isStepping: false, breakLine);
         }

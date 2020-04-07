@@ -15,6 +15,11 @@
                     <x:Type TypeName="viz:ColumnHighlightColor"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
+            <ObjectDataProvider x:Key="ContinueMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="utils:ContinueMode"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ControlStyle.xaml"/>
@@ -48,6 +53,11 @@
                     <Label Content="Group lanes by:"/>
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
                                         Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Label Content="Continue Mode:"/>
+                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.ContinueMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource ContinueMode}}"/>
                 </StackPanel>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
