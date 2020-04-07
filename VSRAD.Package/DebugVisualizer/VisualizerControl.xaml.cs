@@ -115,6 +115,9 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.HeadersFont
                     );
                     break;
+                case nameof(Options.VisualizerAppearance.LaneDivierWidth):
+                    ApplyColumnStyling();
+                    break;
             }
         }
 
@@ -130,7 +133,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             _integration.ProjectOptions.VisualizerColumnStyling.Computed.Apply(_table.DataColumns,
                 groupSize: headerControl.GroupSize,
-                laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping);
+                laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping,
+                laneDividerWidth: _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth, 8);
 
             if (_breakState != null && _integration.ProjectOptions.VisualizerOptions.MaskLanes)
                 ColumnStyling.ApplyLaneMask(_table.DataColumns,

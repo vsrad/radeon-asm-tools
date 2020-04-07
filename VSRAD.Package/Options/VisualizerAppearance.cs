@@ -56,5 +56,13 @@ namespace VSRAD.Package.Options
             set => SetField(ref _headersFont, value);
         }
         #endregion
+        #region diviers
+        private int _laneDividerWidth = 3;
+        public int LaneDivierWidth
+        {
+            get => _laneDividerWidth;
+            set => SetField(ref _laneDividerWidth, value);
+        }
+        #endregion
     }
 }

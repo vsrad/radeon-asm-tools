@@ -10,8 +10,6 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class ColumnStyling
     {
-        private const int LaneDividerWidth = 3;
-
         public bool[] Visibility = new bool[VisualizerTable.DataColumnCount];
         private readonly Color[] _highlightColor = new Color[VisualizerTable.DataColumnCount];
 
@@ -30,7 +28,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint laneGrouping)
+        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint laneGrouping, int laneDividerWidth, int hiddenColumnSeparatorWidth)
         {
             if (columns.Count != VisualizerTable.DataColumnCount)
                 throw new ArgumentException("ColumnStyling applies to exactly 512 columns");
@@ -54,7 +52,7 @@ namespace VSRAD.Package.DebugVisualizer
                     {
                         if (Visibility[lastVisibleInGroup])
                         {
-                            columns[lastVisibleInGroup].DividerWidth = LaneDividerWidth;
+                            columns[lastVisibleInGroup].DividerWidth = laneDividerWidth;
                             break;
                         }
                     }
@@ -66,7 +64,7 @@ namespace VSRAD.Package.DebugVisualizer
                 columns[i].DefaultCellStyle.BackColor = _highlightColor[i];
                 columns[i].Visible = Visibility[i];
                 if (i != groupSize - 1 && Visibility[i] != Visibility[i + 1])
-                    columns[i].DividerWidth = 8;
+                    columns[i].DividerWidth = hiddenColumnSeparatorWidth;
             }
         }
 
