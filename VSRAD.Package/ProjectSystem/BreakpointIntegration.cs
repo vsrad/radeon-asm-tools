@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Package.Options;
 using Task = System.Threading.Tasks.Task;
@@ -19,10 +20,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IProject _project;
 
-        private readonly CancellationTokenSource _pollCts = new CancellationTokenSource();
-        private readonly Dictionary<string, EnvDTE.Breakpoint> _activeBreakpoints = new Dictionary<string, EnvDTE.Breakpoint>();
-
-        private EnvDTE.Debugger _debuggerDte;
+        private CancellationTokenSource _pollCts;
 
         [ImportingConstructor]
         public BreakpointIntegration(SVsServiceProvider serviceProvider, IProject project)
@@ -30,45 +28,64 @@ namespace VSRAD.Package.ProjectSystem
             _serviceProvider = serviceProvider;
             _project = project;
             _project.Loaded += Initialize;
-            _project.Unloaded += _pollCts.Cancel;
+            _project.Unloaded += () => _pollCts?.Cancel();
         }
 
         public void Initialize(ProjectOptions options)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = _serviceProvider.GetService(typeof(SDTE)) as EnvDTE.DTE;
-            Assumes.Present(dte);
-            _debuggerDte = dte.Debugger;
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(PollBreakpointsAsync);
+            SetSingleActiveBreakpointMode(options.DebuggerOptions.SingleActiveBreakpoint);
+            options.DebuggerOptions.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(DebuggerOptions.SingleActiveBreakpoint))
+                    SetSingleActiveBreakpointMode(options.DebuggerOptions.SingleActiveBreakpoint);
+            };
         }
 
-        private async Task PollBreakpointsAsync()
+        private void SetSingleActiveBreakpointMode(bool enable)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (enable)
+            {
+                _pollCts = new CancellationTokenSource();
+                var dte = _serviceProvider.GetService(typeof(SDTE)) as EnvDTE.DTE;
+                Assumes.Present(dte);
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => PollBreakpointsAsync(dte.Debugger, _pollCts.Token));
+            }
+            else
+            {
+                _pollCts?.Cancel();
+            }
+        }
+
+        private static async Task PollBreakpointsAsync(EnvDTE.Debugger debuggerDte, CancellationToken cancellationToken)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            while (!_pollCts.IsCancellationRequested)
+            var activeBreakpoints = new Dictionary<string, EnvDTE.Breakpoint>();
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (_debuggerDte.Breakpoints != null)
+                if (debuggerDte.Breakpoints != null)
                 {
-                    foreach (EnvDTE.Breakpoint newBp in _debuggerDte.Breakpoints)
+                    foreach (EnvDTE.Breakpoint newBp in debuggerDte.Breakpoints)
                     {
                         if (!newBp.Enabled)
                             continue;
                         // If the breakpoint is enabled and does not match the previously active one, disable the latter
-                        if (_activeBreakpoints.TryGetValue(newBp.File, out var oldBp))
+                        if (activeBreakpoints.TryGetValue(newBp.File, out var oldBp))
                         {
                             if (newBp != oldBp)
                             {
-                                oldBp.Enabled = false;
-                                _activeBreakpoints[newBp.File] = newBp;
+                                try { oldBp.Enabled = false; }
+                                catch (COMException) { } // the old breakpoint is deleted
+
+                                activeBreakpoints[newBp.File] = newBp;
                             }
                         }
                         else
                         {
-                            _activeBreakpoints[newBp.File] = newBp;
+                            activeBreakpoints[newBp.File] = newBp;
                         }
                     }
                 }
-
                 await Task.Delay(_pollDelay);
             }
         }

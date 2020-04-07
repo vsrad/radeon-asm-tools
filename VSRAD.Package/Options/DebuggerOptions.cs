@@ -32,6 +32,9 @@ namespace VSRAD.Package.Options
         private ContinueMode _continueMode = ContinueMode.RoundRobin;
         public ContinueMode ContinueMode { get => _continueMode; set => SetField(ref _continueMode, value); }
 
+        private bool _singleActiveBreakpoint = false;
+        public bool SingleActiveBreakpoint { get => _singleActiveBreakpoint; set => SetField(ref _singleActiveBreakpoint, value); }
+
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
     }

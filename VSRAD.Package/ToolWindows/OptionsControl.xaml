@@ -54,10 +54,14 @@
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
                                         Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Continue Mode:"/>
-                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.ContinueMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                <StackPanel Orientation="Vertical" Margin="0,8,0,0">
+                    <CheckBox Content="Disable other breakpoints when adding a new one"
+                            IsChecked="{Binding Options.DebuggerOptions.SingleActiveBreakpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Label Content="Continue Mode:"/>
+                        <ComboBox SelectedItem="{Binding Options.DebuggerOptions.ContinueMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ItemsSource="{Binding Source={StaticResource ContinueMode}}"/>
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
