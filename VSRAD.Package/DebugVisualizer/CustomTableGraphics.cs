@@ -6,7 +6,6 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class CustomTableGraphics
     {
         private readonly VisualizerTable _table;
-        private const int _visibilitySpaceWidth = 8;
         private static readonly Brush _visibilitySpaceColor = Brushes.Black;
         private static readonly Brush _avgprColor = Brushes.LightGreen;
 
@@ -21,8 +20,8 @@ namespace VSRAD.Package.DebugVisualizer
         private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.ColumnIndex == -1) return;
-            var dgw = (DataGridView)sender;
-            if (dgw.Columns[e.ColumnIndex].Visible == dgw.Columns[e.ColumnIndex + 1].Visible) return;
+            var vt = (VisualizerTable)sender;
+            if (vt.Columns[e.ColumnIndex].Visible == vt.Columns[e.ColumnIndex + 1].Visible) return;
 
             // We doing force paint of _visible_ part of cell.
             // Since we have frozen columns visible part of cell
@@ -30,11 +29,11 @@ namespace VSRAD.Package.DebugVisualizer
             var r = e.CellBounds.Left > _table.ReservedColumnsOffset
                 ? e.CellBounds
                 : new Rectangle(_table.ReservedColumnsOffset + 1, e.CellBounds.Top, e.CellBounds.Right - _table.ReservedColumnsOffset - 1, e.CellBounds.Height);
-            r.Width -= _visibilitySpaceWidth;
+            r.Width -= vt.HiddenColumnSeparatorWidth;
             e.Graphics.SetClip(r);
             e.Paint(r, DataGridViewPaintParts.All);
             e.Graphics.SetClip(e.CellBounds);
-            r = new Rectangle(r.Right - 1, r.Top, _visibilitySpaceWidth + 1, r.Height);
+            r = new Rectangle(r.Right - 1, r.Top, vt.HiddenColumnSeparatorWidth + 1, r.Height);
             e.Graphics.FillRectangle(_visibilitySpaceColor, r);
             e.Graphics.ResetClip();
             e.Handled = true;

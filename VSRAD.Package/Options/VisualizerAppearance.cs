@@ -63,6 +63,13 @@ namespace VSRAD.Package.Options
             get => _laneDividerWidth;
             set => SetField(ref _laneDividerWidth, value);
         }
+
+        private int _hiddenColumnSeparatorWidth = 8;
+        public int HiddenColumnSeparatorWidth
+        {
+            get => _hiddenColumnSeparatorWidth;
+            set => SetField(ref _hiddenColumnSeparatorWidth, value);
+        }
         #endregion
     }
 }

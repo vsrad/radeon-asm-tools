@@ -21,6 +21,8 @@ namespace VSRAD.Package.DebugVisualizer
         public int GroupSize => _groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
 
+        public int HiddenColumnSeparatorWidth = 8;
+
         public bool ShowSystemRow
         {
             get => Rows.Count > 0 && Rows[0].Visible;

@@ -97,7 +97,12 @@
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                     <Label Content="Lane Divier Width:"/>
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="1" Maximum="25"
-                                        Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                                        Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Label Content="Hidden Column Separator Width:"/>
+                    <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="1" Maximum="25"
+                                        Value="{Binding DataContext.Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                 </StackPanel>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>

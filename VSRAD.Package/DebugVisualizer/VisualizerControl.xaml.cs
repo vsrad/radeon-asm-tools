@@ -116,6 +116,9 @@ namespace VSRAD.Package.DebugVisualizer
                     );
                     break;
                 case nameof(Options.VisualizerAppearance.LaneDivierWidth):
+                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
+                    _table.HiddenColumnSeparatorWidth =
+                        _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
                     ApplyColumnStyling();
                     break;
             }
@@ -134,7 +137,8 @@ namespace VSRAD.Package.DebugVisualizer
             _integration.ProjectOptions.VisualizerColumnStyling.Computed.Apply(_table.DataColumns,
                 groupSize: headerControl.GroupSize,
                 laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping,
-                laneDividerWidth: _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth, 8);
+                laneDividerWidth: _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth,
+                hiddenColumnSeparatorWidth: _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth);
 
             if (_breakState != null && _integration.ProjectOptions.VisualizerOptions.MaskLanes)
                 ColumnStyling.ApplyLaneMask(_table.DataColumns,
