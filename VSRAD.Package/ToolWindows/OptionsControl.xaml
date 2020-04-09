@@ -59,59 +59,63 @@
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
                                         Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Name Column Alignment:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Name Header Alignment:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Data Alignment:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.DataColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Headers Alignment:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Name Column Font:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource FontType}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Name Header Font:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource FontType}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Label Content="Visualizer Headers Font:"/>
-                    <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource FontType}}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Lane Divier Width:"/>
-                    <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="1" Maximum="25"
-                                        Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Hidden Column Separator Width:"/>
-                    <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="1" Maximum="25"
-                                        Value="{Binding DataContext.Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Hidden Column Separator Color:"/>
-                    <TextBox Width="50" Height="24" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Lane Separator Color:"/>
-                    <TextBox Width="50" Height="24" Text="{Binding Options.VisualizerAppearance.LaneSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
+                <Expander x:Name="VisualizerAppearanceExpander" Header="Visualizer Appearance">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Name Column Alignment:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Name Header Alignment:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Data Alignment:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.DataColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Headers Alignment:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Name Column Font:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource FontType}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Name Header Font:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource FontType}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Visualizer Headers Font:"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  ItemsSource="{Binding Source={StaticResource FontType}}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Label Content="Lane Divier Width:"/>
+                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="1" Maximum="25"
+                                            Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Label Content="Hidden Column Separator Width:"/>
+                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="1" Maximum="25"
+                                            Value="{Binding DataContext.Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Label Content="Hidden Column Separator Color:"/>
+                            <TextBox Width="50" Height="24" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Label Content="Lane Separator Color:"/>
+                            <TextBox Width="50" Height="24" Text="{Binding Options.VisualizerAppearance.LaneSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
             <DataGrid x:Name="ColoringRegionsGrid" ItemsSource="{Binding Options.VisualizerColumnStyling.HighlightRegions, UpdateSourceTrigger=PropertyChanged}"
