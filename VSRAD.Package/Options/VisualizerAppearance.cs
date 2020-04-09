@@ -70,6 +70,13 @@ namespace VSRAD.Package.Options
             get => _hiddenColumnSeparatorWidth;
             set => SetField(ref _hiddenColumnSeparatorWidth, value);
         }
+
+        private string _hiddenColumnSeparatorColor = "000000";
+        public string HiddenColumnSeparatorColor
+        {
+            get => _hiddenColumnSeparatorColor;
+            set => SetField(ref _hiddenColumnSeparatorColor, value);
+        }
         #endregion
     }
 }

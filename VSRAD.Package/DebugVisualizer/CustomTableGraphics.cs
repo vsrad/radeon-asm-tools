@@ -6,7 +6,6 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class CustomTableGraphics
     {
         private readonly VisualizerTable _table;
-        private static readonly Brush _visibilitySpaceColor = Brushes.Black;
         private static readonly Brush _avgprColor = Brushes.LightGreen;
 
         public CustomTableGraphics(VisualizerTable table)
@@ -34,7 +33,7 @@ namespace VSRAD.Package.DebugVisualizer
             e.Paint(r, DataGridViewPaintParts.All);
             e.Graphics.SetClip(e.CellBounds);
             r = new Rectangle(r.Right - 1, r.Top, vt.HiddenColumnSeparatorWidth + 1, r.Height);
-            e.Graphics.FillRectangle(_visibilitySpaceColor, r);
+            e.Graphics.FillRectangle(vt.HiddenColumnSeparatorColor, r);
             e.Graphics.ResetClip();
             e.Handled = true;
         }

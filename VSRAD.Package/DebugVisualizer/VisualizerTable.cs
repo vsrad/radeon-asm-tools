@@ -22,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
 
         public int HiddenColumnSeparatorWidth = 8;
+        public SolidBrush HiddenColumnSeparatorColor;
 
         public bool ShowSystemRow
         {

@@ -43,6 +43,7 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
+            _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
             tableHost.Setup(_table);
             RestoreSavedState();
         }
@@ -120,6 +121,12 @@ namespace VSRAD.Package.DebugVisualizer
                     _table.HiddenColumnSeparatorWidth =
                         _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
                     ApplyColumnStyling();
+                    break;
+                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorColor):
+                    var oldColor = _table.HiddenColumnSeparatorColor;
+                    _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
+                    if (_table.HiddenColumnSeparatorColor != oldColor)
+                        ApplyColumnStyling();
                     break;
             }
         }

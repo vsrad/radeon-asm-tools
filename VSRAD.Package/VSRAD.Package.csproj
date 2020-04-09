@@ -244,6 +244,7 @@
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
+    <Compile Include="Utils\SeparatorColorConverter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
