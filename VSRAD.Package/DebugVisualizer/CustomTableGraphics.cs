@@ -6,8 +6,6 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class CustomTableGraphics
     {
         private readonly VisualizerTable _table;
-        private const int _visibilitySpaceWidth = 8;
-        private static readonly Brush _visibilitySpaceColor = Brushes.Black;
         private static readonly Brush _avgprColor = Brushes.LightGreen;
 
         public CustomTableGraphics(VisualizerTable table)
@@ -21,7 +19,18 @@ namespace VSRAD.Package.DebugVisualizer
         private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.ColumnIndex == -1) return;
-            if (_table.Columns[e.ColumnIndex].DividerWidth != _visibilitySpaceWidth) return;
+            var vt = (VisualizerTable)sender;
+            if (e.ColumnIndex == VisualizerTable.DataColumnCount) return;
+            if ((vt.Columns[e.ColumnIndex].Visible == vt.Columns[e.ColumnIndex + 1].Visible
+                && e.ColumnIndex % vt.LaneGrouping != 0)
+                || e.ColumnIndex == 0) return;
+
+            var width = vt.Columns[e.ColumnIndex].Visible != vt.Columns[e.ColumnIndex + 1].Visible
+                ? vt.HiddenColumnSeparatorWidth
+                : vt.LaneSeparatorWidth;
+            var color = vt.Columns[e.ColumnIndex].Visible != vt.Columns[e.ColumnIndex + 1].Visible
+                ? vt.HiddenColumnSeparatorColor
+                : vt.LaneSeparatorColor; 
 
             // We doing force paint of _visible_ part of cell.
             // Since we have frozen columns visible part of cell
@@ -29,12 +38,12 @@ namespace VSRAD.Package.DebugVisualizer
             var r = e.CellBounds.Left > _table.ReservedColumnsOffset
                 ? e.CellBounds
                 : new Rectangle(_table.ReservedColumnsOffset + 1, e.CellBounds.Top, e.CellBounds.Right - _table.ReservedColumnsOffset - 1, e.CellBounds.Height);
-            r.Width -= _visibilitySpaceWidth;
+            r.Width -= width;
             e.Graphics.SetClip(r);
             e.Paint(r, DataGridViewPaintParts.All);
             e.Graphics.SetClip(e.CellBounds);
-            r = new Rectangle(r.Right - 1, r.Top, _visibilitySpaceWidth + 1, r.Height);
-            e.Graphics.FillRectangle(_visibilitySpaceColor, r);
+            r = new Rectangle(r.Right - 1, r.Top, width + 1, r.Height);
+            e.Graphics.FillRectangle(color, r);
             e.Graphics.ResetClip();
             e.Handled = true;
         }

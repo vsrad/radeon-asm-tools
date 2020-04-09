@@ -21,11 +21,20 @@ namespace VSRAD.Package.DebugVisualizer
         public int GroupSize => _groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
 
+        public int HiddenColumnSeparatorWidth = 8;
+        public SolidBrush HiddenColumnSeparatorColor;
+        public uint LaneGrouping;
+        public int LaneSeparatorWidth = 3;
+        public SolidBrush LaneSeparatorColor;
+
         public bool ShowSystemRow
         {
             get => Rows.Count > 0 && Rows[0].Visible;
             set { if (Rows.Count > 0) Rows[0].Visible = value; }
         }
+
+        //public ContentAlignment NameColumnAlignment = ContentAlignment.Left;
+        //public ContentAlignment DataColumnAlignment = ContentAlignment.Left;
 
         public IReadOnlyList<DataGridViewColumn> DataColumns { get; }
         public IEnumerable<DataGridViewRow> DataRows => Rows
@@ -41,6 +50,9 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly GetGroupSize _groupSizeGetter;
 
         private string _editedWatchName;
+
+        private Font _bold = new Font(DefaultFont, FontStyle.Bold);
+        private Font _regular = new Font(DefaultFont, FontStyle.Regular);
 
         public VisualizerTable(ColumnStylingOptions options, GetGroupSize groupSizeGetter) : base()
         {
@@ -255,6 +267,37 @@ namespace VSRAD.Package.DebugVisualizer
                 Columns.Add(dataColumns[i]);
             }
             return dataColumns;
+        }
+
+        public void AlignmentChanged(
+                ContentAlignment nameColumnAlignment,
+                ContentAlignment dataColumnAlignment,
+                ContentAlignment nameHeaderAlignment,
+                ContentAlignment headersAlignment
+            )
+        {
+            Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
+            Columns[0].HeaderCell.Style.Alignment = nameHeaderAlignment.AsDataGridViewContentAlignment();
+            foreach (var column in DataColumns)
+            {
+                column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
+                column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
+            }
+        }
+
+        public void FontTypeChanged(
+                FontType nameColumnFont,
+                FontType nameHeaderFont,
+                FontType headersFont
+            )
+        {
+            Columns[0].DefaultCellStyle.Font = nameColumnFont == FontType.Bold ? _bold : _regular;
+            Columns[0].HeaderCell.Style.Font = nameHeaderFont == FontType.Bold ? _bold : _regular;
+            var hFont = headersFont == FontType.Bold ? _bold : _regular;
+            foreach (var column in DataColumns)
+            {
+                column.HeaderCell.Style.Font = hFont;
+            }
         }
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)

@@ -139,9 +139,11 @@
     <Compile Include="Commands\ProfileCommand.cs" />
     <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />
+    <Compile Include="DebugVisualizer\ContentAlignment.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
     <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
+    <Compile Include="DebugVisualizer\FontType.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
     </Compile>
@@ -160,6 +162,7 @@
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
+    <Compile Include="Options\VisualizerAppearance.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="Utils\ContinueMode.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
@@ -243,6 +246,7 @@
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
+    <Compile Include="Utils\SeparatorColorConverter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />

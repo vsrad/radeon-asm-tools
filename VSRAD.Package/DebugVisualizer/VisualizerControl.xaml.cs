@@ -30,6 +30,7 @@ namespace VSRAD.Package.DebugVisualizer
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += ApplyColumnStyling;
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
+            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
 
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,
@@ -42,6 +43,15 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
+            _table.HiddenColumnSeparatorColor =
+                SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
+            _table.LaneSeparatorColor =
+                SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
+            _table.HiddenColumnSeparatorWidth =
+                        _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
+            _table.LaneSeparatorWidth =
+                _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
+            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.LaneGrouping;
             tableHost.Setup(_table);
             RestoreSavedState();
         }
@@ -62,6 +72,17 @@ namespace VSRAD.Package.DebugVisualizer
             _table.Rows.Clear();
             _table.AppendVariableRow(new Watch("System", VariableType.Hex, isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
+            _table.AlignmentChanged(
+                    _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment,
+                    _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
+                    _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
+                    _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
+                );
+            _table.FontTypeChanged(
+                    _integration.ProjectOptions.VisualizerAppearance.NameColumnFont,
+                    _integration.ProjectOptions.VisualizerAppearance.NameHeaderFont,
+                    _integration.ProjectOptions.VisualizerAppearance.HeadersFont
+                );
             foreach (var watch in _integration.ProjectOptions.DebuggerOptions.Watches)
                 _table.AppendVariableRow(watch);
             _table.PrepareNewWatchRow();
@@ -83,6 +104,46 @@ namespace VSRAD.Package.DebugVisualizer
                     if (_integration.ProjectOptions.VisualizerOptions.CheckMagicNumber)
                         ApplyColumnStyling();
                     break;
+                case nameof(Options.VisualizerAppearance.NameColumnAlignment):
+                case nameof(Options.VisualizerAppearance.DataColumnAlignment):
+                case nameof(Options.VisualizerAppearance.NameHeaderAlignment):
+                case nameof(Options.VisualizerAppearance.HeadersAlignment):
+                    _table.AlignmentChanged(
+                        _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment,
+                        _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
+                        _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
+                        _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
+                    );
+                    break;
+                case nameof(Options.VisualizerAppearance.NameColumnFont):
+                case nameof(Options.VisualizerAppearance.NameHeaderFont):
+                case nameof(Options.VisualizerAppearance.HeadersFont):
+                    _table.FontTypeChanged(
+                        _integration.ProjectOptions.VisualizerAppearance.NameColumnFont,
+                        _integration.ProjectOptions.VisualizerAppearance.NameHeaderFont,
+                        _integration.ProjectOptions.VisualizerAppearance.HeadersFont
+                    );
+                    break;
+                case nameof(Options.VisualizerAppearance.LaneDivierWidth):
+                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
+                    _table.HiddenColumnSeparatorWidth =
+                        _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
+                    _table.LaneSeparatorWidth =
+                        _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
+                    ApplyColumnStyling();
+                    break;
+                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorColor):
+                    var oldHiddenColor = _table.HiddenColumnSeparatorColor;
+                    _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
+                    if (_table.HiddenColumnSeparatorColor != oldHiddenColor)
+                        ApplyColumnStyling();
+                    break;
+                case nameof(Options.VisualizerAppearance.LaneSeparatorColor):
+                    var oldLaneColor = _table.LaneSeparatorColor;
+                    _table.LaneSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
+                    if (_table.LaneSeparatorColor != oldLaneColor)
+                        ApplyColumnStyling();
+                    break;
             }
         }
 
@@ -96,9 +157,12 @@ namespace VSRAD.Package.DebugVisualizer
             var scrollingOffset = _table.HorizontalScrollingOffset;
             _table.SuspendDrawing(); // prevents the scrollbar from jerking due to visibility changes
 
+            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.LaneGrouping;
             _integration.ProjectOptions.VisualizerColumnStyling.Computed.Apply(_table.DataColumns,
                 groupSize: headerControl.GroupSize,
-                laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping);
+                laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping,
+                laneDividerWidth: _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth,
+                hiddenColumnSeparatorWidth: _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth);
 
             if (_breakState != null && _integration.ProjectOptions.VisualizerOptions.MaskLanes)
                 ColumnStyling.ApplyLaneMask(_table.DataColumns,
