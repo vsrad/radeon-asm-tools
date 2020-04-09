@@ -15,10 +15,12 @@ using VSRAD.Package.Utils;
 namespace VSRAD.Package.ProjectSystem
 {
     public delegate void ProjectLoaded(ProjectOptions options);
+    public delegate void ProjectUnloaded();
 
     public interface IProject
     {
         event ProjectLoaded Loaded;
+        event ProjectUnloaded Unloaded;
 
         ProjectOptions Options { get; }
         string RootPath { get; }
@@ -33,6 +35,7 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class Project : IProject
     {
         public event ProjectLoaded Loaded;
+        public event ProjectUnloaded Unloaded;
 
         public ProjectOptions Options { get; private set; }
 
@@ -58,6 +61,12 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerAppearance.PropertyChanged += (s, e) => SaveOptions();
             Options.VisualizerColumnStyling.StylingChanged += SaveOptions;
             Loaded?.Invoke(Options);
+        }
+
+        public void Unload()
+        {
+            SaveOptions();
+            Unloaded?.Invoke();
         }
 
         public void SaveOptions() => Options.Write(_optionsFilePath);

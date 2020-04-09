@@ -21,7 +21,8 @@ namespace VSRAD.Syntax.Parser
             string declorationStartPattern,
             string declorationEndPattern,
             bool enableManyLineDecloration,
-            Dictionary<string, Regex> variableDefinitRegex);
+            Dictionary<string, Regex> variableDefinitRegex,
+            Regex labelDefinitionRegex);
         int TabSize { get; set; }
         IBaseParser ActualParser { get; }
         event EventHandler ParserUpdatedEvent;
@@ -37,6 +38,7 @@ namespace VSRAD.Syntax.Parser
         string DeclarationEndPattern { get; }
         bool EnableManyLineDecloration { get; }
         Dictionary<string, Regex> VariableDefinitionRegulars { get; }
+        Regex LabelDefinitionRegular { get; }
 
         void UpdateParser(IBaseParser parser);
         void ParseSync();
@@ -70,6 +72,7 @@ namespace VSRAD.Syntax.Parser
         public string DeclarationEndPattern { get; private set; }
         public bool EnableManyLineDecloration { get; private set; }
         public Dictionary<string, Regex> VariableDefinitionRegulars { get; private set; }
+        public Regex LabelDefinitionRegular { get; private set; }
         public IBaseParser ActualParser { get; private set; }
         public int TabSize
         {
@@ -93,7 +96,8 @@ namespace VSRAD.Syntax.Parser
             string declorationStartPattern,
             string declorationEndPattern,
             bool enableManyLineDecloration,
-            Dictionary<string, Regex> variableDefinitRegex)
+            Dictionary<string, Regex> variableDefinitRegex,
+            Regex labelDefinitionRegex)
         {
             this._textBuffer = textBuffer;
             this.KeyWordStartPatterns = keyWordStartPatterns;
@@ -108,6 +112,7 @@ namespace VSRAD.Syntax.Parser
             this.DeclarationStartPattern = declorationStartPattern;
             this.EnableManyLineDecloration = enableManyLineDecloration;
             this.VariableDefinitionRegulars = variableDefinitRegex;
+            this.LabelDefinitionRegular = labelDefinitionRegex;
             _initialized = true;
             _textBuffer.Changed += OnBufferChanged;
             _tabSize = 4;

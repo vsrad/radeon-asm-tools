@@ -2,7 +2,7 @@
 
 namespace VSRAD.Syntax.Parser.Tokens
 {
-    class FunctionToken : BaseToken, IDescriptionToken
+    public class FunctionToken : BaseToken, IDescriptionToken
     {
         public string Description { get; } = null;
 

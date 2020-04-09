@@ -3,6 +3,8 @@ using VSRAD.Syntax.Parser;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
+using Microsoft.VisualStudio.TextManager.Interop;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace VSRAD.Syntax.Helpers
 {
@@ -21,6 +23,18 @@ namespace VSRAD.Syntax.Helpers
             {
                 Microsoft.VisualStudio.Shell.ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
             }
+        }
+
+        public static string GetPath(this IWpfTextView textView)
+        {
+            textView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out IVsTextBuffer bufferAdapter);
+            var persistFileFormat = bufferAdapter as IPersistFileFormat;
+
+            if (persistFileFormat == null)
+                return null;
+
+            persistFileFormat.GetCurFile(out string filePath, out _);
+            return filePath;
         }
 
         public static IParserManager GetParserManager(this ITextView textView) =>

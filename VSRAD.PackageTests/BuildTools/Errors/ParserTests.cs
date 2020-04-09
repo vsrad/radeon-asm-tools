@@ -54,38 +54,31 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
             Assert.Equal(@"include the header<stdio.h> or explicitly provide a declaration for 'printf'", messages[3].Text);
         }
 
-        [Fact]
-        public void ScriptErrorTest()
-        {
-            var messages = ParseStderr(@"
+        public const string ScriptStderr = @"
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
 *W,undefined: 1 undefined references found
 *E,syntax error (<stdin>:12): at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?
 *E,fatal (auth.c:35): Uncaught error: Undefined variable: user
-").ToArray();
+";
 
-            Assert.Equal(MessageKind.Error, messages[0].Kind);
-            Assert.Equal(3, messages[0].Line);
-            Assert.Equal("<stdin>", messages[0].SourceFile);
-            Assert.Equal("fatal: undefined reference to 'printf'", messages[0].Text);
-
-            Assert.Equal(MessageKind.Warning, messages[1].Kind);
-            Assert.Null(messages[1].SourceFile);
-            Assert.Equal("undefined: 1 undefined references found", messages[1].Text);
-
-            Assert.Equal(MessageKind.Error, messages[2].Kind);
-            Assert.Equal(12, messages[2].Line);
-            Assert.Equal("<stdin>", messages[2].SourceFile);
-            Assert.Equal(@"syntax error: at symbol 'printf'
+        public static readonly Message[] ScriptExpectedMessages = new Message[]
+        {
+            new Message { Kind = MessageKind.Error, Line = 3, SourceFile = "<stdin>", Text = "fatal: undefined reference to 'printf'"},
+            new Message { Kind = MessageKind.Warning, Line = 0, SourceFile = "", Text = "undefined: 1 undefined references found" },
+            new Message { Kind = MessageKind.Error, Line = 12, SourceFile = "<stdin>", Text =
+@"syntax error: at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
-    did you really mean to use the scope resolution op here?", messages[2].Text);
+    did you really mean to use the scope resolution op here?" },
+            new Message { Kind = MessageKind.Error, Line = 35, SourceFile = "auth.c", Text = "fatal: Uncaught error: Undefined variable: user" }
+        };
 
-            Assert.Equal(MessageKind.Error, messages[3].Kind);
-            Assert.Equal(35, messages[3].Line);
-            Assert.Equal("auth.c", messages[3].SourceFile);
-            Assert.Equal("fatal: Uncaught error: Undefined variable: user", messages[3].Text);
+        [Fact]
+        public void ScriptErrorTest()
+        {
+            var messages = ParseStderr(ScriptStderr).ToArray();
+            Assert.Equal(ScriptExpectedMessages, messages);
         }
     }
 }

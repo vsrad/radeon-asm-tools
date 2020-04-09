@@ -17,8 +17,6 @@ namespace VSRAD.Syntax
     [ProvideOptionPage(typeof(OptionPage), Constants.RadeonAsmOptionsCategoryName, Constants.RadeonAsmOptionsBasePageName, 0, 0, true)]
     [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionHasMultipleProjects, PackageAutoLoadFlags.BackgroundLoad)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionHasSingleProject, PackageAutoLoadFlags.BackgroundLoad)]
     [Guid(Constants.PackageGuid)]
     public sealed class Package : AsyncPackage
     {
@@ -44,7 +42,7 @@ namespace VSRAD.Syntax
         {
             Instance = this;
             _componentModel = (await GetServiceAsync(typeof(SComponentModel))) as IComponentModel;
-            await OptionPage.ChangeExtensionsAndUpdateCurrentFileAsync();
+            await OptionPage.ChangeExtensionsAndUpdateConentTypesAsync();
             await FunctionListCommand.InitializeAsync(this);
             await ClearSearchFieldCommand.InitializeAsync(this);
             await SelectItemCommand.InitializeAsync(this);

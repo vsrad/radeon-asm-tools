@@ -108,6 +108,31 @@ namespace VSRAD.Package.BuildTools
             File.Delete(preprocessorLocalFile);
         }
 
+        [Fact]
+        public async Task BuildErrorTestAsync()
+        {
+            TestHelper.InitializePackageTaskFactory();
+            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() { { RadMacros.BuildExecutable, "err" } });
+            var channel = new MockCommunicationChannel();
+            var errorProcessor = new BuildErrorProcessor(new Mock<IProjectSourceManager>().Object);
+            var server = StartBuildServer(project, channel.Object, errorProcessor: errorProcessor);
+
+            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
+            {
+                Status = ExecutionStatus.Completed,
+                ExitCode = 1,
+                Stdout = "",
+                Stderr = PackageTests.BuildTools.Errors.ParserTests.ScriptStderr
+            }, (_) => { });
+
+            var message = await FetchResultOnClientAsync(server);
+
+            Assert.False(message.Skipped);
+            Assert.Equal("", message.ServerError);
+            Assert.Equal(1, message.ExitCode);
+            Assert.Equal(PackageTests.BuildTools.Errors.ParserTests.ScriptExpectedMessages, message.ErrorMessages);
+        }
+
         private static BuildToolsServer StartBuildServer(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager = null, IBuildErrorProcessor errorProcessor = null)
         {
             deployManager = deployManager ?? new Mock<IFileSynchronizationManager>().Object;

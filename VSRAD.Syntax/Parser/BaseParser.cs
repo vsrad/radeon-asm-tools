@@ -21,6 +21,8 @@ namespace VSRAD.Syntax.Parser
         IBaseBlock GetBlockByToken(IBaseToken token);
         FunctionBlock GetFunctionByLine(ITextSnapshotLine line);
         IEnumerable<FunctionBlock> GetFunctionBlocks();
+        IEnumerable<IBaseToken> GetLabelTokens();
+        IEnumerable<IBaseToken> GetFunctionTokens();
     }
 
     internal class BaseParser : IBaseParser
@@ -79,7 +81,7 @@ namespace VSRAD.Syntax.Parser
 
                 currentLine = line;
                 var lineText = line.GetText();
-                var cmpLineText = lineText.TrimStart();
+                var cmpLineText = lineText.Trim();
                 try
                 {
                     if (currentLineIsManyLineComment)
@@ -126,7 +128,7 @@ namespace VSRAD.Syntax.Parser
                             }
 
                             var substring = lineText.Substring(0, startIndex);
-                            cmpLineText = substring.TrimStart();
+                            cmpLineText = substring.Trim();
                             ParseBlocks(substring, cmpLineText);
                         }
                         else if (cmpLineText.Contains(parserManager.OneLineCommentPattern))
@@ -135,7 +137,7 @@ namespace VSRAD.Syntax.Parser
                             currentTreeBlock.AddToken(new SnapshotSpan(currentSnapshot, new Span(line.Start + index, line.Length - index)), Tokens.TokenType.Comment);
 
                             var substring = lineText.Substring(0, index);
-                            cmpLineText = substring.TrimStart();
+                            cmpLineText = substring.Trim();
 
                             ParseBlocks(substring, cmpLineText);
                         }
@@ -161,6 +163,9 @@ namespace VSRAD.Syntax.Parser
 
         private void ParseBlocks(string text, string cmpText)
         {
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+
             if (startFindManyLineDeclorationEnd)
             {
                 if (text.Contains(parserManager.DeclarationEndPattern))
@@ -255,7 +260,11 @@ namespace VSRAD.Syntax.Parser
                     {
                         var description = GetDescription();
                         var indexStart = indexStartLine + variableMatch.Groups["var_name"].Index;
-                        var varToken = new VariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
+                        VariableToken varToken;
+                        if (currentTreeBlock.BlockType == BlockType.Root)
+                            varToken = new GlobalVariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
+                        else
+                            varToken = new LocalVariableToken(new SnapshotSpan(currentSnapshot, indexStart, variableMatch.Groups["var_name"].Length), description);
                         currentTreeBlock.Tokens.Add(varToken);
                     }
                 }
@@ -304,14 +313,38 @@ namespace VSRAD.Syntax.Parser
                     }
                 }
             }
+
+            if (cmpText.EndsWith(":", StringComparison.Ordinal))
+            {
+                var labelMatch = parserManager.LabelDefinitionRegular.Match(text);
+                if (labelMatch.Success)
+                {
+                    var indexStart = indexStartLine + labelMatch.Groups["label_name"].Index;
+                    var labelToken = new LabelToken(new SnapshotSpan(currentSnapshot, indexStart, labelMatch.Groups["label_name"].Length));
+                    currentRootBlock.Tokens.Add(labelToken);
+                }
+            }
+        }
+
+        public IEnumerable<IBaseToken> GetLabelTokens()
+        {
+            return currentRootBlock.Tokens
+               .Where(t => t.TokenType == TokenType.Label);
+        }
+
+        public IEnumerable<IBaseToken> GetFunctionTokens()
+        {
+            return currentListBlock
+                .Where(block => block.BlockType == BlockType.Function)
+                .Cast<FunctionBlock>()
+                .Select(fb => fb.FunctionToken);
         }
 
         public IEnumerable<FunctionBlock> GetFunctionBlocks()
         {
             return currentListBlock
                 .Where(block => block.BlockType == BlockType.Function)
-                .Cast<FunctionBlock>()
-                .ToList();
+                .Cast<FunctionBlock>();
         }
 
         public FunctionBlock GetFunctionByLine(ITextSnapshotLine line)
