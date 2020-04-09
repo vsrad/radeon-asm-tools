@@ -45,7 +45,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (laneGrouping != 0)
             {
-                for (int start = 0; start < groupSize; start += (int)laneGrouping)
+                for (int start = 0; start < groupSize - (int)laneGrouping; start += (int)laneGrouping)
                 {
                     for (int lastVisibleInGroup = Math.Min(start + (int)laneGrouping - 1, (int)groupSize - 1);
                         lastVisibleInGroup >= start; lastVisibleInGroup--)

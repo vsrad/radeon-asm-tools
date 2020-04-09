@@ -108,6 +108,10 @@
                     <Label Content="Hidden Column Separator Color:"/>
                     <TextBox Width="50" Height="24" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Label Content="Lane Separator Color:"/>
+                    <TextBox Width="50" Height="24" Text="{Binding Options.VisualizerAppearance.LaneSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
             </StackPanel>
             <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
             <DataGrid x:Name="ColoringRegionsGrid" ItemsSource="{Binding Options.VisualizerColumnStyling.HighlightRegions, UpdateSourceTrigger=PropertyChanged}"

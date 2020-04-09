@@ -77,6 +77,13 @@ namespace VSRAD.Package.Options
             get => _hiddenColumnSeparatorColor;
             set => SetField(ref _hiddenColumnSeparatorColor, value);
         }
+
+        private string _laneSeparatorColor = "000000";
+        public string LaneSeparatorColor
+        {
+            get => _laneSeparatorColor;
+            set => SetField(ref _laneSeparatorColor, value);
+        }
         #endregion
     }
 }

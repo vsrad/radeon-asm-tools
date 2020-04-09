@@ -43,7 +43,15 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
-            _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
+            _table.HiddenColumnSeparatorColor =
+                SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
+            _table.LaneSeparatorColor =
+                SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
+            _table.HiddenColumnSeparatorWidth =
+                        _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
+            _table.LaneSeparatorWidth =
+                _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
+            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.LaneGrouping;
             tableHost.Setup(_table);
             RestoreSavedState();
         }
@@ -120,12 +128,20 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                     _table.HiddenColumnSeparatorWidth =
                         _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
+                    _table.LaneSeparatorWidth =
+                        _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
                     ApplyColumnStyling();
                     break;
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorColor):
-                    var oldColor = _table.HiddenColumnSeparatorColor;
+                    var oldHiddenColor = _table.HiddenColumnSeparatorColor;
                     _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
-                    if (_table.HiddenColumnSeparatorColor != oldColor)
+                    if (_table.HiddenColumnSeparatorColor != oldHiddenColor)
+                        ApplyColumnStyling();
+                    break;
+                case nameof(Options.VisualizerAppearance.LaneSeparatorColor):
+                    var oldLaneColor = _table.LaneSeparatorColor;
+                    _table.LaneSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
+                    if (_table.LaneSeparatorColor != oldLaneColor)
                         ApplyColumnStyling();
                     break;
             }
@@ -141,6 +157,7 @@ namespace VSRAD.Package.DebugVisualizer
             var scrollingOffset = _table.HorizontalScrollingOffset;
             _table.SuspendDrawing(); // prevents the scrollbar from jerking due to visibility changes
 
+            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.LaneGrouping;
             _integration.ProjectOptions.VisualizerColumnStyling.Computed.Apply(_table.DataColumns,
                 groupSize: headerControl.GroupSize,
                 laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping,

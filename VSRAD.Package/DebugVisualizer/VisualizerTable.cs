@@ -23,6 +23,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         public int HiddenColumnSeparatorWidth = 8;
         public SolidBrush HiddenColumnSeparatorColor;
+        public uint LaneGrouping;
+        public int LaneSeparatorWidth = 3;
+        public SolidBrush LaneSeparatorColor;
 
         public bool ShowSystemRow
         {
