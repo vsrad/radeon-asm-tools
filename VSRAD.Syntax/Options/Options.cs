@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser;
 using DisplayNameAttribute = System.ComponentModel.DisplayNameAttribute;
@@ -21,6 +23,7 @@ namespace VSRAD.Syntax.Options
     {
         const string asm1CollectionPath = "Asm1CollectionFileExtensions";
         const string asm2CollectionPath = "Asm2CollectionFileExtensions";
+        private static readonly Regex fileExtensionRegular = new Regex(@"^\.\w+$");
         private readonly IContentTypeRegistryService _contentTypeRegistryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
         private readonly TextViewObserver _textViewObserver;
@@ -77,9 +80,35 @@ namespace VSRAD.Syntax.Options
 
         protected override void OnApply(PageApplyEventArgs e)
         {
-            base.OnApply(e);
-            FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeExtensionsAndUpdateConentTypesAsync());
+            try
+            {
+                base.OnApply(e);
+
+                ValidateExtensions(Asm1FileExtensions);
+                ValidateExtensions(Asm2FileExtensions);
+                FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeExtensionsAndUpdateConentTypesAsync());
+            }
+            catch(Exception ex)
+            {
+                Error.ShowWarning(ex);
+            }
+        }
+        
+        private void ValidateExtensions(List<string> extensions)
+        {
+            var sb = new StringBuilder();
+            foreach (var ext in extensions)
+            {
+                if (!fileExtensionRegular.IsMatch(ext))
+                    sb.AppendLine($"Invalid file extension format \"{ext}\"");
+            }
+            if (sb.Length != 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine("Format example: .asm");
+                throw new ArgumentException(sb.ToString());
+            }
         }
 
         public override void SaveSettingsToStorage()
@@ -122,8 +151,15 @@ namespace VSRAD.Syntax.Options
 
         public void ChangeExtensions()
         {
-            ChangeExtensions(_asm1ContentType, Asm1FileExtensions);
-            ChangeExtensions(_asm2ContentType, Asm2FileExtensions);
+            try
+            {
+                ChangeExtensions(_asm1ContentType, Asm1FileExtensions);
+                ChangeExtensions(_asm2ContentType, Asm2FileExtensions);
+            }
+            catch (InvalidOperationException e)
+            {
+                Error.ShowWarning(e);
+            }
         }
 
         public async Task ChangeExtensionsAndUpdateConentTypesAsync()
@@ -131,7 +167,6 @@ namespace VSRAD.Syntax.Options
             try
             {
                 ChangeExtensions();
-
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 UpdateOpenedTextViewContentType();
             }
@@ -201,27 +236,10 @@ namespace VSRAD.Syntax.Options
         private void ChangeExtensions(IContentType contentType, IEnumerable<string> extensions)
         {
             foreach (var ext in _fileExtensionRegistryService.GetExtensionsForContentType(contentType))
-            {
-                try
-                {
-                    _fileExtensionRegistryService.RemoveFileExtension(ext);
-                }
-                catch (Exception e)
-                {
-                    Error.LogError(e);
-                }
-            }
+                _fileExtensionRegistryService.RemoveFileExtension(ext);
+
             foreach (var ext in extensions)
-            {
-                try
-                {
-                    _fileExtensionRegistryService.AddFileExtension(ext, contentType);
-                }
-                catch (Exception e)
-                {
-                    Error.LogError(e);
-                }
-            }
+                _fileExtensionRegistryService.AddFileExtension(ext, contentType);
         }
 
         private class CollectionConverter : TypeConverter
