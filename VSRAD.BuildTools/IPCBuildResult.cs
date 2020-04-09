@@ -12,10 +12,20 @@ namespace VSRAD.BuildTools
         public sealed class Message
         {
             public MessageKind Kind { get; set; }
-            public string Text { get; set; }
-            public string SourceFile { get; set; }
+            public string Text { get; set; } = "";
+            public string SourceFile { get; set; } = "";
             public int Line { get; set; }
             public int Column { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Message message &&
+                       Kind == message.Kind &&
+                       Text == message.Text &&
+                       SourceFile == message.SourceFile &&
+                       Line == message.Line &&
+                       Column == message.Column;
+            }
         }
 
         public bool Skipped { get; set; }

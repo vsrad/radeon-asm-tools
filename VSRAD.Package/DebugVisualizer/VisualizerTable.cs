@@ -158,7 +158,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void ColumnSelectorChanged(string newSelector)
         {
-            _stylingOptions.VisibleColumns = newSelector;
+            _stylingOptions.VisibleColumns =
+                ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, newSelector);
             ClearSelection();
         }
 

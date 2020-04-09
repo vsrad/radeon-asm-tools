@@ -23,6 +23,9 @@
             <ObjectDataProvider x:Key="FontType" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:FontType"/>
+            <ObjectDataProvider x:Key="ContinueMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="utils:ContinueMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
@@ -58,6 +61,15 @@
                     <Label Content="Group lanes by:"/>
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
                                         Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical" Margin="0,8,0,0">
+                    <CheckBox Content="Disable other breakpoints when adding a new one"
+                            IsChecked="{Binding Options.DebuggerOptions.SingleActiveBreakpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Label Content="Continue Mode:"/>
+                        <ComboBox SelectedItem="{Binding Options.DebuggerOptions.ContinueMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource ContinueMode}}"/>
+                    </StackPanel>
                 </StackPanel>
                 <Expander x:Name="VisualizerAppearanceExpander" Header="Visualizer Appearance">
                     <StackPanel>

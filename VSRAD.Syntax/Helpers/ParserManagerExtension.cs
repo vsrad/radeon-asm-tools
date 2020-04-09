@@ -19,7 +19,8 @@ namespace VSRAD.Syntax.Helpers
                 declorationStartPattern: null,
                 declorationEndPattern: null,
                 enableManyLineDecloration: false,
-                Constants.asm1VariableDefinition);
+                Constants.asm1VariableDefinition,
+                Constants.asm1LabelDefinitionRegular);
 
         public static void InitializeAsm2(this IParserManager parserManager, ITextBuffer textBuffer) =>
             parserManager.Initialize(textBuffer,
@@ -34,6 +35,7 @@ namespace VSRAD.Syntax.Helpers
                 Constants.asm2FunctionDeclorationStartPattern,
                 Constants.asm2FunctionDefinitionEndPattern,
                 enableManyLineDecloration: true,
-                Constants.asm2VariableDefinition);
+                Constants.asm2VariableDefinition,
+                Constants.asm2LabelDefinitionRegular);
     }
 }

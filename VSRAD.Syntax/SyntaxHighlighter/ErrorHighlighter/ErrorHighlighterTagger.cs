@@ -65,8 +65,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             {
                 var errorSnapshotList = new List<(SnapshotSpan errorSpan, string message)>();
 
+                // Note that line and column numbers in the error list start at 1
                 foreach (var (line, column, message) in requestedErrorList)
                 {
+                    // Reported lines may not always match the document; check to avoid an out-of-range
+                    if (line > view.TextSnapshot.LineCount)
+                        continue;
+
                     var snapshotLine = view.TextSnapshot.GetLineFromLineNumber(line - 1);
                     SnapshotSpan errorSpan;
 

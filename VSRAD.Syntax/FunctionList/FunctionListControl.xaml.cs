@@ -1,6 +1,4 @@
-﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Blocks;
-using VSRAD.Syntax.Helpers;
+﻿using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.FunctionList.Commands;
 using static VSRAD.Syntax.Options.OptionPage;
 using Microsoft.VisualStudio.Shell;
@@ -12,7 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
-using Microsoft;
+using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -21,7 +19,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly OleMenuCommandService commandService;
         private bool isHideLineNumber = false;
         private SortState FunctionListSortState = SortState.ByName;
-        private IList<FunctionBlock> Functions;
+        private IList<IBaseToken> Tokens;
         private ListViewItem lastHighlightedItem;
 
         public FunctionListControl(OleMenuCommandService service)
@@ -34,15 +32,15 @@ namespace VSRAD.Syntax.FunctionList
             this.Loaded += OnInitializedFunctionList;
         }
 
-        public async Task UpdateFunctionListAsync(IEnumerable<FunctionBlock> newFunctions)
+        public async Task UpdateFunctionListAsync(IEnumerable<IBaseToken> newTokens)
         {
             try
             {
-                Functions = newFunctions.ToList();
+                Tokens = newTokens.ToList();
 
-                var shownFunctions = SearchByNameFilter(newFunctions);
+                var shownTokens = SearchByNameFilter(newTokens);
 
-                await AddFunctionsToViewAsync(shownFunctions);
+                await AddTokensToViewAsync(shownTokens);
             }
             catch (Exception e)
             {
@@ -50,7 +48,7 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public async Task HighlightCurrentFunctionAsync(FunctionBlock function)
+        public async Task HighlightCurrentFunctionAsync(IBaseToken functionToken)
         {
             try
             {
@@ -59,7 +57,7 @@ namespace VSRAD.Syntax.FunctionList
                 if (lastHighlightedItem != null)
                     lastHighlightedItem.IsSelected = false;
 
-                lastHighlightedItem = (ListViewItem)functions.ItemContainerGenerator.ContainerFromItem(function);
+                lastHighlightedItem = (ListViewItem)tokens.ItemContainerGenerator.ContainerFromItem(functionToken);
                 if (lastHighlightedItem != null)
                     lastHighlightedItem.IsSelected = true;
             }
@@ -82,41 +80,41 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private Task ReloadFunctionListAsync() => AddFunctionsToViewAsync(Functions);
+        private Task ReloadFunctionListAsync() => AddTokensToViewAsync(Tokens);
 
-        private async Task AddFunctionsToViewAsync(IEnumerable<FunctionBlock> functionList)
+        private async Task AddTokensToViewAsync(IEnumerable<IBaseToken> shownTokens)
         {
             switch (FunctionListSortState)
             {
                 case SortState.ByLine:
-                    functionList = functionList
-                        .OrderBy(func => func.FunctionToken.LineNumber);
+                    shownTokens = shownTokens
+                        .OrderBy(token => token.LineNumber);
                     break;
 
                 case SortState.ByName:
-                    functionList = functionList
-                        .OrderBy(func => func.FunctionToken.TokenName, StringComparer.OrdinalIgnoreCase);
+                    shownTokens = shownTokens
+                        .OrderBy(token => token.TokenName, StringComparer.OrdinalIgnoreCase);
                     break;
 
                 case SortState.ByLineDescending:
-                    functionList = functionList
-                        .OrderByDescending(func => func.FunctionToken.LineNumber);
+                    shownTokens = shownTokens
+                        .OrderByDescending(token => token.LineNumber);
                     break;
 
                 case SortState.ByNameDescending:
-                    functionList = functionList
-                        .OrderByDescending(func => func.FunctionToken.TokenName, StringComparer.OrdinalIgnoreCase);
+                    shownTokens = shownTokens
+                        .OrderByDescending(token => token.TokenName, StringComparer.OrdinalIgnoreCase);
                     break;
                 default:
-                    functionList = functionList
-                        .OrderBy(func => func.FunctionToken.LineNumber);
+                    shownTokens = shownTokens
+                        .OrderBy(token => token.LineNumber);
                     break;
             }
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            functions.Items.Clear();
-            foreach (var func in functionList)
-                functions.Items.Add(func);
+            tokens.Items.Clear();
+            foreach (var token in shownTokens)
+                tokens.Items.Add(token);
             ResizeFunctionListColumns();
         }
 
@@ -175,19 +173,19 @@ namespace VSRAD.Syntax.FunctionList
             ResizeFunctionListColumns();
         }
 
-        private IEnumerable<FunctionBlock> SearchByNameFilter(IEnumerable<FunctionBlock> functionList)
+        private IEnumerable<IBaseToken> SearchByNameFilter(IEnumerable<IBaseToken> newTokens)
         {
-            if (functionList == null)
-                return Enumerable.Empty<FunctionBlock>();
+            if (newTokens == null)
+                return Enumerable.Empty<IBaseToken>();
 
-            return functionList
-                .Where(fun => fun.FunctionToken.TokenName.IndexOf(Search.Text, StringComparison.OrdinalIgnoreCase) >= 0);
+            return newTokens
+                .Where(token => token.TokenName.IndexOf(Search.Text, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
-            var filteredFunctions = SearchByNameFilter(this.Functions);
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddFunctionsToViewAsync(filteredFunctions));
+            var filteredTokens = SearchByNameFilter(Tokens);
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(filteredTokens));
         }
 
         private void ResizeFunctionListColumns()
@@ -200,7 +198,7 @@ namespace VSRAD.Syntax.FunctionList
             this.functionsGridView.Columns[1].Width = 0;
             this.functionsGridView.Columns[1].Width = Double.NaN;
 
-            this.functions.UpdateLayout();
+            this.tokens.UpdateLayout();
             this.LineNumberButtonColumn.Width = new GridLength(this.functionsGridView.Columns[0].ActualWidth);
         }
 
@@ -210,8 +208,8 @@ namespace VSRAD.Syntax.FunctionList
         {
             try
             {
-                var function = (FunctionBlock)functions.SelectedItem;
-                FunctionList.Instance.GetActiveTextView().ChangeCaretPosition(function.FunctionToken.Line);
+                var token = (IBaseToken)tokens.SelectedItem;
+                FunctionList.Instance.GetActiveTextView().ChangeCaretPosition(token.Line);
             }
             catch (Exception e)
             {
@@ -226,7 +224,7 @@ namespace VSRAD.Syntax.FunctionList
         private void Search_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Up || e.Key == Key.Down)
-                Keyboard.Focus(functions);
+                Keyboard.Focus(tokens);
         }
 
         private void Functions_PreviewKeyDown(object sender, KeyEventArgs e)

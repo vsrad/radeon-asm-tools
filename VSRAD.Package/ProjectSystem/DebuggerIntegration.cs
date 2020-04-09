@@ -141,5 +141,10 @@ namespace VSRAD.Package.ProjectSystem
                 return false;
             }
         }
+
+        public bool RerunOnContinue()
+        {
+            return _project.Options.DebuggerOptions.ContinueMode == Utils.ContinueMode.RestartLine;
+        }
     }
 }

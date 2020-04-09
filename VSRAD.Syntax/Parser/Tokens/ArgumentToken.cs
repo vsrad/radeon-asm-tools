@@ -4,7 +4,7 @@ namespace VSRAD.Syntax.Parser.Tokens
 {
     class ArgumentToken : BaseToken
     {
-        public ArgumentToken(SnapshotSpan symbolSpan) : base(symbolSpan, TokenType.Argument | TokenType.Variable)
+        public ArgumentToken(SnapshotSpan symbolSpan) : base(symbolSpan, TokenType.Argument)
         {
         }
     }

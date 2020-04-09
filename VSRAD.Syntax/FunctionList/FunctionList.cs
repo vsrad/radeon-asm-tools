@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
+using System.Linq;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -98,8 +99,9 @@ namespace VSRAD.Syntax.FunctionList
             try
             {
                 parser = (BaseParser)sender;
-                var updatedFunctions = parser.GetFunctionBlocks();
-                return FunctionListControl.UpdateFunctionListAsync(updatedFunctions);
+                var updatedFunctions = parser.GetFunctionTokens();
+                var updatedLabels = parser.GetLabelTokens();
+                return FunctionListControl.UpdateFunctionListAsync(updatedFunctions.Concat(updatedLabels));
             }
             catch (Exception e)
             {
@@ -116,7 +118,7 @@ namespace VSRAD.Syntax.FunctionList
                 return Task.CompletedTask;
 
             var function = parser.GetFunctionByLine(line);
-            return FunctionListControl.HighlightCurrentFunctionAsync(function);
+            return FunctionListControl.HighlightCurrentFunctionAsync(function.FunctionToken);
         }
 
         public static void TryUpdateSortOptions(Options.OptionPage.SortState options)

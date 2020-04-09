@@ -34,6 +34,8 @@ namespace VSRAD.Package.ProjectSystem
         [Import]
         private DebuggerIntegration Debugger { get; set; }
         [Import]
+        private BreakpointIntegration Breakpoints { get; set; }
+        [Import]
         private BuildToolsServer BuildServer { get; set; }
 
         [Export(typeof(IToolWindowIntegration))]
@@ -46,7 +48,6 @@ namespace VSRAD.Package.ProjectSystem
             ((Project)_project).Load();
             QuickInfoState.SetProjectOnLoad(_project);
             Debugger.SetProjectOnLoad(_project);
-            BuildServer.SetProjectOnLoad(_project);
 
             var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
             ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
@@ -56,9 +57,8 @@ namespace VSRAD.Package.ProjectSystem
 
         private async Task ProjectUnloadingAsync(object sender, EventArgs args)
         {
-            _project.SaveOptions();
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            BuildServer.OnProjectUnloading();
+            ((Project)_project).Unload();
             VSPackage.ProjectUnloaded();
         }
 

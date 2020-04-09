@@ -63,8 +63,12 @@ namespace VSRAD.Syntax.QuickInfo
                 case TokenType.Function:
                     var functionBlock = textView.GetFunctionBlockByName(token.TokenName);
                     return GetFunctionContainerElement(functionBlock);
-                case TokenType.Variable:
+                case TokenType.GlobalVariable:
+                    return GetBasicContainerElement("global variable", token.TokenName, ((IDescriptionToken)token).Description, SyntaxHighlighter.PredefinedClassificationTypeNames.Keywords);
+                case TokenType.LocalVariable:
                     return GetBasicContainerElement("local variable", token.TokenName, ((IDescriptionToken)token).Description, SyntaxHighlighter.PredefinedClassificationTypeNames.Keywords);
+                case TokenType.Label:
+                    return GetBasicContainerElement("label", token.TokenName, classificationTypeName: SyntaxHighlighter.PredefinedClassificationTypeNames.Labels);
                 default:
                     return null;
             }

@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Settings;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.TextManager.Interop;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
@@ -23,18 +23,16 @@ namespace VSRAD.Syntax.Options
         const string asm2CollectionPath = "Asm2CollectionFileExtensions";
         private readonly IContentTypeRegistryService _contentTypeRegistryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
-        private readonly IVsEditorAdaptersFactoryService _editorAdaptorFactory;
+        private readonly TextViewObserver _textViewObserver;
         private readonly IContentType _asm1ContentType;
         private readonly IContentType _asm2ContentType;
         private readonly CollectionConverter _converter;
-        private IVsTextManager _textManager;
-
 
         public OptionPage()
         {
             _contentTypeRegistryService = Package.Instance.GetMEFComponent<IContentTypeRegistryService>();
             _fileExtensionRegistryService = Package.Instance.GetMEFComponent<IFileExtensionRegistryService>();
-            _editorAdaptorFactory = Package.Instance.GetMEFComponent<IVsEditorAdaptersFactoryService>();
+            _textViewObserver = Package.Instance.GetMEFComponent<TextViewObserver>();
 
             _asm1ContentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
             _asm2ContentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
@@ -81,7 +79,7 @@ namespace VSRAD.Syntax.Options
         {
             base.OnApply(e);
             FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
-            Task.Run(() => ChangeExtensionsAndUpdateCurrentFileAsync());
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeExtensionsAndUpdateConentTypesAsync());
         }
 
         public override void SaveSettingsToStorage()
@@ -128,43 +126,65 @@ namespace VSRAD.Syntax.Options
             ChangeExtensions(_asm2ContentType, Asm2FileExtensions);
         }
 
-        public async Task ChangeExtensionsAndUpdateCurrentFileAsync()
+        public async Task ChangeExtensionsAndUpdateConentTypesAsync()
         {
             try
             {
                 ChangeExtensions();
 
-                _textManager = _textManager ?? GetService(typeof(VsTextManagerClass)) as IVsTextManager;
-                _textManager.GetActiveView(1, null, out var vsTextView);
-                var wpfTextView = _editorAdaptorFactory.GetWpfTextView(vsTextView);
-
-                if (wpfTextView.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out var textDocument))
-                {
-                    var extension = System.IO.Path.GetExtension(textDocument.FilePath);
-                    if (Asm1FileExtensions.Contains(extension))
-                    {
-                        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                        wpfTextView.TextBuffer.ChangeContentType(_asm1ContentType, null);
-                        var parserManager = wpfTextView.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                        parserManager.InitializeAsm1(wpfTextView.TextBuffer);
-                        return;
-                    }
-                    if (Asm1FileExtensions.Contains(extension))
-                    {
-                        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                        wpfTextView.TextBuffer.ChangeContentType(_asm2ContentType, null);
-                        var parserManager = wpfTextView.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                        parserManager.InitializeAsm2(wpfTextView.TextBuffer);
-                        return;
-                    }
-                }
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                UpdateOpenedTextViewContentType();
             }
             catch (Exception e)
             {
                 Error.LogError(e);
             }
+        }
+
+        private void UpdateOpenedTextViewContentType()
+        {
+            foreach (var textView in _textViewObserver.TextViews)
+            {
+                UpdateTextViewContentType(textView);
+            }
+        }
+
+        private void UpdateTextViewContentType(IWpfTextView wpfTextView)
+        {
+            var path = wpfTextView.GetPath();
+            if (path != null)
+            {
+                var extension = System.IO.Path.GetExtension(path);
+                UpdateTextBufferContentType(wpfTextView.TextBuffer, extension);
+            }
+        }
+
+        private void UpdateTextBufferContentType(ITextBuffer textBuffer, string fileExtension)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (textBuffer == null)
+                return;
+
+            if (Asm1FileExtensions.Contains(fileExtension))
+                UpdateTextBufferContentType(textBuffer, _asm1ContentType);
+
+            if (Asm2FileExtensions.Contains(fileExtension))
+                UpdateTextBufferContentType(textBuffer, _asm2ContentType);
+        }
+
+        private void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)
+        {
+            if (textBuffer == null || contentType == null)
+                return;
+
+            textBuffer.ChangeContentType(contentType, null);
+            var parserManager = textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
+
+            if (contentType == _asm1ContentType)
+                parserManager.InitializeAsm1(textBuffer);
+
+            if (contentType == _asm2ContentType)
+                parserManager.InitializeAsm2(textBuffer);
         }
 
         private void SaveCollectionSettings(WritableSettingsStore userSettingsStore, string collectionPath, List<string> collection, string propertyName)

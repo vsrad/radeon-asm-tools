@@ -2,7 +2,7 @@
 
 namespace VSRAD.Syntax.Parser.Tokens
 {
-    internal class BaseToken : IBaseToken
+    public class BaseToken : IBaseToken
     {
         private ITextDocument _textDocument;
 
