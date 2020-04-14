@@ -42,7 +42,7 @@ namespace VSRAD.Syntax
         {
             Instance = this;
             _componentModel = (await GetServiceAsync(typeof(SComponentModel))) as IComponentModel;
-            await OptionPage.ChangeExtensionsAndUpdateConentTypesAsync();
+            await OptionPage.InitializeAsync();
             await FunctionListCommand.InitializeAsync(this);
             await ClearSearchFieldCommand.InitializeAsync(this);
             await SelectItemCommand.InitializeAsync(this);

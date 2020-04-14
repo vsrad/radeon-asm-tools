@@ -1,10 +1,6 @@
-﻿using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.Settings;
+﻿using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Settings;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,7 +9,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser;
 using DisplayNameAttribute = System.ComponentModel.DisplayNameAttribute;
 using Task = System.Threading.Tasks.Task;
 
@@ -24,21 +19,12 @@ namespace VSRAD.Syntax.Options
         const string asm1CollectionPath = "Asm1CollectionFileExtensions";
         const string asm2CollectionPath = "Asm2CollectionFileExtensions";
         private static readonly Regex fileExtensionRegular = new Regex(@"^\.\w+$");
-        private readonly IContentTypeRegistryService _contentTypeRegistryService;
-        private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
-        private readonly TextViewObserver _textViewObserver;
-        private readonly IContentType _asm1ContentType;
-        private readonly IContentType _asm2ContentType;
+        private readonly ContentTypeManager _contentTypeManager;
         private readonly CollectionConverter _converter;
 
         public OptionPage()
         {
-            _contentTypeRegistryService = Package.Instance.GetMEFComponent<IContentTypeRegistryService>();
-            _fileExtensionRegistryService = Package.Instance.GetMEFComponent<IFileExtensionRegistryService>();
-            _textViewObserver = Package.Instance.GetMEFComponent<TextViewObserver>();
-
-            _asm1ContentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
-            _asm2ContentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
+            _contentTypeManager = Package.Instance.GetMEFComponent<ContentTypeManager>();
             _converter = new CollectionConverter();
         }
 
@@ -78,6 +64,9 @@ namespace VSRAD.Syntax.Options
             ByNameDescending = 4,
         }
 
+        public Task InitializeAsync() =>
+            UpdateRadeonContentTypeAsync();
+
         protected override void OnApply(PageApplyEventArgs e)
         {
             try
@@ -87,7 +76,7 @@ namespace VSRAD.Syntax.Options
                 ValidateExtensions(Asm1FileExtensions);
                 ValidateExtensions(Asm2FileExtensions);
                 FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
-                ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeExtensionsAndUpdateConentTypesAsync());
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateRadeonContentTypeAsync());
             }
             catch(Exception ex)
             {
@@ -110,6 +99,9 @@ namespace VSRAD.Syntax.Options
                 throw new ArgumentException(sb.ToString());
             }
         }
+
+        private Task UpdateRadeonContentTypeAsync() =>
+            _contentTypeManager.ChangeRadeonExtensionsAsync(Asm1FileExtensions, Asm2FileExtensions);
 
         public override void SaveSettingsToStorage()
         {
@@ -149,79 +141,6 @@ namespace VSRAD.Syntax.Options
                 userSettingsStore.GetString(asm2CollectionPath, nameof(Asm2FileExtensions))) as List<string>;
         }
 
-        public void ChangeExtensions()
-        {
-            try
-            {
-                ChangeExtensions(_asm1ContentType, Asm1FileExtensions);
-                ChangeExtensions(_asm2ContentType, Asm2FileExtensions);
-            }
-            catch (InvalidOperationException e)
-            {
-                Error.ShowWarning(e);
-            }
-        }
-
-        public async Task ChangeExtensionsAndUpdateConentTypesAsync()
-        {
-            try
-            {
-                ChangeExtensions();
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                UpdateOpenedTextViewContentType();
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
-        }
-
-        private void UpdateOpenedTextViewContentType()
-        {
-            foreach (var textView in _textViewObserver.TextViews)
-            {
-                UpdateTextViewContentType(textView);
-            }
-        }
-
-        private void UpdateTextViewContentType(IWpfTextView wpfTextView)
-        {
-            var path = wpfTextView.GetPath();
-            if (path != null)
-            {
-                var extension = System.IO.Path.GetExtension(path);
-                UpdateTextBufferContentType(wpfTextView.TextBuffer, extension);
-            }
-        }
-
-        private void UpdateTextBufferContentType(ITextBuffer textBuffer, string fileExtension)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            if (textBuffer == null)
-                return;
-
-            if (Asm1FileExtensions.Contains(fileExtension))
-                UpdateTextBufferContentType(textBuffer, _asm1ContentType);
-
-            if (Asm2FileExtensions.Contains(fileExtension))
-                UpdateTextBufferContentType(textBuffer, _asm2ContentType);
-        }
-
-        private void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)
-        {
-            if (textBuffer == null || contentType == null)
-                return;
-
-            textBuffer.ChangeContentType(contentType, null);
-            var parserManager = textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-
-            if (contentType == _asm1ContentType)
-                parserManager.InitializeAsm1(textBuffer);
-
-            if (contentType == _asm2ContentType)
-                parserManager.InitializeAsm2(textBuffer);
-        }
-
         private void SaveCollectionSettings(WritableSettingsStore userSettingsStore, string collectionPath, List<string> collection, string propertyName)
         {
             if (!userSettingsStore.CollectionExists(collectionPath))
@@ -231,15 +150,6 @@ namespace VSRAD.Syntax.Options
                 collectionPath,
                 propertyName,
                 _converter.ConvertTo(collection, typeof(string)) as string);
-        }
-
-        private void ChangeExtensions(IContentType contentType, IEnumerable<string> extensions)
-        {
-            foreach (var ext in _fileExtensionRegistryService.GetExtensionsForContentType(contentType))
-                _fileExtensionRegistryService.RemoveFileExtension(ext);
-
-            foreach (var ext in extensions)
-                _fileExtensionRegistryService.AddFileExtension(ext, contentType);
         }
 
         private class CollectionConverter : TypeConverter
