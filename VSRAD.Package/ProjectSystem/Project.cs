@@ -26,7 +26,7 @@ namespace VSRAD.Package.ProjectSystem
         string RootPath { get; }
         string GetRelativePath(string absoluteFilePath);
         string GetAbsolutePath(string projectRelativePath);
-        Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint breakLine = 0, string[] watchesOverride = null);
+        Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
         void SaveOptions();
     }
 
@@ -85,7 +85,7 @@ namespace VSRAD.Package.ProjectSystem
         #region MacroEvaluator
         private (IActiveCodeEditor, ICommunicationChannel, IProjectProperties)? _macroEvaluatorDependencies;
 
-        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint breakLine = 0, string[] watchesOverride = null)
+        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
@@ -104,8 +104,7 @@ namespace VSRAD.Package.ProjectSystem
 
             var file = GetRelativePath(codeEditor.GetAbsoluteSourcePath());
             var line = codeEditor.GetCurrentLine();
-            var transients = new MacroEvaluatorTransientValues(
-                activeSourceFile: (file, line), breakLine: breakLine, watchesOverride: watchesOverride);
+            var transients = new MacroEvaluatorTransientValues(activeSourceFile: (file, line), breakLines, watchesOverride);
 
             var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(
                 channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);

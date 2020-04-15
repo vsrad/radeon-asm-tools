@@ -28,7 +28,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint laneGrouping, int laneDividerWidth, int hiddenColumnSeparatorWidth)
+        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint laneGrouping, int laneDividerWidth = 3, int hiddenColumnSeparatorWidth = 8)
         {
             if (columns.Count != VisualizerTable.DataColumnCount)
                 throw new ArgumentException("ColumnStyling applies to exactly 512 columns");

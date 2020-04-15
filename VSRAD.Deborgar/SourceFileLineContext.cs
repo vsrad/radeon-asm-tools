@@ -12,8 +12,8 @@ namespace VSRAD.Deborgar
 
         private readonly TEXT_POSITION _position;
 
-        public SourceFileLineContext(string projectPath, uint line)
-            : this(projectPath, new TEXT_POSITION { dwLine = line, dwColumn = 0 }) { }
+        public SourceFileLineContext(string projectPath, uint[] lines)
+            : this(projectPath, new TEXT_POSITION { dwLine = lines[0], dwColumn = 0 }) { }
 
         public SourceFileLineContext(string projectPath, TEXT_POSITION position)
         {

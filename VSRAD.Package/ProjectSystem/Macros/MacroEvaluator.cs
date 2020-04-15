@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.Package.Utils;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
@@ -14,13 +13,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
 #pragma warning restore CA1815
     {
         public (string filename, uint line) ActiveSourceFile { get; }
-        public uint BreakLine { get; }
+        public uint[] BreakLines { get; }
         public string[] WatchesOverride { get; }
 
-        public MacroEvaluatorTransientValues((string, uint) activeSourceFile, uint breakLine = 0, string[] watchesOverride = null)
+        public MacroEvaluatorTransientValues((string, uint) activeSourceFile, uint[] breakLines = null, string[] watchesOverride = null)
         {
             ActiveSourceFile = activeSourceFile;
-            BreakLine = breakLine;
+            BreakLines = breakLines;
             WatchesOverride = watchesOverride;
         }
     }
@@ -108,7 +107,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     ? string.Join(":", values.WatchesOverride)
                     : string.Join(":", debuggerOptions.GetWatchSnapshot()) },
                 { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
-                { RadMacros.BreakLine, values.BreakLine.ToString() },
+                { RadMacros.BreakLine, string.Join(",", values.BreakLines ?? new[] { 0u }) },
                 { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
                 { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
                 { RadMacros.Counter, debuggerOptions.Counter.ToString() }

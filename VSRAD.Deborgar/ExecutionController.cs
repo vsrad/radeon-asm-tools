@@ -7,11 +7,11 @@ namespace VSRAD.Deborgar.Server
         private readonly IEngineIntegration _engineIntegration;
         private readonly IEngineCallbacks _callbacks;
 
-        private readonly Dictionary<string, (bool isStepping, uint breakLine)> _stepState =
-            new Dictionary<string, (bool isStepping, uint breakLine)>();
+        private readonly Dictionary<string, (bool isStepping, uint[] breakLines)> _stepState =
+            new Dictionary<string, (bool isStepping, uint[] breakLines)>();
 
         public string CurrentFile { get; private set; }
-        public uint CurrentBreakTarget => _stepState[CurrentFile].breakLine;
+        public uint[] CurrentBreakTarget => _stepState[CurrentFile].breakLines;
 
         public ExecutionController(IEngineIntegration engineIntegration, IEngineCallbacks callbacks)
         {
@@ -24,26 +24,37 @@ namespace VSRAD.Deborgar.Server
         public void ComputeNextBreakTarget(string file, IBreakpointManager breakpointManager)
         {
             CurrentFile = file;
-            if (!_engineIntegration.PopRunToLineIfSet(file, out var breakLine))
-            {
-                var prevBreakLine = _stepState.TryGetValue(file, out var prevState) 
-                    ? prevState.breakLine 
-                    : _engineIntegration.RerunOnContinue()
-                        ? breakpointManager.GetNextBreakpointLine(file, 0)
-                        : 0;
+            _stepState[file] = (isStepping: false, ComputeBreakLines(file, breakpointManager));
+        }
 
-                breakLine = _engineIntegration.RerunOnContinue()
-                    ? prevBreakLine
-                    : breakpointManager.GetNextBreakpointLine(file, prevBreakLine);
+        private uint[] ComputeBreakLines(string file, IBreakpointManager breakpointManager)
+        {
+            if (_engineIntegration.PopRunToLineIfSet(file, out var breakLine))
+                return new[] { breakLine };
+            switch (_engineIntegration.GetBreakMode())
+            {
+                case BreakMode.Multiple:
+                    return breakpointManager.GetBreakpointLines(file);
+                default:
+                    var prevBreakLine = _stepState.TryGetValue(file, out var prevState) ? prevState.breakLines[0] : 0;
+                    return new[] { breakpointManager.GetNextBreakpointLine(file, prevBreakLine) };
             }
-            _stepState[file] = (isStepping: false, breakLine);
         }
 
         public void ComputeNextStepTarget(string file)
         {
             CurrentFile = file;
-            var prevBreakLine = _stepState.TryGetValue(file, out var prevState) ? prevState.breakLine : 0;
-            _stepState[file] = (isStepping: true, breakLine: prevBreakLine + 1);
+            if (_stepState.TryGetValue(file, out var prevState))
+            {
+                if (_engineIntegration.GetBreakMode() == BreakMode.Multiple)
+                    _stepState[file] = (isStepping: true, prevState.breakLines);
+                else
+                    _stepState[file] = (isStepping: true, breakLines: new[] { prevState.breakLines[0] + 1 });
+            }
+            else
+            {
+                _stepState[file] = (isStepping: true, breakLines: new[] { 0u });
+            }
         }
 
         private void ExecutionCompleted(bool success)

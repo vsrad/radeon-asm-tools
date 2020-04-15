@@ -8,7 +8,7 @@ namespace VSRAD.Deborgar
     {
         void OnAttach();
         void OnBreakpointBound(Breakpoint breakpoint);
-        void OnBreakpointHit(IDebugBoundBreakpoint2 breakpoint);
+        void OnBreakpointsHit(IDebugBoundBreakpoint2[] breakpoints);
         void OnProgramTerminated();
         void OnStepComplete();
         void OnBreakComplete();
@@ -41,9 +41,9 @@ namespace VSRAD.Deborgar
             Send(new AD7BreakpointBoundEvent(breakpoint), AD7BreakpointBoundEvent.GUID);
         }
 
-        public void OnBreakpointHit(IDebugBoundBreakpoint2 breakpoint)
+        public void OnBreakpointsHit(IDebugBoundBreakpoint2[] breakpoints)
         {
-            var boundBreakpoints = new AD7BoundBreakpointsEnum(new[] { breakpoint });
+            var boundBreakpoints = new AD7BoundBreakpointsEnum(breakpoints);
             Send(new AD7BreakpointEvent(boundBreakpoints), AD7BreakpointEvent.GUID);
         }
 

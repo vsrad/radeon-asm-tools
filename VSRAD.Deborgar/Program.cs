@@ -33,16 +33,7 @@ namespace VSRAD.Deborgar
             _breakpointManager = breakpointManager;
             _executionController = new ExecutionController(engineIntegration, callbacks);
 
-            CreateBreakFrame(engineIntegration.GetActiveProjectFile(), 0);
-        }
-
-        public bool AnyBreakpointsSet
-        {
-            get
-            {
-                var file = _engineIntegration.GetActiveProjectFile();
-                return _breakpointManager.AnyBreakpointsSet(file);
-            }
+            CreateBreakFrame(engineIntegration.GetActiveProjectFile(), new[] { 0u });
         }
 
         public int CreatePendingBreakpoint(IDebugBreakpointRequest2 request, out IDebugPendingBreakpoint2 breakpoint)
@@ -57,7 +48,7 @@ namespace VSRAD.Deborgar
         {
             var file = _engineIntegration.GetActiveProjectFile();
             _executionController.ComputeNextBreakTarget(file, _breakpointManager);
-            _engineIntegration.ExecuteToLine(_executionController.CurrentBreakTarget);
+            _engineIntegration.Execute(_executionController.CurrentBreakTarget);
 
             return VSConstants.S_OK;
         }
@@ -68,7 +59,7 @@ namespace VSRAD.Deborgar
             {
                 var file = _engineIntegration.GetActiveProjectFile();
                 _executionController.ComputeNextStepTarget(file);
-                _engineIntegration.ExecuteToLine(_executionController.CurrentBreakTarget);
+                _engineIntegration.Execute(_executionController.CurrentBreakTarget);
 
                 return VSConstants.S_OK;
             }
@@ -77,15 +68,12 @@ namespace VSRAD.Deborgar
 
         public int CauseBreak()
         {
-            CreateBreakFrame(_executionController.CurrentFile, _executionController.CurrentBreakTarget);
-            if (_breakpointManager.TryGetBreakpointAtLine(_executionController.CurrentFile, _executionController.CurrentBreakTarget, out var breakpoint))
-            {
-                _callbacks.OnBreakpointHit(breakpoint);
-            }
+            CreateBreakFrame();
+            var breakpoints = _breakpointManager.GetBreakpointsByLines(_executionController.CurrentFile, _executionController.CurrentBreakTarget);
+            if (breakpoints.Length > 0)
+                _callbacks.OnBreakpointsHit(breakpoints);
             else
-            {
                 _callbacks.OnBreakComplete();
-            }
             return VSConstants.S_OK;
         }
 
@@ -105,9 +93,9 @@ namespace VSRAD.Deborgar
         private void CreateBreakFrame()
             => CreateBreakFrame(_executionController.CurrentFile, _executionController.CurrentBreakTarget);
 
-        private void CreateBreakFrame(string file, uint breakLine)
+        private void CreateBreakFrame(string file, uint[] breakLines)
         {
-            _breakFrame = new StackFrame(file, new SourceFileLineContext(file, breakLine));
+            _breakFrame = new StackFrame(file, new SourceFileLineContext(file, breakLines));
         }
 
         #region IDebugProgram2/IDebugProgram3 Members

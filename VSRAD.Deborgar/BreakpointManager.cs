@@ -9,9 +9,9 @@ namespace VSRAD.Deborgar
     public interface IBreakpointManager
     {
         IDebugPendingBreakpoint2 TryCreateBreakpoint(IDebugProgram2 program, IDebugBreakpointRequest2 request);
-        bool AnyBreakpointsSet(string projectFile);
-        uint GetNextBreakpointLine(string file, uint currentBreakLine);
-        bool TryGetBreakpointAtLine(string projectFile, uint line, out Breakpoint breakpoint);
+        Breakpoint[] GetBreakpointsByLines(string file, uint[] lines);
+        uint[] GetBreakpointLines(string file);
+        uint GetNextBreakpointLine(string file, uint previousLine);
     }
 
     public sealed class BreakpointManager : IBreakpointManager
@@ -72,55 +72,40 @@ namespace VSRAD.Deborgar
             fileState.Breakpoints.Remove(breakpoint);
         }
 
-        public bool TryGetBreakpointAtLine(string projectFile, uint line, out Breakpoint breakpoint)
-        {
-            if (_sourceFileState.TryGetValue(projectFile, out var fileState))
-            {
-                breakpoint = fileState.Breakpoints.Where(bp => bp.Resolution.Context.LineNumber == line).FirstOrDefault();
-                if (breakpoint != null)
-                    return true;
-            }
-            breakpoint = null;
-            return false;
-        }
+        public Breakpoint[] GetBreakpointsByLines(string file, uint[] lines) =>
+            GetSourceFileState(file).Breakpoints.Where((b) => lines.Contains(b.Resolution.Context.LineNumber)).ToArray();
 
-        public uint GetNextBreakpointLine(string file, uint currentBreakLine)
+        public uint[] GetBreakpointLines(string file) =>
+            GetSourceFileState(file).Breakpoints.Select((b) => b.Resolution.Context.LineNumber).ToArray();
+
+        public uint GetNextBreakpointLine(string file, uint previousLine)
         {
             var fileState = GetSourceFileState(file);
-
             /* The user may not set any breakpoints but we need to pass one to the debugger anyway,
              * so we pick the end of the program as the implicit "default" breakpoint */
             var defaultBreakpointLine = _getFileLineCount(file) - 1;
-            Breakpoint breakpointByMinLine = null;
+            Breakpoint firstBreakpoint = null;
             foreach (var breakpoint in fileState.Breakpoints.OrderBy(bp => bp.Resolution.Context.LineNumber))
             {
-                var lineNumber = breakpoint.Resolution.Context.LineNumber;
-                if ((lineNumber > currentBreakLine || currentBreakLine == defaultBreakpointLine) && breakpoint != fileState.PreviousBreakpoint)
+                var line = breakpoint.Resolution.Context.LineNumber;
+                if ((line > previousLine || previousLine == defaultBreakpointLine) && breakpoint != fileState.PreviousBreakpoint)
                 {
                     fileState.PreviousBreakpoint = breakpoint;
-                    return lineNumber;
+                    return line;
                 }
-                breakpointByMinLine = (breakpointByMinLine == null || lineNumber < breakpointByMinLine.Resolution.Context.LineNumber) ? breakpoint : breakpointByMinLine;
+                if (firstBreakpoint == null)
+                    firstBreakpoint = breakpoint;
             }
-            fileState.PreviousBreakpoint = breakpointByMinLine;
-            return (breakpointByMinLine != null) ? breakpointByMinLine.Resolution.Context.LineNumber : defaultBreakpointLine;
+            fileState.PreviousBreakpoint = firstBreakpoint;
+            return firstBreakpoint?.Resolution?.Context?.LineNumber ?? defaultBreakpointLine;
         }
 
-        public bool AnyBreakpointsSet(string projectFile)
+        private SourceFileState GetSourceFileState(string file)
         {
-            if (_sourceFileState.TryGetValue(projectFile, out var fileState))
-            {
-                return fileState.Breakpoints.Count > 0;
-            }
-            return false;
-        }
-
-        private SourceFileState GetSourceFileState(string projectFile)
-        {
-            if (!_sourceFileState.TryGetValue(projectFile, out var state))
+            if (!_sourceFileState.TryGetValue(file, out var state))
             {
                 state = new SourceFileState();
-                _sourceFileState.Add(projectFile, state);
+                _sourceFileState.Add(file, state);
             }
             return state;
         }

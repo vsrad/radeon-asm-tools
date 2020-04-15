@@ -31,10 +31,10 @@ namespace VSRAD.Package.Server
             _timer = new Stopwatch();
         }
 
-        public async Task<Result<BreakState>> ExecuteToLineAsync(uint breakLine, ReadOnlyCollection<string> watches)
+        public async Task<Result<BreakState>> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
         {
             _timer.Restart();
-            var evaluator = await _project.GetMacroEvaluatorAsync(breakLine).ConfigureAwait(false);
+            var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
             var outputFile = options.RemoteOutputFile;
 

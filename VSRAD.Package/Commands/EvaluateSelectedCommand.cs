@@ -54,7 +54,7 @@ namespace VSRAD.Package.Commands
             var breakLine = _codeEditor.GetCurrentLine() + 1;
             var watchName = activeWord.Trim();
 
-            var evaluator = await _project.GetMacroEvaluatorAsync(breakLine, watchesOverride: new[] { watchName });
+            var evaluator = await _project.GetMacroEvaluatorAsync(new[] { breakLine }, watchesOverride: new[] { watchName });
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator);
             await SetStatusBarTextAsync($"RAD Debug: Evaluating {watchName}...");
             try

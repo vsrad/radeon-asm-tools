@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.ProjectSystem.Macros;
-using VSRAD.PackageTests;
 using Xunit;
 
 namespace VSRAD.Package.ProjectSystem.Tests
@@ -51,13 +50,18 @@ namespace VSRAD.Package.ProjectSystem.Tests
             Assert.Equal("a:c:tide", result);
 
             var transients = new MacroEvaluatorTransientValues(
-                activeSourceFile: ("welcome home", 666), breakLine: 13, watchesOverride: new[] { "m", "c", "ride" });
+                activeSourceFile: ("welcome home", 666), breakLines: new[] { 13u }, watchesOverride: new[] { "m", "c", "ride" });
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new Options.ProfileOptions());
 
             result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
             Assert.Equal("m:c:ride", result);
             result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLine})");
             Assert.Equal("welcome home:666, stop at 13", result);
+
+            transients = new MacroEvaluatorTransientValues(activeSourceFile: ("", 0), breakLines: new[] { 20u, 1u, 9u });
+            evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new Options.ProfileOptions());
+            result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLine})");
+            Assert.Equal("-l 20,1,9", result);
         }
 
         [Fact]
