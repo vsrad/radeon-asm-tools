@@ -117,7 +117,7 @@ namespace VSRAD.PackageTests.Server
 
             var project = new Mock<IProject>(MockBehavior.Strict);
             project.Setup((p) => p.RootPath).Returns(_projectRoot);
-            project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
+            project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
 
             var options = new ProjectOptions();
             options.AddProfile("Default", new ProfileOptions(general: generalOptions));

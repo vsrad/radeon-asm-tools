@@ -34,7 +34,7 @@ namespace VSRAD.Package.Server
         public async Task<Result<BreakState>> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
         {
             _timer.Restart();
-            var evaluator = await _project.GetMacroEvaluatorAsync(breakLines[0]).ConfigureAwait(false);
+            var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
             var outputFile = options.RemoteOutputFile;
 
