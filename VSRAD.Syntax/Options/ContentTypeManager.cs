@@ -73,7 +73,8 @@ namespace VSRAD.Syntax.Options
                 ChangeExtensions(_asm2ContentType, asm2Extensions);
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                UpdateWindowContentType(_dte.ActiveDocument.ActiveWindow);
+                if (_dte.ActiveDocument != null)
+                    UpdateWindowContentType(_dte.ActiveDocument.ActiveWindow);
             }
             catch (InvalidOperationException e)
             {
