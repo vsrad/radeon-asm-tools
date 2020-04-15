@@ -24,7 +24,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
             {
                 { RadMacros.DebuggerWorkingDirectory, "/glitch/city" },
                 { RadMacros.DebuggerOutputPath, "va11" }
-            });
+            }).Object;
 
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
@@ -36,7 +36,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now },
                 (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
 
-            var result = await session.ExecuteToLineAsync(13, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
+            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.True(result.TryGetResult(out var breakState, out _));
             Assert.Collection(breakState.Watches,
                 (first) => Assert.Equal("jill", first),
@@ -53,7 +53,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
             {
                 { RadMacros.DebuggerWorkingDirectory, "/glitch/city" },
                 { RadMacros.DebuggerOutputPath, "va11" }
-            });
+            }).Object;
 
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
@@ -63,7 +63,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
                 (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 33 }, (_) => { });
 
-            var result = await session.ExecuteToLineAsync(13, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
+            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.False(result.TryGetResult(out _, out var error));
             Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(33), error.Message);
 

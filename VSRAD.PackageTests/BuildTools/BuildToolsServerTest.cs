@@ -24,7 +24,7 @@ namespace VSRAD.Package.BuildTools
         public async Task SuccessfulBuildTestAsync()
         {
             TestHelper.InitializePackageTaskFactory();
-            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>()
+            var projectMock = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>()
             {
                 { RadMacros.BuildExecutable, "nemu" },
                 { RadMacros.BuildArguments, "--sleep 10" },
@@ -36,7 +36,7 @@ namespace VSRAD.Package.BuildTools
             errorProcessor
                 .Setup((e) => e.ExtractMessagesAsync("stderr", It.IsAny<string>()))
                 .Returns(Task.FromResult<IEnumerable<Message>>(Array.Empty<Message>()));
-            var server = StartBuildServer(project, channel.Object, deployManager.Object, errorProcessor.Object);
+            var server = StartBuildServer(projectMock, channel.Object, deployManager.Object, errorProcessor.Object);
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
             {
@@ -67,7 +67,7 @@ namespace VSRAD.Package.BuildTools
             var preprocessorLocalFile = Path.GetTempFileName();
 
             TestHelper.InitializePackageTaskFactory();
-            var project = TestHelper.MakeProjectWithProfile(
+            var projectMock = TestHelper.MakeProjectWithProfile(
                 new Dictionary<string, string>() {
                     { RadMacros.PreprocessorExecutable, "kuu" },
                     { RadMacros.PreprocessorArguments, "--away" },
@@ -78,7 +78,7 @@ namespace VSRAD.Package.BuildTools
                 projectRoot: @"C:\Users\CFF\Preprocess",
                 profile: new Options.ProfileOptions(build: new Options.BuildProfileOptions(runPreprocessor: true)));
             var channel = new MockCommunicationChannel();
-            var server = StartBuildServer(project, channel.Object);
+            var server = StartBuildServer(projectMock, channel.Object);
 
             var timestamp = DateTime.Now;
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp }, (command) =>
@@ -112,10 +112,10 @@ namespace VSRAD.Package.BuildTools
         public async Task BuildErrorTestAsync()
         {
             TestHelper.InitializePackageTaskFactory();
-            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() { { RadMacros.BuildExecutable, "err" } });
+            var projectMock = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>() { { RadMacros.BuildExecutable, "err" } });
             var channel = new MockCommunicationChannel();
             var errorProcessor = new BuildErrorProcessor(new Mock<IProjectSourceManager>().Object);
-            var server = StartBuildServer(project, channel.Object, errorProcessor: errorProcessor);
+            var server = StartBuildServer(projectMock, channel.Object, errorProcessor: errorProcessor);
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted
             {
@@ -133,7 +133,7 @@ namespace VSRAD.Package.BuildTools
             Assert.Equal(PackageTests.BuildTools.Errors.ParserTests.ScriptExpectedMessages, message.ErrorMessages);
         }
 
-        private static BuildToolsServer StartBuildServer(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager = null, IBuildErrorProcessor errorProcessor = null)
+        private static BuildToolsServer StartBuildServer(Mock<IProject> projectMock, ICommunicationChannel channel, IFileSynchronizationManager deployManager = null, IBuildErrorProcessor errorProcessor = null)
         {
             deployManager = deployManager ?? new Mock<IFileSynchronizationManager>().Object;
             errorProcessor = errorProcessor ?? new Mock<IBuildErrorProcessor>().Object;
@@ -141,8 +141,8 @@ namespace VSRAD.Package.BuildTools
             var output = new Mock<IOutputWindowManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(channel, output.Object, errorProcessor, deployManager);
-            server.SetProjectOnLoad(project); // starts the server
+            var server = new BuildToolsServer(projectMock.Object, channel, output.Object, errorProcessor, deployManager);
+            projectMock.Raise((p) => p.Loaded += null, projectMock.Object.Options); // starts the server
             return server;
         }
 

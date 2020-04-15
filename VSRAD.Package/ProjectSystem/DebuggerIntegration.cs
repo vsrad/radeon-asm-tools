@@ -97,12 +97,12 @@ namespace VSRAD.Package.ProjectSystem
                 dte.Debugger.Go();
         }
 
-        void IEngineIntegration.ExecuteToLine(uint breakLine)
+        void IEngineIntegration.Execute(uint[] breakLines)
         {
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
             {
-                var result = await _debugSession.ExecuteToLineAsync(breakLine, watches);
+                var result = await _debugSession.ExecuteAsync(breakLines, watches);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 if (result.TryGetResult(out var breakState, out var error))
                 {
@@ -127,6 +127,9 @@ namespace VSRAD.Package.ProjectSystem
         string IEngineIntegration.GetProjectRelativePath(string path) =>
             _project.GetRelativePath(path);
 
+        BreakMode IEngineIntegration.GetBreakMode() =>
+            _project.Options.DebuggerOptions.BreakMode;
+
         bool IEngineIntegration.PopRunToLineIfSet(string file, out uint runToLine)
         {
             if (_debugRunToLine.HasValue && _debugRunToLine.Value.file == file)
@@ -140,11 +143,6 @@ namespace VSRAD.Package.ProjectSystem
                 runToLine = 0;
                 return false;
             }
-        }
-
-        public bool RerunOnContinue()
-        {
-            return _project.Options.DebuggerOptions.ContinueMode == Utils.ContinueMode.RestartLine;
         }
     }
 }
