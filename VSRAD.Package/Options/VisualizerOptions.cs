@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using VSRAD.Package.Utils;
 
@@ -10,61 +10,35 @@ namespace VSRAD.Package.Options
     public sealed class VisualizerOptions : DefaultNotifyPropertyChanged
     {
         private bool _showSystemVariable = true;
-        public bool ShowSystemVariable
-        {
-            get => _showSystemVariable;
-            set => SetField(ref _showSystemVariable, value);
-        }
+        public bool ShowSystemVariable { get => _showSystemVariable; set => SetField(ref _showSystemVariable, value); }
 
         private bool _maskLanes = true;
-        public bool MaskLanes
-        {
-            get => _maskLanes;
-            set => SetField(ref _maskLanes, value);
-        }
+        public bool MaskLanes { get => _maskLanes; set => SetField(ref _maskLanes, value); }
 
         private bool _ndrange3d = false;
-        public bool NDRange3D
-        {
-            get => _ndrange3d;
-            set => SetField(ref _ndrange3d, value);
-        }
+        public bool NDRange3D { get => _ndrange3d; set => SetField(ref _ndrange3d, value); }
 
         private uint _laneGrouping = 0;
-        public uint LaneGrouping
-        {
-            get => _laneGrouping;
-            set => SetField(ref _laneGrouping, value);
-        }
+        public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
         private bool _checkMagicNumber = true;
-        public bool CheckMagicNumber
-        {
-            get => _checkMagicNumber;
-            set => SetField(ref _checkMagicNumber, value);
-        }
+        public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
 
         private int _magicNumber = 0x7777777; // Default value, do not change
         [JsonConverter(typeof(MagicNumberConverter))]
-        public int MagicNumber
-        {
-            get => _magicNumber;
-            set => SetField(ref _magicNumber, value);
-        }
+        public int MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
 
-        private bool _showAppArgs = false;
-        public bool ShowAppArgs
-        {
-            get => _showAppArgs;
-            set => SetField(ref _showAppArgs, value);
-        }
+        private bool _showColumnsField;
+        [DefaultValue(true)]
+        public bool ShowColumnsField { get => _showColumnsField; set => SetField(ref _showColumnsField, value); }
 
-        private bool _showBrkArgs = false;
-        public bool ShowBrkArgs
-        {
-            get => _showBrkArgs;
-            set => SetField(ref _showBrkArgs, value);
-        }
+        private bool _showAppArgsField;
+        [DefaultValue(true)]
+        public bool ShowAppArgsField { get => _showAppArgsField; set => SetField(ref _showAppArgsField, value); }
+
+        private bool _showBreakArgsField;
+        [DefaultValue(true)]
+        public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
     }
 
     public sealed class MagicNumberConverter : JsonConverter

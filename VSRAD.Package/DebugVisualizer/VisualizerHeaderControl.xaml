@@ -12,9 +12,9 @@
             <MenuItem Header="Show hidden system variable" IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="3D NDRange" IsChecked="{Binding Options.VisualizerOptions.NDRange3D, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem IsEnabled="False" Header="Show:"/>
-            <MenuItem Header="Columns" IsChecked="{Binding ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="App args" IsChecked="{Binding ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="Break args" IsChecked="{Binding ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="App args" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Break args" IsChecked="{Binding Options.VisualizerOptions.ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
         </ContextMenu>
     </UserControl.ContextMenu>
     <UserControl.Resources>
@@ -80,7 +80,7 @@
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="Auto" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ShowColumnsField}" Value="False">
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowColumnsField}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -92,7 +92,7 @@
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="Auto" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ShowAppArgsField}" Value="False">
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowAppArgsField}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -104,7 +104,7 @@
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="Auto" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding ShowBreakArgsField}" Value="False">
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowBreakArgsField}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>

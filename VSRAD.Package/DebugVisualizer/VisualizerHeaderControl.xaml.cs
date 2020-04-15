@@ -14,15 +14,6 @@ namespace VSRAD.Package.DebugVisualizer
         {
             public Options.ProjectOptions Options { get; }
 
-            private bool _showColumnsField = true;
-            public bool ShowColumnsField { get => _showColumnsField; set => SetField(ref _showColumnsField, value); }
-
-            private bool _showAppArgsField = true;
-            public bool ShowAppArgsField { get => _showAppArgsField; set => SetField(ref _showAppArgsField, value); }
-
-            private bool _showBreakArgsField = true;
-            public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
-
             private bool _groupIndexEditable = true;
             public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 
