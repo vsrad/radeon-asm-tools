@@ -35,12 +35,8 @@ namespace VSRAD.Deborgar.Server
             {
                 case BreakMode.Multiple:
                     return breakpointManager.GetBreakpointLines(file);
-                case BreakMode.SingleRerun:
-                    if (_stepState.TryGetValue(file, out var prevState))
-                        return new[] { prevState.breakLines[0] };
-                    return new[] { breakpointManager.GetNextBreakpointLine(file, 0) };
                 default:
-                    var prevBreakLine = _stepState.TryGetValue(file, out prevState) ? prevState.breakLines[0] : 0;
+                    var prevBreakLine = _stepState.TryGetValue(file, out var prevState) ? prevState.breakLines[0] : 0;
                     return new[] { breakpointManager.GetNextBreakpointLine(file, prevBreakLine) };
             }
         }
