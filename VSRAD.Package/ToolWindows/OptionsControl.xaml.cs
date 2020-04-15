@@ -1,6 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -62,9 +65,29 @@ namespace VSRAD.Package.ToolWindows
         }
 
         // TODO: can freeze here
-        private void EditProfiles(object sender, System.Windows.RoutedEventArgs e)
+        private void EditProfiles(object sender, RoutedEventArgs e)
         {
             new ProjectSystem.Profiles.ProfileOptionsWindow(_macroEditor, _projectOptions).ShowDialog();
         }
+    }
+
+    public sealed class BreakModeConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            switch (value)
+            {
+                case Deborgar.BreakMode.SingleRoundRobin:
+                    return "Single active breakpoint, round-robin";
+                case Deborgar.BreakMode.SingleRerun:
+                    return "Single active breakpoint, rerun same line";
+                case Deborgar.BreakMode.Multiple:
+                    return "Multiple active breakpoints";
+                default:
+                    return DependencyProperty.UnsetValue;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
     }
 }

@@ -6,6 +6,8 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
+             xmlns:local="clr-namespace:VSRAD.Package.ToolWindows"
+             xmlns:deborgar="clr-namespace:VSRAD.Deborgar;assembly=VSRAD.Deborgar"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
@@ -25,9 +27,9 @@
                     <x:Type TypeName="viz:FontType"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
-            <ObjectDataProvider x:Key="ContinueMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="utils:ContinueMode"/>
+                    <x:Type TypeName="deborgar:BreakMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
@@ -64,16 +66,21 @@
                     <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
                                         Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                 </StackPanel>
-                <StackPanel Orientation="Vertical" Margin="0,8,0,0">
-                    <CheckBox Content="Disable other breakpoints when adding a new one"
-                            IsChecked="{Binding Options.DebuggerOptions.SingleActiveBreakpoint, UpdateSourceTrigger=PropertyChanged}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                        <Label Content="Continue Mode:"/>
-                        <ComboBox SelectedItem="{Binding Options.DebuggerOptions.ContinueMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ContinueMode}}"/>
-                    </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Label Content="Break mode:"/>
+                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
+                        <ComboBox.Resources>
+                            <local:BreakModeConverter x:Key="BreakModeConverter" />
+                        </ComboBox.Resources>
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource BreakModeConverter}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </StackPanel>
-                <Expander x:Name="VisualizerAppearanceExpander" Header="Visualizer Appearance">
+                <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Label Content="Visualizer Name Column Alignment:"/>
