@@ -210,7 +210,7 @@ namespace VSRAD.Package.DebugVisualizer
             isAVGPR: (bool)row.HeaderCell.Tag);
 
         public bool IsAVGPR(string watchName) => DataRows
-            .Any(r => r.Cells[NameColumnIndex].Value.ToString() == watchName && (bool)r.HeaderCell.Tag);
+            .Any(r => r.Cells[NameColumnIndex].Value?.ToString() == watchName && (bool)r.HeaderCell.Tag);
 
         private void RaiseWatchStateChanged(IEnumerable<DataGridViewRow> invalidatedRows = null) =>
             WatchStateChanged(GetCurrentWatchState(), invalidatedRows);
@@ -310,22 +310,25 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (e.RowIndex == NewWatchRowIndex)
             {
-                if (e.ColumnIndex == NameColumnIndex && !string.IsNullOrWhiteSpace(rowWatchName))
+                if (e.ColumnIndex == NameColumnIndex)
                 {
                     var scrollingOffset = HorizontalScrollingOffset;
                     Rows[e.RowIndex].HeaderCell.Value = VariableType.Hex.ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     LockWatchRowForEditing(row);
                     PrepareNewWatchRow();
-                    RaiseWatchStateChanged(new[] { row });
-                    // We want to focus on the new row, but changing the current cell inside CellEndEdit
-                    // may cause us to enter infinite loop unless we do it in an asynchronous delegate
-                    BeginInvoke(new MethodInvoker(() =>
+                    if (!string.IsNullOrWhiteSpace(rowWatchName))
                     {
-                        CurrentCell = Rows[NewWatchRowIndex].Cells[NameColumnIndex];
-                        HorizontalScrollingOffset = scrollingOffset;
-                        BeginEdit(true);
-                    }));
+                        RaiseWatchStateChanged(new[] { row });
+                        // We want to focus on the new row, but changing the current cell inside CellEndEdit
+                        // may cause us to enter infinite loop unless we do it in an asynchronous delegate
+                        BeginInvoke(new MethodInvoker(() =>
+                        {
+                            CurrentCell = Rows[NewWatchRowIndex].Cells[NameColumnIndex];
+                            HorizontalScrollingOffset = scrollingOffset;
+                            BeginEdit(true);
+                        }));
+                    }
                 }
             }
             else if (e.RowIndex != 0)
