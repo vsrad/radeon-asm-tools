@@ -10,13 +10,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
         public delegate void FontColorChanged(int rowIndex, Color color);
+        public delegate void InsertRow(int rowIndex, bool after);
 
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
         private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, FontColorChanged fontColorChanged, Action processCopy)
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, FontColorChanged fontColorChanged, Action processCopy, InsertRow insertRow)
         {
             _table = table;
 
@@ -31,6 +32,9 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 new MenuItem("Default", (s, e) => fontColorChanged(_currentRow, Color.Empty))
             });
 
+            var insertRowBefore = new MenuItem("Insert Row Before", (s, e) => insertRow(_currentRow, false));
+            var insertRowAfter = new MenuItem("Insert Row After", (s, e) => insertRow(_currentRow, true));
+
             _avgprButton = new MenuItem("AVGPR", (s, e) =>
             {
                 _avgprButton.Checked = !_avgprButton.Checked;
@@ -44,7 +48,10 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 new MenuItem("-"),
                 fontColorSubmenu,
                 new MenuItem("-"),
-                copy
+                copy,
+                new MenuItem("-"),
+                insertRowBefore,
+                insertRowAfter
                 //_avgprButton
             });
 

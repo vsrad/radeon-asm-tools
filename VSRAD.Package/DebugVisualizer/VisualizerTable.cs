@@ -85,7 +85,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy, InsertRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColorClicked)
             });
@@ -125,6 +125,16 @@ namespace VSRAD.Package.DebugVisualizer
                 );
 
             ClearSelection();
+        }
+
+        private void InsertRow(int rowIndex, bool after)
+        {
+            var index = after ? rowIndex + 1 : rowIndex;
+            Rows.Insert(index);
+            Rows[index].Cells[NameColumnIndex].Value = "";
+            Rows[index].HeaderCell.Value = VariableType.Hex.ShortName();
+            Rows[index].HeaderCell.Tag = false;
+            RaiseWatchStateChanged(new[] { Rows[index] });
         }
 
         private void ProcessCopy()
