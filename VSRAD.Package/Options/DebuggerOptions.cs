@@ -15,7 +15,7 @@ namespace VSRAD.Package.Options
         public List<Watch> Watches { get; } = new List<Watch>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
-            new ReadOnlyCollection<string>(Watches.Select(w => w.Name).Distinct().ToList());
+            new ReadOnlyCollection<string>(Watches.Where(w => !string.IsNullOrEmpty(w.Name)).Select(w => w.Name).Distinct().ToList());
 
         public ReadOnlyCollection<string> GetAWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => w.IsAVGPR).Select(w => w.Name).Distinct().ToList());

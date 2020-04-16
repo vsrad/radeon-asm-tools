@@ -202,7 +202,7 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public List<Watch> GetCurrentWatchState() =>
-            DataRows.Select(GetRowWatchState).Where(w => !string.IsNullOrEmpty(w.Name)).ToList();
+            DataRows.Select(GetRowWatchState).ToList();
 
         public static Watch GetRowWatchState(DataGridViewRow row) => new Watch(
             name: row.Cells[NameColumnIndex].Value?.ToString(),
@@ -317,9 +317,9 @@ namespace VSRAD.Package.DebugVisualizer
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     LockWatchRowForEditing(row);
                     PrepareNewWatchRow();
+                    RaiseWatchStateChanged(new[] { row });
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                     {
-                        RaiseWatchStateChanged(new[] { row });
                         // We want to focus on the new row, but changing the current cell inside CellEndEdit
                         // may cause us to enter infinite loop unless we do it in an asynchronous delegate
                         BeginInvoke(new MethodInvoker(() =>
