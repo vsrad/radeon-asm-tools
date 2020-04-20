@@ -107,7 +107,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     ? string.Join(":", values.WatchesOverride)
                     : string.Join(":", debuggerOptions.GetWatchSnapshot()) },
                 { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
-                { RadMacros.BreakLine, string.Join(",", values.BreakLines ?? new[] { 0u }) },
+                { RadMacros.BreakLine, string.Join(":", values.BreakLines ?? new[] { 0u }) },
                 { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
                 { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
                 { RadMacros.Counter, debuggerOptions.Counter.ToString() }

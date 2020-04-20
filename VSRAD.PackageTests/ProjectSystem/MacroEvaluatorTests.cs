@@ -61,7 +61,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
             transients = new MacroEvaluatorTransientValues(activeSourceFile: ("", 0), breakLines: new[] { 20u, 1u, 9u });
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new Options.ProfileOptions());
             result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLine})");
-            Assert.Equal("-l 20,1,9", result);
+            Assert.Equal("-l 20:1:9", result);
         }
 
         [Fact]
