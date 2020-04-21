@@ -20,6 +20,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.ColumnIndex == -1) return;
             var vt = (VisualizerTable)sender;
+            if (vt.LaneGrouping == 0) return;
             if (e.ColumnIndex == VisualizerTable.DataColumnCount) return;
             if ((vt.Columns[e.ColumnIndex].Visible == vt.Columns[e.ColumnIndex + 1].Visible
                 && e.ColumnIndex % vt.LaneGrouping != 0)

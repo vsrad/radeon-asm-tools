@@ -9,7 +9,6 @@ namespace VSRAD.Package.Options
         public const string DeployDirectory = "";
         public const string RemoteMachineAdredd = "127.0.0.1";
         public const int Port = 9339;
-        public const DocumentSaveType AutosaveSource = DocumentSaveType.ActiveDocument;
         public const string AdditionalSources = "";
         public const bool CopySources = true;
         #endregion

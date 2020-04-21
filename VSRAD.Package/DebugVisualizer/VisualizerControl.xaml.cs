@@ -98,6 +98,7 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.LaneGrouping):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
+                case nameof(Options.VisualizerOptions.VerticalSplit):
                     ApplyColumnStyling();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):

@@ -3,8 +3,10 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data.SqlTypes;
 using System.Linq;
 using VSRAD.Package.DebugVisualizer;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
@@ -28,6 +30,12 @@ namespace VSRAD.Package.Options
 
         private string _breakArgs = "";
         public string BreakArgs { get => _breakArgs; set => SetField(ref _breakArgs, value); }
+        
+        private bool _autosave = true;
+        public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }
+
+        private DocumentSaveType _autosaveSource = DocumentSaveType.ActiveDocument;
+        public DocumentSaveType AutosaveSource { get => _autosave ? _autosaveSource : DocumentSaveType.None; set => SetField(ref _autosaveSource, value); }
 
         private Deborgar.BreakMode _breakMode;
         public Deborgar.BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
