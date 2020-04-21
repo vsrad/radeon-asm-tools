@@ -6,6 +6,7 @@
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
+             xmlns:proj="clr-namespace:VSRAD.Package.ProjectSystem"
              xmlns:local="clr-namespace:VSRAD.Package.ToolWindows"
              xmlns:deborgar="clr-namespace:VSRAD.Deborgar;assembly=VSRAD.Deborgar"
              mc:Ignorable="d"
@@ -20,6 +21,11 @@
             <ObjectDataProvider x:Key="ContentAlignment" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ContentAlignment"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
+            <ObjectDataProvider x:Key="DocumentSaveType" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="proj:DocumentSaveType"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <ObjectDataProvider x:Key="FontType" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
@@ -67,6 +73,12 @@
                     <TextBox VerticalContentAlignment="Center" Width="50" Height="17.6" Margin="0,0,0,0"
                                         Text="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"/>
                     <TextBlock Text=" lanes." Margin="0,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <CheckBox Content="Autosave source mode:" Margin="0,1,0,0"
+                            IsChecked="{Binding Options.DebuggerOptions.Autosave, UpdateSourceTrigger=PropertyChanged}"/>
+                    <ComboBox ItemsSource="{Binding Source={StaticResource DocumentSaveType}}" SelectedItem="{Binding Options.DebuggerOptions.AutosaveSource, Mode=TwoWay}"
+                          Width="156" Margin="4,0,0,4"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                     <Label Content="Break mode:"/>
