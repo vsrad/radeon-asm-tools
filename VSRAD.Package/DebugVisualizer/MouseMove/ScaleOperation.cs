@@ -19,6 +19,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private int _invisibleColumnsCount;
         private int _lastVisibleColumn;
         private int _firstVisibleColumn;
+        private float _x;
+        private int _firstVisible;
 
         private const int _maxDistanceFromDivider = 7;
 
@@ -64,7 +66,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < hit.ColumnIndex - 1);
             }
             _columnOffset = _columnX + _initOffset;
-
+            _x = (((float)_columnX % _initWidth) / _initWidth);
+            _firstVisible = _table.FirstDisplayedScrollingColumnIndex;
             _operationStarted = false;
             return true;
         }
@@ -96,6 +99,26 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         private void ScaleDataColumns(int diff, int x)
         {
+            if (diff == 0) return;
+
+            var fullDiff = x - _initX;
+            var width = _initWidth + fullDiff;
+            if (width <= 30) return;
+
+            var visibleColumnsBefore = _targetColumnIndex - _invisibleColumnsBeforeTargetCount - VisualizerTable.DataColumnOffset;
+
+            _table.ColumnResizeController.BeginBulkColumnWidthChange();
+
+            for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
+            {
+                //if (i == _lastVisibleColumn || i == _firstVisibleColumn) continue;
+                _table.Columns[i].Width = width;
+            }
+
+            var newOffset = _initOffset + _firstVisible * fullDiff - (int)(width * _x) + (int)(_initWidth * _x);
+
+            _table.ColumnResizeController.CommitBulkColumnWidthChange(newOffset);
+            /*
             if (diff == 0) return;
 
             var fullDiff = x - _initX;
@@ -137,6 +160,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             scrollingOffset = Math.Min(scrollingOffset, lastScreenBegin + _table.Width);
 
             _table.ColumnResizeController.CommitBulkColumnWidthChange(scrollingOffset);
+            */
         }
     }
 }
