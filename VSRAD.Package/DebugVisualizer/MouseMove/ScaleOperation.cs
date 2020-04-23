@@ -69,7 +69,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _columnOffset = _columnX + _initOffset;
             _firstColumnVisiblePart = Math.Abs((((float)_columnX % _initWidth) / _initWidth));
             _firstVisible = _table.FirstDisplayedScrollingColumnIndex;
-            _visibleBeforeFirst = _firstVisible - invisibleColumns.Count(c => c.Index < _firstVisible - 1);
+            _visibleBeforeFirst = _firstVisible - invisibleColumns.Count(c => c.Index <= _firstVisible - 1);
+            if (_initOffset == 0)
+                _visibleBeforeFirst = 0;
             _operationStarted = false;
             return true;
         }
