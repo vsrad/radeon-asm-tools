@@ -49,25 +49,36 @@
                 <Button Content="{Binding DisconnectLabel}" Command="{Binding DisconnectCommand}" Height="24" Padding="6,0" Margin="4,0,0,4"/>
             </WrapPanel>
             <StackPanel Margin="8,8">
-                <CheckBox Content="Show hidden System variable"
-                            IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, UpdateSourceTrigger=PropertyChanged}"/>
-                <CheckBox Content="Use data from lanes 8:9 (exec mask) to gray out columns" Margin="0,8,0,0"
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Show hidden System variable" VerticalAlignment="Center" Padding="4,0,0,0"
+                                IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Use data from lanes 8:9 (exec mask) to gray out columns" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.VisualizerOptions.MaskLanes, UpdateSourceTrigger=PropertyChanged}"/>
-                <CheckBox Content="3D NDRange" Margin="0,8,0,0"
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="3D NDRange" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.VisualizerOptions.NDRange3D, UpdateSourceTrigger=PropertyChanged}"/>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <CheckBox Content="Check Magic Number in System lane 0" Margin="0,0,0,0"
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Check Magic Number in System lane 0" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.VisualizerOptions.CheckMagicNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBox x:Name="MagicNumberControl" VerticalContentAlignment="Center" Width="100" Margin="10,0,0,0"
-                                Text="{Binding Options.VisualizerOptions.MagicNumber, Converter={StaticResource MagicNumberConverter}, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="MagicNumberControl" Width="100" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Group lanes by:"/>
-                    <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="24" Minimum="0" Maximum="512"
-                                        Value="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Vertical separator between each" VerticalAlignment="Center" Padding="4,0,0,0"
+                            IsChecked="{Binding Options.VisualizerOptions.VerticalSplit, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                                        Text="{Binding DataContext.Options.VisualizerOptions.LaneGrouping, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="columns" VerticalAlignment="Center" Margin="5,0,0,0"/>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Label Content="Break mode:"/>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Autosave opened files" VerticalAlignment="Center" Padding="4,0,0,0"
+                            IsChecked="{Binding Options.DebuggerOptions.Autosave, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <Label Content="Break mode:" VerticalAlignment="Center" Margin="15,0,0,0"/>
                     <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
                         <ComboBox.Resources>
@@ -80,52 +91,52 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                 </StackPanel>
-                <Expander Header="Appearance" Margin="0,8,0,0">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Visualizer Name Column Alignment:"/>
+                <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
+                    <StackPanel  Margin="0,6,0,0">
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Name Column Alignment: " VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" Height="22" Margin="4,-3,4,0"/>
-                            <TextBlock Text="Font:"/>
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBlock Text="Font:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource FontType}}" Height="22" Margin="2,-3,2,0"/>
+                                  ItemsSource="{Binding Source={StaticResource FontType}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Visualizer Name Header Alignment:"/>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Name Header Alignment:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" Height="22" Margin="4,-3,4,0"/>
-                            <TextBlock Text="Font:"/>
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBlock Text="Font:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource FontType}}" Height="22" Margin="4,-3,4,0"/>
+                                  ItemsSource="{Binding Source={StaticResource FontType}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Visualizer Headers Alignment:"/>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Headers Alignment:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" Height="22" Margin="4,-3,4,0"/>
-                            <TextBlock Text="Font:"/>
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBlock Text="Font:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource FontType}}" Height="22" Margin="4,-3,4,0"/>
+                                  ItemsSource="{Binding Source={StaticResource FontType}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Visualizer Data Alignment:"/>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Data Alignment:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.DataColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" Height="22" Margin="4,-3,4,0"/>
+                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Lane Divier Width:"/>
-                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="22" Minimum="1" Maximum="25" Margin="4,-3,4,0"
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Column Separator Width:" VerticalAlignment="Center"/>
+                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
-                            <TextBlock Text="Color:"/>
-                            <TextBox Width="50" Height="22" Text="{Binding Options.VisualizerAppearance.LaneSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="4,-3,4,0"/>
+                            <TextBlock Text="Color:" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBox Width="50" Text="{Binding Options.VisualizerAppearance.LaneSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <TextBlock Text="Hidden Column Separator Width:"/>
-                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Height="22" Minimum="1" Maximum="25" Margin="4,-3,4,0"
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Hidden Column Separator Width:" VerticalAlignment="Center"/>
+                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding DataContext.Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
-                            <TextBlock Text="Color:"/>
-                            <TextBox Width="50" Height="22" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      Margin="4,-3,4,0"/>
+                            <TextBlock Text="Color:" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBox Width="50" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </Expander>
