@@ -19,7 +19,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private int _invisibleColumnsCount;
         private int _lastVisibleColumn;
         private int _firstVisibleColumn;
-        private float _x;
+        private float _firstColumnVisiblePart;
         private int _firstVisible;
         private int _visibleBeforeFirst;
 
@@ -67,10 +67,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < hit.ColumnIndex - 1);
             }
             _columnOffset = _columnX + _initOffset;
-            _x = Math.Abs((((float)_columnX % _initWidth) / _initWidth));
+            _firstColumnVisiblePart = Math.Abs((((float)_columnX % _initWidth) / _initWidth));
             _firstVisible = _table.FirstDisplayedScrollingColumnIndex;
-            //if (_columnX < _initWidth)
-            //    _firstVisible--;
             _visibleBeforeFirst = _firstVisible - invisibleColumns.Count(c => c.Index < _firstVisible - 1);
             _operationStarted = false;
             return true;
@@ -116,7 +114,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if (_table.ScalingMode == ScalingMode.ResizeTable)
             {
 
-                scrollingOffset = _initOffset + _visibleBeforeFirst * fullDiff - (int)(width * _x) + (int)(_initWidth * _x);
+                scrollingOffset = _initOffset + _visibleBeforeFirst * fullDiff - (int)(width * _firstColumnVisiblePart) + (int)(_initWidth * _firstColumnVisiblePart);
 
                 for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
                 {
