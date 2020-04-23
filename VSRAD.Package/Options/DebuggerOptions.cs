@@ -34,9 +34,6 @@ namespace VSRAD.Package.Options
         private bool _autosave = true;
         public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }
 
-        private DocumentSaveType _autosaveSource = DocumentSaveType.ActiveDocument;
-        public DocumentSaveType AutosaveSource { get => _autosave ? _autosaveSource : DocumentSaveType.None; set => SetField(ref _autosaveSource, value); }
-
         private Deborgar.BreakMode _breakMode;
         public Deborgar.BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
 

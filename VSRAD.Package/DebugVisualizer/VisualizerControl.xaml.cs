@@ -51,7 +51,7 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
             _table.LaneSeparatorWidth =
                 _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
-            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.LaneGrouping;
+            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0;
             tableHost.Setup(_table);
             RestoreSavedState();
         }

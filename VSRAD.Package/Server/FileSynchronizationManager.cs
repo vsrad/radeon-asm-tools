@@ -44,7 +44,7 @@ namespace VSRAD.Package.Server
         {
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             var options = await _project.Options.Profile.General.EvaluateAsync(evaluator);
-            var mode = _project.Options.DebuggerOptions.AutosaveSource;
+            var mode = _project.Options.DebuggerOptions.Autosave ? DocumentSaveType.OpenDocuments : DocumentSaveType.None;
 
             await _projectSourceManager.SaveDocumentsAsync(mode);
             _project.SaveOptions();
