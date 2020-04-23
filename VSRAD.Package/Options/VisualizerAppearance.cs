@@ -85,5 +85,12 @@ namespace VSRAD.Package.Options
             set => SetField(ref _laneSeparatorColor, value);
         }
         #endregion
+        private ScalingMode _scalingMode = ScalingMode.ResizeColumn;
+
+        public ScalingMode ScalingMode
+        {
+            get => _scalingMode;
+            set => SetField(ref _scalingMode, value);
+        }
     }
 }

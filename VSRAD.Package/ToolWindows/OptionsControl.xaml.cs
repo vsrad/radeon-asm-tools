@@ -90,4 +90,22 @@ namespace VSRAD.Package.ToolWindows
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
     }
+
+    public sealed class ScalingModeConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            switch (value)
+            {
+                case DebugVisualizer.ScalingMode.ResizeColumn:
+                    return "Resize Column";
+                case DebugVisualizer.ScalingMode.ResizeTable:
+                    return "Resize Table, Lock Leftmost Point";
+                default:
+                    return DependencyProperty.UnsetValue;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
+    }
 }

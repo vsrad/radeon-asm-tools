@@ -111,72 +111,69 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             _table.ColumnResizeController.BeginBulkColumnWidthChange();
 
-            var scrollingOffset = _initOffset + _visibleBeforeFirst * fullDiff - (int)(width * _x) + (int)(_initWidth * _x);
+            int scrollingOffset;
 
-            for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
+            if (_table.ScalingMode == ScalingMode.ResizeTable)
             {
-                if (i == _lastVisibleColumn) continue;
-                _table.Columns[i].Width = width;
-            }
 
-            var fullRealWidth = (_table.Columns.Count - _invisibleColumnsCount - 2) * width;
-            var lastScreenBegin = Math.Max((_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset, 0);
+                scrollingOffset = _initOffset + _visibleBeforeFirst * fullDiff - (int)(width * _x) + (int)(_initWidth * _x);
 
-            if (scrollingOffset > lastScreenBegin)
-            {
-                var newWidth = Math.Abs(_table.Width - _columnX - fullRealWidth - _table.ReservedColumnsOffset);
-                _table.Columns[_lastVisibleColumn].Width = newWidth;
-            }
+                for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
+                {
+                    if (i == _lastVisibleColumn) continue;
+                    _table.Columns[i].Width = width;
+                }
+
+                var fullRealWidth = (_table.Columns.Count - _invisibleColumnsCount - 2) * width;
+                var lastScreenBegin = Math.Max((_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset, 0);
+
+                if (scrollingOffset > lastScreenBegin)
+                {
+                    var newWidth = Math.Abs(_table.Width - _columnX - fullRealWidth - _table.ReservedColumnsOffset);
+                    _table.Columns[_lastVisibleColumn].Width = newWidth;
+                }
+                else
+                    _table.Columns[_lastVisibleColumn].Width = width;
+
+                if (_table.Columns[_lastVisibleColumn].Width < width)
+                    _table.Columns[_lastVisibleColumn].Width = width;
+            } 
             else
-                _table.Columns[_lastVisibleColumn].Width = width;
+            {
+                for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
+                {
+                    if (i == _lastVisibleColumn || i == _firstVisibleColumn) continue;
+                    _table.Columns[i].Width = width;
+                }
 
-            if (_table.Columns[_lastVisibleColumn].Width < width)
-                _table.Columns[_lastVisibleColumn].Width = width;
+                scrollingOffset = _initOffset + _targetColumnIndex * fullDiff;
+
+                // Computing first and last column width
+                var realColumnOffset = Math.Abs((_targetColumnIndex - 1) * width);
+                var fullRealWidth = (_table.Columns.Count - _targetColumnIndex - _invisibleColumnsCount - 2) * width;
+                var lastScreenBegin = Math.Max((_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset, 0);
+
+                if (scrollingOffset <= 0)
+                    _table.Columns[_firstVisibleColumn].Width = Math.Max(Math.Abs(_columnX - realColumnOffset) - 1, width);
+                else
+                    _table.Columns[_firstVisibleColumn].Width = width;
+
+                if (realColumnOffset != _columnOffset && scrollingOffset > lastScreenBegin)
+                {
+                    var newWidth = Math.Abs(_table.Width - _columnX - fullRealWidth - _table.ReservedColumnsOffset);
+                    _table.Columns[_lastVisibleColumn].Width = newWidth;
+                }
+                else
+                    _table.Columns[_lastVisibleColumn].Width = width;
+
+                if (_table.Columns[_lastVisibleColumn].Width < width)
+                    _table.Columns[_lastVisibleColumn].Width = width;
+
+                // BugFix
+                scrollingOffset = Math.Min(scrollingOffset, lastScreenBegin + _table.Width);
+            }
 
             _table.ColumnResizeController.CommitBulkColumnWidthChange(scrollingOffset);
-            /*
-            if (diff == 0) return;
-
-            var fullDiff = x - _initX;
-            var width = _initWidth + fullDiff;
-            if (width <= 30) return;
-
-            _table.ColumnResizeController.BeginBulkColumnWidthChange();
-
-            for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
-            {
-                if (i == _lastVisibleColumn || i == _firstVisibleColumn) continue;
-                _table.Columns[i].Width = width;
-            }
-
-            var scrollingOffset = _initOffset + _targetColumnIndex * fullDiff;
-
-            // Computing first and last column width
-            var realColumnOffset = Math.Abs((_targetColumnIndex - 1) * width);
-            var fullRealWidth = (_table.Columns.Count - _targetColumnIndex - _invisibleColumnsCount - 2) * width;
-            var lastScreenBegin = Math.Max((_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset, 0);
-
-            if (scrollingOffset <= 0)
-                _table.Columns[_firstVisibleColumn].Width = Math.Max(Math.Abs(_columnX - realColumnOffset) - 1, width);
-            else
-                _table.Columns[_firstVisibleColumn].Width = width;
-
-            if (realColumnOffset != _columnOffset && scrollingOffset > lastScreenBegin)
-            {
-                var newWidth = Math.Abs(_table.Width - _columnX - fullRealWidth - _table.ReservedColumnsOffset);
-                _table.Columns[_lastVisibleColumn].Width = newWidth;
-            }
-            else
-                _table.Columns[_lastVisibleColumn].Width = width;
-
-            if (_table.Columns[_lastVisibleColumn].Width < width)
-                _table.Columns[_lastVisibleColumn].Width = width;
-
-            // BugFix
-            scrollingOffset = Math.Min(scrollingOffset, lastScreenBegin + _table.Width);
-
-            _table.ColumnResizeController.CommitBulkColumnWidthChange(scrollingOffset);
-            */
         }
     }
 }

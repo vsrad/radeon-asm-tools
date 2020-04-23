@@ -27,6 +27,11 @@
                     <x:Type TypeName="viz:FontType"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
+            <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="viz:ScalingMode"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
             <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="deborgar:BreakMode"/>
@@ -137,6 +142,20 @@
                             <TextBlock Text="Color:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <TextBox Width="50" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Scaling mode:" VerticalAlignment="Center" Margin="0"/>
+                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalContentAlignment="Center">
+                                <ComboBox.Resources>
+                                    <local:ScalingModeConverter x:Key="ScalingModeConverter" />
+                                </ComboBox.Resources>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource ScalingModeConverter}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
                         </StackPanel>
                     </StackPanel>
                 </Expander>
