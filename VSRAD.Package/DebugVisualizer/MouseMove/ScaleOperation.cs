@@ -21,6 +21,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private int _firstVisibleColumn;
         private float _x;
         private int _firstVisible;
+        private int _visibleBeforeFirst;
 
         private const int _maxDistanceFromDivider = 7;
 
@@ -66,8 +67,11 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 _invisibleColumnsBeforeTargetCount = invisibleColumns.Count(c => c.Index < hit.ColumnIndex - 1);
             }
             _columnOffset = _columnX + _initOffset;
-            _x = (((float)_columnX % _initWidth) / _initWidth);
+            _x = Math.Abs((((float)_columnX % _initWidth) / _initWidth));
             _firstVisible = _table.FirstDisplayedScrollingColumnIndex;
+            //if (_columnX < _initWidth)
+            //    _firstVisible--;
+            _visibleBeforeFirst = _firstVisible - invisibleColumns.Count(c => c.Index < _firstVisible - 1);
             _operationStarted = false;
             return true;
         }
@@ -105,19 +109,31 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var width = _initWidth + fullDiff;
             if (width <= 30) return;
 
-            var visibleColumnsBefore = _targetColumnIndex - _invisibleColumnsBeforeTargetCount - VisualizerTable.DataColumnOffset;
-
             _table.ColumnResizeController.BeginBulkColumnWidthChange();
+
+            var scrollingOffset = _initOffset + _visibleBeforeFirst * fullDiff - (int)(width * _x) + (int)(_initWidth * _x);
 
             for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
             {
-                //if (i == _lastVisibleColumn || i == _firstVisibleColumn) continue;
+                if (i == _lastVisibleColumn) continue;
                 _table.Columns[i].Width = width;
             }
 
-            var newOffset = _initOffset + _firstVisible * fullDiff - (int)(width * _x) + (int)(_initWidth * _x);
+            var fullRealWidth = (_table.Columns.Count - _invisibleColumnsCount - 2) * width;
+            var lastScreenBegin = Math.Max((_table.ColumnCount - _invisibleColumnsCount - 1) * width - _table.Width - _table.ReservedColumnsOffset, 0);
 
-            _table.ColumnResizeController.CommitBulkColumnWidthChange(newOffset);
+            if (scrollingOffset > lastScreenBegin)
+            {
+                var newWidth = Math.Abs(_table.Width - _columnX - fullRealWidth - _table.ReservedColumnsOffset);
+                _table.Columns[_lastVisibleColumn].Width = newWidth;
+            }
+            else
+                _table.Columns[_lastVisibleColumn].Width = width;
+
+            if (_table.Columns[_lastVisibleColumn].Width < width)
+                _table.Columns[_lastVisibleColumn].Width = width;
+
+            _table.ColumnResizeController.CommitBulkColumnWidthChange(scrollingOffset);
             /*
             if (diff == 0) return;
 
