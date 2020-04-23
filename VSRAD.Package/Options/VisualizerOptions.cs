@@ -23,7 +23,7 @@ namespace VSRAD.Package.Options
         public bool VerticalSplit { get => _verticalSplit; set => SetField(ref _verticalSplit, value); }
 
         private uint _laneGrouping = 0;
-        public uint LaneGrouping { get => _verticalSplit ? _laneGrouping : 0; set => SetField(ref _laneGrouping, value); }
+        public uint LaneGrouping { get =>  _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }

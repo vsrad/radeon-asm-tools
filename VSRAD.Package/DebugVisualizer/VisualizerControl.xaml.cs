@@ -158,10 +158,10 @@ namespace VSRAD.Package.DebugVisualizer
             var scrollingOffset = _table.HorizontalScrollingOffset;
             _table.SuspendDrawing(); // prevents the scrollbar from jerking due to visibility changes
 
-            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.LaneGrouping;
+            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0;
             _integration.ProjectOptions.VisualizerColumnStyling.Computed.Apply(_table.DataColumns,
                 groupSize: headerControl.GroupSize,
-                laneGrouping: _integration.ProjectOptions.VisualizerOptions.LaneGrouping,
+                laneGrouping: _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0,
                 laneDividerWidth: _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth,
                 hiddenColumnSeparatorWidth: _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth);
 
