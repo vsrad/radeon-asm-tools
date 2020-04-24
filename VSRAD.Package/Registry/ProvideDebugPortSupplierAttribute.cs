@@ -2,10 +2,10 @@
 using System.IO;
 using Microsoft.VisualStudio.Shell;
 
-namespace VSRAD.Package
+namespace VSRAD.Package.Registry
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    internal class ProvideDebugPortSupplierAttribute : RegistrationAttribute
+    sealed class ProvideDebugPortSupplierAttribute : RegistrationAttribute
     {
         private readonly string _name;
         private readonly Guid _guid;

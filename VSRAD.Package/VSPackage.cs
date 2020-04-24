@@ -4,7 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Deborgar;
-using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Registry;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
 
@@ -31,6 +31,7 @@ namespace VSRAD.Package
     // Required for the custom project template to show up in New Project dialog
     [ProvideService(typeof(VSLanguageInfo), ServiceName = nameof(VSLanguageInfo))]
     [ProvideLanguageService(typeof(VSLanguageInfo), Deborgar.Constants.LanguageName, 106)]
+    [ProvideFontAndColorsCategory("VSRAD", "3" /* id in VSPackage.resx */ , Constants.FontAndColorsCategoryId)]
     [Guid(Constants.PackageId)]
     public sealed class VSPackage : AsyncPackage
     {

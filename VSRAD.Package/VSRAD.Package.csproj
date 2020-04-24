@@ -230,8 +230,9 @@
     <Compile Include="ProjectSystem\EditorExtensions\EvaluateSelectedQuickInfoSource.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\QuickInfoEvaluateSelectedState.cs" />
     <Compile Include="ProjectSystem\Project.cs" />
-    <Compile Include="ProvideDebugEngineAttribute.cs" />
-    <Compile Include="ProvideDebugPortSupplierAttribute.cs" />
+    <Compile Include="Registry\ProvideDebugEngineAttribute.cs" />
+    <Compile Include="Registry\ProvideDebugPortSupplierAttribute.cs" />
+    <Compile Include="Registry\ProvideFontAndColorsCategoryAttribute.cs" />
     <Compile Include="Server\FileSynchronizationManager.cs" />
     <Compile Include="Server\RemoteCommandExecutor.cs" />
     <Compile Include="ToolWindows\BaseToolWindow.cs" />

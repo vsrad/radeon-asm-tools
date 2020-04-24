@@ -47,5 +47,7 @@ namespace VSRAD.Package
         public const string OutputPaneExecutionResultTitle = "RAD Debug";
         public const string OutputPaneExecutionResultId = "4B10DF21-F96E-4043-9F10-BC41A9A7FD84";
         public static readonly Guid OutputPaneExecutionResultGuid = new Guid(OutputPaneExecutionResultId);
+
+        public const string FontAndColorsCategoryId = "B91ADC62-1D16-46C8-8E59-30C2AC82B89F";
     };
 }
