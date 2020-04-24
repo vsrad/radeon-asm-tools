@@ -2,11 +2,11 @@
 using System;
 using System.IO;
 
-namespace VSRAD.Package
+namespace VSRAD.Package.Registry
 {
     // https://github.com/Microsoft/PTVS/blob/1d04f01b7b902a9e1051b4080770b4a27e6e97e7/Common/Product/SharedProject/ProvideDebugEngineAttribute.cs
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    class ProvideDebugEngineAttribute : RegistrationAttribute
+    sealed class ProvideDebugEngineAttribute : RegistrationAttribute
     {
         private readonly string _name;
         private readonly Type _engine;

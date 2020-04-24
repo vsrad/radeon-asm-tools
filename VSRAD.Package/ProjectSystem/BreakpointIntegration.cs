@@ -33,11 +33,11 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Initialize(ProjectOptions options)
         {
-            SetSingleActiveBreakpointMode(options.DebuggerOptions.BreakMode == Deborgar.BreakMode.SingleRerun);
+            SetSingleActiveBreakpointMode(options.DebuggerOptions.SingleActiveBreakpoint);
             options.DebuggerOptions.PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(DebuggerOptions.BreakMode))
-                    SetSingleActiveBreakpointMode(options.DebuggerOptions.BreakMode == Deborgar.BreakMode.SingleRerun);
+                if (e.PropertyName == nameof(DebuggerOptions.SingleActiveBreakpoint))
+                    SetSingleActiveBreakpointMode(options.DebuggerOptions.SingleActiveBreakpoint);
             };
         }
 

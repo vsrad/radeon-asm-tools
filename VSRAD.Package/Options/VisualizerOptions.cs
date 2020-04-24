@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.VisualStudio.Utilities;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.ComponentModel;
@@ -18,8 +19,11 @@ namespace VSRAD.Package.Options
         private bool _ndrange3d = false;
         public bool NDRange3D { get => _ndrange3d; set => SetField(ref _ndrange3d, value); }
 
+        private bool _verticalSplit = true;
+        public bool VerticalSplit { get => _verticalSplit; set => SetField(ref _verticalSplit, value); }
+
         private uint _laneGrouping = 0;
-        public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
+        public uint LaneGrouping { get =>  _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }

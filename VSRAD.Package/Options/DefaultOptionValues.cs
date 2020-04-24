@@ -9,7 +9,6 @@ namespace VSRAD.Package.Options
         public const string DeployDirectory = "";
         public const string RemoteMachineAdredd = "127.0.0.1";
         public const int Port = 9339;
-        public const DocumentSaveType AutosaveSource = DocumentSaveType.ActiveDocument;
         public const string AdditionalSources = "";
         public const bool CopySources = true;
         #endregion
@@ -21,6 +20,7 @@ namespace VSRAD.Package.Options
         public const bool DebuggerBinaryOutput = false;
         public const bool DebuggerParseValidWatches = false;
         public const string DebuggerValidWatchesFilePath = "";
+        public const string DebuggerStatusStringFilePath = "";
         public const bool DebuggerRunAsAdmin = false;
         public const int DebuggerTimeoutSecs = 0;
         public const int OutputOffset = 0;

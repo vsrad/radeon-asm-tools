@@ -2,12 +2,6 @@
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    static class PredefinedMarkerFormatNames
-    {
-        public const string IdentifierLight = "Radeon asm identifier light theme";
-        public const string IdentifierDark = "Radeon asm identifier dark theme";
-    }
-
     static class PredefinedClassificationTypeNames
     {
         public const string Instructions = "radeonAsm.instructions";
@@ -23,10 +17,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
     static class PredefinedClassificationFormatNames
     {
-        public const string Instructions = "Radeon asm instructions";
-        public const string Arguments = "Radeon asm function arguments";
-        public const string Functions = "Radeon asm function name";
-        public const string Labels = "Radeon asm labels";
-        public const string ExtraKeywords = "Radeon asm extra keywords (preprocessor and etc)";
+        public const string Instructions = "RAD instructions";
+        public const string Arguments = "RAD function arguments";
+        public const string Functions = "RAD function name";
+        public const string Labels = "RAD labels";
+        public const string ExtraKeywords = "RAD extra keywords (preprocessor and etc)";
+    }
+    static class PredefinedMarkerFormatNames
+    {
+        public const string IdentifierLight = "RAD identifier light theme";
+        public const string IdentifierDark = "RAD identifier dark theme";
     }
 }

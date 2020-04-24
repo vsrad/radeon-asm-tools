@@ -83,10 +83,6 @@ namespace VSRAD.Package.Options
         [Description("Port on the remote machine the debug server is listening on. (When started without arguments, the server listens on port `9339`)")]
         [DefaultValue(DefaultOptionValues.Port)]
         public int Port { get; }
-        [DisplayName("Autosave Source")]
-        [Description("Specifies whether the source files that are changed should be automatically saved before running remote commands (debug, disassemble, profile, etc.).")]
-        [DefaultValue(DefaultOptionValues.AutosaveSource)]
-        public DocumentSaveType AutosaveSource { get; }
         [Description("Toggles remote deployment."), DisplayName("Copy Sources to Remote")]
         [DefaultValue(DefaultOptionValues.CopySources)]
         public bool CopySources { get; }
@@ -99,15 +95,14 @@ namespace VSRAD.Package.Options
 
         public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new GeneralProfileOptions(profileName: ProfileName, deployDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DeployDirectory),
-                remoteMachine: RemoteMachine, port: Port, autosaveSource: AutosaveSource, copySources: CopySources, additionalSources: AdditionalSources);
+                remoteMachine: RemoteMachine, port: Port, copySources: CopySources, additionalSources: AdditionalSources);
 
-        public GeneralProfileOptions(string profileName = "", string deployDirectory = null, string remoteMachine = DefaultOptionValues.RemoteMachineAdredd, int port = DefaultOptionValues.Port, DocumentSaveType autosaveSource = DefaultOptionValues.AutosaveSource, string additionalSources = DefaultOptionValues.AdditionalSources, bool copySources = DefaultOptionValues.CopySources)
+        public GeneralProfileOptions(string profileName = "", string deployDirectory = null, string remoteMachine = DefaultOptionValues.RemoteMachineAdredd, int port = DefaultOptionValues.Port, string additionalSources = DefaultOptionValues.AdditionalSources, bool copySources = DefaultOptionValues.CopySources)
         {
             ProfileName = profileName;
             DeployDirectory = deployDirectory ?? DefaultOptionValues.DeployDirectory;
             RemoteMachine = remoteMachine;
             Port = port;
-            AutosaveSource = autosaveSource;
             AdditionalSources = additionalSources;
             CopySources = copySources;
         }
@@ -146,6 +141,10 @@ namespace VSRAD.Package.Options
         [Description("Path to the file with valid watch names on the remote machine.")]
         [DefaultValue(DefaultOptionValues.DebuggerValidWatchesFilePath)]
         public string ValidWatchesFilePath { get; }
+        [DisplayName("Status String File Path")]
+        [Description("Path to the file with status string on the remote machine.")]
+        [DefaultValue(DefaultOptionValues.DebuggerStatusStringFilePath)]
+        public string StatusStringFilePath { get; }
         [DisplayName("Run As Administrator")]
         [Description("Specifies whether the `Executable` is run with administrator rights.")]
         [DefaultValue(DefaultOptionValues.DebuggerRunAsAdmin)]
@@ -158,6 +157,8 @@ namespace VSRAD.Package.Options
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
         [JsonIgnore]
         public OutputFile ValidWatchesFile => new OutputFile(WorkingDirectory, ValidWatchesFilePath);
+        [JsonIgnore]
+        public OutputFile StatusStringFile => new OutputFile(WorkingDirectory, StatusStringFilePath);
 
         public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new DebuggerProfileOptions(
@@ -170,9 +171,10 @@ namespace VSRAD.Package.Options
                 runAsAdmin: RunAsAdmin,
                 timeoutSecs: TimeoutSecs,
                 parseValidWatches: ParseValidWatches,
-                validWatchesFilePath: ValidWatchesFilePath);
+                validWatchesFilePath: ValidWatchesFilePath,
+                statusStringFilePath: StatusStringFilePath);
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath)
+        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, string statusStringFilePath = DefaultOptionValues.DebuggerStatusStringFilePath)
         {
             Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
             Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
@@ -184,6 +186,7 @@ namespace VSRAD.Package.Options
             TimeoutSecs = timeoutSecs;
             ParseValidWatches = parseValidWatches;
             ValidWatchesFilePath = validWatchesFilePath;
+            StatusStringFilePath = statusStringFilePath;
         }
     }
 

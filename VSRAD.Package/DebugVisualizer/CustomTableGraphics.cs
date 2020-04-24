@@ -20,6 +20,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.ColumnIndex == -1) return;
             var vt = (VisualizerTable)sender;
+            if (vt.LaneGrouping == 0) return;
             if (e.ColumnIndex == VisualizerTable.DataColumnCount) return;
             if ((vt.Columns[e.ColumnIndex].Visible == vt.Columns[e.ColumnIndex + 1].Visible
                 && e.ColumnIndex % vt.LaneGrouping != 0)
@@ -75,7 +76,10 @@ namespace VSRAD.Package.DebugVisualizer
                 );
 
             var typeTextPos = new PointF((float)e.RowBounds.Left + 7, (float)e.RowBounds.Top + 4);
-            e.Graphics.DrawString(selectedWatch.Type.ShortName(), _table.Font, Brushes.Black, typeTextPos);
+            e.Graphics.DrawString(selectedWatch.Type.ShortName(),
+                _table.RowHeadersDefaultCellStyle.Font,
+                new SolidBrush(_table.RowHeadersDefaultCellStyle.ForeColor),
+                typeTextPos);
         }
     }
 }

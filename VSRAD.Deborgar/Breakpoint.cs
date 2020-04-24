@@ -1,23 +1,31 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 using System;
+using System.Runtime.InteropServices;
 
 namespace VSRAD.Deborgar
 {
-    public sealed class Breakpoint : IDebugPendingBreakpoint2, IDebugBoundBreakpoint2
+    public sealed class Breakpoint : IDebugPendingBreakpoint2, IDebugBoundBreakpoint2, IDebugBreakpointResolution2
     {
+        public SourceFileLineContext SourceContext => new SourceFileLineContext(_fileName, GetTextPosition());
+
         private readonly BreakpointManager _manager;
         private readonly IDebugBreakpointRequest2 _request;
-
-        public BreakpointResolution Resolution { get; }
+        private readonly IDebugProgram2 _program;
+        private readonly IDebugDocumentPosition2 _documentInfo;
+        private readonly string _fileName;
 
         private bool _enabled = false;
 
-        public Breakpoint(BreakpointManager manager, IDebugBreakpointRequest2 request, BreakpointResolution resolution)
+        public Breakpoint(BreakpointManager manager, IDebugBreakpointRequest2 request, IDebugProgram2 program, IDebugDocumentPosition2 documentInfo)
         {
             _manager = manager;
             _request = request;
-            Resolution = resolution;
+            _program = program;
+            _documentInfo = documentInfo;
+
+            ErrorHandler.ThrowOnFailure(_documentInfo.GetFileName(out var absoluteSourcePath));
+            _fileName = manager.GetProjectRelativePath(absoluteSourcePath);
         }
 
         public int Enable(int fEnable)
@@ -27,13 +35,9 @@ namespace VSRAD.Deborgar
             {
                 _enabled = newState;
                 if (_enabled == true)
-                {
                     _manager.AddBreakpoint(this);
-                }
                 else
-                {
                     _manager.RemoveBreakpoint(this);
-                }
             }
             return VSConstants.S_OK;
         }
@@ -41,6 +45,42 @@ namespace VSRAD.Deborgar
         public int Delete()
         {
             _manager.RemoveBreakpoint(this);
+            return VSConstants.S_OK;
+        }
+
+        private TEXT_POSITION GetTextPosition()
+        {
+            var startPosition = new TEXT_POSITION[1];
+            var endPosition = new TEXT_POSITION[1];
+
+            ErrorHandler.ThrowOnFailure(_documentInfo.GetRange(startPosition, endPosition));
+            return startPosition[0];
+        }
+
+        int IDebugBreakpointResolution2.GetBreakpointType(enum_BP_TYPE[] pBPType)
+        {
+            pBPType[0] = enum_BP_TYPE.BPT_CODE;
+            return VSConstants.S_OK;
+        }
+
+        int IDebugBreakpointResolution2.GetResolutionInfo(enum_BPRESI_FIELDS dwFields, BP_RESOLUTION_INFO[] pBPResolutionInfo)
+        {
+            if ((dwFields & enum_BPRESI_FIELDS.BPRESI_BPRESLOCATION) != 0)
+            {
+                pBPResolutionInfo[0].dwFields |= enum_BPRESI_FIELDS.BPRESI_BPRESLOCATION;
+                pBPResolutionInfo[0].bpResLocation = new BP_RESOLUTION_LOCATION
+                {
+                    bpType = (uint)enum_BP_TYPE.BPT_CODE,
+                    // Taken from the engine sample
+                    unionmember1 = Marshal.GetComInterfaceForObject(SourceContext, typeof(IDebugCodeContext2))
+                };
+            }
+            if ((dwFields & enum_BPRESI_FIELDS.BPRESI_PROGRAM) != 0)
+            {
+                pBPResolutionInfo[0].dwFields |= enum_BPRESI_FIELDS.BPRESI_PROGRAM;
+                pBPResolutionInfo[0].pProgram = _program;
+            }
+
             return VSConstants.S_OK;
         }
 
@@ -76,7 +116,7 @@ namespace VSRAD.Deborgar
 
         int IDebugBoundBreakpoint2.GetBreakpointResolution(out IDebugBreakpointResolution2 ppBPResolution)
         {
-            ppBPResolution = Resolution;
+            ppBPResolution = this;
             return VSConstants.S_OK;
         }
 

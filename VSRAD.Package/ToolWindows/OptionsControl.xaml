@@ -22,11 +22,6 @@
                     <x:Type TypeName="viz:ContentAlignment"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
-            <ObjectDataProvider x:Key="FontType" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="viz:FontType"/>
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ScalingMode"/>
@@ -83,9 +78,13 @@
                             IsChecked="{Binding Options.DebuggerOptions.Autosave, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
-                    <TextBlock Text="Break mode:" VerticalAlignment="Center" Margin="20,0,0,0"/>
-                    <ComboBox Margin="5,0,0,0" SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalAlignment="Center">
+                    <CheckBox Content="Disable other breakpoints when adding a new one" VerticalAlignment="Center" Padding="4,0,0,0"
+                            IsChecked="{Binding Options.DebuggerOptions.SingleActiveBreakpoint, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <Label Content="Break mode:" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
                         <ComboBox.Resources>
                             <local:BreakModeConverter x:Key="BreakModeConverter" />
                         </ComboBox.Resources>
@@ -102,25 +101,16 @@
                             <TextBlock Text="Name Column Alignment: " VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                            <TextBlock Text="Font:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource FontType}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Name Header Alignment:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                            <TextBlock Text="Font:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource FontType}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Headers Alignment:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                            <TextBlock Text="Font:" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersFont, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource FontType}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Data Alignment:" VerticalAlignment="Center"/>
