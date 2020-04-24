@@ -7,17 +7,16 @@ namespace VSRAD.Deborgar
     public sealed class SourceFileLineContext : IDebugDocumentContext2, IDebugCodeContext2
     {
         public uint LineNumber => _position.dwLine;
-
-        public string ProjectPath { get; }
+        public string FileName { get; }
 
         private readonly TEXT_POSITION _position;
 
-        public SourceFileLineContext(string projectPath, uint[] lines)
-            : this(projectPath, new TEXT_POSITION { dwLine = lines[0], dwColumn = 0 }) { }
+        public SourceFileLineContext(string fileName, uint[] lines)
+            : this(fileName, new TEXT_POSITION { dwLine = lines[0], dwColumn = 0 }) { }
 
-        public SourceFileLineContext(string projectPath, TEXT_POSITION position)
+        public SourceFileLineContext(string fileName, TEXT_POSITION position)
         {
-            ProjectPath = projectPath;
+            FileName = fileName;
             _position = position;
         }
 
@@ -50,7 +49,7 @@ namespace VSRAD.Deborgar
 
         int IDebugDocumentContext2.GetName(enum_GETNAME_TYPE gnType, out string pbstrFileName)
         {
-            pbstrFileName = ProjectPath;
+            pbstrFileName = FileName;
             return VSConstants.S_OK;
         }
 
