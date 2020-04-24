@@ -116,9 +116,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 float fullDiff = x - _initX;
                 fullDiff /= visibleBetweenFirstAndTarget;
                 var width = (int)(_initWidth + fullDiff);
-                if (width <= 30) return;
+                if (width <= 30 || Math.Abs(fullDiff) < 1.0) return;
                 
-                scrollingOffset = _initOffset + _visibleBeforeFirst * (int)fullDiff - (int)(width * _firstColumnVisiblePart) + (int)(_initWidth * _firstColumnVisiblePart);
+                scrollingOffset = _initOffset + _visibleBeforeFirst * (int)Math.Floor(fullDiff) - (int)(width * _firstColumnVisiblePart) + (int)(_initWidth * _firstColumnVisiblePart);
 
                 for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
                 {
