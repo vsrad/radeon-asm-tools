@@ -34,7 +34,8 @@ namespace VSRAD.Package.DebugVisualizer
         public event Action ItemsChanged;
         private bool _itemsChangedBeforeApply = false;
 
-        public const string DefaultFontName = "Consolas";
+        private const string _defaultFontName = "Consolas";
+        private const ushort _defaultFontSize = 8;
 
         private static readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
         {
@@ -116,7 +117,13 @@ namespace VSRAD.Package.DebugVisualizer
 
         int IVsFontAndColorDefaults.GetFont(FontInfo[] pInfo)
         {
-            pInfo[0] = new FontInfo { bstrFaceName = DefaultFontName, bFaceNameValid = 1 };
+            pInfo[0] = new FontInfo
+            {
+                bFaceNameValid = 1,
+                bstrFaceName = _defaultFontName,
+                bPointSizeValid = 1,
+                wPointSize = _defaultFontSize
+            };
             return VSConstants.S_OK;
         }
 

@@ -42,10 +42,11 @@ namespace VSRAD.Package.DebugVisualizer
                 ErrorHandler.ThrowOnFailure(_storage.GetItem(item.GetDisplayName(), colorInfo));
 
                 var fontName = fontInfo[0].bstrFaceName;
-                var foregroundColor = ColorTranslator.FromWin32((int)colorInfo[0].crForeground);
+                var fontSize = fontInfo[0].wPointSize;
                 var isBold = ((FONTFLAGS)colorInfo[0].dwFontFlags & FONTFLAGS.FF_BOLD) == FONTFLAGS.FF_BOLD;
 
-                var font = new Font(fontName, fontPrototype.Size, isBold ? FontStyle.Bold : FontStyle.Regular);
+                var font = new Font(fontName, fontSize, isBold ? FontStyle.Bold : FontStyle.Regular);
+                var foregroundColor = ColorTranslator.FromWin32((int)colorInfo[0].crForeground);
 
                 return (font, foregroundColor);
             }
