@@ -31,7 +31,8 @@ namespace VSRAD.Package
     // Required for the custom project template to show up in New Project dialog
     [ProvideService(typeof(VSLanguageInfo), ServiceName = nameof(VSLanguageInfo))]
     [ProvideLanguageService(typeof(VSLanguageInfo), Deborgar.Constants.LanguageName, 106)]
-    [ProvideFontAndColorsCategory("VSRAD", "3" /* id in VSPackage.resx */ , Constants.FontAndColorsCategoryId)]
+    [ProvideService(typeof(DebugVisualizer.FontAndColorDefaults))]
+    [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorDefaults))]
     [Guid(Constants.PackageId)]
     public sealed class VSPackage : AsyncPackage
     {
@@ -44,6 +45,17 @@ namespace VSRAD.Package
         {
             get => _taskFactoryOverride ?? ThreadHelper.JoinableTaskFactory;
             set => _taskFactoryOverride = value;
+        }
+
+        protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
+        {
+            await base.InitializeAsync(cancellationToken, progress);
+            AddService(typeof(DebugVisualizer.FontAndColorDefaults),
+                (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorDefaults()), promote: true);
+#if DEBUG
+            await TaskFactory.SwitchToMainThreadAsync();
+            DebugVisualizer.FontAndColorDefaults.ClearFontAndColorCache(this);
+#endif
         }
 
         public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration)
