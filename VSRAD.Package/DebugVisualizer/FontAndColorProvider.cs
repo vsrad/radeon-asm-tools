@@ -11,20 +11,6 @@ namespace VSRAD.Package.DebugVisualizer
 {
     sealed class FontAndColorProvider
     {
-        public readonly struct FontAndColorInfo
-        {
-            public string FontName { get; }
-            public Color ForegroundColor { get; }
-            public bool Bold { get; }
-
-            public FontAndColorInfo(string fontName = null, Color? foregroundColor = null, bool bold = false)
-            {
-                FontName = fontName ?? FontAndColorService.DefaultFontName;
-                ForegroundColor = foregroundColor ?? Color.Black;
-                Bold = bold;
-            }
-        }
-
         public event Action FontAndColorInfoChanged;
 
         private readonly IVsFontAndColorStorage _storage;
@@ -44,7 +30,7 @@ namespace VSRAD.Package.DebugVisualizer
             ErrorHandler.ThrowOnFailure(_storage.OpenCategory(Constants.FontAndColorsCategoryGuid, _storageFlags));
         }
 
-        public FontAndColorInfo GetInfo(FontAndColorItem item)
+        public (Font font, Color foreground) GetInfo(FontAndColorItem item, Font fontPrototype)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             try
@@ -59,11 +45,13 @@ namespace VSRAD.Package.DebugVisualizer
                 var foregroundColor = ColorTranslator.FromWin32((int)colorInfo[0].crForeground);
                 var isBold = ((FONTFLAGS)colorInfo[0].dwFontFlags & FONTFLAGS.FF_BOLD) == FONTFLAGS.FF_BOLD;
 
-                return new FontAndColorInfo(fontName, foregroundColor, isBold);
+                var font = new Font(fontName, fontPrototype.Size, isBold ? FontStyle.Bold : FontStyle.Regular);
+
+                return (font, foregroundColor);
             }
             catch
             {
-                return new FontAndColorInfo();
+                return (fontPrototype, Color.Black);
             }
         }
     }

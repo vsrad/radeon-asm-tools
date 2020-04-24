@@ -57,7 +57,6 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _stylingOptions = options;
             _groupSizeGetter = groupSizeGetter;
-            _fontAndColor = new FontAndColorProvider();
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -95,6 +94,11 @@ namespace VSRAD.Package.DebugVisualizer
             _selectionController = new SelectionController(this);
 
             DataColumns = SetupColumns();
+
+            EnableHeadersVisualStyles = false;
+            _fontAndColor = new FontAndColorProvider();
+            _fontAndColor.FontAndColorInfoChanged += ApplyFontAndColorInfo;
+            ApplyFontAndColorInfo();
         }
 
         public void ScaleControls(float scaleFactor)
@@ -279,22 +283,6 @@ namespace VSRAD.Package.DebugVisualizer
             return dataColumns;
         }
 
-        public void AlignmentChanged(
-                ContentAlignment nameColumnAlignment,
-                ContentAlignment dataColumnAlignment,
-                ContentAlignment nameHeaderAlignment,
-                ContentAlignment headersAlignment
-            )
-        {
-            Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
-            Columns[0].HeaderCell.Style.Alignment = nameHeaderAlignment.AsDataGridViewContentAlignment();
-            foreach (var column in DataColumns)
-            {
-                column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
-                column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
-            }
-        }
-
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             if (Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
@@ -354,6 +342,46 @@ namespace VSRAD.Package.DebugVisualizer
         {
             row.Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
         }
+
+        #region Styling
+
+        public void AlignmentChanged(
+                ContentAlignment nameColumnAlignment,
+                ContentAlignment dataColumnAlignment,
+                ContentAlignment nameHeaderAlignment,
+                ContentAlignment headersAlignment)
+        {
+            Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
+            Columns[0].HeaderCell.Style.Alignment = nameHeaderAlignment.AsDataGridViewContentAlignment();
+            foreach (var column in DataColumns)
+            {
+                column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
+                column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
+            }
+        }
+
+        private void ApplyFontAndColorInfo()
+        {
+            var (headerFont, headerFg) = _fontAndColor.GetInfo(FontAndColorItem.Header, DefaultFont);
+            var (dataFont, dataFg) = _fontAndColor.GetInfo(FontAndColorItem.Data, DefaultFont);
+            var (watchFont, watchFg) = _fontAndColor.GetInfo(FontAndColorItem.WatchNames, DefaultFont);
+
+            ColumnHeadersDefaultCellStyle.Font = headerFont;
+            ColumnHeadersDefaultCellStyle.ForeColor = headerFg;
+
+            RowHeadersDefaultCellStyle.Font = watchFont;
+            RowHeadersDefaultCellStyle.ForeColor = watchFg;
+            Columns[0].DefaultCellStyle.Font = watchFont;
+            Columns[0].DefaultCellStyle.ForeColor = watchFg;
+
+            foreach (var column in DataColumns)
+            {
+                column.DefaultCellStyle.Font = dataFont;
+                column.DefaultCellStyle.ForeColor = dataFg;
+            }
+        }
+
+        #endregion
 
         #region Custom CmdKeys handlers
 
