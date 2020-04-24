@@ -28,12 +28,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         public bool Show(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (hit.RowIndex != -1 || hit.ColumnIndex < VisualizerTable.DataColumnOffset) return false;
+            if (hit.RowIndex != -1 || hit.ColumnIndex < 0) return false;
             var screenStartOffset = _table.RowHeadersWidth + _table.Columns[VisualizerTable.NameColumnIndex].Width;
             _columnRelStart = hit.ColumnX - screenStartOffset;
             var invisibleColumns = _table.DataColumns.Count(x => x.Index < hit.ColumnIndex && x.Visible == false);
             _clickedColumnIndex = hit.ColumnIndex;
             _targetColumnIndex = hit.ColumnIndex - invisibleColumns - 1;
+            _menu.MenuItems[12].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
+            _menu.MenuItems[16].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
             _menu.Show(_table, new Point(e.X, e.Y));
             return true;
         }
