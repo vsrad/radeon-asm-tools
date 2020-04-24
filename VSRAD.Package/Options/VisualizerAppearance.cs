@@ -34,28 +34,6 @@ namespace VSRAD.Package.Options
             set => SetField(ref _dataColumnAlignment, value);
         }
         #endregion
-        #region font
-        private FontType _nameColumnFont = FontType.Regular;
-        public FontType NameColumnFont
-        {
-            get => _nameColumnFont;
-            set => SetField(ref _nameColumnFont, value);
-        }
-
-        private FontType _nameHeaderFont = FontType.Regular;
-        public FontType NameHeaderFont
-        {
-            get => _nameHeaderFont;
-            set => SetField(ref _nameHeaderFont, value);
-        }
-
-        private FontType _headersFont = FontType.Regular;
-        public FontType HeadersFont
-        {
-            get => _headersFont;
-            set => SetField(ref _headersFont, value);
-        }
-        #endregion
         #region diviers
         private int _laneDividerWidth = 3;
         public int LaneDivierWidth

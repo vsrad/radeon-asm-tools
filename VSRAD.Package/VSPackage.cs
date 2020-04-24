@@ -4,7 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Deborgar;
-using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Registry;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
 
@@ -31,6 +31,8 @@ namespace VSRAD.Package
     // Required for the custom project template to show up in New Project dialog
     [ProvideService(typeof(VSLanguageInfo), ServiceName = nameof(VSLanguageInfo))]
     [ProvideLanguageService(typeof(VSLanguageInfo), Deborgar.Constants.LanguageName, 106)]
+    [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
+    [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
     [Guid(Constants.PackageId)]
     public sealed class VSPackage : AsyncPackage
     {
@@ -43,6 +45,17 @@ namespace VSRAD.Package
         {
             get => _taskFactoryOverride ?? ThreadHelper.JoinableTaskFactory;
             set => _taskFactoryOverride = value;
+        }
+
+        protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
+        {
+            await base.InitializeAsync(cancellationToken, progress);
+            AddService(typeof(DebugVisualizer.FontAndColorService),
+                (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorService()), promote: true);
+#if DEBUG
+            await TaskFactory.SwitchToMainThreadAsync();
+            DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
+#endif
         }
 
         public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration)

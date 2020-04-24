@@ -143,7 +143,8 @@
     <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
     <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
-    <Compile Include="DebugVisualizer\FontType.cs" />
+    <Compile Include="DebugVisualizer\FontAndColorService.cs" />
+    <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
     </Compile>
@@ -230,8 +231,9 @@
     <Compile Include="ProjectSystem\EditorExtensions\EvaluateSelectedQuickInfoSource.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\QuickInfoEvaluateSelectedState.cs" />
     <Compile Include="ProjectSystem\Project.cs" />
-    <Compile Include="ProvideDebugEngineAttribute.cs" />
-    <Compile Include="ProvideDebugPortSupplierAttribute.cs" />
+    <Compile Include="Registry\ProvideDebugEngineAttribute.cs" />
+    <Compile Include="Registry\ProvideDebugPortSupplierAttribute.cs" />
+    <Compile Include="Registry\ProvideFontAndColorsCategoryAttribute.cs" />
     <Compile Include="Server\FileSynchronizationManager.cs" />
     <Compile Include="Server\RemoteCommandExecutor.cs" />
     <Compile Include="ToolWindows\BaseToolWindow.cs" />
