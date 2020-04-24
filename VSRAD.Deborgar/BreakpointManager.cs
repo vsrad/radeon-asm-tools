@@ -81,23 +81,16 @@ namespace VSRAD.Deborgar
         public uint GetNextBreakpointLine(string file, uint previousLine)
         {
             var fileState = GetSourceFileState(file);
-            /* The user may not set any breakpoints but we need to pass one to the debugger anyway,
-             * so we pick the end of the program as the implicit "default" breakpoint */
-            var defaultBreakpointLine = _getFileLineCount(file) - 1;
-            Breakpoint firstBreakpoint = null;
-            foreach (var breakpoint in fileState.Breakpoints.OrderBy(bp => bp.Resolution.Context.LineNumber))
-            {
-                var line = breakpoint.Resolution.Context.LineNumber;
-                if ((line > previousLine || previousLine == defaultBreakpointLine) && breakpoint != fileState.PreviousBreakpoint)
-                {
-                    fileState.PreviousBreakpoint = breakpoint;
-                    return line;
-                }
-                if (firstBreakpoint == null)
-                    firstBreakpoint = breakpoint;
-            }
-            fileState.PreviousBreakpoint = firstBreakpoint;
-            return firstBreakpoint?.Resolution?.Context?.LineNumber ?? defaultBreakpointLine;
+            if (fileState.Breakpoints.Count == 0)
+                // No breakpoints set but we need to pass one to the debugger anyway,
+                // so we pick the end of the program as the implicit "default" breakpoint
+                return _getFileLineCount(file) - 1;
+
+            var breakpoints = fileState.Breakpoints.OrderBy(bp => bp.Resolution.Context.LineNumber);
+            var nextBreakpoint = breakpoints.FirstOrDefault(bp => bp.Resolution.Context.LineNumber > previousLine)
+                              ?? breakpoints.First();
+            fileState.PreviousBreakpoint = nextBreakpoint;
+            return nextBreakpoint.Resolution.Context.LineNumber;
         }
 
         private SourceFileState GetSourceFileState(string file)
