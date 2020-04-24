@@ -27,11 +27,10 @@ namespace VSRAD.PackageTests.Server
             var channel = new MockCommunicationChannel();
             var sourceManager = new Mock<IProjectSourceManager>(MockBehavior.Strict);
             sourceManager
-                .Setup((m) => m.SaveDocumentsAsync(DocumentSaveType.SolutionDocuments))
+                .Setup((m) => m.SaveDocumentsAsync(DocumentSaveType.OpenDocuments))
                 .Returns(Task.CompletedTask).Verifiable();
             var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
-                copySources: false, autosaveSource: DocumentSaveType.SolutionDocuments),
-                channel.Object, sourceManager.Object);
+                copySources: false), channel.Object, sourceManager.Object);
             project.Setup((p) => p.SaveOptions()).Verifiable();
 
             await syncer.SynchronizeRemoteAsync();
