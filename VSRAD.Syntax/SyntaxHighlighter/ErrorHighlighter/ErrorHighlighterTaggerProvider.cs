@@ -33,6 +33,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         private void ProjectBuildDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
         {
             var errors = new Dictionary<string, List<(int line, int column, string message)>>();
+            // the list doesn't contain hidden elements and we can’t affect it.
+            // But we can show it and then return the state
+            var showError = _dte.ToolWindows.ErrorList.ShowErrors;
+            var showWarning = _dte.ToolWindows.ErrorList.ShowWarnings;
+            _dte.ToolWindows.ErrorList.ShowErrors = true;
+            _dte.ToolWindows.ErrorList.ShowWarnings = true;
+
             var errorList = _dte.ToolWindows.ErrorList.ErrorItems;
             for (int i = 1; i <= errorList.Count; i++)
             {
@@ -43,6 +50,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
                 errors[error.FileName].Add((error.Line, error.Column, error.Description));
             }
+            _dte.ToolWindows.ErrorList.ShowErrors = showError;
+            _dte.ToolWindows.ErrorList.ShowWarnings = showWarning;
             ErrorsUpdated?.Invoke(errors);
         }
 
