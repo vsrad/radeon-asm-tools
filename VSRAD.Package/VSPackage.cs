@@ -31,8 +31,8 @@ namespace VSRAD.Package
     // Required for the custom project template to show up in New Project dialog
     [ProvideService(typeof(VSLanguageInfo), ServiceName = nameof(VSLanguageInfo))]
     [ProvideLanguageService(typeof(VSLanguageInfo), Deborgar.Constants.LanguageName, 106)]
-    [ProvideService(typeof(DebugVisualizer.FontAndColorDefaults))]
-    [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorDefaults))]
+    [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
+    [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
     [Guid(Constants.PackageId)]
     public sealed class VSPackage : AsyncPackage
     {
@@ -50,11 +50,11 @@ namespace VSRAD.Package
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             await base.InitializeAsync(cancellationToken, progress);
-            AddService(typeof(DebugVisualizer.FontAndColorDefaults),
-                (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorDefaults()), promote: true);
+            AddService(typeof(DebugVisualizer.FontAndColorService),
+                (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorService()), promote: true);
 #if DEBUG
             await TaskFactory.SwitchToMainThreadAsync();
-            DebugVisualizer.FontAndColorDefaults.ClearFontAndColorCache(this);
+            DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
         }
 

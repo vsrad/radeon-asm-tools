@@ -29,8 +29,11 @@ namespace VSRAD.Package.DebugVisualizer
     }
 
     [Guid(Constants.FontAndColorDefaultsServiceId)]
-    sealed class FontAndColorDefaults : IVsFontAndColorDefaults, IVsFontAndColorDefaultsProvider
+    sealed class FontAndColorService : IVsFontAndColorDefaults, IVsFontAndColorDefaultsProvider, IVsFontAndColorEvents
     {
+        public event Action ItemsChanged;
+        private bool _itemsChangedBeforeApply = false;
+
         public const string DefaultFontName = "Consolas";
 
         private static readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
@@ -127,6 +130,29 @@ namespace VSRAD.Package.DebugVisualizer
         {
             pPriority = 0;
             return VSConstants.E_NOTIMPL;
+        }
+
+        int IVsFontAndColorEvents.OnFontChanged(ref Guid category, FontInfo[] _1, LOGFONTW[] _2, uint _3) => OnChange(ref category);
+
+        int IVsFontAndColorEvents.OnItemChanged(ref Guid category, string _1, int _2, ColorableItemInfo[] _3, uint _4, uint _5) => OnChange(ref category);
+
+        int IVsFontAndColorEvents.OnReset(ref Guid category) => OnChange(ref category);
+
+        int IVsFontAndColorEvents.OnResetToBaseCategory(ref Guid category) => OnChange(ref category);
+
+        int IVsFontAndColorEvents.OnApply()
+        {
+            // Don't fire multiple events if more than one item is changed
+            if (_itemsChangedBeforeApply)
+                ItemsChanged?.Invoke();
+            _itemsChangedBeforeApply = false;
+            return VSConstants.S_OK;
+        }
+
+        private int OnChange(ref Guid category)
+        {
+            _itemsChangedBeforeApply = _itemsChangedBeforeApply || category == Constants.FontAndColorsCategoryGuid;
+            return VSConstants.S_OK;
         }
     }
 }

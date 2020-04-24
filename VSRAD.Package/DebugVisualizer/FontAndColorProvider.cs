@@ -19,7 +19,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             public FontAndColorInfo(string fontName = null, Color? foregroundColor = null, bool bold = false)
             {
-                FontName = fontName ?? FontAndColorDefaults.DefaultFontName;
+                FontName = fontName ?? FontAndColorService.DefaultFontName;
                 ForegroundColor = foregroundColor ?? Color.Black;
                 Bold = bold;
             }
@@ -37,6 +37,10 @@ namespace VSRAD.Package.DebugVisualizer
             ThreadHelper.ThrowIfNotOnUIThread();
             _storage = (IVsFontAndColorStorage)GetGlobalService(typeof(SVsFontAndColorStorage));
             Assumes.Present(_storage);
+
+            var fontAndColorService = (FontAndColorService)GetGlobalService(typeof(FontAndColorService));
+            fontAndColorService.ItemsChanged += () => FontAndColorInfoChanged?.Invoke();
+
             ErrorHandler.ThrowOnFailure(_storage.OpenCategory(Constants.FontAndColorsCategoryGuid, _storageFlags));
         }
 

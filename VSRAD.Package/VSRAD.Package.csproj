@@ -143,7 +143,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
     <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
-    <Compile Include="DebugVisualizer\FontAndColorDefaults.cs" />
+    <Compile Include="DebugVisualizer\FontAndColorService.cs" />
     <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
     <Compile Include="DebugVisualizer\FontType.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
