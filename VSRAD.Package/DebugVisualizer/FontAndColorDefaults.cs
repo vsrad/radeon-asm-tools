@@ -4,18 +4,40 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace VSRAD.Package.DebugVisualizer
 {
+    public enum FontAndColorItem
+    {
+        Header, Data, WatchNames
+    }
+
+    static class FontAndColorItems
+    {
+        public static string GetDisplayName(this FontAndColorItem item)
+        {
+            switch (item)
+            {
+                case FontAndColorItem.Header: return "Header";
+                case FontAndColorItem.Data: return "Data";
+                case FontAndColorItem.WatchNames: return "Watch names";
+            }
+            throw new NotImplementedException();
+        }
+    }
+
     [Guid(Constants.FontAndColorDefaultsServiceId)]
     sealed class FontAndColorDefaults : IVsFontAndColorDefaults, IVsFontAndColorDefaultsProvider
     {
-        private readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
+        public const string DefaultFontName = "Consolas";
+
+        private static readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
         {
-            CreateItem("Header"),
-            CreateItem("Data"),
-            CreateItem("Watch names")
+            CreateItem(FontAndColorItem.Header.GetDisplayName()),
+            CreateItem(FontAndColorItem.Data.GetDisplayName()),
+            CreateItem(FontAndColorItem.WatchNames.GetDisplayName())
         };
 
         // Changes to ProvideFontAndColorsCategory will not be registered until this method is run.
@@ -83,9 +105,17 @@ namespace VSRAD.Package.DebugVisualizer
             return VSConstants.S_OK;
         }
 
-        int IVsFontAndColorDefaults.GetItemByName(string szItem, AllColorableItemInfo[] pInfo) => VSConstants.E_NOTIMPL;
+        int IVsFontAndColorDefaults.GetItemByName(string szItem, AllColorableItemInfo[] pInfo)
+        {
+            pInfo[0] = _items.FirstOrDefault(i => i.bstrName == szItem);
+            return VSConstants.S_OK;
+        }
 
-        int IVsFontAndColorDefaults.GetFont(FontInfo[] pInfo) => VSConstants.S_OK;
+        int IVsFontAndColorDefaults.GetFont(FontInfo[] pInfo)
+        {
+            pInfo[0] = new FontInfo { bstrFaceName = DefaultFontName, bFaceNameValid = 1 };
+            return VSConstants.S_OK;
+        }
 
         int IVsFontAndColorDefaults.GetFlags(out uint dwFlags)
         {

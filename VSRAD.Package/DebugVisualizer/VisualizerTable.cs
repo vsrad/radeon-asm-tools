@@ -54,10 +54,13 @@ namespace VSRAD.Package.DebugVisualizer
         private Font _bold = new Font(DefaultFont, FontStyle.Bold);
         private Font _regular = new Font(DefaultFont, FontStyle.Regular);
 
+        private readonly FontAndColorProvider _fontAndColor;
+
         public VisualizerTable(ColumnStylingOptions options, GetGroupSize groupSizeGetter) : base()
         {
             _stylingOptions = options;
             _groupSizeGetter = groupSizeGetter;
+            _fontAndColor = new FontAndColorProvider();
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
