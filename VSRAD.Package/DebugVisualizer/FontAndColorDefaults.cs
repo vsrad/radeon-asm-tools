@@ -11,10 +11,14 @@ namespace VSRAD.Package.DebugVisualizer
     [Guid(Constants.FontAndColorDefaultsServiceId)]
     sealed class FontAndColorDefaults : IVsFontAndColorDefaults, IVsFontAndColorDefaultsProvider
     {
-        private static readonly Lazy<List<AllColorableItemInfo>> _items =
-            new Lazy<List<AllColorableItemInfo>>(() => new List<AllColorableItemInfo>());
+        private readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
+        {
+            CreateItem("Header"),
+            CreateItem("Data"),
+            CreateItem("Watch names")
+        };
 
-        // Changes to ProvideFontAndColorsCategory will not be registered until this method is ran.
+        // Changes to ProvideFontAndColorsCategory will not be registered until this method is run.
         // This is only useful when developing the extension, so make sure to guard this call with #if DEBUG.
         internal static void ClearFontAndColorCache(IServiceProvider serviceProvider)
         {
@@ -24,6 +28,28 @@ namespace VSRAD.Package.DebugVisualizer
             Assumes.Present(cacheManager);
             var categoryGuid = Constants.FontAndColorsCategoryGuid;
             cacheManager.ClearCache(ref categoryGuid);
+        }
+
+        private static AllColorableItemInfo CreateItem(string name)
+        {
+            return new AllColorableItemInfo
+            {
+                bFlagsValid = 1,
+                fFlags = (uint)(__FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE | __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS),
+                bNameValid = 1,
+                bstrName = name,
+                bLocalizedNameValid = 1,
+                bstrLocalizedName = name,
+                Info = new ColorableItemInfo
+                {
+                    bFontFlagsValid = 1,
+                    dwFontFlags = 0,
+                    bForegroundValid = 1,
+                    crForeground = (uint)__VSCOLORTYPE.CT_RAW | 0x0,
+                    bBackgroundValid = 1,
+                    crBackground = (uint)__VSCOLORTYPE.CT_RAW | 0x00ffffff,
+                }
+            };
         }
 
         int IVsFontAndColorDefaultsProvider.GetObject(ref Guid rguidCategory, out object ppObj)
@@ -47,13 +73,13 @@ namespace VSRAD.Package.DebugVisualizer
 
         int IVsFontAndColorDefaults.GetItemCount(out int pcItems)
         {
-            pcItems = _items.Value.Count;
+            pcItems = _items.Count;
             return VSConstants.S_OK;
         }
 
         int IVsFontAndColorDefaults.GetItem(int iItem, AllColorableItemInfo[] pInfo)
         {
-            pInfo[0] = _items.Value[iItem];
+            pInfo[0] = _items[iItem];
             return VSConstants.S_OK;
         }
 
