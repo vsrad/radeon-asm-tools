@@ -51,9 +51,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         private string _editedWatchName;
 
-        private Font _bold = new Font(DefaultFont, FontStyle.Bold);
-        private Font _regular = new Font(DefaultFont, FontStyle.Regular);
-
         private readonly FontAndColorProvider _fontAndColor;
 
         public VisualizerTable(ColumnStylingOptions options, GetGroupSize groupSizeGetter) : base()
@@ -295,21 +292,6 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
                 column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
-            }
-        }
-
-        public void FontTypeChanged(
-                FontType nameColumnFont,
-                FontType nameHeaderFont,
-                FontType headersFont
-            )
-        {
-            Columns[0].DefaultCellStyle.Font = nameColumnFont == FontType.Bold ? _bold : _regular;
-            Columns[0].HeaderCell.Style.Font = nameHeaderFont == FontType.Bold ? _bold : _regular;
-            var hFont = headersFont == FontType.Bold ? _bold : _regular;
-            foreach (var column in DataColumns)
-            {
-                column.HeaderCell.Style.Font = hFont;
             }
         }
 

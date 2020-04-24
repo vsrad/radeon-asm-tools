@@ -78,11 +78,6 @@ namespace VSRAD.Package.DebugVisualizer
                     _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
                     _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
                 );
-            _table.FontTypeChanged(
-                    _integration.ProjectOptions.VisualizerAppearance.NameColumnFont,
-                    _integration.ProjectOptions.VisualizerAppearance.NameHeaderFont,
-                    _integration.ProjectOptions.VisualizerAppearance.HeadersFont
-                );
             foreach (var watch in _integration.ProjectOptions.DebuggerOptions.Watches)
                 _table.AppendVariableRow(watch);
             _table.PrepareNewWatchRow();
@@ -114,15 +109,6 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
                         _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
                         _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
-                    );
-                    break;
-                case nameof(Options.VisualizerAppearance.NameColumnFont):
-                case nameof(Options.VisualizerAppearance.NameHeaderFont):
-                case nameof(Options.VisualizerAppearance.HeadersFont):
-                    _table.FontTypeChanged(
-                        _integration.ProjectOptions.VisualizerAppearance.NameColumnFont,
-                        _integration.ProjectOptions.VisualizerAppearance.NameHeaderFont,
-                        _integration.ProjectOptions.VisualizerAppearance.HeadersFont
                     );
                     break;
                 case nameof(Options.VisualizerAppearance.LaneDivierWidth):
