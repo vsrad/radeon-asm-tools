@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.ProjectSystem;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -43,6 +44,10 @@ namespace VSRAD.Package.Server
                 ? (await GetMetadataAsync(options.ValidWatchesFile).ConfigureAwait(false)).Timestamp
                 : default;
 
+            var initStatusStringTimestamp = !string.IsNullOrEmpty(options.StatusStringFilePath)
+                ? (await GetMetadataAsync(options.ValidWatchesFile).ConfigureAwait(false)).Timestamp
+                : default;
+
             await _fileSynchronizationManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var executionResult = await _remoteExecutor.ExecuteAsync(
@@ -65,7 +70,16 @@ namespace VSRAD.Package.Server
                     return error;
             }
 
-            return await CreateBreakStateAsync(options.RemoteOutputFile, initOutputTimestamp, watches, resultData.ExecutionTime);
+            var statusString = "";
+
+            if (!string.IsNullOrEmpty(options.StatusStringFilePath))
+            {
+                var statusStringResult = await GetStatusString(initStatusStringTimestamp, options.StatusStringFile);
+                if (!statusStringResult.TryGetResult(out statusString, out error))
+                    return error;
+            }
+
+            return await CreateBreakStateAsync(options.RemoteOutputFile, initOutputTimestamp, watches, resultData.ExecutionTime, statusString);
         }
 
         private async Task<Result<ReadOnlyCollection<string>>> GetValidWatchesAsync(DateTime initValidWatchesTimestamp, Options.OutputFile validWatchesFile)
@@ -88,7 +102,26 @@ namespace VSRAD.Package.Server
             return Array.AsReadOnly(validWatches);
         }
 
-        private async Task<Result<BreakState>> CreateBreakStateAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches, long execElapsedMilliseconds)
+        private async Task<Result<string>> GetStatusString(DateTime initStatusStringFileTimeStamp, Options.OutputFile statusStringFile)
+        {
+            var statusStringFileMetadata = await GetMetadataAsync(statusStringFile).ConfigureAwait(false);
+            if (statusStringFileMetadata.Status != FetchStatus.Successful)
+                return new Error($"Status string file ({statusStringFile.File}) could not be found.", title: "Status string file is missing");
+            if (statusStringFileMetadata.Timestamp == initStatusStringFileTimeStamp)
+                return new Error($"Status string file ({statusStringFile.File}) was not modified.", title: "Data may be stale");
+
+            var statusStringData = await _channel.SendWithReplyAsync<ResultRangeFetched>(
+                new FetchResultRange { FilePath = statusStringFile.Path, BinaryOutput = statusStringFile.BinaryOutput }).ConfigureAwait(false);
+            if (statusStringData.Status != FetchStatus.Successful)
+                return new Error($"Status string file ({statusStringFile.File}) could not be opened.");
+
+            var statusString = System.Text.Encoding.Default.GetString(statusStringData.Data)
+                .Replace("\r\n", "\n");
+
+            return statusString;
+        }
+
+        private async Task<Result<BreakState>> CreateBreakStateAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches, long execElapsedMilliseconds, string statusString)
         {
             var metadataResponse = await GetMetadataAsync(output).ConfigureAwait(false);
             if (metadataResponse.Status != FetchStatus.Successful)
@@ -98,7 +131,7 @@ namespace VSRAD.Package.Server
 
             _timer.Stop();
             return new BreakState(output, metadataResponse.Timestamp, (uint)metadataResponse.ByteCount,
-                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds, execElapsedMilliseconds);
+                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds, execElapsedMilliseconds, statusString);
         }
 
         private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>

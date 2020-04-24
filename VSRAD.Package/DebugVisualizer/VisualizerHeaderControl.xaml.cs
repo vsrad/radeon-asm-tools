@@ -63,9 +63,11 @@ namespace VSRAD.Package.DebugVisualizer
             Data.GroupIndexEditable = false;
         }
 
-        public void OnDataRequestCompleted(uint groupCount, long totalElapsedMilliseconds, long execElapsedMilliseconds)
+        public void OnDataRequestCompleted(uint groupCount, long totalElapsedMilliseconds, long execElapsedMilliseconds, string statusString)
         {
             Data.Status = $"{groupCount} groups, last run at {_lastRunAt.ToString("HH:mm:ss")}, total: {totalElapsedMilliseconds}ms, execute: {execElapsedMilliseconds}ms";
+            if (!string.IsNullOrEmpty(statusString))
+                Data.Status += $", status: {statusString}";
             Data.GroupIndexEditable = true;
         }
     }

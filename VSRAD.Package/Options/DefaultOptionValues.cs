@@ -20,6 +20,7 @@ namespace VSRAD.Package.Options
         public const bool DebuggerBinaryOutput = false;
         public const bool DebuggerParseValidWatches = false;
         public const string DebuggerValidWatchesFilePath = "";
+        public const string DebuggerStatusStringFilePath = "";
         public const bool DebuggerRunAsAdmin = false;
         public const int DebuggerTimeoutSecs = 0;
         public const int OutputOffset = 0;

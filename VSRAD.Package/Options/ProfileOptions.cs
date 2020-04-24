@@ -141,6 +141,10 @@ namespace VSRAD.Package.Options
         [Description("Path to the file with valid watch names on the remote machine.")]
         [DefaultValue(DefaultOptionValues.DebuggerValidWatchesFilePath)]
         public string ValidWatchesFilePath { get; }
+        [DisplayName("Status String File Path")]
+        [Description("Path to the file with status string on the remote machine.")]
+        [DefaultValue(DefaultOptionValues.DebuggerStatusStringFilePath)]
+        public string StatusStringFilePath { get; }
         [DisplayName("Run As Administrator")]
         [Description("Specifies whether the `Executable` is run with administrator rights.")]
         [DefaultValue(DefaultOptionValues.DebuggerRunAsAdmin)]
@@ -153,6 +157,8 @@ namespace VSRAD.Package.Options
         public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
         [JsonIgnore]
         public OutputFile ValidWatchesFile => new OutputFile(WorkingDirectory, ValidWatchesFilePath);
+        [JsonIgnore]
+        public OutputFile StatusStringFile => new OutputFile(WorkingDirectory, StatusStringFilePath);
 
         public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
             new DebuggerProfileOptions(
@@ -165,9 +171,10 @@ namespace VSRAD.Package.Options
                 runAsAdmin: RunAsAdmin,
                 timeoutSecs: TimeoutSecs,
                 parseValidWatches: ParseValidWatches,
-                validWatchesFilePath: ValidWatchesFilePath);
+                validWatchesFilePath: ValidWatchesFilePath,
+                statusStringFilePath: StatusStringFilePath);
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath)
+        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, string statusStringFilePath = DefaultOptionValues.DebuggerStatusStringFilePath)
         {
             Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
             Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
@@ -179,6 +186,7 @@ namespace VSRAD.Package.Options
             TimeoutSecs = timeoutSecs;
             ParseValidWatches = parseValidWatches;
             ValidWatchesFilePath = validWatchesFilePath;
+            StatusStringFilePath = statusStringFilePath;
         }
     }
 
