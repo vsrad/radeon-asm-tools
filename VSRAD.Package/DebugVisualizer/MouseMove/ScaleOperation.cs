@@ -73,6 +73,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if (_initOffset == 0)
                 _visibleBeforeFirst = 0;
             _operationStarted = false;
+
             return true;
         }
 
@@ -105,18 +106,19 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         {
             if (diff == 0) return;
 
-            var fullDiff = x - _initX;
-            var width = _initWidth + fullDiff;
-            if (width <= 30) return;
-
             _table.ColumnResizeController.BeginBulkColumnWidthChange();
 
             int scrollingOffset;
 
             if (_table.ScalingMode == ScalingMode.ResizeTable)
             {
-
-                scrollingOffset = _initOffset + _visibleBeforeFirst * fullDiff - (int)(width * _firstColumnVisiblePart) + (int)(_initWidth * _firstColumnVisiblePart);
+                var visibleBetweenFirstAndTarget = _targetColumnIndex + 1 - _visibleBeforeFirst + _firstColumnVisiblePart;
+                float fullDiff = x - _initX;
+                fullDiff /= visibleBetweenFirstAndTarget;
+                var width = (int)(_initWidth + fullDiff);
+                if (width <= 30) return;
+                
+                scrollingOffset = _initOffset + _visibleBeforeFirst * (int)fullDiff - (int)(width * _firstColumnVisiblePart) + (int)(_initWidth * _firstColumnVisiblePart);
 
                 for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
                 {
@@ -140,6 +142,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             } 
             else
             {
+                var fullDiff = x - _initX;
+                var width = _initWidth + fullDiff;
+                if (width <= 30) return;
+
                 for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
                 {
                     if (i == _lastVisibleColumn || i == _firstVisibleColumn) continue;
