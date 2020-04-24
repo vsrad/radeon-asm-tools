@@ -83,9 +83,9 @@
                             IsChecked="{Binding Options.DebuggerOptions.Autosave, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
-                    <Label Content="Break mode:" VerticalAlignment="Center" Margin="15,0,0,0"/>
-                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
+                    <TextBlock Text="Break mode:" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                    <ComboBox Margin="5,0,0,0" SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalAlignment="Center">
                         <ComboBox.Resources>
                             <local:BreakModeConverter x:Key="BreakModeConverter" />
                         </ComboBox.Resources>
@@ -129,7 +129,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Column Separator Width:" VerticalAlignment="Center"/>
-                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
+                            <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                             <TextBlock Text="Color:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <TextBox Width="50" Text="{Binding Options.VisualizerAppearance.LaneSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -137,7 +137,7 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Hidden Column Separator Width:" VerticalAlignment="Center"/>
-                            <viz:NumberInput VerticalContentAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
+                            <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding DataContext.Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                             <TextBlock Text="Color:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <TextBox Width="50" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -146,7 +146,7 @@
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Scaling mode:" VerticalAlignment="Center" Margin="0"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalContentAlignment="Center">
+                              ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalAlignment="Center">
                                 <ComboBox.Resources>
                                     <local:ScalingModeConverter x:Key="ScalingModeConverter" />
                                 </ComboBox.Resources>
