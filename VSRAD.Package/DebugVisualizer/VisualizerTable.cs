@@ -21,11 +21,14 @@ namespace VSRAD.Package.DebugVisualizer
         public int GroupSize => _groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
 
+        #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
         public SolidBrush HiddenColumnSeparatorColor;
         public uint LaneGrouping;
         public int LaneSeparatorWidth = 3;
         public SolidBrush LaneSeparatorColor;
+        public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
+        #endregion
 
         public bool ShowSystemRow
         {

@@ -51,6 +51,7 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
             _table.LaneSeparatorWidth =
                 _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
+            _table.ScalingMode = _integration.ProjectOptions.VisualizerAppearance.ScalingMode;
             _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0;
             tableHost.Setup(_table);
             RestoreSavedState();
@@ -89,6 +90,9 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 case nameof(Options.VisualizerOptions.ShowSystemVariable):
                     _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
+                    break;
+                case nameof(Options.VisualizerAppearance.ScalingMode):
+                    _table.ScalingMode = _integration.ProjectOptions.VisualizerAppearance.ScalingMode;
                     break;
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.LaneGrouping):
