@@ -35,7 +35,7 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _itemsChangedBeforeApply = false;
 
         private const string _defaultFontName = "Consolas";
-        private const ushort _defaultFontSize = 8;
+        private const ushort _defaultFontSize = 10;
 
         private static readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
         {
