@@ -134,7 +134,7 @@
                                       VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
-                            <TextBlock Text="Scaling mode:" VerticalAlignment="Center" Margin="0"/>
+                            <TextBlock Text="Scaling mode:" VerticalAlignment="Center" Margin="5,0,0,0"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalAlignment="Center">
                                 <ComboBox.Resources>
