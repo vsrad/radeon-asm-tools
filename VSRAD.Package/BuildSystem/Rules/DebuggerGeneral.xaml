@@ -7,5 +7,5 @@
         <DataSource Persistence="ProjectFile" HasConfigurationCondition="False"/>
     </Rule.DataSource>
 
-    <StringProperty Name="DebuggerFlavor" Visible="false" Description="The debug rule selected as the active debugger."/>
+    <StringProperty Name="DebuggerFlavor" Visible="false" />
 </Rule>

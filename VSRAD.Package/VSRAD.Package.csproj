@@ -325,30 +325,26 @@
     <XamlPropertyProjectItemsSchema Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyProjectItemsSchema>
-    <XamlPropertyRule Include="BuildSystem\Rules\general.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\ConfigurationGeneral.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\general_file.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\Folder.xaml">
       <RuleInjection>None</RuleInjection>
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\folder.xaml">
-      <RuleInjection>None</RuleInjection>
+    <XamlPropertyRule Include="BuildSystem\Rules\DebuggerGeneral.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\debugger_general.xaml">
-      <SubType>Designer</SubType>
-    </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\general.browseobject.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\GeneralBrowseObject.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
     <XamlPropertyRule Include="BuildSystem\Rules\RADDebugger.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\none.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\None.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\source_file.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\SourceFile.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
   </ItemGroup>
