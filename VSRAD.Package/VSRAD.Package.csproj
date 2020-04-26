@@ -322,9 +322,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
+    <XamlPropertyProjectItemsSchema Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
       <SubType>Designer</SubType>
-    </None>
+    </XamlPropertyProjectItemsSchema>
     <XamlPropertyRule Include="BuildSystem\Rules\general.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
@@ -343,6 +343,12 @@
       <SubType>Designer</SubType>
     </XamlPropertyRule>
     <XamlPropertyRule Include="BuildSystem\Rules\RADDebugger.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\none.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\source_file.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
   </ItemGroup>
@@ -380,13 +386,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\OptionsControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="BuildSystem\Rules\source_file.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="BuildSystem\Rules\Build.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

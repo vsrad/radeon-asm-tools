@@ -28,7 +28,6 @@
     <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\ProjectItemsSchema.xaml;"/>
     <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general.xaml;
                                  $(MSBuildThisFileDirectory)Rules\debugger_general.xaml;
-                                 $(MSBuildThisFileDirectory)Rules\Build.xaml;
                                  $(MSBuildThisFileDirectory)Rules\RADDebugger.xaml;">
       <Context>Project</Context>
     </PropertyPageSchema>
@@ -38,7 +37,9 @@
     <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general_file.xaml">
       <Context>File</Context>
     </PropertyPageSchema>
-    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\folder.xaml; $(MSBuildThisFileDirectory)Rules\source_file.xaml;">
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\folder.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\source_file.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\none.xaml;">
       <Context>File;BrowseObject</Context>
     </PropertyPageSchema>
   </ItemGroup>
