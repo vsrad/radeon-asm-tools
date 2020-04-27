@@ -23,12 +23,13 @@ namespace VSRAD.Package.Server
             IProject project,
             ICommunicationChannel channel,
             IFileSynchronizationManager fileSynchronizationManager,
-            IOutputWindowManager outputWindowManager)
+            IOutputWindowManager outputWindowManager,
+            IErrorListManager errorListManager)
         {
             _project = project;
             _channel = channel;
             _fileSynchronizationManager = fileSynchronizationManager;
-            _remoteExecutor = new RemoteCommandExecutor("Debugger", channel, outputWindowManager);
+            _remoteExecutor = new RemoteCommandExecutor("Debugger", channel, outputWindowManager, errorListManager);
             _timer = new Stopwatch();
         }
 

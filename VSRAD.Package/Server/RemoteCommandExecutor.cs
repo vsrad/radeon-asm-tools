@@ -16,13 +16,15 @@ namespace VSRAD.Package.Server
 
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowWriter _outputWriter;
+        private readonly IErrorListManager _errorListManager;
         private readonly string _outputTag;
 
-        public RemoteCommandExecutor(string outputTag, ICommunicationChannel channel, IOutputWindowManager outputWindow)
+        public RemoteCommandExecutor(string outputTag, ICommunicationChannel channel, IOutputWindowManager outputWindow, IErrorListManager errorListManager = null)
         {
             _outputTag = outputTag;
             _channel = channel;
             _outputWriter = outputWindow.GetExecutionResultPane();
+            _errorListManager = errorListManager;
         }
 
         public async Task<Result<(ExecutionCompleted, byte[])>> ExecuteWithResultAsync(Execute command, Options.OutputFile output, int byteCount = 0, bool checkExitCode = true)
@@ -60,6 +62,7 @@ namespace VSRAD.Package.Server
             {
                 await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stdout", stdout).ConfigureAwait(false);
                 await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stderr", stderr).ConfigureAwait(false);
+                if (_errorListManager != null) await _errorListManager.AddToErrorListAsync(stderr).ConfigureAwait(false);
             }
 
             switch (result.Status)
