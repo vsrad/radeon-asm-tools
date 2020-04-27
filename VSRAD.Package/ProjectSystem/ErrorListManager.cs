@@ -1,8 +1,12 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
+﻿using EnvDTE;
+using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using System;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Text.RegularExpressions;
+using VSRAD.Package.BuildTools;
+using static VSRAD.BuildTools.IPCBuildResult;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -18,38 +22,70 @@ namespace VSRAD.Package.ProjectSystem
     {
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ErrorListProvider _errorListProvider;
-        private static readonly Regex ScriptErrorRegex = new Regex(
-            @"(?<file>[^:]+):\sline\s(?<line>\d+):\s(?<text>.+)", RegexOptions.Compiled);
+        private readonly IBuildErrorProcessor _buildErrorProcessor;
+        private readonly IProject _project;
 
         [ImportingConstructor]
-        public ErrorListManager(SVsServiceProvider serviceProvider)
+        public ErrorListManager(
+            SVsServiceProvider serviceProvider,
+            IBuildErrorProcessor buildErrorProcessor,
+            IProject project)
         {
             _serviceProvider = serviceProvider;
             _errorListProvider = new ErrorListProvider(_serviceProvider);
+            _buildErrorProcessor = buildErrorProcessor;
+            _project = project;
         }
 
-        public Task AddToErrorListAsync(string stderr)
+        public async Task AddToErrorListAsync(string stderr)
         {
-            if (stderr == null) return Task.CompletedTask;
+            if (stderr == null) return;
 
             _errorListProvider.Tasks.Clear();
-            using (var reader = new StringReader(stderr))
+            var messages = await _buildErrorProcessor.ExtractMessagesAsync(stderr, null);
+            foreach (var message in messages)
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                var task = new ErrorTask
                 {
-                    var match = ScriptErrorRegex.Match(line);
-                    var task = new ErrorTask
-                    {
-                        Text = match.Success ? match.Groups["text"].Value : line,
-                        Document = match.Success ? match.Groups["file"].Value : string.Empty,
-                        Line = match.Success ? int.Parse(match.Groups["line"].Value) : 0,
-                        ErrorCategory = TaskErrorCategory.Error
-                    };
-                    _errorListProvider.Tasks.Add(task);
-                }
+                    Text = message.Text,
+                    Document = Path.Combine(_project.RootPath, message.SourceFile),
+                    Line = message.Line - 1,
+                    Column = message.Column,
+                    ErrorCategory = ParseKind(message.Kind)
+                };
+                task.Navigate += (sender, e) =>
+                {
+                    task.Line++;
+                    _errorListProvider.Navigate(task, Guid.Parse(/*EnvDTE.Constants.vsViewKindCode*/"{7651A701-06E5-11D1-8EBD-00A0C90F26EA}"));
+                    task.Line--;
+                };
+
+                _errorListProvider.Tasks.Add(task);
             }
-            return Task.CompletedTask;
+        }
+
+        private static TaskErrorCategory ParseKind(MessageKind kind)
+        {
+            switch (kind)
+            {
+                case MessageKind.Error: return TaskErrorCategory.Error;
+                case MessageKind.Warning: return TaskErrorCategory.Warning;
+                case MessageKind.Note: return TaskErrorCategory.Message;
+                default: return TaskErrorCategory.Message;
+            }
+        }
+
+        // use this if you need to specify a project
+        private IVsHierarchy GetCurrentProjectHierarchy()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+            var vsService = _serviceProvider.GetService(typeof(IVsSolution)) as IVsSolution;
+
+            // get current Env project
+            var proj = dte.Solution.Projects.Item(1);
+            vsService.GetProjectOfUniqueName(proj.FileName, out var hierarchyItem);
+            return hierarchyItem;
         }
     }
 }

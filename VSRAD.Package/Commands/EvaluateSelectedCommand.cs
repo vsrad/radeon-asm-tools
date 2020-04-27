@@ -22,6 +22,7 @@ namespace VSRAD.Package.Commands
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
+        private readonly IErrorListManager _errorListManager;
 
         [ImportingConstructor]
         public EvaluateSelectedCommand(
@@ -31,7 +32,8 @@ namespace VSRAD.Package.Commands
             IFileSynchronizationManager deployManager,
             IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
-            SVsServiceProvider serviceProvider) : base(Constants.EvaluateSelectedCommandId, serviceProvider)
+            SVsServiceProvider serviceProvider,
+            IErrorListManager errorListManager) : base(Constants.EvaluateSelectedCommandId, serviceProvider)
         {
             _project = project;
             _codeEditor = codeEditor;
@@ -39,6 +41,7 @@ namespace VSRAD.Package.Commands
             _deployManager = deployManager;
             _outputWindow = outputWindow;
             _channel = channel;
+            _errorListManager = errorListManager;
         }
 
         public override async Task RunAsync(long commandId)
@@ -91,7 +94,7 @@ namespace VSRAD.Package.Commands
                 WorkingDirectory = options.RemoteOutputFile.Directory
             };
 
-            var executor = new RemoteCommandExecutor("Evaluate Selected", _channel, _outputWindow);
+            var executor = new RemoteCommandExecutor("Evaluate Selected", _channel, _outputWindow, _errorListManager);
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 

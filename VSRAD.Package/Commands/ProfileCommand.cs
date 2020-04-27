@@ -19,6 +19,7 @@ namespace VSRAD.Package.Commands
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
+        private readonly IErrorListManager _errorListManager;
 
         [ImportingConstructor]
         public ProfileCommand(
@@ -26,12 +27,14 @@ namespace VSRAD.Package.Commands
             IFileSynchronizationManager deployManager,
             IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
-            SVsServiceProvider serviceProvider) : base(Constants.ProfileCommandId, serviceProvider)
+            SVsServiceProvider serviceProvider,
+            IErrorListManager errorListManager) : base(Constants.ProfileCommandId, serviceProvider)
         {
             _project = project;
             _deployManager = deployManager;
             _outputWindow = outputWindow;
             _channel = channel;
+            _errorListManager = errorListManager;
         }
 
         public override async Task RunAsync(long commandId)
@@ -45,7 +48,7 @@ namespace VSRAD.Package.Commands
             try
             {
                 await _deployManager.SynchronizeRemoteAsync();
-                var executor = new RemoteCommandExecutor("Profile", _channel, _outputWindow);
+                var executor = new RemoteCommandExecutor("Profile", _channel, _outputWindow, _errorListManager);
 
                 var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
 

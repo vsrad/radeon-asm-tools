@@ -17,7 +17,8 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var (outputWindow, outputWriterMock) = MockOutputWindow();
-            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow);
+            var errorListManager = MockErrorListManager();
+            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow, errorListManager);
 
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
                 (command) => Assert.Equal(new[] { "file", "path" }, command.FilePath));
@@ -53,7 +54,8 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var (outputWindow, outputWriterMock) = MockOutputWindow();
-            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow);
+            var errorListManager = MockErrorListManager();
+            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow, errorListManager);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch });
@@ -84,7 +86,8 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var (outputWindow, _) = MockOutputWindow();
-            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow);
+            var errorListManager = MockErrorListManager();
+            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow, errorListManager);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
@@ -110,6 +113,13 @@ namespace VSRAD.PackageTests.Server
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((m) => m.GetExecutionResultPane()).Returns(outputWriter.Object);
             return (outputWindow.Object, outputWriter);
+        }
+
+        private static IErrorListManager MockErrorListManager()
+        {
+            var errorListManager = new Mock<IErrorListManager>();
+            errorListManager.Setup((m) => m.AddToErrorListAsync("")).Returns(Task.CompletedTask);
+            return errorListManager.Object;
         }
     }
 }
