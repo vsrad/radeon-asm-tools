@@ -51,11 +51,12 @@ namespace VSRAD.Package.ProjectSystem
                     Document = Path.Combine(_project.RootPath, message.SourceFile),
                     Line = message.Line - 1,
                     Column = message.Column,
-                    ErrorCategory = ParseKind(message.Kind)
+                    ErrorCategory = ParseKind(message.Kind),
+                    Category = TaskCategory.BuildCompile,
                 };
                 task.Navigate += (sender, e) =>
                 {
-                    task.Line++;
+                    task.Line++; // just because vs error list is dumb. inside it dec 1 and jumps to this line
                     _errorListProvider.Navigate(task, Guid.Parse(/*EnvDTE.Constants.vsViewKindCode*/"{7651A701-06E5-11D1-8EBD-00A0C90F26EA}"));
                     task.Line--;
                 };
