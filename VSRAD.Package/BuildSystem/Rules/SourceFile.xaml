@@ -9,7 +9,7 @@
         <DataSource Persistence="ProjectFile" HasConfigurationCondition="False" ItemType="SourceFile" />
     </Rule.DataSource>
 
-    <DynamicEnumProperty Name="{}{ItemType}" EnumProvider="ItemTypes" />
+    <DynamicEnumProperty Name="{}{ItemType}" EnumProvider="ItemTypes" Visible="False" />
 
     <StringProperty Name="Identity" DisplayName="File Name" ReadOnly="true" Category="Misc">
         <StringProperty.DataSource>
