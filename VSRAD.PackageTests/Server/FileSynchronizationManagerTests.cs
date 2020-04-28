@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.VisualStudio.ProjectSystem;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,7 +31,7 @@ namespace VSRAD.PackageTests.Server
                 .Setup((m) => m.SaveDocumentsAsync(DocumentSaveType.OpenDocuments))
                 .Returns(Task.CompletedTask).Verifiable();
             var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
-                copySources: false), channel.Object, sourceManager.Object);
+                copySources: false), channel.Object, fileProvider: null, sourceManager.Object);
             project.Setup((p) => p.SaveOptions()).Verifiable();
 
             await syncer.SynchronizeRemoteAsync();
@@ -43,8 +44,14 @@ namespace VSRAD.PackageTests.Server
         public async Task DeployProjectFilesTestAsync()
         {
             var channel = new MockCommunicationChannel();
+            var fileProvider = new Mock<IProjectItemProvider>(MockBehavior.Strict);
+            fileProvider.Setup((p) => p.GetItemsAsync()).ReturnsAsync(new List<IProjectItem>()
+            {
+                MakeProjectItem("source.txt"),
+                MakeProjectItem("Include/include.txt")
+            });
             var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
-                deployDirectory: _deployDirectory, copySources: true), channel.Object);
+                deployDirectory: _deployDirectory, copySources: true), channel.Object, fileProvider.Object);
             project.Setup((p) => p.SaveOptions());
 
             byte[] archive = null;
@@ -78,9 +85,15 @@ namespace VSRAD.PackageTests.Server
         public async Task DeployFilesWithAdditionalSourcesTestAsync()
         {
             var channel = new MockCommunicationChannel();
+            var fileProvider = new Mock<IProjectItemProvider>(MockBehavior.Strict);
+            fileProvider.Setup((p) => p.GetItemsAsync()).ReturnsAsync(new List<IProjectItem>()
+            {
+                MakeProjectItem("source.txt"),
+                MakeProjectItem("Include/include.txt")
+            });
             var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
                 deployDirectory: _deployDirectory, copySources: true,
-                additionalSources: $@"{_fixturesDir}\AdditionalSources;{_fixturesDir}\separate.txt"), channel.Object);
+                additionalSources: $@"{_fixturesDir}\AdditionalSources;{_fixturesDir}\separate.txt"), channel.Object, fileProvider.Object);
             project.Setup((p) => p.SaveOptions());
 
             byte[] archive = null;
@@ -108,7 +121,7 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal(expectedItems, deployedItems);
         }
 
-        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(GeneralProfileOptions generalOptions, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
+        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(GeneralProfileOptions generalOptions, ICommunicationChannel channel, IProjectItemProvider fileProvider, IProjectSourceManager sourceManager = null)
         {
             TestHelper.InitializePackageTaskFactory();
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
@@ -122,7 +135,21 @@ namespace VSRAD.PackageTests.Server
             options.AddProfile("Default", new ProfileOptions(general: generalOptions));
             project.Setup((p) => p.Options).Returns(options);
 
-            return (project, new FileSynchronizationManager(channel, project.Object, sourceManager ?? new Mock<IProjectSourceManager>().Object));
+            sourceManager = sourceManager ?? new Mock<IProjectSourceManager>().Object;
+            var syncer = new FileSynchronizationManager(channel, project.Object, sourceManager, null)
+            {
+                _projectItemProvider = fileProvider
+            };
+            return (project, syncer);
+        }
+
+        private static IProjectItem MakeProjectItem(string relativePath, string fullPath = null, string link = "")
+        {
+            var item = new Mock<IProjectItem>(MockBehavior.Strict);
+            item.Setup((i) => i.EvaluatedIncludeAsFullPath).Returns(fullPath ?? _projectRoot + "/" + relativePath);
+            item.Setup((i) => i.EvaluatedIncludeAsRelativePath).Returns(relativePath);
+            item.Setup((i) => i.Metadata.GetEvaluatedPropertyValueAsync("Link")).ReturnsAsync(link);
+            return item.Object;
         }
 
         private static HashSet<string> ReadZipItems(byte[] zipBytes)

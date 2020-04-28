@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
@@ -23,18 +24,23 @@ namespace VSRAD.Package.Server
         private readonly ICommunicationChannel _channel;
         private readonly IProject _project;
         private readonly IProjectSourceManager _projectSourceManager;
+        private readonly UnconfiguredProject _unconfiguredProject;
 
         private readonly Dictionary<string, DateTime> _fileTracker = new Dictionary<string, DateTime>();
+
+        internal IProjectItemProvider _projectItemProvider;
 
         [ImportingConstructor]
         public FileSynchronizationManager(
             ICommunicationChannel channel,
             IProject project,
-            IProjectSourceManager projectSourceManager)
+            IProjectSourceManager projectSourceManager,
+            UnconfiguredProject unconfiguredProject)
         {
             _channel = channel;
             _project = project;
             _projectSourceManager = projectSourceManager;
+            _unconfiguredProject = unconfiguredProject;
 
             // Redeploy all files on connection state change
             _channel.ConnectionStateChanged += _fileTracker.Clear;
@@ -54,70 +60,61 @@ namespace VSRAD.Package.Server
             if (string.IsNullOrWhiteSpace(options.DeployDirectory))
                 throw new Exception("The project cannot be deployed: remote directory is not specified. Set it in project properties.");
 
-            var deployItems = EnumerateDeployItems(options);
+            var deployItems = await ListDeployItemsAsync(additionalSources: options.AdditionalSources);
             if (!deployItems.Any())
                 return;
 
             var archive = PackDeployItems(deployItems);
             await _channel.SendAsync(new Deploy { Data = archive, Destination = options.DeployDirectory });
 
-            foreach (var (localPath, _) in deployItems)
-                _fileTracker[localPath] = File.GetLastWriteTime(localPath);
+            foreach (var (path, _, lastWrite) in deployItems)
+                _fileTracker[path] = lastWrite;
         }
 
-        private IEnumerable<(string localPath, string archivePath)> EnumerateDeployItems(Options.GeneralProfileOptions profile)
+        private async Task<IEnumerable<(string path, string name, DateTime lastWrite)>> ListDeployItemsAsync(string additionalSources)
         {
-            foreach (var path in profile.AdditionalSources.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Append(_project.RootPath))
+            if (_projectItemProvider == null)
             {
-                foreach (var (localPath, archivePath) in EnumerateFilePaths(path, path))
+                var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
+                _projectItemProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
+            }
+            var projectItems = await _projectItemProvider.GetItemsAsync();
+
+            var items = new List<(string path, string name, DateTime lastWrite)>();
+            foreach (var item in projectItems)
+            {
+                string name;
+                if (item.EvaluatedIncludeAsFullPath.StartsWith(_project.RootPath, StringComparison.Ordinal))
+                    name = item.EvaluatedIncludeAsRelativePath;
+                else
+                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link");
+                if (!string.IsNullOrEmpty(name))
+                    items.Add((item.EvaluatedIncludeAsFullPath, name, File.GetLastWriteTime(item.EvaluatedIncludeAsFullPath)));
+            }
+            foreach (var path in additionalSources.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    // Skip project settings
-                    if (localPath.Contains(".radproj"))
-                        continue;
-
-                    // Skip files that haven't been modified since the last deployment
-                    if (_fileTracker.TryGetValue(localPath, out var lastWriteTime))
-                        if (lastWriteTime == File.GetLastWriteTime(localPath))
-                            continue;
-
-                    yield return (localPath, archivePath);
+                    var directory = new DirectoryInfo(path);
+                    foreach (var file in directory.EnumerateFileSystemInfos("*.*", SearchOption.AllDirectories).OfType<FileInfo>())
+                        items.Add((file.FullName, file.FullName.Substring(directory.FullName.Length + 1), file.LastWriteTime));
+                }
+                else
+                {
+                    items.Add((path, Path.GetFileName(path), File.GetLastWriteTime(path)));
                 }
             }
+            items.RemoveAll(i => _fileTracker.TryGetValue(i.path, out var lastWrite) && lastWrite == i.lastWrite);
+            return items;
         }
 
-        private static IEnumerable<(string localPath, string archivePath)> EnumerateFilePaths(string path, string rootPath)
-        {
-            if ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)
-            {
-                foreach (var file in Directory.EnumerateFiles(path))
-                    yield return (file, MakeArchivePath(file, rootPath));
-
-                foreach (var directory in Directory.EnumerateDirectories(path))
-                    foreach (var file in EnumerateFilePaths(directory, rootPath))
-                        yield return file;
-            }
-            else
-            {
-                yield return (path, MakeArchivePath(path, rootPath));
-            }
-        }
-
-        private static string MakeArchivePath(string file, string rootPath)
-        {
-            if (file == rootPath)
-                return Path.GetFileName(file);
-            if (!rootPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
-                rootPath += Path.DirectorySeparatorChar;
-            return file.Replace(rootPath, "");
-        }
-
-        private static byte[] PackDeployItems(IEnumerable<(string localPath, string archivePath)> items)
+        private static byte[] PackDeployItems(IEnumerable<(string path, string name, DateTime lastWrite)> items)
         {
             using (var memStream = new MemoryStream())
             {
                 using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, false))
-                    foreach (var (localPath, archivePath) in items)
-                        archive.CreateEntryFromFile(localPath, archivePath.Replace('\\', '/'), CompressionLevel.Optimal);
+                    foreach (var (path, name, _) in items)
+                        archive.CreateEntryFromFile(path, name.Replace('\\', '/'), CompressionLevel.Optimal);
 
                 return memStream.ToArray();
             }
