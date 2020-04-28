@@ -27,7 +27,8 @@ namespace VSRAD.Package.DebugVisualizer
         {
             foreach (var row in rows)
             {
-                if (!watches.Contains(row.Cells[VisualizerTable.NameColumnIndex].Value.ToString()))
+                var rowWatch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
+                if (!string.IsNullOrWhiteSpace(rowWatch) && !watches.Contains(rowWatch))
                     GreyOutRow(row);
             }
         }

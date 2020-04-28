@@ -3,10 +3,8 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Data.SqlTypes;
 using System.Linq;
 using VSRAD.Package.DebugVisualizer;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
@@ -17,7 +15,7 @@ namespace VSRAD.Package.Options
         public List<Watch> Watches { get; } = new List<Watch>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
-            new ReadOnlyCollection<string>(Watches.Where(w => !string.IsNullOrEmpty(w.Name)).Select(w => w.Name).Distinct().ToList());
+            new ReadOnlyCollection<string>(Watches.Where(w => !w.IsEmpty).Select(w => w.Name).Distinct().ToList());
 
         public ReadOnlyCollection<string> GetAWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => w.IsAVGPR).Select(w => w.Name).Distinct().ToList());
@@ -30,7 +28,7 @@ namespace VSRAD.Package.Options
 
         private string _breakArgs = "";
         public string BreakArgs { get => _breakArgs; set => SetField(ref _breakArgs, value); }
-        
+
         private bool _autosave = true;
         public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }
 

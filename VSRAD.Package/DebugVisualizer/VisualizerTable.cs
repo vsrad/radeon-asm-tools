@@ -87,7 +87,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy, InsertRow),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColorClicked)
             });
@@ -132,16 +132,6 @@ namespace VSRAD.Package.DebugVisualizer
                 );
 
             ClearSelection();
-        }
-
-        private void InsertRow(int rowIndex, bool after)
-        {
-            var index = after ? rowIndex + 1 : rowIndex;
-            Rows.Insert(index);
-            Rows[index].Cells[NameColumnIndex].Value = "";
-            Rows[index].HeaderCell.Value = VariableType.Hex.ShortName();
-            Rows[index].HeaderCell.Tag = false;
-            RaiseWatchStateChanged(new[] { Rows[index] });
         }
 
         private void ProcessCopy()
@@ -238,6 +228,14 @@ namespace VSRAD.Package.DebugVisualizer
                 _editedWatchName = CurrentCell.Value.ToString();
         }
 
+        private void InsertSeparatorRow(int rowIndex, bool after)
+        {
+            var index = after ? rowIndex + 1 : rowIndex;
+            Rows.Insert(index);
+            Rows[index].Cells[NameColumnIndex].Value = " ";
+            RaiseWatchStateChanged(new[] { Rows[index] });
+        }
+
         public void AppendVariableRow(Watch watch, bool canBeRemoved = true)
         {
             var index = Rows.Add();
@@ -288,17 +286,16 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            if (Rows[e.RowIndex].Cells[e.ColumnIndex].Value != null)
-                Rows[e.RowIndex].Cells[e.ColumnIndex].Value = Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString().Trim();
-
             var row = Rows[e.RowIndex];
             var rowWatchName = (string)row.Cells[NameColumnIndex].Value;
 
             if (e.RowIndex == NewWatchRowIndex)
             {
-                if (e.ColumnIndex == NameColumnIndex)
+                if (e.ColumnIndex == NameColumnIndex && !string.IsNullOrEmpty(rowWatchName))
                 {
                     var scrollingOffset = HorizontalScrollingOffset;
+                    if (!string.IsNullOrWhiteSpace(rowWatchName))
+                        Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
                     Rows[e.RowIndex].HeaderCell.Value = VariableType.Hex.ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     LockWatchRowForEditing(row);
@@ -319,7 +316,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
             else if (e.RowIndex != 0)
             {
-                if (string.IsNullOrWhiteSpace(rowWatchName))
+                if (string.IsNullOrEmpty(rowWatchName))
                 {
                     // ditto as above (asynchronous delegate to prevent an inifinite loop)
                     BeginInvoke(new MethodInvoker(() =>

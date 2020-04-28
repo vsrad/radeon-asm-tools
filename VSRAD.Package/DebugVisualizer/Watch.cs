@@ -12,6 +12,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         public bool IsAVGPR { get; }
 
+        public bool IsEmpty => string.IsNullOrWhiteSpace(Name);
+
         [JsonConstructor]
         public Watch(string name, VariableType type, bool isAVGPR)
         {

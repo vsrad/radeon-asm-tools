@@ -67,6 +67,7 @@ namespace VSRAD.Package.DebugVisualizer
                 var highlightedRect = new Rectangle(e.RowBounds.Left + 3, e.RowBounds.Top + 3, _table.RowHeadersWidth - 6, e.RowBounds.Height - 6);
                 e.Graphics.FillRectangle(_avgprColor, highlightedRect);
             }
+
             e.PaintHeader(
                     DataGridViewPaintParts.Background
                     | DataGridViewPaintParts.Border
@@ -75,11 +76,14 @@ namespace VSRAD.Package.DebugVisualizer
                     | DataGridViewPaintParts.ContentForeground
                 );
 
-            var typeTextPos = new PointF((float)e.RowBounds.Left + 7, (float)e.RowBounds.Top + 4);
-            e.Graphics.DrawString(selectedWatch.Type.ShortName(),
-                _table.RowHeadersDefaultCellStyle.Font,
-                new SolidBrush(_table.RowHeadersDefaultCellStyle.ForeColor),
-                typeTextPos);
+            if (!selectedWatch.IsEmpty)
+            {
+                var typeTextPos = new PointF((float)e.RowBounds.Left + 7, (float)e.RowBounds.Top + 4);
+                e.Graphics.DrawString(selectedWatch.Type.ShortName(),
+                    _table.RowHeadersDefaultCellStyle.Font,
+                    new SolidBrush(_table.RowHeadersDefaultCellStyle.ForeColor),
+                    typeTextPos);
+            }
         }
     }
 }
