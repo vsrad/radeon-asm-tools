@@ -168,6 +168,7 @@
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
+    <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -323,27 +324,29 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
+    <XamlPropertyProjectItemsSchema Include="BuildSystem\Rules\ProjectItemsSchema.xaml">
       <SubType>Designer</SubType>
-    </None>
-    <XamlPropertyRule Include="BuildSystem\Rules\general.xaml">
+    </XamlPropertyProjectItemsSchema>
+    <XamlPropertyRule Include="BuildSystem\Rules\ConfigurationGeneral.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\general_file.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\Folder.xaml">
       <RuleInjection>None</RuleInjection>
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\folder.xaml">
-      <RuleInjection>None</RuleInjection>
+    <XamlPropertyRule Include="BuildSystem\Rules\DebuggerGeneral.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\debugger_general.xaml">
-      <SubType>Designer</SubType>
-    </XamlPropertyRule>
-    <XamlPropertyRule Include="BuildSystem\Rules\general.browseobject.xaml">
+    <XamlPropertyRule Include="BuildSystem\Rules\GeneralBrowseObject.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
     <XamlPropertyRule Include="BuildSystem\Rules\RADDebugger.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\None.xaml">
+      <SubType>Designer</SubType>
+    </XamlPropertyRule>
+    <XamlPropertyRule Include="BuildSystem\Rules\SourceFile.xaml">
       <SubType>Designer</SubType>
     </XamlPropertyRule>
   </ItemGroup>
@@ -381,13 +384,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\OptionsControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="BuildSystem\Rules\source_file.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="BuildSystem\Rules\Build.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -26,19 +26,17 @@
 
   <ItemGroup>
     <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\ProjectItemsSchema.xaml;"/>
-    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general.xaml;
-                                 $(MSBuildThisFileDirectory)Rules\debugger_general.xaml;
-                                 $(MSBuildThisFileDirectory)Rules\Build.xaml;
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\ConfigurationGeneral.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\DebuggerGeneral.xaml;
                                  $(MSBuildThisFileDirectory)Rules\RADDebugger.xaml;">
       <Context>Project</Context>
     </PropertyPageSchema>
-    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general.browseobject.xaml">
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\GeneralBrowseObject.xaml">
       <Context>BrowseObject</Context>
     </PropertyPageSchema>
-    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\general_file.xaml">
-      <Context>File</Context>
-    </PropertyPageSchema>
-    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\folder.xaml; $(MSBuildThisFileDirectory)Rules\source_file.xaml;">
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)Rules\Folder.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\SourceFile.xaml;
+                                 $(MSBuildThisFileDirectory)Rules\None.xaml;">
       <Context>File;BrowseObject</Context>
     </PropertyPageSchema>
   </ItemGroup>
