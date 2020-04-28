@@ -351,11 +351,10 @@ namespace VSRAD.Package.DebugVisualizer
         public void AlignmentChanged(
                 ContentAlignment nameColumnAlignment,
                 ContentAlignment dataColumnAlignment,
-                ContentAlignment nameHeaderAlignment,
                 ContentAlignment headersAlignment)
         {
             Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
-            Columns[0].HeaderCell.Style.Alignment = nameHeaderAlignment.AsDataGridViewContentAlignment();
+            Columns[0].HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
             foreach (var column in DataColumns)
             {
                 column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();

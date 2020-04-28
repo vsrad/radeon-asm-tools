@@ -69,6 +69,36 @@ namespace VSRAD.Package.ToolWindows
         {
             new ProjectSystem.Profiles.ProfileOptionsWindow(_macroEditor, _projectOptions).ShowDialog();
         }
+
+        private void AlignmentButtonClick(object sender, RoutedEventArgs e)
+        {
+            var button = ((Button)sender);
+            DebugVisualizer.ContentAlignment alignment;
+            switch (button.Content)
+            {
+                case "C":
+                    alignment = DebugVisualizer.ContentAlignment.Center;
+                    break;
+                case "R":
+                    alignment = DebugVisualizer.ContentAlignment.Right;
+                    break;
+                default:
+                    alignment = DebugVisualizer.ContentAlignment.Left;
+                    break;
+            }
+            switch (button.Tag)
+            {
+                case "data":
+                    _projectOptions.VisualizerAppearance.DataColumnAlignment = alignment;
+                    break;
+                case "headers":
+                    _projectOptions.VisualizerAppearance.HeadersAlignment = alignment;
+                    break;
+                default:
+                    _projectOptions.VisualizerAppearance.NameColumnAlignment = alignment;
+                    break;
+            }
+        }
     }
 
     public sealed class BreakModeConverter : IValueConverter

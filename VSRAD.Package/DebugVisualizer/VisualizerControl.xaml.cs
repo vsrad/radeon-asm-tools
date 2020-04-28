@@ -76,7 +76,6 @@ namespace VSRAD.Package.DebugVisualizer
             _table.AlignmentChanged(
                     _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment,
                     _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
-                    _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
                     _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
                 );
             foreach (var watch in _integration.ProjectOptions.DebuggerOptions.Watches)
@@ -106,12 +105,10 @@ namespace VSRAD.Package.DebugVisualizer
                     break;
                 case nameof(Options.VisualizerAppearance.NameColumnAlignment):
                 case nameof(Options.VisualizerAppearance.DataColumnAlignment):
-                case nameof(Options.VisualizerAppearance.NameHeaderAlignment):
                 case nameof(Options.VisualizerAppearance.HeadersAlignment):
                     _table.AlignmentChanged(
                         _integration.ProjectOptions.VisualizerAppearance.NameColumnAlignment,
                         _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
-                        _integration.ProjectOptions.VisualizerAppearance.NameHeaderAlignment,
                         _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
                     );
                     break;

@@ -17,11 +17,6 @@
                     <x:Type TypeName="viz:ColumnHighlightColor"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
-            <ObjectDataProvider x:Key="ContentAlignment" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="viz:ContentAlignment"/>
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ScalingMode"/>
@@ -99,23 +94,21 @@
                     <StackPanel  Margin="0,6,0,0">
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Name Column Alignment: " VerticalAlignment="Center"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
-                            <TextBlock Text="Name Header Alignment:" VerticalAlignment="Center"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.NameHeaderAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
+                            <Button Content="C" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
+                            <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Headers Alignment:" VerticalAlignment="Center"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.HeadersAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="headers"/>
+                            <Button Content="C" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="headers"/>
+                            <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="headers"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Data Alignment:" VerticalAlignment="Center"/>
-                            <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.DataColumnAlignment, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                  ItemsSource="{Binding Source={StaticResource ContentAlignment}}" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
+                            <Button Content="C" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
+                            <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Column Separator Width:" VerticalAlignment="Center"/>
