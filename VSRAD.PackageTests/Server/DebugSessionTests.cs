@@ -28,7 +28,9 @@ namespace VSRAD.Package.ProjectSystem.Tests
 
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
-            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, outputWindow.Object);
+            var errorListManager = new Mock<IErrorListManager>();
+            errorListManager.Setup((m) => m.AddToErrorListAsync("")).Returns(Task.CompletedTask);
+            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, outputWindow.Object, errorListManager.Object);
 
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
                 (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
@@ -57,7 +59,9 @@ namespace VSRAD.Package.ProjectSystem.Tests
 
             var outputWindow = new Mock<IOutputWindowManager>();
             outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
-            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, outputWindow.Object);
+            var errorListManager = new Mock<IErrorListManager>();
+            errorListManager.Setup((m) => m.AddToErrorListAsync("")).Returns(Task.CompletedTask);
+            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, outputWindow.Object, errorListManager.Object);
 
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
                 (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));

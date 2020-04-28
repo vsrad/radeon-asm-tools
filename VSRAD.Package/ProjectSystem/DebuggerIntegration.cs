@@ -26,6 +26,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
+        private readonly IErrorListManager _errorListManager;
 
         public bool DebugInProgress { get; private set; } = false;
 
@@ -39,13 +40,15 @@ namespace VSRAD.Package.ProjectSystem
             IActiveCodeEditor codeEditor,
             IFileSynchronizationManager deployManager,
             IOutputWindowManager outputWindow,
-            ICommunicationChannel channel)
+            ICommunicationChannel channel,
+            IErrorListManager errorListManager)
         {
             _serviceProvider = serviceProvider;
             _codeEditor = codeEditor;
             _deployManager = deployManager;
             _outputWindow = outputWindow;
             _channel = channel;
+            _errorListManager = errorListManager;
 
             DebugEngine.InitializationCallback = RegisterEngine;
             DebugEngine.TerminationCallback = DeregisterEngine;
@@ -73,7 +76,7 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         internal void CreateDebugSession() =>
-            _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow);
+            _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow, _errorListManager);
 
         internal void RunToCurrentLine()
         {

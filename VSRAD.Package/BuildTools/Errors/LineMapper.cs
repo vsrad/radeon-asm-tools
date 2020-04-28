@@ -52,7 +52,7 @@ namespace VSRAD.Package.BuildTools.Errors
             var remotePathArray = remotePath.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
             Array.Reverse(remotePathArray);
             string probablePath = remotePath;
-            int longestMatch = -1;
+            int longestMatch = 0;
             foreach (var path in projectPaths)
             {
                 var pathArray = path.Split(new[] { @"\", @"/" }, StringSplitOptions.None);
