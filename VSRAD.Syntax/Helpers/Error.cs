@@ -19,6 +19,9 @@ namespace VSRAD.Syntax.Helpers
         public static void ShowWarning(Exception e, string module = "") =>
             CreateMessageBox(e.Message, "Radeon syntax", OLEMSGICON.OLEMSGICON_WARNING);
 
+        public static void ShowError(Exception e, string module = "") =>
+            CreateMessageBox(e.Message, "Radeon syntax", OLEMSGICON.OLEMSGICON_CRITICAL);
+
         private static void CreateMessageBox(string message, string title, OLEMSGICON icon)
         {
             if (ThreadHelper.CheckAccess())

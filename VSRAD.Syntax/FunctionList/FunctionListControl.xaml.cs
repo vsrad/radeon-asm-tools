@@ -1,6 +1,6 @@
 ﻿using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.FunctionList.Commands;
-using static VSRAD.Syntax.Options.OptionPage;
+using static VSRAD.Syntax.Options.GeneralOptionPage;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;

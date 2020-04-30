@@ -89,7 +89,12 @@
     <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
+    <Compile Include="Options\BaseOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Options\ContentTypeManager.cs" />
+    <Compile Include="Options\FilePathsEditor.cs" />
+    <Compile Include="Options\InstructionListManager.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />
     <Compile Include="Parser\Blocks\BaseBlock.cs" />
@@ -98,7 +103,7 @@
     <Compile Include="Parser\Blocks\IBaseBlock.cs" />
     <Compile Include="Parser\Blocks\RootBlock.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Options\Options.cs">
+    <Compile Include="Options\GeneralOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Parser\ParserManger.cs" />
