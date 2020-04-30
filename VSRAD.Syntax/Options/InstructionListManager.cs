@@ -11,20 +11,15 @@ namespace VSRAD.Syntax.Options
     [Export(typeof(InstructionListManager))]
     internal sealed class InstructionListManager
     {
-        private readonly List<string> _instructionList;
-
         public delegate void ErrorsUpdateDelegate(IReadOnlyList<string> instructions);
         public event ErrorsUpdateDelegate InstructionUpdated;
 
-        public List<string> InstructionList 
-        {
-            get { return _instructionList; }
-        }
+        public List<string> InstructionList { get; }
 
         [ImportingConstructor]
         public InstructionListManager()
         {
-            _instructionList = new List<string>();
+            InstructionList = new List<string>();
         }
 
         public Task LoadInstructionsFromFilesAsync(string pathsString)
@@ -36,13 +31,13 @@ namespace VSRAD.Syntax.Options
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
-            _instructionList.Clear();
+            InstructionList.Clear();
             foreach (var path in paths)
             {
                 LoadInstructionsFromFile(path);
             }
 
-            InstructionUpdated?.Invoke(_instructionList);
+            InstructionUpdated?.Invoke(InstructionList);
             return Task.CompletedTask;
         }
 
@@ -56,13 +51,13 @@ namespace VSRAD.Syntax.Options
                     string line;
                     while ((line = streamReader.ReadLine()) != null)
                     {
-                        _instructionList.Add(line.Trim());
+                        InstructionList.Add(line.Trim());
                     }
                 }
             }
             catch (Exception e)
             {
-                Error.ShowError(e);
+                Error.ShowError(e, "instrunction file paths");
             }
         }
     }

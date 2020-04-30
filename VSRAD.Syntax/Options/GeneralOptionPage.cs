@@ -55,7 +55,11 @@ namespace VSRAD.Syntax.Options
         [DisplayName("Instruction file paths")]
         [Description("List of files separated by semicolon with assembly instructions")]
         [Editor(typeof(FilePathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
-        public string InstructionsPaths { get; set; } = "";
+#if DEBUG
+        public string InstructionsPaths { get; set; } = @"VSRAD\gfx9_instructions.txt";
+#else
+        public string InstructionsPaths { get; set; } = @"..\..\MSBuild\VSRAD\gfx9_instructions.txt";
+#endif
 
         public enum SortState
         {
