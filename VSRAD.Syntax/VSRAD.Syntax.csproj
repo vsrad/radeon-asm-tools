@@ -89,7 +89,12 @@
     <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
+    <Compile Include="Options\BaseOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Options\ContentTypeManager.cs" />
+    <Compile Include="Options\FilePathsEditor.cs" />
+    <Compile Include="Options\InstructionListManager.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />
     <Compile Include="Parser\Blocks\BaseBlock.cs" />
@@ -98,7 +103,7 @@
     <Compile Include="Parser\Blocks\IBaseBlock.cs" />
     <Compile Include="Parser\Blocks\RootBlock.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Options\Options.cs">
+    <Compile Include="Options\GeneralOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Parser\ParserManger.cs" />
@@ -219,11 +224,18 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
+    <ItemGroup>
+      <InstructionListsToCopy Include="DefaultConfiguration\**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(InstructionListsToCopy)" DestinationFiles="@(InstructionListsToCopy->'$(OutDir)\VSRAD\%(RecursiveDir)%(FileName)%(Extension)')" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+  <!-- When installed as a VSIX, CPS props are copied to $(MSBuildExtensionsPath). This requires AllUsers=true in VSIX manifest. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <VSIXSourceItem Include="DefaultConfiguration\**">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>VSRAD</VSIXSubPath>
+    </VSIXSourceItem>
+  </ItemGroup>
 </Project>

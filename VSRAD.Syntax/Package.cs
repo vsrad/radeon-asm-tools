@@ -14,7 +14,7 @@ namespace VSRAD.Syntax
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(FunctionList.FunctionList))]
-    [ProvideOptionPage(typeof(OptionPage), Constants.RadeonAsmOptionsCategoryName, Constants.RadeonAsmOptionsBasePageName, 0, 0, true)]
+    [ProvideOptionPage(typeof(GeneralOptionPage), Constants.RadeonAsmOptionsCategoryName, Constants.RadeonAsmOptionsBasePageName, 0, 0, true)]
     [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     [Guid(Constants.PackageGuid)]
@@ -25,18 +25,16 @@ namespace VSRAD.Syntax
 
         public Package() { }
 
-        public OptionPage OptionPage
+        public GeneralOptionPage OptionPage 
         {
             get
             {
-                return GetDialogPage(typeof(OptionPage)) as OptionPage;
+                return GetDialogPage(typeof(GeneralOptionPage)) as GeneralOptionPage;
             }
         }
 
-        public T GetMEFComponent<T>() where T : class
-        {
-            return _componentModel.GetService<T>();
-        }
+        public T GetMEFComponent<T>() where T : class =>
+            _componentModel.GetService<T>();
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {

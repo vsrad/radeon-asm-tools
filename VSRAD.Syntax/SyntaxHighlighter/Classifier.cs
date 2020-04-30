@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
@@ -17,11 +18,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private readonly IParserManager _parserManager;
         private readonly Regex _stringPattern;
         private IEnumerable<IBaseBlock> _multiLineComment;
+        private IReadOnlyList<string> _instructions;
 
         public List<string> Keywords { get; protected set; }
         public List<string> ExtraKeywords { get; protected set; }
 
-        public Classifier(IClassificationTypeRegistryService registry, ITextBuffer textBuffer)
+        public Classifier(IClassificationTypeRegistryService registry, ITextBuffer textBuffer, InstructionListManager instructionListManager)
         {
             this._classificationTypeRegistry = registry;
             this._textBuffer = textBuffer;
@@ -34,6 +36,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 .Concat(Constants.preprocessorEnd)
                 .Concat(Constants.preprocessorKeywords)
                 .ToList();
+
+            _instructions = instructionListManager.InstructionList;
+            instructionListManager.InstructionUpdated += InstructionUpdatedEvent;
         }
 
         #region Public Events
@@ -128,7 +133,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                         classificationTypeName = PredefinedClassificationTypeNames.Numbers;
                     else if (ExtraKeywords.Contains(word))
                         classificationTypeName = PredefinedClassificationTypeNames.ExtraKeywords;
-                    else if (Constants.asm1Instructions.Contains(word))
+                    else if (_instructions.Contains(word))
                         classificationTypeName = PredefinedClassificationTypeNames.Instructions;
                     else
                         classificationTypeName = GetClassificationTypeNameOfWord(word, funcArguments);
@@ -166,6 +171,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             }
         }
 
+        private void InstructionUpdatedEvent(IReadOnlyList<string> instructions)
+        {
+            _instructions = instructions;
+            ClassificationChanged.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, _textBuffer.CurrentSnapshot.Length)));
+        }
+
         private ClassificationSpan AddClassificationSpan(string classificationTypeName, ITextSnapshot snapshot, int start, int length, IList<ClassificationSpan> spans)
         {
             var type = _classificationTypeRegistry.GetClassificationType(classificationTypeName);
@@ -190,7 +201,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
     internal class Asm2Classifier : Classifier
     {
-        public Asm2Classifier(IClassificationTypeRegistryService registry, ITextBuffer textBuffer) : base(registry, textBuffer)
+        public Asm2Classifier(
+            IClassificationTypeRegistryService registry,
+            ITextBuffer textBuffer,
+            InstructionListManager instructionListManager) : base(registry, textBuffer, instructionListManager)
         {
             base.Keywords = Constants.asm2Start
                 .Concat(Constants.asm2Middle)
@@ -216,7 +230,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
     internal class Asm1Classifier : Classifier
     {
-        public Asm1Classifier(IClassificationTypeRegistryService registry, ITextBuffer textBuffer) : base(registry, textBuffer)
+        public Asm1Classifier(
+            IClassificationTypeRegistryService registry,
+            ITextBuffer textBuffer,
+            InstructionListManager instructionListManager) : base(registry, textBuffer, instructionListManager)
         {
             base.Keywords = Constants.asm1Start
                 .Concat(Constants.asm1Middle)

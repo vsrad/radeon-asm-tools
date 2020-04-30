@@ -121,7 +121,7 @@ namespace VSRAD.Syntax.FunctionList
             return FunctionListControl.HighlightCurrentFunctionAsync(function.FunctionToken);
         }
 
-        public static void TryUpdateSortOptions(Options.OptionPage.SortState options)
+        public static void TryUpdateSortOptions(Options.GeneralOptionPage.SortState options)
         {
             if (Instance != null)
                 Instance.FunctionListControl.ChangeSortOptions(options);

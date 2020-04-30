@@ -50,6 +50,7 @@ namespace VSRAD.Syntax
          * RadeonAsmSyntax options definition
          */
         internal const string RadeonAsmOptionsBasePageName = "General";
+        internal const string RadeonAsmOptionsInstructionListPageName = "Instruction list";
         internal const string RadeonAsmOptionsCategoryName = "RadeonAsm options";
 
         #region syntax constants
