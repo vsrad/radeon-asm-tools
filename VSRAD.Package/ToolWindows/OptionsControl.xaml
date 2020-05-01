@@ -17,11 +17,13 @@
                     <x:Type TypeName="viz:ColumnHighlightColor"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
+            <!--
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ScalingMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
+            -->
             <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="deborgar:BreakMode"/>
@@ -126,6 +128,7 @@
                             <TextBox Width="50" Text="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorColor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
+                        <!--
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Scaling mode:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -140,6 +143,7 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
+                        -->
                     </StackPanel>
                 </Expander>
             </StackPanel>

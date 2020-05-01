@@ -42,12 +42,12 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if (e.Button != MouseButtons.Left)
             {
                 _table.ColumnResizeController.BeginBulkColumnWidthChange();
-                int newOffset = -1;
+                int newOffset = _table.HorizontalScrollingOffset;
                 var firstVisibleWidth = _table.Columns[_firstVisibleColumn].Width;
                 if (!_table.Columns[_firstVisibleColumn].Displayed)
                 {
                     _table.Columns[_firstVisibleColumn].Width = _table.ColumnWidth;
-                    newOffset = _table.HorizontalScrollingOffset + _table.ColumnWidth - firstVisibleWidth;
+                    newOffset += _table.ColumnWidth - firstVisibleWidth;
                 }
                 if (!_table.Columns[_lastVisibleColumn].Displayed)
                     _table.Columns[_lastVisibleColumn].Width = _table.ColumnWidth;

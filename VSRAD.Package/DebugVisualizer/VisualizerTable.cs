@@ -282,6 +282,7 @@ namespace VSRAD.Package.DebugVisualizer
                 });
                 Columns.Add(dataColumns[i]);
             }
+            ColumnWidth = dataColumns[0].Width;
             return dataColumns;
         }
 
