@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Properties;
 
@@ -14,6 +15,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         private bool _thresholdReached;
         private int _lastX;
+        private int _firstVisibleColumn;
+        private int _lastVisibleColumn;
 
         public PanOperation(VisualizerTable table)
         {
@@ -25,6 +28,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if (e.Button != MouseButtons.Left) return false;
             if (hit.ColumnIndex < VisualizerTable.DataColumnOffset || hit.RowIndex == -1) return false;
 
+            _firstVisibleColumn = _table.DataColumns.First(x => x.Visible == true).Index;
+            _lastVisibleColumn = _table.DataColumns.Last(c => c.Visible == true).Index;
             _lastX = Cursor.Position.X;
             _thresholdReached = false;
             return true;
@@ -35,7 +40,20 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         public bool HandleMouseMove(MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left)
+            {
+                _table.ColumnResizeController.BeginBulkColumnWidthChange();
+                int newOffset = -1;
+                var firstVisibleWidth = _table.Columns[_firstVisibleColumn].Width;
+                if (!_table.Columns[_firstVisibleColumn].Displayed)
+                {
+                    _table.Columns[_firstVisibleColumn].Width = _table.ColumnWidth;
+                    newOffset = _table.HorizontalScrollingOffset + _table.ColumnWidth - firstVisibleWidth;
+                }
+                if (!_table.Columns[_lastVisibleColumn].Displayed)
+                    _table.Columns[_lastVisibleColumn].Width = _table.ColumnWidth;
+                _table.ColumnResizeController.CommitBulkColumnWidthChange(newOffset);
                 return false;
+            }
 
             Cursor.Current = handCursor;
 

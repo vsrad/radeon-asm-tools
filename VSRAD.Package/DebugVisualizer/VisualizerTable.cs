@@ -20,6 +20,7 @@ namespace VSRAD.Package.DebugVisualizer
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int GroupSize => _groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
+        public int ColumnWidth = 30;
 
         #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
