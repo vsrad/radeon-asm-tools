@@ -375,6 +375,12 @@ namespace VSRAD.Package.DebugVisualizer
             Columns[0].DefaultCellStyle.Font = watchFont;
             Columns[0].DefaultCellStyle.ForeColor = watchFg;
 
+            // Disable selection styles because DataGridView does not preserve selected headers when switching selection mode
+            ColumnHeadersDefaultCellStyle.SelectionForeColor = headerFg;
+            ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
+            RowHeadersDefaultCellStyle.SelectionForeColor = watchFg;
+            RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
+
             foreach (var column in DataColumns)
             {
                 column.DefaultCellStyle.Font = dataFont;
@@ -443,26 +449,16 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
+            if (e.Button == MouseButtons.Left)
+            {
+                var hit = HitTest(e.X, e.Y);
+                if (hit.Type == DataGridViewHitTestType.RowHeader)
+                    _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
+                if (hit.Type == DataGridViewHitTestType.ColumnHeader)
+                    _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
+            }
             if (!_mouseMoveController.HandleMouseDown(e))
                 base.OnMouseDown(e);
-        }
-
-        protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
-        {
-            if (!ColumnResizeController.HandleColumnWidthChangeEvent())
-                base.OnColumnWidthChanged(e);
-        }
-
-        protected override void OnColumnHeaderMouseClick(DataGridViewCellMouseEventArgs e)
-        {
-            _selectionController.ColumnHeaderClicked(e.ColumnIndex);
-            base.OnColumnHeaderMouseClick(e);
-        }
-
-        protected override void OnRowHeaderMouseClick(DataGridViewCellMouseEventArgs e)
-        {
-            _selectionController.RowHeaderClicked(e.RowIndex);
-            base.OnRowHeaderMouseClick(e);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -471,6 +467,12 @@ namespace VSRAD.Package.DebugVisualizer
                 ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))
                 base.OnMouseMove(e);
+        }
+
+        protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
+        {
+            if (!ColumnResizeController.HandleColumnWidthChangeEvent())
+                base.OnColumnWidthChanged(e);
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)

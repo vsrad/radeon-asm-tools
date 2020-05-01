@@ -20,40 +20,19 @@ namespace VSRAD.Package.DebugVisualizer
             _table = table;
         }
 
-        #region Table headers
-
         // We want to select a column when the column header is clicked, and a row when the row header is clicked.
         // The table can select _either_ rows or columns, but not both, so we manually change selection mode.
-
-        public void ColumnHeaderClicked(int columnIndex)
+        public void SwitchMode(DataGridViewSelectionMode newMode)
         {
-            if (_table.SelectionMode == DataGridViewSelectionMode.ColumnHeaderSelect) return;
+            if (_table.SelectionMode == newMode) return;
 
-            // When holding shift or ctrl, the user expects to append to the selection. However, changing
-            // selection mode clears the current selection, so we need to manually preserve it.
+            // When holding Shift or Ctrl, the user expects to append to the current selection,
+            // but changing the mode clears it, so we need to manually preserve it.
             var selectedCells = _table.SelectedCells;
-            _table.SelectionMode = DataGridViewSelectionMode.ColumnHeaderSelect;
+            _table.SelectionMode = newMode;
             if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.LeftCtrl))
                 foreach (DataGridViewCell cell in selectedCells)
                     cell.Selected = true;
-
-            // If we've just changed selection mode, we need to manually select the column
-            _table.Columns[columnIndex].Selected = true;
         }
-
-        public void RowHeaderClicked(int rowIndex)
-        {
-            if (_table.SelectionMode == DataGridViewSelectionMode.RowHeaderSelect) return;
-
-            var selectedCells = _table.SelectedCells;
-            _table.SelectionMode = DataGridViewSelectionMode.RowHeaderSelect;
-            if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.LeftCtrl))
-                foreach (DataGridViewCell cell in selectedCells)
-                    cell.Selected = true;
-
-            _table.Rows[rowIndex].Selected = true;
-        }
-
-        #endregion
     }
 }
