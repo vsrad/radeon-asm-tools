@@ -2,36 +2,40 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Globalization;
 using System.Windows.Forms;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class ColumnStyling
     {
-        public bool[] Visibility = new bool[VisualizerTable.DataColumnCount];
-        private readonly Color[] _highlightColor = new Color[VisualizerTable.DataColumnCount];
+        private readonly uint _laneGrouping;
+        private readonly uint _laneDividerWidth;
+        private readonly uint _hiddenColumnSeparatorWidth;
 
-        public ColumnStyling(string visibleColumns, IEnumerable<ColumnHighlightRegion> highlightRegions)
+        private readonly ColumnFontAndColor _fontAndColor;
+
+        private readonly bool[] _visibility = new bool[VisualizerTable.DataColumnCount];
+        private readonly ColumnHighlightColor[] _highlight = new ColumnHighlightColor[VisualizerTable.DataColumnCount];
+
+        public ColumnStyling(Options.VisualizerOptions options, Options.VisualizerAppearance appearance, ColumnStylingOptions styling, ColumnFontAndColor fontAndColor)
         {
-            Ensure.ArgumentNotNull(visibleColumns, nameof(visibleColumns));
-            Ensure.ArgumentNotNull(highlightRegions, nameof(highlightRegions));
+            _laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
+            _laneDividerWidth = (uint)appearance.LaneDivierWidth;
+            _hiddenColumnSeparatorWidth = (uint)appearance.HiddenColumnSeparatorWidth;
+            _fontAndColor = fontAndColor;
 
-            foreach (int index in ColumnSelector.ToIndexes(visibleColumns))
-                Visibility[index] = true;
+            foreach (int index in ColumnSelector.ToIndexes(styling.VisibleColumns))
+                _visibility[index] = true;
 
-            foreach (var region in highlightRegions)
-            {
+            foreach (var region in styling.HighlightRegions)
                 foreach (var index in ColumnSelector.ToIndexes(region.Selector))
-                    _highlightColor[index] = region.Color.AsColor();
-            }
+                    _highlight[index] = region.Color;
         }
 
-        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint laneGrouping, int laneDividerWidth = 3, int hiddenColumnSeparatorWidth = 8)
+        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize)
         {
             if (columns.Count != VisualizerTable.DataColumnCount)
-                throw new ArgumentException("ColumnStyling applies to exactly 512 columns");
+                throw new ArgumentException("ColumnAppearance applies to exactly 512 columns");
 
             for (var i = 0; i < VisualizerTable.DataColumnCount; i++)
                 columns[i].Visible = false;
@@ -43,16 +47,16 @@ namespace VSRAD.Package.DebugVisualizer
             for (int i = 0; i < groupSize; i++)
                 columns[i].DividerWidth = 0;
 
-            if (laneGrouping != 0)
+            if (_laneGrouping != 0)
             {
-                for (int start = 0; start < groupSize - (int)laneGrouping; start += (int)laneGrouping)
+                for (uint start = 0; start < groupSize - _laneGrouping; start += _laneGrouping)
                 {
-                    for (int lastVisibleInGroup = Math.Min(start + (int)laneGrouping - 1, (int)groupSize - 1);
+                    for (int lastVisibleInGroup = (int)Math.Min(start + _laneGrouping - 1, groupSize - 1);
                         lastVisibleInGroup >= start; lastVisibleInGroup--)
                     {
-                        if (Visibility[lastVisibleInGroup])
+                        if (_visibility[lastVisibleInGroup])
                         {
-                            columns[lastVisibleInGroup].DividerWidth = laneDividerWidth;
+                            columns[lastVisibleInGroup].DividerWidth = (int)_laneDividerWidth;
                             break;
                         }
                     }
@@ -61,13 +65,13 @@ namespace VSRAD.Package.DebugVisualizer
 
             for (int i = 0; i < groupSize; i++)
             {
-                columns[i].DefaultCellStyle.BackColor = _highlightColor[i];
-                columns[i].Visible = Visibility[i];
-                if (i != groupSize - 1 && Visibility[i] != Visibility[i + 1])
-                    columns[i].DividerWidth = hiddenColumnSeparatorWidth;
+                columns[i].DefaultCellStyle.BackColor = _fontAndColor.HighlightBackground[(int)_highlight[i]];
+                columns[i].DefaultCellStyle.ForeColor = _fontAndColor.HighlightForeground[(int)_highlight[i]];
+                columns[i].Visible = _visibility[i];
+                if (i != groupSize - 1 && _visibility[i] != _visibility[i + 1])
+                    columns[i].DividerWidth = (int)_hiddenColumnSeparatorWidth;
             }
         }
-
         public static void ApplyLaneMask(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint[] system)
         {
             if (columns.Count != VisualizerTable.DataColumnCount)

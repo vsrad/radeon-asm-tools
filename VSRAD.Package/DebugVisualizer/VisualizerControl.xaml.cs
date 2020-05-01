@@ -19,7 +19,7 @@ namespace VSRAD.Package.DebugVisualizer
             headerControl.Setup(integration,
                 getGroupCount: (groupSize) => _breakState?.GetGroupCount(groupSize) ?? 0,
                 GroupSelectionChanged);
-            headerControl.GroupSizeChanged += ApplyColumnStyling;
+            headerControl.GroupSizeChanged += () => _table.ApplyColumnStyling(_integration.ProjectOptions);
             Application.Current.Deactivated += (sender, e) =>
             {
                 _table.HostWindowDeactivated();
@@ -28,13 +28,13 @@ namespace VSRAD.Package.DebugVisualizer
             integration.BreakEntered += BreakEntered;
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
-            integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += ApplyColumnStyling;
+            integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += () => _table.ApplyColumnStyling(_integration.ProjectOptions); ;
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
 
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,
-                groupSizeGetter: () => (int)headerControl.GroupSize);
+                groupSizeGetter: () => headerControl.GroupSize);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _integration.ProjectOptions.DebuggerOptions.Watches.Clear();
@@ -69,7 +69,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void RestoreSavedState()
         {
-            ApplyColumnStyling();
+            _table.ApplyColumnStyling(_integration.ProjectOptions);
             _table.Rows.Clear();
             _table.AppendVariableRow(new Watch("System", VariableType.Hex, isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
@@ -97,11 +97,11 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerOptions.LaneGrouping):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerOptions.VerticalSplit):
-                    ApplyColumnStyling();
+                    _table.ApplyColumnStyling(_integration.ProjectOptions);
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_integration.ProjectOptions.VisualizerOptions.CheckMagicNumber)
-                        ApplyColumnStyling();
+                        _table.ApplyColumnStyling(_integration.ProjectOptions);
                     break;
                 case nameof(Options.VisualizerAppearance.NameColumnAlignment):
                 case nameof(Options.VisualizerAppearance.DataColumnAlignment):
@@ -118,19 +118,19 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
                     _table.LaneSeparatorWidth =
                         _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
-                    ApplyColumnStyling();
+                    _table.ApplyColumnStyling(_integration.ProjectOptions);
                     break;
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorColor):
                     var oldHiddenColor = _table.HiddenColumnSeparatorColor;
                     _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
                     if (_table.HiddenColumnSeparatorColor != oldHiddenColor)
-                        ApplyColumnStyling();
+                        _table.ApplyColumnStyling(_integration.ProjectOptions);
                     break;
                 case nameof(Options.VisualizerAppearance.LaneSeparatorColor):
                     var oldLaneColor = _table.LaneSeparatorColor;
                     _table.LaneSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
                     if (_table.LaneSeparatorColor != oldLaneColor)
-                        ApplyColumnStyling();
+                        _table.ApplyColumnStyling(_integration.ProjectOptions);
                     break;
             }
         }
@@ -138,32 +138,6 @@ namespace VSRAD.Package.DebugVisualizer
         public void WindowFocusLost()
         {
             _table.HostWindowDeactivated();
-        }
-
-        public void ApplyColumnStyling()
-        {
-            var scrollingOffset = _table.HorizontalScrollingOffset;
-            _table.SuspendDrawing(); // prevents the scrollbar from jerking due to visibility changes
-
-            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0;
-            _integration.ProjectOptions.VisualizerColumnStyling.Computed.Apply(_table.DataColumns,
-                groupSize: headerControl.GroupSize,
-                laneGrouping: _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0,
-                laneDividerWidth: _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth,
-                hiddenColumnSeparatorWidth: _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth);
-
-            if (_breakState != null && _integration.ProjectOptions.VisualizerOptions.MaskLanes)
-                ColumnStyling.ApplyLaneMask(_table.DataColumns,
-                    groupSize: headerControl.GroupSize, system: _breakState.System);
-
-            if (_breakState != null && _integration.ProjectOptions.VisualizerOptions.CheckMagicNumber)
-                ColumnStyling.ApplyMagicNumber(_table.DataColumns,
-                    groupSize: headerControl.GroupSize,
-                    system: _breakState.System,
-                    magicNumber: _integration.ProjectOptions.VisualizerOptions.MagicNumber);
-
-            _table.ResumeDrawing();
-            _table.HorizontalScrollingOffset = scrollingOffset;
         }
 
         public void BreakEntered(Server.BreakState breakState)
@@ -202,7 +176,7 @@ namespace VSRAD.Package.DebugVisualizer
                         EraseRowData(row);
                 }
 
-                ApplyColumnStyling();
+                _table.ApplyColumnStyling(_integration.ProjectOptions);
                 RowStyling.ResetRowStyling(_table.DataRows);
                 RowStyling.GreyOutUnevaluatedWatches(_breakState.Watches, _table.DataRows);
                 headerControl.OnDataRequestCompleted(_breakState.GetGroupCount(headerControl.GroupSize), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds, _breakState.StatusString);

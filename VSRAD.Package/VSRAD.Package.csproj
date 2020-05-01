@@ -137,6 +137,7 @@
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
     <Compile Include="Commands\PreprocessCommand.cs" />
     <Compile Include="Commands\ProfileCommand.cs" />
+    <Compile Include="DebugVisualizer\ColumnFontAndColor.cs" />
     <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />
     <Compile Include="DebugVisualizer\ContentAlignment.cs" />

@@ -11,7 +11,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public enum FontAndColorItem
     {
-        Header, Data, WatchNames
+        Header, Data, WatchNames, ColumnHighlightRed, ColumnHighlightGreen, ColumnHighlightBlue
     }
 
     static class FontAndColorItems
@@ -22,7 +22,19 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 case FontAndColorItem.Header: return "Header";
                 case FontAndColorItem.Data: return "Data";
-                case FontAndColorItem.WatchNames: return "Watch names";
+                case FontAndColorItem.WatchNames: return "Watch Names";
+            }
+            throw new NotImplementedException();
+        }
+
+        public static string GetDisplayName(this ColumnHighlightColor item)
+        {
+            switch (item)
+            {
+                case ColumnHighlightColor.None: return "Data";
+                case ColumnHighlightColor.Green: return "Data - Column Green Highlight";
+                case ColumnHighlightColor.Red: return "Data - Column Red Highlight";
+                case ColumnHighlightColor.Blue: return "Data - Column Blue Highlight";
             }
             throw new NotImplementedException();
         }

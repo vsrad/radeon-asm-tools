@@ -2,7 +2,7 @@
 using VSRAD.Package.DebugVisualizer;
 using Xunit;
 
-namespace VSRAD.PackageTests.DebugVisualizer
+namespace VSRAD.Package.DebugVisualizer.Tests
 {
     public class ColumnSelectorTests
     {

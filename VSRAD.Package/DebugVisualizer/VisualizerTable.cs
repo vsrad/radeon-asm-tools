@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class VisualizerTable : DataGridView
     {
         public delegate void ChangeWatchState(List<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
-        public delegate int GetGroupSize();
+        public delegate uint GetGroupSize();
 
         public event ChangeWatchState WatchStateChanged;
 
@@ -18,7 +19,8 @@ namespace VSRAD.Package.DebugVisualizer
         public const int DataColumnCount = 512;
 
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
-        public int GroupSize => _groupSizeGetter();
+        // TODO: do we need this?
+        public int GroupSize => (int)_groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int ColumnWidth = 30;
 
@@ -346,6 +348,34 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         #region Styling
+
+        public void ApplyColumnStyling(Options.ProjectOptions options, uint[] system = null)
+        {
+            // Prevent the scrollbar from jerking due to visibility changes
+            var scrollingOffset = HorizontalScrollingOffset;
+            ((Control)this).SuspendDrawing();
+
+            // TODO: refactor this away?
+            LaneGrouping = options.VisualizerOptions.VerticalSplit ? options.VisualizerOptions.LaneGrouping : 0;
+
+            var styling = new ColumnStyling(
+                options.VisualizerOptions,
+                options.VisualizerAppearance,
+                options.VisualizerColumnStyling,
+                _fontAndColor.ColumnFontAndColor);
+
+            styling.Apply(DataColumns, _groupSizeGetter());
+
+            if (system != null && options.VisualizerOptions.MaskLanes)
+                ColumnStyling.ApplyLaneMask(DataColumns, _groupSizeGetter(), system);
+
+            if (system != null && options.VisualizerOptions.CheckMagicNumber)
+                ColumnStyling.ApplyMagicNumber(DataColumns, _groupSizeGetter(), system,
+                    magicNumber: options.VisualizerOptions.MagicNumber);
+
+            ((Control)this).ResumeDrawing();
+            HorizontalScrollingOffset = scrollingOffset;
+        }
 
         public void AlignmentChanged(
                 ContentAlignment nameColumnAlignment,
