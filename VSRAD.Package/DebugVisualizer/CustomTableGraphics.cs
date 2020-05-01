@@ -18,20 +18,23 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.ColumnIndex == -1) return;
+            if (e.ColumnIndex < VisualizerTable.DataColumnOffset || e.ColumnIndex == VisualizerTable.DataColumnCount) return;
             var vt = (VisualizerTable)sender;
-            if (vt.LaneGrouping == 0) return;
-            if (e.ColumnIndex == VisualizerTable.DataColumnCount) return;
-            if ((vt.Columns[e.ColumnIndex].Visible == vt.Columns[e.ColumnIndex + 1].Visible
-                && e.ColumnIndex % vt.LaneGrouping != 0)
-                || e.ColumnIndex == 0) return;
 
-            var width = vt.Columns[e.ColumnIndex].Visible != vt.Columns[e.ColumnIndex + 1].Visible
-                ? vt.HiddenColumnSeparatorWidth
-                : vt.LaneSeparatorWidth;
-            var color = vt.Columns[e.ColumnIndex].Visible != vt.Columns[e.ColumnIndex + 1].Visible
-                ? vt.HiddenColumnSeparatorColor
-                : vt.LaneSeparatorColor; 
+            int width;
+            SolidBrush color;
+
+            if (vt.Columns[e.ColumnIndex].Visible != vt.Columns[e.ColumnIndex + 1].Visible)
+            {
+                width = vt.HiddenColumnSeparatorWidth;
+                color = vt.HiddenColumnSeparatorColor;
+            }
+            else if (vt.LaneGrouping != 0 && (e.ColumnIndex % vt.LaneGrouping == 0))
+            {
+                width = vt.LaneSeparatorWidth;
+                color = vt.LaneSeparatorColor;
+            }
+            else return;
 
             // We doing force paint of _visible_ part of cell.
             // Since we have frozen columns visible part of cell
