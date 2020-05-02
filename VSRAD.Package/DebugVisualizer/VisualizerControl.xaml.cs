@@ -28,7 +28,7 @@ namespace VSRAD.Package.DebugVisualizer
             integration.BreakEntered += BreakEntered;
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
-            integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += () => _table.ApplyColumnStyling(_integration.ProjectOptions); ;
+            integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += () => _table.ApplyColumnStyling(_integration.ProjectOptions);
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
 

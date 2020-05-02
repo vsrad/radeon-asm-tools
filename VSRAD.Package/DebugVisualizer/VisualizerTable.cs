@@ -186,28 +186,16 @@ namespace VSRAD.Package.DebugVisualizer
                 .Where(x => x >= 0)
                 .Append(clickedColumnIndex - DataColumnOffset);
 
-            ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
-
-            if (color == null)
+            _stylingOptions.ApplyBulkChange(() =>
             {
-                ClearSelection();
-                return;
-            }
+                ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
+                if (color != null)
+                {
+                    var selector = ColumnSelector.FromIndexes(selectedColumns);
+                    _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color.Value, Selector = selector });
+                }
+            });
 
-            var selector = ColumnSelector.FromIndexes(selectedColumns);
-
-            var existingRegion = _stylingOptions.HighlightRegions.FirstOrDefault(r => r.Selector == selector);
-            if (existingRegion != null)
-            {
-                if (color == null)
-                    _stylingOptions.HighlightRegions.Remove(existingRegion);
-                else
-                    existingRegion.Color = color.Value;
-            }
-            else if (color != null)
-            {
-                _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color.Value, Selector = selector });
-            }
             ClearSelection();
         }
 

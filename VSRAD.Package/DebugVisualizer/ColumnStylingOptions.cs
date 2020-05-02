@@ -27,6 +27,14 @@ namespace VSRAD.Package.DebugVisualizer
             HighlightRegions.ListChanged += (sender, args) => OnStylingChanged();
         }
 
+        public void ApplyBulkChange(Action change)
+        {
+            HighlightRegions.RaiseListChangedEvents = false;
+            change();
+            HighlightRegions.RaiseListChangedEvents = true;
+            OnStylingChanged();
+        }
+
         private void OnStylingChanged() => StylingChanged?.Invoke();
     }
 }

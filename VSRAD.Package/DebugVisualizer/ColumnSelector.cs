@@ -100,13 +100,8 @@ namespace VSRAD.Package.DebugVisualizer
         public static void RemoveIndexes(IEnumerable<int> columnIndexes, IList<ColumnHighlightRegion> regions)
         {
             foreach (var region in regions)
-            {
-                var regionIndexes = ToIndexes(region.Selector).ToList();
-                foreach (var columnIndex in columnIndexes)
-                    if (regionIndexes.Contains(columnIndex))
-                        regionIndexes.Remove(columnIndex);
-                region.Selector = FromIndexes(regionIndexes);
-            }
+                region.Selector = FromIndexes(ToIndexes(region.Selector).Except(columnIndexes));
+
             var emptyRegions = regions.Where(x => string.IsNullOrEmpty(x.Selector)).ToList();
             foreach (var emptyRegion in emptyRegions)
                 regions.Remove(emptyRegion);
