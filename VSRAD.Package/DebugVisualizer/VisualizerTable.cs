@@ -394,7 +394,6 @@ namespace VSRAD.Package.DebugVisualizer
         private void ApplyFontAndColorInfo()
         {
             var (headerFont, headerFg) = _fontAndColor.GetInfo(FontAndColorItem.Header, DefaultFont);
-            var (dataFont, dataFg) = _fontAndColor.GetInfo(FontAndColorItem.Data, DefaultFont);
             var (watchFont, watchFg) = _fontAndColor.GetInfo(FontAndColorItem.WatchNames, DefaultFont);
 
             ColumnHeadersDefaultCellStyle.Font = headerFont;
@@ -410,12 +409,6 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
             RowHeadersDefaultCellStyle.SelectionForeColor = watchFg;
             RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
-
-            foreach (var column in DataColumns)
-            {
-                column.DefaultCellStyle.Font = dataFont;
-                column.DefaultCellStyle.ForeColor = dataFg;
-            }
         }
 
         #endregion
