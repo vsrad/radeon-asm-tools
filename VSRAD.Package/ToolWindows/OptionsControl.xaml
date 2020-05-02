@@ -61,7 +61,8 @@
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Check Magic Number in System lane 0" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.VisualizerOptions.CheckMagicNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBox x:Name="MagicNumberControl" Width="100" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"/>
+                    <TextBox Width="100" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                             Text="{Binding Options.VisualizerOptions.MagicNumber, Converter={StaticResource MagicNumberConverter}, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Vertical separator between each" VerticalAlignment="Center" Padding="4,0,0,0"
