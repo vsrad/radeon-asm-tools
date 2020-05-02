@@ -82,10 +82,10 @@ namespace VSRAD.Package.DebugVisualizer
             return sb.ToString();
         }
 
-        public static string PartialSubgroups(int groupSize, int subgroupSize, int displayedCount, bool displayLast = false)
+        public static string PartialSubgroups(uint groupSize, uint subgroupSize, uint displayedCount, bool displayLast = false)
         {
             var sb = new StringBuilder();
-            for (int i = 0; i < groupSize; i += subgroupSize)
+            for (uint i = 0; i < groupSize; i += subgroupSize)
             {
                 if (displayLast)
                     sb.Append($"{i + subgroupSize - displayedCount}-{i + subgroupSize - 1}:");

@@ -31,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,
-                groupSizeGetter: () => headerControl.GroupSize);
+                getGroupSize: () => headerControl.GroupSize);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _integration.ProjectOptions.DebuggerOptions.Watches.Clear();
@@ -51,12 +51,12 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         private void RefreshTableStyling() =>
-            _table.ApplyColumnStyling(_integration.ProjectOptions, _breakState?.System);
+            _table.ApplyColumnStyling(_integration.ProjectOptions, headerControl.GroupSize, _breakState?.System);
 
         private void DebuggerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Options.DebuggerOptions.Counter))
-                _table.GrayOutColumns();
+                _table.GrayOutColumns(headerControl.GroupSize);
         }
 
         private void RestoreSavedState()
@@ -156,7 +156,7 @@ namespace VSRAD.Package.DebugVisualizer
                         EraseRowData(row);
                 }
 
-                _table.ApplyColumnStyling(_integration.ProjectOptions, _breakState.System);
+                RefreshTableStyling();
                 RowStyling.ResetRowStyling(_table.DataRows);
                 RowStyling.GreyOutUnevaluatedWatches(_breakState.Watches, _table.DataRows);
                 headerControl.OnDataRequestCompleted(_breakState.GetGroupCount(headerControl.GroupSize), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds, _breakState.StatusString);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Utils;
@@ -19,8 +18,6 @@ namespace VSRAD.Package.DebugVisualizer
         public const int DataColumnCount = 512;
 
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
-        // TODO: do we need this?
-        public int GroupSize => (int)_groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int ColumnWidth = 30;
 
@@ -51,16 +48,14 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly SelectionController _selectionController;
 
         private readonly ColumnStylingOptions _stylingOptions;
-        private readonly GetGroupSize _groupSizeGetter;
 
         private string _editedWatchName;
 
         private readonly FontAndColorProvider _fontAndColor;
 
-        public VisualizerTable(ColumnStylingOptions options, GetGroupSize groupSizeGetter) : base()
+        public VisualizerTable(ColumnStylingOptions options, GetGroupSize getGroupSize) : base()
         {
             _stylingOptions = options;
-            _groupSizeGetter = groupSizeGetter;
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -97,7 +92,7 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, RowColorChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColumnColorChanged)
+                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColumnColorChanged, getGroupSize)
             });
             _ = new CustomTableGraphics(this, _fontAndColor);
 
@@ -335,12 +330,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutColumns()
+        public void GrayOutColumns(uint groupSize)
         {
-            ColumnStyling.GrayOutColumns(_fontAndColor.FontAndColorState, DataColumns, _groupSizeGetter());
+            ColumnStyling.GrayOutColumns(_fontAndColor.FontAndColorState, DataColumns, groupSize);
         }
 
-        public void ApplyColumnStyling(Options.ProjectOptions options, uint[] system)
+        public void ApplyColumnStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;
@@ -354,7 +349,7 @@ namespace VSRAD.Package.DebugVisualizer
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
                 _fontAndColor.FontAndColorState);
-            styling.Apply(DataColumns, _groupSizeGetter(), system);
+            styling.Apply(DataColumns, groupSize, system);
 
             ((Control)this).ResumeDrawing();
             HorizontalScrollingOffset = scrollingOffset;
