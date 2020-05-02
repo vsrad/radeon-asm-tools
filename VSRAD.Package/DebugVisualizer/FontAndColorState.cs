@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Drawing;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -9,27 +10,49 @@ namespace VSRAD.Package.DebugVisualizer
         public Color[] HighlightBackground { get; }
         public bool[] HighlightBold { get; }
 
+        public Color HeaderForeground { get; }
+        public Color HeaderBackground { get; }
+        public Color WatchNameBackground { get; }
+        public Color WatchNameForeground { get; }
+        public bool HeaderBold { get; }
+        public bool WatchNameBold { get; }
+
         public SolidBrush ColumnSeparatorBrush { get; }
         public SolidBrush HiddenColumnSeparatorBrush { get; }
 
-        public FontAndColorState(IFontAndColorProvider provider)
+        public Font RegularFont { get; }
+        public Font BoldFont { get; }
+
+        public FontAndColorState(FontAndColorProvider provider)
         {
-            var colors = (DataHighlightColor[])Enum.GetValues(typeof(DataHighlightColor));
+            ThreadHelper.ThrowIfNotOnUIThread();
 
-            HighlightForeground = new Color[colors.Length];
-            HighlightBackground = new Color[colors.Length];
-            HighlightBold = new bool[colors.Length];
+            var highlightColors = (DataHighlightColor[])Enum.GetValues(typeof(DataHighlightColor));
 
-            foreach (var highlight in colors)
+            HighlightForeground = new Color[highlightColors.Length];
+            HighlightBackground = new Color[highlightColors.Length];
+            HighlightBold = new bool[highlightColors.Length];
+
+            foreach (var color in highlightColors)
             {
-                var (fg, bg, bold) = provider.GetHighlightInfo(highlight);
-                HighlightForeground[(int)highlight] = fg;
-                HighlightBackground[(int)highlight] = bg;
-                HighlightBold[(int)highlight] = bold;
+                var (fg, bg, bold) = provider.GetHighlightInfo(color);
+                HighlightForeground[(int)color] = fg;
+                HighlightBackground[(int)color] = bg;
+                HighlightBold[(int)color] = bold;
             }
+
+            (HeaderForeground, HeaderBackground, HeaderBold) = provider.GetInfo(FontAndColorItem.Header);
+            (WatchNameForeground, WatchNameBackground, WatchNameBold) = provider.GetInfo(FontAndColorItem.WatchNames);
 
             ColumnSeparatorBrush = new SolidBrush(provider.GetInfo(FontAndColorItem.ColumnSeparator).bg);
             HiddenColumnSeparatorBrush = new SolidBrush(provider.GetInfo(FontAndColorItem.HiddenColumnSeparator).bg);
+
+            var (fontName, fontSize) = provider.GetFontInfo();
+            RegularFont = new Font(fontName, fontSize, FontStyle.Regular);
+            BoldFont = new Font(fontName, fontSize, FontStyle.Bold);
         }
+
+        // For testing
+        public FontAndColorState() { }
     }
 }

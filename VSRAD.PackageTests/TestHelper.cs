@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Threading;
 using Moq;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package;
@@ -46,6 +47,14 @@ namespace VSRAD.PackageTests
 
             mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
             return mock;
+        }
+
+        public static T MakeWithReadOnlyProps<T>(params (string prop, object value)[] properties) where T : new()
+        {
+            var state = new T();
+            foreach (var (prop, value) in properties)
+                typeof(T).GetField($"<{prop}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(state, value);
+            return state;
         }
     }
 }

@@ -376,21 +376,20 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void ApplyFontAndColorInfo()
         {
-            var (headerFont, headerFg) = _fontAndColor.GetInfo(FontAndColorItem.Header, DefaultFont);
-            var (watchFont, watchFg) = _fontAndColor.GetInfo(FontAndColorItem.WatchNames, DefaultFont);
+            var state = _fontAndColor.FontAndColorState;
 
-            ColumnHeadersDefaultCellStyle.Font = headerFont;
-            ColumnHeadersDefaultCellStyle.ForeColor = headerFg;
+            ColumnHeadersDefaultCellStyle.Font = state.HeaderBold ? state.BoldFont : state.RegularFont;
+            ColumnHeadersDefaultCellStyle.ForeColor = state.HeaderForeground;
 
-            RowHeadersDefaultCellStyle.Font = watchFont;
-            RowHeadersDefaultCellStyle.ForeColor = watchFg;
-            Columns[0].DefaultCellStyle.Font = watchFont;
-            Columns[0].DefaultCellStyle.ForeColor = watchFg;
+            RowHeadersDefaultCellStyle.Font = state.WatchNameBold ? state.BoldFont : state.RegularFont;
+            RowHeadersDefaultCellStyle.ForeColor = state.WatchNameForeground;
+            Columns[0].DefaultCellStyle.Font = state.WatchNameBold ? state.BoldFont : state.RegularFont;
+            Columns[0].DefaultCellStyle.ForeColor = state.WatchNameForeground;
 
             // Disable selection styles because DataGridView does not preserve selected headers when switching selection mode
-            ColumnHeadersDefaultCellStyle.SelectionForeColor = headerFg;
+            ColumnHeadersDefaultCellStyle.SelectionForeColor = state.HeaderForeground;
             ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
-            RowHeadersDefaultCellStyle.SelectionForeColor = watchFg;
+            RowHeadersDefaultCellStyle.SelectionForeColor = state.WatchNameForeground;
             RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
 
             // Update column separators
