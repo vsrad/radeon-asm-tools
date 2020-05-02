@@ -14,12 +14,12 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly bool _maskInactiveLanes;
         private readonly int? _checkMagicNumber;
 
-        private readonly DataFontAndColor _fontAndColor;
+        private readonly FontAndColorState _fontAndColor;
 
         private readonly bool[] _visibility = new bool[VisualizerTable.DataColumnCount];
         private readonly DataHighlightColor[] _highlight = new DataHighlightColor[VisualizerTable.DataColumnCount];
 
-        public ColumnStyling(Options.VisualizerOptions options, Options.VisualizerAppearance appearance, ColumnStylingOptions styling, DataFontAndColor fontAndColor)
+        public ColumnStyling(Options.VisualizerOptions options, Options.VisualizerAppearance appearance, ColumnStylingOptions styling, FontAndColorState fontAndColor)
         {
             _laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
             _laneDividerWidth = (uint)appearance.LaneDivierWidth;
@@ -107,7 +107,7 @@ namespace VSRAD.Package.DebugVisualizer
                         GrayOutColumns(_fontAndColor, columns, groupSize, i, (uint)(i + 64));
         }
 
-        public static void GrayOutColumns(DataFontAndColor fontAndColor, IReadOnlyList<DataGridViewColumn> columns, uint groupSize, int start = 0, uint end = 0)
+        public static void GrayOutColumns(FontAndColorState fontAndColor, IReadOnlyList<DataGridViewColumn> columns, uint groupSize, int start = 0, uint end = 0)
         {
             for (int offset = start; offset < ((end == 0) ? groupSize : end); offset++)
                 columns[offset].DefaultCellStyle.BackColor = fontAndColor.HighlightBackground[(int)DataHighlightColor.Inactive];

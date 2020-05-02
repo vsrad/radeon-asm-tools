@@ -26,10 +26,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
-        public SolidBrush HiddenColumnSeparatorColor;
         public uint LaneGrouping;
         public int LaneSeparatorWidth = 3;
-        public SolidBrush LaneSeparatorColor;
         public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
         #endregion
 
@@ -86,6 +84,13 @@ namespace VSRAD.Package.DebugVisualizer
             DoubleBuffered = true;
             AllowUserToResizeRows = false;
 
+            DataColumns = SetupColumns();
+
+            EnableHeadersVisualStyles = false;
+            _fontAndColor = new FontAndColorProvider();
+            _fontAndColor.FontAndColorInfoChanged += ApplyFontAndColorInfo;
+            ApplyFontAndColorInfo();
+
             ColumnResizeController = new ColumnResizeController(this);
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
@@ -94,17 +99,10 @@ namespace VSRAD.Package.DebugVisualizer
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColumnColorChanged)
             });
-            _ = new CustomTableGraphics(this);
+            _ = new CustomTableGraphics(this, _fontAndColor);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this);
             _selectionController = new SelectionController(this);
-
-            DataColumns = SetupColumns();
-
-            EnableHeadersVisualStyles = false;
-            _fontAndColor = new FontAndColorProvider();
-            _fontAndColor.FontAndColorInfoChanged += ApplyFontAndColorInfo;
-            ApplyFontAndColorInfo();
         }
 
         public void ScaleControls(float scaleFactor)
@@ -175,7 +173,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void RowColorChanged(int rowIndex, DataHighlightColor color)
         {
             var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
-            RowStyling.ChangeRowHighlight(_fontAndColor.ColumnFontAndColor, changedRows, color);
+            RowStyling.ChangeRowHighlight(_fontAndColor.FontAndColorState, changedRows, color);
         }
 
         public void ColumnColorChanged(int clickedColumnIndex, DataHighlightColor color)
@@ -339,7 +337,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void GrayOutColumns()
         {
-            ColumnStyling.GrayOutColumns(_fontAndColor.ColumnFontAndColor, DataColumns, _groupSizeGetter());
+            ColumnStyling.GrayOutColumns(_fontAndColor.FontAndColorState, DataColumns, _groupSizeGetter());
         }
 
         public void ApplyColumnStyling(Options.ProjectOptions options, uint[] system)
@@ -355,7 +353,7 @@ namespace VSRAD.Package.DebugVisualizer
                 options.VisualizerOptions,
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
-                _fontAndColor.ColumnFontAndColor);
+                _fontAndColor.FontAndColorState);
             styling.Apply(DataColumns, _groupSizeGetter(), system);
 
             ((Control)this).ResumeDrawing();
@@ -394,6 +392,9 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
             RowHeadersDefaultCellStyle.SelectionForeColor = watchFg;
             RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
+
+            // Update column separators
+            Invalidate();
         }
 
         #endregion

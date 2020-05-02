@@ -9,7 +9,7 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private static void GreyOutRow(DataGridViewRow row) => row.DefaultCellStyle.BackColor = Color.LightGray;
 
-        public static void ChangeRowHighlight(DataFontAndColor colors, IEnumerable<DataGridViewRow> rows, DataHighlightColor color)
+        public static void ChangeRowHighlight(FontAndColorState colors, IEnumerable<DataGridViewRow> rows, DataHighlightColor color)
         {
             if (color != DataHighlightColor.None)
                 foreach (var row in rows)

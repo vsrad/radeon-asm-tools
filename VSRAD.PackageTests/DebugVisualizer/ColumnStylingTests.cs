@@ -21,7 +21,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var options = new ColumnStylingOptions() { VisibleColumns = "0:2-6 11;14-20,33,666" }; // 666 will result in an IndexOutOfBounds if we don't validate indexes 
             var columns = GenerateTestColumns();
 
-            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, new DataFontAndColor(new Mock<IFontAndColorProvider>().Object))
+            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, new FontAndColorState(new Mock<IFontAndColorProvider>().Object))
                 .Apply(columns, groupSize: 32);
 
             Assert.True(columns[0].Visible);
@@ -56,7 +56,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.ColumnBlue)).Returns((fg: Color.Blue, bg: Color.DarkBlue, bold: false));
             colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.None)).Returns((fg: Color.Black, bg: Color.Empty, bold: false));
 
-            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, new DataFontAndColor(colors.Object))
+            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, new FontAndColorState(colors.Object))
                 .Apply(columns, groupSize: 8);
 
             Assert.Equal(Color.Red, columns[0].DefaultCellStyle.ForeColor);
@@ -86,7 +86,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
             // 2,3|4,5,6|8,11|14|
 
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 4 }, new VisualizerAppearance(), options, new DataFontAndColor(new Mock<IFontAndColorProvider>().Object))
+            new ColumnStyling(new VisualizerOptions { LaneGrouping = 4 }, new VisualizerAppearance(), options, new FontAndColorState(new Mock<IFontAndColorProvider>().Object))
                 .Apply(columns, groupSize: 16);
 
             Assert.Equal(0, columns[0].DividerWidth);
@@ -107,15 +107,15 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             Assert.Equal(0, columns[15].DividerWidth);
 
             options.VisibleColumns = "0-511";
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 3 }, new VisualizerAppearance(), options, new DataFontAndColor(new Mock<IFontAndColorProvider>().Object))
+            new ColumnStyling(new VisualizerOptions { LaneGrouping = 3 }, new VisualizerAppearance(), options, new FontAndColorState(new Mock<IFontAndColorProvider>().Object))
                 .Apply(columns, groupSize: 512);
             // no assertions here, this is just to trigger an index out of bounds if we're not careful with grouping
 
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 1 }, new VisualizerAppearance(), options, new DataFontAndColor(new Mock<IFontAndColorProvider>().Object))
+            new ColumnStyling(new VisualizerOptions { LaneGrouping = 1 }, new VisualizerAppearance(), options, new FontAndColorState(new Mock<IFontAndColorProvider>().Object))
                 .Apply(columns, groupSize: 512);
             Assert.NotEqual(0, columns[0].DividerWidth); // 0 should be separated
 
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 0 }, new VisualizerAppearance(), options, new DataFontAndColor(new Mock<IFontAndColorProvider>().Object))
+            new ColumnStyling(new VisualizerOptions { LaneGrouping = 0 }, new VisualizerAppearance(), options, new FontAndColorState(new Mock<IFontAndColorProvider>().Object))
                 .Apply(columns, groupSize: 512);
             for (int i = 0; i < 256; i++)
                 Assert.Equal(0, columns[i].DividerWidth);
@@ -141,7 +141,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var columns = GenerateTestColumns();
             var colors = new Mock<IFontAndColorProvider>();
             colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.Inactive)).Returns((fg: Color.Empty, bg: Color.Gray, bold: false));
-            new ColumnStyling(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(), new DataFontAndColor(colors.Object))
+            new ColumnStyling(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(), new FontAndColorState(colors.Object))
                 .Apply(columns, groupSize: 64, system: system);
 
             for (int i = 0; i < 5; i++)
@@ -154,7 +154,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             for (int i = 46; i < 64; i++)
                 Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
 
-            new ColumnStyling(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(), new DataFontAndColor(colors.Object))
+            new ColumnStyling(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(), new FontAndColorState(colors.Object))
                 .Apply(columns, groupSize: 64, system: system);
             for (int i = 0; i < 64; i++)
                 Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
@@ -172,7 +172,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var colors = new Mock<IFontAndColorProvider>();
             colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.Inactive)).Returns((fg: Color.Empty, bg: Color.Gray, bold: false));
             var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
-            new ColumnStyling(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(), new DataFontAndColor(colors.Object))
+            new ColumnStyling(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(), new FontAndColorState(colors.Object))
                 .Apply(columns, groupSize: 256, system: system);
 
             for (int i = 0; i < 63; i++)
@@ -191,7 +191,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var columns = GenerateTestColumns();
             var colors = new Mock<IFontAndColorProvider>();
             colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.Inactive)).Returns((fg: Color.Empty, bg: Color.Gray, bold: false));
-            ColumnStyling.GrayOutColumns(new DataFontAndColor(colors.Object), columns, groupSize: 512);
+            ColumnStyling.GrayOutColumns(new FontAndColorState(colors.Object), columns, groupSize: 512);
             for (int i = 0; i < 512; i++)
                 Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
         }
@@ -238,7 +238,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var columns = GenerateTestColumns();
 
             options.VisibleColumns = "0,111111111111111111111,34-111111111111111111111,111111111111111111111-34,1-2";
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 1 }, new VisualizerAppearance(), options, new DataFontAndColor(new Mock<IFontAndColorProvider>().Object))
+            new ColumnStyling(new VisualizerOptions { LaneGrouping = 1 }, new VisualizerAppearance(), options, new FontAndColorState(new Mock<IFontAndColorProvider>().Object))
                 .Apply(columns, groupSize: 512);
 
             Assert.True(columns[0].Visible);

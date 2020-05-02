@@ -11,6 +11,9 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public interface IFontAndColorProvider
     {
+        FontAndColorState FontAndColorState { get; }
+
+        (Color fg, Color bg, bool bold) GetInfo(FontAndColorItem item);
         (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight);
     }
 
@@ -18,43 +21,53 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public event Action FontAndColorInfoChanged;
 
+        public FontAndColorState FontAndColorState { get; private set; }
+
         private readonly IVsFontAndColorStorage _storage;
         private const uint _storageFlags = (uint)(__FCSTORAGEFLAGS.FCSF_LOADDEFAULTS
             | __FCSTORAGEFLAGS.FCSF_PROPAGATECHANGES
             | __FCSTORAGEFLAGS.FCSF_NOAUTOCOLORS);
-
-        private DataFontAndColor _cachedColumnFontAndColor;
-        public DataFontAndColor ColumnFontAndColor
-        {
-            get
-            {
-                if (_cachedColumnFontAndColor == null)
-                    _cachedColumnFontAndColor = new DataFontAndColor(this);
-                return _cachedColumnFontAndColor;
-            }
-        }
 
         public FontAndColorProvider()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             _storage = (IVsFontAndColorStorage)GetGlobalService(typeof(SVsFontAndColorStorage));
             Assumes.Present(_storage);
+            ErrorHandler.ThrowOnFailure(_storage.OpenCategory(Constants.FontAndColorsCategoryGuid, _storageFlags));
 
             var fontAndColorService = (FontAndColorService)GetGlobalService(typeof(FontAndColorService));
             fontAndColorService.ItemsChanged += () =>
             {
-                _cachedColumnFontAndColor = null;
+                FontAndColorState = new FontAndColorState(this);
                 FontAndColorInfoChanged?.Invoke();
             };
 
-            ErrorHandler.ThrowOnFailure(_storage.OpenCategory(Constants.FontAndColorsCategoryGuid, _storageFlags));
+            FontAndColorState = new FontAndColorState(this);
         }
 
-        public (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight)
+        public (Color fg, Color bg, bool bold) GetInfo(FontAndColorItem item) =>
+            GetInfo(item.GetDisplayName());
+
+        public (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight) =>
+            GetInfo(highlight.GetDisplayName());
+
+        public (Color fg, Color bg) GetColorInfo(FontAndColorItem item)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             var colorInfo = new ColorableItemInfo[1];
-            ErrorHandler.ThrowOnFailure(_storage.GetItem(highlight.GetDisplayName(), colorInfo));
+            ErrorHandler.ThrowOnFailure(_storage.GetItem(item.GetDisplayName(), colorInfo));
+
+            var fg = FontAndColorService.ReadVsColor(colorInfo[0].crForeground);
+            var bg = FontAndColorService.ReadVsColor(colorInfo[0].crBackground);
+
+            return (fg, bg);
+        }
+
+        private (Color fg, Color bg, bool bold) GetInfo(string item)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var colorInfo = new ColorableItemInfo[1];
+            ErrorHandler.ThrowOnFailure(_storage.GetItem(item, colorInfo));
 
             var fg = FontAndColorService.ReadVsColor(colorInfo[0].crForeground);
             var bg = FontAndColorService.ReadVsColor(colorInfo[0].crBackground);

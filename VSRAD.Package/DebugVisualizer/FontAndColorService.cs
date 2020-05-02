@@ -12,7 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public enum FontAndColorItem
     {
-        Header, WatchNames, ColumnHighlightRed, ColumnHighlightGreen, ColumnHighlightBlue
+        Header, WatchNames, ColumnSeparator, HiddenColumnSeparator
     }
 
     static class FontAndColorItems
@@ -23,6 +23,8 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 case FontAndColorItem.Header: return "Header";
                 case FontAndColorItem.WatchNames: return "Watch Names";
+                case FontAndColorItem.ColumnSeparator: return "Column Separator";
+                case FontAndColorItem.HiddenColumnSeparator: return "Hidden Column Separator";
             }
             throw new NotImplementedException();
         }
@@ -57,6 +59,8 @@ namespace VSRAD.Package.DebugVisualizer
         {
             CreateItem(FontAndColorItem.Header.GetDisplayName()),
             CreateItem(FontAndColorItem.WatchNames.GetDisplayName()),
+            CreateItem(FontAndColorItem.ColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0xa0a0a0), hasText: false),
+            CreateItem(FontAndColorItem.HiddenColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0x404040), hasText: false),
             CreateItem(DataHighlightColor.None.GetDisplayName()),
             CreateItem(DataHighlightColor.Inactive.GetDisplayName(), bg: Color.LightGray, hasText: false),
             CreateItem(DataHighlightColor.ColumnRed.GetDisplayName(), bg: Color.FromArgb(245, 226, 227)),

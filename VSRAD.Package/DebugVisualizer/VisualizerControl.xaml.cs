@@ -40,12 +40,8 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
-            _table.HiddenColumnSeparatorColor =
-                SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
-            _table.LaneSeparatorColor =
-                SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
             _table.HiddenColumnSeparatorWidth =
-                        _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
+                _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
             _table.LaneSeparatorWidth =
                 _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
             _table.ScalingMode = _integration.ProjectOptions.VisualizerAppearance.ScalingMode;
@@ -115,18 +111,6 @@ namespace VSRAD.Package.DebugVisualizer
                     _table.LaneSeparatorWidth =
                         _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
                     RefreshTableStyling();
-                    break;
-                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorColor):
-                    var oldHiddenColor = _table.HiddenColumnSeparatorColor;
-                    _table.HiddenColumnSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorColor);
-                    if (_table.HiddenColumnSeparatorColor != oldHiddenColor)
-                        RefreshTableStyling();
-                    break;
-                case nameof(Options.VisualizerAppearance.LaneSeparatorColor):
-                    var oldLaneColor = _table.LaneSeparatorColor;
-                    _table.LaneSeparatorColor = SeparatorColorConverter.ConvertToBrush(_integration.ProjectOptions.VisualizerAppearance.LaneSeparatorColor);
-                    if (_table.LaneSeparatorColor != oldLaneColor)
-                        RefreshTableStyling();
                     break;
             }
         }

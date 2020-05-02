@@ -6,33 +6,35 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class CustomTableGraphics
     {
         private readonly VisualizerTable _table;
+        private readonly IFontAndColorProvider _fontAndColor;
         private static readonly Brush _avgprColor = Brushes.LightGreen;
 
-        public CustomTableGraphics(VisualizerTable table)
+        public CustomTableGraphics(VisualizerTable table, IFontAndColorProvider fontAndColor)
         {
             _table = table;
             _table.CellPainting += PaintSpacesInVisibility;
             _table.CellPainting += PaintInvalidWatchName;
             _table.RowPostPaint += ReplaceDefaultRowHeaderBitmap;
+
+            _fontAndColor = fontAndColor;
         }
 
         private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.ColumnIndex < VisualizerTable.DataColumnOffset || e.ColumnIndex == VisualizerTable.DataColumnCount) return;
-            var vt = (VisualizerTable)sender;
 
             int width;
             SolidBrush color;
 
-            if (vt.Columns[e.ColumnIndex].Visible != vt.Columns[e.ColumnIndex + 1].Visible)
+            if (_table.Columns[e.ColumnIndex].Visible != _table.Columns[e.ColumnIndex + 1].Visible)
             {
-                width = vt.HiddenColumnSeparatorWidth;
-                color = vt.HiddenColumnSeparatorColor;
+                width = _table.HiddenColumnSeparatorWidth;
+                color = _fontAndColor.FontAndColorState.HiddenColumnSeparatorBrush;
             }
-            else if (vt.LaneGrouping != 0 && (e.ColumnIndex % vt.LaneGrouping == 0))
+            else if (_table.LaneGrouping != 0 && (e.ColumnIndex % _table.LaneGrouping == 0))
             {
-                width = vt.LaneSeparatorWidth;
-                color = vt.LaneSeparatorColor;
+                width = _table.LaneSeparatorWidth;
+                color = _fontAndColor.FontAndColorState.ColumnSeparatorBrush;
             }
             else return;
 
