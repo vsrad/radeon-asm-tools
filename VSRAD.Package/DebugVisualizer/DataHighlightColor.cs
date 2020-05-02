@@ -2,6 +2,9 @@
 {
     public enum DataHighlightColor
     {
-        None = 0, ColumnRed, ColumnGreen, ColumnBlue, RowRed, RowGreen, RowBlue
+        None = 0,
+        ColumnRed, ColumnGreen, ColumnBlue,
+        RowRed, RowGreen, RowBlue,
+        Inactive
     }
 }

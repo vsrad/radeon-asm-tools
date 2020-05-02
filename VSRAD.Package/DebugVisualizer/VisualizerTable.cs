@@ -337,7 +337,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void ApplyColumnStyling(Options.ProjectOptions options, uint[] system = null)
+        public void GrayOutColumns()
+        {
+            ColumnStyling.GrayOutColumns(_fontAndColor.ColumnFontAndColor, DataColumns, _groupSizeGetter());
+        }
+
+        public void ApplyColumnStyling(Options.ProjectOptions options, uint[] system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;
@@ -351,15 +356,7 @@ namespace VSRAD.Package.DebugVisualizer
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
                 _fontAndColor.ColumnFontAndColor);
-
-            styling.Apply(DataColumns, _groupSizeGetter());
-
-            if (system != null && options.VisualizerOptions.MaskLanes)
-                ColumnStyling.ApplyLaneMask(DataColumns, _groupSizeGetter(), system);
-
-            if (system != null && options.VisualizerOptions.CheckMagicNumber)
-                ColumnStyling.ApplyMagicNumber(DataColumns, _groupSizeGetter(), system,
-                    magicNumber: options.VisualizerOptions.MagicNumber);
+            styling.Apply(DataColumns, _groupSizeGetter(), system);
 
             ((Control)this).ResumeDrawing();
             HorizontalScrollingOffset = scrollingOffset;

@@ -139,28 +139,61 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             system[9] = (uint)tmp[0];
 
             var columns = GenerateTestColumns();
-            ColumnStyling.ApplyLaneMask(columns, groupSize: 64, system: system);
+            var colors = new Mock<IFontAndColorProvider>();
+            colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.Inactive)).Returns((fg: Color.Empty, bg: Color.Gray, bold: false));
+            new ColumnStyling(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(), new DataFontAndColor(colors.Object))
+                .Apply(columns, groupSize: 64, system: system);
 
             for (int i = 0; i < 5; i++)
-                Assert.Equal(Color.LightGray, columns[i].DefaultCellStyle.BackColor);
+                Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
             for (int i = 5; i < 23; i++)
                 Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
             for (int i = 24; i < 45; i++)
-                Assert.Equal(Color.LightGray, columns[i].DefaultCellStyle.BackColor);
+                Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
             Assert.Equal(Color.Empty, columns[45].DefaultCellStyle.BackColor);
             for (int i = 46; i < 64; i++)
-                Assert.Equal(Color.LightGray, columns[i].DefaultCellStyle.BackColor);
+                Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
+
+            new ColumnStyling(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(), new DataFontAndColor(colors.Object))
+                .Apply(columns, groupSize: 64, system: system);
+            for (int i = 0; i < 64; i++)
+                Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
+        }
+
+        [Fact]
+        public void MagicNumberCheckTest()
+        {
+            var system = new uint[256];
+            system[0] = 0x7;
+            system[64] = 0x5;
+            system[128] = 0x7;
+
+            var columns = GenerateTestColumns();
+            var colors = new Mock<IFontAndColorProvider>();
+            colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.Inactive)).Returns((fg: Color.Empty, bg: Color.Gray, bold: false));
+            var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
+            new ColumnStyling(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(), new DataFontAndColor(colors.Object))
+                .Apply(columns, groupSize: 256, system: system);
+
+            for (int i = 0; i < 63; i++)
+                Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
+            for (int i = 64; i < 128; i++)
+                Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
+            for (int i = 128; i < 192; i++)
+                Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
+            for (int i = 192; i < 256; i++)
+                Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
         }
 
         [Fact]
         public void GrayOutColumnsTest()
         {
             var columns = GenerateTestColumns();
-            ColumnStyling.GrayOutColumns(columns, groupSize: 512);
+            var colors = new Mock<IFontAndColorProvider>();
+            colors.Setup(c => c.GetHighlightInfo(DataHighlightColor.Inactive)).Returns((fg: Color.Empty, bg: Color.Gray, bold: false));
+            ColumnStyling.GrayOutColumns(new DataFontAndColor(colors.Object), columns, groupSize: 512);
             for (int i = 0; i < 512; i++)
-            {
-                Assert.Equal(Color.LightGray, columns[i].DefaultCellStyle.BackColor);
-            }
+                Assert.Equal(Color.Gray, columns[i].DefaultCellStyle.BackColor);
         }
 
         [Fact]

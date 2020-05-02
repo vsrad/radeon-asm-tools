@@ -38,6 +38,7 @@ namespace VSRAD.Package.DebugVisualizer
                 case DataHighlightColor.RowRed: return "Data - Row Red Highlight";
                 case DataHighlightColor.RowGreen: return "Data - Row Green Highlight";
                 case DataHighlightColor.RowBlue: return "Data - Row Blue Highlight";
+                case DataHighlightColor.Inactive: return "Data - Inactive";
             }
             throw new NotImplementedException();
         }
@@ -57,6 +58,7 @@ namespace VSRAD.Package.DebugVisualizer
             CreateItem(FontAndColorItem.Header.GetDisplayName()),
             CreateItem(FontAndColorItem.WatchNames.GetDisplayName()),
             CreateItem(DataHighlightColor.None.GetDisplayName()),
+            CreateItem(DataHighlightColor.Inactive.GetDisplayName(), bg: Color.LightGray, hasText: false),
             CreateItem(DataHighlightColor.ColumnRed.GetDisplayName(), bg: Color.FromArgb(245, 226, 227)),
             CreateItem(DataHighlightColor.ColumnGreen.GetDisplayName(), bg: Color.FromArgb(227, 245, 226)),
             CreateItem(DataHighlightColor.ColumnBlue.GetDisplayName(), bg: Color.FromArgb(226, 230, 245)),
@@ -81,15 +83,19 @@ namespace VSRAD.Package.DebugVisualizer
 
         public static uint MakeVsColor(Color color) => color == Color.Empty ? 0xffffffff : (uint)ColorTranslator.ToWin32(color);
 
-        private static AllColorableItemInfo CreateItem(string name, Color? fg = null, Color? bg = null)
+        private static AllColorableItemInfo CreateItem(string name, Color? fg = null, Color? bg = null, bool hasText = true)
         {
             var fgRaw = MakeVsColor(fg ?? Color.Black);
             var bgRaw = MakeVsColor(bg ?? Color.White);
 
+            var flags = __FCITEMFLAGS.FCIF_ALLOWBGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS;
+            if (hasText)
+                flags |= __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE;
+
             return new AllColorableItemInfo
             {
                 bFlagsValid = 1,
-                fFlags = (uint)(__FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE | __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWBGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS),
+                fFlags = (uint)flags,
                 bNameValid = 1,
                 bstrName = name,
                 bLocalizedNameValid = 1,
