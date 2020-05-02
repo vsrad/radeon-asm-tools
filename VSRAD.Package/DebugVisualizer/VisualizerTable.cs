@@ -90,9 +90,9 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy, InsertSeparatorRow),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, RowColorChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColorClicked)
+                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColumnColorChanged)
             });
             _ = new CustomTableGraphics(this);
 
@@ -150,12 +150,6 @@ namespace VSRAD.Package.DebugVisualizer
             RaiseWatchStateChanged(changedRows);
         }
 
-        public void FontColorChanged(int rowIndex, Color color)
-        {
-            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
-            RowStyling.ChangeRowFontColor(changedRows, color);
-        }
-
         private void AvgprStateChanged(int rowIndex, bool newAvgprState)
         {
             var selectedNames = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i].Cells[NameColumnIndex].Value.ToString());
@@ -178,7 +172,13 @@ namespace VSRAD.Package.DebugVisualizer
             CancelEdit();
         }
 
-        public void ColorClicked(int clickedColumnIndex, ColumnHighlightColor? color)
+        public void RowColorChanged(int rowIndex, DataHighlightColor color)
+        {
+            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
+            RowStyling.ChangeRowHighlight(_fontAndColor.ColumnFontAndColor, changedRows, color);
+        }
+
+        public void ColumnColorChanged(int clickedColumnIndex, DataHighlightColor color)
         {
             var selectedColumns = SelectedColumns
                 .Cast<DataGridViewColumn>()
@@ -189,10 +189,10 @@ namespace VSRAD.Package.DebugVisualizer
             _stylingOptions.ApplyBulkChange(() =>
             {
                 ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
-                if (color != null)
+                if (color != DataHighlightColor.None)
                 {
                     var selector = ColumnSelector.FromIndexes(selectedColumns);
-                    _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color.Value, Selector = selector });
+                    _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color, Selector = selector });
                 }
             });
 

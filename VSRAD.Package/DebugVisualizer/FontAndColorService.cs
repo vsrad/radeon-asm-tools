@@ -27,14 +27,17 @@ namespace VSRAD.Package.DebugVisualizer
             throw new NotImplementedException();
         }
 
-        public static string GetDisplayName(this ColumnHighlightColor item)
+        public static string GetDisplayName(this DataHighlightColor item)
         {
             switch (item)
             {
-                case ColumnHighlightColor.None: return "Data";
-                case ColumnHighlightColor.Green: return "Data - Column Green Highlight";
-                case ColumnHighlightColor.Red: return "Data - Column Red Highlight";
-                case ColumnHighlightColor.Blue: return "Data - Column Blue Highlight";
+                case DataHighlightColor.None: return "Data";
+                case DataHighlightColor.ColumnRed: return "Data - Column Red Highlight";
+                case DataHighlightColor.ColumnGreen: return "Data - Column Green Highlight";
+                case DataHighlightColor.ColumnBlue: return "Data - Column Blue Highlight";
+                case DataHighlightColor.RowRed: return "Data - Row Red Highlight";
+                case DataHighlightColor.RowGreen: return "Data - Row Green Highlight";
+                case DataHighlightColor.RowBlue: return "Data - Row Blue Highlight";
             }
             throw new NotImplementedException();
         }
@@ -53,10 +56,13 @@ namespace VSRAD.Package.DebugVisualizer
         {
             CreateItem(FontAndColorItem.Header.GetDisplayName()),
             CreateItem(FontAndColorItem.WatchNames.GetDisplayName()),
-            CreateItem(ColumnHighlightColor.None.GetDisplayName()),
-            CreateItem(ColumnHighlightColor.Red.GetDisplayName(), bg: Color.FromArgb(245, 226, 227)),
-            CreateItem(ColumnHighlightColor.Green.GetDisplayName(), bg: Color.FromArgb(227, 245, 226)),
-            CreateItem(ColumnHighlightColor.Blue.GetDisplayName(), bg: Color.FromArgb(226, 230, 245)),
+            CreateItem(DataHighlightColor.None.GetDisplayName()),
+            CreateItem(DataHighlightColor.ColumnRed.GetDisplayName(), bg: Color.FromArgb(245, 226, 227)),
+            CreateItem(DataHighlightColor.ColumnGreen.GetDisplayName(), bg: Color.FromArgb(227, 245, 226)),
+            CreateItem(DataHighlightColor.ColumnBlue.GetDisplayName(), bg: Color.FromArgb(226, 230, 245)),
+            CreateItem(DataHighlightColor.RowRed.GetDisplayName(), fg: Color.Red, bg: Color.Empty),
+            CreateItem(DataHighlightColor.RowGreen.GetDisplayName(), fg: Color.Green, bg: Color.Empty),
+            CreateItem(DataHighlightColor.RowBlue.GetDisplayName(), fg: Color.Blue, bg: Color.Empty),
         };
 
         // Changes to ProvideFontAndColorsCategory will not be registered until this method is run.
@@ -71,15 +77,19 @@ namespace VSRAD.Package.DebugVisualizer
             cacheManager.ClearCache(ref categoryGuid);
         }
 
+        public static Color ReadVsColor(uint vsColor) => vsColor == 0xffffffff ? Color.Empty : ColorTranslator.FromWin32((int)vsColor);
+
+        public static uint MakeVsColor(Color color) => color == Color.Empty ? 0xffffffff : (uint)ColorTranslator.ToWin32(color);
+
         private static AllColorableItemInfo CreateItem(string name, Color? fg = null, Color? bg = null)
         {
-            var fgRaw = ColorTranslator.ToWin32(fg ?? Color.Black);
-            var bgRaw = ColorTranslator.ToWin32(bg ?? Color.White);
+            var fgRaw = MakeVsColor(fg ?? Color.Black);
+            var bgRaw = MakeVsColor(bg ?? Color.White);
 
             return new AllColorableItemInfo
             {
                 bFlagsValid = 1,
-                fFlags = (uint)(__FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE | __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS),
+                fFlags = (uint)(__FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE | __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWBGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS),
                 bNameValid = 1,
                 bstrName = name,
                 bLocalizedNameValid = 1,
@@ -89,9 +99,9 @@ namespace VSRAD.Package.DebugVisualizer
                     bFontFlagsValid = 1,
                     dwFontFlags = 0,
                     bForegroundValid = 1,
-                    crForeground = (uint)__VSCOLORTYPE.CT_RAW | (uint)fgRaw,
+                    crForeground = (uint)__VSCOLORTYPE.CT_RAW | fgRaw,
                     bBackgroundValid = 1,
-                    crBackground = (uint)__VSCOLORTYPE.CT_RAW | (uint)bgRaw,
+                    crBackground = (uint)__VSCOLORTYPE.CT_RAW | bgRaw,
                 }
             };
         }

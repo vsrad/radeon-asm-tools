@@ -12,12 +12,12 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly uint _laneDividerWidth;
         private readonly uint _hiddenColumnSeparatorWidth;
 
-        private readonly ColumnFontAndColor _fontAndColor;
+        private readonly DataFontAndColor _fontAndColor;
 
         private readonly bool[] _visibility = new bool[VisualizerTable.DataColumnCount];
-        private readonly ColumnHighlightColor[] _highlight = new ColumnHighlightColor[VisualizerTable.DataColumnCount];
+        private readonly DataHighlightColor[] _highlight = new DataHighlightColor[VisualizerTable.DataColumnCount];
 
-        public ColumnStyling(Options.VisualizerOptions options, Options.VisualizerAppearance appearance, ColumnStylingOptions styling, ColumnFontAndColor fontAndColor)
+        public ColumnStyling(Options.VisualizerOptions options, Options.VisualizerAppearance appearance, ColumnStylingOptions styling, DataFontAndColor fontAndColor)
         {
             _laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
             _laneDividerWidth = (uint)appearance.LaneDivierWidth;

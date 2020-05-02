@@ -8,21 +8,21 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
     public sealed class SubgroupContextMenu : IContextMenu
     {
         public delegate void ColumnSelectorChanged(string newSelector);
-        public delegate void ColorClicked(int columnIndex, ColumnHighlightColor? color);
+        public delegate void ColumnColorChanged(int columnIndex, DataHighlightColor color);
 
         private readonly ColumnSelectorChanged _selectorChanged;
-        private readonly ColorClicked _colorClicked;
+        private readonly ColumnColorChanged _colorChanged;
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
         private int _clickedColumnIndex;
         private int _targetColumnIndex;
         private int _columnRelStart;
 
-        public SubgroupContextMenu(VisualizerTable table, ColumnSelectorChanged selectorChanged, ColorClicked colorClicked)
+        public SubgroupContextMenu(VisualizerTable table, ColumnSelectorChanged selectorChanged, ColumnColorChanged colorChanged)
         {
             _table = table;
             _selectorChanged = selectorChanged;
-            _colorClicked = colorClicked;
+            _colorChanged = colorChanged;
             _menu = PrepareContextMenu();
         }
 
@@ -49,10 +49,10 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var highlightThis = new MenuItem("Highlight", new[]
             {
-                new MenuItem("Green", (s, e) => _colorClicked(_clickedColumnIndex, ColumnHighlightColor.Green)),
-                new MenuItem("Red", (s, e) => _colorClicked(_clickedColumnIndex, ColumnHighlightColor.Red)),
-                new MenuItem("Blue", (s, e) => _colorClicked(_clickedColumnIndex, ColumnHighlightColor.Blue)),
-                new MenuItem("None", (s, e) => _colorClicked(_clickedColumnIndex, null))
+                new MenuItem("Green", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnGreen)),
+                new MenuItem("Red", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnRed)),
+                new MenuItem("Blue", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnBlue)),
+                new MenuItem("None", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.None))
             });
 
             var fitWidth = new MenuItem("Fit Width", (s, e) =>

@@ -11,7 +11,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public interface IFontAndColorProvider
     {
-        (Color fg, Color bg, bool bold) GetHighlightInfo(ColumnHighlightColor highlight);
+        (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight);
     }
 
     sealed class FontAndColorProvider : IFontAndColorProvider
@@ -23,13 +23,13 @@ namespace VSRAD.Package.DebugVisualizer
             | __FCSTORAGEFLAGS.FCSF_PROPAGATECHANGES
             | __FCSTORAGEFLAGS.FCSF_NOAUTOCOLORS);
 
-        private ColumnFontAndColor _cachedColumnFontAndColor;
-        public ColumnFontAndColor ColumnFontAndColor
+        private DataFontAndColor _cachedColumnFontAndColor;
+        public DataFontAndColor ColumnFontAndColor
         {
             get
             {
                 if (_cachedColumnFontAndColor == null)
-                    _cachedColumnFontAndColor = new ColumnFontAndColor(this);
+                    _cachedColumnFontAndColor = new DataFontAndColor(this);
                 return _cachedColumnFontAndColor;
             }
         }
@@ -50,14 +50,14 @@ namespace VSRAD.Package.DebugVisualizer
             ErrorHandler.ThrowOnFailure(_storage.OpenCategory(Constants.FontAndColorsCategoryGuid, _storageFlags));
         }
 
-        public (Color fg, Color bg, bool bold) GetHighlightInfo(ColumnHighlightColor highlight)
+        public (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             var colorInfo = new ColorableItemInfo[1];
             ErrorHandler.ThrowOnFailure(_storage.GetItem(highlight.GetDisplayName(), colorInfo));
 
-            var fg = ColorTranslator.FromWin32((int)colorInfo[0].crForeground);
-            var bg = ColorTranslator.FromWin32((int)colorInfo[0].crBackground);
+            var fg = FontAndColorService.ReadVsColor(colorInfo[0].crForeground);
+            var bg = FontAndColorService.ReadVsColor(colorInfo[0].crBackground);
             var isBold = ((FONTFLAGS)colorInfo[0].dwFontFlags & FONTFLAGS.FF_BOLD) == FONTFLAGS.FF_BOLD;
 
             return (fg, bg, isBold);

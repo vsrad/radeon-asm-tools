@@ -31,10 +31,10 @@ namespace VSRAD.Package.DebugVisualizer.Tests
         {
             var highlightRegions = new List<ColumnHighlightRegion>()
             {
-                new ColumnHighlightRegion() { Selector = "0-5:10", Color = ColumnHighlightColor.Blue },
-                new ColumnHighlightRegion() { Selector = "15:17:22-25", Color = ColumnHighlightColor.Green },
-                new ColumnHighlightRegion() { Selector = "30-45:51-55", Color = ColumnHighlightColor.Red },
-                new ColumnHighlightRegion() { Selector = "66-69", Color = ColumnHighlightColor.Blue }
+                new ColumnHighlightRegion() { Selector = "0-5:10", Color = DataHighlightColor.ColumnBlue },
+                new ColumnHighlightRegion() { Selector = "15:17:22-25", Color = DataHighlightColor.ColumnGreen },
+                new ColumnHighlightRegion() { Selector = "30-45:51-55", Color = DataHighlightColor.ColumnRed },
+                new ColumnHighlightRegion() { Selector = "66-69", Color = DataHighlightColor.ColumnBlue }
             };
             var selectedIndexes = new List<int>() { 3, 10, 16, 23, 24, 33, 37, 42, 52, 66, 67, 68, 69 };
             ColumnSelector.RemoveIndexes(selectedIndexes, highlightRegions);

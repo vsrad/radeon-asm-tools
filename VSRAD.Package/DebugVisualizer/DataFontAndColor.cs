@@ -3,15 +3,15 @@ using System.Drawing;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public sealed class ColumnFontAndColor
+    public sealed class DataFontAndColor
     {
         public Color[] HighlightForeground { get; }
         public Color[] HighlightBackground { get; }
         public bool[] HighlightBold { get; }
 
-        public ColumnFontAndColor(IFontAndColorProvider provider)
+        public DataFontAndColor(IFontAndColorProvider provider)
         {
-            var colors = (ColumnHighlightColor[])Enum.GetValues(typeof(ColumnHighlightColor));
+            var colors = (DataHighlightColor[])Enum.GetValues(typeof(DataHighlightColor));
 
             HighlightForeground = new Color[colors.Length];
             HighlightBackground = new Color[colors.Length];

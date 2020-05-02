@@ -9,18 +9,25 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private static void GreyOutRow(DataGridViewRow row) => row.DefaultCellStyle.BackColor = Color.LightGray;
 
-        private static void RestoreRowDefaultColor(DataGridViewRow row) => row.DefaultCellStyle.BackColor = Color.Empty;
-
-        public static void ChangeRowFontColor(IEnumerable<DataGridViewRow> rows, Color color)
+        public static void ChangeRowHighlight(DataFontAndColor colors, IEnumerable<DataGridViewRow> rows, DataHighlightColor color)
         {
-            foreach (var row in rows)
-                row.DefaultCellStyle.ForeColor = color;
+            if (color != DataHighlightColor.None)
+                foreach (var row in rows)
+                {
+                    row.DefaultCellStyle.ForeColor = colors.HighlightForeground[(int)color];
+                    row.DefaultCellStyle.BackColor = colors.HighlightBackground[(int)color];
+                }
+            else
+                ResetRowStyling(rows);
         }
 
         public static void ResetRowStyling(IEnumerable<DataGridViewRow> rows)
         {
             foreach (var row in rows)
-                RestoreRowDefaultColor(row);
+            {
+                row.DefaultCellStyle.ForeColor = Color.Empty;
+                row.DefaultCellStyle.BackColor = Color.Empty;
+            }
         }
 
         public static void GreyOutUnevaluatedWatches(ReadOnlyCollection<string> watches, IEnumerable<DataGridViewRow> rows)

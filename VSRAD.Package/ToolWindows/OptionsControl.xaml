@@ -14,7 +14,7 @@
         <ResourceDictionary>
             <ObjectDataProvider x:Key="VisualizerColorValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="viz:ColumnHighlightColor"/>
+                    <x:Type TypeName="viz:DataHighlightColor"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <!--
