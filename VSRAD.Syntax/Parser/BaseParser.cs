@@ -23,6 +23,7 @@ namespace VSRAD.Syntax.Parser
         IEnumerable<FunctionBlock> GetFunctionBlocks();
         IEnumerable<IBaseToken> GetLabelTokens();
         IEnumerable<IBaseToken> GetFunctionTokens();
+        IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint);
     }
 
     internal class BaseParser : IBaseParser
@@ -324,6 +325,23 @@ namespace VSRAD.Syntax.Parser
                     currentRootBlock.Tokens.Add(labelToken);
                 }
             }
+        }
+
+        public IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint)
+        {
+            var currentBlock = GetBlockBySnapshotPoint(snapshotPoint);
+            if (currentBlock == null)
+                return Enumerable.Empty<IBaseToken>();
+
+            var tokens = new List<IBaseToken>();
+            while (currentBlock != null)
+            {
+                tokens.AddRange(currentBlock.Tokens.Where(t => t.TokenType != TokenType.Comment));
+                currentBlock = currentBlock.Parrent;
+            }
+
+            tokens.AddRange(GetFunctionTokens());
+            return tokens;
         }
 
         public IEnumerable<IBaseToken> GetLabelTokens()
