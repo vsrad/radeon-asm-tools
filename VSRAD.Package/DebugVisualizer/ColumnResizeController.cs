@@ -33,6 +33,12 @@ namespace VSRAD.Package.DebugVisualizer
             _overrideNativeColumnWidthChangeHandler = true;
         }
 
+        public int GetTotalWidthInBulkColumnWidthChange()
+        {
+            _invalidateCachedColumnsWidths();
+            return _table.Columns.GetColumnsWidth(DataGridViewElementStates.Visible);
+        }
+
         public void CommitBulkColumnWidthChange(int? setScrollingOffsetTo = null)
         {
             _invalidateCachedColumnsWidths();
