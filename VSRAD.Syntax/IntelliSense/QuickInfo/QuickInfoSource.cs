@@ -12,7 +12,7 @@ using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Peek.DefinitionService;
 
-namespace VSRAD.Syntax.QuickInfo
+namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {

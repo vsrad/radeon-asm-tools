@@ -11,16 +11,20 @@ namespace VSRAD.Syntax.Options
     [Export(typeof(InstructionListManager))]
     internal sealed class InstructionListManager
     {
-        public delegate void ErrorsUpdateDelegate(IReadOnlyList<string> instructions);
-        public event ErrorsUpdateDelegate InstructionUpdated;
+        public delegate void InstructionsUpdateDelegate(IReadOnlyList<string> instructions);
+        public event InstructionsUpdateDelegate InstructionUpdated;
 
         public List<string> InstructionList { get; }
 
         [ImportingConstructor]
-        public InstructionListManager()
+        public InstructionListManager(OptionsEventProvider optionsEventProvider)
         {
             InstructionList = new List<string>();
+            optionsEventProvider.OptionsUpdated += InstructionPathsUpdated;
         }
+
+        private void InstructionPathsUpdated(OptionsEventProvider provider) =>
+            Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
 
         public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {

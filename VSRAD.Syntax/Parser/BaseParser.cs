@@ -23,6 +23,7 @@ namespace VSRAD.Syntax.Parser
         IEnumerable<FunctionBlock> GetFunctionBlocks();
         IEnumerable<IBaseToken> GetLabelTokens();
         IEnumerable<IBaseToken> GetFunctionTokens();
+        IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint, TokenType tokenType);
     }
 
     internal class BaseParser : IBaseParser
@@ -172,7 +173,11 @@ namespace VSRAD.Syntax.Parser
                 {
                     currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, currentFunctionSpaceStart));
                     startFindManyLineDeclorationEnd = false;
-                    ((List<IBaseToken>)(currentTreeBlock as FunctionBlock)?.Tokens)?.AddRange(argumentTokens);
+                    if (currentTreeBlock as FunctionBlock != null)
+                        foreach (var argToken in argumentTokens)
+                        {
+                            ((FunctionBlock)currentTreeBlock).Tokens.Add(argToken);
+                        }
 
                     var functionArgsText = text.Substring(0, text.LastIndexOf(parserManager.DeclarationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
@@ -324,6 +329,25 @@ namespace VSRAD.Syntax.Parser
                     currentRootBlock.Tokens.Add(labelToken);
                 }
             }
+        }
+
+        public IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint, TokenType tokenType)
+        {
+            var currentBlock = GetBlockBySnapshotPoint(snapshotPoint);
+            if (currentBlock == null)
+                return Enumerable.Empty<IBaseToken>();
+
+            var tokens = new List<IBaseToken>();
+            if (tokenType != TokenType.Function)
+                while (currentBlock != null)
+                {
+                    tokens.AddRange(currentBlock.Tokens.Where(t => t.TokenType == tokenType));
+                    currentBlock = currentBlock.Parrent;
+                }
+            else
+                tokens.AddRange(GetFunctionTokens());
+
+            return tokens;
         }
 
         public IEnumerable<IBaseToken> GetLabelTokens()

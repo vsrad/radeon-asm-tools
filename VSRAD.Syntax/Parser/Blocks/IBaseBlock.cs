@@ -11,7 +11,7 @@ namespace VSRAD.Syntax.Parser.Blocks
         SnapshotSpan BlockSpan { get; }
         SnapshotSpan BlockActualSpan { get; }
         IList<IBaseBlock> Children { get; }
-        IList<IBaseToken> Tokens { get; }
+        ISet<IBaseToken> Tokens { get; }
         IBaseBlock Parrent { get; }
         BlockType BlockType { get; }
 

@@ -8,7 +8,6 @@ namespace VSRAD.Syntax.Parser.Blocks
     public class FunctionBlock : BaseBlock
     {
         public IBaseToken FunctionToken { get; }
-        public override IList<IBaseToken> Tokens => base.Tokens;
 
         public FunctionBlock(
             IBaseBlock parrent,

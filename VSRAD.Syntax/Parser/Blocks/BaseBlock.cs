@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Parser.Blocks
             this.BlockStart = blockStart;
             this.BlockActualStart = (blockActualStart != default) ? blockActualStart : blockStart;
             this.Children = new List<IBaseBlock>();
-            this.Tokens = new List<IBaseToken>();
+            this.Tokens = new HashSet<IBaseToken>();
             this.SpaceStart = spaceStart;
         }
 
@@ -22,7 +22,7 @@ namespace VSRAD.Syntax.Parser.Blocks
         public int SpaceStart { get; protected set; }
         public SnapshotSpan BlockSpan { get; protected set; }
         public IList<IBaseBlock> Children { get; }
-        public virtual IList<IBaseToken> Tokens { get; }
+        public ISet<IBaseToken> Tokens { get; }
         public IBaseBlock Parrent { get; }
         public BlockType BlockType { get; private set; }
 

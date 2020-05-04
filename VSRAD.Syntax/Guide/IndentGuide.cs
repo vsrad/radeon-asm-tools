@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.Guide
 {
@@ -23,8 +24,9 @@ namespace VSRAD.Syntax.Guide
         private readonly Canvas _canvas;
         private IBaseParser _currentParser;
         private IList<Line> _currentAdornments;
+        private bool _isEnables;
 
-        public IndentGuide(IWpfTextView textView, IParserManager parserManager)
+        public IndentGuide(IWpfTextView textView, IParserManager parserManager, OptionsEventProvider optionsProvider)
         {
             _wpfTextView = textView ?? throw new NullReferenceException();
             _parserManager = parserManager ?? throw new NullReferenceException();
@@ -37,10 +39,18 @@ namespace VSRAD.Syntax.Guide
             };
 
             _layer = _wpfTextView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
+            _isEnables = optionsProvider.IsEnabledIndentGuides;
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
             _wpfTextView.LayoutChanged += async (sender, args) => await UpdateIndentGuidesAsync();
             _parserManager.ParserUpdatedEvent += async (sender, args) => await UpdateIndentGuidesAsync();
+            optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
+        }
+
+        private void IndentGuideOptionsUpdated(OptionsEventProvider sender)
+        {
+            _isEnables = sender.IsEnabledIndentGuides;
+            ThreadHelper.JoinableTaskFactory.RunAsync(UpdateIndentGuidesAsync);
         }
 
         private void CanvasRemoved(object tag, UIElement element)
@@ -63,7 +73,7 @@ namespace VSRAD.Syntax.Guide
         {
             try
             {
-                if (Package.Instance == null || !Package.Instance.OptionPage.IsEnabledIndentGuides)
+                if (!_isEnables)
                 {
                     await CleanupIndentGuidesAsync();
                     return;

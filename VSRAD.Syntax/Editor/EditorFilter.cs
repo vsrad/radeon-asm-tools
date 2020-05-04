@@ -5,6 +5,7 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text.Editor;
+using VSRAD.Syntax.IntelliSense.Completion;
 
 namespace VSRAD.Syntax.Editor
 {
@@ -12,13 +13,15 @@ namespace VSRAD.Syntax.Editor
     {
         private readonly IWpfTextView _wpfTextView;
         private readonly DefinitionService _definitionService;
+        private readonly CompletionService _completionService;
 
         public IOleCommandTarget Next { get; set; }
 
-        public EditorFilter(DefinitionService definitionService, IWpfTextView wpfTextView)
+        public EditorFilter(DefinitionService definitionService, CompletionService completionService, IWpfTextView wpfTextView)
         {
             this._wpfTextView = wpfTextView;
             this._definitionService = definitionService;
+            this._completionService = completionService;
         }
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
@@ -112,6 +115,19 @@ namespace VSRAD.Syntax.Editor
                             return VSConstants.S_OK;
 
                         break;
+                    case VSConstants.VSStd2KCmdID.TYPECHAR:
+                        _completionService.TriggerCompletionSession();
+                        break;
+                    case VSConstants.VSStd2KCmdID.BACKSPACE:
+                    case VSConstants.VSStd2KCmdID.DELETE:
+                        _completionService.TryFilterSession();
+                        break;
+                    case VSConstants.VSStd2KCmdID.RETURN:
+                    case VSConstants.VSStd2KCmdID.TAB:
+                        if (_completionService.TryCommitSession())
+                            return VSConstants.S_OK;
+                        break;
+
                 }
             }
             else if (pguidCmdGroup == VSConstants.VsStd12)
