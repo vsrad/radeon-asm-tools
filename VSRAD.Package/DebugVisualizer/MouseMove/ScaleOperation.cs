@@ -45,6 +45,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _firstVisibleIndex = _table.DataColumns.First(x => x.Visible).Index;
             _lastVisibleIndex = _table.DataColumns.Last(c => c.Visible).Index;
             _targetColumn = _table.Columns[index];
+            _currentWidth = _table.ColumnWidth;
 
             _debugEdge = DebugEdgePosition();
 
@@ -72,7 +73,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             }
             var x = Cursor.Position.X;
             var diff = x - _lastX;
-            ScaleDataColumns(diff);
+            if (_targetColumn.Index == _firstVisibleIndex)
+                ScaleDataColumnsWithFirstVisibleAsTarget(diff);
+            else
+                ScaleDataColumns(diff);
             _lastX = x;
             _operationStarted = true;
             return true;
@@ -114,6 +118,31 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             {
                 System.Diagnostics.Debug.Print($"edge change: {_debugEdge} -> {edge}");
                 _debugEdge = edge;
+            }
+        }
+
+        private void ScaleDataColumnsWithFirstVisibleAsTarget(int diff)
+        {
+            var width = _currentWidth + diff;
+            if (diff == 0 || width < 30)
+                return;
+            if (_table.Columns[_firstVisibleIndex].Width == _currentWidth)
+            {
+                ScaleDataColumns(diff);
+                return;
+            }
+            else
+            {
+                _table.Columns[_firstVisibleIndex].Width += diff;
+                if (diff > 0)
+                {
+                    for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
+                    {
+                        if (i == _firstVisibleIndex) continue;
+                        _table.Columns[i].Width = width;
+                    }
+                    _currentWidth = width;
+                }
             }
         }
 
