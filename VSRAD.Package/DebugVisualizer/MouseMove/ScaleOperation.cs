@@ -36,11 +36,15 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _lastX = Cursor.Position.X;
             _operationStarted = false;
 
+            var index = (Math.Abs(e.X - hit.ColumnX) <= _maxDistanceFromDivider)
+                ? hit.ColumnIndex - 1
+                : hit.ColumnIndex;
+
             _tableDataAreaWidth = _table.GetRowDisplayRectangle(1, false).Width - _table.RowHeadersWidth;
-            _visibleColumnsToLeft = _table.DataColumns.Count(c => c.Visible && c.Index < hit.ColumnIndex);
+            _visibleColumnsToLeft = _table.DataColumns.Count(c => c.Visible && c.Index < index);
             _firstVisibleIndex = _table.DataColumns.First(x => x.Visible).Index;
             _lastVisibleIndex = _table.DataColumns.Last(c => c.Visible).Index;
-            _targetColumn = _table.Columns[hit.ColumnIndex];
+            _targetColumn = _table.Columns[index];
 
             _debugEdge = DebugEdgePosition();
 
@@ -49,9 +53,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, VisualizerTable table, int x) =>
             hit.Type == DataGridViewHitTestType.ColumnHeader &&
-            Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider &&
-            hit.ColumnIndex > table.DataColumns.First(c => c.Visible).Index && // can't scale the first visible column
-            hit.ColumnIndex < table.DataColumns.Last(c => c.Visible).Index; // can't scale the last visible column
+            (Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider ||
+            Math.Abs(x - hit.ColumnX - table.ColumnWidth) <= _maxDistanceFromDivider) &&
+            hit.ColumnIndex > table.DataColumns.First(c => c.Visible).Index; // can't scale the first visible column
 
         public bool HandleMouseMove(MouseEventArgs e)
         {
