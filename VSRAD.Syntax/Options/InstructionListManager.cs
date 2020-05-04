@@ -24,25 +24,40 @@ namespace VSRAD.Syntax.Options
         }
 
         private void InstructionPathsUpdated(OptionsEventProvider provider) =>
-            Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromFilesAsync(provider.InstructionsPaths));
+            Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
 
-        private Task LoadInstructionsFromFilesAsync(string pathsString)
+        public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {
-            if (string.IsNullOrWhiteSpace(pathsString))
+            if (string.IsNullOrWhiteSpace(dirPathsString))
                 return Task.CompletedTask;
 
-            var paths = pathsString.Split(';')
+            var paths = dirPathsString.Split(';')
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
             InstructionList.Clear();
             foreach (var path in paths)
             {
-                LoadInstructionsFromFile(path);
+                LoadInstructionsFromDirectory(path);
             }
 
             InstructionUpdated?.Invoke(InstructionList);
             return Task.CompletedTask;
+        }
+
+        private void LoadInstructionsFromDirectory(string path)
+        {
+            try
+            {
+                foreach (var filepath in Directory.EnumerateFiles(path))
+                {
+                    if (Path.GetExtension(filepath) == Constants.InstructionsFileExtension)
+                        LoadInstructionsFromFile(filepath);
+                }
+            }catch (Exception e)
+            {
+                Error.ShowError(e, "instrunction folder paths");
+            }
         }
 
         private void LoadInstructionsFromFile(string path)

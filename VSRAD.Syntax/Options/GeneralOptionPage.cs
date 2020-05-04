@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using VSRAD.Syntax.Helpers;
@@ -19,7 +21,7 @@ namespace VSRAD.Syntax.Options
             IsEnabledIndentGuides = true;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
-            InstructionsPaths = "";
+            InstructionsPaths = GetDefaultInstructionDirectoryPath();
             AutocompleteInstructions = false;
             AutocompleteFunctions = false;
             AutocompleteLabels = false;
@@ -41,6 +43,12 @@ namespace VSRAD.Syntax.Options
 
         public void OptionsUpdatedInvoke() =>
             OptionsUpdated?.Invoke(this);
+
+        private static string GetDefaultInstructionDirectoryPath()
+        {
+            var assemblyFolder = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
+            return Path.GetDirectoryName(assemblyFolder);
+        }
     }
 
     public class GeneralOptionPage : BaseOptionPage
@@ -96,10 +104,10 @@ namespace VSRAD.Syntax.Options
             set { if (ValidateExtensions(value)) _optionsEventProvider.Asm2FileExtensions = value; }
         }
 
-        [Category("Syntax instruction file paths")]
-        [DisplayName("Instruction file paths")]
-        [Description("List of files separated by semicolon wit assembly instructions")]
-        [Editor(typeof(FilePathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
+        [Category("Syntax instruction folder paths")]
+        [DisplayName("Instruction folder paths")]
+        [Description("List of folder path separated by semicolon wit assembly instructions with .radasm file extension")]
+        [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
         public string InstructionsPaths
         {
             get { return _optionsEventProvider.InstructionsPaths; }

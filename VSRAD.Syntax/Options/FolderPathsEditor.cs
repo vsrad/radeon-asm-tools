@@ -1,6 +1,6 @@
 ﻿namespace VSRAD.Syntax.Options
 {
-    public class FilePathsEditor : System.Windows.Forms.Design.FileNameEditor
+    public class FolderPathsEditor : System.Windows.Forms.Design.FolderNameEditor
     {
         public override object EditValue(System.ComponentModel.ITypeDescriptorContext context, System.IServiceProvider provider, object value)
         {
