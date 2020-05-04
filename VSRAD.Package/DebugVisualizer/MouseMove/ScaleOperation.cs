@@ -17,6 +17,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private int _visibleColumnsToLeft;
         private int _firstVisibleIndex;
         private int _lastVisibleIndex;
+        private int _currentWidth;
 
         private DataGridViewColumn _targetColumn;
 
@@ -35,7 +36,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _lastX = Cursor.Position.X;
             _operationStarted = false;
 
-            _tableDataAreaWidth = _table.GetRowDisplayRectangle(0, false).Width - _table.RowHeadersWidth;
+            _tableDataAreaWidth = _table.GetRowDisplayRectangle(1, false).Width - _table.RowHeadersWidth;
             _visibleColumnsToLeft = _table.DataColumns.Count(c => c.Visible && c.Index < hit.ColumnIndex);
             _firstVisibleIndex = _table.DataColumns.First(x => x.Visible).Index;
             _lastVisibleIndex = _table.DataColumns.Last(c => c.Visible).Index;
@@ -62,7 +63,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 //if (!_table.Columns[_lastVisibleColumn].Displayed)
                 //    _table.Columns[_lastVisibleColumn].Width = _currentWidth;
                 //_table.ColumnResizeController.CommitBulkColumnWidthChange();
-                //_table.ColumnWidth = _currentWidth;
+                _table.ColumnWidth = _currentWidth;
                 return false;
             }
             var x = Cursor.Position.X;
@@ -99,6 +100,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 _table.Columns[_lastVisibleIndex].Width += scrollingOffset - maxScrollingOffset;
             else
                 _table.Columns[_lastVisibleIndex].Width += diff;
+
+            _currentWidth = width;
 
             _table.ColumnResizeController.CommitBulkColumnWidthChange(scrollingOffset);
 
