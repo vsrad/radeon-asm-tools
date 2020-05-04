@@ -29,5 +29,17 @@ namespace VSRAD.Syntax.Parser.Tokens
             this.TokenType = tokenType;
             this.TokenName = symbolSpan.GetText();
         }
+
+        public override int GetHashCode() =>
+            TokenName.GetHashCode() ^ TokenType.GetHashCode();
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(obj, this)) 
+                return true;
+            return (BaseToken)obj != null
+                && ((BaseToken)obj).TokenName == TokenName
+                && ((BaseToken)obj).TokenType == TokenType;
+        }
     }
 }

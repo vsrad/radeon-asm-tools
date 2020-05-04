@@ -173,7 +173,11 @@ namespace VSRAD.Syntax.Parser
                 {
                     currentTreeBlock = currentTreeBlock.AddChildren(new FunctionBlock(currentTreeBlock, new SnapshotPoint(currentSnapshot, indexStartLine + text.Length), currentFunctionToken, currentFunctionSpaceStart));
                     startFindManyLineDeclorationEnd = false;
-                    ((List<IBaseToken>)(currentTreeBlock as FunctionBlock)?.Tokens)?.AddRange(argumentTokens);
+                    if (currentTreeBlock as FunctionBlock != null)
+                        foreach (var argToken in argumentTokens)
+                        {
+                            ((FunctionBlock)currentTreeBlock).Tokens.Add(argToken);
+                        }
 
                     var functionArgsText = text.Substring(0, text.LastIndexOf(parserManager.DeclarationEndPattern, StringComparison.Ordinal)).Split(new char[] { ' ', '\t', ',', '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var functionArgText in functionArgsText)
