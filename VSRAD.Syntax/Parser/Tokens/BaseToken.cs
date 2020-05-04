@@ -35,10 +35,12 @@ namespace VSRAD.Syntax.Parser.Tokens
 
         public override bool Equals(object obj)
         {
-            if (ReferenceEquals(obj, this)) 
+            if (base.Equals(obj) || ReferenceEquals(obj, this))
                 return true;
-            return (BaseToken)obj != null
-                && ((BaseToken)obj).TokenName == TokenName
+            if (obj as BaseToken == null)
+                return false;
+
+            return ((BaseToken)obj).TokenName == TokenName
                 && ((BaseToken)obj).TokenType == TokenType;
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using System;
 using System.Collections.Generic;
@@ -18,35 +19,43 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         private IEnumerable<VsCompletion> _instructionCompletions;
         private bool _isDisposed;
 
+        private bool _autocompleteInstructions;
+        private bool _autocompleteFunctions;
+        private bool _autocompleteLabels;
+        private bool _autocompleteVariables;
+
         public CompletionSource(
             IGlyphService glyphService,
             ITextStructureNavigator textStructureNavigator,
-            InstructionListManager instructionListManager)
+            InstructionListManager instructionListManager,
+            OptionsEventProvider optionsProvider)
         {
             _textStructureNavigator = textStructureNavigator;
             _glyphService = glyphService;
 
-            instructionListManager.InstructionUpdated += InstructionUpdatedEvent;
-            UpdateInstructionCompletions(instructionListManager.InstructionList);
+            instructionListManager.InstructionUpdated += InstructionUpdated;
+            optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
+
+            InstructionUpdated(instructionListManager.InstructionList);
+            DisplayOptionsUpdated(optionsProvider);
         }
 
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
         {
             try
             {
-                completionSets.Add(new CompletionSet(
-                    "RadInstructions",    //the non-localized title of the tab
-                    "RadInstructions",    //the display title of the tab
-                    FindTokenSpanAtPosition(session),
-                    _instructionCompletions,
-                    null));
-
-                completionSets.Add(new CompletionSet(
-                    "RadTokens",    //the non-localized title of the tab
-                    "RadTokens",    //the display title of the tab
-                    FindTokenSpanAtPosition(session),
-                    GetScopedCompletions(session),
-                    null));
+                if (_autocompleteInstructions)
+                    AddCompletionSet(completionSets, "RadInstructions", FindTokenSpanAtPosition(session), _instructionCompletions);
+                if (_autocompleteFunctions)
+                    AddCompletionSet(completionSets, "RadFunctions", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.Function));
+                if (_autocompleteLabels)
+                    AddCompletionSet(completionSets, "RadLables", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.Label));
+                if (_autocompleteVariables)
+                {
+                    AddCompletionSet(completionSets, "RadArguments", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.Argument));
+                    AddCompletionSet(completionSets, "RadGlobalVariable", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.GlobalVariable));
+                    AddCompletionSet(completionSets, "RadLocalVariable", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.LocalVariable));
+                }
             }
             catch (Exception e)
             {
@@ -63,6 +72,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             }
         }
 
+        private static void AddCompletionSet(IList<CompletionSet> completionSets, string displayName, ITrackingSpan applicableTo, IEnumerable<VsCompletion> completions) =>
+            completionSets.Add(new CompletionSet(displayName, displayName, applicableTo, completions, null));
+
         private ITrackingSpan FindTokenSpanAtPosition(ICompletionSession session)
         {
             var currentPoint = session.TextView.Caret.Position.BufferPosition;
@@ -74,54 +86,37 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             return currentPoint.Snapshot.CreateTrackingSpan(extent.Span, SpanTrackingMode.EdgeInclusive);
         }
 
-        private IEnumerable<VsCompletion> GetScopedCompletions(ICompletionSession session)
+        private IEnumerable<VsCompletion> GetScopedCompletions(ICompletionSession session, TokenType tokenType)
         {
-            var scopedCompletions = new List<VsCompletion>();
+            var scopedCompletions = Enumerable.Empty<VsCompletion>();
 
             var parserManager = session.TextView.GetParserManager();
             var parser = parserManager?.ActualParser;
             if (parser == null)
                 return scopedCompletions;
 
-            var scopedTokens = parser
-                .GetScopedTokens(session.TextView.Caret.Position.BufferPosition)
-                .OrderBy(t => t.TokenName);
-            foreach (var token in scopedTokens)
-            {
-                switch (token.TokenType)
-                {
-                    case TokenType.Argument:
-                        scopedCompletions.Add(InitializeCompletion(token.TokenName, "argument", StandardGlyphGroup.GlyphGroupVariable));
-                        break;
-                    case TokenType.Function:
-                        scopedCompletions.Add(InitializeCompletion(token.TokenName, "function", StandardGlyphGroup.GlyphGroupMethod));
-                        break;
-                    case TokenType.Label:
-                        scopedCompletions.Add(InitializeCompletion(token.TokenName, "label", StandardGlyphGroup.GlyphGroupNamespace));
-                        break;
-                    case TokenType.GlobalVariable:
-                        scopedCompletions.Add(InitializeCompletion(token.TokenName, "global variable", StandardGlyphGroup.GlyphGroupVariable));
-                        break;
-                    case TokenType.LocalVariable:
-                        scopedCompletions.Add(InitializeCompletion(token.TokenName, "local variable", StandardGlyphGroup.GlyphGroupVariable));
-                        break;
-                    default:
-                        scopedCompletions.Add(InitializeCompletion(token.TokenName, "unknown", StandardGlyphGroup.GlyphGroupUnknown));
-                        break;
-                }
-            }
+            scopedCompletions = parser
+                .GetScopedTokens(session.TextView.Caret.Position.BufferPosition, tokenType)
+                .OrderBy(t => t.TokenName)
+                .Select(t => InitializeCompletion(t.TokenName, tokenType.GetName(), tokenType.GetGlyphGroup()));
+
             return scopedCompletions;
         }
 
-        private void UpdateInstructionCompletions(IEnumerable<string> instructions)
+        private void InstructionUpdated(IReadOnlyList<string> instructions)
         {
             _instructionCompletions = instructions
                 .OrderBy(i => i)
                 .Select(i => InitializeCompletion(i, "instruction", StandardGlyphGroup.GlyphGroupField));
         }
 
-        private void InstructionUpdatedEvent(IReadOnlyList<string> instructions) =>
-            UpdateInstructionCompletions(instructions);
+        private void DisplayOptionsUpdated(OptionsEventProvider options)
+        {
+            _autocompleteInstructions = options.AutocompleteInstructions;
+            _autocompleteFunctions = options.AutocompleteFunctions;
+            _autocompleteLabels = options.AutocompleteLabels;
+            _autocompleteVariables = options.AutocompleteVariables;
+        }
 
         private VsCompletion InitializeCompletion(string text, string type, StandardGlyphGroup group) =>
             new VsCompletion(text, text, $"({type}) {text}", _glyphService.GetGlyph(group, StandardGlyphItem.GlyphItemPublic), type);

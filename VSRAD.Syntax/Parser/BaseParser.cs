@@ -23,7 +23,7 @@ namespace VSRAD.Syntax.Parser
         IEnumerable<FunctionBlock> GetFunctionBlocks();
         IEnumerable<IBaseToken> GetLabelTokens();
         IEnumerable<IBaseToken> GetFunctionTokens();
-        IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint);
+        IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint, TokenType tokenType);
     }
 
     internal class BaseParser : IBaseParser
@@ -331,20 +331,22 @@ namespace VSRAD.Syntax.Parser
             }
         }
 
-        public IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint)
+        public IEnumerable<IBaseToken> GetScopedTokens(SnapshotPoint snapshotPoint, TokenType tokenType)
         {
             var currentBlock = GetBlockBySnapshotPoint(snapshotPoint);
             if (currentBlock == null)
                 return Enumerable.Empty<IBaseToken>();
 
             var tokens = new List<IBaseToken>();
-            while (currentBlock != null)
-            {
-                tokens.AddRange(currentBlock.Tokens.Where(t => t.TokenType != TokenType.Comment));
-                currentBlock = currentBlock.Parrent;
-            }
+            if (tokenType != TokenType.Function)
+                while (currentBlock != null)
+                {
+                    tokens.AddRange(currentBlock.Tokens.Where(t => t.TokenType == tokenType));
+                    currentBlock = currentBlock.Parrent;
+                }
+            else
+                tokens.AddRange(GetFunctionTokens());
 
-            tokens.AddRange(GetFunctionTokens());
             return tokens;
         }
 

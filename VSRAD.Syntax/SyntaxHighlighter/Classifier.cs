@@ -1,5 +1,4 @@
 ﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
@@ -163,7 +162,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 var parser = actualParser as IBaseParser;
                 _multiLineComment = parser.ListBlock.Where(b => b.BlockType == BlockType.Comment);
-                ClassificationChanged.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, 0)));
+                ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, 0)));
             }
             catch (Exception e)
             {
@@ -174,7 +173,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private void InstructionUpdatedEvent(IReadOnlyList<string> instructions)
         {
             _instructions = instructions;
-            ClassificationChanged.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, _textBuffer.CurrentSnapshot.Length)));
+            ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, _textBuffer.CurrentSnapshot.Length)));
         }
 
         private ClassificationSpan AddClassificationSpan(string classificationTypeName, ITextSnapshot snapshot, int start, int length, IList<ClassificationSpan> spans)

@@ -17,16 +17,19 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         private readonly IGlyphService _glyphService;
         private readonly ITextStructureNavigatorSelectorService _textStructureNavigatorSelector;
         private readonly InstructionListManager _instructionListManager;
+        private readonly OptionsEventProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public CompletionSourceProvider(
             IGlyphService glyphService, 
             ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService, 
+            OptionsEventProvider optionsEventProvider, 
             InstructionListManager instructionListManager)
         {
             _glyphService = glyphService;
             _textStructureNavigatorSelector = textStructureNavigatorSelectorService;
             _instructionListManager = instructionListManager;
+            _optionsEventProvider = optionsEventProvider;
         }
 
         public ICompletionSource TryCreateCompletionSource(ITextBuffer textBuffer)
@@ -35,7 +38,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 throw new ArgumentNullException(nameof(textBuffer));
 
             var textStructureNavigator = _textStructureNavigatorSelector.GetTextStructureNavigator(textBuffer);
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new CompletionSource(_glyphService, textStructureNavigator, _instructionListManager));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new CompletionSource(_glyphService, textStructureNavigator, _instructionListManager, _optionsEventProvider));
         }
     }
 }

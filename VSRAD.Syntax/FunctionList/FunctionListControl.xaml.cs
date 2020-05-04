@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -18,19 +19,24 @@ namespace VSRAD.Syntax.FunctionList
     {
         private readonly OleMenuCommandService commandService;
         private bool isHideLineNumber = false;
-        private SortState FunctionListSortState = SortState.ByName;
+        private SortState FunctionListSortState;
         private IList<IBaseToken> Tokens;
         private ListViewItem lastHighlightedItem;
 
-        public FunctionListControl(OleMenuCommandService service)
+        public FunctionListControl(OleMenuCommandService service, OptionsEventProvider optionsProvider)
         {
             var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
             service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
 
             this.InitializeComponent();
             this.commandService = service;
-            this.Loaded += OnInitializedFunctionList;
+
+            FunctionListSortState = optionsProvider.SortOptions;
+            optionsProvider.OptionsUpdated += SortOptionsUpdated;
         }
+
+        private void SortOptionsUpdated(OptionsEventProvider sender) =>
+            ChangeSortOptions(sender.SortOptions);
 
         public async Task UpdateFunctionListAsync(IEnumerable<IBaseToken> newTokens)
         {
@@ -67,7 +73,7 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public void ChangeSortOptions(SortState option)
+        private void ChangeSortOptions(SortState option)
         {
             try
             {
@@ -117,9 +123,6 @@ namespace VSRAD.Syntax.FunctionList
                 tokens.Items.Add(token);
             ResizeFunctionListColumns();
         }
-
-        private void OnInitializedFunctionList(object sender, object args)
-            => FunctionListSortState = Package.Instance.OptionPage.SortOptions;
 
         private void ByNumber_Click(object sender, RoutedEventArgs e)
         {

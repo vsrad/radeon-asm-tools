@@ -23,16 +23,6 @@ namespace VSRAD.Syntax
         public static Package Instance { get; private set; }
         private IComponentModel _componentModel;
 
-        public Package() { }
-
-        public GeneralOptionPage OptionPage 
-        {
-            get
-            {
-                return GetDialogPage(typeof(GeneralOptionPage)) as GeneralOptionPage;
-            }
-        }
-
         public T GetMEFComponent<T>() where T : class =>
             _componentModel.GetService<T>();
 
@@ -40,7 +30,7 @@ namespace VSRAD.Syntax
         {
             Instance = this;
             _componentModel = (await GetServiceAsync(typeof(SComponentModel))) as IComponentModel;
-            await OptionPage.InitializeAsync();
+            await ((GeneralOptionPage)GetDialogPage(typeof(GeneralOptionPage))).InitializeAsync();
             await FunctionListCommand.InitializeAsync(this);
             await ClearSearchFieldCommand.InitializeAsync(this);
             await SelectItemCommand.InitializeAsync(this);

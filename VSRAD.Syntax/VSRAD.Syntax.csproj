@@ -106,9 +106,7 @@
     <Compile Include="Parser\Blocks\IBaseBlock.cs" />
     <Compile Include="Parser\Blocks\RootBlock.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Options\GeneralOptionPage.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Options\GeneralOptionPage.cs" />
     <Compile Include="Parser\ParserManger.cs" />
     <Compile Include="Parser\ParserProvider.cs" />
     <Compile Include="Parser\Tokens\ArgumentToken.cs" />

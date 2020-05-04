@@ -30,7 +30,8 @@ namespace VSRAD.Syntax.Options
         public ContentTypeManager(SVsServiceProvider serviceProvider,
             IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
             IContentTypeRegistryService contentTypeRegistryService,
-            IFileExtensionRegistryService fileExtensionRegistryService)
+            IFileExtensionRegistryService fileExtensionRegistryService,
+            OptionsEventProvider optionsEventProvider)
         {
             _serviceProvider = serviceProvider;
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
@@ -38,10 +39,11 @@ namespace VSRAD.Syntax.Options
             _dte = (DTE)serviceProvider.GetService(typeof(DTE));
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+            optionsEventProvider.OptionsUpdated += FileExtensionChanged;
             _asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
             _asm2ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
-            _asm1Extensions = Constants.DefaultFileExtensionAsm1;
-            _asm2Extensions = Constants.DefaultFileExtensionAsm2;
+            _asm1Extensions = optionsEventProvider.Asm1FileExtensions;
+            _asm2Extensions = optionsEventProvider.Asm2FileExtensions;
         }
 
         private void OnChangeActivatedWindow(Window GotFocus, Window _) =>
@@ -81,6 +83,9 @@ namespace VSRAD.Syntax.Options
                 Error.ShowWarning(e);
             }
         }
+
+        private void FileExtensionChanged(OptionsEventProvider optionsProvider) =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(optionsProvider.Asm1FileExtensions, optionsProvider.Asm2FileExtensions));
 
         private void ChangeExtensions(IContentType contentType, IEnumerable<string> extensions)
         {
