@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Utils;
@@ -168,7 +169,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void RowColorChanged(int rowIndex, DataHighlightColor color)
         {
             var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
-            RowStyling.ChangeRowHighlight(_fontAndColor.FontAndColorState, changedRows, color);
+            RowStyling.ChangeRowHighlight(changedRows, _fontAndColor.FontAndColorState, color);
         }
 
         public void ColumnColorChanged(int clickedColumnIndex, DataHighlightColor color)
@@ -330,12 +331,13 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutColumns(uint groupSize)
-        {
-            ColumnStyling.GrayOutColumns(_fontAndColor.FontAndColorState, DataColumns, groupSize);
-        }
+        public void GrayOutColumns(uint groupSize) =>
+            ColumnStyling.GrayOutColumns(DataColumns, _fontAndColor.FontAndColorState, groupSize);
 
-        public void ApplyColumnStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
+        public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
+            RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
+
+        public void ApplyDataStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;
@@ -344,12 +346,18 @@ namespace VSRAD.Package.DebugVisualizer
             // TODO: refactor this away?
             LaneGrouping = options.VisualizerOptions.VerticalSplit ? options.VisualizerOptions.LaneGrouping : 0;
 
-            var styling = new ColumnStyling(
+            var columnStyling = new ColumnStyling(
                 options.VisualizerOptions,
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
                 _fontAndColor.FontAndColorState);
-            styling.Apply(DataColumns, groupSize, system);
+            columnStyling.Apply(DataColumns, groupSize);
+
+            var rowStyling = new RowStyling(
+                Rows.Cast<DataGridViewRow>(),
+                options.VisualizerOptions,
+                _fontAndColor.FontAndColorState);
+            rowStyling.Apply(groupSize, system);
 
             ((Control)this).ResumeDrawing();
             HorizontalScrollingOffset = scrollingOffset;

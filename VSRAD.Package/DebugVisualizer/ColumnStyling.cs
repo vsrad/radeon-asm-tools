@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -11,8 +9,6 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly uint _laneGrouping;
         private readonly uint _laneDividerWidth;
         private readonly uint _hiddenColumnSeparatorWidth;
-        private readonly bool _maskInactiveLanes;
-        private readonly int? _checkMagicNumber;
 
         private readonly FontAndColorState _fontAndColor;
 
@@ -24,8 +20,6 @@ namespace VSRAD.Package.DebugVisualizer
             _laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
             _laneDividerWidth = (uint)appearance.LaneDivierWidth;
             _hiddenColumnSeparatorWidth = (uint)appearance.HiddenColumnSeparatorWidth;
-            _maskInactiveLanes = options.MaskLanes;
-            _checkMagicNumber = options.CheckMagicNumber ? (int?)options.MagicNumber : null;
 
             _fontAndColor = fontAndColor;
 
@@ -37,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer
                     _highlight[index] = region.Color;
         }
 
-        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint[] system = null)
+        public void Apply(IReadOnlyList<DataGridViewColumn> columns, uint groupSize)
         {
             if (columns.Count != VisualizerTable.DataColumnCount)
                 throw new ArgumentException("ColumnAppearance applies to exactly 512 columns");
@@ -62,9 +56,6 @@ namespace VSRAD.Package.DebugVisualizer
                 if (i != groupSize - 1 && _visibility[i] != _visibility[i + 1])
                     columns[i].DividerWidth = (int)_hiddenColumnSeparatorWidth;
             }
-
-            ApplyLaneMask(columns, groupSize, system);
-            ApplyMagicNumberCheck(columns, groupSize, system);
         }
 
         private void ApplyLaneGrouping(IReadOnlyList<DataGridViewColumn> columns, uint groupSize)
@@ -85,32 +76,10 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void ApplyLaneMask(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint[] system)
+        public static void GrayOutColumns(IReadOnlyList<DataGridViewColumn> columns, FontAndColorState fontAndColor, uint groupSize)
         {
-            if (!_maskInactiveLanes || system == null)
-                return;
-            for (int wfrontOffset = 0; wfrontOffset < groupSize; wfrontOffset += 64)
-            {
-                var execMask = new BitArray(new int[] { (int)system[wfrontOffset + 8], (int)system[wfrontOffset + 9] });
-
-                for (int laneId = 0; laneId < 64; laneId++)
-                    if (!execMask[laneId])
-                        columns[wfrontOffset + laneId].DefaultCellStyle.BackColor = _fontAndColor.HighlightBackground[(int)DataHighlightColor.Inactive];
-            }
-        }
-
-        private void ApplyMagicNumberCheck(IReadOnlyList<DataGridViewColumn> columns, uint groupSize, uint[] system)
-        {
-            if (system != null && _checkMagicNumber is int magicNumber)
-                for (int i = 0; i < groupSize; i += 64)
-                    if (system[i] != magicNumber)
-                        GrayOutColumns(_fontAndColor, columns, groupSize, i, (uint)(i + 64));
-        }
-
-        public static void GrayOutColumns(FontAndColorState fontAndColor, IReadOnlyList<DataGridViewColumn> columns, uint groupSize, int start = 0, uint end = 0)
-        {
-            for (int offset = start; offset < ((end == 0) ? groupSize : end); offset++)
-                columns[offset].DefaultCellStyle.BackColor = fontAndColor.HighlightBackground[(int)DataHighlightColor.Inactive];
+            for (int i = 0; i < groupSize; i++)
+                columns[i].DefaultCellStyle.BackColor = fontAndColor.HighlightBackground[(int)DataHighlightColor.Inactive];
         }
     }
 }

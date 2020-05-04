@@ -19,13 +19,13 @@ namespace VSRAD.Package.DebugVisualizer
             headerControl.Setup(integration,
                 getGroupCount: (groupSize) => _breakState?.GetGroupCount(groupSize) ?? 0,
                 GroupSelectionChanged);
-            headerControl.GroupSizeChanged += RefreshTableStyling;
+            headerControl.GroupSizeChanged += RefreshDataStyling;
             Application.Current.Deactivated += (sender, e) => WindowFocusLost();
 
             integration.BreakEntered += BreakEntered;
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
-            integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += RefreshTableStyling;
+            integration.ProjectOptions.VisualizerColumnStyling.StylingChanged += RefreshDataStyling;
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
 
@@ -50,8 +50,8 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
-        private void RefreshTableStyling() =>
-            _table.ApplyColumnStyling(_integration.ProjectOptions, headerControl.GroupSize, _breakState?.System);
+        private void RefreshDataStyling() =>
+            _table.ApplyDataStyling(_integration.ProjectOptions, headerControl.GroupSize, _breakState?.System);
 
         private void DebuggerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void RestoreSavedState()
         {
-            RefreshTableStyling();
+            RefreshDataStyling();
             _table.Rows.Clear();
             _table.AppendVariableRow(new Watch("System", VariableType.Hex, isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
@@ -89,11 +89,11 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerOptions.LaneGrouping):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerOptions.VerticalSplit):
-                    RefreshTableStyling();
+                    RefreshDataStyling();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_integration.ProjectOptions.VisualizerOptions.CheckMagicNumber)
-                        RefreshTableStyling();
+                        RefreshDataStyling();
                     break;
                 case nameof(Options.VisualizerAppearance.NameColumnAlignment):
                 case nameof(Options.VisualizerAppearance.DataColumnAlignment):
@@ -110,7 +110,7 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
                     _table.LaneSeparatorWidth =
                         _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
-                    RefreshTableStyling();
+                    RefreshDataStyling();
                     break;
             }
         }
@@ -126,6 +126,7 @@ namespace VSRAD.Package.DebugVisualizer
             _breakState = breakState;
             _breakState.GroupSize = headerControl.GroupSize;
             headerControl.OnDataAvailable();
+            _table.ApplyWatchStyling(_breakState.Watches);
         }
 
         public void AddWatch(string watchName)
@@ -156,9 +157,7 @@ namespace VSRAD.Package.DebugVisualizer
                         EraseRowData(row);
                 }
 
-                RefreshTableStyling();
-                RowStyling.ResetRowStyling(_table.DataRows);
-                RowStyling.GreyOutUnevaluatedWatches(_breakState.Watches, _table.DataRows);
+                RefreshDataStyling();
                 headerControl.OnDataRequestCompleted(_breakState.GetGroupCount(headerControl.GroupSize), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds, _breakState.StatusString);
             });
         }
