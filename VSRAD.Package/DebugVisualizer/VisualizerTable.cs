@@ -21,6 +21,7 @@ namespace VSRAD.Package.DebugVisualizer
         public int GroupSize => _groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int ColumnWidth = 30;
+        public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
 
         #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
@@ -283,6 +284,16 @@ namespace VSRAD.Package.DebugVisualizer
                 Columns.Add(dataColumns[i]);
             }
             ColumnWidth = dataColumns[0].Width;
+
+            Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Width = 0,
+                ReadOnly = true,
+                SortMode = DataGridViewColumnSortMode.NotSortable,
+                Visible = true
+            });
+            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#ABABAB");
+            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = ColorTranslator.FromHtml("#ABABAB");
             return dataColumns;
         }
 

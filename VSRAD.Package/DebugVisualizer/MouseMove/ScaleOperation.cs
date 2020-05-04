@@ -94,7 +94,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
             {
-                if (i == _firstVisibleIndex || i == _lastVisibleIndex) continue;
+                if (i == _firstVisibleIndex || i == VisualizerTable.PhantomColumnIndex) continue;
                 _table.Columns[i].Width = width;
             }
 
@@ -105,9 +105,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var maxScrollingOffset = _table.ColumnResizeController.GetTotalWidthInBulkColumnWidthChange() - _tableDataAreaWidth;
 
             if (scrollingOffset > maxScrollingOffset && _lastVisibleIndex != _targetColumn.Index)
-                _table.Columns[_lastVisibleIndex].Width += scrollingOffset - maxScrollingOffset;
-            else
-                _table.Columns[_lastVisibleIndex].Width += diff;
+                _table.Columns[VisualizerTable.PhantomColumnIndex].Width += scrollingOffset - maxScrollingOffset;
 
             _currentWidth = width;
 
