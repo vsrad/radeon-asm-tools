@@ -25,6 +25,8 @@ namespace VSRAD.Syntax
         /*
          * File extensions definition
          */
+        internal const string InstructionsFileExtension = ".radasm";
+
         internal const string FileExtensionInc = ".inc";
         internal const string FileExtensionS = ".s";
         internal const string FileExtensionAsm1 = ".gas";

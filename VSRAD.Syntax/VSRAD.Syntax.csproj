@@ -93,7 +93,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Options\ContentTypeManager.cs" />
-    <Compile Include="Options\FilePathsEditor.cs" />
+    <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\InstructionListManager.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />
@@ -147,6 +147,7 @@
     <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTaggerProvider.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="DefaultConfiguration\gfx9_instructions.radasm" />
     <None Include="Key.snk" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

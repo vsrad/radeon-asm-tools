@@ -56,8 +56,8 @@ namespace VSRAD.Syntax.Options
         [Category("Syntax instruction file paths")]
         [DisplayName("Instruction file paths")]
         [Description("List of files separated by semicolon with assembly instructions")]
-        [Editor(typeof(FilePathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
-        public string InstructionsPaths { get; set; } = GetDefaultInstructionFilePath();
+        [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
+        public string InstructionsPaths { get; set; } = GetDefaultInstructionDirectoryPath();
 
         public enum SortState
         {
@@ -74,7 +74,7 @@ namespace VSRAD.Syntax.Options
         public override async Task InitializeAsync()
         { 
             await UpdateRadeonContentTypeAsync();
-            await _instructionListManager.LoadInstructionsFromFilesAsync(InstructionsPaths);
+            await _instructionListManager.LoadInstructionsFromDirectoriesAsync(InstructionsPaths);
         }
 
         protected override void OnApply(PageApplyEventArgs e)
@@ -87,7 +87,7 @@ namespace VSRAD.Syntax.Options
                 ValidateExtensions(Asm2FileExtensions);
                 FunctionList.FunctionList.TryUpdateSortOptions(SortOptions);
                 ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateRadeonContentTypeAsync());
-                ThreadHelper.JoinableTaskFactory.RunAsync(() => _instructionListManager.LoadInstructionsFromFilesAsync(InstructionsPaths));
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => _instructionListManager.LoadInstructionsFromDirectoriesAsync(InstructionsPaths));
             }
             catch(Exception ex)
             {
@@ -114,11 +114,11 @@ namespace VSRAD.Syntax.Options
         private Task UpdateRadeonContentTypeAsync() =>
             _contentTypeManager.ChangeRadeonExtensionsAsync(Asm1FileExtensions, Asm2FileExtensions);
 
-        private static string GetDefaultInstructionFilePath()
+        private static string GetDefaultInstructionDirectoryPath()
         {
             var assemblyPath = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
             var assemblyFolder = Path.GetDirectoryName(assemblyPath);
-            return Path.Combine(assemblyFolder, "gfx9_instructions.txt");
+            return Path.GetDirectoryName(assemblyPath);
         }
     }
 }
