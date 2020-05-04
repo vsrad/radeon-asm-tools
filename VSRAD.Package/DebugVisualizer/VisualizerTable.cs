@@ -287,11 +287,11 @@ namespace VSRAD.Package.DebugVisualizer
 
             Columns.Add(new DataGridViewTextBoxColumn()
             {
+                MinimumWidth = 2,
                 Width = 2,
                 ReadOnly = true,
                 SortMode = DataGridViewColumnSortMode.NotSortable,
-                Visible = true,
-                MinimumWidth = 2
+                Visible = true
             });
             Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#ABABAB");
             Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = ColorTranslator.FromHtml("#ABABAB");

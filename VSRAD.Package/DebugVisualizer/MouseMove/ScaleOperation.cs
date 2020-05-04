@@ -62,19 +62,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         {
             if ((e.Button & MouseButtons.Left) != MouseButtons.Left)
             {
-                _table.ColumnResizeController.BeginBulkColumnWidthChange();
-                var offset = _table.HorizontalScrollingOffset;
-                if (!_table.Columns[_firstVisibleIndex].Displayed)
-                {
-                    var firstVisibleWidth = _table.Columns[_firstVisibleIndex].Width;
-                    _table.Columns[_firstVisibleIndex].Width = _currentWidth;
-                    offset -= firstVisibleWidth - _currentWidth;
-                }
-                if (!_table.Columns[VisualizerTable.PhantomColumnIndex].Displayed)
-                    _table.Columns[VisualizerTable.PhantomColumnIndex].Width = 2; // minimum width
-
-                _table.ColumnWidth = _currentWidth;
-                _table.ColumnResizeController.CommitBulkColumnWidthChange(offset);
+                NormalizeSpecialColumnsWidth();
                 return false;
             }
             var x = Cursor.Position.X;
@@ -148,6 +136,44 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     _currentWidth = width;
                 }
             }
+        }
+
+        private void NormalizeSpecialColumnsWidth()
+        {
+            _table.ColumnResizeController.BeginBulkColumnWidthChange();
+            var offset = _table.HorizontalScrollingOffset;
+            // if first column is not displayed - make it as wide as others
+            if (!_table.Columns[_firstVisibleIndex].Displayed)
+            {
+                var firstVisibleWidth = _table.Columns[_firstVisibleIndex].Width;
+                _table.Columns[_firstVisibleIndex].Width = _currentWidth;
+                offset -= firstVisibleWidth - _currentWidth;
+            }
+            // if first column is dislpayed partly - shrink it
+            else if (_table.Columns[_firstVisibleIndex].Width != _currentWidth
+                && offset != 0)
+            {
+                var initialWidth = _table.Columns[_firstVisibleIndex].Width;
+                var fistColumnWidth = Math.Max(_table.Columns[_firstVisibleIndex].Width - offset, _currentWidth);
+                _table.Columns[_firstVisibleIndex].Width = fistColumnWidth;
+                offset = _table.Columns[_firstVisibleIndex].Width != _currentWidth
+                    ? 0
+                    : _currentWidth - initialWidth + offset;
+            }
+            // if phantom column is not displayed - hide it
+            if (!_table.Columns[VisualizerTable.PhantomColumnIndex].Displayed)
+                _table.Columns[VisualizerTable.PhantomColumnIndex].Width = 2; // minimum width
+            // if phantom column is displayed partly - shrink it
+            else
+            {
+                var totalWidth = _table.ColumnResizeController.GetTotalWidthInBulkColumnWidthChange();
+                var phantomColumnX = totalWidth - _table.Columns[VisualizerTable.PhantomColumnIndex].Width;
+                var currentViewEnd = offset + _tableDataAreaWidth;
+                _table.Columns[VisualizerTable.PhantomColumnIndex].Width = currentViewEnd - phantomColumnX;
+            }
+
+            _table.ColumnWidth = _currentWidth;
+            _table.ColumnResizeController.CommitBulkColumnWidthChange(offset);
         }
 
         private int DebugEdgePosition()
