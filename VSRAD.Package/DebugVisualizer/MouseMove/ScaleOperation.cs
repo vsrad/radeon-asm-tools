@@ -62,13 +62,19 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         {
             if ((e.Button & MouseButtons.Left) != MouseButtons.Left)
             {
-                //_table.ColumnResizeController.BeginBulkColumnWidthChange();
-                //if (!_table.Columns[_firstVisibleColumn].Displayed)
-                //    _table.Columns[_firstVisibleColumn].Width = _currentWidth;
-                //if (!_table.Columns[_lastVisibleColumn].Displayed)
-                //    _table.Columns[_lastVisibleColumn].Width = _currentWidth;
-                //_table.ColumnResizeController.CommitBulkColumnWidthChange();
+                _table.ColumnResizeController.BeginBulkColumnWidthChange();
+                var offset = _table.HorizontalScrollingOffset;
+                if (!_table.Columns[_firstVisibleIndex].Displayed)
+                {
+                    var firstVisibleWidth = _table.Columns[_firstVisibleIndex].Width;
+                    _table.Columns[_firstVisibleIndex].Width = _currentWidth;
+                    offset -= firstVisibleWidth - _currentWidth;
+                }
+                if (!_table.Columns[VisualizerTable.PhantomColumnIndex].Displayed)
+                    _table.Columns[VisualizerTable.PhantomColumnIndex].Width = 2; // minimum width
+
                 _table.ColumnWidth = _currentWidth;
+                _table.ColumnResizeController.CommitBulkColumnWidthChange(offset);
                 return false;
             }
             var x = Cursor.Position.X;
