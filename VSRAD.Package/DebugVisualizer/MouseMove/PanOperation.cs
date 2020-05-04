@@ -39,21 +39,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool HandleMouseMove(MouseEventArgs e)
         {
-            if (e.Button != MouseButtons.Left)
-            {
-                _table.ColumnResizeController.BeginBulkColumnWidthChange();
-                int newOffset = _table.HorizontalScrollingOffset;
-                var firstVisibleWidth = _table.Columns[_firstVisibleColumn].Width;
-                if (!_table.Columns[_firstVisibleColumn].Displayed)
-                {
-                    _table.Columns[_firstVisibleColumn].Width = _table.ColumnWidth;
-                    newOffset += _table.ColumnWidth - firstVisibleWidth;
-                }
-                if (!_table.Columns[_lastVisibleColumn].Displayed)
-                    _table.Columns[_lastVisibleColumn].Width = _table.ColumnWidth;
-                _table.ColumnResizeController.CommitBulkColumnWidthChange(newOffset);
-                return false;
-            }
+            if (e.Button != MouseButtons.Left) return false;
 
             Cursor.Current = handCursor;
 
@@ -62,7 +48,19 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             {
                 var diff = _lastX - x;
                 _lastX = x;
-                _table.HorizontalScrollingOffset = Math.Max(0, _table.HorizontalScrollingOffset + diff);
+
+                if (_table.Columns[_firstVisibleColumn].Width != _table.ColumnWidth && diff > 0)
+                {
+                    var fistColumnWidth = _table.Columns[_firstVisibleColumn].Width - diff;
+                    _table.Columns[_firstVisibleColumn].Width = Math.Max(fistColumnWidth, _table.ColumnWidth);
+                }
+                else if (_table.Columns[VisualizerTable.PhantomColumnIndex].Width != 2 && diff < 0)
+                {
+                    var phantomWidth = _table.Columns[VisualizerTable.PhantomColumnIndex].Width + diff;
+                    _table.Columns[VisualizerTable.PhantomColumnIndex].Width = Math.Max(phantomWidth, 2);
+                }
+                else
+                    _table.HorizontalScrollingOffset = Math.Max(0, _table.HorizontalScrollingOffset + diff);
             }
             else if (Math.Abs(x - _lastX) > _thresholdX)
             {
