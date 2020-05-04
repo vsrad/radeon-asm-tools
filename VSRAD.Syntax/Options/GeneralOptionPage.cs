@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using VSRAD.Syntax.Helpers;
@@ -55,11 +57,7 @@ namespace VSRAD.Syntax.Options
         [DisplayName("Instruction file paths")]
         [Description("List of files separated by semicolon with assembly instructions")]
         [Editor(typeof(FilePathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
-#if DEBUG
-        public string InstructionsPaths { get; set; } = @"VSRAD\gfx9_instructions.txt";
-#else
-        public string InstructionsPaths { get; set; } = @"..\..\MSBuild\VSRAD\gfx9_instructions.txt";
-#endif
+        public string InstructionsPaths { get; set; } = GetDefaultInstructionFilePath();
 
         public enum SortState
         {
@@ -115,5 +113,12 @@ namespace VSRAD.Syntax.Options
 
         private Task UpdateRadeonContentTypeAsync() =>
             _contentTypeManager.ChangeRadeonExtensionsAsync(Asm1FileExtensions, Asm2FileExtensions);
+
+        private static string GetDefaultInstructionFilePath()
+        {
+            var assemblyPath = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
+            var assemblyFolder = Path.GetDirectoryName(assemblyPath);
+            return Path.Combine(assemblyFolder, "gfx9_instructions.txt");
+        }
     }
 }
