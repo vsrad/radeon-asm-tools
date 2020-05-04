@@ -98,7 +98,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             scopedCompletions = parser
                 .GetScopedTokens(session.TextView.Caret.Position.BufferPosition, tokenType)
                 .OrderBy(t => t.TokenName)
-                .Select(t => InitializeCompletion(t.TokenName, tokenType.GetName(), tokenType.GetGlyphGroup()));
+                .Select(t => InitializeCompletion(t.TokenName, GetTokenDescription(t), tokenType.GetName(), tokenType.GetGlyphGroup()));
 
             return scopedCompletions;
         }
@@ -107,7 +107,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         {
             _instructionCompletions = instructions
                 .OrderBy(i => i)
-                .Select(i => InitializeCompletion(i, "instruction", StandardGlyphGroup.GlyphGroupField));
+                .Select(i => InitializeCompletion(i, "", "instruction", StandardGlyphGroup.GlyphGroupField));
         }
 
         private void DisplayOptionsUpdated(OptionsEventProvider options)
@@ -118,7 +118,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _autocompleteVariables = options.AutocompleteVariables;
         }
 
-        private VsCompletion InitializeCompletion(string text, string type, StandardGlyphGroup group) =>
-            new VsCompletion(text, text, $"({type}) {text}", _glyphService.GetGlyph(group, StandardGlyphItem.GlyphItemPublic), type);
+        private VsCompletion InitializeCompletion(string text, string description, string type, StandardGlyphGroup group) =>
+            new VsCompletion(text, text, $"({type}) {text}{description}", _glyphService.GetGlyph(group, StandardGlyphItem.GlyphItemPublic), type);
+
+        private static string GetTokenDescription(IBaseToken token) =>
+            ((token as IDescriptionToken) != null) ? Environment.NewLine + ((IDescriptionToken)token).Description : string.Empty;
     }
 }
