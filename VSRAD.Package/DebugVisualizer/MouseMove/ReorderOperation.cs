@@ -57,6 +57,14 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
                 _rowsToMove.Sort((r1, r2) => (indexDiff < 0) ? r1.Index.CompareTo(r2.Index) : r2.Index.CompareTo(r1.Index));
 
+                // When SelectionMode is set to RowHeaderSelect and a selected row is removed,
+                // DataGridView "compensates" for it by selecting an adjacent row.
+                // As a result, rows that weren't a part of the selection at the start of the
+                // reorder operation suddenly become selected, which is jarring.
+                // To prevent this, we keep _selectedRows and restore them manually.
+                var originalSelectionMode = _table.SelectionMode;
+                _table.SelectionMode = DataGridViewSelectionMode.CellSelect;
+
                 foreach (var row in _rowsToMove)
                 {
                     var oldIndex = row.Index;
@@ -64,8 +72,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     _table.Rows.Insert(oldIndex + indexDiff, row);
                 }
 
-                // DataGridView appears to reset selection when adding/removing rows
-                // (is there a less hacky way to preserve it?)
+                _table.SelectionMode = originalSelectionMode;
                 foreach (var row in _selectedRows)
                     row.Selected = true;
 
