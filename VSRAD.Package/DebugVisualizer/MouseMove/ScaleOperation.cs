@@ -118,7 +118,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var width = _currentWidth + diff;
             if (diff == 0 || width < 30)
                 return;
-            if (_table.Columns[_firstVisibleIndex].Width == _currentWidth)
+            if (_table.Columns[_firstVisibleIndex].Width <= _currentWidth)
             {
                 ScaleDataColumns(diff);
                 return;
