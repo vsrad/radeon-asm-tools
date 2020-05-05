@@ -125,7 +125,6 @@
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
     <Compile Include="BuildTools\Errors\Parser.cs" />
-    <Compile Include="Colors.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
     <Compile Include="Commands\BaseBuildWithPreviewCommand.cs" />
@@ -137,6 +136,7 @@
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
     <Compile Include="Commands\PreprocessCommand.cs" />
     <Compile Include="Commands\ProfileCommand.cs" />
+    <Compile Include="DebugVisualizer\FontAndColorState.cs" />
     <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />
     <Compile Include="DebugVisualizer\ContentAlignment.cs" />
@@ -223,7 +223,7 @@
     </Compile>
     <Compile Include="Options\DebuggerOptions.cs" />
     <Compile Include="DebugVisualizer\ColumnHighlightRegion.cs" />
-    <Compile Include="DebugVisualizer\ColumnHighlightColor.cs" />
+    <Compile Include="DebugVisualizer\DataHighlightColor.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DebugVisualizer\ColumnStylingOptions.cs" />
     <Compile Include="ProjectSystem\DebuggerIntegration.cs" />
@@ -250,7 +250,6 @@
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
-    <Compile Include="Utils\SeparatorColorConverter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />

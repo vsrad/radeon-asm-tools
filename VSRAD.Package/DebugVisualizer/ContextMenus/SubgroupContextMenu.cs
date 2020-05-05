@@ -8,21 +8,23 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
     public sealed class SubgroupContextMenu : IContextMenu
     {
         public delegate void ColumnSelectorChanged(string newSelector);
-        public delegate void ColorClicked(int columnIndex, ColumnHighlightColor? color);
+        public delegate void ColumnColorChanged(int columnIndex, DataHighlightColor color);
 
         private readonly ColumnSelectorChanged _selectorChanged;
-        private readonly ColorClicked _colorClicked;
+        private readonly ColumnColorChanged _colorChanged;
+        private readonly VisualizerTable.GetGroupSize _getGroupSize;
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
         private int _clickedColumnIndex;
         private int _targetColumnIndex;
         private int _columnRelStart;
 
-        public SubgroupContextMenu(VisualizerTable table, ColumnSelectorChanged selectorChanged, ColorClicked colorClicked)
+        public SubgroupContextMenu(VisualizerTable table, ColumnSelectorChanged selectorChanged, ColumnColorChanged colorChanged, VisualizerTable.GetGroupSize getGroupSize)
         {
             _table = table;
             _selectorChanged = selectorChanged;
-            _colorClicked = colorClicked;
+            _colorChanged = colorChanged;
+            _getGroupSize = getGroupSize;
             _menu = PrepareContextMenu();
         }
 
@@ -45,14 +47,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: false);
             var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: true);
 
-            var showAll = new MenuItem("All Columns", (s, e) => _selectorChanged($"0-{_table.GroupSize - 1}"));
+            var showAll = new MenuItem("All Columns", (s, e) => _selectorChanged($"0-{_getGroupSize() - 1}"));
 
             var highlightThis = new MenuItem("Highlight", new[]
             {
-                new MenuItem("Green", (s, e) => _colorClicked(_clickedColumnIndex, ColumnHighlightColor.Green)),
-                new MenuItem("Red", (s, e) => _colorClicked(_clickedColumnIndex, ColumnHighlightColor.Red)),
-                new MenuItem("Blue", (s, e) => _colorClicked(_clickedColumnIndex, ColumnHighlightColor.Blue)),
-                new MenuItem("None", (s, e) => _colorClicked(_clickedColumnIndex, null))
+                new MenuItem("Green", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnGreen)),
+                new MenuItem("Red", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnRed)),
+                new MenuItem("Blue", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnBlue)),
+                new MenuItem("None", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.None))
             });
 
             var fitWidth = new MenuItem("Fit Width", (s, e) =>
@@ -75,10 +77,10 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             return new ContextMenu(menuItems.ToArray());
         }
 
-        private void SelectPartialSubgroups(int groupSize, int displayedCount, bool displayLast) =>
-            _selectorChanged(ColumnSelector.PartialSubgroups(_table.GroupSize, groupSize, displayedCount, displayLast));
+        private void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast) =>
+            _selectorChanged(ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast));
 
-        private MenuItem[] CreatePartialSubgroupMenu(int minSubgroupSize, int maxSubgroupSize, bool displayLast) =>
+        private MenuItem[] CreatePartialSubgroupMenu(uint minSubgroupSize, uint maxSubgroupSize, bool displayLast) =>
             PowersOfTwo(from: minSubgroupSize, upto: maxSubgroupSize / 2)
                 .Select(displayedCount =>
                 {
@@ -90,7 +92,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 })
                 .ToArray();
 
-        private static IEnumerable<int> PowersOfTwo(int from, int upto)
+        private static IEnumerable<uint> PowersOfTwo(uint from, uint upto)
         {
             while (from <= upto)
             {

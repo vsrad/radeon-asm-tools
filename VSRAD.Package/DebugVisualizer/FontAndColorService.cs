@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -11,7 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public enum FontAndColorItem
     {
-        Header, Data, WatchNames
+        Header, WatchNames, ColumnSeparator, HiddenColumnSeparator
     }
 
     static class FontAndColorItems
@@ -21,8 +22,25 @@ namespace VSRAD.Package.DebugVisualizer
             switch (item)
             {
                 case FontAndColorItem.Header: return "Header";
-                case FontAndColorItem.Data: return "Data";
-                case FontAndColorItem.WatchNames: return "Watch names";
+                case FontAndColorItem.WatchNames: return "Watch Names";
+                case FontAndColorItem.ColumnSeparator: return "Column Separator";
+                case FontAndColorItem.HiddenColumnSeparator: return "Hidden Column Separator";
+            }
+            throw new NotImplementedException();
+        }
+
+        public static string GetDisplayName(this DataHighlightColor item)
+        {
+            switch (item)
+            {
+                case DataHighlightColor.None: return "Data";
+                case DataHighlightColor.ColumnRed: return "Data - Column Red Highlight";
+                case DataHighlightColor.ColumnGreen: return "Data - Column Green Highlight";
+                case DataHighlightColor.ColumnBlue: return "Data - Column Blue Highlight";
+                case DataHighlightColor.RowRed: return "Data - Row Red Highlight";
+                case DataHighlightColor.RowGreen: return "Data - Row Green Highlight";
+                case DataHighlightColor.RowBlue: return "Data - Row Blue Highlight";
+                case DataHighlightColor.Inactive: return "Data - Inactive";
             }
             throw new NotImplementedException();
         }
@@ -40,8 +58,17 @@ namespace VSRAD.Package.DebugVisualizer
         private static readonly List<AllColorableItemInfo> _items = new List<AllColorableItemInfo>()
         {
             CreateItem(FontAndColorItem.Header.GetDisplayName()),
-            CreateItem(FontAndColorItem.Data.GetDisplayName()),
-            CreateItem(FontAndColorItem.WatchNames.GetDisplayName())
+            CreateItem(FontAndColorItem.WatchNames.GetDisplayName()),
+            CreateItem(FontAndColorItem.ColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0xa0a0a0), hasText: false),
+            CreateItem(FontAndColorItem.HiddenColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0x404040), hasText: false),
+            CreateItem(DataHighlightColor.None.GetDisplayName()),
+            CreateItem(DataHighlightColor.Inactive.GetDisplayName(), bg: Color.LightGray, hasText: false),
+            CreateItem(DataHighlightColor.ColumnRed.GetDisplayName(), bg: Color.FromArgb(245, 226, 227)),
+            CreateItem(DataHighlightColor.ColumnGreen.GetDisplayName(), bg: Color.FromArgb(227, 245, 226)),
+            CreateItem(DataHighlightColor.ColumnBlue.GetDisplayName(), bg: Color.FromArgb(226, 230, 245)),
+            CreateItem(DataHighlightColor.RowRed.GetDisplayName(), fg: Color.Red, bg: Color.Empty),
+            CreateItem(DataHighlightColor.RowGreen.GetDisplayName(), fg: Color.Green, bg: Color.Empty),
+            CreateItem(DataHighlightColor.RowBlue.GetDisplayName(), fg: Color.Blue, bg: Color.Empty),
         };
 
         // Changes to ProvideFontAndColorsCategory will not be registered until this method is run.
@@ -56,12 +83,23 @@ namespace VSRAD.Package.DebugVisualizer
             cacheManager.ClearCache(ref categoryGuid);
         }
 
-        private static AllColorableItemInfo CreateItem(string name)
+        public static Color ReadVsColor(uint vsColor) => vsColor == 0xffffffff ? Color.Empty : ColorTranslator.FromWin32((int)vsColor);
+
+        public static uint MakeVsColor(Color color) => color == Color.Empty ? 0xffffffff : (uint)ColorTranslator.ToWin32(color);
+
+        private static AllColorableItemInfo CreateItem(string name, Color? fg = null, Color? bg = null, bool hasText = true)
         {
+            var fgRaw = MakeVsColor(fg ?? Color.Black);
+            var bgRaw = MakeVsColor(bg ?? Color.White);
+
+            var flags = __FCITEMFLAGS.FCIF_ALLOWBGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS;
+            if (hasText)
+                flags |= __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE;
+
             return new AllColorableItemInfo
             {
                 bFlagsValid = 1,
-                fFlags = (uint)(__FCITEMFLAGS.FCIF_ALLOWBOLDCHANGE | __FCITEMFLAGS.FCIF_ALLOWFGCHANGE | __FCITEMFLAGS.FCIF_ALLOWCUSTOMCOLORS),
+                fFlags = (uint)flags,
                 bNameValid = 1,
                 bstrName = name,
                 bLocalizedNameValid = 1,
@@ -71,9 +109,9 @@ namespace VSRAD.Package.DebugVisualizer
                     bFontFlagsValid = 1,
                     dwFontFlags = 0,
                     bForegroundValid = 1,
-                    crForeground = (uint)__VSCOLORTYPE.CT_RAW | 0x0,
+                    crForeground = (uint)__VSCOLORTYPE.CT_RAW | fgRaw,
                     bBackgroundValid = 1,
-                    crBackground = (uint)__VSCOLORTYPE.CT_RAW | 0x00ffffff,
+                    crBackground = (uint)__VSCOLORTYPE.CT_RAW | bgRaw,
                 }
             };
         }

@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.ComponentModel;
 using VSRAD.Package.Utils;
 
@@ -8,20 +7,6 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class ColumnStylingOptions : DefaultNotifyPropertyChanged
     {
         public event Action StylingChanged;
-
-        private ColumnStyling _computed;
-        [JsonIgnore]
-        public ColumnStyling Computed
-        {
-            get
-            {
-                if (_computed == null)
-                {
-                    _computed = new ColumnStyling(VisibleColumns, HighlightRegions);
-                }
-                return _computed;
-            }
-        }
 
         private string _visibleColumns = "0:1-511";
         public string VisibleColumns
@@ -42,10 +27,14 @@ namespace VSRAD.Package.DebugVisualizer
             HighlightRegions.ListChanged += (sender, args) => OnStylingChanged();
         }
 
-        private void OnStylingChanged()
+        public void ApplyBulkChange(Action change)
         {
-            _computed = null;
-            StylingChanged?.Invoke();
+            HighlightRegions.RaiseListChangedEvents = false;
+            change();
+            HighlightRegions.RaiseListChangedEvents = true;
+            OnStylingChanged();
         }
+
+        private void OnStylingChanged() => StylingChanged?.Invoke();
     }
 }
