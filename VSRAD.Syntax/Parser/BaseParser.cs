@@ -20,6 +20,7 @@ namespace VSRAD.Syntax.Parser
         IBaseBlock GetBlockBySnapshotPoint(SnapshotPoint point);
         IBaseBlock GetBlockByToken(IBaseToken token);
         FunctionBlock GetFunctionByLine(ITextSnapshotLine line);
+        FunctionBlock GetFunctionByToken(IBaseToken token);
         IEnumerable<FunctionBlock> GetFunctionBlocks();
         IEnumerable<IBaseToken> GetLabelTokens();
         IEnumerable<IBaseToken> GetFunctionTokens();
@@ -381,6 +382,9 @@ namespace VSRAD.Syntax.Parser
                     .FirstOrDefault();
         }
 
+        public FunctionBlock GetFunctionByToken(IBaseToken token) =>
+            GetFunctionBlocks().FirstOrDefault(fb => fb.FunctionToken == token);
+
         public IBaseBlock GetBlockBySnapshotPoint(SnapshotPoint point)
         {
             if (currentSnapshot.Equals(point.Snapshot))
@@ -422,7 +426,7 @@ namespace VSRAD.Syntax.Parser
             if (token != default && token.TokenType == TokenType.Comment && (token.Line.LineNumber == currentLine.LineNumber || token.Line.LineNumber == currentLine.LineNumber - 1))
                 return token.TokenName.Trim('/', '*', ' ');
 
-            return null;
+            return string.Empty;
         }
     }
 }

@@ -44,18 +44,21 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         {
             try
             {
+                var completions = Enumerable.Empty<VsCompletion>();
                 if (_autocompleteInstructions)
-                    AddCompletionSet(completionSets, "RadInstructions", FindTokenSpanAtPosition(session), _instructionCompletions);
+                    completions = completions.Concat(_instructionCompletions);
                 if (_autocompleteFunctions)
-                    AddCompletionSet(completionSets, "RadFunctions", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.Function));
+                    completions = completions.Concat(GetScopedCompletions(session, TokenType.Function));
                 if (_autocompleteLabels)
-                    AddCompletionSet(completionSets, "RadLables", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.Label));
+                    completions = completions.Concat(GetScopedCompletions(session, TokenType.Label));
                 if (_autocompleteVariables)
-                {
-                    AddCompletionSet(completionSets, "RadArguments", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.Argument));
-                    AddCompletionSet(completionSets, "RadGlobalVariable", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.GlobalVariable));
-                    AddCompletionSet(completionSets, "RadLocalVariable", FindTokenSpanAtPosition(session), GetScopedCompletions(session, TokenType.LocalVariable));
-                }
+                    completions = completions
+                        .Concat(GetScopedCompletions(session, TokenType.Argument))
+                        .Concat(GetScopedCompletions(session, TokenType.GlobalVariable))
+                        .Concat(GetScopedCompletions(session, TokenType.LocalVariable));
+
+                if (completions.Any())
+                    completionSets.Add(new CompletionSet(Constants.CompletionSetName, Constants.CompletionSetName, FindTokenSpanAtPosition(session), completions, null));
             }
             catch (Exception e)
             {
@@ -98,7 +101,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             scopedCompletions = parser
                 .GetScopedTokens(session.TextView.Caret.Position.BufferPosition, tokenType)
                 .OrderBy(t => t.TokenName)
-                .Select(t => InitializeCompletion(t.TokenName, GetTokenDescription(t), tokenType.GetName(), tokenType.GetGlyphGroup()));
+                .Select(t => InitializeCompletion(t.TokenName, t.TokenName, GetFullName(t), GetTokenDescription(t), tokenType.GetName(), tokenType.GetGlyphGroup()));
 
             return scopedCompletions;
         }
@@ -107,7 +110,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         {
             _instructionCompletions = instructions
                 .OrderBy(i => i)
-                .Select(i => InitializeCompletion(i, "", "instruction", StandardGlyphGroup.GlyphGroupField));
+                .Select(i => InitializeCompletion(i, i, i, "", "instruction", StandardGlyphGroup.GlyphGroupField));
         }
 
         private void DisplayOptionsUpdated(OptionsEventProvider options)
@@ -118,10 +121,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _autocompleteVariables = options.AutocompleteVariables;
         }
 
-        private VsCompletion InitializeCompletion(string text, string description, string type, StandardGlyphGroup group) =>
-            new VsCompletion(text, text, $"({type}) {text}{description}", _glyphService.GetGlyph(group, StandardGlyphItem.GlyphItemPublic), type);
+        private VsCompletion InitializeCompletion(string displayName, string insertText, string fullName, string description, string type, StandardGlyphGroup group) =>
+            new VsCompletion(displayName, insertText, $"({type}) {fullName}{description}", _glyphService.GetGlyph(group, StandardGlyphItem.GlyphItemPublic), type);
 
-        private static string GetTokenDescription(IBaseToken token) =>
-            ((token as IDescriptionToken) != null) ? Environment.NewLine + ((IDescriptionToken)token).Description : string.Empty;
+        private static string GetFullName(IBaseToken token) =>
+            token.TokenType != TokenType.Function ? token.TokenName : ((FunctionToken)token).GetFullName();
+
+        private static string GetTokenDescription(IBaseToken token) => 
+            (token is IDescriptionToken descriptionToken && !string.IsNullOrWhiteSpace(descriptionToken.Description))
+                ? Environment.NewLine + Environment.NewLine + ((IDescriptionToken)token).Description
+                : string.Empty;
     }
 }

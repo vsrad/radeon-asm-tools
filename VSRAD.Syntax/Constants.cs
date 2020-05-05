@@ -1441,5 +1441,10 @@ namespace VSRAD.Syntax
          * Indent guide adornment layer
          */
         internal const string IndentGuideAdornmentLayerName = "RadeonAsmIndentGuide";
+
+        /*
+         * Completion set name
+         */
+        internal const string CompletionSetName = "RadAsm";
     }
 }
