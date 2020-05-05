@@ -18,6 +18,7 @@ namespace VSRAD.Package.DebugVisualizer
         public const int DataColumnOffset = 1; /* name column */
         public const int DataColumnCount = 512;
 
+        public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int ColumnWidth = 30;
