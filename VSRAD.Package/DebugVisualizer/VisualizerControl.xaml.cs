@@ -29,8 +29,11 @@ namespace VSRAD.Package.DebugVisualizer
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
 
+            var tableFontAndColor = new FontAndColorProvider();
+            tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,
+                tableFontAndColor,
                 getGroupSize: () => headerControl.GroupSize);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {

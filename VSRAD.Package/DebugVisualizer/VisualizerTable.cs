@@ -49,14 +49,14 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly SelectionController _selectionController;
 
         private readonly ColumnStylingOptions _stylingOptions;
+        private readonly FontAndColorProvider _fontAndColor;
 
         private string _editedWatchName;
 
-        private readonly FontAndColorProvider _fontAndColor;
-
-        public VisualizerTable(ColumnStylingOptions options, GetGroupSize getGroupSize) : base()
+        public VisualizerTable(ColumnStylingOptions options, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
             _stylingOptions = options;
+            _fontAndColor = fontAndColor;
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -79,13 +79,9 @@ namespace VSRAD.Package.DebugVisualizer
             ShowCellToolTips = false;
             DoubleBuffered = true;
             AllowUserToResizeRows = false;
+            EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
             DataColumns = SetupColumns();
-
-            EnableHeadersVisualStyles = false;
-            _fontAndColor = new FontAndColorProvider();
-            _fontAndColor.FontAndColorInfoChanged += ApplyFontAndColorInfo;
-            ApplyFontAndColorInfo();
 
             ColumnResizeController = new ColumnResizeController(this);
 
@@ -343,6 +339,8 @@ namespace VSRAD.Package.DebugVisualizer
             var scrollingOffset = HorizontalScrollingOffset;
             ((Control)this).SuspendDrawing();
 
+            ApplyFontAndColorInfo();
+
             // TODO: refactor this away?
             LaneGrouping = options.VisualizerOptions.VerticalSplit ? options.VisualizerOptions.LaneGrouping : 0;
 
@@ -363,20 +361,6 @@ namespace VSRAD.Package.DebugVisualizer
             HorizontalScrollingOffset = scrollingOffset;
         }
 
-        public void AlignmentChanged(
-                ContentAlignment nameColumnAlignment,
-                ContentAlignment dataColumnAlignment,
-                ContentAlignment headersAlignment)
-        {
-            Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
-            Columns[0].HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
-            foreach (var column in DataColumns)
-            {
-                column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
-                column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
-            }
-        }
-
         private void ApplyFontAndColorInfo()
         {
             var state = _fontAndColor.FontAndColorState;
@@ -394,9 +378,20 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
             RowHeadersDefaultCellStyle.SelectionForeColor = state.WatchNameForeground;
             RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
+        }
 
-            // Update column separators
-            Invalidate();
+        public void AlignmentChanged(
+                ContentAlignment nameColumnAlignment,
+                ContentAlignment dataColumnAlignment,
+                ContentAlignment headersAlignment)
+        {
+            Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
+            Columns[0].HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
+            foreach (var column in DataColumns)
+            {
+                column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
+                column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
+            }
         }
 
         #endregion
