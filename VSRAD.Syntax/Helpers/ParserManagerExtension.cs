@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System.Linq;
 using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.Helpers
 {
@@ -37,5 +38,22 @@ namespace VSRAD.Syntax.Helpers
                 enableManyLineDecloration: true,
                 Constants.asm2VariableDefinition,
                 Constants.asm2LabelDefinitionRegular);
+    }
+
+    internal static class ParserExtension
+    {
+        public static bool PointInComment(this IBaseParser parser, SnapshotPoint point)
+        {
+            var block = parser.GetBlockBySnapshotPoint(point);
+            if (block == null)
+                return false;
+
+            foreach (var comment in block.GetTokens().Where(token => token.TokenType == TokenType.Comment))
+            {
+                if (comment.SymbolSpan.Contains(point))
+                    return true;
+            }
+            return false;
+        }
     }
 }

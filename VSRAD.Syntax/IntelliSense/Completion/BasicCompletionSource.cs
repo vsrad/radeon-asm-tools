@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Operations;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -11,19 +9,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
+using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
     internal sealed class BasicCompletionSource : IAsyncCompletionSource
     {
+        private readonly IParserManager _parserManager;
         private readonly IDictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>> _completions;
 
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
 
-        public BasicCompletionSource(OptionsProvider optionsProvider)
+        public BasicCompletionSource(OptionsProvider optionsProvider, IParserManager parserManager)
         {
+            _parserManager = parserManager;
             _completions = new Dictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>>();
 
             optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
@@ -32,15 +33,18 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
         {
+            if (_parserManager.ActualParser == null || _parserManager.ActualParser.PointInComment(triggerLocation))
+                return Task.FromResult<CompletionContext>(null);
+
             var completions = Enumerable.Empty<CompletionItem>();
             if (_autocompleteLabels)
                 completions = completions
-                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Label));
+                    .Concat(GetScopedCompletions(triggerLocation, TokenType.Label));
             if (_autocompleteVariables)
                 completions = completions
-                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.GlobalVariable))
-                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.LocalVariable))
-                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Argument));
+                    .Concat(GetScopedCompletions(triggerLocation, TokenType.GlobalVariable))
+                    .Concat(GetScopedCompletions(triggerLocation, TokenType.LocalVariable))
+                    .Concat(GetScopedCompletions(triggerLocation, TokenType.Argument));
 
             return Task.FromResult(completions.Any() ? new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()) : null);
         }
@@ -88,11 +92,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             return false;
         }
 
-        private ImmutableArray<CompletionItem> GetScopedCompletions(ITextView textView, SnapshotPoint triggerPoint, TokenType type)
+        private ImmutableArray<CompletionItem> GetScopedCompletions(SnapshotPoint triggerPoint, TokenType type)
         {
             var scopedCompletions = ImmutableArray<CompletionItem>.Empty;
-            var parserManager = textView.GetParserManager();
-            var parser = parserManager?.ActualParser;
+            var parser = _parserManager.ActualParser;
 
             if (parser == null)
                 return scopedCompletions;

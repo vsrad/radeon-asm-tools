@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
@@ -31,7 +30,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView.TextBuffer == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new BasicCompletionSource(_optionsEventProvider);
+            return new BasicCompletionSource(_optionsEventProvider, textView.GetParserManager());
         }
     }
 
@@ -83,7 +82,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView.TextBuffer == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider);
+            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider, textView.GetParserManager());
         }
     }
 }

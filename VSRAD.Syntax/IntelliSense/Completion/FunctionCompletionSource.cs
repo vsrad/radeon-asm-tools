@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Operations;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
@@ -27,12 +26,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
         {
-            if (!_autocompleteFunctions)
-                return Task.FromResult((CompletionContext)null);
+            if (!_autocompleteFunctions 
+                || _parserManager.ActualParser == null 
+                || _parserManager.ActualParser.PointInComment(triggerLocation))
+                return Task.FromResult<CompletionContext>(null);
 
             var parser = _parserManager.ActualParser;
             if (parser == null)
-                return Task.FromResult((CompletionContext)null);
+                return Task.FromResult<CompletionContext>(null);
 
             var completions = parser
                 .GetFunctionTokens()
@@ -47,11 +48,11 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         {
             var parser = _parserManager.ActualParser;
             if (parser == null)
-                return Task.FromResult((object)null);
+                return Task.FromResult<object>(null);
 
             var fb = parser.GetFunction(item.DisplayText);
             if (fb == null)
-                return Task.FromResult((object)null);
+                return Task.FromResult<object>(null);
 
             return Task.FromResult(IntellisenseTokenDescription.GetColorizedDescription(fb.FunctionToken));
         }

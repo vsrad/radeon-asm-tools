@@ -136,7 +136,7 @@ namespace VSRAD.Syntax.Parser
                         else if (cmpLineText.Contains(parserManager.OneLineCommentPattern))
                         {
                             var index = lineText.IndexOf(parserManager.OneLineCommentPattern, StringComparison.Ordinal);
-                            currentTreeBlock.AddToken(new SnapshotSpan(currentSnapshot, new Span(line.Start + index, line.Length - index)), Tokens.TokenType.Comment);
+                            currentTreeBlock.AddToken(new SnapshotSpan(currentSnapshot, new Span(line.Start + index, line.LengthIncludingLineBreak - index)), Tokens.TokenType.Comment);
 
                             var substring = lineText.Substring(0, index);
                             cmpLineText = substring.Trim();
