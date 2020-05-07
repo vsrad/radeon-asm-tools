@@ -22,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int ColumnWidth = 30;
+        public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
 
         #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
@@ -264,6 +265,18 @@ namespace VSRAD.Package.DebugVisualizer
                 Columns.Add(dataColumns[i]);
             }
             ColumnWidth = dataColumns[0].Width;
+
+            Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                MinimumWidth = 2,
+                Width = 2,
+                ReadOnly = true,
+                SortMode = DataGridViewColumnSortMode.NotSortable,
+                Visible = true
+            });
+            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#ABABAB");
+            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = ColorTranslator.FromHtml("#ABABAB");
+            Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
         }
 

@@ -21,7 +21,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.ColumnIndex < VisualizerTable.DataColumnOffset || e.ColumnIndex == VisualizerTable.DataColumnCount) return;
+            if (e.ColumnIndex < VisualizerTable.DataColumnOffset || e.ColumnIndex >= VisualizerTable.DataColumnCount) return;
 
             int width;
             SolidBrush color;
