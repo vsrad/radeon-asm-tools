@@ -39,6 +39,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var index = (Math.Abs(e.X - hit.ColumnX) <= _maxDistanceFromDivider)
                 ? hit.ColumnIndex - 1
                 : hit.ColumnIndex;
+            if (hit.ColumnIndex == VisualizerTable.PhantomColumnIndex)
+                index = _lastVisibleIndex;
+            if (!_table.Columns[index].Visible)
+                index = _table.DataColumns.Last(c => c.Visible && c.Index < index).Index;
 
             _tableDataAreaWidth = _table.GetRowDisplayRectangle(1, false).Width - _table.RowHeadersWidth;
             _visibleColumnsToLeft = _table.DataColumns.Count(c => c.Visible && c.Index < index);
@@ -67,10 +71,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             }
             var x = Cursor.Position.X;
             var diff = x - _lastX;
-            if (_targetColumn.Index == _firstVisibleIndex)
+            if (_table.DataColumns.Count(c => c.Visible) == 1)
+                ScaleOneDataColumn(diff);
+            else if (_targetColumn.Index == _firstVisibleIndex)
                 ScaleDataColumnsWithFirstVisibleAsTarget(diff);
-            else if (_targetColumn.Index == _lastVisibleIndex)
-                ScaleDataColumnsWithLastVisivleAsTarget(diff);
             else
                 ScaleDataColumns(diff);
             _lastX = x;
@@ -100,7 +104,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             var maxScrollingOffset = _table.ColumnResizeController.GetTotalWidthInBulkColumnWidthChange() - _tableDataAreaWidth;
 
-            if (scrollingOffset > maxScrollingOffset && _lastVisibleIndex != _targetColumn.Index)
+            if (scrollingOffset > maxScrollingOffset)
                 _table.Columns[VisualizerTable.PhantomColumnIndex].Width += scrollingOffset - maxScrollingOffset;
 
             _currentWidth = width;
@@ -115,12 +119,22 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             }
         }
 
-        private void ScaleDataColumnsWithLastVisivleAsTarget(int diff)
+        private void ScaleOneDataColumn(int diff)
         {
+            var width = _currentWidth + diff;
+            if (diff == 0 || width < 30)
+                return;
+            _table.Columns[_firstVisibleIndex].Width += diff;
             var totalWidth = _table.ColumnResizeController.GetTotalWidthInBulkColumnWidthChange();
-            if (totalWidth < _tableDataAreaWidth)
-                _table.Columns[VisualizerTable.PhantomColumnIndex].Width += _tableDataAreaWidth - totalWidth;
-            ScaleDataColumns(diff);
+            _table.Columns[VisualizerTable.PhantomColumnIndex].Width += _tableDataAreaWidth - totalWidth;
+            _table.ColumnResizeController.BeginBulkColumnWidthChange();
+            for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
+            {
+                if (i == _firstVisibleIndex || i == VisualizerTable.PhantomColumnIndex) continue;
+                _table.Columns[i].Width = width;
+            }
+            _currentWidth = width;
+            _table.ColumnResizeController.CommitBulkColumnWidthChange();
         }
 
         private void ScaleDataColumnsWithFirstVisibleAsTarget(int diff)
