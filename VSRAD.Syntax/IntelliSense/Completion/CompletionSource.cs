@@ -1,135 +1,156 @@
-﻿using Microsoft.VisualStudio.Language.Intellisense;
+﻿using Microsoft.VisualStudio.Core.Imaging;
+using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
+using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.ComponentModel.Composition;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser.Tokens;
-using VsCompletion = Microsoft.VisualStudio.Language.Intellisense.Completion;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
-    internal sealed class CompletionSource : ICompletionSource
+    [Export(typeof(IAsyncCompletionSourceProvider))]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [Name(nameof(CompletionSourceProvider))]
+    internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly ITextStructureNavigator _textStructureNavigator;
-        private readonly IGlyphService _glyphService;
-        private IEnumerable<VsCompletion> _instructionCompletions;
-        private bool _isDisposed;
+        private readonly ITextStructureNavigatorSelectorService _textStructureNavigatorSelector;
+        private readonly InstructionListManager _instructionListManager;
+        private readonly OptionsEventProvider _optionsEventProvider;
 
-        private bool _autocompleteInstructions;
+        [ImportingConstructor]
+        public CompletionSourceProvider(
+            ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService,
+            OptionsEventProvider optionsEventProvider,
+            InstructionListManager instructionListManager)
+        {
+            _textStructureNavigatorSelector = textStructureNavigatorSelectorService;
+            _instructionListManager = instructionListManager;
+            _optionsEventProvider = optionsEventProvider;
+        }
+
+        public IAsyncCompletionSource GetOrCreate(ITextView textView)
+        {
+            if (textView.TextBuffer == null)
+                throw new ArgumentNullException(nameof(textView));
+
+            var textStructureNavigator = _textStructureNavigatorSelector.GetTextStructureNavigator(textView.TextBuffer);
+            return new CompletionSource(textStructureNavigator, _optionsEventProvider);
+        }
+    }
+
+    internal sealed class CompletionSource : IAsyncCompletionSource
+    {
+        private static readonly ImageElement CompletionItemIcon = new ImageElement(new ImageId(new Guid("D0DBB6F5-765C-4582-8CE3-F412F0830FA1"), 1), "Hello Icon");
+        private readonly ITextStructureNavigator _textStructureNavigator;
+        private readonly IDictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>> _completions;
+
         private bool _autocompleteFunctions;
         private bool _autocompleteLabels;
-        private bool _autocompleteVariables;
+        private bool _autocompleteGlobalVariables;
 
         public CompletionSource(
-            IGlyphService glyphService,
             ITextStructureNavigator textStructureNavigator,
-            InstructionListManager instructionListManager,
             OptionsEventProvider optionsProvider)
         {
             _textStructureNavigator = textStructureNavigator;
-            _glyphService = glyphService;
+            _completions = new Dictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>>();
 
-            instructionListManager.InstructionUpdated += InstructionUpdated;
             optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
-
-            InstructionUpdated(instructionListManager.InstructionList);
             DisplayOptionsUpdated(optionsProvider);
         }
 
-        public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
+        public Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
+        {
+            var completions = Enumerable.Empty<CompletionItem>();
+            if (_autocompleteFunctions)
+                completions = completions.Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Function));
+            if (_autocompleteLabels)
+                completions = completions.Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Label));
+            if (_autocompleteGlobalVariables)
+                completions = completions.Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.GlobalVariable));
+
+            return Task.FromResult(completions.Any() ? new CompletionContext(completions.ToImmutableArray()) : null);
+        }
+
+        public Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
+        {
+            if (TryGetDescription(TokenType.Function, item, out var description))
+                return Task.FromResult(description);
+            if (TryGetDescription(TokenType.Label, item, out description))
+                return Task.FromResult(description);
+            if (TryGetDescription(TokenType.GlobalVariable, item, out description))
+                return Task.FromResult(description);
+
+            return Task.FromResult((object)string.Empty);
+        }
+
+        public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
+        {
+            var extent = _textStructureNavigator.GetExtentOfWord(triggerLocation - 1);
+            if (extent.IsSignificant && extent.Span.Length > 2)
+                return new CompletionStartData(CompletionParticipation.ProvidesItems, extent.Span);
+
+            return CompletionStartData.DoesNotParticipateInCompletion;
+        }
+
+        private bool TryGetDescription(TokenType tokenType, CompletionItem item, out object description)
         {
             try
             {
-                var completions = Enumerable.Empty<VsCompletion>();
-                if (_autocompleteInstructions)
-                    completions = completions.Concat(_instructionCompletions);
-                if (_autocompleteFunctions)
-                    completions = completions.Concat(GetScopedCompletions(session, TokenType.Function));
-                if (_autocompleteLabels)
-                    completions = completions.Concat(GetScopedCompletions(session, TokenType.Label));
-                if (_autocompleteVariables)
-                    completions = completions
-                        .Concat(GetScopedCompletions(session, TokenType.Argument))
-                        .Concat(GetScopedCompletions(session, TokenType.GlobalVariable))
-                        .Concat(GetScopedCompletions(session, TokenType.LocalVariable));
-
-                if (completions.Any())
-                    completionSets.Add(new CompletionSet(Constants.CompletionSetName, Constants.CompletionSetName, FindTokenSpanAtPosition(session), completions, null));
+                if (_completions.TryGetValue(tokenType, out var pairs)
+                    && pairs.Select(p => p.Value.DisplayText).Contains(item.DisplayText))
+                {
+                    description = IntellisenseTokenDescription.GetColorizedDescription(pairs.Single(p => p.Value.DisplayText == item.DisplayText).Key);
+                    return true;
+                }
             }
             catch (Exception e)
             {
-                Error.LogError(e, "CompletionSource");
+                Error.LogError(e);
             }
+
+            description = null;
+            return false;
         }
 
-        public void Dispose()
+        private ImmutableArray<CompletionItem> GetScopedCompletions(ITextView textView, SnapshotPoint triggerPoint, TokenType type)
         {
-            if (!_isDisposed)
-            {
-                GC.SuppressFinalize(this);
-                _isDisposed = true;
-            }
-        }
-
-        private static void AddCompletionSet(IList<CompletionSet> completionSets, string displayName, ITrackingSpan applicableTo, IEnumerable<VsCompletion> completions) =>
-            completionSets.Add(new CompletionSet(displayName, displayName, applicableTo, completions, null));
-
-        private ITrackingSpan FindTokenSpanAtPosition(ICompletionSession session)
-        {
-            var currentPoint = session.TextView.Caret.Position.BufferPosition;
-            // show set after only two characters
-            if (currentPoint > 2)
-                currentPoint -= 2;
-
-            var extent = _textStructureNavigator.GetExtentOfWord(currentPoint);
-            return currentPoint.Snapshot.CreateTrackingSpan(extent.Span, SpanTrackingMode.EdgeInclusive);
-        }
-
-        private IEnumerable<VsCompletion> GetScopedCompletions(ICompletionSession session, TokenType tokenType)
-        {
-            var scopedCompletions = Enumerable.Empty<VsCompletion>();
-
-            var parserManager = session.TextView.GetParserManager();
+            var scopedCompletions = ImmutableArray<CompletionItem>.Empty;
+            var parserManager = textView.GetParserManager();
             var parser = parserManager?.ActualParser;
+
             if (parser == null)
                 return scopedCompletions;
 
-            scopedCompletions = parser
-                .GetScopedTokens(session.TextView.Caret.Position.BufferPosition, tokenType)
-                .OrderBy(t => t.TokenName)
-                .Select(t => InitializeCompletion(t.TokenName, t.TokenName, GetFullName(t), GetTokenDescription(t), tokenType.GetName(), tokenType.GetGlyphGroup()));
+            var scopedCompletionPairs = parser
+                .GetScopedTokens(triggerPoint, type)
+                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this, CompletionItemIcon)));
 
-            return scopedCompletions;
-        }
-
-        private void InstructionUpdated(IReadOnlyList<string> instructions)
-        {
-            _instructionCompletions = instructions
-                .OrderBy(i => i)
-                .Select(i => InitializeCompletion(i, i, i, "", "instruction", StandardGlyphGroup.GlyphGroupField));
+            _completions[type] = scopedCompletionPairs;
+            return scopedCompletionPairs
+                .Select(p => p.Value)
+                .ToImmutableArray();
         }
 
         private void DisplayOptionsUpdated(OptionsEventProvider options)
         {
-            _autocompleteInstructions = options.AutocompleteInstructions;
-            _autocompleteFunctions = options.AutocompleteFunctions;
-            _autocompleteLabels = options.AutocompleteLabels;
-            _autocompleteVariables = options.AutocompleteVariables;
+            if (!(_autocompleteFunctions = options.AutocompleteFunctions))
+                _completions.Remove(TokenType.Function);
+            if (!(_autocompleteLabels = options.AutocompleteLabels))
+                _completions.Remove(TokenType.Label);
+            if (!(_autocompleteGlobalVariables = options.AutocompleteVariables))
+                _completions.Remove(TokenType.GlobalVariable);
         }
-
-        private VsCompletion InitializeCompletion(string displayName, string insertText, string fullName, string description, string type, StandardGlyphGroup group) =>
-            new VsCompletion(displayName, insertText, $"({type}) {fullName}{description}", _glyphService.GetGlyph(group, StandardGlyphItem.GlyphItemPublic), type);
-
-        private static string GetFullName(IBaseToken token) =>
-            token.TokenType != TokenType.Function ? token.TokenName : ((FunctionToken)token).GetFullName();
-
-        private static string GetTokenDescription(IBaseToken token) => 
-            (token is IDescriptionToken descriptionToken && !string.IsNullOrWhiteSpace(descriptionToken.Description))
-                ? Environment.NewLine + Environment.NewLine + ((IDescriptionToken)token).Description
-                : string.Empty;
     }
 }

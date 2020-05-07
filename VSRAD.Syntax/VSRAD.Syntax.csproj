@@ -89,9 +89,9 @@
     <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
-    <Compile Include="IntelliSense\Completion\CompletionService.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
-    <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
+    <Compile Include="IntelliSense\Completion\InstructionCompletionSource.cs" />
+    <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -209,7 +209,7 @@
       <Version>15.8.525</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Language.Intellisense">
-      <Version>15.8.525</Version>
+      <Version>16.4.280</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Language.StandardClassification">
       <Version>15.8.525</Version>

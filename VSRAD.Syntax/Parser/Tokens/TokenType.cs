@@ -10,6 +10,7 @@ namespace VSRAD.Syntax.Parser.Tokens
         Argument = 4,
         Comment = 5,
         Label = 6,
+        Instruction = 7,
     }
 
     public static class TokenTypeMapping
@@ -28,27 +29,10 @@ namespace VSRAD.Syntax.Parser.Tokens
                     return "global variable";
                 case TokenType.LocalVariable:
                     return "function";
+                case TokenType.Instruction:
+                    return "instruction";
                 default:
                     return "unknown";
-            }
-        }
-
-        public static StandardGlyphGroup GetGlyphGroup(this TokenType tokenType)
-        {
-            switch (tokenType)
-            {
-                case TokenType.Argument:
-                    return StandardGlyphGroup.GlyphGroupValueType;
-                case TokenType.Function:
-                    return StandardGlyphGroup.GlyphExtensionMethod;
-                case TokenType.Label:
-                    return StandardGlyphGroup.GlyphGroupNamespace;
-                case TokenType.GlobalVariable:
-                    return StandardGlyphGroup.GlyphGroupVariable;
-                case TokenType.LocalVariable:
-                    return StandardGlyphGroup.GlyphGroupValueType;
-                default:
-                    return StandardGlyphGroup.GlyphGroupUnknown;
             }
         }
     }
