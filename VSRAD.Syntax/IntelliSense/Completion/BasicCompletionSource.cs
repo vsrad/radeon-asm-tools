@@ -1,66 +1,25 @@
-﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
+﻿using Microsoft.VisualStudio.Core.Imaging;
+using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Adornments;
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
-    internal sealed class BasicCompletionSource : IAsyncCompletionSource
+    internal abstract class BasicCompletionSource : IAsyncCompletionSource
     {
-        private readonly IParserManager _parserManager;
-        private readonly IDictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>> _completions;
-
-        private bool _autocompleteLabels;
-        private bool _autocompleteVariables;
+        public readonly IParserManager ParserManager;
 
         public BasicCompletionSource(OptionsProvider optionsProvider, IParserManager parserManager)
         {
-            _parserManager = parserManager;
-            _completions = new Dictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>>();
-
+            ParserManager = parserManager;
             optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
-            DisplayOptionsUpdated(optionsProvider);
-        }
-
-        public Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
-        {
-            if (_parserManager.ActualParser == null || _parserManager.ActualParser.PointInComment(triggerLocation))
-                return Task.FromResult<CompletionContext>(null);
-
-            var completions = Enumerable.Empty<CompletionItem>();
-            if (_autocompleteLabels)
-                completions = completions
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.Label));
-            if (_autocompleteVariables)
-                completions = completions
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.GlobalVariable))
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.LocalVariable))
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.Argument));
-
-            return Task.FromResult(completions.Any() ? new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()) : null);
-        }
-
-        public Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
-        {
-            if (TryGetDescription(TokenType.Label, item, out var description))
-                return Task.FromResult(description);
-            if (TryGetDescription(TokenType.GlobalVariable, item, out description))
-                return Task.FromResult(description);
-            if (TryGetDescription(TokenType.LocalVariable, item, out description))
-                return Task.FromResult(description);
-            if (TryGetDescription(TokenType.Argument, item, out description))
-                return Task.FromResult(description);
-
-            return Task.FromResult((object)string.Empty);
         }
 
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
@@ -72,54 +31,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             return CompletionStartData.DoesNotParticipateInCompletion;
         }
 
-        private bool TryGetDescription(TokenType tokenType, CompletionItem item, out object description)
-        {
-            try
-            {
-                if (_completions.TryGetValue(tokenType, out var pairs)
-                    && pairs.Select(p => p.Value.DisplayText).Contains(item.DisplayText))
-                {
-                    description = IntellisenseTokenDescription.GetColorizedDescription(pairs.Single(p => p.Value.DisplayText == item.DisplayText).Key);
-                    return true;
-                }
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
+        public static ImageElement GetImageElement(int imageId) =>
+            new ImageElement(new ImageId(ImageCatalogGuid, imageId));
 
-            description = null;
-            return false;
-        }
+        public abstract Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token);
 
-        private ImmutableArray<CompletionItem> GetScopedCompletions(SnapshotPoint triggerPoint, TokenType type)
-        {
-            var scopedCompletions = ImmutableArray<CompletionItem>.Empty;
-            var parser = _parserManager.ActualParser;
+        public abstract Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token);
 
-            if (parser == null)
-                return scopedCompletions;
+        protected abstract void DisplayOptionsUpdated(OptionsProvider options);
 
-            var scopedCompletionPairs = parser
-                .GetScopedTokens(triggerPoint, type)
-                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this)));
-
-            _completions[type] = scopedCompletionPairs;
-            return scopedCompletionPairs
-                .Select(p => p.Value)
-                .ToImmutableArray();
-        }
-
-        private void DisplayOptionsUpdated(OptionsProvider options)
-        {
-            if (!(_autocompleteLabels = options.AutocompleteLabels))
-                _completions.Remove(TokenType.Label);
-            if (!(_autocompleteVariables = options.AutocompleteVariables))
-            {
-                _completions.Remove(TokenType.LocalVariable);
-                _completions.Remove(TokenType.Argument);
-                _completions.Remove(TokenType.GlobalVariable);
-            }
-        }
+        private static readonly Guid ImageCatalogGuid = Guid.Parse(/* image catalog guid */ "ae27a6b0-e345-4288-96df-5eaf394ee369");
     }
 }

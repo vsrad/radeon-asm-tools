@@ -94,6 +94,7 @@
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
     <Compile Include="IntelliSense\Completion\FunctionCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\InstructionCompletionSource.cs" />
+    <Compile Include="IntelliSense\Completion\ScopedTokenCompletionSource.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
       <SubType>Component</SubType>

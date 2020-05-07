@@ -10,14 +10,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 {
     [Export(typeof(IAsyncCompletionSourceProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
-    [Name(nameof(CompletionSourceProvider))]
-    internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
+    [Name(nameof(ScopeTokenCompletionSourceProvider))]
+    internal class ScopeTokenCompletionSourceProvider : IAsyncCompletionSourceProvider
     {
         private readonly InstructionListManager _instructionListManager;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
-        public CompletionSourceProvider(
+        public ScopeTokenCompletionSourceProvider(
             OptionsProvider optionsEventProvider,
             InstructionListManager instructionListManager)
         {
@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView.TextBuffer == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new BasicCompletionSource(_optionsEventProvider, textView.GetParserManager());
+            return new ScopeTokenCompletionSource(_optionsEventProvider, textView.GetParserManager());
         }
     }
 
