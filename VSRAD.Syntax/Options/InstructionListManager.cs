@@ -17,13 +17,13 @@ namespace VSRAD.Syntax.Options
         public List<string> InstructionList { get; }
 
         [ImportingConstructor]
-        public InstructionListManager(OptionsEventProvider optionsEventProvider)
+        public InstructionListManager(OptionsProvider optionsEventProvider)
         {
             InstructionList = new List<string>();
             optionsEventProvider.OptionsUpdated += InstructionPathsUpdated;
         }
 
-        private void InstructionPathsUpdated(OptionsEventProvider provider) =>
+        private void InstructionPathsUpdated(OptionsProvider provider) =>
             Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
 
         public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)

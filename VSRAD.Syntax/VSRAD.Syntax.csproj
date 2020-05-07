@@ -89,7 +89,9 @@
     <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
-    <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
+    <Compile Include="IntelliSense\Completion\BasicCompletionSource.cs" />
+    <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
+    <Compile Include="IntelliSense\Completion\FunctionCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\InstructionCompletionSource.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
     <Compile Include="Options\BaseOptionPage.cs">

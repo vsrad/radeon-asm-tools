@@ -103,7 +103,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                     isNeedGetFunction = true;
 
                 if (isNeedGetFunction)
-                    currentFunction = _parser?.GetFunctionByLine(line);
+                    currentFunction = _parser?.GetFunction(line);
 
                 if (currentFunction != null)
                 {

@@ -38,7 +38,7 @@ namespace VSRAD.Syntax.FunctionList
             _textManager = GetService(typeof(VsTextManagerClass)) as IVsTextManager;
             _dte = GetService(typeof(DTE)) as DTE;
             _editorAdaptorFactory = (this.Package as Package).GetMEFComponent<IVsEditorAdaptersFactoryService>();
-            var optionsEventProvider = (this.Package as Package).GetMEFComponent<OptionsEventProvider>();
+            var optionsEventProvider = (this.Package as Package).GetMEFComponent<OptionsProvider>();
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
 
@@ -119,7 +119,7 @@ namespace VSRAD.Syntax.FunctionList
             if (line == null)
                 return Task.CompletedTask;
 
-            var function = parser.GetFunctionByLine(line);
+            var function = parser.GetFunction(line);
             return function == null ? Task.CompletedTask : FunctionListControl.HighlightCurrentFunctionAsync(function.FunctionToken);
         }
 

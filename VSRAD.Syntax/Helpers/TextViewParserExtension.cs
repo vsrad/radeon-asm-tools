@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Helpers
             if (parser == null)
                 return null;
 
-            return parser.GetFunctionByToken(token);
+            return parser.GetFunction(token);
         }
     }
 }

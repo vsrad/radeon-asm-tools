@@ -31,7 +31,7 @@ namespace VSRAD.Syntax.Options
             IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
             IContentTypeRegistryService contentTypeRegistryService,
             IFileExtensionRegistryService fileExtensionRegistryService,
-            OptionsEventProvider optionsEventProvider)
+            OptionsProvider optionsEventProvider)
         {
             _serviceProvider = serviceProvider;
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
@@ -84,7 +84,7 @@ namespace VSRAD.Syntax.Options
             }
         }
 
-        private void FileExtensionChanged(OptionsEventProvider optionsProvider) =>
+        private void FileExtensionChanged(OptionsProvider optionsProvider) =>
             ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(optionsProvider.Asm1FileExtensions, optionsProvider.Asm2FileExtensions));
 
         private void ChangeExtensions(IContentType contentType, IEnumerable<string> extensions)

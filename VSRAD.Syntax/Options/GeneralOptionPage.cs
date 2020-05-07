@@ -12,10 +12,10 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Options
 {
-    [Export(typeof(OptionsEventProvider))]
-    public class OptionsEventProvider
+    [Export(typeof(OptionsProvider))]
+    public class OptionsProvider
     {
-        public OptionsEventProvider()
+        public OptionsProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;
             IsEnabledIndentGuides = true;
@@ -38,7 +38,7 @@ namespace VSRAD.Syntax.Options
         public bool AutocompleteLabels;
         public bool AutocompleteVariables;
 
-        public delegate void OptionsUpdate(OptionsEventProvider sender);
+        public delegate void OptionsUpdate(OptionsProvider sender);
         public event OptionsUpdate OptionsUpdated;
 
         public void OptionsUpdatedInvoke() =>
@@ -54,11 +54,11 @@ namespace VSRAD.Syntax.Options
     public class GeneralOptionPage : BaseOptionPage
     {
         private static readonly Regex fileExtensionRegular = new Regex(@"^\.\w+$");
-        private readonly OptionsEventProvider _optionsEventProvider;
+        private readonly OptionsProvider _optionsEventProvider;
 
         public GeneralOptionPage(): base()
         {
-            _optionsEventProvider = Package.Instance.GetMEFComponent<OptionsEventProvider>();
+            _optionsEventProvider = Package.Instance.GetMEFComponent<OptionsProvider>();
             _collectionSettings = new Dictionary<string, KeyValuePair<string, (List<string>, IReadOnlyList<string>)>>()
             {
                 { "Asm1CollectionFileExtensions", new KeyValuePair<string, (List<string>, IReadOnlyList<string>)>(nameof(Asm1FileExtensions), (Asm1FileExtensions, Constants.DefaultFileExtensionAsm1)) },

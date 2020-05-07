@@ -23,7 +23,7 @@ namespace VSRAD.Syntax.FunctionList
         private IList<IBaseToken> Tokens;
         private ListViewItem lastHighlightedItem;
 
-        public FunctionListControl(OleMenuCommandService service, OptionsEventProvider optionsProvider)
+        public FunctionListControl(OleMenuCommandService service, OptionsProvider optionsProvider)
         {
             var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
             service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.FunctionList
             optionsProvider.OptionsUpdated += SortOptionsUpdated;
         }
 
-        private void SortOptionsUpdated(OptionsEventProvider sender) =>
+        private void SortOptionsUpdated(OptionsProvider sender) =>
             ChangeSortOptions(sender.SortOptions);
 
         public async Task UpdateFunctionListAsync(IEnumerable<IBaseToken> newTokens)

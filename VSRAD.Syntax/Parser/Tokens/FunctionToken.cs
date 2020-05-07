@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.Parser.Tokens
             if (parser == null)
                 return null;
 
-            return parser.GetFunctionByToken(this);
+            return parser.GetFunction(this);
         }
     }
 }

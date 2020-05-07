@@ -28,7 +28,7 @@ namespace VSRAD.Syntax.Parser.Tokens
                 case TokenType.GlobalVariable:
                     return "global variable";
                 case TokenType.LocalVariable:
-                    return "function";
+                    return "local variable";
                 case TokenType.Instruction:
                     return "instruction";
                 default:

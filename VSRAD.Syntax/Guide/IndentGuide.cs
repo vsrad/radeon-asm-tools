@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.Guide
         private IList<Line> _currentAdornments;
         private bool _isEnables;
 
-        public IndentGuide(IWpfTextView textView, IParserManager parserManager, OptionsEventProvider optionsProvider)
+        public IndentGuide(IWpfTextView textView, IParserManager parserManager, OptionsProvider optionsProvider)
         {
             _wpfTextView = textView ?? throw new NullReferenceException();
             _parserManager = parserManager ?? throw new NullReferenceException();
@@ -47,7 +47,7 @@ namespace VSRAD.Syntax.Guide
             optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
         }
 
-        private void IndentGuideOptionsUpdated(OptionsEventProvider sender)
+        private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
             _isEnables = sender.IsEnabledIndentGuides;
             ThreadHelper.JoinableTaskFactory.RunAsync(UpdateIndentGuidesAsync);

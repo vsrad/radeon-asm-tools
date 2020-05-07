@@ -1,7 +1,6 @@
 ﻿using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,8 +18,9 @@ namespace VSRAD.Syntax.Parser
         void Parse(object threadContext);
         IBaseBlock GetBlockBySnapshotPoint(SnapshotPoint point);
         IBaseBlock GetBlockByToken(IBaseToken token);
-        FunctionBlock GetFunctionByLine(ITextSnapshotLine line);
-        FunctionBlock GetFunctionByToken(IBaseToken token);
+        FunctionBlock GetFunction(ITextSnapshotLine line);
+        FunctionBlock GetFunction(IBaseToken token);
+        FunctionBlock GetFunction(string name);
         IEnumerable<FunctionBlock> GetFunctionBlocks();
         IEnumerable<IBaseToken> GetLabelTokens();
         IEnumerable<IBaseToken> GetFunctionTokens();
@@ -372,7 +372,7 @@ namespace VSRAD.Syntax.Parser
                 .Cast<FunctionBlock>();
         }
 
-        public FunctionBlock GetFunctionByLine(ITextSnapshotLine line)
+        public FunctionBlock GetFunction(ITextSnapshotLine line)
         {
             return (FunctionBlock)currentListBlock
                     .Where(block =>
@@ -382,8 +382,11 @@ namespace VSRAD.Syntax.Parser
                     .FirstOrDefault();
         }
 
-        public FunctionBlock GetFunctionByToken(IBaseToken token) =>
+        public FunctionBlock GetFunction(IBaseToken token) =>
             GetFunctionBlocks().FirstOrDefault(fb => fb.FunctionToken == token);
+
+        public FunctionBlock GetFunction(string name) =>
+            GetFunctionBlocks().FirstOrDefault(fb => fb.FunctionToken.TokenName == name);
 
         public IBaseBlock GetBlockBySnapshotPoint(SnapshotPoint point)
         {
