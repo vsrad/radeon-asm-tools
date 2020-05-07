@@ -274,8 +274,8 @@ namespace VSRAD.Package.DebugVisualizer
                 SortMode = DataGridViewColumnSortMode.NotSortable,
                 Visible = true
             });
-            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = ColorTranslator.FromHtml("#ABABAB");
+            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
+            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
             Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
         }
