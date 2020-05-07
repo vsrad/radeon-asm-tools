@@ -7,13 +7,13 @@ namespace VSRAD.Deborgar
 {
     public sealed class Breakpoint : IDebugPendingBreakpoint2, IDebugBoundBreakpoint2, IDebugBreakpointResolution2
     {
-        public SourceFileLineContext SourceContext => new SourceFileLineContext(_fileName, GetTextPosition());
+        public SourceFileLineContext SourceContext => new SourceFileLineContext(_sourcePath, GetTextPosition());
 
         private readonly BreakpointManager _manager;
         private readonly IDebugBreakpointRequest2 _request;
         private readonly IDebugProgram2 _program;
         private readonly IDebugDocumentPosition2 _documentInfo;
-        private readonly string _fileName;
+        private readonly string _sourcePath;
 
         private bool _enabled = false;
 
@@ -24,8 +24,7 @@ namespace VSRAD.Deborgar
             _program = program;
             _documentInfo = documentInfo;
 
-            ErrorHandler.ThrowOnFailure(_documentInfo.GetFileName(out var absoluteSourcePath));
-            _fileName = manager.GetProjectRelativePath(absoluteSourcePath);
+            ErrorHandler.ThrowOnFailure(_documentInfo.GetFileName(out _sourcePath));
         }
 
         public int Enable(int fEnable)

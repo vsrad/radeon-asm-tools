@@ -33,7 +33,7 @@ namespace VSRAD.Deborgar
             _breakpointManager = breakpointManager;
             _executionController = new ExecutionController(engineIntegration, callbacks);
 
-            CreateBreakFrame(engineIntegration.GetActiveProjectFile(), new[] { 0u });
+            CreateBreakFrame(engineIntegration.GetActiveSourcePath(), new[] { 0u });
         }
 
         public int CreatePendingBreakpoint(IDebugBreakpointRequest2 request, out IDebugPendingBreakpoint2 breakpoint)
@@ -46,7 +46,7 @@ namespace VSRAD.Deborgar
 
         public int ExecuteOnThread(IDebugThread2 thread)
         {
-            var file = _engineIntegration.GetActiveProjectFile();
+            var file = _engineIntegration.GetActiveSourcePath();
             _executionController.ComputeNextBreakTarget(file, _breakpointManager);
             _engineIntegration.Execute(_executionController.CurrentBreakTarget);
 
@@ -57,7 +57,7 @@ namespace VSRAD.Deborgar
         {
             if (sk == enum_STEPKIND.STEP_INTO || sk == enum_STEPKIND.STEP_OUT || sk == enum_STEPKIND.STEP_OVER)
             {
-                var file = _engineIntegration.GetActiveProjectFile();
+                var file = _engineIntegration.GetActiveSourcePath();
                 _executionController.ComputeNextStepTarget(file);
                 _engineIntegration.Execute(_executionController.CurrentBreakTarget);
 

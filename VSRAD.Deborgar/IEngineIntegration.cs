@@ -10,9 +10,7 @@
     public interface IEngineIntegration
     {
         void Execute(uint[] breakLines);
-        string GetActiveProjectFile();
-        string GetProjectRelativePath(string absoluteFilePath);
-        uint GetFileLineCount(string projectFilePath);
+        string GetActiveSourcePath();
         BreakMode GetBreakMode();
         bool PopRunToLineIfSet(string file, out uint runToLine);
 

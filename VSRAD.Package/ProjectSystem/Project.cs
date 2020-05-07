@@ -24,8 +24,6 @@ namespace VSRAD.Package.ProjectSystem
 
         ProjectOptions Options { get; }
         string RootPath { get; }
-        string GetRelativePath(string absoluteFilePath);
-        string GetAbsolutePath(string projectRelativePath);
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
         void SaveOptions();
     }
@@ -71,19 +69,16 @@ namespace VSRAD.Package.ProjectSystem
 
         public void SaveOptions() => Options.Write(_optionsFilePath);
 
-        public string GetRelativePath(string absoluteFilePath)
+        #region MacroEvaluator
+        private (IActiveCodeEditor, ICommunicationChannel, IProjectProperties)? _macroEvaluatorDependencies;
+
+        private string GetRelativePath(string absoluteFilePath)
         {
             if (!absoluteFilePath.StartsWith(RootPath, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"\"{absoluteFilePath}\" does not belong to the current project located at \"{RootPath}\"");
 
             return absoluteFilePath.Substring(RootPath.Length + 1);
         }
-
-        public string GetAbsolutePath(string projectRelativePath) =>
-            Path.Combine(RootPath, projectRelativePath);
-
-        #region MacroEvaluator
-        private (IActiveCodeEditor, ICommunicationChannel, IProjectProperties)? _macroEvaluatorDependencies;
 
         public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null)
         {

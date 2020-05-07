@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -27,16 +28,11 @@ namespace VSRAD.Deborgar
         private readonly Dictionary<string, SourceFileState> _sourceFileState = new Dictionary<string, SourceFileState>();
 
         private readonly OnBreakpointBound _onBreakpointBound;
-        private readonly IEngineIntegration _integration;
 
-        public BreakpointManager(IEngineIntegration integration, OnBreakpointBound onBreakpointBound)
+        public BreakpointManager(OnBreakpointBound onBreakpointBound)
         {
-            _integration = integration;
             _onBreakpointBound = onBreakpointBound;
         }
-
-        public string GetProjectRelativePath(string absoluteFilePath) =>
-            _integration.GetProjectRelativePath(absoluteFilePath);
 
         public IDebugPendingBreakpoint2 TryCreateBreakpoint(IDebugProgram2 program, IDebugBreakpointRequest2 request)
         {
@@ -52,7 +48,7 @@ namespace VSRAD.Deborgar
 
         public void AddBreakpoint(Breakpoint breakpoint)
         {
-            var fileState = GetSourceFileState(breakpoint.SourceContext.FileName);
+            var fileState = GetSourceFileState(breakpoint.SourceContext.SourcePath);
             fileState.Breakpoints.Add(breakpoint);
 
             _onBreakpointBound(breakpoint);
@@ -60,7 +56,7 @@ namespace VSRAD.Deborgar
 
         public void RemoveBreakpoint(Breakpoint breakpoint)
         {
-            var fileState = GetSourceFileState(breakpoint.SourceContext.FileName);
+            var fileState = GetSourceFileState(breakpoint.SourceContext.SourcePath);
             fileState.Breakpoints.Remove(breakpoint);
         }
 
@@ -76,7 +72,7 @@ namespace VSRAD.Deborgar
             if (fileState.Breakpoints.Count == 0)
                 // No breakpoints set but we need to pass one to the debugger anyway,
                 // so we pick the end of the program as the implicit "default" breakpoint
-                return _integration.GetFileLineCount(file) - 1;
+                return (uint)File.ReadLines(file).Count() - 1;
 
             var breakpoints = fileState.Breakpoints.OrderBy(bp => bp.SourceContext.LineNumber);
             var nextBreakpoint = breakpoints.FirstOrDefault(bp => bp.SourceContext.LineNumber > previousLine)

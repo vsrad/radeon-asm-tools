@@ -5,8 +5,6 @@ using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
-using System.IO;
-using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.Server;
 
@@ -82,9 +80,9 @@ namespace VSRAD.Package.ProjectSystem
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var projectFile = _project.GetRelativePath(_codeEditor.GetAbsoluteSourcePath());
+            var sourcePath = _codeEditor.GetAbsoluteSourcePath();
             var line = _codeEditor.GetCurrentLine();
-            _debugRunToLine = (projectFile, line);
+            _debugRunToLine = (sourcePath, line);
 
             Launch();
         }
@@ -121,14 +119,8 @@ namespace VSRAD.Package.ProjectSystem
             exceptionCallbackOnMainThread: () => ExecutionCompleted(success: false));
         }
 
-        string IEngineIntegration.GetActiveProjectFile() =>
-            _project.GetRelativePath(_codeEditor.GetAbsoluteSourcePath());
-
-        uint IEngineIntegration.GetFileLineCount(string projectFilePath) =>
-            (uint)File.ReadLines(_project.GetAbsolutePath(projectFilePath)).Count();
-
-        string IEngineIntegration.GetProjectRelativePath(string path) =>
-            _project.GetRelativePath(path);
+        string IEngineIntegration.GetActiveSourcePath() =>
+            _codeEditor.GetAbsoluteSourcePath();
 
         BreakMode IEngineIntegration.GetBreakMode() =>
             _project.Options.DebuggerOptions.BreakMode;

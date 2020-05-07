@@ -12,7 +12,7 @@ namespace VSRAD.DeborgarTests
             var integration = new Mock<IEngineIntegration>();
             var callbacks = new Mock<IEngineCallbacks>();
             var breakpointManager = new Mock<IBreakpointManager>();
-            integration.Setup((i) => i.GetActiveProjectFile()).Returns(file);
+            integration.Setup((i) => i.GetActiveSourcePath()).Returns(file);
             program.AttachDebugger(integration.Object, callbacks.Object, breakpointManager.Object);
             return (program, integration, callbacks, breakpointManager);
         }
