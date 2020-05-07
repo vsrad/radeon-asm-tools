@@ -12,6 +12,7 @@ using Microsoft;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
 using System.Linq;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -37,11 +38,12 @@ namespace VSRAD.Syntax.FunctionList
             _textManager = GetService(typeof(VsTextManagerClass)) as IVsTextManager;
             _dte = GetService(typeof(DTE)) as DTE;
             _editorAdaptorFactory = (this.Package as Package).GetMEFComponent<IVsEditorAdaptersFactoryService>();
+            var optionsEventProvider = (this.Package as Package).GetMEFComponent<OptionsEventProvider>();
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
 
             var commandService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            Content = new FunctionListControl(commandService);
+            Content = new FunctionListControl(commandService, optionsEventProvider);
 
             try
             {
@@ -118,13 +120,7 @@ namespace VSRAD.Syntax.FunctionList
                 return Task.CompletedTask;
 
             var function = parser.GetFunctionByLine(line);
-            return FunctionListControl.HighlightCurrentFunctionAsync(function.FunctionToken);
-        }
-
-        public static void TryUpdateSortOptions(Options.GeneralOptionPage.SortState options)
-        {
-            if (Instance != null)
-                Instance.FunctionListControl.ChangeSortOptions(options);
+            return function == null ? Task.CompletedTask : FunctionListControl.HighlightCurrentFunctionAsync(function.FunctionToken);
         }
 
         public static Task TryUpdateFunctionListAsync(object sender)

@@ -17,10 +17,19 @@ namespace VSRAD.Syntax.Helpers
         }
 
         public static void ShowWarning(Exception e, string module = "") =>
-            CreateMessageBox(e.Message, $"Radeon syntax {module}", OLEMSGICON.OLEMSGICON_WARNING);
+            ShowWarningMessage(e.Message, module);
 
         public static void ShowError(Exception e, string module = "") =>
-            CreateMessageBox(e.Message, $"Radeon syntax {module}", OLEMSGICON.OLEMSGICON_CRITICAL);
+            ShowErrorMessage(e.Message, module);
+
+        public static void ShowErrorMessage(string msg, string module = "") =>
+            ShowMessage(OLEMSGICON.OLEMSGICON_CRITICAL, msg, module);
+
+        public static void ShowWarningMessage(string msg, string module = "") =>
+            ShowMessage(OLEMSGICON.OLEMSGICON_WARNING, msg, module);
+
+        public static void ShowMessage(OLEMSGICON type, string msg, string module) =>
+            CreateMessageBox(msg, $"Radeon syntax {module}", type);
 
         private static void CreateMessageBox(string message, string title, OLEMSGICON icon)
         {

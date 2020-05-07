@@ -1,12 +1,12 @@
 ﻿using Microsoft.VisualStudio.Text.Editor;
-using System.Linq;
 using VSRAD.Syntax.Parser.Blocks;
+using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.Helpers
 {
     public static class TextViewParserExtension
     {
-        public static FunctionBlock GetFunctionBlockByName(this IWpfTextView view, string name)
+        public static FunctionBlock GetFunctionBlockByName(this IWpfTextView view, IBaseToken token)
         {
             var parserManager = view.GetParserManager();
             var parser = parserManager.ActualParser;
@@ -14,8 +14,7 @@ namespace VSRAD.Syntax.Helpers
             if (parser == null)
                 return null;
 
-            return parser.GetFunctionBlocks()
-                .FirstOrDefault(fb => fb.FunctionToken.TokenName == name);
+            return parser.GetFunctionByToken(token);
         }
     }
 }

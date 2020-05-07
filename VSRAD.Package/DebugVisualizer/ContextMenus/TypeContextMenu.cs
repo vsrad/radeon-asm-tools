@@ -9,7 +9,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
     {
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
-        public delegate void FontColorChanged(int rowIndex, Color color);
+        public delegate void RowColorChanged(int rowIndex, DataHighlightColor color);
         public delegate void InsertRow(int rowIndex, bool after);
 
         private readonly VisualizerTable _table;
@@ -17,19 +17,19 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, FontColorChanged fontColorChanged, Action processCopy, InsertRow insertRow)
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, RowColorChanged colorChanged, Action processCopy, InsertRow insertRow)
         {
             _table = table;
 
             var typeItems = ((VariableType[])Enum.GetValues(typeof(VariableType)))
                 .Select(type => new MenuItem(type.ToString(), (s, e) => typeChanged(_currentRow, type)));
 
-            var fontColorSubmenu = new MenuItem("Font Color", new[]
+            var fontColorSubmenu = new MenuItem("Highlight", new[]
             {
-                new MenuItem("Green", (s, e) => fontColorChanged(_currentRow, Color.Green)),
-                new MenuItem("Red", (s, e) => fontColorChanged(_currentRow, Color.Red)),
-                new MenuItem("Blue", (s, e) => fontColorChanged(_currentRow, Color.Blue)),
-                new MenuItem("Default", (s, e) => fontColorChanged(_currentRow, Color.Empty))
+                new MenuItem("Green", (s, e) => colorChanged(_currentRow, DataHighlightColor.RowGreen)),
+                new MenuItem("Red", (s, e) => colorChanged(_currentRow, DataHighlightColor.RowRed)),
+                new MenuItem("Blue", (s, e) => colorChanged(_currentRow, DataHighlightColor.RowBlue)),
+                new MenuItem("None", (s, e) => colorChanged(_currentRow, DataHighlightColor.None))
             });
 
             var insertRowBefore = new MenuItem("Insert Row Before", (s, e) => insertRow(_currentRow, false));

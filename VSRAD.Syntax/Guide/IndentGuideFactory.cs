@@ -13,6 +13,8 @@ namespace VSRAD.Syntax.Guide
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class IndentGuideFactory : IWpfTextViewCreationListener
     {
+        [Import]
+        private readonly Options.OptionsEventProvider _optionsProvider;
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name(Constants.IndentGuideAdornmentLayerName)]
@@ -37,7 +39,7 @@ namespace VSRAD.Syntax.Guide
             var buffer = textView.TextBuffer;
             var parserManager = buffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
 
-            return new IndentGuide(textView, parserManager);
+            return new IndentGuide(textView, parserManager, _optionsProvider);
         }
     }
 }

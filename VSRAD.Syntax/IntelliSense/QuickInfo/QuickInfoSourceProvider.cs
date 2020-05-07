@@ -1,12 +1,11 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Peek.DefinitionService;
 
-namespace VSRAD.Syntax.QuickInfo
+namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     [Export(typeof(IAsyncQuickInfoSourceProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]

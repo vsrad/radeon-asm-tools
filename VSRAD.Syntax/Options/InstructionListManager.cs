@@ -11,34 +11,53 @@ namespace VSRAD.Syntax.Options
     [Export(typeof(InstructionListManager))]
     internal sealed class InstructionListManager
     {
-        public delegate void ErrorsUpdateDelegate(IReadOnlyList<string> instructions);
-        public event ErrorsUpdateDelegate InstructionUpdated;
+        public delegate void InstructionsUpdateDelegate(IReadOnlyList<string> instructions);
+        public event InstructionsUpdateDelegate InstructionUpdated;
 
         public List<string> InstructionList { get; }
 
         [ImportingConstructor]
-        public InstructionListManager()
+        public InstructionListManager(OptionsEventProvider optionsEventProvider)
         {
             InstructionList = new List<string>();
+            optionsEventProvider.OptionsUpdated += InstructionPathsUpdated;
         }
 
-        public Task LoadInstructionsFromFilesAsync(string pathsString)
+        private void InstructionPathsUpdated(OptionsEventProvider provider) =>
+            Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
+
+        public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {
-            if (string.IsNullOrWhiteSpace(pathsString))
+            if (string.IsNullOrWhiteSpace(dirPathsString))
                 return Task.CompletedTask;
 
-            var paths = pathsString.Split(';')
+            var paths = dirPathsString.Split(';')
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
             InstructionList.Clear();
             foreach (var path in paths)
             {
-                LoadInstructionsFromFile(path);
+                LoadInstructionsFromDirectory(path);
             }
 
             InstructionUpdated?.Invoke(InstructionList);
             return Task.CompletedTask;
+        }
+
+        private void LoadInstructionsFromDirectory(string path)
+        {
+            try
+            {
+                foreach (var filepath in Directory.EnumerateFiles(path))
+                {
+                    if (Path.GetExtension(filepath) == Constants.InstructionsFileExtension)
+                        LoadInstructionsFromFile(filepath);
+                }
+            }catch (Exception e)
+            {
+                Error.ShowError(e, "instrunction folder paths");
+            }
         }
 
         private void LoadInstructionsFromFile(string path)

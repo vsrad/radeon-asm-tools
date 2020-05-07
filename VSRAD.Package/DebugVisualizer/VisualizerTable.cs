@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Forms;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class VisualizerTable : DataGridView
     {
         public delegate void ChangeWatchState(List<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
-        public delegate int GetGroupSize();
+        public delegate uint GetGroupSize();
 
         public event ChangeWatchState WatchStateChanged;
 
@@ -17,18 +18,16 @@ namespace VSRAD.Package.DebugVisualizer
         public const int DataColumnOffset = 1; /* name column */
         public const int DataColumnCount = 512;
 
+        public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
-        public int GroupSize => _groupSizeGetter();
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int ColumnWidth = 30;
         public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
 
         #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
-        public SolidBrush HiddenColumnSeparatorColor;
         public uint LaneGrouping;
         public int LaneSeparatorWidth = 3;
-        public SolidBrush LaneSeparatorColor;
         public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
         #endregion
 
@@ -52,16 +51,14 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly SelectionController _selectionController;
 
         private readonly ColumnStylingOptions _stylingOptions;
-        private readonly GetGroupSize _groupSizeGetter;
+        private readonly FontAndColorProvider _fontAndColor;
 
         private string _editedWatchName;
 
-        private readonly FontAndColorProvider _fontAndColor;
-
-        public VisualizerTable(ColumnStylingOptions options, GetGroupSize groupSizeGetter) : base()
+        public VisualizerTable(ColumnStylingOptions options, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
             _stylingOptions = options;
-            _groupSizeGetter = groupSizeGetter;
+            _fontAndColor = fontAndColor;
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -84,26 +81,22 @@ namespace VSRAD.Package.DebugVisualizer
             ShowCellToolTips = false;
             DoubleBuffered = true;
             AllowUserToResizeRows = false;
+            EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
+
+            DataColumns = SetupColumns();
 
             ColumnResizeController = new ColumnResizeController(this);
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, FontColorChanged, ProcessCopy, InsertSeparatorRow),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, RowColorChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColorClicked)
+                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColumnColorChanged, getGroupSize)
             });
-            _ = new CustomTableGraphics(this);
+            _ = new CustomTableGraphics(this, _fontAndColor);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this);
             _selectionController = new SelectionController(this);
-
-            DataColumns = SetupColumns();
-
-            EnableHeadersVisualStyles = false;
-            _fontAndColor = new FontAndColorProvider();
-            _fontAndColor.FontAndColorInfoChanged += ApplyFontAndColorInfo;
-            ApplyFontAndColorInfo();
         }
 
         public void ScaleControls(float scaleFactor)
@@ -149,12 +142,6 @@ namespace VSRAD.Package.DebugVisualizer
             RaiseWatchStateChanged(changedRows);
         }
 
-        public void FontColorChanged(int rowIndex, Color color)
-        {
-            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
-            RowStyling.ChangeRowFontColor(changedRows, color);
-        }
-
         private void AvgprStateChanged(int rowIndex, bool newAvgprState)
         {
             var selectedNames = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i].Cells[NameColumnIndex].Value.ToString());
@@ -177,7 +164,13 @@ namespace VSRAD.Package.DebugVisualizer
             CancelEdit();
         }
 
-        public void ColorClicked(int clickedColumnIndex, ColumnHighlightColor? color)
+        public void RowColorChanged(int rowIndex, DataHighlightColor color)
+        {
+            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
+            RowStyling.ChangeRowHighlight(changedRows, _fontAndColor.FontAndColorState, color);
+        }
+
+        public void ColumnColorChanged(int clickedColumnIndex, DataHighlightColor color)
         {
             var selectedColumns = SelectedColumns
                 .Cast<DataGridViewColumn>()
@@ -185,28 +178,16 @@ namespace VSRAD.Package.DebugVisualizer
                 .Where(x => x >= 0)
                 .Append(clickedColumnIndex - DataColumnOffset);
 
-            ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
-
-            if (color == null)
+            _stylingOptions.ApplyBulkChange(() =>
             {
-                ClearSelection();
-                return;
-            }
+                ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
+                if (color != DataHighlightColor.None)
+                {
+                    var selector = ColumnSelector.FromIndexes(selectedColumns);
+                    _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color, Selector = selector });
+                }
+            });
 
-            var selector = ColumnSelector.FromIndexes(selectedColumns);
-
-            var existingRegion = _stylingOptions.HighlightRegions.FirstOrDefault(r => r.Selector == selector);
-            if (existingRegion != null)
-            {
-                if (color == null)
-                    _stylingOptions.HighlightRegions.Remove(existingRegion);
-                else
-                    existingRegion.Color = color.Value;
-            }
-            else if (color != null)
-            {
-                _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color.Value, Selector = selector });
-            }
             ClearSelection();
         }
 
@@ -360,6 +341,59 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
+        public void GrayOutColumns(uint groupSize) =>
+            ColumnStyling.GrayOutColumns(DataColumns, _fontAndColor.FontAndColorState, groupSize);
+
+        public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
+            RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
+
+        public void ApplyDataStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
+        {
+            // Prevent the scrollbar from jerking due to visibility changes
+            var scrollingOffset = HorizontalScrollingOffset;
+            ((Control)this).SuspendDrawing();
+
+            ApplyFontAndColorInfo();
+
+            // TODO: refactor this away?
+            LaneGrouping = options.VisualizerOptions.VerticalSplit ? options.VisualizerOptions.LaneGrouping : 0;
+
+            var columnStyling = new ColumnStyling(
+                options.VisualizerOptions,
+                options.VisualizerAppearance,
+                options.VisualizerColumnStyling,
+                _fontAndColor.FontAndColorState);
+            columnStyling.Apply(DataColumns, groupSize);
+
+            var rowStyling = new RowStyling(
+                Rows.Cast<DataGridViewRow>(),
+                options.VisualizerOptions,
+                _fontAndColor.FontAndColorState);
+            rowStyling.Apply(groupSize, system);
+
+            ((Control)this).ResumeDrawing();
+            HorizontalScrollingOffset = scrollingOffset;
+        }
+
+        private void ApplyFontAndColorInfo()
+        {
+            var state = _fontAndColor.FontAndColorState;
+
+            ColumnHeadersDefaultCellStyle.Font = state.HeaderBold ? state.BoldFont : state.RegularFont;
+            ColumnHeadersDefaultCellStyle.ForeColor = state.HeaderForeground;
+
+            RowHeadersDefaultCellStyle.Font = state.WatchNameBold ? state.BoldFont : state.RegularFont;
+            RowHeadersDefaultCellStyle.ForeColor = state.WatchNameForeground;
+            Columns[0].DefaultCellStyle.Font = state.WatchNameBold ? state.BoldFont : state.RegularFont;
+            Columns[0].DefaultCellStyle.ForeColor = state.WatchNameForeground;
+
+            // Disable selection styles because DataGridView does not preserve selected headers when switching selection mode
+            ColumnHeadersDefaultCellStyle.SelectionForeColor = state.HeaderForeground;
+            ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
+            RowHeadersDefaultCellStyle.SelectionForeColor = state.WatchNameForeground;
+            RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
+        }
+
         public void AlignmentChanged(
                 ContentAlignment nameColumnAlignment,
                 ContentAlignment dataColumnAlignment,
@@ -371,33 +405,6 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
                 column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
-            }
-        }
-
-        private void ApplyFontAndColorInfo()
-        {
-            var (headerFont, headerFg) = _fontAndColor.GetInfo(FontAndColorItem.Header, DefaultFont);
-            var (dataFont, dataFg) = _fontAndColor.GetInfo(FontAndColorItem.Data, DefaultFont);
-            var (watchFont, watchFg) = _fontAndColor.GetInfo(FontAndColorItem.WatchNames, DefaultFont);
-
-            ColumnHeadersDefaultCellStyle.Font = headerFont;
-            ColumnHeadersDefaultCellStyle.ForeColor = headerFg;
-
-            RowHeadersDefaultCellStyle.Font = watchFont;
-            RowHeadersDefaultCellStyle.ForeColor = watchFg;
-            Columns[0].DefaultCellStyle.Font = watchFont;
-            Columns[0].DefaultCellStyle.ForeColor = watchFg;
-
-            // Disable selection styles because DataGridView does not preserve selected headers when switching selection mode
-            ColumnHeadersDefaultCellStyle.SelectionForeColor = headerFg;
-            ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
-            RowHeadersDefaultCellStyle.SelectionForeColor = watchFg;
-            RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
-
-            foreach (var column in DataColumns)
-            {
-                column.DefaultCellStyle.Font = dataFont;
-                column.DefaultCellStyle.ForeColor = dataFg;
             }
         }
 

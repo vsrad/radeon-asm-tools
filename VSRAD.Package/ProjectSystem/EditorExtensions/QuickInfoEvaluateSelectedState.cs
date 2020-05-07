@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Package.Utils;
@@ -28,15 +29,16 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             if (_evaluated.TryGetValue(watchName, out var values))
             {
-                var valuesIncluded = _project.Options.VisualizerColumnStyling.Computed.Visibility;
+                throw new NotImplementedException();
+                //var valuesIncluded = _project.Options.VisualizerColumnStyling.Computed.Visibility;
 
-                var formattedValues = new List<string>();
-                for (int i = 0; i < values.Length; i++)
-                    if (valuesIncluded[i])
-                        formattedValues.Add(DataFormatter.FormatDword(DebugVisualizer.VariableType.Hex, values[i]));
+                //var formattedValues = new List<string>();
+                //for (int i = 0; i < values.Length; i++)
+                //    if (valuesIncluded[i])
+                //        formattedValues.Add(DataFormatter.FormatDword(DebugVisualizer.VariableType.Hex, values[i]));
 
-                formattedValue = formattedValues.ToArray();
-                return true;
+                //formattedValue = formattedValues.ToArray();
+                //return true;
             }
 
             formattedValue = System.Array.Empty<string>();
