@@ -69,6 +69,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var diff = x - _lastX;
             if (_targetColumn.Index == _firstVisibleIndex)
                 ScaleDataColumnsWithFirstVisibleAsTarget(diff);
+            else if (_targetColumn.Index == _lastVisibleIndex)
+                ScaleDataColumnsWithLastVisivleAsTarget(diff);
             else
                 ScaleDataColumns(diff);
             _lastX = x;
@@ -111,6 +113,14 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 System.Diagnostics.Debug.Print($"edge change: {_debugEdge} -> {edge}");
                 _debugEdge = edge;
             }
+        }
+
+        private void ScaleDataColumnsWithLastVisivleAsTarget(int diff)
+        {
+            var totalWidth = _table.ColumnResizeController.GetTotalWidthInBulkColumnWidthChange();
+            if (totalWidth < _tableDataAreaWidth)
+                _table.Columns[VisualizerTable.PhantomColumnIndex].Width += _tableDataAreaWidth - totalWidth;
+            ScaleDataColumns(diff);
         }
 
         private void ScaleDataColumnsWithFirstVisibleAsTarget(int diff)
