@@ -1386,7 +1386,7 @@ namespace VSRAD.Syntax
         internal static readonly Dictionary<string, Regex> asm1VariableDefinition = new Dictionary<string, Regex>
         {
             { ".set", new Regex(@"\.set\s+(?<var_name>\.?\w+)")},
-            { " = ", new Regex(@"(?<var_name>\.?\w+)\s+=[^=]")},
+            { " = ", new Regex(@"(?<!\\)(?<var_name>\.?\w+)\s+=[^=]")},
         };
         internal static readonly Regex asm1LabelDefinitionRegular = new Regex(@"(?<label_name>[\w.]+):");
         #endregion

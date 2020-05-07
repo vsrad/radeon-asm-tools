@@ -14,16 +14,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
     internal sealed class IdentifierHighliterTaggerProvider : IViewTaggerProvider
     {
         private readonly ITextSearchService2 TextSearchService;
-        private readonly ITextStructureNavigatorSelectorService TextStructureNavigatorSelector;
         private readonly DefinitionService DefinitionService;
 
         [ImportingConstructor]
         public IdentifierHighliterTaggerProvider(ITextSearchService2 textSearchService,
-            ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService,
             DefinitionService definitionService)
         {
             this.TextSearchService = textSearchService;
-            this.TextStructureNavigatorSelector = textStructureNavigatorSelectorService;
             this.DefinitionService = definitionService;
         }
 
@@ -32,9 +29,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             if (textView.TextBuffer != buffer)
                 return null;
 
-            var textStructureNavigator = TextStructureNavigatorSelector.GetTextStructureNavigator(buffer);
-
-            return new HighlightWordTagger(textView, buffer, TextSearchService, textStructureNavigator, DefinitionService) as ITagger<T>;
+            return new HighlightWordTagger(textView, buffer, TextSearchService, DefinitionService) as ITagger<T>;
         }
     }
 }

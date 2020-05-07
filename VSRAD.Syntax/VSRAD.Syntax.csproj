@@ -87,6 +87,7 @@
     <Compile Include="Helpers\BaseBlockExtension.cs" />
     <Compile Include="Helpers\Error.cs" />
     <Compile Include="Helpers\ParserManagerExtension.cs" />
+    <Compile Include="Helpers\SnapshotPointExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\TextViewParserExtension.cs" />
     <Compile Include="IntelliSense\Completion\BasicCompletionSource.cs" />

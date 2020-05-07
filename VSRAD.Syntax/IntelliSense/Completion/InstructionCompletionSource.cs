@@ -7,22 +7,20 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
     internal sealed class InstructionCompletionSource : IAsyncCompletionSource
     {
-        private readonly ITextStructureNavigator _textStructureNavigator;
         private ImmutableArray<CompletionItem> _completions;
         private bool _autocompleteInstructions;
 
         public InstructionCompletionSource(
-            ITextStructureNavigator textStructureNavigator,
             InstructionListManager instructionListManager,
             OptionsProvider optionsProvider)
         {
-            _textStructureNavigator = textStructureNavigator;
             _completions = ImmutableArray<CompletionItem>.Empty;
 
             instructionListManager.InstructionUpdated += InstructionUpdated;
@@ -49,7 +47,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
-            var extent = _textStructureNavigator.GetExtentOfWord(triggerLocation - 1);
+            var extent = triggerLocation.GetExtent();
             if (extent.IsSignificant && extent.Span.Length > 2)
                 return new CompletionStartData(CompletionParticipation.ProvidesItems, extent.Span);
 

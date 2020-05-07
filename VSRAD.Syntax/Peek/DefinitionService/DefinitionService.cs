@@ -29,7 +29,6 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
         private readonly ITextDocumentFactoryService _textDocumentFactoryService;
         public readonly IPeekBroker PeekBroker;
-        private readonly ITextStructureNavigatorSelectorService _navigatorService;
         private readonly IContentTypeRegistryService _contentTypeRegistryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
         private readonly ITextSearchService2 _textSearchService;
@@ -41,7 +40,6 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             [Import(typeof(SVsServiceProvider))] IServiceProvider serviceProvider,
             IPeekBroker peekBroker,
             ITextDocumentFactoryService textDocumentFactoryService,
-            ITextStructureNavigatorSelectorService navigatorService,
             IContentTypeRegistryService contentTypeRegistryService,
             IFileExtensionRegistryService fileExtensionRegistryService,
             ITextSearchService2 textSearchService,
@@ -49,7 +47,6 @@ namespace VSRAD.Syntax.Peek.DefinitionService
         {
             this._textDocumentFactoryService = textDocumentFactoryService;
             this.PeekBroker = peekBroker;
-            this._navigatorService = navigatorService;
             this._contentTypeRegistryService = contentTypeRegistryService;
             this._fileExtensionRegistryService = fileExtensionRegistryService;
             this._textSearchService = textSearchService;
@@ -62,8 +59,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
         {
             try
             {
-                var _navigator = _navigatorService.GetTextStructureNavigator(view.TextBuffer);
-                var extent = _navigator.GetExtentOfWord(view.Caret.Position.BufferPosition);
+                var extent = GetTextExtentOnCursor(view);
 
                 var token = GetNaviationItem(view, extent, false);
                 if (token != null)
@@ -117,18 +113,8 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return null;
         }
 
-        public TextExtent GetTextExtent(ITextBuffer textBuffer, SnapshotPoint snapshotPoint)
-        {
-            var _navigator = _navigatorService.GetTextStructureNavigator(textBuffer);
-            return _navigator.GetExtentOfWord(snapshotPoint);
-        }
-
-        public TextExtent GetTextExtentOnCursor(IWpfTextView view)
-        {
-            var _navigator = _navigatorService.GetTextStructureNavigator(view.TextBuffer);
-            var extent = _navigator.GetExtentOfWord(view.Caret.Position.BufferPosition);
-            return extent;
-        }
+        public TextExtent GetTextExtentOnCursor(IWpfTextView view) =>
+            view.Caret.Position.BufferPosition.GetExtent();
 
         private static void NavigateToFunction(IBaseToken token)
         {
@@ -180,7 +166,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
                 {
                     foreach (var token in currentBlock.Tokens)
                     {
-                        if (token.TokenName.TrimStart('.') == text)
+                        if (token.TokenName == text)
                         {
                             outToken = token;
                             return true;
@@ -216,7 +202,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
                     foreach (var token in codeBlock.Tokens)
                     {
-                        if (token.TokenName.TrimStart('.') == text)
+                        if (token.TokenName == text)
                         {
                             outToken = token;
                             return true;
@@ -235,7 +221,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
             foreach (var token in functionTokens)
             {
-                if (token.TokenName.TrimStart('.') == text)
+                if (token.TokenName == text)
                 {
                     functionToken = token;
                     return true;
@@ -281,7 +267,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
 
                     foreach (var token in tokens)
                     {
-                        if (token.TokenName.TrimStart('.') == text)
+                        if (token.TokenName == text)
                         {
                             outToken = token;
                             return true;

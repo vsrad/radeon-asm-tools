@@ -14,17 +14,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(CompletionSourceProvider))]
     internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly ITextStructureNavigatorSelectorService _textStructureNavigatorSelector;
         private readonly InstructionListManager _instructionListManager;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public CompletionSourceProvider(
-            ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService,
             OptionsProvider optionsEventProvider,
             InstructionListManager instructionListManager)
         {
-            _textStructureNavigatorSelector = textStructureNavigatorSelectorService;
             _instructionListManager = instructionListManager;
             _optionsEventProvider = optionsEventProvider;
         }
@@ -34,8 +31,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView.TextBuffer == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            var textStructureNavigator = _textStructureNavigatorSelector.GetTextStructureNavigator(textView.TextBuffer);
-            return new BasicCompletionSource(textStructureNavigator, _optionsEventProvider);
+            return new BasicCompletionSource(_optionsEventProvider);
         }
     }
 
@@ -44,17 +40,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(FunctionCompletionSourceProvider))]
     internal class FunctionCompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly ITextStructureNavigatorSelectorService _textStructureNavigatorSelector;
         private readonly InstructionListManager _instructionListManager;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public FunctionCompletionSourceProvider(
-            ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService,
             OptionsProvider optionsEventProvider,
             InstructionListManager instructionListManager)
         {
-            _textStructureNavigatorSelector = textStructureNavigatorSelectorService;
             _instructionListManager = instructionListManager;
             _optionsEventProvider = optionsEventProvider;
         }
@@ -64,8 +57,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView.TextBuffer == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            var textStructureNavigator = _textStructureNavigatorSelector.GetTextStructureNavigator(textView.TextBuffer);
-            return new FunctionCompletionSource(textStructureNavigator, _optionsEventProvider, textView.GetParserManager());
+            return new FunctionCompletionSource(_optionsEventProvider, textView.GetParserManager());
         }
     }
 
@@ -74,17 +66,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(InstructionCompletionSourceProvider))]
     internal class InstructionCompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly ITextStructureNavigatorSelectorService _textStructureNavigatorSelector;
         private readonly InstructionListManager _instructionListManager;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public InstructionCompletionSourceProvider(
-            ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService,
             OptionsProvider optionsEventProvider,
             InstructionListManager instructionListManager)
         {
-            _textStructureNavigatorSelector = textStructureNavigatorSelectorService;
             _instructionListManager = instructionListManager;
             _optionsEventProvider = optionsEventProvider;
         }
@@ -94,8 +83,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView.TextBuffer == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            var textStructureNavigator = _textStructureNavigatorSelector.GetTextStructureNavigator(textView.TextBuffer);
-            return new InstructionCompletionSource(textStructureNavigator, _instructionListManager, _optionsEventProvider);
+            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider);
         }
     }
 }

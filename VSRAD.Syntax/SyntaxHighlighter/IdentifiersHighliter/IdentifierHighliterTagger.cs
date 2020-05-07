@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
@@ -33,7 +34,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private ITextView View { get; set; }
         private ITextBuffer SourceBuffer { get; set; }
         private ITextSearchService2 TextSearchService { get; set; }
-        private ITextStructureNavigator TextStructureNavigator { get; set; }
 
         private readonly DefinitionService DefinitionService;
         private readonly ParserManger parserManager;
@@ -42,14 +42,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private SnapshotSpan? CurrentWord { get; set; }
         private SnapshotPoint RequestedPoint { get; set; }
 
-        internal HighlightWordTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService2 textSearchService,
-                                   ITextStructureNavigator textStructureNavigator,
-                                   DefinitionService definitionService)
+        internal HighlightWordTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService2 textSearchService, DefinitionService definitionService)
         {
             this.View = view;
             this.SourceBuffer = sourceBuffer;
             this.TextSearchService = textSearchService;
-            this.TextStructureNavigator = textStructureNavigator;
             this.DefinitionService = definitionService;
             this.parserManager = this.SourceBuffer.Properties.GetOrCreateSingletonProperty(
                 () => new ParserManger());
@@ -92,30 +89,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
         private void UpdateWordAdornments(object threadContext)
         {
-            SnapshotPoint currentRequest = RequestedPoint;
-            List<SnapshotSpan> wordSpans = new List<SnapshotSpan>();
-            TextExtent word = TextStructureNavigator.GetExtentOfWord(currentRequest);
-
-            bool foundWord = true;
+            var currentRequest = RequestedPoint;
+            var wordSpans = new List<SnapshotSpan>();
+            var word = currentRequest.GetExtent();
 
             if (!WordExtentIsValid(currentRequest, word))
-            {
-                if (word.Span.Start != currentRequest ||
-                    currentRequest == currentRequest.GetContainingLine().Start ||
-                    char.IsWhiteSpace((currentRequest - 1).GetChar()))
-                {
-                    foundWord = false;
-                }
-                else
-                {
-                    word = TextStructureNavigator.GetExtentOfWord(currentRequest - 1);
-
-                    if (!WordExtentIsValid(currentRequest, word))
-                        foundWord = false;
-                }
-            }
-
-            if (!foundWord)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);
                 return;

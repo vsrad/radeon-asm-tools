@@ -17,17 +17,13 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 {
     internal sealed class BasicCompletionSource : IAsyncCompletionSource
     {
-        private readonly ITextStructureNavigator _textStructureNavigator;
         private readonly IDictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>> _completions;
 
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
 
-        public BasicCompletionSource(
-            ITextStructureNavigator textStructureNavigator,
-            OptionsProvider optionsProvider)
+        public BasicCompletionSource(OptionsProvider optionsProvider)
         {
-            _textStructureNavigator = textStructureNavigator;
             _completions = new Dictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>>();
 
             optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
@@ -42,9 +38,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                     .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Label));
             if (_autocompleteVariables)
                 completions = completions
+                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.GlobalVariable))
                     .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.LocalVariable))
-                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Argument))
-                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.GlobalVariable));
+                    .Concat(GetScopedCompletions(session.TextView, triggerLocation, TokenType.Argument));
 
             return Task.FromResult(completions.Any() ? new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()) : null);
         }
@@ -53,11 +49,11 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         {
             if (TryGetDescription(TokenType.Label, item, out var description))
                 return Task.FromResult(description);
+            if (TryGetDescription(TokenType.GlobalVariable, item, out description))
+                return Task.FromResult(description);
             if (TryGetDescription(TokenType.LocalVariable, item, out description))
                 return Task.FromResult(description);
             if (TryGetDescription(TokenType.Argument, item, out description))
-                return Task.FromResult(description);
-            if (TryGetDescription(TokenType.GlobalVariable, item, out description))
                 return Task.FromResult(description);
 
             return Task.FromResult((object)string.Empty);
@@ -65,7 +61,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
-            var extent = _textStructureNavigator.GetExtentOfWord(triggerLocation - 1);
+            var extent = triggerLocation.GetExtent();
             if (extent.IsSignificant && extent.Span.Length > 2)
                 return new CompletionStartData(CompletionParticipation.ProvidesItems, extent.Span);
 

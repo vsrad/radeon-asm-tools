@@ -6,6 +6,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
 
@@ -13,16 +14,11 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 {
     internal sealed class FunctionCompletionSource : IAsyncCompletionSource
     {
-        private readonly ITextStructureNavigator _textStructureNavigator;
         private readonly IParserManager _parserManager;
         private bool _autocompleteFunctions;
 
-        public FunctionCompletionSource(
-            ITextStructureNavigator textStructureNavigator,
-            OptionsProvider optionsProvider,
-            IParserManager parserManager)
+        public FunctionCompletionSource(OptionsProvider optionsProvider, IParserManager parserManager)
         {
-            _textStructureNavigator = textStructureNavigator;
             _parserManager = parserManager;
 
             optionsProvider.OptionsUpdated += AutocompleteOptionsUpdated;
@@ -62,7 +58,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
-            var extent = _textStructureNavigator.GetExtentOfWord(triggerLocation - 1);
+            var extent = triggerLocation.GetExtent();
             if (extent.IsSignificant && extent.Span.Length > 2)
                 return new CompletionStartData(CompletionParticipation.ProvidesItems, extent.Span);
 

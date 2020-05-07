@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Peek.DefinitionService;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
@@ -28,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
                 return Task.FromResult<QuickInfoItem>(null);
 
             var currentSnapshot = _textBuffer.CurrentSnapshot;
-            var extent = _definitionService.GetTextExtent(_textBuffer, triggerPoint.Value);
+            var extent = triggerPoint.Value.GetExtent();
 
             var navigationToken = _definitionService.GetNaviationItem(textView, extent);
             if (navigationToken != null)
