@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
@@ -24,23 +23,18 @@ namespace VSRAD.Package.Server
         private readonly ICommunicationChannel _channel;
         private readonly IProject _project;
         private readonly IProjectSourceManager _projectSourceManager;
-        private readonly UnconfiguredProject _unconfiguredProject;
 
         private readonly Dictionary<string, DateTime> _fileTracker = new Dictionary<string, DateTime>();
-
-        internal IProjectItemProvider _projectItemProvider;
 
         [ImportingConstructor]
         public FileSynchronizationManager(
             ICommunicationChannel channel,
             IProject project,
-            IProjectSourceManager projectSourceManager,
-            UnconfiguredProject unconfiguredProject)
+            IProjectSourceManager projectSourceManager)
         {
             _channel = channel;
             _project = project;
             _projectSourceManager = projectSourceManager;
-            _unconfiguredProject = unconfiguredProject;
 
             // Redeploy all files on connection state change
             _channel.ConnectionStateChanged += _fileTracker.Clear;
@@ -73,30 +67,18 @@ namespace VSRAD.Package.Server
 
         private async Task<IEnumerable<(string path, string name, DateTime lastWrite)>> ListDeployItemsAsync(string additionalSources)
         {
-            if (_projectItemProvider == null)
-            {
-                var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-                _projectItemProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
-            }
-            var projectItems = await _projectItemProvider.GetItemsAsync();
+            var projectItems = await _projectSourceManager.ListProjectFilesAsync();
 
             var items = new List<(string path, string name, DateTime lastWrite)>();
-            foreach (var item in projectItems)
-            {
-                string name;
-                if (item.EvaluatedIncludeAsFullPath.StartsWith(_project.RootPath, StringComparison.Ordinal))
-                    name = item.EvaluatedIncludeAsRelativePath;
-                else
-                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link");
-                if (!string.IsNullOrEmpty(name))
-                    items.Add((item.EvaluatedIncludeAsFullPath, name, File.GetLastWriteTime(item.EvaluatedIncludeAsFullPath)));
-            }
+            foreach (var (absolutePath, relativePath) in projectItems)
+                items.Add((absolutePath, relativePath, File.GetLastWriteTime(absolutePath)));
+
             foreach (var path in additionalSources.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if ((File.GetAttributes(path) & FileAttributes.Directory) == FileAttributes.Directory)
                 {
                     var directory = new DirectoryInfo(path);
-                    foreach (var file in directory.EnumerateFileSystemInfos("*.*", SearchOption.AllDirectories).OfType<FileInfo>())
+                    foreach (var file in directory.EnumerateFiles("*.*", SearchOption.AllDirectories))
                         items.Add((file.FullName, file.FullName.Substring(directory.FullName.Length + 1), file.LastWriteTime));
                 }
                 else

@@ -23,7 +23,7 @@ namespace VSRAD.Package.ProjectSystem
         event ProjectUnloaded Unloaded;
 
         ProjectOptions Options { get; }
-        string RootPath { get; }
+        string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
         void SaveOptions();
     }
@@ -70,15 +70,7 @@ namespace VSRAD.Package.ProjectSystem
         public void SaveOptions() => Options.Write(_optionsFilePath);
 
         #region MacroEvaluator
-        private (IActiveCodeEditor, ICommunicationChannel, IProjectProperties)? _macroEvaluatorDependencies;
-
-        private string GetRelativePath(string absoluteFilePath)
-        {
-            if (!absoluteFilePath.StartsWith(RootPath, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException($"\"{absoluteFilePath}\" does not belong to the current project located at \"{RootPath}\"");
-
-            return absoluteFilePath.Substring(RootPath.Length + 1);
-        }
+        private (IActiveCodeEditor, IProjectSourceManager, ICommunicationChannel, IProjectProperties)? _macroEvaluatorDependencies;
 
         public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null)
         {
@@ -88,16 +80,17 @@ namespace VSRAD.Package.ProjectSystem
             {
                 var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
                 var activeCodeEditor = configuredProject.GetExport<IActiveCodeEditor>();
+                var projectSourceManager = configuredProject.GetExport<IProjectSourceManager>();
                 var communicationChannel = configuredProject.GetExport<ICommunicationChannel>();
 
                 var propertiesProvider = configuredProject.GetService<IProjectPropertiesProvider>("ProjectPropertiesProvider");
                 var projectProperties = propertiesProvider.GetCommonProperties();
 
-                _macroEvaluatorDependencies = (activeCodeEditor, communicationChannel, projectProperties);
+                _macroEvaluatorDependencies = (activeCodeEditor, projectSourceManager, communicationChannel, projectProperties);
             }
-            var (codeEditor, channel, properties) = _macroEvaluatorDependencies.Value;
+            var (codeEditor, sourceManager, channel, properties) = _macroEvaluatorDependencies.Value;
 
-            var file = GetRelativePath(codeEditor.GetAbsoluteSourcePath());
+            var file = await GetRelativeSourcePathAsync(codeEditor, sourceManager);
             var line = codeEditor.GetCurrentLine();
             var transients = new MacroEvaluatorTransientValues(activeSourceFile: (file, line), breakLines, watchesOverride);
 
@@ -105,6 +98,19 @@ namespace VSRAD.Package.ProjectSystem
                 channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
 
             return new MacroEvaluator(properties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
+        }
+
+        private async Task<string> GetRelativeSourcePathAsync(IActiveCodeEditor codeEditor, IProjectSourceManager sourceManager)
+        {
+            var sourcePath = codeEditor.GetAbsoluteSourcePath();
+            if (sourcePath.StartsWith(RootPath, StringComparison.OrdinalIgnoreCase))
+                return sourcePath.Substring(RootPath.Length + 1);
+
+            foreach (var (absolutePath, relativePath) in await sourceManager.ListProjectFilesAsync())
+                if (absolutePath == sourcePath)
+                    return relativePath;
+
+            throw new ArgumentException($"\"{sourcePath}\" does not belong to the current project located at \"{RootPath}\"");
         }
         #endregion
     }

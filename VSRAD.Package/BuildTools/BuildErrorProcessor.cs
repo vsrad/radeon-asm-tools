@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
 using static VSRAD.BuildTools.IPCBuildResult;
@@ -29,7 +30,7 @@ namespace VSRAD.Package.BuildTools
             var messages = Errors.Parser.ParseStderr(output);
             if (messages.Count > 0)
             {
-                var projectSources = await _sourceManager.ListProjectFilesAsync();
+                var projectSources = (await _sourceManager.ListProjectFilesAsync()).Select(f => f.relativePath);
                 UpdateErrorLocations(messages, preprocessedSource, projectSources);
             }
             return messages;

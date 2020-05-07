@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
@@ -23,8 +23,9 @@ namespace VSRAD.Package.ProjectSystem
 
     public interface IProjectSourceManager
     {
+        string ProjectRoot { get; }
         Task SaveDocumentsAsync(DocumentSaveType type);
-        Task<IEnumerable<string>> ListProjectFilesAsync();
+        Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
     }
 
     [Export(typeof(IProjectSourceManager))]
@@ -34,11 +35,14 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly UnconfiguredProject _unconfiguredProject;
 
+        public string ProjectRoot { get; }
+
         [ImportingConstructor]
         public ProjectSourceManager(SVsServiceProvider serviceProvider, UnconfiguredProject unconfiguredProject)
         {
             _serviceProvider = serviceProvider;
             _unconfiguredProject = unconfiguredProject;
+            ProjectRoot = Path.GetDirectoryName(unconfiguredProject.FullPath);
         }
 
         public async Task SaveDocumentsAsync(DocumentSaveType type)
@@ -69,12 +73,24 @@ namespace VSRAD.Package.ProjectSystem
             }
         }
 
-        public async Task<IEnumerable<string>> ListProjectFilesAsync()
+        public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()
         {
             var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
             var itemsProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
-            var sourceItems = await itemsProvider.GetItemsAsync();
-            var files = sourceItems.Select((i) => i.EvaluatedIncludeAsRelativePath).ToArray();
+            var projectItems = await itemsProvider.GetItemsAsync();
+
+            var files = new List<(string absolutePath, string relativePath)>();
+            foreach (var item in projectItems)
+            {
+                string name;
+                if (item.EvaluatedIncludeAsFullPath.StartsWith(ProjectRoot, StringComparison.Ordinal))
+                    name = item.EvaluatedIncludeAsRelativePath;
+                else
+                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link");
+                if (!string.IsNullOrEmpty(name))
+                    files.Add((item.EvaluatedIncludeAsFullPath, name));
+            }
+
             return files;
         }
 
