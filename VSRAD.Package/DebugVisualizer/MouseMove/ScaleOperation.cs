@@ -51,7 +51,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _targetColumn = _table.Columns[index];
             _currentWidth = _table.ColumnWidth;
 
+#if DEBUG
             _debugEdge = DebugEdgePosition();
+#endif
 
             return true;
         }
@@ -111,12 +113,14 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             _table.ColumnResizeController.CommitBulkColumnWidthChange(scrollingOffset);
 
+#if DEBUG
             var edge = DebugEdgePosition();
             if (_debugEdge != edge)
             {
                 System.Diagnostics.Debug.Print($"edge change: {_debugEdge} -> {edge}");
                 _debugEdge = edge;
             }
+#endif
         }
 
         private void ScaleOneDataColumn(int diff)
@@ -199,6 +203,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _table.ColumnResizeController.CommitBulkColumnWidthChange(offset);
         }
 
+#if DEBUG
         private int DebugEdgePosition()
         {
             int pos = _table.Columns[_table.FirstDisplayedScrollingColumnIndex].Width - _table.FirstDisplayedScrollingColumnHiddenWidth;
@@ -209,5 +214,6 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         }
 
         private int _debugEdge;
+#endif
     }
 }
