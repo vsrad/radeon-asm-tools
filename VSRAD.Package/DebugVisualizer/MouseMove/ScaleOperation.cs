@@ -121,8 +121,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         private void ScaleOneDataColumn(int diff)
         {
-            var width = _currentWidth + diff;
-            if (diff == 0 || width < 30)
+            if (diff == 0 || (_table.Columns[_firstVisibleIndex].Width < 30) && diff < 0)
                 return;
             _table.Columns[_firstVisibleIndex].Width += diff;
             var totalWidth = _table.ColumnResizeController.GetTotalWidthInBulkColumnWidthChange();
@@ -131,9 +130,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             for (int i = VisualizerTable.DataColumnOffset; i < _table.ColumnCount; ++i)
             {
                 if (i == _firstVisibleIndex || i == VisualizerTable.PhantomColumnIndex) continue;
-                _table.Columns[i].Width = width;
+                _table.Columns[i].Width = _table.Columns[_firstVisibleIndex].Width;
             }
-            _currentWidth = width;
+            _currentWidth = _table.Columns[_firstVisibleIndex].Width;
             _table.ColumnResizeController.CommitBulkColumnWidthChange();
         }
 

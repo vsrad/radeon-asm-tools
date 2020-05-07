@@ -295,6 +295,7 @@ namespace VSRAD.Package.DebugVisualizer
             });
             Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#ABABAB");
             Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = ColorTranslator.FromHtml("#ABABAB");
+            Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
         }
 
