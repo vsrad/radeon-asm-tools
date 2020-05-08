@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Guide
     internal sealed class IndentGuideFactory : IWpfTextViewCreationListener
     {
         [Import]
-        private readonly Options.OptionsProvider _optionsProvider;
+        private readonly Options.OptionsProvider _optionsProvider = null;
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name(Constants.IndentGuideAdornmentLayerName)]

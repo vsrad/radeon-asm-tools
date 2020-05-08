@@ -23,22 +23,22 @@ namespace VSRAD.Syntax
         public readonly IServiceProvider ServiceProvider;
 
         [Import]
-        public ITextDocumentFactoryService TextDocumentFactoryService;
+        public ITextDocumentFactoryService TextDocumentFactoryService = null;
 
         [Import]
-        public IFileExtensionRegistryService FileExtensionRegistryService;
+        public IFileExtensionRegistryService FileExtensionRegistryService = null;
 
         [Import]
-        public IVsEditorAdaptersFactoryService EditorAdaptersFactoryService;
+        public IVsEditorAdaptersFactoryService EditorAdaptersFactoryService = null;
 
         [Import]
-        public ITextSearchService2 TextSearchService;
+        public ITextSearchService2 TextSearchService = null;
 
         [Import]
-        public IClassificationTypeRegistryService ClassificationTypeRegistryService;
+        public IClassificationTypeRegistryService ClassificationTypeRegistryService = null;
 
         [Import]
-        public IContentTypeRegistryService ContentTypeRegistryService;
+        public IContentTypeRegistryService ContentTypeRegistryService = null;
 
         [Import]
         public IPeekBroker PeekBroker = null;

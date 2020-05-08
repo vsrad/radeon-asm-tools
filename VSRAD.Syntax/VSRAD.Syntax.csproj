@@ -101,10 +101,6 @@
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
-    <Compile Include="IntelliSense\SignatureHelper\RadeonParameter.cs" />
-    <Compile Include="IntelliSense\SignatureHelper\RadeonSignature.cs" />
-    <Compile Include="IntelliSense\SignatureHelper\SignatureHelpSource.cs" />
-    <Compile Include="IntelliSense\SignatureHelper\SignatureHelpSourceProvider.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
