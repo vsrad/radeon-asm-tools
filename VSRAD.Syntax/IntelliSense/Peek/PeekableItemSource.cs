@@ -34,12 +34,12 @@ namespace VSRAD.Syntax.IntelliSense.Peek
                 peekableItems.Add(item);
         }
 
-        private IPeekableItem GetPeekableItem(IWpfTextView view, IPeekResultFactory peekResultFactory)
+        private IPeekableItem GetPeekableItem(ITextView view, IPeekResultFactory peekResultFactory)
         {
             if (view != null)
             {
                 var extent = NavigationTokenService.GetTextExtentOnCursor(view);
-                var token = _navigationTokenService.GetNaviationItem(view, extent, false);
+                var token = _navigationTokenService.GetNaviationItem(extent, false);
                 if (token != null)
                     return new PeekableItem(peekResultFactory, token);
             }

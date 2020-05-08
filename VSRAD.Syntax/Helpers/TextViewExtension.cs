@@ -37,9 +37,6 @@ namespace VSRAD.Syntax.Helpers
             return filePath;
         }
 
-        public static IParserManager GetParserManager(this ITextView textView) =>
-            textView.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-
         public static bool CommentUncommentBlock(this IWpfTextView textView, bool comment)
         {
             SnapshotPoint start, end;

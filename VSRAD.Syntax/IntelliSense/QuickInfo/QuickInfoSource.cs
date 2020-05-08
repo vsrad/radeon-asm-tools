@@ -23,14 +23,10 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             if (!triggerPoint.HasValue)
                 return Task.FromResult<QuickInfoItem>(null);
 
-            var textView = _definitionService.GetWpfTextView();
-            if (textView.TextBuffer.CurrentSnapshot != _textBuffer.CurrentSnapshot)
-                return Task.FromResult<QuickInfoItem>(null);
-
             var currentSnapshot = _textBuffer.CurrentSnapshot;
             var extent = triggerPoint.Value.GetExtent();
 
-            var navigationToken = _definitionService.GetNaviationItem(textView, extent);
+            var navigationToken = _definitionService.GetNaviationItem(extent);
             if (navigationToken != null)
             {
                 var dataElement = IntellisenseTokenDescription.GetColorizedDescription(navigationToken);

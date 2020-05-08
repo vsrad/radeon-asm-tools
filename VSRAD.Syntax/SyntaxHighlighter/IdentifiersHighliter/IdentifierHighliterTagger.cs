@@ -104,7 +104,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             if (CurrentWord.HasValue && currentWord == CurrentWord)
                 return;
 
-            var navigationItem = navigationTokenService.GetNaviationItem((IWpfTextView)View, word);
+            var navigationItem = navigationTokenService.GetNaviationItem(word);
             if (navigationItem == null)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);

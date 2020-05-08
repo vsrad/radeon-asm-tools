@@ -88,14 +88,17 @@
     <Compile Include="Helpers\Error.cs" />
     <Compile Include="Helpers\ParserManagerExtension.cs" />
     <Compile Include="Helpers\SnapshotPointExtension.cs" />
+    <Compile Include="Helpers\TextBufferExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
-    <Compile Include="Helpers\TextViewParserExtension.cs" />
     <Compile Include="IntelliSense\Completion\BasicCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
     <Compile Include="IntelliSense\Completion\FunctionCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\InstructionCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\ScopedTokenCompletionSource.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>

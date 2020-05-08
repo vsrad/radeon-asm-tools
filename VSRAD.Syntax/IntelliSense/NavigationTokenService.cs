@@ -5,7 +5,6 @@ using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
@@ -55,15 +54,15 @@ namespace VSRAD.Syntax.IntelliSense
             Instance = this;
         }
 
-        public void GoToDefinition(IWpfTextView view)
+        public void GoToDefinition(ITextView view)
         {
             try
             {
                 var extent = GetTextExtentOnCursor(view);
+                var token = GetNaviationItem(extent, false);
 
-                var token = GetNaviationItem(view, extent, false);
                 if (token != null)
-                    NavigateToFunction(token);
+                    GoToPoint(token.SymbolSpan.Start);
             }
             catch (Exception e)
             {
@@ -71,11 +70,21 @@ namespace VSRAD.Syntax.IntelliSense
             }
         }
 
-        public IBaseToken GetNaviationItem(IWpfTextView view, TextExtent extent, bool onlyCurrentFile = true)
+        public void GoToPoint(SnapshotPoint point)
+        {
+            var buffer = _adaptersFactoryService.GetBufferAdapter(point.Snapshot.TextBuffer);
+            if (buffer == null)
+                throw new InvalidOperationException("Cannot find IVsTextBuffer associated with point");
+
+            IVsTextManager mgr = Microsoft.VisualStudio.Shell.Package.GetGlobalService(typeof(VsTextManagerClass)) as IVsTextManager;
+            mgr.NavigateToPosition(buffer, VSConstants.LOGVIEWID.TextView_guid, point.Position, 0);
+        }
+
+        public IBaseToken GetNaviationItem(TextExtent extent, bool onlyCurrentFile = true)
         {
             try
             {
-                return GetNaviationToken(view, extent, onlyCurrentFile);
+                return GetNaviationToken(extent, onlyCurrentFile);
             }
             catch (Exception e)
             {
@@ -84,13 +93,13 @@ namespace VSRAD.Syntax.IntelliSense
             }
         }
 
-        private IBaseToken GetNaviationToken(IWpfTextView view, TextExtent extent, bool onlyCurrentFile)
+        private IBaseToken GetNaviationToken(TextExtent extent, bool onlyCurrentFile)
         {
             if (!extent.IsSignificant)
                 return null;
 
             var text = extent.Span.GetText();
-            var parserManager = view.GetParserManager();
+            var parserManager = extent.Span.Snapshot.TextBuffer.GetParserManager();
             var parser = parserManager.ActualParser;
 
             if (parser == null)
@@ -113,46 +122,10 @@ namespace VSRAD.Syntax.IntelliSense
             return null;
         }
 
-        public static TextExtent GetTextExtentOnCursor(IWpfTextView view) =>
+        public static TextExtent GetTextExtentOnCursor(ITextView view) =>
             view.Caret.Position.BufferPosition.GetExtent();
 
-        private static void NavigateToFunction(IBaseToken token)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            if (token == null) return;
-
-            String path = token.FilePath;
-            var openDoc = Microsoft.VisualStudio.Shell.Package.GetGlobalService(typeof(IVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-
-            Guid logicalView = VSConstants.LOGVIEWID_Code;
-            if (ErrorHandler.Failed(
-              openDoc.OpenDocumentViaProject(path, ref logicalView, out _,
-                out _, out _, out var frame))
-                  || frame == null)
-            {
-                return;
-            }
-            frame.GetProperty((int)__VSFPROPID.VSFPROPID_DocData, out var docData);
-
-            var buffer = docData as VsTextBuffer;
-            if (buffer == null)
-            {
-                if (docData is IVsTextBufferProvider bufferProvider)
-                {
-                    ErrorHandler.ThrowOnFailure(bufferProvider.GetTextBuffer(out var lines));
-                    buffer = lines as VsTextBuffer;
-                    if (buffer == null)
-                        return;
-                }
-                else
-                    return;
-            }
-
-            IVsTextManager mgr = Microsoft.VisualStudio.Shell.Package.GetGlobalService(typeof(VsTextManagerClass)) as IVsTextManager;
-            mgr.NavigateToLineAndColumn(buffer, ref logicalView, token.Line.LineNumber, 0, token.Line.LineNumber, 0);
-        }
-
-        public IWpfTextView GetWpfTextView()
+        public ITextView GetWpfTextView()
         {
             _textManager.GetActiveView(1, null, out var textViewCurrent);
             return (textViewCurrent != null) ? _adaptersFactoryService.GetWpfTextView(textViewCurrent) : null;

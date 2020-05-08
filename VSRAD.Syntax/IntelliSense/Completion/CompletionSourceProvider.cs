@@ -27,10 +27,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public IAsyncCompletionSource GetOrCreate(ITextView textView)
         {
-            if (textView.TextBuffer == null)
+            if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new ScopeTokenCompletionSource(_optionsEventProvider, textView.GetParserManager());
+            return new ScopeTokenCompletionSource(_optionsEventProvider, textView.TextBuffer.GetParserManager());
         }
     }
 
@@ -53,10 +53,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public IAsyncCompletionSource GetOrCreate(ITextView textView)
         {
-            if (textView.TextBuffer == null)
+            if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new FunctionCompletionSource(_optionsEventProvider, textView.GetParserManager());
+            return new FunctionCompletionSource(_optionsEventProvider, textView.TextBuffer.GetParserManager());
         }
     }
 
@@ -79,10 +79,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public IAsyncCompletionSource GetOrCreate(ITextView textView)
         {
-            if (textView.TextBuffer == null)
+            if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider, textView.GetParserManager());
+            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider, textView.TextBuffer.GetParserManager());
         }
     }
 }
