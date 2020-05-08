@@ -57,11 +57,6 @@ namespace VSRAD.Package.ToolWindows
             _macroEditor = integration.GetExport<MacroEditManager>();
             DataContext = new Context(integration.ProjectOptions, integration.GetExport<ICommunicationChannel>());
             InitializeComponent();
-            ColoringRegionsGrid.PreviewMouseWheel += (s, e) =>
-            {
-                if (ColoringRegionsGrid.IsMouseOver)
-                    ControlScrollViewer.ScrollToVerticalOffset(ControlScrollViewer.VerticalOffset - e.Delta * 0.125);
-            };
         }
 
         // TODO: can freeze here

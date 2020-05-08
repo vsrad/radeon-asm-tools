@@ -12,11 +12,6 @@
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
         <ResourceDictionary>
-            <ObjectDataProvider x:Key="VisualizerColorValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="viz:DataHighlightColor"/>
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
             <!--
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
@@ -142,16 +137,6 @@
                     </StackPanel>
                 </Expander>
             </StackPanel>
-            <Label Margin="8,4,0,0" Content="Visualizer Coloring Ranges"/>
-            <DataGrid x:Name="ColoringRegionsGrid" ItemsSource="{Binding Options.VisualizerColumnStyling.HighlightRegions, UpdateSourceTrigger=PropertyChanged}"
-                        Margin="8,8" AutoGenerateColumns="False" HeadersVisibility="Column"
-                        CanUserResizeColumns="False" CanUserResizeRows="False" CanUserReorderColumns="False" CanUserSortColumns="False">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Range" Width="75*" Binding="{Binding Selector, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    <DataGridComboBoxColumn Header="Color" Width="25*" ItemsSource="{Binding Source={StaticResource VisualizerColorValues}}"
-                                            SelectedValueBinding="{Binding Color, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                </DataGrid.Columns>
-            </DataGrid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
