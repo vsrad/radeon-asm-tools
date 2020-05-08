@@ -216,6 +216,8 @@ namespace VSRAD.Package.DebugVisualizer
             var index = after ? rowIndex + 1 : rowIndex;
             Rows.Insert(index);
             Rows[index].Cells[NameColumnIndex].Value = " ";
+            Rows[index].HeaderCell.Value = VariableType.Hex.ToString();
+            Rows[index].HeaderCell.Tag = false; // avgpr
             RaiseWatchStateChanged(new[] { Rows[index] });
         }
 
