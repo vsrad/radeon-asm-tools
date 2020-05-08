@@ -23,9 +23,9 @@ namespace VSRAD.Syntax.Options
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
             AutocompleteInstructions = true;
-            AutocompleteFunctions = false;
-            AutocompleteLabels = false;
-            AutocompleteVariables = false;
+            AutocompleteFunctions = true;
+            AutocompleteLabels = true;
+            AutocompleteVariables = true;
     }
 
         public GeneralOptionPage.SortState SortOptions;
