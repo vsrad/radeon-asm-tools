@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -7,23 +8,19 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 {
     public sealed class SubgroupContextMenu : IContextMenu
     {
-        public delegate void ColumnSelectorChanged(string newSelector);
-        public delegate void ColumnColorChanged(int columnIndex, DataHighlightColor color);
-
-        private readonly ColumnSelectorChanged _selectorChanged;
-        private readonly ColumnColorChanged _colorChanged;
-        private readonly VisualizerTable.GetGroupSize _getGroupSize;
         private readonly VisualizerTable _table;
+        private readonly ColumnStylingOptions _stylingOptions;
+        private readonly VisualizerTable.GetGroupSize _getGroupSize;
         private readonly ContextMenu _menu;
+
         private int _clickedColumnIndex;
         private int _targetColumnIndex;
         private int _columnRelStart;
 
-        public SubgroupContextMenu(VisualizerTable table, ColumnSelectorChanged selectorChanged, ColumnColorChanged colorChanged, VisualizerTable.GetGroupSize getGroupSize)
+        public SubgroupContextMenu(VisualizerTable table, ColumnStylingOptions stylingOptions, VisualizerTable.GetGroupSize getGroupSize)
         {
             _table = table;
-            _selectorChanged = selectorChanged;
-            _colorChanged = colorChanged;
+            _stylingOptions = stylingOptions;
             _getGroupSize = getGroupSize;
             _menu = PrepareContextMenu();
         }
@@ -47,20 +44,27 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: false);
             var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: true);
 
-            var showAll = new MenuItem("All Columns", (s, e) => _selectorChanged($"0-{_getGroupSize() - 1}"));
+            var showAll = new MenuItem("All Columns", (s, e) => SetColumnSelector($"0-{_getGroupSize() - 1}"));
 
-            var highlightThis = new MenuItem("Highlight", new[]
+            var fgColor = new MenuItem("Font Color", new[]
             {
-                new MenuItem("Green", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnGreen)),
-                new MenuItem("Red", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnRed)),
-                new MenuItem("Blue", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.ColumnBlue)),
-                new MenuItem("None", (s, e) => _colorChanged(_clickedColumnIndex, DataHighlightColor.None))
+                new MenuItem("Green", (s, e) => SetForegroundColor(DataHighlightColor.ColumnGreen)),
+                new MenuItem("Red", (s, e) => SetForegroundColor(DataHighlightColor.ColumnRed)),
+                new MenuItem("Blue", (s, e) => SetForegroundColor(DataHighlightColor.ColumnBlue)),
+                new MenuItem("None", (s, e) => SetForegroundColor(DataHighlightColor.None))
+            });
+            var bgColor = new MenuItem("Background Color", new[]
+            {
+                new MenuItem("Green", (s, e) => SetBackgroundColor(DataHighlightColor.ColumnGreen)),
+                new MenuItem("Red", (s, e) => SetBackgroundColor(DataHighlightColor.ColumnRed)),
+                new MenuItem("Blue", (s, e) => SetBackgroundColor(DataHighlightColor.ColumnBlue)),
+                new MenuItem("None", (s, e) => SetBackgroundColor(DataHighlightColor.None))
             });
 
             var fitWidth = new MenuItem("Fit Width", (s, e) =>
                 _table.ColumnResizeController.FitWidth(_targetColumnIndex, _columnRelStart));
 
-            var hideThis = new MenuItem("Hide This", (s, e) => _table.HideColumns(_clickedColumnIndex));
+            var hideThis = new MenuItem("Hide This", HideColumns);
 
             var menuItems = new[] { new MenuItem("Keep First") { Enabled = false } }
                 .Concat(keepFirst)
@@ -68,7 +72,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 .Append(new MenuItem("Keep Last", keepLast))
                 .Append(showAll)
                 .Append(new MenuItem("-"))
-                .Append(highlightThis)
+                .Append(fgColor)
+                .Append(bgColor)
                 .Append(new MenuItem("-"))
                 .Append(fitWidth)
                 .Append(new MenuItem("-"))
@@ -77,8 +82,40 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             return new ContextMenu(menuItems.ToArray());
         }
 
-        private void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast) =>
-            _selectorChanged(ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast));
+        private void HideColumns(object sender, EventArgs e)
+        {
+            var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
+            var newColumnIndexes = ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns).Except(selectedColumns);
+            var newSelector = ColumnSelector.FromIndexes(newColumnIndexes);
+            SetColumnSelector(newSelector);
+        }
+
+        private void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
+        {
+            string subgroupsSelector = ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast);
+            string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector);
+            SetColumnSelector(newSelector);
+        }
+
+        private void SetBackgroundColor(DataHighlightColor color)
+        {
+            var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
+            _stylingOptions.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.BackgroundColors, selectedColumns, color);
+            _table.ClearSelection();
+        }
+
+        private void SetForegroundColor(DataHighlightColor color)
+        {
+            var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
+            _stylingOptions.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.ForegroundColors, selectedColumns, color);
+            _table.ClearSelection();
+        }
+
+        private void SetColumnSelector(string newSelector)
+        {
+            _stylingOptions.VisibleColumns = newSelector;
+            _table.ClearSelection();
+        }
 
         private MenuItem[] CreatePartialSubgroupMenu(uint minSubgroupSize, uint maxSubgroupSize, bool displayLast) =>
             PowersOfTwo(from: minSubgroupSize, upto: maxSubgroupSize / 2)
