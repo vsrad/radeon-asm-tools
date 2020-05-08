@@ -63,14 +63,19 @@ namespace VSRAD.Package.DebugVisualizer
                 row.Cells[VisualizerTable.DataColumnOffset + columnIndex].Style = _inactiveCellStyle;
         }
 
-        public static void ChangeRowHighlight(IEnumerable<DataGridViewRow> rows, FontAndColorState colors, DataHighlightColor color)
+        public static void ChangeRowHighlight(IEnumerable<DataGridViewRow> rows, FontAndColorState colors, DataHighlightColor color, bool fg)
         {
-            var fg = color != DataHighlightColor.None ? colors.HighlightForeground[(int)color] : Color.Empty;
-            var bg = color != DataHighlightColor.None ? colors.HighlightBackground[(int)color] : Color.Empty;
-            foreach (var row in rows)
+            if (fg)
             {
-                row.DefaultCellStyle.ForeColor = fg;
-                row.DefaultCellStyle.BackColor = bg;
+                var fgColor = color != DataHighlightColor.None ? colors.HighlightForeground[(int)color] : Color.Empty;
+                foreach (var row in rows)
+                    row.DefaultCellStyle.ForeColor = fgColor;
+            }
+            else
+            {
+                var bgColor = color != DataHighlightColor.None ? colors.HighlightBackground[(int)color] : Color.Empty;
+                foreach (var row in rows)
+                    row.DefaultCellStyle.BackColor = bgColor;
             }
         }
 

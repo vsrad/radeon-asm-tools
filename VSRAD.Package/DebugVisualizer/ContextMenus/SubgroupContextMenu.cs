@@ -48,16 +48,16 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var fgColor = new MenuItem("Font Color", new[]
             {
-                new MenuItem("Green", (s, e) => SetForegroundColor(DataHighlightColor.ColumnGreen)),
-                new MenuItem("Red", (s, e) => SetForegroundColor(DataHighlightColor.ColumnRed)),
-                new MenuItem("Blue", (s, e) => SetForegroundColor(DataHighlightColor.ColumnBlue)),
+                new MenuItem("Green", (s, e) => SetForegroundColor(DataHighlightColor.Green)),
+                new MenuItem("Red", (s, e) => SetForegroundColor(DataHighlightColor.Red)),
+                new MenuItem("Blue", (s, e) => SetForegroundColor(DataHighlightColor.Blue)),
                 new MenuItem("None", (s, e) => SetForegroundColor(DataHighlightColor.None))
             });
             var bgColor = new MenuItem("Background Color", new[]
             {
-                new MenuItem("Green", (s, e) => SetBackgroundColor(DataHighlightColor.ColumnGreen)),
-                new MenuItem("Red", (s, e) => SetBackgroundColor(DataHighlightColor.ColumnRed)),
-                new MenuItem("Blue", (s, e) => SetBackgroundColor(DataHighlightColor.ColumnBlue)),
+                new MenuItem("Green", (s, e) => SetBackgroundColor(DataHighlightColor.Green)),
+                new MenuItem("Red", (s, e) => SetBackgroundColor(DataHighlightColor.Red)),
+                new MenuItem("Blue", (s, e) => SetBackgroundColor(DataHighlightColor.Blue)),
                 new MenuItem("None", (s, e) => SetBackgroundColor(DataHighlightColor.None))
             });
 

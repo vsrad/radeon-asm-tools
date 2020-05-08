@@ -9,7 +9,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
     {
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
-        public delegate void RowColorChanged(int rowIndex, DataHighlightColor color);
         public delegate void InsertRow(int rowIndex, bool after);
 
         private readonly VisualizerTable _table;
@@ -17,19 +16,26 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, RowColorChanged colorChanged, Action processCopy, InsertRow insertRow)
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy, InsertRow insertRow)
         {
             _table = table;
 
             var typeItems = ((VariableType[])Enum.GetValues(typeof(VariableType)))
                 .Select(type => new MenuItem(type.ToString(), (s, e) => typeChanged(_currentRow, type)));
 
-            var fontColorSubmenu = new MenuItem("Highlight", new[]
+            var fgColor = new MenuItem("Font Color", new[]
             {
-                new MenuItem("Green", (s, e) => colorChanged(_currentRow, DataHighlightColor.RowGreen)),
-                new MenuItem("Red", (s, e) => colorChanged(_currentRow, DataHighlightColor.RowRed)),
-                new MenuItem("Blue", (s, e) => colorChanged(_currentRow, DataHighlightColor.RowBlue)),
-                new MenuItem("None", (s, e) => colorChanged(_currentRow, DataHighlightColor.None))
+                new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Green, fg: true)),
+                new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Red, fg: true)),
+                new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Blue, fg: true)),
+                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.None, fg: true))
+            });
+            var bgColor = new MenuItem("Background Color", new[]
+            {
+                new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Green, fg: false)),
+                new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Red, fg: false)),
+                new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Blue, fg: false)),
+                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.None, fg: false))
             });
 
             var insertRowBefore = new MenuItem("Insert Row Before", (s, e) => insertRow(_currentRow, false));
@@ -46,7 +52,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             var menuItems = typeItems.Concat(new[]
             {
                 new MenuItem("-"),
-                fontColorSubmenu,
+                fgColor,
+                bgColor,
                 new MenuItem("-"),
                 copy,
                 new MenuItem("-"),

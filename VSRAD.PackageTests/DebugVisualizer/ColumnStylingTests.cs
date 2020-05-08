@@ -15,10 +15,10 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
         private static FontAndColorState MakeColorState() => TestHelper.MakeWithReadOnlyProps<FontAndColorState>(
             (nameof(FontAndColorState.HighlightBackground), new Color[]
-                { /* none */ Color.Empty, /* columns */ Color.Red, Color.Green, Color.Blue, /* rows */ default, default, default, /* inactive */ Color.LightGray }),
+                { /* none */ Color.Empty, /* inactive */ Color.LightGray, /* highlight */ Color.Red, Color.Green, Color.Blue }),
             (nameof(FontAndColorState.HighlightForeground), new Color[]
-                { /* none */ Color.Black, /* columns */ Color.DarkRed, Color.DarkGreen, Color.DarkBlue, /* rows */ default, default, default, /* inactive */ default }),
-            (nameof(FontAndColorState.HighlightBold), Enumerable.Repeat(false, 7).ToArray()));
+                { /* none */ Color.Black, /* inactive */ default, /* highlight */ Color.DarkRed, Color.DarkGreen, Color.DarkBlue }),
+            (nameof(FontAndColorState.HighlightBold), Enumerable.Repeat(false, 5).ToArray()));
 
         [Fact]
         public void VisibilityTest()
@@ -73,9 +73,9 @@ namespace VSRAD.Package.DebugVisualizer.Tests
                 Assert.Equal(Color.Black, columns[i].DefaultCellStyle.ForeColor);
 
             string bgString = null;
-            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 0, 1, 2, 3, 4, 5 }, DataHighlightColor.ColumnRed); // rrrrrr
-            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 1, 2, 3 }, DataHighlightColor.ColumnGreen);        // rgggrr
-            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 3, 4, 666, -1 }, DataHighlightColor.ColumnBlue);   // rggbbr, 666 (> 512) and -1 to trigger IndexOutOfBounds
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 0, 1, 2, 3, 4, 5 }, DataHighlightColor.Red); // rrrrrr
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 1, 2, 3 }, DataHighlightColor.Green);        // rgggrr
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 3, 4, 666, -1 }, DataHighlightColor.Blue);   // rggbbr, 666 (> 512) and -1 to trigger IndexOutOfBounds
 
             var fgString = DataHighlightColors.UpdateColorStringRange(bgString, Enumerable.Range(0, 512), DataHighlightColor.None);
             Assert.Equal("", fgString);

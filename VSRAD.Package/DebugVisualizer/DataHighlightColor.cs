@@ -5,10 +5,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public enum DataHighlightColor
     {
-        None = 0,
-        ColumnRed, ColumnGreen, ColumnBlue,
-        RowRed, RowGreen, RowBlue,
-        Inactive
+        None = 0, Inactive, Red, Green, Blue
     }
 
     public static class DataHighlightColors
@@ -20,9 +17,9 @@ namespace VSRAD.Package.DebugVisualizer
 
             switch (colorString[index])
             {
-                case 'r': return DataHighlightColor.ColumnRed;
-                case 'g': return DataHighlightColor.ColumnGreen;
-                case 'b': return DataHighlightColor.ColumnBlue;
+                case 'r': return DataHighlightColor.Red;
+                case 'g': return DataHighlightColor.Green;
+                case 'b': return DataHighlightColor.Blue;
                 default: return DataHighlightColor.None;
             }
         }
@@ -31,9 +28,9 @@ namespace VSRAD.Package.DebugVisualizer
         {
             switch (color)
             {
-                case DataHighlightColor.ColumnRed: return 'r';
-                case DataHighlightColor.ColumnGreen: return 'g';
-                case DataHighlightColor.ColumnBlue: return 'b';
+                case DataHighlightColor.Red: return 'r';
+                case DataHighlightColor.Green: return 'g';
+                case DataHighlightColor.Blue: return 'b';
                 default: return ' ';
             }
         }

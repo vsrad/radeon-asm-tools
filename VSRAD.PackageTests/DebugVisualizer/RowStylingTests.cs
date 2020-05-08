@@ -22,10 +22,10 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
         private static FontAndColorState MakeColorState() => TestHelper.MakeWithReadOnlyProps<FontAndColorState>(
             (nameof(FontAndColorState.HighlightBackground), new Color[]
-                { /* none */ Color.Empty, /* columns */ Color.Red, Color.Green, Color.Blue, /* rows */ default, default, default, /* inactive */ Color.LightGray }),
+                { /* none */ Color.Empty, /* inactive */ Color.LightGray, /* highlight */ Color.Red, Color.Green, Color.Blue }),
             (nameof(FontAndColorState.HighlightForeground), new Color[]
-                { /* none */ Color.Black, /* columns */ Color.DarkRed, Color.DarkGreen, Color.DarkBlue, /* rows */ default, default, default, /* inactive */ default }),
-            (nameof(FontAndColorState.HighlightBold), Enumerable.Repeat(false, 7).ToArray()));
+                { /* none */ Color.Black, /* inactive */ default, /* highlight */ Color.DarkRed, Color.DarkGreen, Color.DarkBlue }),
+            (nameof(FontAndColorState.HighlightBold), Enumerable.Repeat(false, 5).ToArray()));
 
         private static IEnumerable<DataGridViewCell> GetDataColumnCells(IEnumerable<DataGridViewRow> rows, int dataColumnIndex) =>
             rows.Select(r => r.Cells[VisualizerTable.DataColumnOffset + dataColumnIndex]);
