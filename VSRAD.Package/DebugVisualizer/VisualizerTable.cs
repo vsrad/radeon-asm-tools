@@ -50,14 +50,12 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
 
-        private readonly ColumnStylingOptions _stylingOptions;
         private readonly FontAndColorProvider _fontAndColor;
 
         private string _editedWatchName;
 
-        public VisualizerTable(ColumnStylingOptions options, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
+        public VisualizerTable(ColumnStylingOptions stylingOptions, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
-            _stylingOptions = options;
             _fontAndColor = fontAndColor;
 
             RowHeadersWidth = 30;
@@ -89,9 +87,9 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, RowColorChanged, ProcessCopy, InsertSeparatorRow),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, ColumnSelectorChanged, ColumnColorChanged, getGroupSize)
+                new ContextMenus.SubgroupContextMenu(this, stylingOptions, getGroupSize)
             });
             _ = new CustomTableGraphics(this, _fontAndColor);
 
@@ -112,22 +110,12 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersHeight = headerHeight;
         }
 
-        public void HideColumns(int clickedColumnIndex)
-        {
-            var selectedColumns = SelectedColumns
+        public IEnumerable<int> GetSelectedDataColumnIndexes(int includeIndex) =>
+            SelectedColumns
                 .Cast<DataGridViewColumn>()
                 .Select(x => x.Index - DataColumnOffset)
                 .Where(x => x >= 0)
-                .Append(clickedColumnIndex - DataColumnOffset);
-
-            _stylingOptions.VisibleColumns =
-                ColumnSelector.FromIndexes(
-                    ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns)
-                    .Where(x => !selectedColumns.Contains(x))
-                );
-
-            ClearSelection();
-        }
+                .Append(includeIndex - DataColumnOffset);
 
         private void ProcessCopy()
         {
@@ -152,43 +140,9 @@ namespace VSRAD.Package.DebugVisualizer
             Invalidate(); // redraw custom avgpr graphics
         }
 
-        public void ColumnSelectorChanged(string newSelector)
-        {
-            _stylingOptions.VisibleColumns =
-                ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, newSelector);
-            ClearSelection();
-        }
-
         public void HostWindowDeactivated()
         {
             CancelEdit();
-        }
-
-        public void RowColorChanged(int rowIndex, DataHighlightColor color)
-        {
-            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
-            RowStyling.ChangeRowHighlight(changedRows, _fontAndColor.FontAndColorState, color);
-        }
-
-        public void ColumnColorChanged(int clickedColumnIndex, DataHighlightColor color)
-        {
-            var selectedColumns = SelectedColumns
-                .Cast<DataGridViewColumn>()
-                .Select(x => x.Index - DataColumnOffset)
-                .Where(x => x >= 0)
-                .Append(clickedColumnIndex - DataColumnOffset);
-
-            _stylingOptions.ApplyBulkChange(() =>
-            {
-                ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
-                if (color != DataHighlightColor.None)
-                {
-                    var selector = ColumnSelector.FromIndexes(selectedColumns);
-                    _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color, Selector = selector });
-                }
-            });
-
-            ClearSelection();
         }
 
         public List<Watch> GetCurrentWatchState() =>
@@ -348,6 +302,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
             RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
+
+        public void ApplyRowHighlight(int rowIndex, DataHighlightColor color, bool fg)
+        {
+            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
+            RowStyling.ChangeRowHighlight(changedRows, _fontAndColor.FontAndColorState, color, fg);
+        }
 
         public void ApplyDataStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
         {

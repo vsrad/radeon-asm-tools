@@ -15,10 +15,10 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
         private static FontAndColorState MakeColorState() => TestHelper.MakeWithReadOnlyProps<FontAndColorState>(
             (nameof(FontAndColorState.HighlightBackground), new Color[]
-                { /* none */ Color.Empty, /* columns */ Color.Red, Color.Green, Color.Blue, /* rows */ default, default, default, /* inactive */ Color.LightGray }),
+                { /* none */ Color.Empty, /* inactive */ Color.LightGray, /* highlight */ Color.Red, Color.Green, Color.Blue }),
             (nameof(FontAndColorState.HighlightForeground), new Color[]
-                { /* none */ Color.Black, /* columns */ Color.DarkRed, Color.DarkGreen, Color.DarkBlue, /* rows */ default, default, default, /* inactive */ default }),
-            (nameof(FontAndColorState.HighlightBold), Enumerable.Repeat(false, 7).ToArray()));
+                { /* none */ Color.Black, /* inactive */ default, /* highlight */ Color.DarkRed, Color.DarkGreen, Color.DarkBlue }),
+            (nameof(FontAndColorState.HighlightBold), Enumerable.Repeat(false, 5).ToArray()));
 
         [Fact]
         public void VisibilityTest()
@@ -50,31 +50,50 @@ namespace VSRAD.Package.DebugVisualizer.Tests
         [Fact]
         public void HighlightColorTest()
         {
-            var options = new ColumnStylingOptions();
-            options.HighlightRegions.Add(new ColumnHighlightRegion { Color = DataHighlightColor.ColumnRed, Selector = "0|1|2-5" });
-            options.HighlightRegions.Add(new ColumnHighlightRegion { Color = DataHighlightColor.ColumnGreen, Selector = "1-3" });
-            options.HighlightRegions.Add(new ColumnHighlightRegion { Color = DataHighlightColor.ColumnBlue, Selector = "3-4,666-667" }); // 666 (> 512) to trigger IndexOutOfBounds
             var columns = GenerateTestColumns();
+            var options = new ColumnStylingOptions { BackgroundColors = null, ForegroundColors = "" };
+            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
+                .Apply(columns, groupSize: 8);
+            for (int i = 0; i < 8; ++i)
+            {
+                Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
+                Assert.Equal(Color.Black, columns[i].DefaultCellStyle.ForeColor);
+            }
+
+            columns = GenerateTestColumns();
+            options = new ColumnStylingOptions { BackgroundColors = null, ForegroundColors = "rgbJKFJ" + new string(' ', 512 - "rgbJKFJ".Length) };
+            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
+                .Apply(columns, groupSize: 8);
+            for (int i = 0; i < 8; ++i)
+                Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
+            Assert.Equal(Color.DarkRed, columns[0].DefaultCellStyle.ForeColor);
+            Assert.Equal(Color.DarkGreen, columns[1].DefaultCellStyle.ForeColor);
+            Assert.Equal(Color.DarkBlue, columns[2].DefaultCellStyle.ForeColor);
+            for (int i = 3; i < 8; ++i)
+                Assert.Equal(Color.Black, columns[i].DefaultCellStyle.ForeColor);
+
+            string bgString = null;
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 0, 1, 2, 3, 4, 5 }, DataHighlightColor.Red); // rrrrrr
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 1, 2, 3 }, DataHighlightColor.Green);        // rgggrr
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 3, 4, 666, -1 }, DataHighlightColor.Blue);   // rggbbr, 666 (> 512) and -1 to trigger IndexOutOfBounds
+
+            var fgString = DataHighlightColors.UpdateColorStringRange(bgString, Enumerable.Range(0, 512), DataHighlightColor.None);
+            Assert.Equal("", fgString);
+
+            options = new ColumnStylingOptions { BackgroundColors = bgString, ForegroundColors = fgString };
 
             new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
                 .Apply(columns, groupSize: 8);
 
-            Assert.Equal(Color.DarkRed, columns[0].DefaultCellStyle.ForeColor);
+            for (int i = 0; i < 8; ++i)
+                Assert.Equal(Color.Black, columns[i].DefaultCellStyle.ForeColor);
+
             Assert.Equal(Color.Red, columns[0].DefaultCellStyle.BackColor);
             for (int i = 1; i <= 2; ++i)
-            {
-                Assert.Equal(Color.DarkGreen, columns[i].DefaultCellStyle.ForeColor);
                 Assert.Equal(Color.Green, columns[i].DefaultCellStyle.BackColor);
-            }
             for (int i = 3; i <= 4; ++i)
-            {
-                Assert.Equal(Color.DarkBlue, columns[i].DefaultCellStyle.ForeColor);
                 Assert.Equal(Color.Blue, columns[i].DefaultCellStyle.BackColor);
-            }
-            Assert.Equal(Color.DarkRed, columns[5].DefaultCellStyle.ForeColor);
             Assert.Equal(Color.Red, columns[5].DefaultCellStyle.BackColor);
-
-            Assert.Equal(Color.Black, columns[6].DefaultCellStyle.ForeColor);
             Assert.Equal(Color.Empty, columns[6].DefaultCellStyle.BackColor);
         }
 
@@ -128,41 +147,6 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             ColumnStyling.GrayOutColumns(columns, MakeColorState(), groupSize: 512);
             for (int i = 0; i < 512; i++)
                 Assert.Equal(Color.LightGray, columns[i].DefaultCellStyle.BackColor);
-        }
-
-        [Fact]
-        public void StylingChangedEventTest()
-        {
-            int eventsRaised = 0;
-
-            var options = new ColumnStylingOptions();
-            options.StylingChanged += () => ++eventsRaised;
-
-            Assert.Equal(0, eventsRaised);
-            options.VisibleColumns = "1";
-            Assert.Equal(1, eventsRaised);
-
-            options.HighlightRegions.Add(new ColumnHighlightRegion { Color = DataHighlightColor.ColumnRed, Selector = "1" });
-            Assert.Equal(2, eventsRaised);
-            options.HighlightRegions[0].Selector = "2";
-            Assert.Equal(3, eventsRaised);
-            options.HighlightRegions[0].Color = DataHighlightColor.ColumnBlue;
-            Assert.Equal(4, eventsRaised);
-            options.HighlightRegions.RemoveAt(0);
-            Assert.Equal(5, eventsRaised);
-        }
-
-        [Fact]
-        public void HighlightRangeNeverNullTest()
-        {
-            /* DataGridView, which we use to present highlight regions, treats an empty string as null.
-             * Region selectors, however, must _not_ be null */
-
-            var options = new ColumnStylingOptions();
-            options.HighlightRegions.Add(new ColumnHighlightRegion());
-            options.HighlightRegions.Add(new ColumnHighlightRegion { Color = DataHighlightColor.ColumnRed, Selector = null });
-            Assert.Equal("", options.HighlightRegions[0].Selector);
-            Assert.Equal("", options.HighlightRegions[1].Selector);
         }
 
         [Fact]

@@ -34,13 +34,10 @@ namespace VSRAD.Package.DebugVisualizer
             switch (item)
             {
                 case DataHighlightColor.None: return "Data";
-                case DataHighlightColor.ColumnRed: return "Data - Column Red Highlight";
-                case DataHighlightColor.ColumnGreen: return "Data - Column Green Highlight";
-                case DataHighlightColor.ColumnBlue: return "Data - Column Blue Highlight";
-                case DataHighlightColor.RowRed: return "Data - Row Red Highlight";
-                case DataHighlightColor.RowGreen: return "Data - Row Green Highlight";
-                case DataHighlightColor.RowBlue: return "Data - Row Blue Highlight";
                 case DataHighlightColor.Inactive: return "Data - Inactive";
+                case DataHighlightColor.Red: return "Data - Red Highlight";
+                case DataHighlightColor.Green: return "Data - Green Highlight";
+                case DataHighlightColor.Blue: return "Data - Blue Highlight";
             }
             throw new NotImplementedException();
         }
@@ -63,12 +60,9 @@ namespace VSRAD.Package.DebugVisualizer
             CreateItem(FontAndColorItem.HiddenColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0x404040), hasText: false),
             CreateItem(DataHighlightColor.None.GetDisplayName()),
             CreateItem(DataHighlightColor.Inactive.GetDisplayName(), bg: Color.LightGray, hasText: false),
-            CreateItem(DataHighlightColor.ColumnRed.GetDisplayName(), bg: Color.FromArgb(245, 226, 227)),
-            CreateItem(DataHighlightColor.ColumnGreen.GetDisplayName(), bg: Color.FromArgb(227, 245, 226)),
-            CreateItem(DataHighlightColor.ColumnBlue.GetDisplayName(), bg: Color.FromArgb(226, 230, 245)),
-            CreateItem(DataHighlightColor.RowRed.GetDisplayName(), fg: Color.Red, bg: Color.Empty),
-            CreateItem(DataHighlightColor.RowGreen.GetDisplayName(), fg: Color.Green, bg: Color.Empty),
-            CreateItem(DataHighlightColor.RowBlue.GetDisplayName(), fg: Color.Blue, bg: Color.Empty),
+            CreateItem(DataHighlightColor.Red.GetDisplayName(), fg: Color.Red, bg: Color.FromArgb(245, 226, 227)),
+            CreateItem(DataHighlightColor.Green.GetDisplayName(), fg: Color.Green, bg: Color.FromArgb(227, 245, 226)),
+            CreateItem(DataHighlightColor.Blue.GetDisplayName(), fg: Color.Blue, bg: Color.FromArgb(226, 230, 245))
         };
 
         // Changes to ProvideFontAndColorsCategory will not be registered until this method is run.
@@ -83,9 +77,9 @@ namespace VSRAD.Package.DebugVisualizer
             cacheManager.ClearCache(ref categoryGuid);
         }
 
-        public static Color ReadVsColor(uint vsColor) => vsColor == 0xffffffff ? Color.Empty : ColorTranslator.FromWin32((int)vsColor);
+        public static Color ReadVsColor(uint vsColor) => ColorTranslator.FromWin32((int)vsColor);
 
-        public static uint MakeVsColor(Color color) => color == Color.Empty ? 0xffffffff : (uint)ColorTranslator.ToWin32(color);
+        public static uint MakeVsColor(Color color) => (uint)ColorTranslator.ToWin32(color);
 
         private static AllColorableItemInfo CreateItem(string name, Color? fg = null, Color? bg = null, bool hasText = true)
         {

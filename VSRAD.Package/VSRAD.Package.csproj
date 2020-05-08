@@ -222,7 +222,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Options\DebuggerOptions.cs" />
-    <Compile Include="DebugVisualizer\ColumnHighlightRegion.cs" />
     <Compile Include="DebugVisualizer\DataHighlightColor.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DebugVisualizer\ColumnStylingOptions.cs" />

@@ -97,16 +97,6 @@ namespace VSRAD.Package.DebugVisualizer
             return sb.ToString();
         }
 
-        public static void RemoveIndexes(IEnumerable<int> columnIndexes, IList<ColumnHighlightRegion> regions)
-        {
-            foreach (var region in regions)
-                region.Selector = FromIndexes(ToIndexes(region.Selector).Except(columnIndexes));
-
-            var emptyRegions = regions.Where(x => string.IsNullOrEmpty(x.Selector)).ToList();
-            foreach (var emptyRegion in emptyRegions)
-                regions.Remove(emptyRegion);
-        }
-
         public static string GetSelectorMultiplication(string currentSelector, string newSelector)
         {
             var currentIndexes = ToIndexes(currentSelector);
