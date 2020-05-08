@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
 
-namespace VSRAD.Syntax.Peek
+namespace VSRAD.Syntax.IntelliSense.Peek
 {
     [Export(typeof(IPeekableItemSourceProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
@@ -14,15 +14,15 @@ namespace VSRAD.Syntax.Peek
     internal sealed class PeekableItemSourceProvider : IPeekableItemSourceProvider
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly DefinitionService.DefinitionService _definitionService;
+        private readonly NavigationTokenService _navigationTokenService;
 
         [ImportingConstructor]
         public PeekableItemSourceProvider(
             IPeekResultFactory peekResultFactory,
-            DefinitionService.DefinitionService definitionService)
+            NavigationTokenService definitionService)
         {
             _peekResultFactory = peekResultFactory;
-            _definitionService = definitionService;
+            _navigationTokenService = definitionService;
         }
 
         public IPeekableItemSource TryCreatePeekableItemSource(ITextBuffer textBuffer)
@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Peek
             if (textBuffer == null)
                 throw new ArgumentNullException(nameof(textBuffer));
 
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new PeekableItemSource(_peekResultFactory, _definitionService));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new PeekableItemSource(_peekResultFactory, _navigationTokenService));
         }
     }
 }

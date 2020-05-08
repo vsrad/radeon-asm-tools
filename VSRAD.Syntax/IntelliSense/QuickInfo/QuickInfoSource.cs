@@ -3,16 +3,15 @@ using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Peek.DefinitionService;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {
-        private readonly DefinitionService _definitionService;
+        private readonly NavigationTokenService _definitionService;
         private readonly ITextBuffer _textBuffer;
 
-        public QuickInfoSource(ITextBuffer textBuffer, DefinitionService definitionService)
+        public QuickInfoSource(ITextBuffer textBuffer, NavigationTokenService definitionService)
         {
             _textBuffer = textBuffer;
             _definitionService = definitionService;

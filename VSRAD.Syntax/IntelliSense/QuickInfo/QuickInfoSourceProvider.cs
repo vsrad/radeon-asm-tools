@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Peek.DefinitionService;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
@@ -13,10 +12,10 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     [Order]
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
-        private readonly DefinitionService _definitionService;
+        private readonly NavigationTokenService _definitionService;
 
         [ImportingConstructor]
-        public QuickInfoSourceProvider(DefinitionService definitionService)
+        public QuickInfoSourceProvider(NavigationTokenService definitionService)
         {
             _definitionService = definitionService;
         }

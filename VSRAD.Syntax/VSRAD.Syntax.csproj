@@ -121,11 +121,11 @@
     <Compile Include="Parser\Tokens\LabelToken.cs" />
     <Compile Include="Parser\Tokens\TokenType.cs" />
     <Compile Include="Parser\Tokens\VariableToken.cs" />
-    <Compile Include="Peek\DefinitionService\DefinitionService.cs" />
-    <Compile Include="Peek\PeekableItem.cs" />
-    <Compile Include="Peek\PeekableItemSource.cs" />
-    <Compile Include="Peek\PeekableItemSourceProvider.cs" />
-    <Compile Include="Peek\PeekResultSource.cs" />
+    <Compile Include="IntelliSense\NavigationTokenService.cs" />
+    <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
+    <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />
+    <Compile Include="IntelliSense\Peek\PeekableItemSourceProvider.cs" />
+    <Compile Include="IntelliSense\Peek\PeekResultSource.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

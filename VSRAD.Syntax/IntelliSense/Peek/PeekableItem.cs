@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using System;
 using System.Collections.Generic;
 
-namespace VSRAD.Syntax.Peek
+namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekableItem : IPeekableItem
     {

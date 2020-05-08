@@ -1,11 +1,10 @@
 ﻿using VSRAD.Syntax.Parser.Tokens;
-using Microsoft.VisualStudio.Imaging.Interop;
 using Microsoft.VisualStudio.Language.Intellisense;
 using System;
 using System.IO;
 using System.Threading;
 
-namespace VSRAD.Syntax.Peek
+namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekResultSource : IPeekResultSource
     {

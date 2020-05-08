@@ -1,10 +1,9 @@
-﻿using VSRAD.Syntax.Peek.DefinitionService;
-using Microsoft.VisualStudio.Editor;
+﻿using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.IntelliSense.Completion;
+using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Editor
 {
@@ -14,14 +13,14 @@ namespace VSRAD.Syntax.Editor
     internal sealed class EditorFilterFactory : IVsTextViewCreationListener
     {
         private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
-        private readonly DefinitionService _definitionService;
+        private readonly NavigationTokenService _navigationTokenService;
 
         [ImportingConstructor]
         public EditorFilterFactory(IVsEditorAdaptersFactoryService adaptersFactoryService, 
-            DefinitionService definitionService)
+            NavigationTokenService definitionService)
         {
             this._adaptersFactoryService = adaptersFactoryService;
-            this._definitionService = definitionService;
+            this._navigationTokenService = definitionService;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
@@ -30,7 +29,7 @@ namespace VSRAD.Syntax.Editor
 
             if (view != null)
             {
-                var filter = new EditorFilter(_definitionService, view);
+                var filter = new EditorFilter(_navigationTokenService, view);
 
                 textViewAdapter.AddCommandFilter(filter, out var next);
                 filter.Next = next;

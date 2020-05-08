@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text.Editor;
 
-namespace VSRAD.Syntax.Peek
+namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekableItemSource : IPeekableItemSource
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly DefinitionService.DefinitionService _definitionService;
+        private readonly NavigationTokenService _navigationTokenService;
 
         public PeekableItemSource(
             IPeekResultFactory peekResultFactory,
-            DefinitionService.DefinitionService definitionService)
+            NavigationTokenService definitionService)
         {
             _peekResultFactory = peekResultFactory ?? throw new ArgumentNullException(nameof(peekResultFactory));
-            _definitionService = definitionService ?? throw new ArgumentNullException(nameof(peekResultFactory));
+            _navigationTokenService = definitionService ?? throw new ArgumentNullException(nameof(peekResultFactory));
         }
 
         public void AugmentPeekSession(IPeekSession session, IList<IPeekableItem> peekableItems)
@@ -38,8 +38,8 @@ namespace VSRAD.Syntax.Peek
         {
             if (view != null)
             {
-                var extent = _definitionService.GetTextExtentOnCursor(view);
-                var token = _definitionService.GetNaviationItem(view, extent, false);
+                var extent = NavigationTokenService.GetTextExtentOnCursor(view);
+                var token = _navigationTokenService.GetNaviationItem(view, extent, false);
                 if (token != null)
                     return new PeekableItem(peekResultFactory, token);
             }

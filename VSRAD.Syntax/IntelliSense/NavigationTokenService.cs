@@ -20,12 +20,12 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 
-namespace VSRAD.Syntax.Peek.DefinitionService
+namespace VSRAD.Syntax.IntelliSense
 {
-    [Export(typeof(DefinitionService))]
-    internal class DefinitionService
+    [Export(typeof(NavigationTokenService))]
+    internal class NavigationTokenService
     {
-        public static DefinitionService Instance { get; protected set; }
+        public static NavigationTokenService Instance { get; protected set; }
 
         private readonly ITextDocumentFactoryService _textDocumentFactoryService;
         public readonly IPeekBroker PeekBroker;
@@ -36,7 +36,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
         private readonly IVsTextManager _textManager;
 
         [ImportingConstructor]
-        public DefinitionService(
+        public NavigationTokenService(
             [Import(typeof(SVsServiceProvider))] IServiceProvider serviceProvider,
             IPeekBroker peekBroker,
             ITextDocumentFactoryService textDocumentFactoryService,
@@ -113,7 +113,7 @@ namespace VSRAD.Syntax.Peek.DefinitionService
             return null;
         }
 
-        public TextExtent GetTextExtentOnCursor(IWpfTextView view) =>
+        public static TextExtent GetTextExtentOnCursor(IWpfTextView view) =>
             view.Caret.Position.BufferPosition.GetExtent();
 
         private static void NavigateToFunction(IBaseToken token)

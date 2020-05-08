@@ -1,10 +1,10 @@
-﻿using VSRAD.Syntax.Peek.DefinitionService;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
@@ -14,11 +14,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
     internal sealed class IdentifierHighliterTaggerProvider : IViewTaggerProvider
     {
         private readonly ITextSearchService2 TextSearchService;
-        private readonly DefinitionService DefinitionService;
+        private readonly NavigationTokenService DefinitionService;
 
         [ImportingConstructor]
         public IdentifierHighliterTaggerProvider(ITextSearchService2 textSearchService,
-            DefinitionService definitionService)
+            NavigationTokenService definitionService)
         {
             this.TextSearchService = textSearchService;
             this.DefinitionService = definitionService;

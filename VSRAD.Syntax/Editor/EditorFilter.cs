@@ -1,25 +1,24 @@
 ﻿using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Peek.DefinitionService;
 using System;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text.Editor;
-using VSRAD.Syntax.IntelliSense.Completion;
+using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Editor
 {
     internal sealed class EditorFilter : IOleCommandTarget
     {
         private readonly IWpfTextView _wpfTextView;
-        private readonly DefinitionService _definitionService;
+        private readonly NavigationTokenService _navigationTokenService;
 
         public IOleCommandTarget Next { get; set; }
 
-        public EditorFilter(DefinitionService definitionService, IWpfTextView wpfTextView)
+        public EditorFilter(NavigationTokenService definitionService, IWpfTextView wpfTextView)
         {
             this._wpfTextView = wpfTextView;
-            this._definitionService = definitionService;
+            this._navigationTokenService = definitionService;
         }
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
@@ -58,7 +57,7 @@ namespace VSRAD.Syntax.Editor
                     switch ((VSConstants.VSStd12CmdID)prgCmds[i].cmdID)
                     {
                         case VSConstants.VSStd12CmdID.PeekDefinition:
-                            var canPeek = _definitionService.PeekBroker?.CanTriggerPeekSession(
+                            var canPeek = _navigationTokenService.PeekBroker?.CanTriggerPeekSession(
                                 _wpfTextView,
                                 PredefinedPeekRelationships.Definitions.Name,
                                 isStandaloneFilePredicate: (string filename) => false
@@ -93,7 +92,7 @@ namespace VSRAD.Syntax.Editor
                 switch ((VSConstants.VSStd97CmdID)nCmdID)
                 {
                     case VSConstants.VSStd97CmdID.GotoDefn:
-                        _definitionService.GoToDefinition(_wpfTextView);
+                        _navigationTokenService.GoToDefinition(_wpfTextView);
                         return VSConstants.S_OK;
                 }
             }
@@ -121,11 +120,11 @@ namespace VSRAD.Syntax.Editor
                 switch ((VSConstants.VSStd12CmdID)nCmdID)
                 {
                     case VSConstants.VSStd12CmdID.PeekDefinition:
-                        if (_definitionService.PeekBroker != null &&
+                        if (_navigationTokenService.PeekBroker != null &&
                             !_wpfTextView.Roles.Contains(PredefinedTextViewRoles.EmbeddedPeekTextView) &&
                             !_wpfTextView.Roles.Contains(PredefinedTextViewRoles.CodeDefinitionView))
                         {
-                            _definitionService.PeekBroker.TriggerPeekSession(_wpfTextView, PredefinedPeekRelationships.Definitions.Name);
+                            _navigationTokenService.PeekBroker.TriggerPeekSession(_wpfTextView, PredefinedPeekRelationships.Definitions.Name);
                             return VSConstants.S_OK;
                         }
 

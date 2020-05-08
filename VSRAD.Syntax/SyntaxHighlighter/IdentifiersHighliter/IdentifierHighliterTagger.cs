@@ -1,6 +1,5 @@
 ﻿using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Tokens;
-using VSRAD.Syntax.Peek.DefinitionService;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
@@ -11,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
@@ -35,19 +35,19 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private ITextBuffer SourceBuffer { get; set; }
         private ITextSearchService2 TextSearchService { get; set; }
 
-        private readonly DefinitionService DefinitionService;
+        private readonly NavigationTokenService navigationTokenService;
         private readonly ParserManger parserManager;
         private readonly object updateLock = new object();
         private NormalizedSnapshotSpanCollection WordSpans { get; set; }
         private SnapshotSpan? CurrentWord { get; set; }
         private SnapshotPoint RequestedPoint { get; set; }
 
-        internal HighlightWordTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService2 textSearchService, DefinitionService definitionService)
+        internal HighlightWordTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService2 textSearchService, NavigationTokenService definitionService)
         {
             this.View = view;
             this.SourceBuffer = sourceBuffer;
             this.TextSearchService = textSearchService;
-            this.DefinitionService = definitionService;
+            this.navigationTokenService = definitionService;
             this.parserManager = this.SourceBuffer.Properties.GetOrCreateSingletonProperty(
                 () => new ParserManger());
 
@@ -104,7 +104,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             if (CurrentWord.HasValue && currentWord == CurrentWord)
                 return;
 
-            var navigationItem = DefinitionService.GetNaviationItem((IWpfTextView)View, word);
+            var navigationItem = navigationTokenService.GetNaviationItem((IWpfTextView)View, word);
             if (navigationItem == null)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);
