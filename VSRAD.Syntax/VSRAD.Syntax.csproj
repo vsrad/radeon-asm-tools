@@ -95,10 +95,16 @@
     <Compile Include="IntelliSense\Completion\FunctionCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\InstructionCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\ScopedTokenCompletionSource.cs" />
+    <Compile Include="IntelliSense\IntellisenseController.cs" />
+    <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
+    <Compile Include="IntelliSense\SignatureHelper\RadeonParameter.cs" />
+    <Compile Include="IntelliSense\SignatureHelper\RadeonSignature.cs" />
+    <Compile Include="IntelliSense\SignatureHelper\SignatureHelpSource.cs" />
+    <Compile Include="IntelliSense\SignatureHelper\SignatureHelpSourceProvider.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -124,7 +130,7 @@
     <Compile Include="Parser\Tokens\LabelToken.cs" />
     <Compile Include="Parser\Tokens\TokenType.cs" />
     <Compile Include="Parser\Tokens\VariableToken.cs" />
-    <Compile Include="IntelliSense\NavigationTokenService.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSourceProvider.cs" />
@@ -141,6 +147,7 @@
     </Compile>
     <Compile Include="IntelliSense\QuickInfo\QuickInfoSource.cs" />
     <Compile Include="IntelliSense\QuickInfo\QuickInfoSourceProvider.cs" />
+    <Compile Include="RadeonServiceProvider.cs" />
     <Compile Include="SyntaxHighlighter\Classifier.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierClassificationDefinition.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierProvider.cs" />

@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Editor
 {
@@ -13,14 +12,11 @@ namespace VSRAD.Syntax.Editor
     internal sealed class EditorFilterFactory : IVsTextViewCreationListener
     {
         private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
-        private readonly NavigationTokenService _navigationTokenService;
 
         [ImportingConstructor]
-        public EditorFilterFactory(IVsEditorAdaptersFactoryService adaptersFactoryService, 
-            NavigationTokenService definitionService)
+        public EditorFilterFactory(RadeonServiceProvider editorService)
         {
-            this._adaptersFactoryService = adaptersFactoryService;
-            this._navigationTokenService = definitionService;
+            _adaptersFactoryService = editorService.EditorAdaptersFactoryService;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
@@ -29,7 +25,7 @@ namespace VSRAD.Syntax.Editor
 
             if (view != null)
             {
-                var filter = new EditorFilter(_navigationTokenService, view);
+                var filter = new EditorFilter(view);
 
                 textViewAdapter.AddCommandFilter(filter, out var next);
                 filter.Next = next;

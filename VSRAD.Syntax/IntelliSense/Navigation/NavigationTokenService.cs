@@ -3,14 +3,11 @@ using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio.Utilities;
-using Microsoft.VisualStudio.Editor;
 using System;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Primitives;
@@ -24,35 +21,18 @@ namespace VSRAD.Syntax.IntelliSense
     [Export(typeof(NavigationTokenService))]
     internal class NavigationTokenService
     {
-        public static NavigationTokenService Instance { get; protected set; }
-
-        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
-        public readonly IPeekBroker PeekBroker;
-        private readonly IContentTypeRegistryService _contentTypeRegistryService;
-        private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
-        private readonly ITextSearchService2 _textSearchService;
-        private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
+        private readonly RadeonServiceProvider _editorService;
         private readonly IVsTextManager _textManager;
 
         [ImportingConstructor]
-        public NavigationTokenService(
-            [Import(typeof(SVsServiceProvider))] IServiceProvider serviceProvider,
-            IPeekBroker peekBroker,
-            ITextDocumentFactoryService textDocumentFactoryService,
-            IContentTypeRegistryService contentTypeRegistryService,
-            IFileExtensionRegistryService fileExtensionRegistryService,
-            ITextSearchService2 textSearchService,
-            IVsEditorAdaptersFactoryService adaptersFactoryService)
+        public NavigationTokenService(RadeonServiceProvider editorService)
         {
-            this._textDocumentFactoryService = textDocumentFactoryService;
-            this.PeekBroker = peekBroker;
-            this._contentTypeRegistryService = contentTypeRegistryService;
-            this._fileExtensionRegistryService = fileExtensionRegistryService;
-            this._textSearchService = textSearchService;
-            this._adaptersFactoryService = adaptersFactoryService;
-            this._textManager = serviceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
-            Instance = this;
+            _editorService = editorService;
+            _textManager = editorService.ServiceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
         }
+
+        public static TextExtent GetTextExtentOnCursor(ITextView view) =>
+            view.Caret.Position.BufferPosition.GetExtent();
 
         public void GoToDefinition(ITextView view)
         {
@@ -72,12 +52,11 @@ namespace VSRAD.Syntax.IntelliSense
 
         public void GoToPoint(SnapshotPoint point)
         {
-            var buffer = _adaptersFactoryService.GetBufferAdapter(point.Snapshot.TextBuffer);
+            var buffer = _editorService.EditorAdaptersFactoryService.GetBufferAdapter(point.Snapshot.TextBuffer);
             if (buffer == null)
                 throw new InvalidOperationException("Cannot find IVsTextBuffer associated with point");
 
-            IVsTextManager mgr = Microsoft.VisualStudio.Shell.Package.GetGlobalService(typeof(VsTextManagerClass)) as IVsTextManager;
-            mgr.NavigateToPosition(buffer, VSConstants.LOGVIEWID.TextView_guid, point.Position, 0);
+            _textManager.NavigateToPosition(buffer, VSConstants.LOGVIEWID.TextView_guid, point.Position, 0);
         }
 
         public IBaseToken GetNaviationItem(TextExtent extent, bool onlyCurrentFile = true)
@@ -120,15 +99,6 @@ namespace VSRAD.Syntax.IntelliSense
                 return fileToken;
 
             return null;
-        }
-
-        public static TextExtent GetTextExtentOnCursor(ITextView view) =>
-            view.Caret.Position.BufferPosition.GetExtent();
-
-        public ITextView GetWpfTextView()
-        {
-            _textManager.GetActiveView(1, null, out var textViewCurrent);
-            return (textViewCurrent != null) ? _adaptersFactoryService.GetWpfTextView(textViewCurrent) : null;
         }
 
         private static bool FindNavigationTokenInBlock(IBaseBlock currentBlock, string text, out IBaseToken outToken)
@@ -207,6 +177,10 @@ namespace VSRAD.Syntax.IntelliSense
 
         private bool FindNavigationTokenInFileTree(IBaseParser parser, string text, out IBaseToken outToken)
         {
+            // TODO rewrite broken code
+            outToken = null;
+            return false;
+
             var textBuffer = parser.CurrentSnapshot.TextBuffer;
             var rc = textBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out var textDocument);
             if (!rc)
@@ -216,20 +190,20 @@ namespace VSRAD.Syntax.IntelliSense
             }
 
             var dirPath = Path.GetDirectoryName(textDocument.FilePath);
-            var contentType = _contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
+            var contentType = _editorService.ContentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
 
-            var documentNames = _textSearchService.FindAll(new SnapshotSpan(textBuffer.CurrentSnapshot, 0, textBuffer.CurrentSnapshot.Length), "include\\s\"(.+)\"", FindOptions.UseRegularExpressions | FindOptions.SingleLine);
+            var documentNames = _editorService.TextSearchService.FindAll(new SnapshotSpan(textBuffer.CurrentSnapshot, 0, textBuffer.CurrentSnapshot.Length), "include\\s\"(.+)\"", FindOptions.UseRegularExpressions | FindOptions.SingleLine);
 
             foreach (var documentName in documentNames)
             {
                 var docFileName = Regex.Match(documentName.GetText(), "\"(.+)\"").Groups[1].Value;
                 var extension = Path.GetExtension(docFileName);
 
-                var extensionsAsm1 = _fileExtensionRegistryService.GetExtensionsForContentType(contentType);
+                var extensionsAsm1 = _editorService.FileExtensionRegistryService.GetExtensionsForContentType(contentType);
                 if (extensionsAsm1.Contains(extension))
                 {
                     var pathToDocument = Path.GetFullPath(Path.Combine(dirPath, docFileName));
-                    var document = _textDocumentFactoryService.CreateAndLoadTextDocument(pathToDocument, contentType);
+                    var document = _editorService.TextDocumentFactoryService.CreateAndLoadTextDocument(pathToDocument, contentType);
                     var parserManager = document.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
 
                     parserManager.InitializeAsm1(document.TextBuffer);

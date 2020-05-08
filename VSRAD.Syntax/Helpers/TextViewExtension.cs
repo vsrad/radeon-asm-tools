@@ -12,7 +12,7 @@ namespace VSRAD.Syntax.Helpers
     {
         private const double OffsetLineFromTextView = 60.0;
 
-        public static void ChangeCaretPosition(this IWpfTextView textView, ITextSnapshotLine line)
+        public static void ChangeCaretPosition(this ITextView textView, ITextSnapshotLine line)
         {
             try
             {
@@ -25,7 +25,7 @@ namespace VSRAD.Syntax.Helpers
             }
         }
 
-        public static string GetPath(this IWpfTextView textView)
+        public static string GetPath(this ITextView textView)
         {
             textView.TextBuffer.Properties.TryGetProperty(typeof(IVsTextBuffer), out IVsTextBuffer bufferAdapter);
             var persistFileFormat = bufferAdapter as IPersistFileFormat;
@@ -37,7 +37,7 @@ namespace VSRAD.Syntax.Helpers
             return filePath;
         }
 
-        public static bool CommentUncommentBlock(this IWpfTextView textView, bool comment)
+        public static bool CommentUncommentBlock(this ITextView textView, bool comment)
         {
             SnapshotPoint start, end;
             SnapshotPoint? mappedStart, mappedEnd;

@@ -7,12 +7,12 @@ namespace VSRAD.Syntax.Parser.Blocks
 {
     public class FunctionBlock : BaseBlock
     {
-        public IBaseToken FunctionToken { get; }
+        public FunctionToken FunctionToken { get; }
 
         public FunctionBlock(
             IBaseBlock parrent,
             SnapshotPoint blockStart,
-            IBaseToken functionToken,
+            FunctionToken functionToken,
             int spaceStart) : base(parrent, BlockType.Function, blockStart, spaceStart: spaceStart)
         {
             this.FunctionToken = functionToken;
