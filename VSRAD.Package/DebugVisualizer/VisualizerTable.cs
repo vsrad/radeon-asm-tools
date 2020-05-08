@@ -178,15 +178,7 @@ namespace VSRAD.Package.DebugVisualizer
                 .Where(x => x >= 0)
                 .Append(clickedColumnIndex - DataColumnOffset);
 
-            _stylingOptions.ApplyBulkChange(() =>
-            {
-                ColumnSelector.RemoveIndexes(selectedColumns, _stylingOptions.HighlightRegions);
-                if (color != DataHighlightColor.None)
-                {
-                    var selector = ColumnSelector.FromIndexes(selectedColumns);
-                    _stylingOptions.HighlightRegions.Add(new ColumnHighlightRegion { Color = color, Selector = selector });
-                }
-            });
+            _stylingOptions.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.BackgroundColors, selectedColumns, color);
 
             ClearSelection();
         }
