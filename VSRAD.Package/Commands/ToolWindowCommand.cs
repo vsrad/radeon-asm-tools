@@ -22,6 +22,7 @@ namespace VSRAD.Package.Commands
             {
                 case Constants.ToolWindowVisualizerCommandId:
                 case Constants.ToolWindowOptionsCommandId:
+                case Constants.ToolWindowSliceVisualizerCommandId:
                     return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
                 default:
                     return Task.FromResult(CommandStatusResult.Unhandled);
@@ -38,6 +39,9 @@ namespace VSRAD.Package.Commands
                     break;
                 case Constants.ToolWindowOptionsCommandId:
                     ErrorHandler.ThrowOnFailure(((IVsWindowFrame)VSPackage.OptionsToolWindow.Frame).Show());
+                    break;
+                case Constants.ToolWindowSliceVisualizerCommandId:
+                    ErrorHandler.ThrowOnFailure(((IVsWindowFrame)VSPackage.SliceVisualizerToolWindow.Frame).Show());
                     break;
             }
         }

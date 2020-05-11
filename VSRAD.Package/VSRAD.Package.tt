@@ -98,6 +98,15 @@
           <ButtonText>Options</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Open Slice Visualizer</ButtonText>
+        </Strings>
+      </Button>
       <!-- Editor context menu -->
       <Button guid="guidCmdSetFRTC" id="ForceRunToCursorCommandId" priority="0x0100" type="Button">
         <Parent guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" />
@@ -231,6 +240,7 @@
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
       <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
       <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
+      <IDSymbol name="ToolWindowSliceVisualizerCommandId" value="0x0102" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetDisassembly" value="{03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE}">

@@ -19,6 +19,8 @@ namespace VSRAD.Package
         typeof(Deborgar.Remote.RemotePortSupplier))]
     [ProvideToolWindow(typeof(ToolWindows.VisualizerWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
+    [ProvideToolWindow(typeof(ToolWindows.SliceVisualizerWindow),
+        Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
     [ProvideToolWindow(typeof(ToolWindows.OptionsWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
     [ProvideToolWindow(typeof(ToolWindows.EvaluateSelectedWindow),
@@ -37,6 +39,7 @@ namespace VSRAD.Package
     public sealed class VSPackage : AsyncPackage
     {
         public static VisualizerWindow VisualizerToolWindow { get; private set; }
+        public static SliceVisualizerWindow SliceVisualizerToolWindow { get; private set; }
         public static OptionsWindow OptionsToolWindow { get; private set; }
         public static EvaluateSelectedWindow EvaluateSelectedWindow { get; private set; }
 
@@ -62,6 +65,8 @@ namespace VSRAD.Package
         {
             VisualizerToolWindow = (VisualizerWindow)await FindToolWindowAsync(
                 typeof(VisualizerWindow), 0, true, CancellationToken.None);
+            SliceVisualizerToolWindow = (SliceVisualizerWindow)await FindToolWindowAsync(
+                typeof(SliceVisualizerWindow), 0, true, CancellationToken.None);
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
                 typeof(OptionsWindow), 0, true, CancellationToken.None);
             EvaluateSelectedWindow = (EvaluateSelectedWindow)await FindToolWindowAsync(
@@ -69,6 +74,7 @@ namespace VSRAD.Package
 
             await TaskFactory.SwitchToMainThreadAsync();
             VisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
+            SliceVisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(toolWindowIntegration);
             EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
