@@ -12,19 +12,19 @@ namespace VSRAD.Package.ToolWindows
     [Guid("D3DEA94C-D9B7-4450-B4E5-272C928AAB65")]
     public sealed class SliceVisualizerWindow : BaseToolWindow
     {
-        private VisualizerControl _visualizerControl;
+        private SliceVisualizerControl _sliceVisualizerControl;
 
         public SliceVisualizerWindow() : base("RAD Slice Visualizer") { }
 
         protected override UIElement CreateToolControl(IToolWindowIntegration integration)
         {
-            _visualizerControl = new VisualizerControl(integration);
-            return _visualizerControl;
+            _sliceVisualizerControl = new SliceVisualizerControl(integration);
+            return _sliceVisualizerControl;
         }
 
         protected override void OnWindowFocusLost()
         {
-            _visualizerControl.WindowFocusLost();
+            //_sliceVisualizerControl.WindowFocusLost();
         }
     }
 }
