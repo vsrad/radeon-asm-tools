@@ -33,6 +33,7 @@ namespace VSRAD.Package.DebugVisualizer
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
                 _integration.ProjectOptions.VisualizerColumnStyling,
+                _integration.ProjectOptions.VisualizerAppearance,
                 tableFontAndColor,
                 getGroupSize: () => headerControl.GroupSize);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>

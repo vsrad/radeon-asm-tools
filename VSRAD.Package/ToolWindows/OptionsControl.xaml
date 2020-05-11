@@ -89,7 +89,7 @@
                     </ComboBox>
                 </StackPanel>
                 <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
-                    <StackPanel  Margin="0,6,0,0">
+                    <StackPanel Margin="0,6,0,0">
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Name Column Alignment: " VerticalAlignment="Center"/>
                             <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
@@ -117,6 +117,12 @@
                             <TextBlock Text="Hidden Column Separator Width:" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding DataContext.Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Darken odd rows by" VerticalAlignment="Center"/>
+                            <TextBox Width="40" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                                        Text="{Binding Options.VisualizerAppearance.DarkenAlternatingRowsBy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="%" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <!--
                         <StackPanel Orientation="Horizontal" Height="25">

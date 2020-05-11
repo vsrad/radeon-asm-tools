@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Forms;
+using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -54,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private string _editedWatchName;
 
-        public VisualizerTable(ColumnStylingOptions stylingOptions, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
+        public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
             _fontAndColor = fontAndColor;
 
@@ -91,10 +92,12 @@ namespace VSRAD.Package.DebugVisualizer
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, stylingOptions, getGroupSize)
             });
+            _ = new CellStyling(this, appearance);
             _ = new CustomTableGraphics(this, _fontAndColor);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this);
             _selectionController = new SelectionController(this);
+
         }
 
         public void ScaleControls(float scaleFactor)

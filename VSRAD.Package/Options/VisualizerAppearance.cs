@@ -49,5 +49,8 @@ namespace VSRAD.Package.Options
             get => _scalingMode;
             set => SetField(ref _scalingMode, value);
         }
+
+        private int _darkenAlternatingRowsBy = 0;
+        public int DarkenAlternatingRowsBy { get => _darkenAlternatingRowsBy; set => SetField(ref _darkenAlternatingRowsBy, value); }
     }
 }
