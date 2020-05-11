@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using VSRAD.Package.Options;
 using VSRAD.Package.ToolWindows;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -21,12 +12,25 @@ namespace VSRAD.Package.DebugVisualizer
     /// </summary>
     public partial class SliceVisualizerControl : UserControl
     {
-        private readonly IToolWindowIntegration _integration;
+        public sealed class Context : DefaultNotifyPropertyChanged
+        {
+            public ProjectOptions Options { get; }
+            public IReadOnlyList<string> Watches => Options.DebuggerOptions.Watches
+                .Where(w => !string.IsNullOrWhiteSpace(w.Name))
+                .Select(w => w.Name)
+                .ToList();
+
+            public Context(ProjectOptions options)
+            {
+                Options = options;
+            }
+        }
+        
 
         public SliceVisualizerControl(IToolWindowIntegration integration)
         {
             InitializeComponent();
-            _integration = integration;
+            DataContext = new Context(integration.ProjectOptions);
         }
     }
 }
