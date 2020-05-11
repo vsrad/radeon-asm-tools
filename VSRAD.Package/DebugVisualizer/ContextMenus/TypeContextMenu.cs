@@ -25,17 +25,17 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var fgColor = new MenuItem("Font Color", new[]
             {
-                new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Green, fg: true)),
-                new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Red, fg: true)),
-                new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Blue, fg: true)),
-                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.None, fg: true))
+                new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.Green)),
+                new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.Red)),
+                new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.Blue)),
+                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.None))
             });
             var bgColor = new MenuItem("Background Color", new[]
             {
-                new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Green, fg: false)),
-                new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Red, fg: false)),
-                new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.Blue, fg: false)),
-                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, DataHighlightColor.None, fg: false))
+                new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.Green)),
+                new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.Red)),
+                new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.Blue)),
+                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.None))
             });
 
             var insertRowBefore = new MenuItem("Insert Row Before", (s, e) => insertRow(_currentRow, false));

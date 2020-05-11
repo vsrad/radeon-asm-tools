@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Drawing;
@@ -63,20 +64,24 @@ namespace VSRAD.Package.DebugVisualizer
                 row.Cells[VisualizerTable.DataColumnOffset + columnIndex].Style = _inactiveCellStyle;
         }
 
-        public static void ChangeRowHighlight(IEnumerable<DataGridViewRow> rows, FontAndColorState colors, DataHighlightColor color, bool fg)
+        public static void UpdateRowHighlight(DataGridViewRow row, FontAndColorState colors, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
-            if (fg)
-            {
-                var fgColor = color != DataHighlightColor.None ? colors.HighlightForeground[(int)color] : Color.Empty;
-                foreach (var row in rows)
-                    row.DefaultCellStyle.ForeColor = fgColor;
-            }
-            else
-            {
-                var bgColor = color != DataHighlightColor.None ? colors.HighlightBackground[(int)color] : Color.Empty;
-                foreach (var row in rows)
-                    row.DefaultCellStyle.BackColor = bgColor;
-            }
+            var rowFg = DataHighlightColor.None;
+            var rowBg = DataHighlightColor.None;
+            if (row.DefaultCellStyle.Tag is ValueTuple<DataHighlightColor, DataHighlightColor> existingColors)
+                (rowFg, rowBg) = existingColors;
+
+            if (changeFg is DataHighlightColor fg)
+                rowFg = fg;
+            if (changeBg is DataHighlightColor bg)
+                rowBg = bg;
+
+            var fgColor = rowFg != DataHighlightColor.None ? colors.HighlightForeground[(int)rowFg] : Color.Empty;
+            var bgColor = rowBg != DataHighlightColor.None ? colors.HighlightBackground[(int)rowBg] : Color.Empty;
+
+            row.DefaultCellStyle.ForeColor = fgColor;
+            row.DefaultCellStyle.BackColor = bgColor;
+            row.DefaultCellStyle.Tag = (rowFg, rowBg);
         }
 
         public static void GrayOutUnevaluatedWatches(IEnumerable<DataGridViewRow> rows, FontAndColorState colors, ReadOnlyCollection<string> watches)
@@ -88,18 +93,9 @@ namespace VSRAD.Package.DebugVisualizer
                 var isUnevaluated = !string.IsNullOrWhiteSpace(watch) && watch != "System" && !watches.Contains(watch);
 
                 if (isUnevaluated)
-                {
-                    // Preserve old background in case the row was highlighted
-                    row.DefaultCellStyle.Tag = row.DefaultCellStyle.BackColor;
                     row.DefaultCellStyle.BackColor = inactiveBg;
-                }
                 else if (row.DefaultCellStyle.BackColor == inactiveBg) // used to be unevaluated
-                {
-                    if (row.DefaultCellStyle.Tag is Color highlightColor)
-                        row.DefaultCellStyle.BackColor = highlightColor;
-                    else
-                        row.DefaultCellStyle.BackColor = Color.Empty;
-                }
+                    UpdateRowHighlight(row, colors, changeFg: null, changeBg: null); // restore old highlight
             }
         }
     }

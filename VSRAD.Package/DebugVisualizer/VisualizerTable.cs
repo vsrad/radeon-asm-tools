@@ -303,10 +303,11 @@ namespace VSRAD.Package.DebugVisualizer
         public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
             RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
 
-        public void ApplyRowHighlight(int rowIndex, DataHighlightColor color, bool fg)
+        public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
-            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
-            RowStyling.ChangeRowHighlight(changedRows, _fontAndColor.FontAndColorState, color, fg);
+            var changedRowIndexes = _selectionController.SelectedWatchIndexes.Append(rowIndex);
+            foreach (var i in changedRowIndexes)
+                RowStyling.UpdateRowHighlight(Rows[i], _fontAndColor.FontAndColorState, changeFg, changeBg);
         }
 
         public void ApplyDataStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
@@ -332,6 +333,9 @@ namespace VSRAD.Package.DebugVisualizer
                 options.VisualizerOptions,
                 _fontAndColor.FontAndColorState);
             rowStyling.Apply(groupSize, system);
+
+            foreach (DataGridViewRow row in Rows)
+                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
 
             ((Control)this).ResumeDrawing();
             HorizontalScrollingOffset = scrollingOffset;
