@@ -13,6 +13,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly VisualizerAppearance _appearance;
         private readonly ComputedColumnStyling _computedStyling;
         private readonly IFontAndColorProvider _fontAndColor;
+        private readonly SolidBrush _tableBackgroundBrush;
 
         public CellStyling(VisualizerTable table, VisualizerAppearance appearance, ComputedColumnStyling computedStyling, IFontAndColorProvider fontAndColor)
         {
@@ -20,6 +21,7 @@ namespace VSRAD.Package.DebugVisualizer
             _appearance = appearance;
             _computedStyling = computedStyling;
             _fontAndColor = fontAndColor;
+            _tableBackgroundBrush = new SolidBrush(_table.BackgroundColor);
 
             _table.CellPainting += HandleCellPaint;
         }
@@ -30,6 +32,8 @@ namespace VSRAD.Package.DebugVisualizer
             var isDataColumn = dataColumnIndex >= 0 && dataColumnIndex < VisualizerTable.DataColumnCount;
             var isDataRow = e.RowIndex >= 0;
 
+            if (e.ColumnIndex == VisualizerTable.PhantomColumnIndex)
+                HidePhantomColumn(e);
             if (isDataRow)
                 PaintInvalidWatchName(e);
             if (isDataColumn && isDataRow)
@@ -38,6 +42,12 @@ namespace VSRAD.Package.DebugVisualizer
                 DarkenAlternatingRows(e);
             if (isDataColumn)
                 PaintColumnSeparators(dataColumnIndex, e);
+        }
+
+        private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
+        {
+            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+            e.Handled = true;
         }
 
         private void DarkenAlternatingRows(DataGridViewCellPaintingEventArgs e)

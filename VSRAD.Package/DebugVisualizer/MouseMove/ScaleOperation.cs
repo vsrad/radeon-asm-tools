@@ -62,7 +62,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             hit.Type == DataGridViewHitTestType.ColumnHeader &&
             (Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider ||
             Math.Abs(x - hit.ColumnX - table.ColumnWidth) <= _maxDistanceFromDivider) &&
-            hit.ColumnIndex > table.DataColumns.First(c => c.Visible).Index; // can't scale the first visible column
+            hit.ColumnIndex > table.DataColumns.FirstOrDefault(c => c.Visible)?.Index; // can't scale the first visible column
 
         public bool HandleMouseMove(MouseEventArgs e)
         {

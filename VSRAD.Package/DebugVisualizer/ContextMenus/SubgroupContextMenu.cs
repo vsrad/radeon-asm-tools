@@ -27,7 +27,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         public bool Show(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (hit.RowIndex != -1 || hit.ColumnIndex < 0) return false;
+            if (hit.RowIndex != -1 || hit.ColumnIndex < 0 || hit.ColumnIndex == VisualizerTable.PhantomColumnIndex)
+                return false;
             var screenStartOffset = _table.RowHeadersWidth + _table.Columns[VisualizerTable.NameColumnIndex].Width;
             _columnRelStart = hit.ColumnX - screenStartOffset;
             var invisibleColumns = _table.DataColumns.Count(x => x.Index < hit.ColumnIndex && x.Visible == false);
