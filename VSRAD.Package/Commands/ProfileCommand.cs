@@ -12,7 +12,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.ProfileCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class ProfileCommand : BaseRemoteCommand
     {
         private readonly IProject _project;

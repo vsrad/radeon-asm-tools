@@ -29,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IProject))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class Project : IProject
     {
         public event ProjectLoaded Loaded;

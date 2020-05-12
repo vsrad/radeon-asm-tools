@@ -14,7 +14,7 @@ namespace VSRAD.Package.BuildTools
     }
 
     [Export(typeof(IBuildErrorProcessor))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class BuildErrorProcessor : IBuildErrorProcessor
     {
         private readonly IProjectSourceManager _sourceManager;

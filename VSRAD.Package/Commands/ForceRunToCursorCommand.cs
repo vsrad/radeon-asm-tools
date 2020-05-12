@@ -8,7 +8,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.ForceRunToCursorCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class ForceRunToCursorCommand : BaseCommand
     {
         private readonly ProjectSystem.DebuggerIntegration _debugger;

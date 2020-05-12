@@ -13,7 +13,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.ToolWindowCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class ToolWindowCommand : BaseCommand
     {
         public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)

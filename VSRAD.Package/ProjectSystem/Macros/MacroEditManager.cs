@@ -11,7 +11,7 @@ using VSRAD.Package.Utils;
 namespace VSRAD.Package.ProjectSystem.Macros
 {
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class MacroEditManager
     {
         private readonly UnconfiguredProject _unconfiguredProject;

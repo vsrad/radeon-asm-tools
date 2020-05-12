@@ -29,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IProjectSourceManager))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
         private readonly SVsServiceProvider _serviceProvider;

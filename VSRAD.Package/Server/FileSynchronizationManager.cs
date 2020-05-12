@@ -17,7 +17,7 @@ namespace VSRAD.Package.Server
     }
 
     [Export(typeof(IFileSynchronizationManager))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class FileSynchronizationManager : IFileSynchronizationManager
     {
         private readonly ICommunicationChannel _channel;

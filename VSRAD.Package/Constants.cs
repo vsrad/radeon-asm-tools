@@ -16,7 +16,8 @@ namespace VSRAD.Package
         /// <remarks>
         /// This value should be kept in sync with the capability in BuildSystem/DeployedBuildSystem/RADProject.targets.
         /// </remarks>
-        public const string ProjectCapability = "RADProject";
+        public const string RadProjectCapability = "RADProject";
+        public const string RadOrVisualCProjectCapability = "RADProject | VisualC";
 
         public const int MenuCommandId = 0x0100;
         public const int ToolWindowVisualizerCommandId = 0x0100;

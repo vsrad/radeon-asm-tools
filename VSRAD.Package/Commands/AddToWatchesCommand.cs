@@ -11,7 +11,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.AddToWatchesCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class AddToWatchesCommand : BaseCommand
     {
         private readonly IToolWindowIntegration _toolIntegration;

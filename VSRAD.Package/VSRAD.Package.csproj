@@ -273,6 +273,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="BuildSystem\[PlatformName]\ImportAfter\RAD.VisualC.targets" />
     <None Include="BuildSystem\DeployedBuildSystem\RADProject.targets">
       <SubType>Designer</SubType>
     </None>
@@ -497,6 +498,25 @@
       <InProject>false</InProject>
       <InstallRoot>MSBuild</InstallRoot>
       <VSIXSubPath>VSRAD</VSIXSubPath>
+    </VSIXSourceItem>
+  </ItemGroup>
+  <!-- VisualC integration-->
+  <ItemGroup>
+    <VSIXSourceItem Include="BuildSystem\[PlatformName]\ImportAfter\RAD.VisualC.targets">
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\Win32\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\Rules\RADDebugger.xaml">
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\Win32\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\[PlatformName]\ImportAfter\RAD.VisualC.targets">
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\x64\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\Rules\RADDebugger.xaml">
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\x64\ImportAfter</VSIXSubPath>
     </VSIXSourceItem>
   </ItemGroup>
   <PropertyGroup>

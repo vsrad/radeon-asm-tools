@@ -12,7 +12,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.ProjectSystem
 {
     [Export(ExportContractNames.Scopes.UnconfiguredProject, typeof(IProjectDynamicLoadComponent))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectLifecycle : IProjectDynamicLoadComponent
     {
         private readonly IProject _project;
@@ -43,23 +43,23 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task LoadAsync()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            //await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-            ((Project)_project).Load();
-            QuickInfoState.SetProjectOnLoad(_project);
-            Debugger.SetProjectOnLoad(_project);
+            //((Project)_project).Load();
+            //QuickInfoState.SetProjectOnLoad(_project);
+            //Debugger.SetProjectOnLoad(_project);
 
-            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
+            //var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
+            //ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
 
-            await GetPackage().ProjectLoadedAsync(ToolWindowIntegration);
+            //await GetPackage().ProjectLoadedAsync(ToolWindowIntegration);
         }
 
         private async Task ProjectUnloadingAsync(object sender, EventArgs args)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            ((Project)_project).Unload();
-            VSPackage.ProjectUnloaded();
+            //await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            //((Project)_project).Unload();
+            //VSPackage.ProjectUnloaded();
         }
 
         private VSPackage GetPackage()

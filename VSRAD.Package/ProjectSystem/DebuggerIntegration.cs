@@ -13,7 +13,7 @@ namespace VSRAD.Package.ProjectSystem
     public delegate void DebugBreakEntered(BreakState breakState);
 
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class DebuggerIntegration : IEngineIntegration
     {
         public event ExecutionCompleted ExecutionCompleted;

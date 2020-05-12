@@ -7,7 +7,7 @@ using VSRAD.Package.Utils;
 namespace VSRAD.Package.ProjectSystem.EditorExtensions
 {
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class QuickInfoEvaluateSelectedState
     {
         private readonly Dictionary<string, uint[]> _evaluated = new Dictionary<string, uint[]>();

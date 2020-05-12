@@ -17,7 +17,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IErrorListManager))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ErrorListManager : IErrorListManager
     {
         private readonly SVsServiceProvider _serviceProvider;

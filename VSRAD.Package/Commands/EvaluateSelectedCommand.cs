@@ -13,7 +13,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.EvaluateSelectedCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     sealed class EvaluateSelectedCommand : BaseRemoteCommand
     {
         private readonly IProject _project;

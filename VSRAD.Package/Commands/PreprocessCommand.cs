@@ -8,7 +8,7 @@ using VSRAD.Package.ProjectSystem;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.PreprocessCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class PreprocessCommand : BaseBuildWithPreviewCommand
     {
         private readonly IProject _project;

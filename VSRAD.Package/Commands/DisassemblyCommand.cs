@@ -8,7 +8,7 @@ using VSRAD.Package.ProjectSystem;
 namespace VSRAD.Package.Commands
 {
     [ExportCommandGroup(Constants.DisassemblyCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class DisassemblyCommand : BaseBuildWithPreviewCommand
     {
         private readonly IProject _project;
