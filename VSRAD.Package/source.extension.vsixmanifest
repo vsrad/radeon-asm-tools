@@ -6,10 +6,10 @@
         <Description xml:space="preserve">Debugging tools for Radeon Asm projects</Description>
     </Metadata>
     <Installation InstalledByMsi="false" AllUsers="true">
-        <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[15.0,17.0)" />
+        <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[16.2,17.0)" />
     </Installation>
     <Dependencies>
-        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.7.2,)" />
+        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.8,)" />
     </Dependencies>
     <Assets>
         <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
@@ -18,6 +18,6 @@
         <Asset Type="Microsoft.VisualStudio.ItemTemplate" d:Source="Project" d:ProjectName="VSRAD.ProjectItemTemplate" d:TargetPath="|VSRAD.ProjectItemTemplate;TemplateProjectOutputGroup|" Path="ItemTemplates" d:VsixSubPath="ItemTemplates" />
     </Assets>
     <Prerequisites>
-        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,17.0)" DisplayName="Visual Studio core editor" />
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[16.1.28811.260,17.0)" DisplayName="Visual Studio core editor" />
     </Prerequisites>
 </PackageManifest>
