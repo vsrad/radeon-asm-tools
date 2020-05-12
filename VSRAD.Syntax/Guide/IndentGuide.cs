@@ -158,7 +158,7 @@ namespace VSRAD.Syntax.Guide
         {
             _currentParser = _parserManager.ActualParser;
 
-            return SetupIndentGuidesAsync();
+            return _currentParser == null ? Task.CompletedTask : SetupIndentGuidesAsync();
         }
     }
 }
