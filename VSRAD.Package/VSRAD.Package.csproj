@@ -137,6 +137,7 @@
     <Compile Include="Commands\PreprocessCommand.cs" />
     <Compile Include="Commands\ProfileCommand.cs" />
     <Compile Include="DebugVisualizer\CellStyling.cs" />
+    <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
     <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />

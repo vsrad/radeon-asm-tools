@@ -25,12 +25,7 @@ namespace VSRAD.Package.DebugVisualizer
         public int ColumnWidth = 30;
         public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
 
-        #region Appearance
-        public int HiddenColumnSeparatorWidth = 8;
-        public uint LaneGrouping;
-        public int LaneSeparatorWidth = 3;
         public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
-        #endregion
 
         public bool ShowSystemRow
         {
@@ -52,12 +47,14 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly SelectionController _selectionController;
 
         private readonly FontAndColorProvider _fontAndColor;
+        private readonly ComputedColumnStyling _computedStyling;
 
         private string _editedWatchName;
 
         public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
             _fontAndColor = fontAndColor;
+            _computedStyling = new ComputedColumnStyling();
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -92,12 +89,11 @@ namespace VSRAD.Package.DebugVisualizer
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, stylingOptions, getGroupSize)
             });
-            _ = new CellStyling(this, appearance);
-            _ = new CustomTableGraphics(this, _fontAndColor);
+            _ = new CellStyling(this, appearance, _computedStyling, _fontAndColor);
+            _ = new CustomTableGraphics(this);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this);
             _selectionController = new SelectionController(this);
-
         }
 
         public void ScaleControls(float scaleFactor)
@@ -300,8 +296,11 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutColumns(uint groupSize) =>
-            ColumnStyling.GrayOutColumns(DataColumns, _fontAndColor.FontAndColorState, groupSize);
+        public void GrayOutColumns(uint groupSize)
+        {
+            _computedStyling.GrayOutColumns(groupSize);
+            Invalidate();
+        }
 
         public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
             RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
@@ -313,29 +312,22 @@ namespace VSRAD.Package.DebugVisualizer
                 RowStyling.UpdateRowHighlight(Rows[i], _fontAndColor.FontAndColorState, changeFg, changeBg);
         }
 
-        public void ApplyDataStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
+        public void ApplyDataStyling(ProjectOptions options, uint groupSize, uint[] system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;
             ((Control)this).SuspendDrawing();
 
+            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling, groupSize, system);
+
             ApplyFontAndColorInfo();
 
-            // TODO: refactor this away?
-            LaneGrouping = options.VisualizerOptions.VerticalSplit ? options.VisualizerOptions.LaneGrouping : 0;
-
             var columnStyling = new ColumnStyling(
-                options.VisualizerOptions,
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
+                _computedStyling,
                 _fontAndColor.FontAndColorState);
-            columnStyling.Apply(DataColumns, groupSize);
-
-            var rowStyling = new RowStyling(
-                Rows.Cast<DataGridViewRow>(),
-                options.VisualizerOptions,
-                _fontAndColor.FontAndColorState);
-            rowStyling.Apply(groupSize, system);
+            columnStyling.Apply(DataColumns);
 
             foreach (DataGridViewRow row in Rows)
                 RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);

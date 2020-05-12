@@ -28,11 +28,11 @@ namespace VSRAD.Package.Options
         }
         #endregion
         #region diviers
-        private int _laneDividerWidth = 3;
-        public int LaneDivierWidth
+        private int _laneSeparatorWidth = 3;
+        public int LaneSeparatorWidth
         {
-            get => _laneDividerWidth;
-            set => SetField(ref _laneDividerWidth, value);
+            get => _laneSeparatorWidth;
+            set => SetField(ref _laneSeparatorWidth, value);
         }
 
         private int _hiddenColumnSeparatorWidth = 8;

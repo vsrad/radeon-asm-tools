@@ -27,8 +27,10 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var options = new ColumnStylingOptions() { VisibleColumns = "0:2-6 11;14-20,33,666" }; // 666 will result in an IndexOutOfBounds if we don't validate indexes 
             var columns = GenerateTestColumns();
 
-            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 32);
+            var computedStyling = new ComputedColumnStyling();
+            computedStyling.Recompute(new VisualizerOptions(), options, groupSize: 32, system: null);
+
+            new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
 
             Assert.True(columns[0].Visible);
             Assert.False(columns[1].Visible);
@@ -50,10 +52,15 @@ namespace VSRAD.Package.DebugVisualizer.Tests
         [Fact]
         public void HighlightColorTest()
         {
+            var visualizerOptions = new VisualizerOptions();
+            var appearance = new VisualizerAppearance();
+
             var columns = GenerateTestColumns();
+            var computedStyling = new ComputedColumnStyling();
             var options = new ColumnStylingOptions { BackgroundColors = null, ForegroundColors = "" };
-            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 8);
+
+            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, system: null);
+            new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
             for (int i = 0; i < 8; ++i)
             {
                 Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
@@ -62,8 +69,9 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
             columns = GenerateTestColumns();
             options = new ColumnStylingOptions { BackgroundColors = null, ForegroundColors = "rgbJKFJ" + new string(' ', 512 - "rgbJKFJ".Length) };
-            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 8);
+            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, system: null);
+            new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
+
             for (int i = 0; i < 8; ++i)
                 Assert.Equal(Color.Empty, columns[i].DefaultCellStyle.BackColor);
             Assert.Equal(Color.DarkRed, columns[0].DefaultCellStyle.ForeColor);
@@ -82,8 +90,8 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
             options = new ColumnStylingOptions { BackgroundColors = bgString, ForegroundColors = fgString };
 
-            new ColumnStyling(new VisualizerOptions(), new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 8);
+            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, system: null);
+            new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
 
             for (int i = 0; i < 8; ++i)
                 Assert.Equal(Color.Black, columns[i].DefaultCellStyle.ForeColor);
@@ -100,53 +108,49 @@ namespace VSRAD.Package.DebugVisualizer.Tests
         [Fact]
         public void LaneGroupingTest()
         {
-            var options = new ColumnStylingOptions() { VisibleColumns = "2-6:8:11:14" };
+            const int laneSep = 3;
+            const int hiddenSep = 8;
+            var appearance = new VisualizerAppearance { HiddenColumnSeparatorWidth = hiddenSep, LaneSeparatorWidth = laneSep };
+
+            var options = new ColumnStylingOptions { VisibleColumns = "2-6:8-9:11-12:14-16" };
             var columns = GenerateTestColumns();
 
-            // 2,3|4,5,6|8,11|14|
+            var computedStyling = new ComputedColumnStyling();
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, options, groupSize: 32, system: null);
+            new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
 
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 4 }, new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 16);
+            // 2 3 | 4 5 6 || 8 9 || 11 | 12 || 14 15 | 16
 
             Assert.Equal(0, columns[0].DividerWidth);
-            Assert.Equal(8, columns[1].DividerWidth);
+            Assert.Equal(0, columns[1].DividerWidth);
             Assert.Equal(0, columns[2].DividerWidth);
-            Assert.NotEqual(0, columns[3].DividerWidth);
+            Assert.Equal(laneSep, columns[3].DividerWidth);
             Assert.Equal(0, columns[4].DividerWidth);
             Assert.Equal(0, columns[5].DividerWidth);
-            Assert.NotEqual(0, columns[6].DividerWidth);
-            Assert.Equal(8, columns[7].DividerWidth);
-            Assert.Equal(8, columns[8].DividerWidth);
-            Assert.Equal(0, columns[9].DividerWidth);
-            Assert.Equal(8, columns[10].DividerWidth);
-            Assert.NotEqual(0, columns[11].DividerWidth);
-            Assert.Equal(0, columns[12].DividerWidth);
-            Assert.Equal(8, columns[13].DividerWidth);
-            Assert.NotEqual(0, columns[14].DividerWidth);
-            Assert.Equal(0, columns[15].DividerWidth);
+            Assert.Equal(hiddenSep, columns[6].DividerWidth);
+            Assert.Equal(0, columns[7].DividerWidth);
+            Assert.Equal(0, columns[8].DividerWidth);
+            Assert.Equal(hiddenSep, columns[9].DividerWidth);
+            Assert.Equal(0, columns[10].DividerWidth);
+            Assert.Equal(laneSep, columns[11].DividerWidth);
+            Assert.Equal(hiddenSep, columns[12].DividerWidth);
+            Assert.Equal(0, columns[13].DividerWidth);
+            Assert.Equal(0, columns[14].DividerWidth);
+            Assert.Equal(laneSep, columns[15].DividerWidth);
 
             options.VisibleColumns = "0-511";
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 3 }, new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 512);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 3 }, options, groupSize: 512, system: null);
+            new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
             // no assertions here, this is just to trigger an index out of bounds if we're not careful with grouping
 
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 1 }, new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 512);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 1 }, options, groupSize: 512, system: null);
+            new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
             Assert.NotEqual(0, columns[0].DividerWidth); // 0 should be separated
 
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 0 }, new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 512);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 0 }, options, groupSize: 512, system: null);
+            new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
             for (int i = 0; i < 256; i++)
                 Assert.Equal(0, columns[i].DividerWidth);
-        }
-
-        [Fact]
-        public void GrayOutColumnsTest()
-        {
-            var columns = GenerateTestColumns();
-            ColumnStyling.GrayOutColumns(columns, MakeColorState(), groupSize: 512);
-            for (int i = 0; i < 512; i++)
-                Assert.Equal(Color.LightGray, columns[i].DefaultCellStyle.BackColor);
         }
 
         [Fact]
@@ -156,8 +160,10 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             var columns = GenerateTestColumns();
 
             options.VisibleColumns = "0,111111111111111111111,34-111111111111111111111,111111111111111111111-34,1-2";
-            new ColumnStyling(new VisualizerOptions { LaneGrouping = 1 }, new VisualizerAppearance(), options, MakeColorState())
-                .Apply(columns, groupSize: 512);
+
+            var computedStyling = new ComputedColumnStyling();
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 1 }, options, groupSize: 512, system: null);
+            new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
 
             Assert.True(columns[0].Visible);
             Assert.True(columns[1].Visible);

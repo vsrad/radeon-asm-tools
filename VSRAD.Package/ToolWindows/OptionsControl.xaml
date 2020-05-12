@@ -111,7 +111,7 @@
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Column Separator Width:" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
-                                            Value="{Binding DataContext.Options.VisualizerAppearance.LaneDivierWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
+                                            Value="{Binding DataContext.Options.VisualizerAppearance.LaneSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ElementName=Root}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Hidden Column Separator Width:" VerticalAlignment="Center"/>

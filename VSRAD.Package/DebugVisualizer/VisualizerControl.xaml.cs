@@ -44,12 +44,7 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
-            _table.HiddenColumnSeparatorWidth =
-                _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
-            _table.LaneSeparatorWidth =
-                _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
             _table.ScalingMode = _integration.ProjectOptions.VisualizerAppearance.ScalingMode;
-            _table.LaneGrouping = _integration.ProjectOptions.VisualizerOptions.VerticalSplit ? _integration.ProjectOptions.VisualizerOptions.LaneGrouping : 0;
             tableHost.Setup(_table);
             RestoreSavedState();
         }
@@ -93,6 +88,9 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerOptions.LaneGrouping):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerOptions.VerticalSplit):
+                case nameof(Options.VisualizerAppearance.LaneSeparatorWidth):
+                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
+                case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
                     RefreshDataStyling();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
@@ -107,14 +105,6 @@ namespace VSRAD.Package.DebugVisualizer
                         _integration.ProjectOptions.VisualizerAppearance.DataColumnAlignment,
                         _integration.ProjectOptions.VisualizerAppearance.HeadersAlignment
                     );
-                    break;
-                case nameof(Options.VisualizerAppearance.LaneDivierWidth):
-                case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
-                    _table.HiddenColumnSeparatorWidth =
-                        _integration.ProjectOptions.VisualizerAppearance.HiddenColumnSeparatorWidth;
-                    _table.LaneSeparatorWidth =
-                        _integration.ProjectOptions.VisualizerAppearance.LaneDivierWidth;
-                    RefreshDataStyling();
                     break;
             }
         }
