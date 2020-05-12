@@ -17,7 +17,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private readonly IParserManager _parserManager;
         private readonly Regex _stringPattern;
         private IEnumerable<IBaseBlock> _multiLineComment;
-        private IReadOnlyList<string> _instructions;
+        private HashSet<string> _instructions;
+        private HashSet<string> _functions;
+        private HashSet<string> _labels;
 
         public List<string> Keywords { get; protected set; }
         public List<string> ExtraKeywords { get; protected set; }
@@ -30,13 +32,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             _parserManager.ParserUpdatedEvent += OnParserComplete;
             this._stringPattern = new Regex("\\\"(.*?)\\\"");
             this._multiLineComment = new List<IBaseBlock>();
+            this._functions = new HashSet<string>();
+            this._labels = new HashSet<string>();
             this.ExtraKeywords = Constants.preprocessorStart
                 .Concat(Constants.preprocessorMiddle)
                 .Concat(Constants.preprocessorEnd)
                 .Concat(Constants.preprocessorKeywords)
                 .ToList();
 
-            _instructions = instructionListManager.InstructionList;
+            _instructions = instructionListManager.InstructionList.ToHashSet();
             instructionListManager.InstructionUpdated += InstructionUpdatedEvent;
         }
 
@@ -134,6 +138,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                         classificationTypeName = PredefinedClassificationTypeNames.ExtraKeywords;
                     else if (_instructions.Contains(word))
                         classificationTypeName = PredefinedClassificationTypeNames.Instructions;
+                    else if (_functions.Contains(word))
+                        classificationTypeName = PredefinedClassificationTypeNames.Functions;
+                    else if (_labels.Contains(word))
+                        classificationTypeName = PredefinedClassificationTypeNames.Labels;
                     else
                         classificationTypeName = GetClassificationTypeNameOfWord(word, funcArguments);
 
@@ -162,6 +170,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 var parser = actualParser as IBaseParser;
                 _multiLineComment = parser.ListBlock.Where(b => b.BlockType == BlockType.Comment);
+                _functions = parser.GetFunctionTokens().Select(t => t.TokenName).ToHashSet();
+                _labels = parser.GetLabelTokens().Select(t => t.TokenName).ToHashSet();
                 ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, 0)));
             }
             catch (Exception e)
@@ -172,7 +182,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
         private void InstructionUpdatedEvent(IReadOnlyList<string> instructions)
         {
-            _instructions = instructions;
+            _instructions = instructions.ToHashSet();
             ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, _textBuffer.CurrentSnapshot.Length)));
         }
 
