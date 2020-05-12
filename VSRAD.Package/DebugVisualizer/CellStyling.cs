@@ -22,13 +22,6 @@ namespace VSRAD.Package.DebugVisualizer
             _fontAndColor = fontAndColor;
 
             _table.CellPainting += HandleCellPaint;
-            _appearance.PropertyChanged += AppearancePropertyChanged;
-        }
-
-        private void AppearancePropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(VisualizerAppearance.DarkenAlternatingRowsBy))
-                _table.Invalidate();
         }
 
         private void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
@@ -39,12 +32,10 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (isDataRow)
                 PaintInvalidWatchName(e);
-
             if (isDataColumn && isDataRow)
                 GrayOutInactiveLanes(dataColumnIndex, e);
-
-            DarkenAlternatingRows(e);
-
+            if (isDataRow)
+                DarkenAlternatingRows(e);
             if (isDataColumn)
                 PaintColumnSeparators(dataColumnIndex, e);
         }
