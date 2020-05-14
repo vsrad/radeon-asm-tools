@@ -27,17 +27,20 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public override Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
         {
-            if (!_autocompleteFunctions 
-                || ParserManager.ActualParser == null 
-                || ParserManager.ActualParser.PointInComment(triggerLocation))
-                return Task.FromResult<CompletionContext>(null);
+            if (!_autocompleteFunctions)
+                return Task.FromResult(CompletionContext.Empty);
 
             var parser = ParserManager.ActualParser;
             if (parser == null)
-                return Task.FromResult<CompletionContext>(null);
+                return Task.FromResult(CompletionContext.Empty);
+
+            var triggerText = triggerLocation
+                .GetExtent()
+                .Span.GetText();
 
             var completions = parser
                 .GetFunctionTokens()
+                .Where(t => t.TokenName.Contains(triggerText))
                 .Select(t => new CompletionItem(t.TokenName, this, Icon))
                 .OrderBy(i => i.DisplayText)
                 .ToImmutableArray();

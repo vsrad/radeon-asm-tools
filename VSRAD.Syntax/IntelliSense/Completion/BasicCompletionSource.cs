@@ -24,6 +24,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
+            if (ParserManager.ActualParser == null
+                || ParserManager.ActualParser.PointInComment(triggerLocation))
+                return CompletionStartData.DoesNotParticipateInCompletion;
+
             var extent = triggerLocation.GetExtent();
             if (extent.IsSignificant && extent.Span.Length > 2)
                 return new CompletionStartData(CompletionParticipation.ProvidesItems, extent.Span);

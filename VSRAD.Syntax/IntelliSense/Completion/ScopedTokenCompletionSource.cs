@@ -37,9 +37,6 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public override Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
         {
-            if (ParserManager.ActualParser == null || ParserManager.ActualParser.PointInComment(triggerLocation))
-                return Task.FromResult<CompletionContext>(null);
-
             var completions = Enumerable.Empty<CompletionItem>();
             if (_autocompleteLabels)
                 completions = completions
@@ -50,7 +47,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                     .Concat(GetScopedCompletions(triggerLocation, TokenType.LocalVariable, LocalVariableIcon))
                     .Concat(GetScopedCompletions(triggerLocation, TokenType.Argument, ArgumentIcon));
 
-            return Task.FromResult(completions.Any() ? new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()) : null);
+            return Task.FromResult(new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()));
         }
 
         public override Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
@@ -107,9 +104,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (parser == null)
                 return scopedCompletions;
 
+            var triggerText = triggerPoint
+                .GetExtent()
+                .Span.GetText();
+
             var scopedCompletionPairs = parser
                 .GetScopedTokens(triggerPoint, type)
-                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this, icon)));
+                .Where(t => t.TokenName.Contains(triggerText))
+                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this, icon, ImmutableArray<CompletionFilter>.Empty, null, t.TokenName, t.TokenName, t.TokenName, ImmutableArray<ImageElement>.Empty)));
 
             _completions[type] = scopedCompletionPairs;
             return scopedCompletionPairs
