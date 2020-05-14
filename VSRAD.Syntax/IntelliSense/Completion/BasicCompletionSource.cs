@@ -25,6 +25,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
             if (ParserManager.ActualParser == null
+                || trigger.Reason == CompletionTriggerReason.Backspace
+                || trigger.Reason == CompletionTriggerReason.Deletion
+                || trigger.Character == '\n'
+                || trigger.Character == ' '
                 || ParserManager.ActualParser.PointInComment(triggerLocation))
                 return CompletionStartData.DoesNotParticipateInCompletion;
 
