@@ -6,6 +6,8 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Package.BuildTools;
+using VSRAD.Package.Commands;
+using VSRAD.Package.Server;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
 
@@ -39,6 +41,8 @@ namespace VSRAD.Package.ProjectSystem
         private BreakpointIntegration Breakpoints { get; set; }
         [Import]
         private BuildToolsServer BuildServer { get; set; }
+        [Import]
+        private ICommandRouter CommandRouter { get; set; }
 
         [Export(typeof(IToolWindowIntegration))]
         private IToolWindowIntegration ToolWindowIntegration { get; set; }

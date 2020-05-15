@@ -1,9 +1,12 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Deborgar;
+using VSRAD.Package.Commands;
 using VSRAD.Package.Registry;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
@@ -34,7 +37,7 @@ namespace VSRAD.Package
     [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
     [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
     [Guid(Constants.PackageId)]
-    public sealed class VSPackage : AsyncPackage
+    public sealed class VSPackage : AsyncPackage, IOleCommandTarget
     {
         public static VisualizerWindow VisualizerToolWindow { get; private set; }
         public static OptionsWindow OptionsToolWindow { get; private set; }
@@ -47,6 +50,8 @@ namespace VSRAD.Package
             set => _taskFactoryOverride = value;
         }
 
+        private ICommandRouter _commandRouter;
+
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             await base.InitializeAsync(cancellationToken, progress);
@@ -58,8 +63,10 @@ namespace VSRAD.Package
 #endif
         }
 
-        public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration)
+        public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration, ICommandRouter commandRouter)
         {
+            _commandRouter = commandRouter;
+
             VisualizerToolWindow = (VisualizerWindow)await FindToolWindowAsync(
                 typeof(VisualizerWindow), 0, true, CancellationToken.None);
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
@@ -78,5 +85,11 @@ namespace VSRAD.Package
             VisualizerToolWindow.OnProjectUnloaded();
             OptionsToolWindow.OnProjectUnloaded();
         }
+
+        int IOleCommandTarget.QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText) =>
+            _commandRouter?.QueryStatus(ref pguidCmdGroup, cCmds, prgCmds, pCmdText) ?? VSConstants.S_OK;
+
+        int IOleCommandTarget.Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut) =>
+            _commandRouter?.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut) ?? VSConstants.S_OK;
     }
 }

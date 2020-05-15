@@ -132,6 +132,7 @@
     <Compile Include="Commands\BaseBuildWithPreviewCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
+    <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\DisassemblyCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
