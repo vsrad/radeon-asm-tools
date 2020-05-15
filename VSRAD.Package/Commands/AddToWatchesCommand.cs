@@ -1,18 +1,15 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.ProjectSystem;
 using System;
-using System.Collections.Immutable;
 using System.ComponentModel.Composition;
-using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ToolWindows;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.AddToWatchesCommandSet)]
+    [Export(typeof(ICommandHandler))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class AddToWatchesCommand : BaseCommand
+    public sealed class AddToWatchesCommand : ICommandHandler
     {
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
@@ -24,21 +21,20 @@ namespace VSRAD.Package.Commands
             _codeEditor = codeEditor;
         }
 
-        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public Guid CommandSet => Constants.AddToWatchesCommandSet;
+
+        public OLECMDF GetCommandStatus(uint commandId)
         {
             if (commandId == Constants.MenuCommandId)
-            {
-                return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
-            }
-            return Task.FromResult(CommandStatusResult.Unhandled);
+                return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
+            return 0;
         }
 
-        public async override Task RunAsync(long commandId)
+        public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
             if (commandId != Constants.MenuCommandId)
                 return;
-            
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
             var activeWord = _codeEditor.GetActiveWord();
             if (!string.IsNullOrWhiteSpace(activeWord))
             {

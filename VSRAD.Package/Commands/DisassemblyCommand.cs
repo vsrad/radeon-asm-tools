@@ -7,7 +7,7 @@ using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.DisassemblyCommandSet)]
+    [Export(typeof(ICommandHandler))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class DisassemblyCommand : BaseBuildWithPreviewCommand
     {
@@ -15,7 +15,7 @@ namespace VSRAD.Package.Commands
 
         [ImportingConstructor]
         public DisassemblyCommand(IProject project, BuildToolsServer buildServer, SVsServiceProvider serviceProvider)
-            : base(BuildSteps.Disassembler, buildServer, Constants.PreprocessCommandId, serviceProvider)
+            : base(Constants.DisassemblyCommandSet, Constants.DisassembleCommandId, BuildSteps.Disassembler, buildServer, serviceProvider)
         {
             _project = project;
         }
