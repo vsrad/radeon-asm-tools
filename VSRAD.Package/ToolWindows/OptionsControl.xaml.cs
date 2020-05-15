@@ -54,8 +54,8 @@ namespace VSRAD.Package.ToolWindows
         public OptionsControl(IToolWindowIntegration integration)
         {
             _projectOptions = integration.ProjectOptions;
-            _macroEditor = integration.GetExport<MacroEditManager>();
-            DataContext = new Context(integration.ProjectOptions, integration.GetExport<ICommunicationChannel>());
+            _macroEditor = integration.MacroEditor;
+            DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel);
             InitializeComponent();
         }
 

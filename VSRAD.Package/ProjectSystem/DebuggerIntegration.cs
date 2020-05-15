@@ -73,8 +73,17 @@ namespace VSRAD.Package.ProjectSystem
             ExecutionCompleted = null;
         }
 
-        internal void CreateDebugSession() =>
+        internal bool TryCreateDebugSession()
+        {
+            if (!_project.ProfileInitialized)
+            {
+                Errors.ShowProfileUninitializedError();
+                return false;
+            }
+
             _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow, _errorListManager);
+            return true;
+        }
 
         internal void RunToCurrentLine()
         {

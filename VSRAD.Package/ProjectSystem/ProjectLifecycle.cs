@@ -30,7 +30,9 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         [Import]
-        private EditorExtensions.QuickInfoEvaluateSelectedState QuickInfoState { get; set; }
+        private ICommunicationChannel CommunicationChannel { get; set; }
+        [Import]
+        private Macros.MacroEditManager MacroEditManager { get; set; }
         [Import]
         private DebuggerIntegration Debugger { get; set; }
         [Import]
@@ -43,23 +45,20 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task LoadAsync()
         {
-            //await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-            //((Project)_project).Load();
-            //QuickInfoState.SetProjectOnLoad(_project);
-            //Debugger.SetProjectOnLoad(_project);
+            ((Project)_project).Load();
+            Debugger.SetProjectOnLoad(_project);
 
-            //var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            //ToolWindowIntegration = new ToolWindowIntegration(configuredProject, _project, Debugger);
-
-            //await GetPackage().ProjectLoadedAsync(ToolWindowIntegration);
+            ToolWindowIntegration = new ToolWindowIntegration(_project.Options, CommunicationChannel, MacroEditManager, Debugger);
+            await GetPackage().ProjectLoadedAsync(ToolWindowIntegration, CommandRouter);
         }
 
         private async Task ProjectUnloadingAsync(object sender, EventArgs args)
         {
-            //await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            //((Project)_project).Unload();
-            //VSPackage.ProjectUnloaded();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ((Project)_project).Unload();
+            VSPackage.ProjectUnloaded();
         }
 
         private VSPackage GetPackage()

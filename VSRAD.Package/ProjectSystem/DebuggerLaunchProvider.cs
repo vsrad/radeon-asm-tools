@@ -16,9 +16,9 @@ namespace VSRAD.Package.ProjectSystem
         private readonly DebuggerIntegration _debugger;
 
         [ImportingConstructor]
-        public DebuggerLaunchProvider(ConfiguredProject project/*, DebuggerIntegration debugger*/) : base(project)
+        public DebuggerLaunchProvider(ConfiguredProject project, DebuggerIntegration debugger) : base(project)
         {
-            //_debugger = debugger;
+            _debugger = debugger;
         }
 
         /* "RadeonAsmDebugger" must match AssemblyName, PublicKeyToken must match the output of `sn.exe -T` */
@@ -43,8 +43,10 @@ namespace VSRAD.Package.ProjectSystem
 
         public override Task LaunchAsync(DebugLaunchOptions launchOptions)
         {
-            _debugger.CreateDebugSession();
-            return base.LaunchAsync(launchOptions);
+            if (_debugger.TryCreateDebugSession())
+                return base.LaunchAsync(launchOptions);
+            else
+                return Task.CompletedTask;
         }
     }
 }

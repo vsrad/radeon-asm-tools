@@ -37,6 +37,9 @@ namespace VSRAD.Package
         public static void ShowWarning(string message, string title = "RAD Debugger") =>
             CreateMessageBox(message, title, OLEMSGICON.OLEMSGICON_WARNING);
 
+        public static void ShowProfileUninitializedError() =>
+            CreateMessageBox("RAD Debug has not been configured for this project yet.\nOpen Tools->RAD Debug->Options and create a profile.", "RAD Debugger", OLEMSGICON.OLEMSGICON_CRITICAL);
+
         public static void ShowException(Exception e)
         {
             // Cancelled operations are usually triggered by the user or are accompanied by a more descriptive message.

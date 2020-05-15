@@ -51,7 +51,7 @@ namespace VSRAD.Package.Server
     public sealed class CommunicationChannel : ICommunicationChannel
     {
         public event Action ConnectionStateChanged;
-        public ServerConnectionOptions ConnectionOptions => _project.Options.Profile.General.Connection;
+        public ServerConnectionOptions ConnectionOptions => _project.Options.Profile?.General?.Connection ?? default;
 
         private ClientState _state = ClientState.Disconnected;
         public ClientState ConnectionState

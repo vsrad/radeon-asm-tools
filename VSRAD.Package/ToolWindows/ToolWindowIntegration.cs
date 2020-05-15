@@ -1,8 +1,8 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
-using System.ComponentModel.Composition;
+﻿using System.ComponentModel.Composition;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Utils;
+using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ToolWindows
 {
@@ -11,16 +11,22 @@ namespace VSRAD.Package.ToolWindows
     public interface IToolWindowIntegration
     {
         ProjectOptions ProjectOptions { get; }
+        ICommunicationChannel CommunicationChannel { get; }
+        MacroEditManager MacroEditor { get; }
 
         event AddWatch AddWatch;
+
         event DebugBreakEntered BreakEntered;
 
-        T GetExport<T>();
         void AddWatchFromEditor(string watch);
     }
 
     public sealed class ToolWindowIntegration : IToolWindowIntegration
     {
+        public ProjectOptions ProjectOptions { get; }
+        public ICommunicationChannel CommunicationChannel { get; }
+        public MacroEditManager MacroEditor { get; }
+
         public event AddWatch AddWatch;
 
         event DebugBreakEntered IToolWindowIntegration.BreakEntered
@@ -29,24 +35,16 @@ namespace VSRAD.Package.ToolWindows
             remove => _debugger.BreakEntered -= value;
         }
 
-        public ProjectOptions ProjectOptions => _project.Options;
-
-        public bool DebugInProgress => _debugger.DebugInProgress;
-
-        private readonly ConfiguredProject _configuredProject;
-        private readonly IProject _project;
         private readonly DebuggerIntegration _debugger;
 
-        [ImportingConstructor]
-        internal ToolWindowIntegration(ConfiguredProject configuredProject, IProject project, DebuggerIntegration debugger)
+        public ToolWindowIntegration(ProjectOptions options, ICommunicationChannel channel, MacroEditManager macroEditor, DebuggerIntegration debugger)
         {
-            _configuredProject = configuredProject;
-            _project = project;
+            ProjectOptions = options;
+            CommunicationChannel = channel;
+            MacroEditor = macroEditor;
             _debugger = debugger;
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);
-
-        public T GetExport<T>() => _configuredProject.GetExport<T>();
     }
 }
