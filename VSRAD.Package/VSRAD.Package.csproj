@@ -217,7 +217,7 @@
     <Compile Include="ToolWindows\OptionsControl.xaml.cs">
       <DependentUpon>OptionsControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ToolWindows\ToolWindowIntegration.cs" />
+    <Compile Include="ProjectSystem\ToolWindowIntegration.cs" />
     <Compile Include="Server\BreakState.cs" />
     <Compile Include="Server\CommunicationChannel.cs" />
     <Compile Include="Server\DebugSession.cs" />

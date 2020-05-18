@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;

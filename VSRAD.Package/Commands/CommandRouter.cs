@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.ProjectSystem;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -18,6 +19,7 @@ namespace VSRAD.Package.Commands
     }
 
     [Export(typeof(ICommandRouter))]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class CommandRouter : ICommandRouter
     {
         [ImportMany]

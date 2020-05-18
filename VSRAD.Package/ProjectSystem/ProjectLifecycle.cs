@@ -7,8 +7,6 @@ using System;
 using System.ComponentModel.Composition;
 using VSRAD.Package.BuildTools;
 using VSRAD.Package.Commands;
-using VSRAD.Package.Server;
-using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -32,10 +30,6 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         [Import]
-        private ICommunicationChannel CommunicationChannel { get; set; }
-        [Import]
-        private Macros.MacroEditManager MacroEditManager { get; set; }
-        [Import]
         private DebuggerIntegration Debugger { get; set; }
         [Import]
         private BreakpointIntegration Breakpoints { get; set; }
@@ -43,8 +37,7 @@ namespace VSRAD.Package.ProjectSystem
         private BuildToolsServer BuildServer { get; set; }
         [Import]
         private ICommandRouter CommandRouter { get; set; }
-
-        [Export(typeof(IToolWindowIntegration))]
+        [Import]
         private IToolWindowIntegration ToolWindowIntegration { get; set; }
 
         public async Task LoadAsync()
@@ -54,7 +47,6 @@ namespace VSRAD.Package.ProjectSystem
             ((Project)_project).Load();
             Debugger.SetProjectOnLoad(_project);
 
-            ToolWindowIntegration = new ToolWindowIntegration(_project.Options, CommunicationChannel, MacroEditManager, Debugger);
             await GetPackage().ProjectLoadedAsync(ToolWindowIntegration, CommandRouter);
         }
 

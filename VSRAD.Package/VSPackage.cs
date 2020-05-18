@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Deborgar;
 using VSRAD.Package.Commands;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Registry;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
@@ -20,12 +21,12 @@ namespace VSRAD.Package
         })]
     [ProvideDebugPortSupplier(Deborgar.Constants.RemotePortSupplierName, Deborgar.Constants.RemotePortSupplierId,
         typeof(Deborgar.Remote.RemotePortSupplier))]
-    [ProvideToolWindow(typeof(ToolWindows.VisualizerWindow),
+    [ProvideToolWindow(typeof(VisualizerWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
-    [ProvideToolWindow(typeof(ToolWindows.OptionsWindow),
+    [ProvideToolWindow(typeof(OptionsWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
-    [ProvideToolWindow(typeof(ToolWindows.EvaluateSelectedWindow),
-        Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
+    //[ProvideToolWindow(typeof(ToolWindows.EvaluateSelectedWindow),
+    //    Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
@@ -71,13 +72,13 @@ namespace VSRAD.Package
                 typeof(VisualizerWindow), 0, true, CancellationToken.None);
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
                 typeof(OptionsWindow), 0, true, CancellationToken.None);
-            EvaluateSelectedWindow = (EvaluateSelectedWindow)await FindToolWindowAsync(
-                typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
+            //EvaluateSelectedWindow = (EvaluateSelectedWindow)await FindToolWindowAsync(
+            //    typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
 
             await TaskFactory.SwitchToMainThreadAsync();
             VisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(toolWindowIntegration);
-            EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
+            //EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
 
         public static void ProjectUnloaded()
