@@ -58,6 +58,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void WatchSelected(object sender, SelectionChangedEventArgs e)
         {
+            // TODO: fetch all groups, find a way to get current group size
             var watchName = (((ComboBox)sender).SelectedItem).ToString();
             var data = new List<uint[]>();
             var groupData = new uint[64];

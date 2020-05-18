@@ -35,10 +35,17 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 Rows[index].HeaderCell.Value = i;
             }
             
-            for (int i = 0; i < groupSize; i++)
+            for (int i = 0; i < MaxGroupSize; i++)
             {
-                for (int j = 0; j < data.Count; j++)
-                    Rows[j].Cells[i].Value = data[j][i];
+                if (i < groupSize)
+                {
+                    for (int j = 0; j < data.Count; j++)
+                        Rows[j].Cells[i].Value = data[j][i];
+                }
+                else
+                {
+                    Columns[i].Visible = false;
+                }
             }
         }
     }
