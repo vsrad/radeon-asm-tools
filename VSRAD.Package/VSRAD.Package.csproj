@@ -146,8 +146,11 @@
     <Compile Include="DebugVisualizer\ScalingMode.cs" />
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
     <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
-    <Compile Include="DebugVisualizer\SliceVisualizerControl.xaml.cs">
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml.cs">
       <DependentUpon>SliceVisualizerControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTable.cs">
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
@@ -353,7 +356,7 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="DebugVisualizer\SliceVisualizerControl.xaml">
+    <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
