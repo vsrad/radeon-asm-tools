@@ -7,8 +7,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel>
-        <TextBlock Text="Watch: "/>
-        <ComboBox ItemsSource="{Binding Watches}" SelectionChanged="WatchSelected"/>
+        <local:SliceVisualizerHeaderControl x:Name="headerControl" DockPanel.Dock="Top"/>
         <local:SliceVisualizerTableHost DockPanel.Dock="Bottom" x:Name="tableHost"/>
     </DockPanel>
 </UserControl>

@@ -149,6 +149,9 @@
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml.cs">
       <DependentUpon>SliceVisualizerControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerHeaderControl.xaml.cs">
+      <DependentUpon>SliceVisualizerHeaderControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTable.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -358,6 +361,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerHeaderControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -26,27 +26,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private Server.BreakState _breakState;
         private SliceVisualizerTable _table;
 
-        public sealed class Context : DefaultNotifyPropertyChanged
-        {
-            public ProjectOptions Options { get; }
-            public IReadOnlyList<string> Watches => Options.DebuggerOptions.Watches
-                .Where(w => !string.IsNullOrWhiteSpace(w.Name))
-                .Select(w => w.Name)
-                .ToList();
-
-            public Context(ProjectOptions options)
-            {
-                Options = options;
-            }
-        }
-
-
         public SliceVisualizerControl(IToolWindowIntegration integration)
         {
             InitializeComponent();
-            DataContext = new Context(integration.ProjectOptions);
             integration.BreakEntered += BreakEntered;
             _table = new SliceVisualizerTable();
+            headerControl.Setup(integration, WatchSelected);
             tableHost.Setup(_table);
         }
 
@@ -56,10 +41,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _breakState = breakState;
         }
 
-        private void WatchSelected(object sender, SelectionChangedEventArgs e)
+        private void WatchSelected(string watchName)
         {
             // TODO: fetch all groups, find a way to get current group size
-            var watchName = (((ComboBox)sender).SelectedItem).ToString();
             var data = new List<uint[]>();
             var groupData = new uint[64];
             _breakState.TryGetWatch(watchName, out groupData);
