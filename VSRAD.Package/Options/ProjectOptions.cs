@@ -26,6 +26,8 @@ namespace VSRAD.Package.Options
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
         [JsonIgnore]
+        public bool HasProfiles => Profiles.Count > 0;
+        [JsonIgnore]
         public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
 
         /// <summary>
@@ -41,6 +43,7 @@ namespace VSRAD.Package.Options
             var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
             writeableProfiles[name] = profile;
             ActiveProfile = name;
+            RaisePropertyChanged(nameof(HasProfiles));
         }
 
         public delegate string ResolveImportNameConflict(string profileName);

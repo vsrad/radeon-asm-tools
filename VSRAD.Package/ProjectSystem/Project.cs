@@ -63,11 +63,7 @@ namespace VSRAD.Package.ProjectSystem
             Loaded?.Invoke(Options);
         }
 
-        public void Unload()
-        {
-           //SaveOptions();
-            Unloaded?.Invoke();
-        }
+        public void Unload() => Unloaded?.Invoke();
 
         public void SaveOptions() => Options.Write(_optionsFilePath);
 
