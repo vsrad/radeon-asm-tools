@@ -22,7 +22,6 @@ namespace VSRAD.Package.ProjectSystem
         event ProjectLoaded Loaded;
         event ProjectUnloaded Unloaded;
 
-        bool ProfileInitialized { get; }
         ProjectOptions Options { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
@@ -36,7 +35,6 @@ namespace VSRAD.Package.ProjectSystem
         public event ProjectLoaded Loaded;
         public event ProjectUnloaded Unloaded;
 
-        public bool ProfileInitialized => Options.Profile != null;
         public ProjectOptions Options { get; private set; }
 
         public string RootPath { get; }

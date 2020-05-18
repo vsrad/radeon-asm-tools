@@ -75,7 +75,7 @@ namespace VSRAD.Package.ProjectSystem
 
         internal bool TryCreateDebugSession()
         {
-            if (!_project.ProfileInitialized)
+            if (!_project.Options.HasProfiles)
             {
                 Errors.ShowProfileUninitializedError();
                 return false;

@@ -20,11 +20,13 @@ namespace VSRAD.Package.ToolWindows
             public ProjectOptions Options { get; }
             public IReadOnlyList<string> ProfileNames => Options.Profiles.Keys.ToList();
 
-            private string _disconnectLabel = "Disconnected";
-            public string DisconnectLabel { get => _disconnectLabel; set => SetField(ref _disconnectLabel, value); }
+            public string ConnectionInfo => _channel.ConnectionOptions.ToString();
 
-            private string _connectionInfo = "";
-            public string ConnectionInfo { get => _connectionInfo; set => SetField(ref _connectionInfo, value); }
+            public string DisconnectLabel
+            {
+                get => _channel.ConnectionState == ClientState.Connected ? "Disconnect"
+                     : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
+            }
 
             public ICommand DisconnectCommand { get; }
 
@@ -36,15 +38,13 @@ namespace VSRAD.Package.ToolWindows
                 Options.Profiles.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(Options.Profiles.Keys)) RaisePropertyChanged(nameof(ProfileNames)); };
                 _channel = channel;
                 _channel.ConnectionStateChanged += ConnectionStateChanged;
-                DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: false);
-                ConnectionStateChanged();
+                DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
             }
 
             private void ConnectionStateChanged()
             {
-                DisconnectLabel = _channel.ConnectionState == ClientState.Connected ? "Disconnect"
-                                : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
-                ConnectionInfo = _channel.ConnectionOptions.ToString();
+                RaisePropertyChanged(nameof(ConnectionInfo));
+                RaisePropertyChanged(nameof(DisconnectLabel));
                 ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;
             }
         }

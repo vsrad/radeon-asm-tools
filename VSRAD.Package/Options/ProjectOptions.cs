@@ -53,7 +53,7 @@ namespace VSRAD.Package.Options
             foreach (var updateKv in updates.ToList())
             {
                 var oldName = updateKv.Key;
-                var newName = updateKv.Value.General.ProfileName;
+                var newName = updateKv.Value.General.ProfileName ?? oldName;
                 if (oldName != newName && Profiles.Keys.Contains(newName))
                     newName = nameConflictResolver(newName);
                 if (string.IsNullOrWhiteSpace(newName))
