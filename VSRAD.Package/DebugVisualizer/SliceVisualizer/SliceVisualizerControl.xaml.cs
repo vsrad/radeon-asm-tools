@@ -23,8 +23,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     /// </summary>
     public partial class SliceVisualizerControl : UserControl
     {
-
         private Server.BreakState _breakState;
+        private SliceVisualizerTable _table;
 
         public sealed class Context : DefaultNotifyPropertyChanged
         {
@@ -45,6 +45,25 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             InitializeComponent();
             DataContext = new Context(integration.ProjectOptions);
+            integration.BreakEntered += BreakEntered;
+            _table = new SliceVisualizerTable();
+            tableHost.Setup(_table);
+        }
+
+        public void BreakEntered(Server.BreakState breakState)
+        {
+            Ensure.ArgumentNotNull(breakState, nameof(breakState));
+            _breakState = breakState;
+        }
+
+        private void WatchSelected(object sender, SelectionChangedEventArgs e)
+        {
+            var watchName = (((ComboBox)sender).SelectedItem).ToString();
+            var data = new List<uint[]>();
+            var groupData = new uint[64];
+            _breakState.TryGetWatch(watchName, out groupData);
+            data.Add(groupData);
+            _table.DisplayWatch(data, 64);
         }
     }
 }
