@@ -39,10 +39,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             Ensure.ArgumentNotNull(breakState, nameof(breakState));
             _breakState = breakState;
+            /*  rewrite BreakState
+            var selectedWatch = headerControl.GetSelectedWatch();
+            if (selectedWatch != null)
+                WatchSelected(selectedWatch);
+            */
         }
 
         private void WatchSelected(string watchName)
         {
+            if (_breakState == null) return;
             // TODO: fetch all groups, find a way to get current group size
             var data = new List<uint[]>();
             var groupData = new uint[64];

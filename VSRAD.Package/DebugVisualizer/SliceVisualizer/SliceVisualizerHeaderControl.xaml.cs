@@ -47,6 +47,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             WatchSelected = watchSelected;
         }
 
+        public string GetSelectedWatch() => WatchSelector.SelectedItem?.ToString();
+
         private void NewWatchSelected(object sender, SelectionChangedEventArgs e)
         {
             var watchName = (((ComboBox)sender).SelectedItem).ToString();

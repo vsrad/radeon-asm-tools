@@ -14,6 +14,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private const int MaxGroupSize = 512;
         public SliceVisualizerTable() : base()
         {
+            AllowUserToAddRows = false;
+
             for (int i = 0; i < MaxGroupSize; i++)
             {
                 Columns.Add(new DataGridViewTextBoxColumn()
@@ -23,6 +25,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     SortMode = DataGridViewColumnSortMode.NotSortable
                 });
             }
+
+            new CustomSliceTableGraphics(this);
         }
 
         public void DisplayWatch(List<uint[]> data, uint groupSize)
