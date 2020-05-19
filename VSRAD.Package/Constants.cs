@@ -10,6 +10,8 @@ namespace VSRAD.Package
         public const string ProjectTypeId = "{BFE1F494-F7E3-4EA1-AD50-435F95335B74}"; // braces required
         public const string ProjectFileExtension = "radproj";
 
+        public const string DebuggerSchemaName = "RADDebugger";
+
         /// <summary>
         /// A unique capability that may be used together with the [AppliesTo] attribute to load our MEF components for RAD projects only.
         /// </summary>

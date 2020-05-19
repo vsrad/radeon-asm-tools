@@ -123,13 +123,13 @@
       <Version>16.4.11</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem">
-      <Version>15.8.243</Version>
+      <Version>16.2.133-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk">
-      <Version>15.8.243</Version>
+      <Version>16.2.133-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk.Tools">
-      <Version>15.8.243</Version>
+      <Version>16.2.133-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.EmbedInteropTypes">
       <Version>15.0.30</Version>
@@ -146,7 +146,7 @@
       <Version>14.3.26929</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
-      <Version>16.6.13</Version>
+      <Version>16.5.132</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
       <Version>16.5.2044</Version>
@@ -154,7 +154,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="System.Composition">
-      <Version>1.4.0</Version>
+      <Version>1.4.1</Version>
     </PackageReference>
   </ItemGroup>
   <Choose>
