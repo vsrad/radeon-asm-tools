@@ -127,14 +127,14 @@ namespace VSRAD.Syntax.Parser
 
         public void Parse()
         {
-            if (!_initialized || _textBuffer.CurrentSnapshot == _actualSnapshot)
-                return;
+            //if (!_initialized || _textBuffer.CurrentSnapshot == _actualSnapshot)
+            //    return;
 
-            _lastCancellationTokenSource.Cancel();
-            _actualSnapshot = _textBuffer.CurrentSnapshot;
+            //_lastCancellationTokenSource.Cancel();
+            //_actualSnapshot = _textBuffer.CurrentSnapshot;
 
-            _lastCancellationTokenSource = new CancellationTokenSource();
-            ThreadPool.QueueUserWorkItem(new BaseParser(this, _actualSnapshot).Parse, _lastCancellationTokenSource.Token);
+            //_lastCancellationTokenSource = new CancellationTokenSource();
+            //ThreadPool.QueueUserWorkItem(new BaseParser(this, _actualSnapshot).Parse, _lastCancellationTokenSource.Token);
         }
 
         public void UpdateParser(IBaseParser parser)

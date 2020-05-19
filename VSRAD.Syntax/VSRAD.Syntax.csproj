@@ -22,6 +22,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Internal asm2 lang release|AnyCPU' ">
     <OutputPath>bin\Internal asm2 lang release\</OutputPath>
@@ -32,6 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <WarningLevel>0</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -65,6 +67,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>..\VSRAD.Package\VSRAD.Package.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -75,6 +78,7 @@
     <WarningLevel>4</WarningLevel>
     <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>..\VSRAD.Package\VSRAD.Package.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Editor\EditorFilter.cs" />
@@ -109,6 +113,7 @@
     <Compile Include="Options\InstructionListManager.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Parser\BaseParser.cs" />
+    <Compile Include="Parser\BitHelper.cs" />
     <Compile Include="Parser\Blocks\BaseBlock.cs" />
     <Compile Include="Parser\Blocks\BlockType.cs" />
     <Compile Include="Parser\Blocks\FunctionBlock.cs" />
@@ -116,8 +121,13 @@
     <Compile Include="Parser\Blocks\RootBlock.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs" />
+    <Compile Include="Parser\DocumentAnalysis.cs" />
+    <Compile Include="Parser\Lexer.cs" />
     <Compile Include="Parser\ParserManger.cs" />
     <Compile Include="Parser\ParserProvider.cs" />
+    <Compile Include="Parser\SortedSet.cs" />
+    <Compile Include="Parser\SortedSetHelper.cs" />
+    <Compile Include="Parser\TokenSpan.cs" />
     <Compile Include="Parser\Tokens\ArgumentToken.cs" />
     <Compile Include="Parser\Tokens\BaseToken.cs" />
     <Compile Include="Parser\Tokens\FunctionToken.cs" />
@@ -153,6 +163,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyntaxHighlighter\ErrorHighlighter\ErrorHighlighterTagger.cs" />
     <Compile Include="SyntaxHighlighter\ErrorHighlighter\ErrorHighlighterTaggerProvider.cs" />
+    <Compile Include="SyntaxHighlighter\NewClassifierProvider.cs" />
     <Compile Include="SyntaxHighlighter\PredefinedClassificationNames.cs" />
     <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTagger.cs" />
     <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTaggerProvider.cs" />
@@ -204,6 +215,19 @@
     <Resource Include="Resources\CommandIcons.png" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Antlr4">
+      <Version>4.6.6</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Antlr4.CodeGenerator">
+      <Version>4.6.6</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Antlr4.Runtime">
+      <Version>4.6.6</Version>
+    </PackageReference>
     <PackageReference Include="EnvDTE100">
       <Version>10.0.2</Version>
     </PackageReference>
@@ -240,4 +264,11 @@
   <ItemGroup>
     <VSIXSourceItem Include="DefaultConfiguration\**" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VSRAD.SyntaxParser\VSRAD.SyntaxParser.csproj">
+      <Project>{ccc917d5-5dd9-4e11-a5b3-9204e8fdc408}</Project>
+      <Name>VSRAD.SyntaxParser</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
 </Project>
