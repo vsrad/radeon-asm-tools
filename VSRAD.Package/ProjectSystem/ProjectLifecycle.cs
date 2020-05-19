@@ -1,5 +1,6 @@
 ﻿using Microsoft;
 using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -15,46 +16,44 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectLifecycle : IProjectDynamicLoadComponent
     {
-        private readonly IProject _project;
-
         private readonly SVsServiceProvider _serviceProvider;
         private readonly UnconfiguredProject _unconfiguredProject;
+        private readonly ExportProvider _exportProvider;
 
         [ImportingConstructor]
-        public ProjectLifecycle(IProject project, SVsServiceProvider serviceProvider, UnconfiguredProject unconfiguredProject)
+        public ProjectLifecycle(SVsServiceProvider serviceProvider, UnconfiguredProject unconfiguredProject)
         {
-            _project = project;
             _serviceProvider = serviceProvider;
             _unconfiguredProject = unconfiguredProject;
-            _unconfiguredProject.ProjectUnloading += ProjectUnloadingAsync;
+            _exportProvider = unconfiguredProject.Services.ExportProvider;
         }
-
-        [Import]
-        private DebuggerIntegration Debugger { get; set; }
-        [Import]
-        private BreakpointIntegration Breakpoints { get; set; }
-        [Import]
-        private BuildToolsServer BuildServer { get; set; }
-        [Import]
-        private ICommandRouter CommandRouter { get; set; }
-        [Import]
-        private IToolWindowIntegration ToolWindowIntegration { get; set; }
 
         public async Task LoadAsync()
         {
+            if (IsTemporaryVisualCProject(_unconfiguredProject))
+                return;
+
+            // Initialize our project components. We cannot use [Import] declarations because that would
+            // result in components getting recreated for temporary VisualC projects
+            // (particularly bad for DebuggerIntegration which has global state)
+            var project = (Project)_exportProvider.GetExportedValue<IProject>();
+            _unconfiguredProject.ProjectUnloading += async (s, e) =>
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                project.Unload();
+                VSPackage.ProjectUnloaded();
+            };
+
+            _exportProvider.GetExportedValue<DebuggerIntegration>();
+            _exportProvider.GetExportedValue<BreakpointIntegration>();
+            _exportProvider.GetExportedValue<BuildToolsServer>();
+            var toolWindowIntegration = _exportProvider.GetExportedValue<IToolWindowIntegration>();
+            var commandRouter = _exportProvider.GetExportedValue<ICommandRouter>();
+
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-            ((Project)_project).Load();
-            Debugger.SetProjectOnLoad(_project);
-
-            await GetPackage().ProjectLoadedAsync(ToolWindowIntegration, CommandRouter);
-        }
-
-        private async Task ProjectUnloadingAsync(object sender, EventArgs args)
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            ((Project)_project).Unload();
-            VSPackage.ProjectUnloaded();
+            project.Load();
+            await GetPackage().ProjectLoadedAsync(toolWindowIntegration, commandRouter);
         }
 
         private VSPackage GetPackage()
@@ -70,5 +69,16 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         public Task UnloadAsync() => Task.CompletedTask; /* https://github.com/microsoft/VSProjectSystem/issues/287 */
+
+        private static bool IsTemporaryVisualCProject(UnconfiguredProject unconfiguredProject)
+        {
+            // When opening an external source file, VisualC creates a temporary ("SingleFileISense") project.
+            // We don't want to set up the plugin for those!
+
+            // A better way of checking it would be reading the "Keyword" global property (= "SingleFileISense")
+            // but UnconfiguredProject doesn't seem to allow that, and at the time LoadAsync runs
+            // the ConfiguredProject hasn't been instantiated yet.
+            return unconfiguredProject.FullPath.IndexOf(@"\SingleFileISense\", StringComparison.OrdinalIgnoreCase) > 0;
+        }
     }
 }
