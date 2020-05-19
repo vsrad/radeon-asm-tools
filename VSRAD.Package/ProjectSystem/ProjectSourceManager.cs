@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
-using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -75,9 +74,8 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()
         {
-            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            var itemsProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
-            var projectItems = await itemsProvider.GetItemsAsync();
+            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            var projectItems = await configuredProject.Services.SourceItems.GetItemsAsync();
 
             var files = new List<(string absolutePath, string relativePath)>();
             foreach (var item in projectItems)

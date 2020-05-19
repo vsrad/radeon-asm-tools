@@ -250,7 +250,6 @@
     <Compile Include="Utils\NotifyPropertyChanged.cs" />
     <Compile Include="Utils\Ensure.cs" />
     <Compile Include="Utils\Half.cs" />
-    <Compile Include="Utils\ProjectSystemExtensions.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
