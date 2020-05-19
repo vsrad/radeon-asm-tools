@@ -82,11 +82,17 @@ namespace VSRAD.Package.ProjectSystem
             {
                 string name;
                 if (item.EvaluatedIncludeAsFullPath.StartsWith(ProjectRoot, StringComparison.Ordinal))
+                {
                     name = item.EvaluatedIncludeAsRelativePath;
+                }
                 else
-                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link");
-                if (!string.IsNullOrEmpty(name))
-                    files.Add((item.EvaluatedIncludeAsFullPath, name));
+                {
+                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link"); // CPS-style links, used in RADProject
+                    if (string.IsNullOrEmpty(name))
+                        name = Path.GetFileName(item.EvaluatedIncludeAsFullPath); // VisualC-style links (project-relative Include starting with "..")
+                }
+
+                files.Add((item.EvaluatedIncludeAsFullPath, name));
             }
 
             return files;

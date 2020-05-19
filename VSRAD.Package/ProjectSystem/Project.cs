@@ -105,7 +105,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (absolutePath == sourcePath)
                     return relativePath;
 
-            return Path.GetFileName(sourcePath);
+            throw new ArgumentException($"\"{sourcePath}\" does not belong to the current project located at \"{RootPath}\"");
         }
         #endregion
     }
