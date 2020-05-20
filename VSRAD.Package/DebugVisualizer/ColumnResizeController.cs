@@ -12,10 +12,10 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly InvalidateCachedColumnsWidths _invalidateCachedColumnsWidths;
         private readonly PerformLayoutPrivate _performLayoutPrivate;
 
-        private readonly VisualizerTable _table;
+        private readonly DataGridView _table;
         private bool _overrideNativeColumnWidthChangeHandler;
 
-        public ColumnResizeController(VisualizerTable table)
+        public ColumnResizeController(DataGridView table)
         {
             // Out of the box DataGridView is unable to change the width of even several dozen columns in real time because it recalculates layout after each individual column is resized
             // (https://referencesource.microsoft.com/#System.Windows.Forms/winforms/Managed/System/WinForms/DataGridViewMethods.cs,dc107b02a9e367cc)
