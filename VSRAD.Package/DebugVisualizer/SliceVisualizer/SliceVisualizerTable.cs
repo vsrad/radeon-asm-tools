@@ -21,7 +21,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public SliceVisualizerTable() : base()
         {
             AllowUserToAddRows = false;
+
             var dataColumns = SetupColumns();
+            Rows.Add(new DataGridViewRow() { Visible = false }); // phantom row for scaling
 
             _state = new TableState(0, PhantomColumnIndex, 60, dataColumns, new ColumnResizeController(this));
 

@@ -48,7 +48,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if (!_table.Columns[index].Visible)
                 index = _state.DataColumns.Last(c => c.Visible && c.Index < index).Index;
 
-            _tableDataAreaWidth = _table.GetRowDisplayRectangle(1, false).Width - _table.RowHeadersWidth;
+            _tableDataAreaWidth = _table.GetRowDisplayRectangle(0, false).Width - _table.RowHeadersWidth;
             _visibleColumnsToLeft = _state.DataColumns.Count(c => c.Visible && c.Index < index);
             _firstVisibleIndex = _state.DataColumns.First(x => x.Visible).Index;
             _lastVisibleIndex = _state.DataColumns.Last(c => c.Visible).Index;
