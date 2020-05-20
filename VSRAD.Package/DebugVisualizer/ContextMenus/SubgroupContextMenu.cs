@@ -9,6 +9,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
     public sealed class SubgroupContextMenu : IContextMenu
     {
         private readonly VisualizerTable _table;
+        private readonly TableState _state;
         private readonly ColumnStylingOptions _stylingOptions;
         private readonly VisualizerTable.GetGroupSize _getGroupSize;
         private readonly ContextMenu _menu;
@@ -17,9 +18,10 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private int _targetColumnIndex;
         private int _columnRelStart;
 
-        public SubgroupContextMenu(VisualizerTable table, ColumnStylingOptions stylingOptions, VisualizerTable.GetGroupSize getGroupSize)
+        public SubgroupContextMenu(VisualizerTable table, TableState state, ColumnStylingOptions stylingOptions, VisualizerTable.GetGroupSize getGroupSize)
         {
             _table = table;
+            _state = state;
             _stylingOptions = stylingOptions;
             _getGroupSize = getGroupSize;
             _menu = PrepareContextMenu();
@@ -30,7 +32,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             if (hit.RowIndex != -1 || hit.ColumnIndex < 0) return false;
             var screenStartOffset = _table.RowHeadersWidth + _table.Columns[VisualizerTable.NameColumnIndex].Width;
             _columnRelStart = hit.ColumnX - screenStartOffset;
-            var invisibleColumns = _table.DataColumns.Count(x => x.Index < hit.ColumnIndex && x.Visible == false);
+            var invisibleColumns = _state.DataColumns.Count(x => x.Index < hit.ColumnIndex && x.Visible == false);
             _clickedColumnIndex = hit.ColumnIndex;
             _targetColumnIndex = hit.ColumnIndex - invisibleColumns - 1;
             _menu.MenuItems[12].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
@@ -62,7 +64,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             });
 
             var fitWidth = new MenuItem("Fit Width", (s, e) =>
-                _table.ColumnResizeController.FitWidth(_targetColumnIndex, _columnRelStart));
+                _state.ResizeController.FitWidth(_targetColumnIndex, _columnRelStart));
 
             var hideThis = new MenuItem("Hide This", HideColumns);
 

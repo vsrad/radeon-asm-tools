@@ -157,6 +157,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTableHost.cs" />
+    <Compile Include="DebugVisualizer\TableState.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
     </Compile>

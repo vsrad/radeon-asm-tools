@@ -55,9 +55,12 @@ namespace VSRAD.Package.DebugVisualizer
         {
             BeginBulkColumnWidthChange();
 
-            var widestColumnWidth = _table.DataColumns.Where(c => c.Visible).Max(c => c.GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true));
+            var widestColumnWidth = _table.Columns
+                .Cast<DataGridViewColumn>()
+                .Where(c => c.Visible && c.Index >= VisualizerTable.DataColumnOffset)
+                .Max(c => c.GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true));
 
-            foreach (var column in _table.DataColumns)
+            foreach (var column in _table.Columns.Cast<DataGridViewColumn>().Where(c => c.Index > VisualizerTable.DataColumnOffset))
                 column.Width = widestColumnWidth;
 
             var scrollingOffset = widestColumnWidth * scrollingOffsetColumnIndex - scrollingOffsetColumnRelStart;

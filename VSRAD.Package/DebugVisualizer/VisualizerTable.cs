@@ -15,14 +15,13 @@ namespace VSRAD.Package.DebugVisualizer
         public event ChangeWatchState WatchStateChanged;
 
         public const int NameColumnIndex = 0;
-        public const int DataColumnOffset = 1; /* name column */
         public const int DataColumnCount = 512;
+        public const int DataColumnOffset = 1;
+        public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
-        public int ColumnWidth = 30;
-        public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
 
         #region Appearance
         public int HiddenColumnSeparatorWidth = 8;
@@ -40,12 +39,9 @@ namespace VSRAD.Package.DebugVisualizer
         //public ContentAlignment NameColumnAlignment = ContentAlignment.Left;
         //public ContentAlignment DataColumnAlignment = ContentAlignment.Left;
 
-        public IReadOnlyList<DataGridViewColumn> DataColumns { get; }
         public IEnumerable<DataGridViewRow> DataRows => Rows
             .Cast<DataGridViewRow>()
             .Where(x => x.Index > 0 && x.Index != NewWatchRowIndex);
-
-        public ColumnResizeController ColumnResizeController { get; }
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
@@ -53,6 +49,8 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly FontAndColorProvider _fontAndColor;
 
         private string _editedWatchName;
+
+        private TableState _state;
 
         public VisualizerTable(ColumnStylingOptions stylingOptions, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
@@ -81,19 +79,18 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            DataColumns = SetupColumns();
-
-            ColumnResizeController = new ColumnResizeController(this);
+            var dataColumns = SetupColumns();
+            _state = new TableState(DataColumnOffset, PhantomColumnIndex, 60, dataColumns, new ColumnResizeController(this));
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
                 new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, stylingOptions, getGroupSize)
+                new ContextMenus.SubgroupContextMenu(this, _state, stylingOptions, getGroupSize)
             });
             _ = new CustomTableGraphics(this, _fontAndColor);
 
-            _mouseMoveController = new MouseMove.MouseMoveController(this);
+            _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
         }
 
@@ -113,9 +110,9 @@ namespace VSRAD.Package.DebugVisualizer
         public IEnumerable<int> GetSelectedDataColumnIndexes(int includeIndex) =>
             SelectedColumns
                 .Cast<DataGridViewColumn>()
-                .Select(x => x.Index - DataColumnOffset)
+                .Select(x => x.Index - _state.DataColumnOffset)
                 .Where(x => x >= 0)
-                .Append(includeIndex - DataColumnOffset);
+                .Append(includeIndex - _state.DataColumnOffset);
 
         private void ProcessCopy()
         {
@@ -216,11 +213,11 @@ namespace VSRAD.Package.DebugVisualizer
                 {
                     HeaderText = i.ToString(),
                     ReadOnly = true,
-                    SortMode = DataGridViewColumnSortMode.NotSortable
+                    SortMode = DataGridViewColumnSortMode.NotSortable,
+                    Width = 60
                 });
                 Columns.Add(dataColumns[i]);
             }
-            ColumnWidth = dataColumns[0].Width;
 
             Columns.Add(new DataGridViewTextBoxColumn()
             {
@@ -298,7 +295,7 @@ namespace VSRAD.Package.DebugVisualizer
         #region Styling
 
         public void GrayOutColumns(uint groupSize) =>
-            ColumnStyling.GrayOutColumns(DataColumns, _fontAndColor.FontAndColorState, groupSize);
+            ColumnStyling.GrayOutColumns(_state.DataColumns, _fontAndColor.FontAndColorState, groupSize);
 
         public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
             RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
@@ -326,7 +323,7 @@ namespace VSRAD.Package.DebugVisualizer
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
                 _fontAndColor.FontAndColorState);
-            columnStyling.Apply(DataColumns, groupSize);
+            columnStyling.Apply(_state.DataColumns, groupSize);
 
             var rowStyling = new RowStyling(
                 Rows.Cast<DataGridViewRow>(),
@@ -367,7 +364,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             Columns[0].DefaultCellStyle.Alignment = nameColumnAlignment.AsDataGridViewContentAlignment();
             Columns[0].HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
-            foreach (var column in DataColumns)
+            foreach (var column in _state.DataColumns)
             {
                 column.DefaultCellStyle.Alignment = dataColumnAlignment.AsDataGridViewContentAlignment();
                 column.HeaderCell.Style.Alignment = headersAlignment.AsDataGridViewContentAlignment();
@@ -449,7 +446,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), this, e.X)
+            Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), this, _state, e.X)
                 ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))
                 base.OnMouseMove(e);
@@ -457,7 +454,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
-            if (!ColumnResizeController.HandleColumnWidthChangeEvent())
+            if (!_state.ResizeController.HandleColumnWidthChangeEvent())
                 base.OnColumnWidthChanged(e);
         }
 
