@@ -1,7 +1,5 @@
-﻿using EnvDTE;
-using Microsoft.VisualStudio.ProjectSystem;
+﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -74,19 +72,6 @@ namespace VSRAD.Package.ProjectSystem
                 case MessageKind.Note: return TaskErrorCategory.Message;
                 default: return TaskErrorCategory.Message;
             }
-        }
-
-        // use this if you need to specify a project
-        private IVsHierarchy GetCurrentProjectHierarchy()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-            var vsService = _serviceProvider.GetService(typeof(IVsSolution)) as IVsSolution;
-
-            // get current Env project
-            var proj = dte.Solution.Projects.Item(1);
-            vsService.GetProjectOfUniqueName(proj.FileName, out var hierarchyItem);
-            return hierarchyItem;
         }
     }
 }

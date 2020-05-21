@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 
@@ -28,6 +29,7 @@ namespace VSRAD.Package.Commands
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (commandId == Constants.MenuCommandId)
                 _debugger.RunToCurrentLine();
         }

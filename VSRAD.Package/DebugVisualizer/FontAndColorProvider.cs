@@ -59,11 +59,17 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public (Color fg, Color bg, bool bold) GetInfo(FontAndColorItem item) =>
-            GetInfo(item.GetDisplayName());
+        public (Color fg, Color bg, bool bold) GetInfo(FontAndColorItem item)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            return GetInfo(item.GetDisplayName());
+        }
 
-        public (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight) =>
-            GetInfo(highlight.GetDisplayName());
+        public (Color fg, Color bg, bool bold) GetHighlightInfo(DataHighlightColor highlight)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            return GetInfo(highlight.GetDisplayName());
+        }
 
         private (Color fg, Color bg, bool bold) GetInfo(string item)
         {
