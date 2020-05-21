@@ -511,6 +511,18 @@
       <VSIXSubPath>Microsoft\VC\v160\Platforms\x64\ImportAfter</VSIXSubPath>
     </VSIXSourceItem>
   </ItemGroup>
+  <!-- In development, VisualC targets need to be copied manually because it requires elevation,
+       and we don't want to have to run Visual Studio as administrator just for this. -->
+  <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
+    <PropertyGroup>
+      <VC32Targets>$(MSBuildExtensionsPath)\Microsoft\VC\v160\Platforms\Win32\ImportAfter\</VC32Targets>
+      <VC64Targets>$(MSBuildExtensionsPath)\Microsoft\VC\v160\Platforms\x64\ImportAfter\</VC64Targets>
+    </PropertyGroup>
+    <Warning Condition="!Exists('$(VC32Targets)RAD.VisualC.targets')" Text="Copy BuildSystem\[PlatformName]\RAD.VisualC.targets to $(VC32Targets) to enable VisualC integration." />
+    <Warning Condition="!Exists('$(VC32Targets)RADDebugger.xaml')" Text="Copy BuildSystem\[PlatformName]\RADDebugger.xaml to $(VC32Targets) to enable VisualC integration." />
+    <Warning Condition="!Exists('$(VC64Targets)RAD.VisualC.targets')" Text="Copy BuildSystem\[PlatformName]\RAD.VisualC.targets to $(VC64Targets) to enable VisualC integration." />
+    <Warning Condition="!Exists('$(VC64Targets)RADDebugger.xaml')" Text="Copy BuildSystem\[PlatformName]\RADDebugger.xaml to $(VC64Targets) to enable VisualC integration." />
+  </Target>
   <PropertyGroup>
     <TransformOnBuild>true</TransformOnBuild>
   </PropertyGroup>
