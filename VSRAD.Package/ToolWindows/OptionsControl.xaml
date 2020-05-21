@@ -32,14 +32,47 @@
     </UserControl.Resources>
     <ScrollViewer x:Name="ControlScrollViewer" VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <WrapPanel Margin="4,8,4,4">
-                <Label Content="Profile:" Margin="4,0,0,4"/>
-                <ComboBox ItemsSource="{Binding ProfileNames}" SelectedItem="{Binding Options.ActiveProfile, Mode=TwoWay}"
-                          Width="156" Height="24" Margin="4,0,0,4"/>
-                <Button Content="Edit" Click="EditProfiles" Height="24" Padding="6,0" Margin="4,0,0,4"/>
-                <Label Content="{Binding ConnectionInfo}" Margin="4,0,0,4"/>
-                <Button Content="{Binding DisconnectLabel}" Command="{Binding DisconnectCommand}" Height="24" Padding="6,0" Margin="4,0,0,4"/>
-            </WrapPanel>
+            <ContentControl>
+                <ContentControl.Resources>
+                    <Style x:Key="ProfileButton" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                        <EventSetter Event="Button.Click" Handler="EditProfiles" />
+                    </Style>
+                </ContentControl.Resources>
+                <ContentControl.Style>
+                    <Style TargetType="{x:Type ContentControl}" BasedOn="{StaticResource {x:Type ContentControl}}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Options.HasProfiles}" Value="True">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <WrapPanel Margin="4,8,4,4">
+                                                <Label Content="Profile:" Margin="4,0,0,4"/>
+                                                <ComboBox ItemsSource="{Binding ProfileNames}" SelectedItem="{Binding Options.ActiveProfile, Mode=TwoWay}"
+                                                          Width="156" Height="24" Margin="4,0,0,4"/>
+                                                <Button Content="Edit" Style="{StaticResource ProfileButton}" Height="24" Padding="6,0" Margin="4,0,0,4"/>
+                                                <Label Content="{Binding ConnectionInfo}" Margin="4,0,0,4"/>
+                                                <Button Content="{Binding DisconnectLabel}" Command="{Binding DisconnectCommand}" Height="24" Padding="6,0" Margin="4,0,0,4"/>
+                                            </WrapPanel>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Options.HasProfiles}" Value="False">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate>
+                                            <StackPanel Orientation="Vertical" Margin="4,8,4,4">
+                                                <TextBlock Margin="4,0,0,4" Text="To use RAD Debugger, create a new or import an existing profile:" TextWrapping="Wrap"/>
+                                                <Button Margin="4,0,0,4" Content="Open profile editor" Style="{StaticResource ProfileButton}" HorizontalAlignment="Left" Height="24" Width="156" Padding="6,0"/>
+                                            </StackPanel>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ContentControl.Style>
+            </ContentControl>
             <StackPanel Margin="8,8">
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Show hidden System variable" VerticalAlignment="Center" Padding="4,0,0,0"

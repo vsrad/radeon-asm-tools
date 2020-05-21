@@ -12,8 +12,8 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.EvaluateSelectedCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    //[Export(typeof(ICommandHandler))]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     sealed class EvaluateSelectedCommand : BaseRemoteCommand
     {
         private readonly IProject _project;
@@ -33,7 +33,7 @@ namespace VSRAD.Package.Commands
             IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
             SVsServiceProvider serviceProvider,
-            IErrorListManager errorListManager) : base(Constants.EvaluateSelectedCommandId, serviceProvider)
+            IErrorListManager errorListManager) : base(Constants.EvaluateSelectedCommandSet, Constants.EvaluateSelectedCommandId, serviceProvider)
         {
             _project = project;
             _codeEditor = codeEditor;
@@ -44,11 +44,8 @@ namespace VSRAD.Package.Commands
             _errorListManager = errorListManager;
         }
 
-        public override async Task RunAsync(long commandId)
+        public override async Task RunAsync()
         {
-            if (commandId != _commandId)
-                return;
-
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var activeWord = _codeEditor.GetActiveWord();
             if (string.IsNullOrWhiteSpace(activeWord))

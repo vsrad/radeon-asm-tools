@@ -13,7 +13,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.ProjectSystem
 {
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class BreakpointIntegration
     {
         private static readonly TimeSpan _pollDelay = new TimeSpan(250 * TimeSpan.TicksPerMillisecond);

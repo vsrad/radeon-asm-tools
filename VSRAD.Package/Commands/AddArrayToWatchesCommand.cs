@@ -1,18 +1,16 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Shell;
-using System.Collections.Immutable;
+﻿using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.ProjectSystem;
+using System;
 using System.ComponentModel.Composition;
-using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.AddArrayToWatchesCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
-    public sealed class AddArrayToWatchesCommand : BaseCommand
+    [Export(typeof(ICommandHandler))]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
+    public sealed class AddArrayToWatchesCommand : ICommandHandler
     {
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
@@ -24,24 +22,25 @@ namespace VSRAD.Package.Commands
             _codeEditor = codeEditor;
         }
 
-        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public Guid CommandSet => Constants.AddArrayToWatchesCommandSet;
+
+        public OLECMDF GetCommandStatus(uint commandId)
         {
             var fromHeader = commandId == Constants.AddArrayToWatchesFromHeaderId;
             var toHeader = commandId >= Constants.AddArrayToWatchesToHeaderOffset
                 && commandId < Constants.AddArrayToWatchesToHeaderOffset + Constants.AddArrayToWatchesIndexCount;
 
             if (fromHeader || toHeader)
-                return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Supported));
+                return OLECMDF.OLECMDF_SUPPORTED;
 
-            return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
+            return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
         }
 
-        public async override Task RunAsync(long commandId)
+        public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
             if (commandId < Constants.AddArrayToWatchesToIdOffset)
                 return;
 
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var watchName = _codeEditor.GetActiveWord()?.Trim();
 
             if (string.IsNullOrEmpty(watchName))

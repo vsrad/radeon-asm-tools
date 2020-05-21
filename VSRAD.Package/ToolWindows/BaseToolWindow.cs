@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.ToolWindows
 {
@@ -16,7 +17,7 @@ namespace VSRAD.Package.ToolWindows
             VerticalAlignment = VerticalAlignment.Center
         };
 
-        public BaseToolWindow(string caption) : base(null)
+        protected BaseToolWindow(string caption) : base(null)
         {
             Caption = caption;
             Content = new Grid

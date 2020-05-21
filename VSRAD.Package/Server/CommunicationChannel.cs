@@ -47,7 +47,7 @@ namespace VSRAD.Package.Server
     }
 
     [Export(typeof(ICommunicationChannel))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class CommunicationChannel : ICommunicationChannel
     {
         public event Action ConnectionStateChanged;

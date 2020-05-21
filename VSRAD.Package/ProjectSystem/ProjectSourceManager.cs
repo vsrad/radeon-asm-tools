@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
-using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -29,7 +28,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IProjectSourceManager))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
         private readonly SVsServiceProvider _serviceProvider;
@@ -75,20 +74,25 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()
         {
-            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            var itemsProvider = configuredProject.GetService<IProjectItemProvider>("SourceItems");
-            var projectItems = await itemsProvider.GetItemsAsync();
+            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            var projectItems = await configuredProject.Services.SourceItems.GetItemsAsync();
 
             var files = new List<(string absolutePath, string relativePath)>();
             foreach (var item in projectItems)
             {
                 string name;
                 if (item.EvaluatedIncludeAsFullPath.StartsWith(ProjectRoot, StringComparison.Ordinal))
+                {
                     name = item.EvaluatedIncludeAsRelativePath;
+                }
                 else
-                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link");
-                if (!string.IsNullOrEmpty(name))
-                    files.Add((item.EvaluatedIncludeAsFullPath, name));
+                {
+                    name = await item.Metadata.GetEvaluatedPropertyValueAsync("Link"); // CPS-style links, used in RADProject
+                    if (string.IsNullOrEmpty(name))
+                        name = Path.GetFileName(item.EvaluatedIncludeAsFullPath); // VisualC-style links (project-relative Include starting with "..")
+                }
+
+                files.Add((item.EvaluatedIncludeAsFullPath, name));
             }
 
             return files;

@@ -9,7 +9,7 @@ using VSRAD.Package.Utils;
 namespace VSRAD.Package.ProjectSystem
 {
     [Export(typeof(IPasteDataObjectProcessor))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     [Order(10000)]
     public sealed class ProjectItemPasteProcessor : IPasteDataObjectProcessor
     {

@@ -21,7 +21,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IOutputWindowManager))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class OutputWindowManager : IOutputWindowManager
     {
         private readonly SVsServiceProvider _serviceProvider;

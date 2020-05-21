@@ -28,7 +28,7 @@ where `port` is a TCP port number the server will listen on.
 
 * [.NET Core 3.1 SDK (x64)](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 * [.NET Framework 4.8 Developer Pack](https://dotnet.microsoft.com/download/dotnet-framework/net48)
-* Visual Studio 2017/2019 with *.NET desktop development* and *Visual Studio extension development* workloads and *Modeling SDK* (available in the *Individual components* tab in Visual Studio Installer)
+* Visual Studio 2019 with *.NET desktop development* and *Visual Studio extension development* workloads and *Modeling SDK* (available in the *Individual components* tab in Visual Studio Installer)
 
 ### Debugging
 
@@ -39,17 +39,6 @@ select *Properties*.
 4. Navigate to the *Debug* tab in the project properties editor.
 5. Choose *Start external program* as the *Start action* and enter the path to your Visual Studio executable (`<Visual Studio installation path>\Common7\IDE\devenv.exe`).
 6. Close the project properties editor and start debugging by pressing F5.
-
-#### Known Issues
-
-If you encounter a *load failed* error for `VSRAD.Package`:
-
-1. Go to *Tools* -> *NuGet Package Manager* -> *Package Manager Console*.
-2. Run the following:
-    ```
-    Install-Package Microsoft.VisualStudio.ProjectSystem.Sdk.Tools -Version 15.8.243
-    ```
-3. Right-click on `VSRAD.Package` in *Solution Explorer* and select *Reload Project*.
 
 ### Assembling a Release
 

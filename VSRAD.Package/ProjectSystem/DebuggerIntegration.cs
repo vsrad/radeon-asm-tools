@@ -13,12 +13,13 @@ namespace VSRAD.Package.ProjectSystem
     public delegate void DebugBreakEntered(BreakState breakState);
 
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class DebuggerIntegration : IEngineIntegration
     {
         public event ExecutionCompleted ExecutionCompleted;
         public event DebugBreakEntered BreakEntered;
 
+        private readonly IProject _project;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IFileSynchronizationManager _deployManager;
@@ -30,10 +31,10 @@ namespace VSRAD.Package.ProjectSystem
 
         private (string file, uint line)? _debugRunToLine;
         private DebugSession _debugSession;
-        private IProject _project;
 
         [ImportingConstructor]
         public DebuggerIntegration(
+            IProject project,
             SVsServiceProvider serviceProvider,
             IActiveCodeEditor codeEditor,
             IFileSynchronizationManager deployManager,
@@ -41,6 +42,7 @@ namespace VSRAD.Package.ProjectSystem
             ICommunicationChannel channel,
             IErrorListManager errorListManager)
         {
+            _project = project;
             _serviceProvider = serviceProvider;
             _codeEditor = codeEditor;
             _deployManager = deployManager;
@@ -51,10 +53,6 @@ namespace VSRAD.Package.ProjectSystem
             DebugEngine.InitializationCallback = RegisterEngine;
             DebugEngine.TerminationCallback = DeregisterEngine;
         }
-
-        /* DebuggerIntegration and Project are circular dependencies,
-         * so we use this hack to obtain the project once it's created. */
-        public void SetProjectOnLoad(IProject project) => _project = project;
 
         public IEngineIntegration RegisterEngine()
         {
@@ -73,8 +71,17 @@ namespace VSRAD.Package.ProjectSystem
             ExecutionCompleted = null;
         }
 
-        internal void CreateDebugSession() =>
+        internal bool TryCreateDebugSession()
+        {
+            if (!_project.Options.HasProfiles)
+            {
+                Errors.ShowProfileUninitializedError();
+                return false;
+            }
+
             _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow, _errorListManager);
+            return true;
+        }
 
         internal void RunToCurrentLine()
         {
