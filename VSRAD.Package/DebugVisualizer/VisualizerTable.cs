@@ -312,11 +312,23 @@ namespace VSRAD.Package.DebugVisualizer
                 RowStyling.UpdateRowHighlight(Rows[i], _fontAndColor.FontAndColorState, changeFg, changeBg);
         }
 
+        private bool _disableColumnWidthChangeHandler = false;
+
+        protected override void OnColumnDividerWidthChanged(DataGridViewColumnEventArgs e)
+        {
+            /* The base method invokes OnColumnGlobalAutoSize, which is very expensive
+             * when changing DividerWidth in bulk, as it is done in ColumnStyling.
+             * To prevent slowdowns, we disable the handler before invoking ColumnStyling.Apply */
+            if (!_disableColumnWidthChangeHandler)
+                base.OnColumnDividerWidthChanged(e);
+        }
+
         public void ApplyDataStyling(ProjectOptions options, uint groupSize, uint[] system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;
             ((Control)this).SuspendDrawing();
+            _disableColumnWidthChangeHandler = true;
 
             _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling, groupSize, system);
 
@@ -332,6 +344,7 @@ namespace VSRAD.Package.DebugVisualizer
             foreach (DataGridViewRow row in Rows)
                 RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
 
+            _disableColumnWidthChangeHandler = false;
             ((Control)this).ResumeDrawing();
             HorizontalScrollingOffset = scrollingOffset;
         }
