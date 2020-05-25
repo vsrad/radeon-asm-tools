@@ -29,7 +29,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
-            new CustomSliceTableGraphics(this);
+            _ = new CustomSliceTableGraphics(this);
         }
 
         private IReadOnlyList<DataGridViewColumn> SetupColumns()
@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             return dataColumns;
         }
 
-        public void DisplayWatch(List<uint[]> data, uint groupSize)
+        public void DisplayWatch(List<uint[]> data)
         {
             Rows.Clear();
 
@@ -73,7 +73,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             
             for (int i = 0; i < DataColumnCount; i++)
             {
-                if (i < groupSize)
+                if (i < data[0].Length)
                 {
                     for (int j = 0; j < data.Count; j++)
                         Rows[j].Cells[i].Value = data[j][i];
@@ -85,6 +85,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
         }
 
+        #region Standard functions overriding
         protected override void OnMouseUp(MouseEventArgs e)
         {
             if (_mouseMoveController.OperationDidNotFinishOnMouseUp())
@@ -93,7 +94,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             base.OnMouseUp(e);
         }
 
-        #region Standard functions overriding
         protected override void OnMouseDown(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)

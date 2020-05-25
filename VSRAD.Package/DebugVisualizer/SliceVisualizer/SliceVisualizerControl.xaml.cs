@@ -1,18 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Collections.Generic;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using VSRAD.Package.Options;
 using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
 
@@ -49,12 +36,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private void WatchSelected(string watchName)
         {
             if (_breakState == null) return;
-            // TODO: fetch all groups, find a way to get current group size
+            // TODO: fetch all groups
             var data = new List<uint[]>();
-            var groupData = new uint[64];
+            var groupData = new uint[_breakState.GroupSize];
             _breakState.TryGetWatch(watchName, out groupData);
             data.Add(groupData);
-            _table.DisplayWatch(data, 64);
+            _table.DisplayWatch(data);
         }
     }
 }
