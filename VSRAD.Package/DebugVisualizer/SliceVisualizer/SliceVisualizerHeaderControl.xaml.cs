@@ -34,16 +34,35 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 .Select(w => w.Name)
                 .ToList();
 
+            private int _subgroupSize = 64;
+            public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
+
+            private int _groupsInRow = 1;
+            public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
+
             public Context(ProjectOptions options)
             {
                 Options = options;
             }
         }
 
+        private void VisualizerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Context.SubgroupSize):
+                    break;
+                case nameof(Context.GroupsInRow):
+                    break;
+            }
+        }
+
         public void Setup(IToolWindowIntegration integration, WatchSelectedDelegate watchSelected)
         {
             InitializeComponent();
-            DataContext = new Context(integration.ProjectOptions);
+            var context = new Context(integration.ProjectOptions);
+            context.PropertyChanged += VisualizerOptionsChanged;
+            DataContext = context;
             WatchSelected = watchSelected;
         }
 
