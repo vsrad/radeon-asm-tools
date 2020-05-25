@@ -111,7 +111,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var scopedCompletionPairs = parser
                 .GetScopedTokens(triggerPoint, type)
                 .Where(t => t.TokenName.Contains(triggerText))
-                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this, icon, ImmutableArray<CompletionFilter>.Empty, null, t.TokenName, t.TokenName, t.TokenName, ImmutableArray<ImageElement>.Empty)));
+                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this, icon)));
 
             _completions[type] = scopedCompletionPairs;
             return scopedCompletionPairs
