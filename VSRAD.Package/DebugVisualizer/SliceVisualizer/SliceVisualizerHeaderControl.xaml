@@ -16,10 +16,15 @@
             <TextBlock Text="Show columns __ALL__ of each subgroup of " Height="24"/>
             <viz:NumberInput Value="{Binding DataContext.SubgroupSize, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="24"/>
         </StackPanel>
-        <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Show "/>
-            <viz:NumberInput Value="{Binding DataContext.GroupsInRow, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="24"/>
-            <TextBlock Text=" groups in one row"/>
-        </StackPanel>
+        <DockPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Show "/>
+                <viz:NumberInput Value="{Binding DataContext.GroupsInRow, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="24"/>
+                <TextBlock Text=" groups in one row"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <CheckBox Content="Transpose" IsChecked="{Binding TransposedView}"/>
+            </StackPanel>
+        </DockPanel>
     </StackPanel>
 </UserControl>

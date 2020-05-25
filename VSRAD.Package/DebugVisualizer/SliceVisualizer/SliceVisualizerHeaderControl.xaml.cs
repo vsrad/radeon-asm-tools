@@ -40,6 +40,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             private int _groupsInRow = 1;
             public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
 
+            private bool _transposedView = false;
+            public bool TransposedView { get => _transposedView; set => SetField(ref _transposedView, value); }
+
             public Context(ProjectOptions options)
             {
                 Options = options;
@@ -53,6 +56,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 case nameof(Context.SubgroupSize):
                     break;
                 case nameof(Context.GroupsInRow):
+                    break;
+                case nameof(Context.TransposedView):
                     break;
             }
         }
