@@ -26,6 +26,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public delegate void WatchSelectedDelegate(string watchName);
         private WatchSelectedDelegate WatchSelected;
 
+        public delegate void ToggleHeatMapDelegate(bool heatMapActive);
+        private ToggleHeatMapDelegate ToggleHeatMap;
+
+        private Context _context;
+
         public sealed class Context : DefaultNotifyPropertyChanged
         {
             public ProjectOptions Options { get; }
@@ -43,6 +48,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             private bool _transposedView = false;
             public bool TransposedView { get => _transposedView; set => SetField(ref _transposedView, value); }
 
+            private bool _useHeatMap = false;
+            public bool UseHeatMap { get => _useHeatMap; set => SetField(ref _useHeatMap, value); }
+
+
+
             public Context(ProjectOptions options)
             {
                 Options = options;
@@ -59,16 +69,21 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     break;
                 case nameof(Context.TransposedView):
                     break;
+                case nameof(Context.UseHeatMap):
+                    ToggleHeatMap(_context.UseHeatMap);
+                    break;
             }
         }
 
-        public void Setup(IToolWindowIntegration integration, WatchSelectedDelegate watchSelected)
+        public void Setup(IToolWindowIntegration integration, WatchSelectedDelegate watchSelected, ToggleHeatMapDelegate toggleHeatMap)
         {
             InitializeComponent();
             var context = new Context(integration.ProjectOptions);
             context.PropertyChanged += VisualizerOptionsChanged;
             DataContext = context;
+            _context = context;
             WatchSelected = watchSelected;
+            ToggleHeatMap = toggleHeatMap;
         }
 
         public string GetSelectedWatch() => WatchSelector.SelectedItem?.ToString();

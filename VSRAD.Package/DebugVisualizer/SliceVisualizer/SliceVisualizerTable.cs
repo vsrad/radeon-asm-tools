@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -14,12 +15,17 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         private const int DataColumnCount = 512;
         private const int PhantomColumnIndex = DataColumnCount;
+
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
+        private readonly FontAndColorProvider _fontAndColor;
+
         private TableState _state;
 
-        public SliceVisualizerTable() : base()
+        public SliceVisualizerTable(FontAndColorProvider fontAndColor) : base()
         {
+            _fontAndColor = fontAndColor;
+
             AllowUserToAddRows = false;
 
             var dataColumns = SetupColumns();
@@ -59,6 +65,13 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
             Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
+        }
+
+        public void ApplyDataStyling(Options.ProjectOptions options/*uint groupSize*/)
+        {
+            // there will be separate options appearance and styling for slice
+            var columnStyling = new ColumnStyling(options.VisualizerOptions, options.VisualizerAppearance, options.VisualizerColumnStyling, _fontAndColor.FontAndColorState);
+            columnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.White, Color.White);
         }
 
         public void DisplayWatch(List<uint[]> data)

@@ -23,6 +23,7 @@
                 <TextBlock Text=" groups in one row"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <CheckBox Content="Heat Map" IsChecked="{Binding UseHeatMap}"/>
                 <CheckBox Content="Transpose" IsChecked="{Binding TransposedView}"/>
             </StackPanel>
         </DockPanel>

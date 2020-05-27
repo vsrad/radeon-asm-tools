@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.DebugVisualizer.SliceVisualizer;
 
 namespace VSRAD.Package.ToolWindows

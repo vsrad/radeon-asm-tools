@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.VisualStudio.Debugger.Interop;
+using System.Collections.Generic;
 using System.Windows.Controls;
 using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
@@ -12,13 +13,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         private Server.BreakState _breakState;
         private SliceVisualizerTable _table;
+        private readonly IToolWindowIntegration _integration;
 
         public SliceVisualizerControl(IToolWindowIntegration integration)
         {
+            _integration = integration;
+            var tableFontAndColor = new FontAndColorProvider();
             InitializeComponent();
             integration.BreakEntered += BreakEntered;
-            _table = new SliceVisualizerTable();
-            headerControl.Setup(integration, WatchSelected);
+            _table = new SliceVisualizerTable(tableFontAndColor);
+            headerControl.Setup(integration, WatchSelected, ToggleHeatMap);
             tableHost.Setup(_table);
         }
 
@@ -42,6 +46,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _breakState.TryGetWatch(watchName, out groupData);
             data.Add(groupData);
             _table.DisplayWatch(data);
+        }
+
+        private void ToggleHeatMap(bool heatMapActive)
+        {
+            if (heatMapActive)
+                _table.ApplyDataStyling(_integration.ProjectOptions);
         }
     }
 }

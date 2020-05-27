@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Text;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -74,6 +76,24 @@ namespace VSRAD.Package.DebugVisualizer
                     }
                 }
             }
+        }
+
+        public void ApplyHeatMap(IReadOnlyList<DataGridViewRow> rows, Color minColor, Color maxColor)
+        {
+            var minValue = rows
+                .Select(r => r.Cells)
+                .Select(c => c
+                    .Cast<DataGridViewCell>()
+                    .Where(cell => cell.Value != null)
+                    .Min(cell => int.Parse(cell.Value?.ToString())))
+                .Min();
+            var maxValue = rows
+                .Select(r => r.Cells)
+                .Select(c => c
+                    .Cast<DataGridViewCell>()
+                    .Where(cell => cell.Value != null)
+                    .Max(cell => int.Parse(cell.Value?.ToString())))
+                .Max();
         }
 
         public static void GrayOutColumns(IReadOnlyList<DataGridViewColumn> columns, FontAndColorState fontAndColor, uint groupSize)
