@@ -71,7 +71,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             // there will be separate options appearance and styling for slice
             var columnStyling = new ColumnStyling(options.VisualizerOptions, options.VisualizerAppearance, options.VisualizerColumnStyling, _fontAndColor.FontAndColorState);
-            columnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.White, Color.White);
+            columnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.Green, Color.Red);
         }
 
         public void DisplayWatch(List<uint[]> data)

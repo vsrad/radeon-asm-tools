@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Text;
 using System.Linq;
 using System.Windows.Forms;
+using Microsoft.VisualStudio.Shell.Interop;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -94,6 +95,27 @@ namespace VSRAD.Package.DebugVisualizer
                     .Where(cell => cell.Value != null)
                     .Max(cell => int.Parse(cell.Value?.ToString())))
                 .Max();
+
+            var valueDiff = maxValue - minValue;
+            var rDiff = maxColor.R - minColor.R;
+            var gDiff = maxColor.G - minColor.G;
+            var bDiff = maxColor.B - minColor.B;
+
+            foreach (var row in rows)
+            {
+                foreach (var cell in row.Cells.Cast<DataGridViewCell>())
+                {
+                    if (cell.Value == null) continue;
+                    var value = int.Parse(cell.Value.ToString());
+                    var relDiff = ((float)(value - minValue)) / valueDiff;
+                    var color = Color.FromArgb(
+                        (byte)(minColor.R + (rDiff * relDiff)),
+                        (byte)(minColor.G + (gDiff * relDiff)),
+                        (byte)(minColor.B + (bDiff * relDiff))
+                    );
+                    cell.Style.BackColor = color;
+                }
+            }
         }
 
         public static void GrayOutColumns(IReadOnlyList<DataGridViewColumn> columns, FontAndColorState fontAndColor, uint groupSize)
