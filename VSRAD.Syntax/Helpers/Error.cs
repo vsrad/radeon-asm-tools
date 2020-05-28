@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.Helpers
         {
             var source = string.IsNullOrEmpty(module) ? Constants.RadeonAsmSyntaxContentType : $"{module} - {Constants.RadeonAsmSyntaxContentType}";
 #if DEBUG
-            ActivityLog.LogError(source, e.ToString());
+            //ShowErrorMessage(e.ToString(), source);
 #else
             ActivityLog.LogError(source, e.Message);
 #endif

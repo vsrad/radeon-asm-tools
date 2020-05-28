@@ -1,57 +1,58 @@
 ﻿using System.ComponentModel.Composition;
+using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
-using VSRAD.Syntax.Options;
+using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-//    [Export(typeof(IClassifierProvider))]
-//    [ContentType(Constants.RadeonAsmSyntaxContentType)]
-//    internal class Asm1ClassifierProvider : IClassifierProvider
-//    {
-//#pragma warning disable 649
+    [Export(typeof(ITaggerProvider))]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [TagType(typeof(ClassificationTag))]
+    internal class ClassifierProvider : ITaggerProvider
+    {
+        private readonly IStandardClassificationService _classificationService;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvider;
 
-//        private readonly IClassificationTypeRegistryService _classificationRegistry;
-//        private readonly InstructionListManager _instructionListManager;
+        [ImportingConstructor]
+        public ClassifierProvider(IStandardClassificationService classificationService, DocumentAnalysisProvoder documentAnalysisProvoder)
+        {
+            _classificationService = classificationService;
+            _documentAnalysisProvider = documentAnalysisProvoder;
+        }
 
-//        [ImportingConstructor]
-//        public Asm1ClassifierProvider(IClassificationTypeRegistryService classificationRegistry, InstructionListManager instructionListManager)
-//        {
-//            _classificationRegistry = classificationRegistry;
-//            _instructionListManager = instructionListManager;
-//        }
+        public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
+        {
+            var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(buffer);
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new TokenizerClassifier(buffer, documentAnalysis, _classificationService)) as ITagger<T>;
+        }
+    }
 
+    [Export(typeof(ITaggerProvider))]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [TagType(typeof(ClassificationTag))]
+    internal class AnalysisClassifierProvider : ITaggerProvider
+    {
+        private readonly IStandardClassificationService _classificationService;
+        private readonly IClassificationTypeRegistryService _classificationTypeRegistryService;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvider;
 
-//        public IClassifier GetClassifier(ITextBuffer buffer)
-//        {
-//            var asm1Classifier = buffer.Properties.GetOrCreateSingletonProperty(() => new Asm1Classifier(_classificationRegistry, buffer, _instructionListManager));
-//            return asm1Classifier;
-//        }
-//#pragma warning restore 649
-//    }
+        [ImportingConstructor]
+        public AnalysisClassifierProvider(IStandardClassificationService classificationService,
+            IClassificationTypeRegistryService classificationTypeRegistryService,
+            DocumentAnalysisProvoder documentAnalysisProvoder)
+        {
+            _classificationService = classificationService;
+            _classificationTypeRegistryService = classificationTypeRegistryService;
+            _documentAnalysisProvider = documentAnalysisProvoder;
+        }
 
-//    [Export(typeof(IClassifierProvider))]
-//    [ContentType(Constants.RadeonAsm2SyntaxContentType)]
-//    internal class Asm2ClassifierProvider : IClassifierProvider
-//    {
-//#pragma warning disable 649
-
-//        private readonly IClassificationTypeRegistryService _classificationRegistry;
-//        private readonly InstructionListManager _instructionListManager;
-
-//        [ImportingConstructor]
-//        public Asm2ClassifierProvider(IClassificationTypeRegistryService classificationRegistry, InstructionListManager instructionListManager)
-//        {
-//            _classificationRegistry = classificationRegistry;
-//            _instructionListManager = instructionListManager;
-//        }
-
-//        public IClassifier GetClassifier(ITextBuffer buffer)
-//        {
-//            var asmClassifier = buffer.Properties.GetOrCreateSingletonProperty(() => new Asm2Classifier(_classificationRegistry, buffer, _instructionListManager));
-//            return asmClassifier;
-//        }
-//#pragma warning restore 649
-//    }
+        public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
+        {
+            var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(buffer);
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new AnalysisClassifier(buffer, documentAnalysis, _classificationTypeRegistryService, _classificationService)) as ITagger<T>;
+        }
+    }
 }

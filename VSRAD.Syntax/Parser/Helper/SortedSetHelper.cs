@@ -1,9 +1,9 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using VSRAD.Syntax.Parser.Tokens;
 
-namespace VSRAD.Syntax.Parser
+namespace VSRAD.Syntax.Parser.Helper
 {
     internal static class SortedSetHelpers
     {

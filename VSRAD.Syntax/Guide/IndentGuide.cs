@@ -13,23 +13,25 @@ using System.Windows.Media;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
+using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Guide
 {
     internal sealed class IndentGuide
     {
-        private readonly IWpfTextView _wpfTextView;
-        private readonly IParserManager _parserManager;
+        private readonly IWpfTextView _textView;
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
-        private IBaseParser _currentParser;
+        private readonly DocumentAnalysis _documentAnalysis;
         private IList<Line> _currentAdornments;
         private bool _isEnables;
+        private int _tabSize;
 
-        public IndentGuide(IWpfTextView textView, IParserManager parserManager, OptionsProvider optionsProvider)
+        public IndentGuide(IWpfTextView textView, DocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
         {
-            _wpfTextView = textView ?? throw new NullReferenceException();
-            _parserManager = parserManager ?? throw new NullReferenceException();
+            _textView = textView ?? throw new NullReferenceException();
+            _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
+            _documentAnalysis = documentAnalysis;
 
             _currentAdornments = new List<Line>();
             _canvas = new Canvas
@@ -38,30 +40,49 @@ namespace VSRAD.Syntax.Guide
                 VerticalAlignment = VerticalAlignment.Stretch
             };
 
-            _layer = _wpfTextView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
+            _layer = _textView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
             _isEnables = optionsProvider.IsEnabledIndentGuides;
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
-            _wpfTextView.LayoutChanged += async (sender, args) => await UpdateIndentGuidesAsync();
-            _parserManager.ParserUpdatedEvent += async (sender, args) => await UpdateIndentGuidesAsync();
+            _textView.LayoutChanged += (sender, args) => UpdateIndentGuides();
+            _documentAnalysis.ParserUpdated += ParserUpdated;
             optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
+            textView.Options.OptionChanged += TabSizeOptionsChanged;
         }
+
+        private void TabSizeOptionsChanged(object sender, EditorOptionChangedEventArgs e)
+        {
+            _tabSize = _textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
+            UpdateIndentGuides();
+        }
+
+        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks) =>
+            UpdateIndentGuides();
 
         private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
-            _isEnables = sender.IsEnabledIndentGuides;
-            ThreadHelper.JoinableTaskFactory.RunAsync(UpdateIndentGuidesAsync);
+            if (sender.IsEnabledIndentGuides != _isEnables)
+            {
+                _isEnables = sender.IsEnabledIndentGuides;
+                if (_isEnables)
+                    UpdateIndentGuides();
+                else
+                    CleanupIndentGuidesAsync().ConfigureAwait(false);
+            }
         }
 
-        private void CanvasRemoved(object tag, UIElement element)
-        {
+        private void CanvasRemoved(object tag, UIElement element) =>
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
+
+        private void UpdateIndentGuides()
+        {
+            if (_isEnables)
+                ThreadHelper.JoinableTaskFactory.RunAsync(SetupIndentGuidesAsync);
         }
 
         private async Task CleanupIndentGuidesAsync()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
             foreach (var oldIndentGuide in _currentAdornments)
             {
                 _canvas.Children.Remove(oldIndentGuide);
@@ -73,16 +94,12 @@ namespace VSRAD.Syntax.Guide
         {
             try
             {
-                if (!_isEnables)
-                {
-                    await CleanupIndentGuidesAsync();
-                    return;
-                }
+                var firstVisibleLine = _textView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
+                var lastVisibleLine = _textView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
 
-                var firstVisibleLine = _wpfTextView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
-                var lastVisibleLine = _wpfTextView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
-
-                var newSpanElements = _currentParser.ListBlock.Where(block => block.BlockType != BlockType.Root && block.BlockType != BlockType.Comment && IsInVisualBuffer(block, firstVisibleLine, lastVisibleLine));
+                var newSpanElements = _documentAnalysis
+                    .LastParserResult
+                    .Where(b => b.Type != BlockType.Root && b.Type != BlockType.Comment && IsInVisualBuffer(b, firstVisibleLine, lastVisibleLine));
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
@@ -95,32 +112,37 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        private static bool IsInVisualBuffer(IBaseBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
+        private static bool IsInVisualBuffer(IBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
-            bool isOnStart = block.BlockSpan.Start <= lastVisibleLine.End;
-            bool isOnEnd = block.BlockSpan.End >= firstVisibleLine.End;
+            var blockStart = block.TokenStart.Start.GetPoint(firstVisibleLine.Snapshot);
+            var blockEnd = block.TokenEnd.GetEnd(firstVisibleLine.Snapshot);
 
-            bool isInBlockAll = (block.BlockSpan.Start <= firstVisibleLine.End) && (block.BlockSpan.End >= lastVisibleLine.Start);
+            bool isOnStart = blockStart <= lastVisibleLine.End;
+            bool isOnEnd = blockEnd >= firstVisibleLine.End;
+
+            bool isInBlockAll = (blockStart <= firstVisibleLine.End) && (blockEnd >= lastVisibleLine.Start);
 
             return isOnStart && isOnEnd || isInBlockAll;
         }
 
-        private IEnumerable<Line> GetUpdatedIndentGuides(IEnumerable<IBaseBlock> blocks, double horizontalOffset, double spaceWidth)
+        private IEnumerable<Line> GetUpdatedIndentGuides(IEnumerable<IBlock> blocks, double horizontalOffset, double spaceWidth)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             foreach (var block in blocks)
             {
-                var span = block.BlockActualSpan;
+                var pointStart = block.TokenStart.Start.GetPoint(_textView.TextSnapshot);
+                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.TokenEnd.GetEnd(_textView.TextSnapshot));
 
-                if (span.Snapshot != _wpfTextView.TextSnapshot)
-                    yield break;
-
-                var viewLineStart = _wpfTextView.GetTextViewLineContainingBufferPosition(span.Start);
-                var viewLineEnd = _wpfTextView.GetTextViewLineContainingBufferPosition(span.End);
+                var viewLineStart = _textView.GetTextViewLineContainingBufferPosition(pointStart);
+                var viewLineEnd = _textView.GetTextViewLineContainingBufferPosition(pointEnd);
 
                 if (viewLineStart.Equals(viewLineEnd)) continue;
 
-                var indentStart = block.SpaceStart;
+                var lineStart = pointStart.GetContainingLine();
+                var spaceText = new SnapshotSpan(lineStart.Start, pointStart).GetText();
+                var tabs = spaceText.Count(ch => ch == '\t');
+
+                var indentStart = (spaceText.Length - tabs) + tabs * _tabSize;
                 var leftOffset = indentStart * spaceWidth + horizontalOffset;
 
                 yield return new Line()
@@ -130,8 +152,8 @@ namespace VSRAD.Syntax.Guide
                     StrokeDashArray = new DoubleCollection() { 2 },
                     X1 = leftOffset,
                     X2 = leftOffset,
-                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom : _wpfTextView.ViewportTop,
-                    Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top : _wpfTextView.ViewportBottom,
+                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom : _textView.ViewportTop,
+                    Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top : _textView.ViewportBottom,
                 };
             }
         }
@@ -152,13 +174,6 @@ namespace VSRAD.Syntax.Guide
             {
                 _canvas.Children.Add(newIndentGuide);
             }
-        }
-
-        private Task UpdateIndentGuidesAsync()
-        {
-            _currentParser = _parserManager.ActualParser;
-
-            return _currentParser == null ? Task.CompletedTask : SetupIndentGuidesAsync();
         }
     }
 }

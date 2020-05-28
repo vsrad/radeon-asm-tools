@@ -61,6 +61,11 @@
       <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
       <Listener>True</Listener>
     </Antlr4>
+    <Antlr4 Include="RadAsm2.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
+      <Listener>True</Listener>
+    </Antlr4>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="RadAsmLexer.g4.cs" />

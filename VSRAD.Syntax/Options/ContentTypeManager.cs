@@ -20,6 +20,7 @@ namespace VSRAD.Syntax.Options
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly DTE _dte;
         private readonly IContentType _asm1ContentType;
         private readonly IContentType _asm2ContentType;
@@ -31,11 +32,13 @@ namespace VSRAD.Syntax.Options
             IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
             IContentTypeRegistryService contentTypeRegistryService,
             IFileExtensionRegistryService fileExtensionRegistryService,
-            OptionsProvider optionsEventProvider)
+            OptionsProvider optionsEventProvider,
+            DocumentAnalysisProvoder documentAnalysisProvoder)
         {
             _serviceProvider = serviceProvider;
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
             _fileExtensionRegistryService = fileExtensionRegistryService;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
             _dte = (DTE)serviceProvider.GetService(typeof(DTE));
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
@@ -114,13 +117,7 @@ namespace VSRAD.Syntax.Options
                 return;
 
             textBuffer.ChangeContentType(contentType, null);
-            var parserManager = textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-
-            if (contentType == _asm1ContentType)
-                parserManager.InitializeAsm1(textBuffer);
-
-            if (contentType == _asm2ContentType)
-                parserManager.InitializeAsm2(textBuffer);
+            _documentAnalysisProvoder.CreateDocumentAnalysis(textBuffer);
         }
     }
 }

@@ -15,12 +15,26 @@ using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {
+    public struct FunctionListToken
+    {
+        public RadAsmTokenType Type { get; }
+        public string Text { get; }
+        public int LineNumber { get; }
+
+        public FunctionListToken(RadAsmTokenType type, string text, int lineNumber)
+        {
+            Type = type;
+            Text = text;
+            LineNumber = lineNumber + 1;
+        }
+    }
+
     public partial class FunctionListControl : UserControl
     {
         private readonly OleMenuCommandService commandService;
         private bool isHideLineNumber = false;
         private SortState FunctionListSortState;
-        private IList<IBaseToken> Tokens;
+        private IList<FunctionListToken> Tokens;
         private ListViewItem lastHighlightedItem;
 
         public FunctionListControl(OleMenuCommandService service, OptionsProvider optionsProvider)
@@ -28,25 +42,19 @@ namespace VSRAD.Syntax.FunctionList
             var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
             service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
 
-            this.InitializeComponent();
-            this.commandService = service;
+            InitializeComponent();
+            commandService = service;
 
             FunctionListSortState = optionsProvider.SortOptions;
             optionsProvider.OptionsUpdated += SortOptionsUpdated;
         }
 
-        private void SortOptionsUpdated(OptionsProvider sender) =>
-            ChangeSortOptions(sender.SortOptions);
-
-        public async Task UpdateFunctionListAsync(IEnumerable<IBaseToken> newTokens)
+        private void SortOptionsUpdated(OptionsProvider sender)
         {
             try
             {
-                Tokens = newTokens.ToList();
-
-                var shownTokens = SearchByNameFilter(newTokens);
-
-                await AddTokensToViewAsync(shownTokens);
+                FunctionListSortState = sender.SortOptions;
+                ReloadFunctionList();
             }
             catch (Exception e)
             {
@@ -54,7 +62,23 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public async Task HighlightCurrentFunctionAsync(IBaseToken functionToken)
+        public Task UpdateFunctionListAsync(IEnumerable<FunctionListToken> newTokens)
+        {
+            try
+            {
+                Tokens = newTokens.ToList();
+                var shownTokens = SearchByNameFilter(newTokens);
+
+                return AddTokensToViewAsync(shownTokens);
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+                return Task.CompletedTask;
+            }
+        }
+
+        public async Task HighlightCurrentFunctionAsync(FunctionListToken token)
         {
             try
             {
@@ -63,7 +87,7 @@ namespace VSRAD.Syntax.FunctionList
                 if (lastHighlightedItem != null)
                     lastHighlightedItem.IsSelected = false;
 
-                lastHighlightedItem = (ListViewItem)tokens.ItemContainerGenerator.ContainerFromItem(functionToken);
+                lastHighlightedItem = (ListViewItem)tokens.ItemContainerGenerator.ContainerFromItem(token);
                 if (lastHighlightedItem != null)
                     lastHighlightedItem.IsSelected = true;
             }
@@ -73,22 +97,10 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private void ChangeSortOptions(SortState option)
-        {
-            try
-            {
-                FunctionListSortState = option;
-                ThreadHelper.JoinableTaskFactory.RunAsync(ReloadFunctionListAsync);
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
-        }
+        private void ReloadFunctionList() => 
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(Tokens));
 
-        private Task ReloadFunctionListAsync() => AddTokensToViewAsync(Tokens);
-
-        private async Task AddTokensToViewAsync(IEnumerable<IBaseToken> shownTokens)
+        private async Task AddTokensToViewAsync(IEnumerable<FunctionListToken> shownTokens)
         {
             switch (FunctionListSortState)
             {
@@ -99,7 +111,7 @@ namespace VSRAD.Syntax.FunctionList
 
                 case SortState.ByName:
                     shownTokens = shownTokens
-                        .OrderBy(token => token.TokenName, StringComparer.OrdinalIgnoreCase);
+                        .OrderBy(token => token.Text, StringComparer.OrdinalIgnoreCase);
                     break;
 
                 case SortState.ByLineDescending:
@@ -109,7 +121,7 @@ namespace VSRAD.Syntax.FunctionList
 
                 case SortState.ByNameDescending:
                     shownTokens = shownTokens
-                        .OrderByDescending(token => token.TokenName, StringComparer.OrdinalIgnoreCase);
+                        .OrderByDescending(token => token.Text, StringComparer.OrdinalIgnoreCase);
                     break;
                 default:
                     shownTokens = shownTokens
@@ -118,9 +130,11 @@ namespace VSRAD.Syntax.FunctionList
             }
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
             tokens.Items.Clear();
             foreach (var token in shownTokens)
                 tokens.Items.Add(token);
+
             ResizeFunctionListColumns();
         }
 
@@ -135,7 +149,7 @@ namespace VSRAD.Syntax.FunctionList
                     FunctionListSortState = SortState.ByLine;
                     break;
             }
-            ThreadHelper.JoinableTaskFactory.RunAsync(ReloadFunctionListAsync);
+            ReloadFunctionList();
         }
 
         private void ByName_Click(object sender, RoutedEventArgs e)
@@ -149,7 +163,7 @@ namespace VSRAD.Syntax.FunctionList
                     FunctionListSortState = SortState.ByName;
                     break;
             }
-            ThreadHelper.JoinableTaskFactory.RunAsync(ReloadFunctionListAsync);
+            ReloadFunctionList();
         }
 
         private void FunctionsName_MouseDoubleClick(object sender, MouseButtonEventArgs e) => GoToSelectedItem();
@@ -176,14 +190,8 @@ namespace VSRAD.Syntax.FunctionList
             ResizeFunctionListColumns();
         }
 
-        private IEnumerable<IBaseToken> SearchByNameFilter(IEnumerable<IBaseToken> newTokens)
-        {
-            if (newTokens == null)
-                return Enumerable.Empty<IBaseToken>();
-
-            return newTokens
-                .Where(token => token.TokenName.IndexOf(Search.Text, StringComparison.OrdinalIgnoreCase) >= 0);
-        }
+        private IEnumerable<FunctionListToken> SearchByNameFilter(IEnumerable<FunctionListToken> newTokens) =>
+            newTokens.Where(t => t.Text.Contains(Search.Text));
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -194,25 +202,27 @@ namespace VSRAD.Syntax.FunctionList
         private void ResizeFunctionListColumns()
         {
             if (isHideLineNumber)
-                this.functionsGridView.Columns[0].Width = 0;
+                functionsGridView.Columns[0].Width = 0;
             else
-                this.functionsGridView.Columns[0].Width = Double.NaN;
+                functionsGridView.Columns[0].Width = Double.NaN;
 
-            this.functionsGridView.Columns[1].Width = 0;
-            this.functionsGridView.Columns[1].Width = Double.NaN;
+            functionsGridView.Columns[1].Width = 0;
+            functionsGridView.Columns[1].Width = Double.NaN;
 
-            this.tokens.UpdateLayout();
-            this.LineNumberButtonColumn.Width = new GridLength(this.functionsGridView.Columns[0].ActualWidth);
+            tokens.UpdateLayout();
+            LineNumberButtonColumn.Width = new GridLength(this.functionsGridView.Columns[0].ActualWidth);
         }
 
-        public void OnClearSearchField() => this.Search.Text = "";
+        public void OnClearSearchField() => Search.Text = "";
 
         public void GoToSelectedItem()
         {
             try
             {
-                var token = (IBaseToken)tokens.SelectedItem;
-                FunctionList.Instance.GetActiveTextView().ChangeCaretPosition(token.Line);
+                var token = (FunctionListToken)tokens.SelectedItem;
+                FunctionList.Instance
+                    .GetActiveTextView()
+                    .ChangeCaretPosition(token.LineNumber - 1);
             }
             catch (Exception e)
             {

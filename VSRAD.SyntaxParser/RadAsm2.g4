@@ -1,59 +1,33 @@
-﻿grammar RadAsm;
+﻿grammar RadAsm2;
 
 function
-    : MACRO ENDM
+    : FUNCTION END
     ;
 
 /* Keywords */
-TEXT    : '.text'       ;
-SET     : '.set'        ;
-BYTE    : '.byte'       ;
-SHORT   : '.short'      ;
-LONG    : '.long'       ;
-EXITM   : '.exitm'      ;
-INCLUDE : '.include'    ;
-ALTMAC  : '.altmacro'   ;
-NOALTMAC: '.noaltmacro' ;
-LOCAL   : '.local'      ;
-LINE    : '.line'       ;
-SIZE    : '.size'       ;
-LN      : '.ln'         ;
-NOPS    : '.nops'       ;
-ERROR   : '.error'      ;
-END     : '.end'        ;
+VAR     : 'var' ;
+VMCNT   : 'vmcnt' ;
+EXPCNT  : 'expcnt' ;
+LGKMCNT : 'lgkmcnt' ;
+HWREG   : 'hwreg' ;
+SENDMSG : 'sendmsg' ;
+ASIC    : 'asic' ;
+TYPE    : 'type' ;
+ASSERT  : 'assert' ;
 
+FUNCTION: 'function' ;
 
-MACRO   : '.macro' ;
-ENDM    : '.endm' ;
+IF      : 'if' ;
+ELSIF   : 'elsif' ;
+ELSE    : 'else' ;
 
-IF      : '.if'         ;
-IFDEF   : '.ifdef'      ;
-IFNDEF  : '.ifndef'     ;
-IFNOTDEF: '.ifnotdef'   ;
-IFB     : '.ifb'        ;
-IFC     : '.ifc'        ;
-IFEQ    : '.ifeq'       ;
-IFEQS   : '.ifeqs'      ;
-IFGE    : '.ifge'       ;
-IFGT    : '.ifgt'       ;
-IFLE    : '.ifle'       ;
-IFLT    : '.iflt'       ;
-IFNB    : '.ifnb'       ;
-IFNC    : '.ifnc'       ;
-IFNE    : '.ifne'       ;
-IFNES   : '.ifnes'      ;
+FOR     : 'for' ;
+WHILE   : 'while' ;
 
-ELSEIF  : '.elseif'     ;
-ELSE    : '.else'       ;
+END     : 'end' ;
 
-ENDIF   : '.endif'      ;
-
-REPT    : '.rept'       ;
-ENDR    : '.endr'       ;
-IRP     : '.irp'        ;
-IRPC    : '.irpc'       ;
-DEF     : '.def'        ;
-ENDEF   : '.endef'      ;
+REPEAT  : 'repeat' ;
+UNTIL   : 'until' ;
 
 /* Preprocessor Keywords */
 PP_INCLUDE  : '#include' ;
@@ -75,37 +49,6 @@ PP_ELSIF    : '#elsif'   ;
 PP_ELIF     : '#elif'    ;
 
 PP_ENDIF    : '#endif'   ;
-
-/* HSA Keywords */
-HSA_CO_VERSION      : '.hsa_code_object_version' ;
-HSA_CO_ISA          : '.hsa_code_object_isa'     ;
-AMD_HSA_KERNEL      : '.amdgpu_hsa_kernel'       ;
-AMD_KERNEL_CODE     : '.amd_kernel_code_t'       ;
-AMD_END_KERNEL_CODE : '.end_amd_kernel_code_t'   ;
-
-STARTIF
-    : IF
-    | IFDEF
-    | IFNDEF
-    | IFNOTDEF
-    | IFB
-    | IFC
-    | IFEQ
-    | IFEQS
-    | IFGE
-    | IFGT
-    | IFLE
-    | IFLT
-    | IFNB
-    | IFNC
-    | IFNE
-    | IFNES
-    ;
-
-MIDDLEIF
-    : ELSEIF
-    | ELSE
-    ;
 
 /* Expression-operator symbols */
 EQ      : '='   ;

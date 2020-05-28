@@ -1,4 +1,4 @@
-﻿namespace VSRAD.Syntax.Parser
+﻿namespace VSRAD.Syntax.Parser.Helper
 {
     unsafe internal sealed class BitHelper
     {   // should not be serialized

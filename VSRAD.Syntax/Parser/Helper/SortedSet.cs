@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace VSRAD.Syntax.Parser
+namespace VSRAD.Syntax.Parser.Helper
 {
     //
     // A binary search tree is a red-black tree if it satifies the following red-black properties:
@@ -38,11 +38,12 @@ namespace VSRAD.Syntax.Parser
     [DebuggerDisplay("Count = {Count}")]
     public class SortedSet<T> : ISet<T>, ICollection<T>, ICollection, IReadOnlyCollection<T>
     {
+        public int Version { get; private set; }
+
         #region local variables/constants
         private Node _root;
         private readonly IComparer<T> _comparer;
         private int _count;
-        private int _version;
         private Object _syncRoot;
 
         internal const int StackAllocThreshold = 100;
@@ -361,7 +362,7 @@ namespace VSRAD.Syntax.Parser
             {   // empty tree
                 _root = new Node(item, false);
                 _count = 1;
-                _version++;
+                Version++;
                 return true;
             }
 
@@ -377,7 +378,7 @@ namespace VSRAD.Syntax.Parser
 
             //even if we don't actually add to the set, we may be altering its structure (by doing rotations
             //and such). so update version to disable any enumerators/subsets working on it
-            _version++;
+            Version++;
 
 
             int order = 0;
@@ -460,7 +461,7 @@ namespace VSRAD.Syntax.Parser
 
             //even if we don't actually remove from the set, we may be altering its structure (by doing rotations
             //and such). so update version to disable any enumerators/subsets working on it
-            _version++;
+            Version++;
 
             Node current = _root;
             Node parent = null;
@@ -602,7 +603,7 @@ namespace VSRAD.Syntax.Parser
         {
             _root = null;
             _count = 0;
-            ++_version;
+            ++Version;
         }
 
 
@@ -938,7 +939,7 @@ namespace VSRAD.Syntax.Parser
 
         internal void UpdateVersion()
         {
-            ++_version;
+            ++Version;
         }
 
 
@@ -1109,7 +1110,7 @@ namespace VSRAD.Syntax.Parser
                 SortedSet<T> dummy = new SortedSet<T>(s, _comparer);
                 _root = dummy._root;
                 _count = dummy._count;
-                _version++;
+                Version++;
                 return;
             }
 
@@ -1160,7 +1161,7 @@ namespace VSRAD.Syntax.Parser
 
                 _root = SortedSet<T>.ConstructRootFromSortedArray(merged, 0, c - 1, null);
                 _count = c;
-                _version++;
+                Version++;
             }
             else
             {
@@ -1306,7 +1307,7 @@ namespace VSRAD.Syntax.Parser
 
                 _root = ConstructRootFromSortedArray(merged, 0, c - 1, null);
                 _count = c;
-                _version++;
+                Version++;
             }
             else
             {
@@ -1909,7 +1910,7 @@ namespace VSRAD.Syntax.Parser
 #if DEBUG
             internal override bool versionUpToDate()
             {
-                return (_version == _underlying._version);
+                return (Version == _underlying.Version);
             }
 #endif
 
@@ -1923,7 +1924,7 @@ namespace VSRAD.Syntax.Parser
                 _uBoundActive = upperBoundActive;
                 _root = _underlying.FindRange(_min, _max, _lBoundActive, _uBoundActive); // root is first element within range                                
                 _count = 0;
-                _version = -1;
+                Version = -1;
                 VersionCheckImpl();
             }
 
@@ -1988,7 +1989,7 @@ namespace VSRAD.Syntax.Parser
                 }
                 _root = null;
                 _count = 0;
-                _version = _underlying._version;
+                Version = _underlying.Version;
             }
 
 
@@ -2138,10 +2139,10 @@ namespace VSRAD.Syntax.Parser
             private void VersionCheckImpl()
             {
                 Debug.Assert(_underlying != null, "Underlying set no longer exists");
-                if (_version != _underlying._version)
+                if (Version != _underlying.Version)
                 {
                     _root = _underlying.FindRange(_min, _max, _lBoundActive, _uBoundActive);
-                    _version = _underlying._version;
+                    Version = _underlying.Version;
                     _count = 0;
                     InOrderTreeWalk(delegate (Node n) { _count++; return true; });
                 }
@@ -2232,7 +2233,7 @@ namespace VSRAD.Syntax.Parser
                 //TODO: more elegant way to ensure failfast on concurrency failures
                 _tree.VersionCheck();
 
-                _version = _tree._version;
+                _version = _tree.Version;
 
                 // 2lg(n + 1) is the maximum height
                 _stack = new Stack<SortedSet<T>.Node>(2 * (int)SortedSet<T>.log2(set.Count + 1));
@@ -2247,7 +2248,7 @@ namespace VSRAD.Syntax.Parser
                 //this is a hack to make sure that the underlying subset has not been changed since
                 //TODO: more elegant way to ensure failfast on concurrency failures
                 _tree.VersionCheck();
-                _version = _tree._version;
+                _version = _tree.Version;
 
                 // 2lg(n + 1) is the maximum height
                 _stack = new Stack<SortedSet<T>.Node>(2 * (int)SortedSet<T>.log2(set.Count + 1));
@@ -2287,7 +2288,7 @@ namespace VSRAD.Syntax.Parser
                 //TODO: more elegant way to ensure failfast on concurrency failures
                 _tree.VersionCheck();
 
-                if (_version != _tree._version)
+                if (_version != _tree.Version)
                 {
                     throw new InvalidOperationException();
                 }
@@ -2361,7 +2362,7 @@ namespace VSRAD.Syntax.Parser
 
             internal void Reset()
             {
-                if (_version != _tree._version)
+                if (_version != _tree.Version)
                 {
                     throw new InvalidOperationException();
                 }

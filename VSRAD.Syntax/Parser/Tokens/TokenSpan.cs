@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 
-namespace VSRAD.Syntax.Parser
+namespace VSRAD.Syntax.Parser.Tokens
 {
     public struct TokenSpan
     {

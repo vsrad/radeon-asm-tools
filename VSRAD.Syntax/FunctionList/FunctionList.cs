@@ -1,8 +1,6 @@
-﻿using VSRAD.Syntax.Parser;
-using EnvDTE;
+﻿using EnvDTE;
 using System;
 using System.ComponentModel.Design;
-using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
@@ -13,6 +11,10 @@ using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
 using System.Linq;
 using VSRAD.Syntax.Options;
+using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.Parser;
+using System.Collections.Generic;
+using VSRAD.Syntax.Parser.Blocks;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -21,70 +23,16 @@ namespace VSRAD.Syntax.FunctionList
     {
         private const string CaptionName = "Function list";
 
-        public static FunctionList Instance { get; private set; }
         private IVsTextManager _textManager;
         private IVsEditorAdaptersFactoryService _editorAdaptorFactory;
-        private DTE _dte;
-        private BaseParser parser;
-        private FunctionListControl FunctionListControl => (FunctionListControl)Content;
+        private DocumentAnalysisProvoder _documentAnalysisProvider;
+
+        public static FunctionList Instance { get; private set; }
+        public FunctionListControl FunctionListControl => (FunctionListControl)Content;
 
         public FunctionList() : base(null)
         {
-            this.Caption = CaptionName;
-        }
-
-        protected override void Initialize()
-        {
-            _textManager = GetService(typeof(VsTextManagerClass)) as IVsTextManager;
-            _dte = GetService(typeof(DTE)) as DTE;
-            _editorAdaptorFactory = (this.Package as Package).GetMEFComponent<IVsEditorAdaptersFactoryService>();
-            var optionsEventProvider = (this.Package as Package).GetMEFComponent<OptionsProvider>();
-
-            _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
-
-            var commandService = (OleMenuCommandService)GetService(typeof(IMenuCommandService));
-            Content = new FunctionListControl(commandService, optionsEventProvider);
-
-            try
-            {
-                var activeView = GetActiveTextView();
-                var parserManager = activeView.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(parserManager.ActualParser));
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
-
-            Instance = this;
-        }
-
-        private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)
-        {
-            if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
-            {
-                var openWindowPath = Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
-
-                if (VsShellUtilities.IsDocumentOpen(
-                  this,
-                  openWindowPath,
-                  Guid.Empty,
-                  out var uiHierarchy,
-                  out var itemID,
-                  out var windowFrame))
-                {
-                    var view = VsShellUtilities.GetTextView(windowFrame);
-                    if (view.GetBuffer(out var lines) == 0)
-                    {
-                        if (lines is IVsTextBuffer buffer)
-                        {
-                            var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
-                            var parserManager = textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-                            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(parserManager.ActualParser));
-                        }
-                    }
-                }
-            }
+            Caption = CaptionName;
         }
 
         public IWpfTextView GetActiveTextView()
@@ -96,14 +44,78 @@ namespace VSRAD.Syntax.FunctionList
             return _editorAdaptorFactory.GetWpfTextView(textViewCurrent);
         }
 
-        private Task UpdateFunctionListAsync(object sender)
+        protected override void Initialize()
+        {
+            _textManager = GetService(typeof(VsTextManagerClass)) as IVsTextManager;
+            _editorAdaptorFactory = Syntax.Package.Instance.GetMEFComponent<IVsEditorAdaptersFactoryService>();
+            _documentAnalysisProvider = Syntax.Package.Instance.GetMEFComponent<DocumentAnalysisProvoder>();
+
+            var optionsEventProvider = Syntax.Package.Instance.GetMEFComponent<OptionsProvider>();
+            var commandService = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+            Content = new FunctionListControl(commandService, optionsEventProvider);
+
+            Instance = this;
+            UpdateFunctionList(GetActiveTextView()?.TextBuffer);
+
+            var dte = GetService(typeof(DTE)) as DTE;
+            dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+        }
+
+        private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)
+        {
+            if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
+            {
+                var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
+                if (VsShellUtilities.IsDocumentOpen(
+                  this,
+                  openWindowPath,
+                  Guid.Empty,
+                  out _,
+                  out _,
+                  out var windowFrame))
+                {
+                    var view = VsShellUtilities.GetTextView(windowFrame);
+                    if (view.GetBuffer(out var lines) == 0)
+                    {
+                        if (lines is IVsTextBuffer buffer)
+                        {
+                            var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
+                            if (textBuffer.CurrentSnapshot.IsRadeonAsmContentType())
+                                UpdateFunctionList(textBuffer);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void UpdateFunctionList(ITextBuffer buffer)
         {
             try
             {
-                parser = (BaseParser)sender;
-                var updatedFunctions = parser.GetFunctionTokens();
-                var updatedLabels = parser.GetLabelTokens();
-                return FunctionListControl.UpdateFunctionListAsync(updatedFunctions.Concat(updatedLabels));
+                var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(buffer);
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult));
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+            }
+        }
+
+        private Task UpdateFunctionListAsync(ITextSnapshot version, IReadOnlyList<IBlock> blocks)
+        {
+            try
+            {
+                var functionNames = blocks.GetFunctions().Select(b => b.Name);
+
+                var labels = blocks
+                    .SelectMany(b => b.Tokens)
+                    .Where(t => t.Type == Parser.Tokens.RadAsmTokenType.Label);
+
+                var functionListTokens = functionNames
+                    .Concat(labels)
+                    .Select(t => new FunctionListToken(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
+
+                return FunctionListControl.UpdateFunctionListAsync(functionListTokens);
             }
             catch (Exception e)
             {
@@ -119,24 +131,48 @@ namespace VSRAD.Syntax.FunctionList
             if (line == null)
                 return Task.CompletedTask;
 
-            var function = parser.GetFunction(line);
-            return function == null ? Task.CompletedTask : FunctionListControl.HighlightCurrentFunctionAsync(function.FunctionToken);
+            var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(textView.TextBuffer);
+            var functions = documentAnalysis.LastParserResult.GetFunctions();
+            var currentFunction = GetFunctionBy(functions, line);
+
+            if (currentFunction == null)
+            {
+                return Task.CompletedTask;
+            }
+            else
+            {
+                var functionToken = currentFunction.Name;
+                var text = functionToken.TrackingToken.GetText(documentAnalysis.CurrentSnapshot);
+                var lineNumber = functionToken
+                    .TrackingToken.Start
+                    .GetPoint(documentAnalysis.CurrentSnapshot)
+                    .GetContainingLine().LineNumber;
+
+                return FunctionListControl.HighlightCurrentFunctionAsync(new FunctionListToken(functionToken.Type, text, lineNumber));
+            }
         }
 
-        public static Task TryUpdateFunctionListAsync(object sender)
+        public static void TryHighlightCurrentFunction(ITextView textView)
         {
             if (Instance != null)
-                return Instance.UpdateFunctionListAsync(sender);
-
-            return Task.CompletedTask;
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => Instance.HighlightCurrentFunctionAsync(textView));
         }
 
-        public static Task TryHighlightCurrentFunctionAsync(CaretPositionChangedEventArgs args)
+        public static void TryUpdateFunctionList(ITextSnapshot version, IReadOnlyList<IBlock> blocks)
         {
             if (Instance != null)
-                return Instance.HighlightCurrentFunctionAsync(args.TextView);
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => Instance.UpdateFunctionListAsync(version, blocks));
+        }
 
-            return Task.CompletedTask;
+        private static FunctionBlock GetFunctionBy(IEnumerable<FunctionBlock> blocks, ITextSnapshotLine line)
+        {
+            foreach (var func in blocks)
+            {
+                if (func.Scope.GetSpan(line.Snapshot).Contains(line.Start))
+                    return func;
+            }
+
+            return null;
         }
     }
 }

@@ -4,10 +4,10 @@
     partial class RadAsmLexer : Lexer
     {
         public RadAsmLexer(string input) : this(new AntlrInputStream(input)) { }
+    }
 
-        private bool isAt(int pos)
-        {
-            return _input.Index == pos;
-        }
+    partial class RadAsm2Lexer : Lexer
+    {
+        public RadAsm2Lexer(string input) : this(new AntlrInputStream(input)) { }
     }
 }

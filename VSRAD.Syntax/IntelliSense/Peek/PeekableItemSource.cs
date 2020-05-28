@@ -1,20 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
+using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekableItemSource : IPeekableItemSource
     {
         private readonly IPeekResultFactory _peekResultFactory;
+        private readonly ITextDocumentFactoryService _textDocumentFactory;
         private readonly NavigationTokenService _navigationTokenService;
 
-        public PeekableItemSource(
-            IPeekResultFactory peekResultFactory,
+        public PeekableItemSource(IPeekResultFactory peekResultFactory,
+            ITextDocumentFactoryService textDocumentFactory,
             NavigationTokenService definitionService)
         {
             _peekResultFactory = peekResultFactory ?? throw new ArgumentNullException(nameof(peekResultFactory));
+            _textDocumentFactory = textDocumentFactory ?? throw new ArgumentNullException(nameof(textDocumentFactory));
             _navigationTokenService = definitionService ?? throw new ArgumentNullException(nameof(peekResultFactory));
         }
 
@@ -40,8 +44,8 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             {
                 var extent = NavigationTokenService.GetTextExtentOnCursor(view);
                 var token = _navigationTokenService.GetNaviationItem(extent, false);
-                if (token != null)
-                    return new PeekableItem(peekResultFactory, token);
+                if (token != AnalysisToken.Empty)
+                    return new PeekableItem(peekResultFactory, _textDocumentFactory, extent.Span.Snapshot, token);
             }
             return null;
         }
