@@ -37,6 +37,8 @@
                     return "local variable";
                 case RadAsmTokenType.FunctionName:
                     return "function";
+                case RadAsmTokenType.Instruction:
+                    return "instruction";
                 default:
                     return "unknown";
             }
