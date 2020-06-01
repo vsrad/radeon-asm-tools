@@ -1,17 +1,15 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
 using VSRAD.Package.Server;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class MacroEditManager
     {
         private readonly UnconfiguredProject _unconfiguredProject;
@@ -28,9 +26,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public async Task<string> EditAsync(string macroName, string currentValue, Options.ProfileOptions profileOptions)
         {
-            var configuredProject = await _unconfiguredProject.GetSuggestedConfiguredProjectAsync();
-            var propertiesProvider = configuredProject.GetService<IProjectPropertiesProvider>("ProjectPropertiesProvider");
-            var projectProperties = propertiesProvider.GetCommonProperties();
+            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            var projectProperties = configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
             var transients = new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0));
 
             var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(async () =>

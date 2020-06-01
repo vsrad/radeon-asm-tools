@@ -27,15 +27,15 @@ namespace VSRAD.Package.Utils
         }
 
         [DllImport("shlwapi.dll")]
-        private static extern int ColorHLSToRGB(int h, int l, int s);
+        private static extern int ColorHLSToRGB(ushort h, ushort l, ushort s);
 
         [DllImport("shlwapi.dll")]
-        private static extern void ColorRGBToHLS(int win32rgb, ref int h, ref int l, ref int s);
+        private static extern void ColorRGBToHLS(int win32rgb, ref ushort h, ref ushort l, ref ushort s);
 
-        public static void ToHls(this Color c, ref int h, ref int l, ref int s) =>
+        public static void ToHls(this Color c, ref ushort h, ref ushort l, ref ushort s) =>
             ColorRGBToHLS(ColorTranslator.ToWin32(c), ref h, ref l, ref s);
 
-        public static Color FromHls(int h, int l, int s) =>
+        public static Color FromHls(ushort h, ushort l, ushort s) =>
             ColorTranslator.FromWin32(ColorHLSToRGB(h, l, s));
     }
 }

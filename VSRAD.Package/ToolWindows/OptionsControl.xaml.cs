@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -19,11 +20,13 @@ namespace VSRAD.Package.ToolWindows
             public ProjectOptions Options { get; }
             public IReadOnlyList<string> ProfileNames => Options.Profiles.Keys.ToList();
 
-            private string _disconnectLabel = "Disconnected";
-            public string DisconnectLabel { get => _disconnectLabel; set => SetField(ref _disconnectLabel, value); }
+            public string ConnectionInfo => _channel.ConnectionOptions.ToString();
 
-            private string _connectionInfo = "";
-            public string ConnectionInfo { get => _connectionInfo; set => SetField(ref _connectionInfo, value); }
+            public string DisconnectLabel
+            {
+                get => _channel.ConnectionState == ClientState.Connected ? "Disconnect"
+                     : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
+            }
 
             public ICommand DisconnectCommand { get; }
 
@@ -35,15 +38,13 @@ namespace VSRAD.Package.ToolWindows
                 Options.Profiles.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(Options.Profiles.Keys)) RaisePropertyChanged(nameof(ProfileNames)); };
                 _channel = channel;
                 _channel.ConnectionStateChanged += ConnectionStateChanged;
-                DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: false);
-                ConnectionStateChanged();
+                DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
             }
 
             private void ConnectionStateChanged()
             {
-                DisconnectLabel = _channel.ConnectionState == ClientState.Connected ? "Disconnect"
-                                : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
-                ConnectionInfo = _channel.ConnectionOptions.ToString();
+                RaisePropertyChanged(nameof(ConnectionInfo));
+                RaisePropertyChanged(nameof(DisconnectLabel));
                 ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;
             }
         }
@@ -54,8 +55,8 @@ namespace VSRAD.Package.ToolWindows
         public OptionsControl(IToolWindowIntegration integration)
         {
             _projectOptions = integration.ProjectOptions;
-            _macroEditor = integration.GetExport<MacroEditManager>();
-            DataContext = new Context(integration.ProjectOptions, integration.GetExport<ICommunicationChannel>());
+            _macroEditor = integration.MacroEditor;
+            DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel);
             InitializeComponent();
         }
 

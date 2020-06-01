@@ -26,7 +26,11 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
             var triggerToken = GetToken(triggerLocation);
-            if (triggerToken == TrackingToken.Empty 
+            if (triggerToken == TrackingToken.Empty
+                || trigger.Reason == CompletionTriggerReason.Backspace
+                || trigger.Reason == CompletionTriggerReason.Deletion
+                || trigger.Character == '\n'
+                || trigger.Character == ' '
                 || triggerToken.Type == DocumentAnalysis.LINE_COMMENT 
                 || triggerToken.Type == DocumentAnalysis.BLOCK_COMMENT)
                 return CompletionStartData.DoesNotParticipateInCompletion;

@@ -27,7 +27,7 @@ namespace VSRAD.Package.BuildTools
     }
 
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class BuildToolsServer
     {
         public const string ErrorPreprocessorFileNotCreated = "Preprocessor output file is missing.";

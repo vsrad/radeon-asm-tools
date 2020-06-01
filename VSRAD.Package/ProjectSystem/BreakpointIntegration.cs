@@ -13,7 +13,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Package.ProjectSystem
 {
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class BreakpointIntegration
     {
         private static readonly TimeSpan _pollDelay = new TimeSpan(250 * TimeSpan.TicksPerMillisecond);
@@ -33,6 +33,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Initialize(ProjectOptions options)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             SetSingleActiveBreakpointMode(options.DebuggerOptions.SingleActiveBreakpoint);
             options.DebuggerOptions.PropertyChanged += (s, e) =>
             {
@@ -49,7 +50,8 @@ namespace VSRAD.Package.ProjectSystem
                 _pollCts = new CancellationTokenSource();
                 var dte = _serviceProvider.GetService(typeof(SDTE)) as EnvDTE.DTE;
                 Assumes.Present(dte);
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => PollBreakpointsAsync(dte.Debugger, _pollCts.Token));
+                var debuggerDte = dte.Debugger;
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => PollBreakpointsAsync(debuggerDte, _pollCts.Token));
             }
             else
             {

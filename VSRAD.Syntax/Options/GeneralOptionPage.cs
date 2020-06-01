@@ -25,10 +25,10 @@ namespace VSRAD.Syntax.Options
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
-            AutocompleteInstructions = true;
-            AutocompleteFunctions = true;
-            AutocompleteLabels = true;
-            AutocompleteVariables = true;
+            AutocompleteInstructions = false;
+            AutocompleteFunctions = false;
+            AutocompleteLabels = false;
+            AutocompleteVariables = false;
     }
 
         public GeneralOptionPage.SortState SortOptions;

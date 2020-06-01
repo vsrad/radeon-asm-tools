@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -17,7 +16,7 @@ namespace VSRAD.Package.Server
         private readonly IFileSynchronizationManager _fileSynchronizationManager;
         private readonly RemoteCommandExecutor _remoteExecutor;
 
-        private Stopwatch _timer;
+        private readonly Stopwatch _timer;
 
         public DebugSession(
             IProject project,
@@ -75,7 +74,7 @@ namespace VSRAD.Package.Server
 
             if (!string.IsNullOrEmpty(options.StatusStringFilePath))
             {
-                var statusStringResult = await GetStatusString(initStatusStringTimestamp, options.StatusStringFile);
+                var statusStringResult = await GetStatusStringAsync(initStatusStringTimestamp, options.StatusStringFile);
                 if (!statusStringResult.TryGetResult(out statusString, out error))
                     return error;
             }
@@ -103,7 +102,7 @@ namespace VSRAD.Package.Server
             return Array.AsReadOnly(validWatches);
         }
 
-        private async Task<Result<string>> GetStatusString(DateTime initStatusStringFileTimeStamp, Options.OutputFile statusStringFile)
+        private async Task<Result<string>> GetStatusStringAsync(DateTime initStatusStringFileTimeStamp, Options.OutputFile statusStringFile)
         {
             var statusStringFileMetadata = await GetMetadataAsync(statusStringFile).ConfigureAwait(false);
             if (statusStringFileMetadata.Status != FetchStatus.Successful)

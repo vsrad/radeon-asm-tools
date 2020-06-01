@@ -5,7 +5,7 @@ using System.ComponentModel.Composition;
 namespace VSRAD.Package
 {
     [Export]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal partial class ProjectProperties : StronglyTypedPropertyAccess
     {
         [ImportingConstructor]

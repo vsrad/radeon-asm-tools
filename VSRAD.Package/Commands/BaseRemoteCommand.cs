@@ -1,37 +1,42 @@
 ﻿using EnvDTE;
 using Microsoft;
-using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
-using System.Collections.Immutable;
 using System.IO;
-using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    public abstract class BaseRemoteCommand : BaseCommand
+    public abstract class BaseRemoteCommand : ICommandHandler
     {
         protected readonly SVsServiceProvider _serviceProvider;
         protected readonly int _commandId;
 
         private IVsStatusbar _statusBar;
 
-        protected BaseRemoteCommand(int commandId, SVsServiceProvider serviceProvider)
+        public Guid CommandSet { get; }
+
+        protected BaseRemoteCommand(Guid commandSet, int commandId, SVsServiceProvider serviceProvider)
         {
+            CommandSet = commandSet;
             _commandId = commandId;
             _serviceProvider = serviceProvider;
         }
 
-        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public OLECMDF GetCommandStatus(uint commandId)
         {
-            var status = commandId == _commandId
-                ? new CommandStatusResult(true, commandText, CommandStatus.Supported | CommandStatus.Enabled)
-                : CommandStatusResult.Unhandled;
-            return Task.FromResult(status);
+            if (commandId == _commandId)
+                return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
+            return 0;
         }
+
+        public abstract Task RunAsync();
+
+        public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut) =>
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunAsync);
 
         protected async Task SetStatusBarTextAsync(string text)
         {

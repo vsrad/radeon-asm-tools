@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
@@ -109,9 +108,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         private static Color DarkenColor(Color c, float by)
         {
-            int h = 0, l = 0, s = 0;
+            ushort h = 0, l = 0, s = 0;
             c.ToHls(ref h, ref l, ref s);
-            l = (int)(l * (1 - by));
+            l = (ushort)(l * (1 - by));
             return FromHls(h, l, s);
         }
     }

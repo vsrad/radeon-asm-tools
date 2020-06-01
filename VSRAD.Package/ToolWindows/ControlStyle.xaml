@@ -58,6 +58,10 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
         </Setter>
     </Style>
 
+    <Style TargetType="{x:Type ContentControl}">
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+    </Style>
+
     <Style TargetType="{x:Type Label}">
         <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
     </Style>

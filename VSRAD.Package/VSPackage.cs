@@ -1,9 +1,13 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using VSRAD.Deborgar;
+using VSRAD.Package.Commands;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Registry;
 using VSRAD.Package.ToolWindows;
 using Task = System.Threading.Tasks.Task;
@@ -17,12 +21,12 @@ namespace VSRAD.Package
         })]
     [ProvideDebugPortSupplier(Deborgar.Constants.RemotePortSupplierName, Deborgar.Constants.RemotePortSupplierId,
         typeof(Deborgar.Remote.RemotePortSupplier))]
-    [ProvideToolWindow(typeof(ToolWindows.VisualizerWindow),
+    [ProvideToolWindow(typeof(VisualizerWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
-    [ProvideToolWindow(typeof(ToolWindows.OptionsWindow),
+    [ProvideToolWindow(typeof(OptionsWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
-    [ProvideToolWindow(typeof(ToolWindows.EvaluateSelectedWindow),
-        Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
+    //[ProvideToolWindow(typeof(ToolWindows.EvaluateSelectedWindow),
+    //    Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
@@ -34,7 +38,7 @@ namespace VSRAD.Package
     [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
     [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
     [Guid(Constants.PackageId)]
-    public sealed class VSPackage : AsyncPackage
+    public sealed class VSPackage : AsyncPackage, IOleCommandTarget
     {
         public static VisualizerWindow VisualizerToolWindow { get; private set; }
         public static OptionsWindow OptionsToolWindow { get; private set; }
@@ -47,6 +51,8 @@ namespace VSRAD.Package
             set => _taskFactoryOverride = value;
         }
 
+        private ICommandRouter _commandRouter;
+
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             await base.InitializeAsync(cancellationToken, progress);
@@ -58,25 +64,39 @@ namespace VSRAD.Package
 #endif
         }
 
-        public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration)
+        public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration, ICommandRouter commandRouter)
         {
+            _commandRouter = commandRouter;
+
             VisualizerToolWindow = (VisualizerWindow)await FindToolWindowAsync(
                 typeof(VisualizerWindow), 0, true, CancellationToken.None);
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
                 typeof(OptionsWindow), 0, true, CancellationToken.None);
-            EvaluateSelectedWindow = (EvaluateSelectedWindow)await FindToolWindowAsync(
-                typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
+            //EvaluateSelectedWindow = (EvaluateSelectedWindow)await FindToolWindowAsync(
+            //    typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
 
             await TaskFactory.SwitchToMainThreadAsync();
             VisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(toolWindowIntegration);
-            EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
+            //EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
 
         public static void ProjectUnloaded()
         {
             VisualizerToolWindow.OnProjectUnloaded();
             OptionsToolWindow.OnProjectUnloaded();
+        }
+
+        int IOleCommandTarget.QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            return _commandRouter?.QueryStatus(ref pguidCmdGroup, cCmds, prgCmds, pCmdText) ?? VSConstants.S_OK;
+        }
+
+        int IOleCommandTarget.Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            return _commandRouter?.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut) ?? VSConstants.S_OK;
         }
     }
 }

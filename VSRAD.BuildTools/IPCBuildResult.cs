@@ -26,6 +26,8 @@ namespace VSRAD.BuildTools
                        Line == message.Line &&
                        Column == message.Column;
             }
+
+            public override int GetHashCode() => (Kind, Text, SourceFile, Line, Column).GetHashCode();
         }
 
         public bool Skipped { get; set; }

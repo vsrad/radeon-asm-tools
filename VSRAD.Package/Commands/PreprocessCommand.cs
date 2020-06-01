@@ -7,15 +7,15 @@ using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.PreprocessCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [Export(typeof(ICommandHandler))]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class PreprocessCommand : BaseBuildWithPreviewCommand
     {
         private readonly IProject _project;
 
         [ImportingConstructor]
         public PreprocessCommand(IProject project, BuildToolsServer buildServer, SVsServiceProvider serviceProvider)
-            : base(BuildSteps.Preprocessor, buildServer, Constants.PreprocessCommandId, serviceProvider)
+            : base(Constants.PreprocessCommandSet, Constants.PreprocessCommandId, BuildSteps.Preprocessor, buildServer, serviceProvider)
         {
             _project = project;
         }

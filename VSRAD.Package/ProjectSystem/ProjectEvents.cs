@@ -16,7 +16,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IProjectEvents))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectEvents : IProjectEvents
     {
         public event OnSourceFileChange SourceFileChanged;
