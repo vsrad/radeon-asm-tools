@@ -29,17 +29,16 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             if (!triggerPoint.HasValue)
                 return Task.FromResult<QuickInfoItem>(null);
 
-            var currentSnapshot = _textBuffer.CurrentSnapshot;
             var extent = triggerPoint.Value.GetExtent();
 
             var navigationToken = _navigationService.GetNaviationItem(extent);
             if (navigationToken != AnalysisToken.Empty)
             {
-                var dataElement = IntellisenseTokenDescription.GetColorizedTokenDescription(_documentAnalysis, currentSnapshot, navigationToken);
+                var dataElement = IntellisenseTokenDescription.GetColorizedTokenDescription(_documentAnalysis, navigationToken);
                 if (dataElement == null)
                     return Task.FromResult<QuickInfoItem>(null);
 
-                var applicableToSpan = currentSnapshot.CreateTrackingSpan(extent.Span.Start, navigationToken.TrackingToken.Length, SpanTrackingMode.EdgeInclusive);
+                var applicableToSpan = _documentAnalysis.CurrentSnapshot.CreateTrackingSpan(extent.Span.Start, navigationToken.TrackingToken.Length, SpanTrackingMode.EdgeInclusive);
                 return Task.FromResult(new QuickInfoItem(applicableToSpan, dataElement));
             }
 

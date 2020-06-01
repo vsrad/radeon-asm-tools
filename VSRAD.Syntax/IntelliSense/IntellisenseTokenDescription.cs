@@ -8,17 +8,16 @@ using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
-using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     internal static class IntellisenseTokenDescription
     {
-        public static object GetColorizedTokenDescription(DocumentAnalysis documentAnalysis, ITextSnapshot version, AnalysisToken token)
+        public static object GetColorizedTokenDescription(DocumentAnalysis documentAnalysis, AnalysisToken token)
         {
             try
             {
-                return GetColorizedDescription(documentAnalysis, version, token);
+                return GetColorizedDescription(documentAnalysis, token);
             }
             catch (Exception e)
             {
@@ -26,8 +25,9 @@ namespace VSRAD.Syntax.IntelliSense
                 return null;
             }
         }
-        private static object GetColorizedDescription(DocumentAnalysis documentAnalysis, ITextSnapshot version, AnalysisToken token)
+        private static object GetColorizedDescription(DocumentAnalysis documentAnalysis, AnalysisToken token)
         {
+            var version = documentAnalysis.CurrentSnapshot;
             string description = null;
             if (token.Type == RadAsmTokenType.FunctionName 
                 || token.Type == RadAsmTokenType.GlobalVariable
@@ -85,7 +85,7 @@ namespace VSRAD.Syntax.IntelliSense
             }
         }
 
-        private static object GetColorizedDescription(RadAsmTokenType tokenType, string tokenName, string description = null)
+        public static object GetColorizedDescription(RadAsmTokenType tokenType, string tokenName, string description = null)
         {
             var typeName = tokenType.GetName();
             var nameElement = GetNameElement(tokenType, tokenName);
