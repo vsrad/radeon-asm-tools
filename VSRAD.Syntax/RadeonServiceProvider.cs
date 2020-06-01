@@ -7,7 +7,6 @@ using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax
 {
@@ -42,6 +41,9 @@ namespace VSRAD.Syntax
 
         [Import]
         public IPeekBroker PeekBroker = null;
+
+        [Import]
+        public IPeekResultFactory PeekResultFactory = null;
 
         [Import]
         public ISignatureHelpBroker SignatureHelpBroker = null;

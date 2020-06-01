@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
-             xmlns:tokens="clr-namespace:VSRAD.Syntax.Parser.Tokens"
+             xmlns:tokentype="clr-namespace:VSRAD.Syntax.Parser.Tokens"
              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
              d:DesignHeight="300" d:DesignWidth="300"
@@ -51,7 +51,7 @@
             <ListView.View>
                 <GridView x:Name="functionsGridView">
                     <GridViewColumn Header="Line" DisplayMemberBinding="{Binding Path=LineNumber}" Width="Auto"/>
-                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=TokenName}"/>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=Text}"/>
                 </GridView>
             </ListView.View>
         </ListView>
@@ -109,7 +109,7 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=TokenType}" Value="{x:Static tokens:TokenType.Label}">
+                <DataTrigger Binding="{Binding Path=Type}" Value="{x:Static tokentype:RadAsmTokenType.Label}">
                     <Setter Property="Foreground" Value="DarkGoldenrod" />
                 </DataTrigger>
                 

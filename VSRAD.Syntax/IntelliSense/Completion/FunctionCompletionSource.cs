@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Parser.Blocks;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -19,8 +20,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         private bool _autocompleteFunctions;
 
         public FunctionCompletionSource(
-            OptionsProvider optionsProvider, 
-            IParserManager parserManager) : base(optionsProvider, parserManager)
+            OptionsProvider optionsProvider,
+            DocumentAnalysis documentAnalysis) : base(optionsProvider, documentAnalysis)
         {
             DisplayOptionsUpdated(optionsProvider);
         }
@@ -28,40 +29,38 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         public override Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
         {
             if (!_autocompleteFunctions)
-                return Task.FromResult(CompletionContext.Empty);
-
-            var parser = ParserManager.ActualParser;
-            if (parser == null)
-                return Task.FromResult(CompletionContext.Empty);
+                return Task.FromResult<CompletionContext>(null);
 
             var triggerText = triggerLocation
                 .GetExtent()
                 .Span.GetText();
 
-            var completions = parser
-                .GetFunctionTokens()
-                .Where(t => t.TokenName.Contains(triggerText))
-                .Select(t => new CompletionItem(t.TokenName, this, Icon))
+            var completions = DocumentAnalysis
+                .LastParserResult
+                .GetFunctions()
+                .Where(t => t.Name.TrackingToken.GetText(triggerLocation.Snapshot).Contains(triggerText))
+                .Select(t => new CompletionItem(t.Name.TrackingToken.GetText(triggerLocation.Snapshot), this, Icon))
                 .OrderBy(i => i.DisplayText)
                 .ToImmutableArray();
 
-            return Task.FromResult(new CompletionContext(completions));
+            return completions.Any()
+                ? Task.FromResult(new CompletionContext(completions))
+                : Task.FromResult<CompletionContext>(null);
         }
 
         public override Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
         {
-            var parser = ParserManager.ActualParser;
-            if (parser == null)
-                return Task.FromResult<object>(null);
-
-            var fb = parser.GetFunction(item.DisplayText);
+            var fb = GetFunction(item.DisplayText, DocumentAnalysis.CurrentSnapshot);
             if (fb == null)
                 return Task.FromResult<object>(null);
 
-            return Task.FromResult(IntellisenseTokenDescription.GetColorizedDescription(fb.FunctionToken));
+            return Task.FromResult(IntellisenseTokenDescription.GetColorizedTokenDescription(DocumentAnalysis, fb.Name));
         }
 
         protected override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocompleteFunctions = sender.AutocompleteFunctions;
+
+        private FunctionBlock GetFunction(string name, ITextSnapshot version) =>
+            DocumentAnalysis.LastParserResult.GetFunctions().Where(f => f.Name.TrackingToken.GetText(version) == name).FirstOrDefault();
     }
 }

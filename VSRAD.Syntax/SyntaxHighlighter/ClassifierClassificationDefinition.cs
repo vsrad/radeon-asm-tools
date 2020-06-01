@@ -1,9 +1,7 @@
-﻿using System.ComponentModel.Composition;
-using System.Windows.Media;
-using Microsoft.VisualStudio.Text.Classification;
+﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
-
-
+using System.ComponentModel.Composition;
+using System.Windows.Media;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
@@ -68,11 +66,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         [BaseDefinition(Constants.RadeonAsmSyntaxContentType)]
         internal static ClassificationTypeDefinition labesDefinition = null;
 
-        [Export]
-        [Name(PredefinedClassificationTypeNames.ExtraKeywords)]
-        [BaseDefinition(Constants.RadeonAsmSyntaxContentType)]
-        internal static ClassificationTypeDefinition extraKeywordsDefinition = null;
-
         #endregion
 
         #region Classification Format Productions
@@ -112,7 +105,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         {
             public FunctionsFormat()
             {
-                ForegroundColor = Colors.Teal;
+                ForegroundColor = Color.FromArgb(255, 78, 201, 178);
             }
         }
 
@@ -129,37 +122,48 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         }
 
         [Export(typeof(EditorFormatDefinition))]
-        [ClassificationType(ClassificationTypeNames = PredefinedClassificationTypeNames.ExtraKeywords)]
-        [Name(PredefinedClassificationFormatNames.ExtraKeywords)]
+        [Name(PredefinedMarkerFormatNames.ReferenceIdentifierLight)]
         [UserVisible(true)]
-        internal sealed class ExtraKeywordFormat : ClassificationFormatDefinition
+        internal sealed class ReferenceIdentifierHighlightFormatLight : MarkerFormatDefinition
         {
-            public ExtraKeywordFormat()
-            {
-                ForegroundColor = Colors.DarkGray;
-            }
-        }
-
-        [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.IdentifierLight)]
-        [UserVisible(true)]
-        internal sealed class IdentifierHighlightFormatLight : MarkerFormatDefinition
-        {
-            public IdentifierHighlightFormatLight()
+            public ReferenceIdentifierHighlightFormatLight()
             {
                 BackgroundColor = Color.FromArgb(255, 219, 224, 204);
             }
         }
 
         [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.IdentifierDark)]
+        [Name(PredefinedMarkerFormatNames.ReferenceIdentifierDark)]
         [UserVisible(true)]
-        internal sealed class IdentifierHighlightFormatDark : MarkerFormatDefinition
+        internal sealed class ReferenceIdentifierHighlightFormatDark : MarkerFormatDefinition
         {
-            public IdentifierHighlightFormatDark()
+            public ReferenceIdentifierHighlightFormatDark()
             {
-                BackgroundColor = Color.FromArgb(125, 23, 62, 94);
-                ForegroundColor = Color.FromArgb(125, 113, 171, 219);
+                BackgroundColor = Color.FromArgb(225, 14, 69, 131);
+                ForegroundColor = Color.FromArgb(255, 173, 192, 211);
+            }
+        }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [Name(PredefinedMarkerFormatNames.DefinitionIdentifierLight)]
+        [UserVisible(true)]
+        internal sealed class DefinitionIdentifierHighlightFormatLight : MarkerFormatDefinition
+        {
+            public DefinitionIdentifierHighlightFormatLight()
+            {
+                BackgroundColor = Color.FromArgb(255, 219, 224, 204);
+            }
+        }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [Name(PredefinedMarkerFormatNames.DefinitionIdentifierDark)]
+        [UserVisible(true)]
+        internal sealed class DefinitionIdentifierHighlightFormatDark : MarkerFormatDefinition
+        {
+            public DefinitionIdentifierHighlightFormatDark()
+            {
+                BackgroundColor = Color.FromArgb(255, 72, 131, 14);
+                ForegroundColor = Color.FromArgb(255, 192, 211, 173);
             }
         }
         #endregion

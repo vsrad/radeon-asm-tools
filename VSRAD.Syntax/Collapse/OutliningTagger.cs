@@ -7,24 +7,19 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Parser.Blocks;
 
 namespace VSRAD.Syntax.Collapse
 {
     internal sealed class OutliningTagger : ITagger<IOutliningRegionTag>
     {
-        private readonly ITextBuffer buffer;
-        private readonly IParserManager parserManager;
-        private IBaseParser currentParser;
         private ITextSnapshot currentSnapshot;
-        private IList<Span> currentSpans;
+        private IReadOnlyList<Span> currentSpans;
 
-        public OutliningTagger(ITextBuffer buffer, IParserManager parserManager)
+        public OutliningTagger(DocumentAnalysis documentAnalysis)
         {
-            this.buffer = buffer;
-            this.parserManager = parserManager;
-            this.currentSpans = new List<Span>();
-
-            this.parserManager.ParserUpdatedEvent += async (sender, args) => await ParserCompletedAsync();
+            currentSpans = new List<Span>();
+            documentAnalysis.ParserUpdated += ParserUpdated;
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -34,11 +29,16 @@ namespace VSRAD.Syntax.Collapse
             if (spans.Count == 0)
                 yield break;
 
-            foreach (var span in currentSpans.ToList())
+            foreach (var span in currentSpans)
             {
                 if (currentSnapshot.Length >= span.End)
                 {
                     var hintSpan = new SnapshotSpan(currentSnapshot, span.Start, span.Length);
+
+                    // skip one line blocks
+                    if (hintSpan.Start.GetContainingLine().LineNumber == hintSpan.End.GetContainingLine().LineNumber)
+                        continue;
+
                     yield return new TagSpan(
                         hintSpan,
                         hintSpan
@@ -47,14 +47,15 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot)
-        {
-            if (currentParser.CurrentSnapshot != textSnapshot)
-                return;
+        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks) =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(version, blocks));
 
-            var newSpanElements = currentParser.ListBlock
-                                    .Where(block => block.BlockSpan.Start.GetContainingLine().LineNumber != block.BlockSpan.End.GetContainingLine().LineNumber)
-                                    .Select(block => block.BlockSpan.Span).ToList();
+        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot, IReadOnlyList<IBlock> blocks)
+        {
+            var newSpanElements = blocks
+                .Where(b => b.Type != BlockType.Root)
+                .Select(b => b.Scope.GetSpan(textSnapshot))
+                .ToList();
 
             var oldSpanCollection = new NormalizedSpanCollection(currentSpans);
             var newSpanCollection = new NormalizedSpanCollection(newSpanElements);
@@ -86,7 +87,6 @@ namespace VSRAD.Syntax.Collapse
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                currentSpans.Clear();
                 currentSpans = newSpanElements;
                 currentSnapshot = textSnapshot;
 
@@ -100,20 +100,7 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void BufferChanged(object sender, TextContentChangedEventArgs e)
-        {
-            if (e.After != buffer.CurrentSnapshot)
-                return;
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => ParserCompletedAsync());
-        }
-
-        private Task ParserCompletedAsync()
-        {
-            currentParser = parserManager.ActualParser;
-            return UpdateTagSpansAsync(buffer.CurrentSnapshot);
-        }
-
-        internal class TagSpan : ITagSpan<IOutliningRegionTag>
+        private class TagSpan : ITagSpan<IOutliningRegionTag>
         {
             public TagSpan(SnapshotSpan span, SnapshotSpan? hintSpan)
             {
@@ -126,7 +113,7 @@ namespace VSRAD.Syntax.Collapse
             public IOutliningRegionTag Tag { get; }
         }
 
-        internal class OutliningTag : IOutliningRegionTag
+        private class OutliningTag : IOutliningRegionTag
         {
             private readonly SnapshotSpan _hintSpan;
 

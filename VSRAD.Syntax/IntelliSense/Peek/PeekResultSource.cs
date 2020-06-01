@@ -1,19 +1,26 @@
 ﻿using VSRAD.Syntax.Parser.Tokens;
 using Microsoft.VisualStudio.Language.Intellisense;
 using System;
-using System.IO;
 using System.Threading;
+using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekResultSource : IPeekResultSource
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly IBaseToken _token;
+        private readonly ITextDocumentFactoryService _textDocumentFactory;
+        private readonly ITextSnapshot _version;
+        private readonly AnalysisToken _token;
 
-        public PeekResultSource(IPeekResultFactory peekResultFactory, IBaseToken token)
+        public PeekResultSource(IPeekResultFactory peekResultFactory,
+            ITextDocumentFactoryService textDocumentFactory,
+            ITextSnapshot version,
+            AnalysisToken token)
         {
-            _peekResultFactory = peekResultFactory ?? throw new ArgumentNullException(nameof(peekResultFactory));
+            _peekResultFactory = peekResultFactory;
+            _textDocumentFactory = textDocumentFactory;
+            _version = version;
             _token = token;
         }
 
@@ -30,29 +37,34 @@ namespace VSRAD.Syntax.IntelliSense.Peek
 
         private IDocumentPeekResult CreateResult()
         {
-            var filePath = _token.FilePath;
-            var fileName = Path.GetFileName(filePath);
-            var startLineIndex = _token.Line.LineNumber;
-            var endLineIndex = _token.Line.LineNumber;
+            if (!_textDocumentFactory.TryGetTextDocument(_version.TextBuffer, out var document))
+                return null;
+
+            var endPosition = _token.TrackingToken.GetEnd(_version);
+            var line = _version.GetLineFromPosition(endPosition);
+
+            var startLineIndex = line.LineNumber;
+            var startIndex = endPosition - line.Start.Position;
+            var endLineIndex = line.LineNumber;
+            var endIndex = endPosition - line.Start.Position;
 
             var displayInfo = new PeekResultDisplayInfo2(
-                label: string.Format("{0}: {1}-{2} ", fileName, startLineIndex + 1, endLineIndex + 1),
-                labelTooltip: _token.FilePath,
-                title: fileName,
-                titleTooltip: filePath,
+                label: string.Format("{0}: {1}-{2} ", document.FilePath, startLineIndex + 1, endLineIndex + 1),
+                labelTooltip: document.FilePath,
+                title: document.FilePath,
+                titleTooltip: document.FilePath,
                 startIndexOfTokenInLabel: 0,
                 lengthOfTokenInLabel: 0
             );
 
-
             return _peekResultFactory.Create(
                 displayInfo,
                 default,
-                filePath,
+                document.FilePath,
                 startLineIndex,
-                0,
+                startIndex,
                 endLineIndex,
-                0,
+                endIndex,
                 0,
                 0,
                 0,

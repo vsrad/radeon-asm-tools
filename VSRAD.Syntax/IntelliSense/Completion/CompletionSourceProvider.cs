@@ -3,8 +3,8 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
+using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -13,15 +13,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(ScopeTokenCompletionSourceProvider))]
     internal class ScopeTokenCompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly InstructionListManager _instructionListManager;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public ScopeTokenCompletionSourceProvider(
             OptionsProvider optionsEventProvider,
-            InstructionListManager instructionListManager)
+            DocumentAnalysisProvoder documentAnalysisProvoder)
         {
-            _instructionListManager = instructionListManager;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
             _optionsEventProvider = optionsEventProvider;
         }
 
@@ -30,7 +30,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new ScopeTokenCompletionSource(_optionsEventProvider, textView.TextBuffer.GetParserManager());
+            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textView.TextBuffer);
+            return new ScopeTokenCompletionSource(_optionsEventProvider, documentAnalysis);
         }
     }
 
@@ -39,15 +40,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(FunctionCompletionSourceProvider))]
     internal class FunctionCompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly InstructionListManager _instructionListManager;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public FunctionCompletionSourceProvider(
             OptionsProvider optionsEventProvider,
-            InstructionListManager instructionListManager)
+            DocumentAnalysisProvoder documentAnalysisProvoder)
         {
-            _instructionListManager = instructionListManager;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
             _optionsEventProvider = optionsEventProvider;
         }
 
@@ -56,7 +57,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new FunctionCompletionSource(_optionsEventProvider, textView.TextBuffer.GetParserManager());
+            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textView.TextBuffer);
+            return new FunctionCompletionSource(_optionsEventProvider, documentAnalysis);
         }
     }
 
@@ -66,14 +68,17 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     internal class InstructionCompletionSourceProvider : IAsyncCompletionSourceProvider
     {
         private readonly InstructionListManager _instructionListManager;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly OptionsProvider _optionsEventProvider;
 
         [ImportingConstructor]
         public InstructionCompletionSourceProvider(
             OptionsProvider optionsEventProvider,
+            DocumentAnalysisProvoder documentAnalysisProvoder,
             InstructionListManager instructionListManager)
         {
             _instructionListManager = instructionListManager;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
             _optionsEventProvider = optionsEventProvider;
         }
 
@@ -82,7 +87,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider, textView.TextBuffer.GetParserManager());
+            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textView.TextBuffer);
+            return new InstructionCompletionSource(_instructionListManager, _optionsEventProvider, documentAnalysis);
         }
     }
 }

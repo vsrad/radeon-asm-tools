@@ -11,11 +11,14 @@ namespace VSRAD.Syntax.Collapse
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     internal sealed class OutliningTaggerAsmProvider : ITaggerProvider
     {
+        [Import]
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
-            var parserManager = buffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
+            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(buffer);
 
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(buffer, parserManager) as ITagger<T>);
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(documentAnalysis) as ITagger<T>);
         }
     }
 }

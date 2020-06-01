@@ -1,273 +1,157 @@
 ﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
-using VSRAD.Syntax.Options;
+using Microsoft.VisualStudio.Text.Tagging;
+using Microsoft.VisualStudio.Language.StandardClassification;
+using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Parser.Blocks;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class Classifier : IClassifier
+    internal class AnalysisClassifier : ITagger<ClassificationTag>
     {
-        public IClassificationTypeRegistryService _classificationTypeRegistry;
-        private readonly ITextBuffer _textBuffer;
-        private readonly IParserManager _parserManager;
-        private readonly Regex _stringPattern;
-        private IEnumerable<IBaseBlock> _multiLineComment;
-        private HashSet<string> _instructions;
-        private HashSet<string> _functions;
-        private HashSet<string> _labels;
+        private readonly ITextBuffer _buffer;
+        private readonly DocumentAnalysis _documentAnalysis;
+        private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
 
-        public List<string> Keywords { get; protected set; }
-        public List<string> ExtraKeywords { get; protected set; }
-
-        public Classifier(IClassificationTypeRegistryService registry, ITextBuffer textBuffer, InstructionListManager instructionListManager)
+        public AnalysisClassifier(ITextBuffer buffer,
+            DocumentAnalysis documentAnalysis,
+            IClassificationTypeRegistryService classificationTypeRegistryService,
+            IStandardClassificationService standardClassificationService)
         {
-            this._classificationTypeRegistry = registry;
-            this._textBuffer = textBuffer;
-            this._parserManager = _textBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-            _parserManager.ParserUpdatedEvent += OnParserComplete;
-            this._stringPattern = new Regex("\\\"(.*?)\\\"");
-            this._multiLineComment = new List<IBaseBlock>();
-            this._functions = new HashSet<string>();
-            this._labels = new HashSet<string>();
-            this.ExtraKeywords = Constants.preprocessorStart
-                .Concat(Constants.preprocessorMiddle)
-                .Concat(Constants.preprocessorEnd)
-                .Concat(Constants.preprocessorKeywords)
-                .ToList();
+            _buffer = buffer;
+            _documentAnalysis = documentAnalysis;
+            documentAnalysis.ParserUpdated += ParserUpdated;
 
-            _instructions = instructionListManager.InstructionList.ToHashSet();
-            instructionListManager.InstructionUpdated += InstructionUpdatedEvent;
+            InitializeClassifierDictonary(standardClassificationService, classificationTypeRegistryService);
+            ParserUpdated(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
         }
 
-        #region Public Events
-#pragma warning disable 67
-        public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
-#pragma warning restore 67
-        #endregion // Public Events
+        public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
-        #region Public Methods
-        public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
+        public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            ITextSnapshot snapshot = span.Snapshot;
-            List<ClassificationSpan> spans = new List<ClassificationSpan>();
+            if (_documentAnalysis.CurrentSnapshot.Version.VersionNumber != _buffer.CurrentSnapshot.Version.VersionNumber)
+                yield break;
 
-            if (snapshot.Length == 0)
-                return spans;
-
-            string classificationTypeName;
-            int startno = span.Start.GetContainingLine().LineNumber,  //number of start line
-                endno = (span.End - 1).GetContainingLine().LineNumber;  //number of end line
-
-            bool isNeedGetFunction = true;
-            FunctionBlock currentFunction = null;
-            var funcArguments = new List<string>();
-            int functionEndPoint = 0;
-
-            var _parser = _parserManager.ActualParser;
-
-            foreach (var commentSpan in _multiLineComment)
+            foreach (var block in _documentAnalysis.LastParserResult)
             {
-                var classificationSpan = AddClassificationSpan(PredefinedClassificationTypeNames.Comments, snapshot, commentSpan.BlockSpan.Span, spans);
-                if (classificationSpan != null && classificationSpan.Span.Contains(span))
-                    return spans;
-            }
+                if (block.Type == BlockType.Comment)
+                    continue;
 
-            for (int i = startno; i <= endno; i++)
-            {
-                ITextSnapshotLine line = snapshot.GetLineFromLineNumber(i);
-
-                var textLine = line.GetText();
-                if (textLine.Contains("//"))
+                if (block.Type == BlockType.Function)
                 {
-                    var index = textLine.IndexOf("//", StringComparison.Ordinal);
-                    var indexStart = line.Start + index;
-
-                    AddClassificationSpan(PredefinedClassificationTypeNames.Comments, snapshot, indexStart, line.End - indexStart, spans);
-                    textLine = textLine.Substring(0, index);
+                    var name = ((FunctionBlock)block).Name;
+                    yield return GetTag(name);
                 }
 
-                var match = _stringPattern.Match(textLine);
-                if (match.Success)
+                foreach (var scopeToken in block.Tokens)
                 {
-                    var indexStart = line.Start + match.Index;
-
-                    AddClassificationSpan(PredefinedClassificationTypeNames.Strings, snapshot, indexStart, match.Length, spans);
-                    textLine = textLine.Substring(0, match.Index);
+                    yield return GetTag(scopeToken);
                 }
-
-
-                String[] words = textLine.Split(new char[] { ' ', '\t', '(', ')', '+', '-', '=', '[', ']', ',', '!' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (!isNeedGetFunction && line.Start > functionEndPoint)
-                    isNeedGetFunction = true;
-
-                if (isNeedGetFunction)
-                    currentFunction = _parser?.GetFunction(line);
-
-                if (currentFunction != null)
-                {
-                    funcArguments = currentFunction.GetArgumentTokens().Select(token => token.TokenName).ToList();
-                    isNeedGetFunction = false;
-                    functionEndPoint = currentFunction.BlockSpan.End;
-                }
-
-                int wordStart = line.Start;
-
-                for (int ii = 0; ii <= words.Length - 1; ii++)
-                {
-                    classificationTypeName = null;
-                    string word = words[ii];
-                    int pos = textLine.IndexOf(word, StringComparison.Ordinal);
-                    wordStart += pos;
-
-                    if (words.Length == 1 && word.EndsWith(":", StringComparison.Ordinal))
-                    {
-                        classificationTypeName = PredefinedClassificationTypeNames.Labels;
-                        AddClassificationSpan(classificationTypeName, snapshot, wordStart, word.Length, spans);
-                        break;
-                    }
-
-                    if (char.IsDigit(word[0]))
-                        classificationTypeName = PredefinedClassificationTypeNames.Numbers;
-                    else if (ExtraKeywords.Contains(word))
-                        classificationTypeName = PredefinedClassificationTypeNames.ExtraKeywords;
-                    else if (_instructions.Contains(word))
-                        classificationTypeName = PredefinedClassificationTypeNames.Instructions;
-                    else if (_functions.Contains(word))
-                        classificationTypeName = PredefinedClassificationTypeNames.Functions;
-                    else if (_labels.Contains(word))
-                        classificationTypeName = PredefinedClassificationTypeNames.Labels;
-                    else
-                        classificationTypeName = GetClassificationTypeNameOfWord(word, funcArguments);
-
-                    if (classificationTypeName != null)
-                        AddClassificationSpan(classificationTypeName, snapshot, wordStart, word.Length, spans);
-
-                    textLine = textLine.Substring(pos + word.Length);
-                    wordStart += word.Length;
-                }
-                if (currentFunction != null)
-                    AddClassificationSpan(PredefinedClassificationTypeNames.Functions, snapshot, currentFunction.FunctionToken.SymbolSpan.Span, spans);
-            }
-            return spans;
-        }
-
-        #endregion
-
-        public virtual string GetClassificationTypeNameOfWord(string word, IList<string> functionArgs)
-        {
-            return null;
-        }
-
-        private void OnParserComplete(object actualParser, object _)
-        {
-            try
-            {
-                var parser = actualParser as IBaseParser;
-                _multiLineComment = parser.ListBlock.Where(b => b.BlockType == BlockType.Comment);
-                _functions = parser.GetFunctionTokens().Select(t => t.TokenName).ToHashSet();
-                _labels = parser.GetLabelTokens().Select(t => t.TokenName).ToHashSet();
-                ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, 0)));
-            }
-            catch (Exception e)
-            {
-                Microsoft.VisualStudio.Shell.ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
             }
         }
 
-        private void InstructionUpdatedEvent(IReadOnlyList<string> instructions)
+        private TagSpan<ClassificationTag> GetTag(AnalysisToken token) =>
+            new TagSpan<ClassificationTag>(new SnapshotSpan(_documentAnalysis.CurrentSnapshot, token.TrackingToken.GetSpan(_documentAnalysis.CurrentSnapshot)), new ClassificationTag(_tokenClassification[token.Type]));
+
+        private void InitializeClassifierDictonary(IStandardClassificationService typeService, IClassificationTypeRegistryService registryService)
         {
-            _instructions = instructions.ToHashSet();
-            ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(_textBuffer.CurrentSnapshot, 0, _textBuffer.CurrentSnapshot.Length)));
+            if (_tokenClassification != null)
+                return;
+
+            _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
+            {
+                { RadAsmTokenType.Instruction, registryService.GetClassificationType(PredefinedClassificationTypeNames.Instructions) },
+                { RadAsmTokenType.FunctionName, registryService.GetClassificationType(PredefinedClassificationTypeNames.Functions) },
+                { RadAsmTokenType.FunctionParameter, registryService.GetClassificationType(PredefinedClassificationTypeNames.Arguments) },
+                { RadAsmTokenType.FunctionParameterReference, registryService.GetClassificationType(PredefinedClassificationTypeNames.Arguments) },
+                { RadAsmTokenType.Label, registryService.GetClassificationType(PredefinedClassificationTypeNames.Labels) },
+                { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
+                { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
+            };
         }
 
-        private ClassificationSpan AddClassificationSpan(string classificationTypeName, ITextSnapshot snapshot, int start, int length, IList<ClassificationSpan> spans)
+        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks)
         {
-            var type = _classificationTypeRegistry.GetClassificationType(classificationTypeName);
+            if (blocks.Count == 0)
+                return;
 
-            ClassificationSpan classificationSpan = null;
-            try
-            {
-                var span = new SnapshotSpan(snapshot, start, length);
-                classificationSpan = new ClassificationSpan(span, type);
-                spans.Add(classificationSpan);
-            }
-            catch (Exception e)
-            {
-                Microsoft.VisualStudio.Shell.ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
-            }
-            return classificationSpan;
-        }
-
-        private ClassificationSpan AddClassificationSpan(string classificationTypeName, ITextSnapshot snapshot, Span span, IList<ClassificationSpan> spans)
-            => AddClassificationSpan(classificationTypeName, snapshot, span.Start, span.Length, spans);
-    }
-
-    internal class Asm2Classifier : Classifier
-    {
-        public Asm2Classifier(
-            IClassificationTypeRegistryService registry,
-            ITextBuffer textBuffer,
-            InstructionListManager instructionListManager) : base(registry, textBuffer, instructionListManager)
-        {
-            base.Keywords = Constants.asm2Start
-                .Concat(Constants.asm2Middle)
-                .Concat(Constants.asm2End)
-                .Concat(Constants.asm2Keywords)
-                .ToList();
-            base.Keywords.Add(Constants.asm2FunctionKeyword);
-        }
-
-        public override string GetClassificationTypeNameOfWord(string word, IList<string> functionArgs)
-        {
-            if (Keywords.Contains(word))
-            {
-                return PredefinedClassificationTypeNames.Keywords;
-            }
-            else if (functionArgs.Contains(word))
-            {
-                return PredefinedClassificationTypeNames.Arguments;
-            }
-            return null;
+            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(version, new Span(0, version.Length))));
         }
     }
 
-    internal class Asm1Classifier : Classifier
+    internal class TokenizerClassifier : ITagger<ClassificationTag>
     {
-        public Asm1Classifier(
-            IClassificationTypeRegistryService registry,
-            ITextBuffer textBuffer,
-            InstructionListManager instructionListManager) : base(registry, textBuffer, instructionListManager)
+        private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
+        private readonly ITextBuffer _buffer;
+        private readonly DocumentAnalysis _documentAnalysis;
+
+        public TokenizerClassifier(ITextBuffer buffer,
+            DocumentAnalysis documentAnalysis,
+            IStandardClassificationService standardClassificationService)
         {
-            base.Keywords = Constants.asm1Start
-                .Concat(Constants.asm1Middle)
-                .Concat(Constants.asm1End)
-                .Concat(Constants.asm1Keywords)
-                .ToList();
-            base.Keywords.Add(Constants.asm1FunctionKeyword);
-            base.ExtraKeywords.AddRange(Constants.asm1ExtraKeywords);
+            _buffer = buffer;
+            _documentAnalysis = documentAnalysis;
+
+            _documentAnalysis.TokensChanged += TokensChanged;
+            InitializeClassifierDictionary(standardClassificationService);
         }
 
-        public override string GetClassificationTypeNameOfWord(string word, IList<string> functionArgs)
+        public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+
+        public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            if (Keywords.Contains(word))
+            if (_documentAnalysis.CurrentSnapshot.Version.VersionNumber != _buffer.CurrentSnapshot.Version.VersionNumber)
+                yield break;
+
+            foreach (var span in spans)
             {
-                return PredefinedClassificationTypeNames.Keywords;
+                foreach (var token in _documentAnalysis.GetTokens(span))
+                {
+                    if (token.IsEmpty || token.Type == _documentAnalysis.IDENTIFIER)
+                        continue;
+
+                    var tag = new ClassificationTag(_tokenClassification[_documentAnalysis.LexerTokenToRadAsmToken(token.Type)]);
+                    yield return new TagSpan<ClassificationTag>(new SnapshotSpan(_documentAnalysis.CurrentSnapshot, token.GetSpan(_documentAnalysis.CurrentSnapshot)), tag);
+                }
             }
-            else if (functionArgs.Contains(word))
+
+        }
+
+        private void InitializeClassifierDictionary(IStandardClassificationService typeService)
+        {
+            if (_tokenClassification != null)
+                return;
+
+            _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
-                return PredefinedClassificationTypeNames.Arguments;
-            }
-            else if (word.StartsWith("\\", StringComparison.Ordinal) && functionArgs.Contains(word.Substring(1)))
-            {
-                return PredefinedClassificationTypeNames.Arguments;
-            }
-            return null;
+                { RadAsmTokenType.Comment, typeService.Comment },
+                { RadAsmTokenType.Number, typeService.NumberLiteral },
+                { RadAsmTokenType.Identifier, typeService.FormalLanguage },
+                { RadAsmTokenType.Operation, typeService.Operator },
+                { RadAsmTokenType.String, typeService.StringLiteral },
+                { RadAsmTokenType.Structural, typeService.FormalLanguage },
+                { RadAsmTokenType.Whitespace, typeService.WhiteSpace },
+                { RadAsmTokenType.Keyword, typeService.Keyword },
+                { RadAsmTokenType.Preprocessor, typeService.PreprocessorKeyword },
+                { RadAsmTokenType.Unknown, typeService.Other },
+            };
+        }
+
+        private void TokensChanged(IList<TrackingToken> trackingTokens)
+        {
+            if (trackingTokens.Count == 0)
+                return;
+
+            var snapshot = _documentAnalysis.CurrentSnapshot;
+            var start = trackingTokens.First().GetStart(snapshot);
+            var end = trackingTokens.Last().GetEnd(snapshot);
+
+            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, new Span(start, end - start))));
         }
     }
 }

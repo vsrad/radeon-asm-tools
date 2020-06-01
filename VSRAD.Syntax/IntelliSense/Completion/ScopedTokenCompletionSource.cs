@@ -22,16 +22,16 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         private static readonly ImageElement LocalVariableIcon = GetImageElement(KnownImageIds.LocalVariable);
         private static readonly ImageElement ArgumentIcon = GetImageElement(KnownImageIds.Parameter);
         private static readonly ImageElement LabelIcon = GetImageElement(KnownImageIds.Label);
-        private readonly IDictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>> _completions;
+        private readonly IDictionary<RadAsmTokenType, IEnumerable<KeyValuePair<AnalysisToken, CompletionItem>>> _completions;
 
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
 
         public ScopeTokenCompletionSource(
-            OptionsProvider optionsProvider, 
-            IParserManager parserManager) : base(optionsProvider, parserManager)
+            OptionsProvider optionsProvider,
+            DocumentAnalysis documentAnalysis) : base(optionsProvider, documentAnalysis)
         {
-            _completions = new Dictionary<TokenType, IEnumerable<KeyValuePair<IBaseToken, CompletionItem>>>();
+            _completions = new Dictionary<RadAsmTokenType, IEnumerable<KeyValuePair<AnalysisToken, CompletionItem>>>();
             DisplayOptionsUpdated(optionsProvider);
         }
 
@@ -40,25 +40,27 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var completions = Enumerable.Empty<CompletionItem>();
             if (_autocompleteLabels)
                 completions = completions
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.Label, LabelIcon));
+                    .Concat(GetScopedCompletions(triggerLocation, RadAsmTokenType.Label, LabelIcon));
             if (_autocompleteVariables)
                 completions = completions
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.GlobalVariable, GlobalVariableIcon))
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.LocalVariable, LocalVariableIcon))
-                    .Concat(GetScopedCompletions(triggerLocation, TokenType.Argument, ArgumentIcon));
+                    .Concat(GetScopedCompletions(triggerLocation, RadAsmTokenType.GlobalVariable, GlobalVariableIcon))
+                    .Concat(GetScopedCompletions(triggerLocation, RadAsmTokenType.LocalVariable, LocalVariableIcon))
+                    .Concat(GetScopedCompletions(triggerLocation, RadAsmTokenType.FunctionParameter, ArgumentIcon));
 
-            return Task.FromResult(new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()));
+            return completions.Any()
+                ? Task.FromResult(new CompletionContext(completions.OrderBy(c => c.DisplayText).ToImmutableArray()))
+                : Task.FromResult<CompletionContext>(null);
         }
 
         public override Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
         {
-            if (TryGetDescription(TokenType.Label, item, out var description))
+            if (TryGetDescription(RadAsmTokenType.Label, item, out var description))
                 return Task.FromResult(description);
-            if (TryGetDescription(TokenType.GlobalVariable, item, out description))
+            if (TryGetDescription(RadAsmTokenType.GlobalVariable, item, out description))
                 return Task.FromResult(description);
-            if (TryGetDescription(TokenType.LocalVariable, item, out description))
+            if (TryGetDescription(RadAsmTokenType.LocalVariable, item, out description))
                 return Task.FromResult(description);
-            if (TryGetDescription(TokenType.Argument, item, out description))
+            if (TryGetDescription(RadAsmTokenType.FunctionParameter, item, out description))
                 return Task.FromResult(description);
 
             return Task.FromResult((object)string.Empty);
@@ -67,23 +69,23 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         protected override void DisplayOptionsUpdated(OptionsProvider options)
         {
             if (!(_autocompleteLabels = options.AutocompleteLabels))
-                _completions.Remove(TokenType.Label);
+                _completions.Remove(RadAsmTokenType.Label);
             if (!(_autocompleteVariables = options.AutocompleteVariables))
             {
-                _completions.Remove(TokenType.LocalVariable);
-                _completions.Remove(TokenType.Argument);
-                _completions.Remove(TokenType.GlobalVariable);
+                _completions.Remove(RadAsmTokenType.LocalVariable);
+                _completions.Remove(RadAsmTokenType.FunctionParameter);
+                _completions.Remove(RadAsmTokenType.GlobalVariable);
             }
         }
 
-        private bool TryGetDescription(TokenType tokenType, CompletionItem item, out object description)
+        private bool TryGetDescription(RadAsmTokenType tokenType, CompletionItem item, out object description)
         {
             try
             {
                 if (_completions.TryGetValue(tokenType, out var pairs)
                     && pairs.Select(p => p.Value.DisplayText).Contains(item.DisplayText))
                 {
-                    description = IntellisenseTokenDescription.GetColorizedDescription(pairs.Single(p => p.Value.DisplayText == item.DisplayText).Key);
+                    description = IntellisenseTokenDescription.GetColorizedTokenDescription(DocumentAnalysis, pairs.Single(p => p.Value.DisplayText == item.DisplayText).Key);
                     return true;
                 }
             }
@@ -96,22 +98,18 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             return false;
         }
 
-        private ImmutableArray<CompletionItem> GetScopedCompletions(SnapshotPoint triggerPoint, TokenType type, ImageElement icon)
+        private ImmutableArray<CompletionItem> GetScopedCompletions(SnapshotPoint triggerPoint, RadAsmTokenType type, ImageElement icon)
         {
-            var scopedCompletions = ImmutableArray<CompletionItem>.Empty;
-            var parser = ParserManager.ActualParser;
-
-            if (parser == null)
-                return scopedCompletions;
-
             var triggerText = triggerPoint
                 .GetExtent()
                 .Span.GetText();
 
-            var scopedCompletionPairs = parser
-                .GetScopedTokens(triggerPoint, type)
-                .Where(t => t.TokenName.Contains(triggerText))
-                .Select(t => new KeyValuePair<IBaseToken, CompletionItem>(t, new CompletionItem(t.TokenName, this, icon)));
+            var currentBlock = DocumentAnalysis.LastParserResult.GetBlockBy(triggerPoint);
+
+            var scopedCompletionPairs = currentBlock
+                .GetScopedTokens(type)
+                .Where(t => t.TrackingToken.GetText(DocumentAnalysis.CurrentSnapshot).Contains(triggerText))
+                .Select(t => new KeyValuePair<AnalysisToken, CompletionItem>(t, new CompletionItem(t.TrackingToken.GetText(DocumentAnalysis.CurrentSnapshot), this, icon)));
 
             _completions[type] = scopedCompletionPairs;
             return scopedCompletionPairs

@@ -9,27 +9,30 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
     internal abstract class BasicCompletionSource : IAsyncCompletionSource
     {
-        public readonly IParserManager ParserManager;
+        public readonly DocumentAnalysis DocumentAnalysis;
 
-        public BasicCompletionSource(OptionsProvider optionsProvider, IParserManager parserManager)
+        public BasicCompletionSource(OptionsProvider optionsProvider, DocumentAnalysis documentAnalysis)
         {
-            ParserManager = parserManager;
+            DocumentAnalysis = documentAnalysis;
             optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
         }
 
         public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
         {
-            if (ParserManager.ActualParser == null
+            var triggerToken = GetToken(triggerLocation);
+            if (triggerToken == TrackingToken.Empty
                 || trigger.Reason == CompletionTriggerReason.Backspace
                 || trigger.Reason == CompletionTriggerReason.Deletion
                 || trigger.Character == '\n'
                 || trigger.Character == ' '
-                || ParserManager.ActualParser.PointInComment(triggerLocation))
+                || triggerToken.Type == DocumentAnalysis.LINE_COMMENT 
+                || triggerToken.Type == DocumentAnalysis.BLOCK_COMMENT)
                 return CompletionStartData.DoesNotParticipateInCompletion;
 
             var extent = triggerLocation.GetExtent();
@@ -47,6 +50,18 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         public abstract Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token);
 
         protected abstract void DisplayOptionsUpdated(OptionsProvider options);
+
+        private TrackingToken GetToken(SnapshotPoint point)
+        {
+            try
+            {
+                return DocumentAnalysis.GetToken(point);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return TrackingToken.Empty;
+            }
+        }
 
         private static readonly Guid ImageCatalogGuid = Guid.Parse(/* image catalog guid */ "ae27a6b0-e345-4288-96df-5eaf394ee369");
     }

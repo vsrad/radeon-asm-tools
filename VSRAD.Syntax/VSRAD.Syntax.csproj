@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>
     </CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Internal asm2 lang release|AnyCPU' ">
     <OutputPath>bin\Internal asm2 lang release\</OutputPath>
@@ -34,6 +35,7 @@
     <CodeAnalysisRuleSet>
     </CodeAnalysisRuleSet>
     <WarningLevel>0</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -68,6 +70,7 @@
     <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>
     </CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -79,6 +82,7 @@
     <LangVersion>7.3</LangVersion>
     <CodeAnalysisRuleSet>
     </CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Editor\EditorFilter.cs" />
@@ -88,11 +92,9 @@
     <Compile Include="FunctionList\FunctionListEventFactory.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
-    <Compile Include="Helpers\BaseBlockExtension.cs" />
     <Compile Include="Helpers\Error.cs" />
-    <Compile Include="Helpers\ParserManagerExtension.cs" />
+    <Compile Include="Helpers\ParserResultExtension.cs" />
     <Compile Include="Helpers\SnapshotPointExtension.cs" />
-    <Compile Include="Helpers\TextBufferExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="IntelliSense\Completion\BasicCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
@@ -112,29 +114,26 @@
     <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\InstructionListManager.cs" />
     <Compile Include="Package.cs" />
-    <Compile Include="Parser\BaseParser.cs" />
-    <Compile Include="Parser\Blocks\BaseBlock.cs" />
-    <Compile Include="Parser\Blocks\BlockType.cs" />
+    <Compile Include="Parser\Blocks\Block.cs" />
     <Compile Include="Parser\Blocks\FunctionBlock.cs" />
-    <Compile Include="Parser\Blocks\IBaseBlock.cs" />
-    <Compile Include="Parser\Blocks\RootBlock.cs" />
+    <Compile Include="Parser\Helper\BitHelper.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs" />
-    <Compile Include="Parser\ParserManger.cs" />
-    <Compile Include="Parser\ParserProvider.cs" />
-    <Compile Include="Parser\Tokens\ArgumentToken.cs" />
-    <Compile Include="Parser\Tokens\BaseToken.cs" />
-    <Compile Include="Parser\Tokens\FunctionToken.cs" />
-    <Compile Include="Parser\Tokens\IBaseToken.cs" />
-    <Compile Include="Parser\Tokens\IDescriptionToken.cs" />
-    <Compile Include="Parser\Tokens\LabelToken.cs" />
-    <Compile Include="Parser\Tokens\TokenType.cs" />
-    <Compile Include="Parser\Tokens\VariableToken.cs" />
+    <Compile Include="Parser\Blocks\TrackingBlock.cs" />
+    <Compile Include="Parser\DocumentAnalysis.cs" />
+    <Compile Include="Parser\Lexer.cs" />
+    <Compile Include="Parser\Parser.cs" />
+    <Compile Include="Parser\Helper\SortedSet.cs" />
+    <Compile Include="Parser\Helper\SortedSetHelper.cs" />
+    <Compile Include="Parser\Tokens\AnalysisToken.cs" />
+    <Compile Include="Parser\Tokens\TokenSpan.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSourceProvider.cs" />
     <Compile Include="IntelliSense\Peek\PeekResultSource.cs" />
+    <Compile Include="Parser\Tokens\TokenType.cs" />
+    <Compile Include="Parser\Tokens\TrackingToken.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -208,6 +207,19 @@
     <Resource Include="Resources\CommandIcons.png" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Antlr4">
+      <Version>4.6.6</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Antlr4.CodeGenerator">
+      <Version>4.6.6</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Antlr4.Runtime">
+      <Version>4.6.6</Version>
+    </PackageReference>
     <PackageReference Include="EnvDTE100">
       <Version>10.0.2</Version>
     </PackageReference>
@@ -244,4 +256,11 @@
   <ItemGroup>
     <VSIXSourceItem Include="DefaultConfiguration\**" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VSRAD.SyntaxParser\VSRAD.SyntaxParser.csproj">
+      <Project>{ccc917d5-5dd9-4e11-a5b3-9204e8fdc408}</Project>
+      <Name>VSRAD.SyntaxParser</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
 </Project>

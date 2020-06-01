@@ -1,35 +1,43 @@
-﻿using Microsoft.VisualStudio.Language.Intellisense;
-
-namespace VSRAD.Syntax.Parser.Tokens
+﻿namespace VSRAD.Syntax.Parser.Tokens
 {
-    public enum TokenType
+    public enum RadAsmTokenType
     {
-        Function = 1,
-        GlobalVariable = 2,
-        LocalVariable = 3,
-        Argument = 4,
-        Comment = 5,
-        Label = 6,
-        Instruction = 7,
+        Comment,
+        Identifier,
+        String,
+        Number,
+        Operation,
+        Structural,
+        Whitespace,
+        Keyword,
+        FunctionName,
+        FunctionParameter,
+        FunctionParameterReference,
+        Label,
+        Instruction,
+        GlobalVariable,
+        LocalVariable,
+        Preprocessor,
+        Unknown,
     }
 
-    public static class TokenTypeMapping
+    public static class RadAsmTokenTypeExtension
     {
-        public static string GetName(this TokenType tokenType)
+        public static string GetName(this RadAsmTokenType type)
         {
-            switch (tokenType)
+            switch (type)
             {
-                case TokenType.Argument:
+                case RadAsmTokenType.FunctionParameter:
                     return "argument";
-                case TokenType.Function:
-                    return "function";
-                case TokenType.Label:
+                case RadAsmTokenType.Label:
                     return "label";
-                case TokenType.GlobalVariable:
+                case RadAsmTokenType.GlobalVariable:
                     return "global variable";
-                case TokenType.LocalVariable:
+                case RadAsmTokenType.LocalVariable:
                     return "local variable";
-                case TokenType.Instruction:
+                case RadAsmTokenType.FunctionName:
+                    return "function";
+                case RadAsmTokenType.Instruction:
                     return "instruction";
                 default:
                     return "unknown";

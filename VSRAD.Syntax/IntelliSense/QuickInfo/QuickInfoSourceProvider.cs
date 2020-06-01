@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
@@ -12,12 +13,15 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     [Order]
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
-        private readonly NavigationTokenService _definitionService;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+        private readonly NavigationTokenService _navigationService;
 
         [ImportingConstructor]
-        public QuickInfoSourceProvider(NavigationTokenService definitionService)
+        public QuickInfoSourceProvider(DocumentAnalysisProvoder documentAnalysisProvoder,
+            NavigationTokenService navigationService)
         {
-            _definitionService = definitionService;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
+            _navigationService = navigationService;
         }
 
         public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
@@ -25,7 +29,8 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             if (textBuffer == null)
                 throw new ArgumentNullException(nameof(textBuffer));
 
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new QuickInfoSource(textBuffer, _definitionService));
+            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textBuffer);
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new QuickInfoSource(textBuffer, documentAnalysis, _navigationService));
         }
     }
 }

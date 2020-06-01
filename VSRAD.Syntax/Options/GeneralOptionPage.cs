@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.Options
         public OptionsProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;
-            IsEnabledIndentGuides = true;
+            IsEnabledIndentGuides = false;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
