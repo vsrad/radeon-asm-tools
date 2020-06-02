@@ -100,6 +100,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             var lbracketType = -1;
             var rbracketType = -1;
 
+            cancellation.ThrowIfCancellationRequested();
             var currentToken = _documentAnalysis.GetToken(currentRequest);
             if (currentToken.Type == _documentAnalysis.LINE_COMMENT || currentToken.Type == _documentAnalysis.BLOCK_COMMENT)
             {
@@ -164,7 +165,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    if (token.Type == RadAsmLexer.LPAREN)
+                    if (token.Type == lbracketType)
                     {
                         bracketCounter++;
                     }
@@ -188,7 +189,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    if (token.Type == RadAsmLexer.RPAREN)
+                    if (token.Type == rbracketType)
                     {
                         bracketCounter++;
                     }
