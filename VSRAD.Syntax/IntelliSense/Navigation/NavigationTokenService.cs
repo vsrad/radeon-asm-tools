@@ -218,6 +218,31 @@ namespace VSRAD.Syntax.IntelliSense
 
                         if (FindNavigationTokenInFunctionList(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult, text, out outToken))
                             return true;
+
+                        if (FindNavigationTokenInRootBlock(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult[0], text, out outToken))
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool FindNavigationTokenInRootBlock(ITextSnapshot version, IBlock rootBlock, string text, out NavigationToken outToken)
+        {
+            outToken = NavigationToken.Empty;
+
+            if (rootBlock.Type != BlockType.Root)
+                return false;
+
+            foreach (var token in rootBlock.Tokens)
+            {
+                if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.Label)
+                {
+                    if (token.TrackingToken.GetText(version) == text)
+                    {
+                        outToken = new NavigationToken(token, version);
+                        return true;
                     }
                 }
             }
