@@ -182,6 +182,14 @@ namespace VSRAD.Syntax.Parser
                         if (_instructions.Contains(token.GetText(version)))
                             currentBlock.AddToken(RadAsmTokenType.Instruction, token);
                     }
+                    else if (token.Type == RadAsmLexer.INCLUDE
+                        || token.Type == RadAsmLexer.PP_INCLUDE)
+                    {
+                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
+                        {
+                            currentBlock.AddToken(RadAsmTokenType.Include, tokens[i + 1]);
+                        }
+                    }
                 }
                 else if (parserState == ParserState.SearchArguments)
                 {
@@ -352,6 +360,13 @@ namespace VSRAD.Syntax.Parser
 
                         if (_instructions.Contains(token.GetText(version)))
                             currentBlock.AddToken(RadAsmTokenType.Instruction, token);
+                    }
+                    else if (token.Type == RadAsm2Lexer.PP_INCLUDE)
+                    {
+                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm2Lexer.STRING_LITERAL)
+                        {
+                            currentBlock.AddToken(RadAsmTokenType.Include, tokens[i + 1]);
+                        }
                     }
                 }
                 else if (parserState == ParserState.SearchArguments)

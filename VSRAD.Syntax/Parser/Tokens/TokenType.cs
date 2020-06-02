@@ -17,6 +17,7 @@
         Instruction,
         GlobalVariable,
         LocalVariable,
+        Include,
         Preprocessor,
         Unknown,
     }

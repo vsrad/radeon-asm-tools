@@ -20,11 +20,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
         {
             var extent = triggerSpan.Start.GetExtent();
-            var navigableToken = _navigationService.GetNaviationItem(extent, false);
+            var navigableToken = _navigationService.GetNaviationItem(extent, true);
 
-            return (navigableToken == AnalysisToken.Empty)
+            return (navigableToken == NavigationToken.Empty)
                 ? Task.FromResult<INavigableSymbol>(null)
-                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, new SnapshotPoint(triggerSpan.Snapshot, navigableToken.TrackingToken.GetEnd(triggerSpan.Snapshot)), _navigationService));
+                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, new SnapshotPoint(navigableToken.Snapshot, navigableToken.GetEnd()), _navigationService));
         }
 
         public void Dispose()

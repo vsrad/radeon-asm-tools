@@ -31,7 +31,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
 
             var extent = triggerPoint.Value.GetExtent();
 
-            var navigationToken = _navigationService.GetNaviationItem(extent);
+            var navigationToken = _navigationService.GetNaviationItem(extent).AnalysisToken;
             if (navigationToken != AnalysisToken.Empty)
             {
                 var dataElement = IntellisenseTokenDescription.GetColorizedTokenDescription(_documentAnalysis, navigationToken);

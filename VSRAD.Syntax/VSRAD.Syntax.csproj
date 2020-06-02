@@ -107,6 +107,7 @@
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>

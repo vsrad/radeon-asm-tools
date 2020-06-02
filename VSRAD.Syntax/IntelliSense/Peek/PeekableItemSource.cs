@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
@@ -43,9 +43,9 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             if (view != null)
             {
                 var extent = NavigationTokenService.GetTextExtentOnCursor(view);
-                var token = _navigationTokenService.GetNaviationItem(extent, false);
-                if (token != AnalysisToken.Empty)
-                    return new PeekableItem(peekResultFactory, _textDocumentFactory, extent.Span.Snapshot, token);
+                var token = _navigationTokenService.GetNaviationItem(extent, true);
+                if (token != NavigationToken.Empty)
+                    return new PeekableItem(peekResultFactory, _textDocumentFactory, token.Snapshot, token.AnalysisToken);
             }
             return null;
         }

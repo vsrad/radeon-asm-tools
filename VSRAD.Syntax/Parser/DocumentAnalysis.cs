@@ -150,6 +150,7 @@ namespace VSRAD.Syntax.Parser
         private void Initialize()
         {
             LastLexerResult = new Helper.SortedSet<TrackingToken>(_lexer.Run(new string[] { CurrentSnapshot.GetText() }, 0).Select(t => new TrackingToken(CurrentSnapshot, t)), _comparer);
+            RunParser(new object[] { LastLexerResult.Version, LastLexerResult, CurrentSnapshot, parserCts });
             RaiseTokensChanged(LastLexerResult.ToList());
         }
 

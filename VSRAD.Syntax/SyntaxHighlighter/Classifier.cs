@@ -72,6 +72,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.Label, registryService.GetClassificationType(PredefinedClassificationTypeNames.Labels) },
                 { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
                 { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
+                { RadAsmTokenType.Include, typeService.StringLiteral },
             };
         }
 

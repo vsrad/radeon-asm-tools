@@ -13,6 +13,8 @@ using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Primitives;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -39,10 +41,10 @@ namespace VSRAD.Syntax.IntelliSense
             try
             {
                 var extent = GetTextExtentOnCursor(view);
-                var token = GetNaviationItem(extent, false);
+                var token = GetNaviationItem(extent, true);
 
-                if (token != null)
-                    GoToPoint(new SnapshotPoint(view.TextSnapshot, token.TrackingToken.GetEnd(view.TextSnapshot)));
+                if (token != NavigationToken.Empty)
+                    GoToPoint(new SnapshotPoint(token.Snapshot, token.GetEnd()));
             }
             catch (Exception e)
             {
@@ -59,35 +61,35 @@ namespace VSRAD.Syntax.IntelliSense
             _textManager.NavigateToPosition(buffer, VSConstants.LOGVIEWID.TextView_guid, point.Position, 0);
         }
 
-        public AnalysisToken GetNaviationItem(TextExtent extent, bool onlyCurrentFile = true)
+        public NavigationToken GetNaviationItem(TextExtent extent, bool searchWithInclude = false)
         {
             try
             {
-                return GetNaviationToken(extent, onlyCurrentFile);
+                return GetNaviationToken(extent, searchWithInclude);
             }
             catch (Exception e)
             {
                 ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
-                return AnalysisToken.Empty;
+                return NavigationToken.Empty;
             }
         }
 
-        private AnalysisToken GetNaviationToken(TextExtent extent, bool onlyCurrentFile)
+        private NavigationToken GetNaviationToken(TextExtent extent, bool searchWithInclude)
         {
             if (!extent.IsSignificant)
-                return AnalysisToken.Empty;
+                return NavigationToken.Empty;
 
             var text = extent.Span.GetText();
             var version = extent.Span.Snapshot;
             var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(version.TextBuffer);
 
             if (documentAnalysis.LastParserResult.Count == 0)
-                return AnalysisToken.Empty;
+                return NavigationToken.Empty;
 
             var currentBlock = documentAnalysis.LastParserResult.GetBlockBy(extent.Span.Start);
 
             if (currentBlock == null || currentBlock.Type == BlockType.Comment)
-                return AnalysisToken.Empty;
+                return NavigationToken.Empty;
 
             if (FindNavigationTokenInBlock(version, currentBlock, text, out var token))
                 return token;
@@ -95,13 +97,13 @@ namespace VSRAD.Syntax.IntelliSense
             if (FindNavigationTokenInFunctionList(version, documentAnalysis.LastParserResult, text, out var functionToken))
                 return functionToken;
 
-            //if (!onlyCurrentFile && FindNavigationTokenInFileTree(version, parser, text, out var fileToken))
-            //    return fileToken;
+            if (searchWithInclude && FindNavigationTokenInFileTree(documentAnalysis, text, out var fileToken))
+                return fileToken;
 
-            return AnalysisToken.Empty;
+            return NavigationToken.Empty;
         }
 
-        private static bool FindNavigationTokenInBlock(ITextSnapshot version, IBlock currentBlock, string text, out AnalysisToken outToken)
+        private static bool FindNavigationTokenInBlock(ITextSnapshot version, IBlock currentBlock, string text, out NavigationToken outToken)
         {
             if (version.IsRadeonAsm2ContentType())
             {
@@ -114,7 +116,7 @@ namespace VSRAD.Syntax.IntelliSense
 
                         if (token.TrackingToken.GetText(version) == text)
                         {
-                            outToken = token;
+                            outToken = new NavigationToken(token, version);
                             return true;
                         }
                     }
@@ -134,7 +136,7 @@ namespace VSRAD.Syntax.IntelliSense
 
                         if (argToken != default)
                         {
-                            outToken = argToken;
+                            outToken = new NavigationToken(argToken, version);
                             return true;
                         }
                     }
@@ -151,18 +153,18 @@ namespace VSRAD.Syntax.IntelliSense
                     {
                         if (token.TrackingToken.GetText(version) == text)
                         {
-                            outToken = token;
+                            outToken = new NavigationToken(token, version);
                             return true;
                         }
                     }
                 }
             }
 
-            outToken = AnalysisToken.Empty;
+            outToken = NavigationToken.Empty;
             return false;
         }
 
-        private static bool FindNavigationTokenInFunctionList(ITextSnapshot version, IReadOnlyList<IBlock> blocks, string text, out AnalysisToken functionToken)
+        private static bool FindNavigationTokenInFunctionList(ITextSnapshot version, IReadOnlyList<IBlock> blocks, string text, out NavigationToken functionToken)
         {
             var functionTokens = blocks.GetFunctions().Select(b => b.Name);
 
@@ -170,65 +172,57 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 if (token.TrackingToken.GetText(version) == text)
                 {
-                    functionToken = token;
+                    functionToken = new NavigationToken(token, version);
                     return true;
                 }
             }
 
-            functionToken = AnalysisToken.Empty;
+            functionToken = NavigationToken.Empty;
             return false;
         }
 
-        private bool FindNavigationTokenInFileTree(IBlock parser, string text, out AnalysisToken outToken)
+        private bool FindNavigationTokenInFileTree(DocumentAnalysis documentAnalysis, string text, out NavigationToken outToken)
         {
-            // TODO rewrite broken code
-            outToken = AnalysisToken.Empty;
+            outToken = NavigationToken.Empty;
+
+            var textBuffer = documentAnalysis.CurrentSnapshot.TextBuffer;
+            if (!textBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out var textDocument))
+                return false;
+
+            var dirPath = Path.GetDirectoryName(textDocument.FilePath);
+            var includes = documentAnalysis
+                .LastParserResult[0] // the first block is Root block
+                .Tokens.Where(t => t.Type == RadAsmTokenType.Include);
+
+            foreach (var include in includes)
+            {
+                var docFileName = include.TrackingToken.GetText(textBuffer.CurrentSnapshot).Trim('"');
+                var extension = Path.GetExtension(docFileName);
+
+                var pathToDocument = Path.GetFullPath(Path.Combine(dirPath, docFileName));
+                if (!File.Exists(pathToDocument))
+                    continue;
+
+                if (!VsShellUtilities.IsDocumentOpen(_serviceProvider.ServiceProvider, pathToDocument, Guid.Empty, out _, out _, out var windowFrame))
+                {
+                    VsShellUtilities.OpenDocument(_serviceProvider.ServiceProvider, pathToDocument, Guid.Empty, out _, out _, out windowFrame);
+                }
+
+                var view = VsShellUtilities.GetTextView(windowFrame);
+                if (view.GetBuffer(out var lines) == 0)
+                {
+                    if (lines is IVsTextBuffer buffer)
+                    {
+                        var navigationBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDataBuffer(buffer);
+                        var includeDocumentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(navigationBuffer);
+
+                        if (FindNavigationTokenInFunctionList(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult, text, out outToken))
+                            return true;
+                    }
+                }
+            }
+
             return false;
-
-            //var textBuffer = parser.CurrentSnapshot.TextBuffer;
-            //var rc = textBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out var textDocument);
-            //if (!rc)
-            //{
-            //    outToken = null;
-            //    return false;
-            //}
-
-            //var dirPath = Path.GetDirectoryName(textDocument.FilePath);
-            //var contentType = _serviceProvider.ContentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
-
-            //var documentNames = _serviceProvider.TextSearchService.FindAll(new SnapshotSpan(textBuffer.CurrentSnapshot, 0, textBuffer.CurrentSnapshot.Length), "include\\s\"(.+)\"", FindOptions.UseRegularExpressions | FindOptions.SingleLine);
-
-            //foreach (var documentName in documentNames)
-            //{
-            //    var docFileName = Regex.Match(documentName.GetText(), "\"(.+)\"").Groups[1].Value;
-            //    var extension = Path.GetExtension(docFileName);
-
-            //    var extensionsAsm1 = _serviceProvider.FileExtensionRegistryService.GetExtensionsForContentType(contentType);
-            //    if (extensionsAsm1.Contains(extension))
-            //    {
-            //        var pathToDocument = Path.GetFullPath(Path.Combine(dirPath, docFileName));
-            //        var document = _serviceProvider.TextDocumentFactoryService.CreateAndLoadTextDocument(pathToDocument, contentType);
-            //        var parserManager = document.TextBuffer.Properties.GetOrCreateSingletonProperty(() => new ParserManger());
-
-            //        parserManager.InitializeAsm1(document.TextBuffer);
-            //        parserManager.ParseSync();
-
-            //        var rootBlock = parserManager.ActualParser.RootBlock;
-            //        var tokens = (rootBlock as RootBlock).FunctionTokens.Concat(rootBlock.Tokens);
-
-            //        foreach (var token in tokens)
-            //        {
-            //            if (token.TokenName == text)
-            //            {
-            //                outToken = token;
-            //                return true;
-            //            }
-            //        }
-            //    }
-            //}
-
-            //outToken = null;
-            //return false;
         }
     }
 }
