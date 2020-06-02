@@ -166,6 +166,29 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 ForegroundColor = Color.FromArgb(255, 192, 211, 173);
             }
         }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [Name(PredefinedMarkerFormatNames.BraceMatchingLight)]
+        [UserVisible(true)]
+        internal sealed class BraceMatchingHighlightFormatLight : MarkerFormatDefinition
+        {
+            public BraceMatchingHighlightFormatLight()
+            {
+                BackgroundColor = Color.FromArgb(255, 219, 224, 204);
+            }
+        }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [Name(PredefinedMarkerFormatNames.BraceMatchingDark)]
+        [UserVisible(true)]
+        internal sealed class BraceMatchingHighlightFormatDark : MarkerFormatDefinition
+        {
+            public BraceMatchingHighlightFormatDark()
+            {
+                BackgroundColor = Color.FromArgb(225, 14, 69, 131);
+                ForegroundColor = Color.FromArgb(255, 173, 192, 211);
+            }
+        }
         #endregion
 
 #pragma warning restore 169

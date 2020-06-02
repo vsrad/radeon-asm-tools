@@ -150,8 +150,10 @@ SEMI       : ';' ;
 COLON      : ':' ;
 LPAREN     : '(' ;
 RPAREN     : ')' ;
-LBRACKET   : '[' ;
-RBRACKET   : ']' ;
+LSQUAREBRACKET   : '[' ;
+RSQUAREBRACKET   : ']' ;
+LCURVEBRACKET    : '{' ;
+RCURVEBRACKET    : '}' ;
 
 // Literals
 
@@ -192,5 +194,5 @@ BLOCK_COMMENT
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]=<>!&|~+*%^]+
+    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^]+
     ;

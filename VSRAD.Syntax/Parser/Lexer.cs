@@ -11,9 +11,15 @@ namespace VSRAD.Syntax.Parser
     {
         IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset);
         RadAsmTokenType LexerTokenToRadAsmToken(int type);
-        int IdentifierIdx { get; }
-        int LineCommentIdx { get; }
-        int BlockCommentIdx { get; }
+        int IDENTIFIER { get; }
+        int LINE_COMMENT { get; }
+        int BLOCK_COMMENT { get; }
+        int LPAREN { get; }
+        int RPAREN { get; }
+        int LSQUAREBRACKET { get; }
+        int RSQUAREBRACKET { get; }
+        int LCURVEBRACKET { get; }
+        int RCURVEBRACKET { get; }
     }
 
     public class TextSegmentsCharStream : TextReader
@@ -172,8 +178,10 @@ namespace VSRAD.Syntax.Parser
             { RadAsmLexer.COLON, RadAsmTokenType.Structural },
             { RadAsmLexer.LPAREN, RadAsmTokenType.Structural },
             { RadAsmLexer.RPAREN, RadAsmTokenType.Structural },
-            { RadAsmLexer.LBRACKET, RadAsmTokenType.Structural },
-            { RadAsmLexer.RBRACKET, RadAsmTokenType.Structural },
+            { RadAsmLexer.LSQUAREBRACKET, RadAsmTokenType.Structural },
+            { RadAsmLexer.RSQUAREBRACKET, RadAsmTokenType.Structural },
+            { RadAsmLexer.LCURVEBRACKET, RadAsmTokenType.Structural },
+            { RadAsmLexer.RCURVEBRACKET, RadAsmTokenType.Structural },
 
             { RadAsmLexer.CONSTANT, RadAsmTokenType.Number },
             { RadAsmLexer.STRING_LITERAL, RadAsmTokenType.String },
@@ -187,9 +195,15 @@ namespace VSRAD.Syntax.Parser
             { RadAsmLexer.UNKNOWN, RadAsmTokenType.Unknown },
         };
 
-        public int IdentifierIdx => RadAsmLexer.IDENTIFIER;
-        public int LineCommentIdx => RadAsmLexer.LINE_COMMENT;
-        public int BlockCommentIdx => RadAsmLexer.BLOCK_COMMENT;
+        public int IDENTIFIER => RadAsmLexer.IDENTIFIER;
+        public int LINE_COMMENT => RadAsmLexer.LINE_COMMENT;
+        public int BLOCK_COMMENT => RadAsmLexer.BLOCK_COMMENT;
+        public int LPAREN => RadAsmLexer.LPAREN;
+        public int RPAREN => RadAsmLexer.RPAREN;
+        public int LSQUAREBRACKET => RadAsmLexer.LSQUAREBRACKET;
+        public int RSQUAREBRACKET => RadAsmLexer.RSQUAREBRACKET;
+        public int LCURVEBRACKET => RadAsmLexer.LCURVEBRACKET;
+        public int RCURVEBRACKET => RadAsmLexer.RCURVEBRACKET;
     }
 
     public class Asm2Lexer : ILexer
@@ -277,8 +291,10 @@ namespace VSRAD.Syntax.Parser
             { RadAsm2Lexer.COLON, RadAsmTokenType.Structural },
             { RadAsm2Lexer.LPAREN, RadAsmTokenType.Structural },
             { RadAsm2Lexer.RPAREN, RadAsmTokenType.Structural },
-            { RadAsm2Lexer.LBRACKET, RadAsmTokenType.Structural },
-            { RadAsm2Lexer.RBRACKET, RadAsmTokenType.Structural },
+            { RadAsm2Lexer.LSQUAREBRACKET, RadAsmTokenType.Structural },
+            { RadAsm2Lexer.RSQUAREBRACKET, RadAsmTokenType.Structural },
+            { RadAsm2Lexer.LCURVEBRACKET, RadAsmTokenType.Structural },
+            { RadAsm2Lexer.RCURVEBRACKET, RadAsmTokenType.Structural },
 
             { RadAsm2Lexer.CONSTANT, RadAsmTokenType.Number },
             { RadAsm2Lexer.STRING_LITERAL, RadAsmTokenType.String },
@@ -292,8 +308,14 @@ namespace VSRAD.Syntax.Parser
             { RadAsm2Lexer.UNKNOWN, RadAsmTokenType.Unknown },
         };
 
-        public int IdentifierIdx => RadAsm2Lexer.IDENTIFIER;
-        public int LineCommentIdx => RadAsm2Lexer.LINE_COMMENT;
-        public int BlockCommentIdx => RadAsm2Lexer.BLOCK_COMMENT;
+        public int IDENTIFIER => RadAsm2Lexer.IDENTIFIER;
+        public int LINE_COMMENT => RadAsm2Lexer.LINE_COMMENT;
+        public int BLOCK_COMMENT => RadAsm2Lexer.BLOCK_COMMENT;
+        public int LPAREN => RadAsm2Lexer.LPAREN;
+        public int RPAREN => RadAsm2Lexer.RPAREN;
+        public int LSQUAREBRACKET => RadAsm2Lexer.LSQUAREBRACKET;
+        public int RSQUAREBRACKET => RadAsm2Lexer.RSQUAREBRACKET;
+        public int LCURVEBRACKET => RadAsm2Lexer.LCURVEBRACKET;
+        public int RCURVEBRACKET => RadAsm2Lexer.RCURVEBRACKET;
     }
 }

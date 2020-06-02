@@ -10,7 +10,6 @@ using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Parser;
-using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
