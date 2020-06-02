@@ -319,7 +319,7 @@ namespace VSRAD.Package.DebugVisualizer
                 base.OnColumnDividerWidthChanged(e);
         }
 
-        public void ApplyDataStyling(ProjectOptions options, uint groupSize, uint[] system)
+        public void ApplyDataStyling(ProjectOptions options, uint groupSize, Server.WatchView system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;

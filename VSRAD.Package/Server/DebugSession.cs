@@ -130,8 +130,9 @@ namespace VSRAD.Package.Server
                 return new Error($"Output file ({output.File}) was not modified.", title: "Data may be stale");
 
             _timer.Stop();
-            return new BreakState(output, metadataResponse.Timestamp, (uint)metadataResponse.ByteCount,
-                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds, execElapsedMilliseconds, statusString);
+
+            var breakStateData = new BreakStateData(watches, output, metadataResponse.Timestamp, metadataResponse.ByteCount, _project.Options.Profile.Debugger.OutputOffset);
+            return new BreakState(breakStateData, _timer.ElapsedMilliseconds, execElapsedMilliseconds, statusString);
         }
 
         private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>

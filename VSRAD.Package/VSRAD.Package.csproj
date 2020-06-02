@@ -177,6 +177,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
+    <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>

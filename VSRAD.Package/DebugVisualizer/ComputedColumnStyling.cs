@@ -26,7 +26,7 @@ namespace VSRAD.Package.DebugVisualizer
                 ColumnState[i] |= ColumnStates.Inactive;
         }
 
-        public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, uint[] system)
+        public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, Server.WatchView system)
         {
             GroupSize = groupSize;
 
@@ -39,7 +39,7 @@ namespace VSRAD.Package.DebugVisualizer
             ComputeHiddenColumnSeparators();
         }
 
-        private void ComputeInactiveLanes(VisualizerOptions options, uint[] system)
+        private void ComputeInactiveLanes(VisualizerOptions options, Server.WatchView system)
         {
             if (system == null)
                 return;
