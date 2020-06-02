@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 using System.Windows.Input;
 
@@ -7,17 +6,26 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class SelectionController
     {
-        public IEnumerable<int> SelectedWatchIndexes => _table.SelectedCells
-            .Cast<DataGridViewCell>()
-            .Where(x => x.ColumnIndex == VisualizerTable.NameColumnIndex && x.Value != null)
-            .Select(x => x.RowIndex)
-            .OrderByDescending(x => x);
+        private readonly VisualizerTable _table;
 
-        private readonly DataGridView _table;
-
-        public SelectionController(DataGridView table)
+        public SelectionController(VisualizerTable table)
         {
             _table = table;
+        }
+
+        public IEnumerable<DataGridViewRow> GetSelectedRows()
+        {
+            foreach (DataGridViewRow row in _table.Rows)
+                if (row.Index >= 0 && row.Index != _table.NewWatchRowIndex && row.Cells[VisualizerTable.NameColumnIndex].Selected)
+                    yield return row;
+        }
+
+        public IEnumerable<DataGridViewRow> GetClickTargetRows(int clickedRowIndex)
+        {
+            if (_table.Rows[clickedRowIndex].Cells[VisualizerTable.NameColumnIndex].Selected)
+                return GetSelectedRows();
+            else
+                return new[] { _table.Rows[clickedRowIndex] };
         }
 
         // We want to select a column when the column header is clicked, and a row when the row header is clicked.

@@ -123,7 +123,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void VariableTypeChanged(int rowIndex, VariableType type)
         {
-            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
+            var changedRows = _selectionController.GetClickTargetRows(rowIndex);
             foreach (var row in changedRows)
                 row.HeaderCell.Value = type.ShortName();
             RaiseWatchStateChanged(changedRows);
@@ -131,7 +131,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void AvgprStateChanged(int rowIndex, bool newAvgprState)
         {
-            var selectedNames = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i].Cells[NameColumnIndex].Value.ToString());
+            var selectedNames = _selectionController.GetClickTargetRows(rowIndex).Select(r => (string)r.Cells[NameColumnIndex].Value);
             var selectedRows = DataRows.Where(r => selectedNames.Contains(r.Cells[NameColumnIndex].Value.ToString()));
             foreach (var row in selectedRows)
                 row.HeaderCell.Tag = newAvgprState;
@@ -307,9 +307,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
-            var changedRowIndexes = _selectionController.SelectedWatchIndexes.Append(rowIndex);
-            foreach (var i in changedRowIndexes)
-                RowStyling.UpdateRowHighlight(Rows[i], _fontAndColor.FontAndColorState, changeFg, changeBg);
+            foreach (var row in _selectionController.GetClickTargetRows(rowIndex))
+                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, changeFg, changeBg);
         }
 
         private bool _disableColumnWidthChangeHandler = false;
@@ -390,10 +389,9 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (!IsCurrentCellInEditMode)
             {
-                // deleting System is forbidden
-                var selectedRows = _selectionController.SelectedWatchIndexes.Where(i => i != 0).Select(i => Rows[i]);
-                foreach (var row in selectedRows)
-                    Rows.Remove(row);
+                foreach (var row in _selectionController.GetSelectedRows())
+                    if (row.Index != 0) // deleting System is forbidden
+                        Rows.Remove(row);
 
                 RaiseWatchStateChanged();
 
