@@ -135,6 +135,7 @@
     <Compile Include="IntelliSense\Peek\PeekResultSource.cs" />
     <Compile Include="Parser\Tokens\TokenType.cs" />
     <Compile Include="Parser\Tokens\TrackingToken.cs" />
+    <Compile Include="Parser\Tokens\VariableToken.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

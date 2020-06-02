@@ -136,7 +136,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
             cancellation.ThrowIfCancellationRequested();
             var navigationItem = _navigationTokenService.GetNaviationItem(word).AnalysisToken;
-            if (navigationItem == AnalysisToken.Empty || navigationItem.Type == RadAsmTokenType.Instruction)
+            if (navigationItem == null || navigationItem.Type == RadAsmTokenType.Instruction)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;

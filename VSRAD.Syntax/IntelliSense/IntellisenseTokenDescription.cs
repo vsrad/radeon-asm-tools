@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense
         {
             var version = documentAnalysis.CurrentSnapshot;
             string description = null;
-            if (token.Type == RadAsmTokenType.FunctionName 
+            if (token.Type == RadAsmTokenType.FunctionName
                 || token.Type == RadAsmTokenType.GlobalVariable
                 || token.Type == RadAsmTokenType.LocalVariable
                 || token.Type == RadAsmTokenType.Label)
@@ -73,6 +73,22 @@ namespace VSRAD.Syntax.IntelliSense
 
                 if (addBrackets)
                     nameTextRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ")"));
+
+                return GetDescriptionElement(token.Type.GetName(), new ClassifiedTextElement(nameTextRuns), description);
+            }
+            else if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.LocalVariable)
+            {
+                var variable = (VariableToken)token;
+                var nameTextRuns = new List<ClassifiedTextRun>()
+                {
+                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, token.TrackingToken.GetText(version)),
+                };
+
+                if (variable.DefaultValue != TrackingToken.Empty)
+                {
+                    nameTextRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.FormalLanguage, " = "));
+                    nameTextRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Number, variable.DefaultValue.GetText(version)));
+                }
 
                 return GetDescriptionElement(token.Type.GetName(), new ClassifiedTextElement(nameTextRuns), description);
             }
@@ -152,7 +168,7 @@ namespace VSRAD.Syntax.IntelliSense
 
         private static bool GetDescriptionFromComment(DocumentAnalysis documentAnalysis, ITextSnapshot version, IEnumerable<TrackingToken> tokens, out string description)
         {
-            var commentTokens = tokens.Where(t => t.Type ==  documentAnalysis.LINE_COMMENT || t.Type == documentAnalysis.LINE_COMMENT);
+            var commentTokens = tokens.Where(t => t.Type == documentAnalysis.LINE_COMMENT || t.Type == documentAnalysis.LINE_COMMENT);
 
             if (commentTokens.Any())
             {

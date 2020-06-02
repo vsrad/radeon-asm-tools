@@ -134,7 +134,7 @@ namespace VSRAD.Syntax.IntelliSense
                             .Tokens
                             .FirstOrDefault(t => (t.Type == RadAsmTokenType.FunctionParameter) && ("\\" + t.TrackingToken.GetText(version)) == text);
 
-                        if (argToken != default)
+                        if (argToken != null)
                         {
                             outToken = new NavigationToken(argToken, version);
                             return true;
