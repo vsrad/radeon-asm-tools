@@ -43,9 +43,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
                 Assert.False(columns[i].Visible);
             for (int i = 14; i <= 20; i++)
                 Assert.True(columns[i].Visible);
-            for (int i = 21; i <= 32; i++)
-                Assert.False(columns[i].Visible);
-            for (int i = 33; i <= 511; i++)
+            for (int i = 21; i < 32; i++)
                 Assert.False(columns[i].Visible);
         }
 
