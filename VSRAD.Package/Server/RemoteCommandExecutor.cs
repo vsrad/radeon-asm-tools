@@ -8,11 +8,14 @@ namespace VSRAD.Package.Server
 {
     public sealed class RemoteCommandExecutor
     {
-        public const string ErrorTimedOut = "Execution timeout has been exceeded. The process is terminated.";
-        public const string ErrorFileUnchanged = "Output file is unchanged after running the command.";
-        public const string ErrorFileNotCreated = "Output file is missing.";
-        public const string ErrorCouldNotLaunch = "The process could not be started. Make sure the path to the executable is specified correctly.";
-        public static string ErrorNonZeroExitCode(int exitCode) => $"The process has exited with a non-zero code ({exitCode}).";
+        private const string ErrorFileNotCreated = "Output file is missing on the target machine.";
+        private const string ErrorFileUnchanged = "Output file is unchanged on the target machine after running the command.";
+        private static string ErrorTimedOut(string tag) =>
+            "Execution timeout is exceeded. " + tag + " command on the target machine is terminated.";
+        private static string ErrorCouldNotLaunch(string tag) =>
+            tag + " process could not be started on the target machine. Make sure the path to the executable is specified correctly.";
+        private static string ErrorNonZeroExitCode(string tag, int exitCode) =>
+            tag + $" command on the target machine returned a non-zero exit code ({exitCode}). Check your application or debug script output in Output -> RAD Debug.";
 
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowWriter _outputWriter;
@@ -70,11 +73,11 @@ namespace VSRAD.Package.Server
                 case ExecutionStatus.Completed when result.ExitCode == 0 || !checkExitCode:
                     return result;
                 case ExecutionStatus.Completed:
-                    return new Error(ErrorNonZeroExitCode(result.ExitCode), title: "RAD " + _outputTag);
+                    return new Error(ErrorNonZeroExitCode(_outputTag, result.ExitCode), title: "RAD " + _outputTag);
                 case ExecutionStatus.TimedOut:
-                    return new Error(ErrorTimedOut, title: "RAD " + _outputTag);
+                    return new Error(ErrorTimedOut(_outputTag), title: "RAD " + _outputTag);
                 default:
-                    return new Error(ErrorCouldNotLaunch, title: "RAD " + _outputTag);
+                    return new Error(ErrorCouldNotLaunch(_outputTag), title: "RAD " + _outputTag);
             }
         }
     }

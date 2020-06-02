@@ -69,7 +69,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
 
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.False(result.TryGetResult(out _, out var error));
-            Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(33), error.Message);
+            Assert.Equal("Debugger command on the target machine returned a non-zero exit code (33). Check your application or debug script output in Output -> RAD Debug.", error.Message);
 
             Assert.True(channel.AllInteractionsHandled);
         }

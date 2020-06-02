@@ -47,7 +47,7 @@ namespace VSRAD.Package.Commands
             try
             {
                 await _deployManager.SynchronizeRemoteAsync();
-                var executor = new RemoteCommandExecutor("Profile", _channel, _outputWindow, _errorListManager);
+                var executor = new RemoteCommandExecutor("Profiler", _channel, _outputWindow, _errorListManager);
 
                 var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
 
