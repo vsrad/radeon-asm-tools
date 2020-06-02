@@ -221,17 +221,14 @@ namespace VSRAD.Package.DebugVisualizer
             }
             ColumnWidth = dataColumns[0].Width;
 
+            // phantom column
             Columns.Add(new DataGridViewTextBoxColumn()
             {
                 MinimumWidth = 2,
                 Width = 2,
                 ReadOnly = true,
-                SortMode = DataGridViewColumnSortMode.NotSortable,
-                Visible = true
+                SortMode = DataGridViewColumnSortMode.NotSortable
             });
-            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
         }
 
