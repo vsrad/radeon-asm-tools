@@ -40,7 +40,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
 
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.True(result.TryGetResult(out var breakState, out _));
-            Assert.Collection(breakState.Watches,
+            Assert.Collection(breakState.Data.Watches,
                 (first) => Assert.Equal("jill", first),
                 (second) => Assert.Equal("julianne", second));
 

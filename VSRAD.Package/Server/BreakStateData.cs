@@ -30,6 +30,13 @@ namespace VSRAD.Package.Server
             _laneDataSize = laneDataSize;
         }
 
+        // For tests
+        public WatchView(uint[] flatWatchData)
+        {
+            _data = flatWatchData;
+            _laneDataSize = 1;
+        }
+
         public uint this[int index]
         {
             get
@@ -92,7 +99,11 @@ namespace VSRAD.Package.Server
             int byteCount = 4 * groupSize * _laneDataSize;
 
             if (IsGroupFetched(byteOffset, byteCount))
+            {
+                GroupIndex = groupIndex;
+                GroupSize = groupSize;
                 return null;
+            }
 
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
@@ -122,7 +133,8 @@ namespace VSRAD.Package.Server
 
         private bool IsGroupFetched(int byteOffset, int byteCount)
         {
-            for (int i = byteOffset / 64; i < (byteOffset + byteCount) / 64; ++i)
+            const int waveSize = 4 * 64; // 64 dwords
+            for (int i = byteOffset / waveSize; i < (byteOffset + byteCount) / waveSize; ++i)
                 if (!_fetchedDataWaves[i])
                     return false;
             return true;
@@ -131,7 +143,9 @@ namespace VSRAD.Package.Server
         private void SetGroupData(int byteOffset, int byteCount, byte[] groupData)
         {
             Buffer.BlockCopy(groupData, 0, _data, byteOffset, groupData.Length);
-            for (int i = byteOffset / 64; i < (byteOffset + byteCount) / 64; ++i)
+
+            const int waveSize = 4 * 64; // 64 dwords
+            for (int i = byteOffset / waveSize; i < (byteOffset + byteCount) / waveSize; ++i)
                 _fetchedDataWaves[i] = true;
         }
     }
