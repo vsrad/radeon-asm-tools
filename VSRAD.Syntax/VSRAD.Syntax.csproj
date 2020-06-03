@@ -165,7 +165,6 @@
     <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTaggerProvider.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DefaultConfiguration\gfx9_instructions.radasm" />
     <None Include="Key.snk" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
