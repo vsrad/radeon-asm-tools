@@ -42,8 +42,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         private ContextMenu PrepareContextMenu()
         {
-            var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: false);
-            var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: true);
+            var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 1, maxSubgroupSize: 512, displayLast: false);
+            var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 1, maxSubgroupSize: 512, displayLast: true);
 
             var showAll = new MenuItem("All Columns", (s, e) => SetColumnSelector($"0-{_getGroupSize() - 1}"));
 
