@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
             new List<INavigableRelationship>() { PredefinedNavigableRelationships.Definition };
 
         public NavigableSymbol(
-            SnapshotSpan span, 
+            SnapshotSpan span,
             SnapshotPoint navigationPoint,
             NavigationTokenService navigationService)
         {

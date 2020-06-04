@@ -1,10 +1,8 @@
 ﻿using VSRAD.Syntax.Helpers;
 using System;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text.Editor;
-using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Editor
 {

@@ -21,7 +21,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IActiveCodeEditor))]
-    [AppliesTo(Constants.ProjectCapability)]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ActiveCodeEditor : IActiveCodeEditor
     {
         private readonly SVsServiceProvider _serviceProvider;

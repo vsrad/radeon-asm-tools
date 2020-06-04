@@ -1,5 +1,4 @@
 ﻿using SnapshotExtension = VSRAD.Syntax.Helpers.TextSnapshotExtension;
-using VSRAD.Syntax.Parser;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
@@ -12,12 +11,16 @@ namespace VSRAD.Syntax.Helpers
     {
         private const double OffsetLineFromTextView = 60.0;
 
-        public static void ChangeCaretPosition(this ITextView textView, ITextSnapshotLine line)
+        public static void ChangeCaretPosition(this ITextView textView, int lineNumber)
         {
             try
             {
-                textView?.Caret.MoveTo(textView.TextBuffer.CurrentSnapshot.GetLineFromLineNumber(line.LineNumber).Start);
-                textView?.DisplayTextLineContainingBufferPosition(textView.TextBuffer.CurrentSnapshot.GetLineFromLineNumber(line.LineNumber).Start, OffsetLineFromTextView, ViewRelativePosition.Top);
+                if (textView == null)
+                    return;
+
+                var position = textView.TextBuffer.CurrentSnapshot.GetLineFromLineNumber(lineNumber).Start;
+                textView.Caret.MoveTo(position);
+                textView.DisplayTextLineContainingBufferPosition(position, OffsetLineFromTextView, ViewRelativePosition.Top);
             }
             catch (Exception e)
             {

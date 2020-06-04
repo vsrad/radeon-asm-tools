@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Settings;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Settings;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
@@ -18,14 +21,14 @@ namespace VSRAD.Syntax.Options
         public OptionsProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;
-            IsEnabledIndentGuides = true;
+            IsEnabledIndentGuides = false;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
-            AutocompleteInstructions = true;
-            AutocompleteFunctions = true;
-            AutocompleteLabels = true;
-            AutocompleteVariables = true;
+            AutocompleteInstructions = false;
+            AutocompleteFunctions = false;
+            AutocompleteLabels = false;
+            AutocompleteVariables = false;
     }
 
         public GeneralOptionPage.SortState SortOptions;
@@ -44,7 +47,7 @@ namespace VSRAD.Syntax.Options
         public void OptionsUpdatedInvoke() =>
             OptionsUpdated?.Invoke(this);
 
-        private static string GetDefaultInstructionDirectoryPath()
+        public static string GetDefaultInstructionDirectoryPath()
         {
             var assemblyFolder = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
             return Path.GetDirectoryName(assemblyFolder);
@@ -53,6 +56,7 @@ namespace VSRAD.Syntax.Options
 
     public class GeneralOptionPage : BaseOptionPage
     {
+        private const string InstructionCollectionPath = "VSRADInstructionCollectionPath";
         private static readonly Regex fileExtensionRegular = new Regex(@"^\.\w+$");
         private readonly OptionsProvider _optionsEventProvider;
 
@@ -170,6 +174,33 @@ namespace VSRAD.Syntax.Options
 
             _optionsEventProvider.OptionsUpdatedInvoke();
             return Task.CompletedTask;
+        }
+
+        // hack to avoid installation errors when reinstalling the extension
+        public override void LoadSettingsFromStorage()
+        {
+            base.LoadSettingsFromStorage();
+            var settingsManager = new ShellSettingsManager(ServiceProvider.GlobalProvider);
+            var userSettingsStore = settingsManager.GetWritableSettingsStore(SettingsScope.UserSettings);
+
+            InstructionsPaths = userSettingsStore.CollectionExists(InstructionCollectionPath)
+                ? userSettingsStore.GetString(InstructionCollectionPath, nameof(InstructionsPaths))
+                : OptionsProvider.GetDefaultInstructionDirectoryPath();
+        }
+
+        public override void SaveSettingsToStorage()
+        {
+            base.SaveSettingsToStorage();
+            var settingsManager = new ShellSettingsManager(ServiceProvider.GlobalProvider);
+            var userSettingsStore = settingsManager.GetWritableSettingsStore(SettingsScope.UserSettings);
+
+            if (InstructionsPaths != OptionsProvider.GetDefaultInstructionDirectoryPath())
+            {
+                if (!userSettingsStore.CollectionExists(InstructionCollectionPath))
+                    userSettingsStore.CreateCollection(InstructionCollectionPath);
+
+                userSettingsStore.SetString(InstructionCollectionPath, nameof(InstructionsPaths), InstructionsPaths);
+            }
         }
 
         protected override void OnApply(PageApplyEventArgs e)

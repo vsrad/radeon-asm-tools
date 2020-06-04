@@ -1,9 +1,9 @@
 ﻿using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -13,11 +13,14 @@ namespace VSRAD.Syntax.FunctionList
     internal sealed class FunctionListEventFactory : IVsTextViewCreationListener
     {
         private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
 
         [ImportingConstructor]
-        public FunctionListEventFactory(IVsEditorAdaptersFactoryService adaptersFactoryService)
+        public FunctionListEventFactory(IVsEditorAdaptersFactoryService adaptersFactoryService, 
+            DocumentAnalysisProvoder documentAnalysisProvoder)
         {
-            this._adaptersFactoryService = adaptersFactoryService;
+            _adaptersFactoryService = adaptersFactoryService;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
@@ -25,7 +28,12 @@ namespace VSRAD.Syntax.FunctionList
             var view = _adaptersFactoryService.GetWpfTextView(textViewAdapter);
 
             if (view != null)
-                view.Caret.PositionChanged += (obj, args) => ThreadHelper.JoinableTaskFactory.RunAsync(() => FunctionList.TryHighlightCurrentFunctionAsync(args));
+            {
+                var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(view.TextBuffer);
+
+                documentAnalysis.ParserUpdated += FunctionList.TryUpdateFunctionList;
+                view.Caret.PositionChanged += (obj, args) => FunctionList.TryHighlightCurrentFunction(args.TextView);
+            }
         }
     }
 }

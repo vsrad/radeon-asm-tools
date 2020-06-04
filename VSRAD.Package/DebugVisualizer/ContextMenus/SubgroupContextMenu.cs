@@ -29,7 +29,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         public bool Show(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (hit.RowIndex != -1 || hit.ColumnIndex < 0) return false;
+            if (hit.RowIndex != -1 || hit.ColumnIndex < 0 || hit.ColumnIndex == VisualizerTable.PhantomColumnIndex)
+                return false;
             var screenStartOffset = _table.RowHeadersWidth + _table.Columns[VisualizerTable.NameColumnIndex].Width;
             _columnRelStart = hit.ColumnX - screenStartOffset;
             var invisibleColumns = _state.DataColumns.Count(x => x.Index < hit.ColumnIndex && x.Visible == false);
@@ -43,8 +44,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         private ContextMenu PrepareContextMenu()
         {
-            var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: false);
-            var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 4, maxSubgroupSize: 512, displayLast: true);
+            var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 1, maxSubgroupSize: 512, displayLast: false);
+            var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 1, maxSubgroupSize: 512, displayLast: true);
 
             var showAll = new MenuItem("All Columns", (s, e) => SetColumnSelector($"0-{_getGroupSize() - 1}"));
 

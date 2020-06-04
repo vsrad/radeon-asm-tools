@@ -37,7 +37,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <CodeAnalysisRuleSet>VSRAD.Package.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>
+    </CodeAnalysisRuleSet>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -48,19 +49,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
-    <CodeAnalysisRuleSet>VSRAD.Package.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>
+    </CodeAnalysisRuleSet>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="envdte, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="envdte100, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="envdte80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualStudio.CommandBars, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -130,12 +123,15 @@
     <Compile Include="Commands\BaseBuildWithPreviewCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
+    <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\DisassemblyCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
     <Compile Include="Commands\PreprocessCommand.cs" />
     <Compile Include="Commands\ProfileCommand.cs" />
+    <Compile Include="DebugVisualizer\CellStyling.cs" />
+    <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
     <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />
@@ -193,6 +189,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
+    <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
@@ -225,7 +222,7 @@
     <Compile Include="ToolWindows\OptionsControl.xaml.cs">
       <DependentUpon>OptionsControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ToolWindows\ToolWindowIntegration.cs" />
+    <Compile Include="ProjectSystem\ToolWindowIntegration.cs" />
     <Compile Include="Server\BreakState.cs" />
     <Compile Include="Server\CommunicationChannel.cs" />
     <Compile Include="Server\DebugSession.cs" />
@@ -258,7 +255,6 @@
     <Compile Include="Utils\NotifyPropertyChanged.cs" />
     <Compile Include="Utils\Ensure.cs" />
     <Compile Include="Utils\Half.cs" />
-    <Compile Include="Utils\ProjectSystemExtensions.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
@@ -281,9 +277,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config">
-      <SubType>Designer</SubType>
-    </None>
+    <None Include="app.config" />
+    <None Include="BuildSystem\[PlatformName]\ImportAfter\RAD.VisualC.targets" />
     <None Include="BuildSystem\DeployedBuildSystem\RADProject.targets">
       <SubType>Designer</SubType>
     </None>
@@ -293,7 +288,6 @@
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
-    <None Include="VSRAD.Package.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
@@ -411,22 +405,25 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="EnvDTE80">
+      <Version>8.0.3</Version>
+    </PackageReference>
     <PackageReference Include="Microsoft.Build">
-      <Version>15.9.20</Version>
+      <Version>16.4.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Build.Tasks.Core">
-      <Version>15.9.20</Version>
+      <Version>16.4.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers">
-      <Version>2.9.6</Version>
+      <Version>2.9.9</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Composition">
-      <Version>15.8.117</Version>
+      <Version>16.4.11</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Editor">
-      <Version>15.8.525</Version>
+      <Version>16.4.280</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Imaging.Interop.14.0.DesignTime">
       <Version>14.3.26930</Version>
@@ -435,19 +432,19 @@
       <Version>7.10.6071</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem">
-      <Version>15.8.243</Version>
+      <Version>16.2.133-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk">
-      <Version>15.8.243</Version>
+      <Version>16.2.133-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk.Tools">
-      <Version>15.8.243</Version>
+      <Version>16.2.133-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers">
-      <Version>15.8.36</Version>
+      <Version>16.5.5</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.EmbedInteropTypes">
-      <Version>15.0.27</Version>
+      <Version>15.0.30</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop">
       <Version>1.16.30</Version>
@@ -455,27 +452,30 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Shell.15.0">
-      <Version>15.9.28307</Version>
+      <Version>16.5.29911.84</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime">
       <Version>14.3.26929</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
-      <Version>15.8.209</Version>
+      <Version>16.5.132</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers">
-      <Version>15.8.209</Version>
+      <Version>16.5.132</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
-      <Version>15.9.3039</Version>
+      <Version>16.5.2044</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>9.0.1</Version>
+      <Version>12.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Collections.Immutable">
+      <Version>1.5.0</Version>
     </PackageReference>
     <PackageReference Include="System.Composition">
-      <Version>1.3.0</Version>
+      <Version>1.4.1</Version>
     </PackageReference>
     <PackageReference Include="System.Reflection.Metadata">
       <Version>1.6.0</Version>
@@ -487,8 +487,6 @@
   </PropertyGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
-  <!-- https://github.com/Microsoft/VSProjectSystem/issues/234#issuecomment-525065410 -->
-  <Import Project="$(UserProfile)\.nuget\packages\microsoft.visualstudio.projectsystem.sdk.tools\15.8.243\build\Microsoft.VisualStudio.ProjectSystem.Sdk.Tools.targets" Condition="!$(PrepareResourceNamesDependsOn.Contains('GenerateRuleSourceFromXaml'))" />
   <!-- See VSRAD.ProjectTempalte/RADProject.radproj. CPS props are copied to $(LocalAppData) on every build to simplify extension development -->
   <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
     <ItemGroup>
@@ -516,6 +514,41 @@
       <VSIXSubPath>VSRAD</VSIXSubPath>
     </VSIXSourceItem>
   </ItemGroup>
+  <!-- VisualC integration-->
+  <ItemGroup>
+    <VSIXSourceItem Include="BuildSystem\[PlatformName]\ImportAfter\RAD.VisualC.targets">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\Win32\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\Rules\RADDebugger.xaml">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\Win32\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\[PlatformName]\ImportAfter\RAD.VisualC.targets">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\x64\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+    <VSIXSourceItem Include="BuildSystem\Rules\RADDebugger.xaml">
+      <InProject>false</InProject>
+      <InstallRoot>MSBuild</InstallRoot>
+      <VSIXSubPath>Microsoft\VC\v160\Platforms\x64\ImportAfter</VSIXSubPath>
+    </VSIXSourceItem>
+  </ItemGroup>
+  <!-- In development, VisualC targets need to be copied manually because it requires elevation,
+       and we don't want to have to run Visual Studio as administrator just for this. -->
+  <Target Condition="'$(Configuration)' == 'Debug'" Name="AfterBuild">
+    <PropertyGroup>
+      <VC32Targets>$(MSBuildExtensionsPath)\Microsoft\VC\v160\Platforms\Win32\ImportAfter\</VC32Targets>
+      <VC64Targets>$(MSBuildExtensionsPath)\Microsoft\VC\v160\Platforms\x64\ImportAfter\</VC64Targets>
+    </PropertyGroup>
+    <Warning Condition="!Exists('$(VC32Targets)RAD.VisualC.targets')" Text="Copy BuildSystem\[PlatformName]\RAD.VisualC.targets to $(VC32Targets) to enable VisualC integration." />
+    <Warning Condition="!Exists('$(VC32Targets)RADDebugger.xaml')" Text="Copy BuildSystem\Rules\RADDebugger.xaml to $(VC32Targets) to enable VisualC integration." />
+    <Warning Condition="!Exists('$(VC64Targets)RAD.VisualC.targets')" Text="Copy BuildSystem\[PlatformName]\RAD.VisualC.targets to $(VC64Targets) to enable VisualC integration." />
+    <Warning Condition="!Exists('$(VC64Targets)RADDebugger.xaml')" Text="Copy BuildSystem\Rules\RADDebugger.xaml to $(VC64Targets) to enable VisualC integration." />
+  </Target>
   <PropertyGroup>
     <TransformOnBuild>true</TransformOnBuild>
   </PropertyGroup>

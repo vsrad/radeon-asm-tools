@@ -28,6 +28,7 @@ namespace VSRAD.Syntax.Options
 
         public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {
+            InstructionList.Clear();
             if (string.IsNullOrWhiteSpace(dirPathsString))
                 return Task.CompletedTask;
 
@@ -35,7 +36,6 @@ namespace VSRAD.Syntax.Options
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
-            InstructionList.Clear();
             foreach (var path in paths)
             {
                 LoadInstructionsFromDirectory(path);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Forms;
+using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -23,12 +24,7 @@ namespace VSRAD.Package.DebugVisualizer
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
 
-        #region Appearance
-        public int HiddenColumnSeparatorWidth = 8;
-        public uint LaneGrouping;
-        public int LaneSeparatorWidth = 3;
         public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
-        #endregion
 
         public bool ShowSystemRow
         {
@@ -47,6 +43,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly SelectionController _selectionController;
 
         private readonly FontAndColorProvider _fontAndColor;
+        private readonly ComputedColumnStyling _computedStyling;
 
         private string _editedWatchName;
 
@@ -55,6 +52,7 @@ namespace VSRAD.Package.DebugVisualizer
         public VisualizerTable(ColumnStylingOptions stylingOptions, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
             _fontAndColor = fontAndColor;
+            _computedStyling = new ComputedColumnStyling();
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -88,7 +86,8 @@ namespace VSRAD.Package.DebugVisualizer
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, stylingOptions, getGroupSize)
             });
-            _ = new CustomTableGraphics(this, _fontAndColor);
+            _ = new CellStyling(this, appearance, _computedStyling, _fontAndColor);
+            _ = new CustomTableGraphics(this);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
@@ -121,7 +120,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void VariableTypeChanged(int rowIndex, VariableType type)
         {
-            var changedRows = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i]);
+            var changedRows = _selectionController.GetClickTargetRows(rowIndex);
             foreach (var row in changedRows)
                 row.HeaderCell.Value = type.ShortName();
             RaiseWatchStateChanged(changedRows);
@@ -129,7 +128,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void AvgprStateChanged(int rowIndex, bool newAvgprState)
         {
-            var selectedNames = _selectionController.SelectedWatchIndexes.Append(rowIndex).Select(i => Rows[i].Cells[NameColumnIndex].Value.ToString());
+            var selectedNames = _selectionController.GetClickTargetRows(rowIndex).Select(r => (string)r.Cells[NameColumnIndex].Value);
             var selectedRows = DataRows.Where(r => selectedNames.Contains(r.Cells[NameColumnIndex].Value.ToString()));
             foreach (var row in selectedRows)
                 row.HeaderCell.Tag = newAvgprState;
@@ -219,17 +218,14 @@ namespace VSRAD.Package.DebugVisualizer
                 Columns.Add(dataColumns[i]);
             }
 
+            // phantom column
             Columns.Add(new DataGridViewTextBoxColumn()
             {
                 MinimumWidth = 2,
                 Width = 2,
                 ReadOnly = true,
-                SortMode = DataGridViewColumnSortMode.NotSortable,
-                Visible = true
+                SortMode = DataGridViewColumnSortMode.NotSortable
             });
-            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
         }
 
@@ -294,34 +290,47 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutColumns(uint groupSize) =>
-            ColumnStyling.GrayOutColumns(_state.DataColumns, _fontAndColor.FontAndColorState, groupSize);
+        public void GrayOutColumns(uint groupSize)
+        {
+            _computedStyling.GrayOutColumns(groupSize);
+            Invalidate();
+        }
 
         public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
             RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
 
         public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
-            var changedRowIndexes = _selectionController.SelectedWatchIndexes.Append(rowIndex);
-            foreach (var i in changedRowIndexes)
-                RowStyling.UpdateRowHighlight(Rows[i], _fontAndColor.FontAndColorState, changeFg, changeBg);
+            foreach (var row in _selectionController.GetClickTargetRows(rowIndex))
+                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, changeFg, changeBg);
         }
 
-        public void ApplyDataStyling(Options.ProjectOptions options, uint groupSize, uint[] system)
+        private bool _disableColumnWidthChangeHandler = false;
+
+        protected override void OnColumnDividerWidthChanged(DataGridViewColumnEventArgs e)
+        {
+            /* The base method invokes OnColumnGlobalAutoSize, which is very expensive
+             * when changing DividerWidth in bulk, as it is done in ColumnStyling.
+             * To prevent slowdowns, we disable the handler before invoking ColumnStyling.Apply */
+            if (!_disableColumnWidthChangeHandler)
+                base.OnColumnDividerWidthChanged(e);
+        }
+
+        public void ApplyDataStyling(ProjectOptions options, uint groupSize, Server.WatchView system)
         {
             // Prevent the scrollbar from jerking due to visibility changes
             var scrollingOffset = HorizontalScrollingOffset;
             ((Control)this).SuspendDrawing();
+            _disableColumnWidthChangeHandler = true;
+
+            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling, groupSize, system);
 
             ApplyFontAndColorInfo();
 
-            // TODO: refactor this away?
-            LaneGrouping = options.VisualizerOptions.VerticalSplit ? options.VisualizerOptions.LaneGrouping : 0;
-
             var columnStyling = new ColumnStyling(
-                options.VisualizerOptions,
                 options.VisualizerAppearance,
                 options.VisualizerColumnStyling,
+                _computedStyling,
                 _fontAndColor.FontAndColorState);
             columnStyling.Apply(_state.DataColumns, groupSize);
 
@@ -334,6 +343,7 @@ namespace VSRAD.Package.DebugVisualizer
             foreach (DataGridViewRow row in Rows)
                 RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
 
+            _disableColumnWidthChangeHandler = false;
             ((Control)this).ResumeDrawing();
             HorizontalScrollingOffset = scrollingOffset;
         }
@@ -379,10 +389,9 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (!IsCurrentCellInEditMode)
             {
-                // deleting System is forbidden
-                var selectedRows = _selectionController.SelectedWatchIndexes.Where(i => i != 0).Select(i => Rows[i]);
-                foreach (var row in selectedRows)
-                    Rows.Remove(row);
+                foreach (var row in _selectionController.GetSelectedRows())
+                    if (row.Index != 0) // deleting System is forbidden
+                        Rows.Remove(row);
 
                 RaiseWatchStateChanged();
 

@@ -39,10 +39,11 @@ namespace VSRAD.Syntax.FunctionList.Commands
         private void Execute(object sender, EventArgs e)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ToolWindowPane window = this.package.FindToolWindow(typeof(FunctionList), 0, true);
-            if ((null == window) || (null == window.Frame)) return;
+            var window = (FunctionList)package.FindToolWindow(typeof(FunctionList), 0, true);
+            if ((null == window) || (null == window.Frame)) 
+                return;
 
-            ((window as FunctionList)?.Content as FunctionListControl)?.GoToSelectedItem();
+            window.FunctionListControl.GoToSelectedItem();
         }
     }
 }

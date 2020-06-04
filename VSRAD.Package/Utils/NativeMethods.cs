@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -24,5 +25,17 @@ namespace VSRAD.Package.Utils
             _ = SendMessage(control.Handle, WM_SETREDRAW, new UIntPtr(1), IntPtr.Zero);
             control.Refresh();
         }
+
+        [DllImport("shlwapi.dll")]
+        private static extern int ColorHLSToRGB(ushort h, ushort l, ushort s);
+
+        [DllImport("shlwapi.dll")]
+        private static extern void ColorRGBToHLS(int win32rgb, ref ushort h, ref ushort l, ref ushort s);
+
+        public static void ToHls(this Color c, ref ushort h, ref ushort l, ref ushort s) =>
+            ColorRGBToHLS(ColorTranslator.ToWin32(c), ref h, ref l, ref s);
+
+        public static Color FromHls(ushort h, ushort l, ushort s) =>
+            ColorTranslator.FromWin32(ColorHLSToRGB(h, l, s));
     }
 }

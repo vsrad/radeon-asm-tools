@@ -28,11 +28,11 @@ namespace VSRAD.Package.Options
         }
         #endregion
         #region diviers
-        private int _laneDividerWidth = 3;
-        public int LaneDivierWidth
+        private int _laneSeparatorWidth = 3;
+        public int LaneSeparatorWidth
         {
-            get => _laneDividerWidth;
-            set => SetField(ref _laneDividerWidth, value);
+            get => _laneSeparatorWidth;
+            set => SetField(ref _laneSeparatorWidth, value);
         }
 
         private int _hiddenColumnSeparatorWidth = 8;
@@ -49,5 +49,8 @@ namespace VSRAD.Package.Options
             get => _scalingMode;
             set => SetField(ref _scalingMode, value);
         }
+
+        private int _darkenAlternatingRowsBy = 0;
+        public int DarkenAlternatingRowsBy { get => _darkenAlternatingRowsBy; set => SetField(ref _darkenAlternatingRowsBy, value); }
     }
 }

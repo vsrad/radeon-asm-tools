@@ -6,59 +6,12 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class CustomTableGraphics
     {
         private readonly VisualizerTable _table;
-        private readonly IFontAndColorProvider _fontAndColor;
         private static readonly Brush _avgprColor = Brushes.LightGreen;
 
-        public CustomTableGraphics(VisualizerTable table, IFontAndColorProvider fontAndColor)
+        public CustomTableGraphics(VisualizerTable table)
         {
             _table = table;
-            _table.CellPainting += PaintSpacesInVisibility;
-            _table.CellPainting += PaintInvalidWatchName;
             _table.RowPostPaint += ReplaceDefaultRowHeaderBitmap;
-
-            _fontAndColor = fontAndColor;
-        }
-
-        private void PaintSpacesInVisibility(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-            if (e.ColumnIndex < VisualizerTable.DataColumnOffset || e.ColumnIndex >= VisualizerTable.DataColumnCount) return;
-
-            int width;
-            SolidBrush color;
-
-            if (_table.Columns[e.ColumnIndex].Visible != _table.Columns[e.ColumnIndex + 1].Visible)
-            {
-                width = _table.HiddenColumnSeparatorWidth;
-                color = _fontAndColor.FontAndColorState.HiddenColumnSeparatorBrush;
-            }
-            else if (_table.LaneGrouping != 0 && (e.ColumnIndex % _table.LaneGrouping == 0))
-            {
-                width = _table.LaneSeparatorWidth;
-                color = _fontAndColor.FontAndColorState.ColumnSeparatorBrush;
-            }
-            else return;
-
-            // We doing force paint of _visible_ part of cell.
-            // Since we have frozen columns visible part of cell
-            // is not necessarily whole cell.
-            var r = e.CellBounds.Left > _table.ReservedColumnsOffset
-                ? e.CellBounds
-                : new Rectangle(_table.ReservedColumnsOffset + 1, e.CellBounds.Top, e.CellBounds.Right - _table.ReservedColumnsOffset - 1, e.CellBounds.Height);
-            r.Width -= width;
-            e.Graphics.SetClip(r);
-            e.Paint(r, DataGridViewPaintParts.All);
-            e.Graphics.SetClip(e.CellBounds);
-            r = new Rectangle(r.Right - 1, r.Top, width + 1, r.Height);
-            e.Graphics.FillRectangle(color, r);
-            e.Graphics.ResetClip();
-            e.Handled = true;
-        }
-
-        private void PaintInvalidWatchName(object sender, DataGridViewCellPaintingEventArgs e)
-        {
-            if (e.ColumnIndex == -1 || e.Value == null) return;
-            if (e.Value.ToString().IndexOf(':') >= 0)
-                e.CellStyle.BackColor = Color.Red;
         }
 
         // Show variable type in row header and highlight AVGPR watches

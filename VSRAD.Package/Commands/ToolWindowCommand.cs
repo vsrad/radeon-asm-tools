@@ -1,37 +1,35 @@
-﻿using EnvDTE;
-using Microsoft;
-using Microsoft.VisualStudio;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using System.Collections.Immutable;
+using System;
 using System.ComponentModel.Composition;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.ToolWindowCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
-    internal sealed class ToolWindowCommand : BaseCommand
+    [Export(typeof(ICommandHandler))]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
+    internal sealed class ToolWindowCommand : ICommandHandler
     {
-        public override Task<CommandStatusResult> GetCommandStatusAsync(IImmutableSet<IProjectTree> nodes, long commandId, bool focused, string commandText, CommandStatus progressiveStatus)
+        public Guid CommandSet => Constants.ToolWindowCommandSet;
+
+        public OLECMDF GetCommandStatus(uint commandId)
         {
             switch (commandId)
             {
                 case Constants.ToolWindowVisualizerCommandId:
                 case Constants.ToolWindowOptionsCommandId:
                 case Constants.ToolWindowSliceVisualizerCommandId:
-                    return Task.FromResult(new CommandStatusResult(true, commandText, CommandStatus.Enabled | CommandStatus.Supported));
+                    return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
                 default:
-                    return Task.FromResult(CommandStatusResult.Unhandled);
+                    return 0;
             }
         }
 
-        public async override Task RunAsync(long commandId)
+        public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            ThreadHelper.ThrowIfNotOnUIThread();
             switch (commandId)
             {
                 case Constants.ToolWindowVisualizerCommandId:

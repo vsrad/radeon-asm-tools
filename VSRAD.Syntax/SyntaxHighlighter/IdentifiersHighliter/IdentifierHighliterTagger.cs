@@ -1,8 +1,5 @@
-﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Tokens;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.PlatformUI;
 using System;
@@ -11,173 +8,183 @@ using System.Linq;
 using System.Threading;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense;
+using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
-    public class HighlightWordTag : TextMarkerTag
+    public class DefinitionHighlightWordTag : TextMarkerTag
     {
         private static string GetColorFormat()
         {
             var color = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
 
             if (color.R <= 100 && color.G <= 100 && color.B <= 100)
-                return PredefinedMarkerFormatNames.IdentifierDark;
+                return PredefinedMarkerFormatNames.DefinitionIdentifierDark;
 
-            return PredefinedMarkerFormatNames.IdentifierLight;
+            return PredefinedMarkerFormatNames.DefinitionIdentifierLight;
         }
 
-        public HighlightWordTag() : base(GetColorFormat()) { }
+        public DefinitionHighlightWordTag() : base(GetColorFormat()) { }
     }
 
-    internal class HighlightWordTagger : ITagger<HighlightWordTag>
+    public class ReferenceHighlightWordTag : TextMarkerTag
     {
-        private ITextView View { get; set; }
-        private ITextBuffer SourceBuffer { get; set; }
-        private ITextSearchService2 TextSearchService { get; set; }
-
-        private readonly NavigationTokenService navigationTokenService;
-        private readonly ParserManger parserManager;
-        private readonly object updateLock = new object();
-        private NormalizedSnapshotSpanCollection WordSpans { get; set; }
-        private SnapshotSpan? CurrentWord { get; set; }
-        private SnapshotPoint RequestedPoint { get; set; }
-
-        internal HighlightWordTagger(ITextView view, ITextBuffer sourceBuffer, ITextSearchService2 textSearchService, NavigationTokenService definitionService)
+        private static string GetColorFormat()
         {
-            this.View = view;
-            this.SourceBuffer = sourceBuffer;
-            this.TextSearchService = textSearchService;
-            this.navigationTokenService = definitionService;
-            this.parserManager = this.SourceBuffer.Properties.GetOrCreateSingletonProperty(
-                () => new ParserManger());
+            var color = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
 
-            WordSpans = new NormalizedSnapshotSpanCollection();
-            CurrentWord = null;
+            if (color.R <= 100 && color.G <= 100 && color.B <= 100)
+                return PredefinedMarkerFormatNames.ReferenceIdentifierDark;
 
-            View.Caret.PositionChanged += CaretPositionChanged;
-            View.LayoutChanged += ViewLayoutChanged;
+            return PredefinedMarkerFormatNames.ReferenceIdentifierLight;
         }
 
-        #region Event Handlers
+        public ReferenceHighlightWordTag() : base(GetColorFormat()) { }
+    }
+
+    internal class HighlightWordTagger : ITagger<TextMarkerTag>
+    {
+        private readonly object updateLock = new object();
+        private readonly ITextView _view;
+        private readonly ITextBuffer _buffer;
+        private readonly DocumentAnalysis _documentAnalysis;
+        private readonly NavigationTokenService _navigationTokenService;
+
+        private NormalizedSnapshotSpanCollection wordSpans;
+        private SnapshotSpan? navigationWordSpans;
+        private SnapshotSpan? currentWord;
+        private SnapshotPoint requestedPoint;
+        private CancellationTokenSource indentCts;
+
+        internal HighlightWordTagger(ITextView view, 
+            ITextBuffer sourceBuffer, 
+            DocumentAnalysis documentAnalysis,
+            NavigationTokenService definitionService)
+        {
+            _view = view;
+            _buffer = sourceBuffer;
+            _documentAnalysis = documentAnalysis;
+            _navigationTokenService = definitionService;
+
+            wordSpans = new NormalizedSnapshotSpanCollection();
+            indentCts = new CancellationTokenSource();
+            currentWord = null;
+
+            _view.Caret.PositionChanged += CaretPositionChanged;
+            _view.LayoutChanged += ViewLayoutChanged;
+        }
+
         private void ViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
         {
             if (e.NewViewState.EditSnapshot != e.OldViewState.EditSnapshot)
-                UpdateAtCaretPosition(View.Caret.Position);
+                UpdateAtCaretPosition(_view.Caret.Position);
         }
 
-        private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) => UpdateAtCaretPosition(e.NewPosition);
+        private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) => 
+            UpdateAtCaretPosition(e.NewPosition);
 
         private void UpdateAtCaretPosition(CaretPosition caretPoisition)
         {
-            SnapshotPoint? point = caretPoisition.Point.GetPoint(SourceBuffer, caretPoisition.Affinity);
+            indentCts.Cancel();
+            SnapshotPoint? point = caretPoisition.Point.GetPoint(_buffer, caretPoisition.Affinity);
 
             if (!point.HasValue)
                 return;
 
-            if (CurrentWord.HasValue &&
-                CurrentWord.Value.Snapshot == View.TextSnapshot &&
-                point.Value >= CurrentWord.Value.Start &&
-                point.Value <= CurrentWord.Value.End)
+            if (currentWord.HasValue &&
+                currentWord.Value.Snapshot == _view.TextSnapshot &&
+                point.Value >= currentWord.Value.Start &&
+                point.Value <= currentWord.Value.End)
             {
                 return;
             }
 
-            RequestedPoint = point.Value;
-
-            ThreadPool.QueueUserWorkItem(UpdateWordAdornments);
+            requestedPoint = point.Value;
+            indentCts = new CancellationTokenSource();
+            ThreadPool.QueueUserWorkItem(UpdateWordAdornments, indentCts.Token);
         }
 
         private void UpdateWordAdornments(object threadContext)
         {
-            var currentRequest = RequestedPoint;
+            try
+            {
+                UpdateWordAdornments((CancellationToken)threadContext);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private void UpdateWordAdornments(CancellationToken cancellation)
+        {
+            var currentRequest = requestedPoint;
+            var version = currentRequest.Snapshot;
             var wordSpans = new List<SnapshotSpan>();
             var word = currentRequest.GetExtent();
+            var currentTokenRequest = _documentAnalysis.GetToken(currentRequest.Position);
 
-            if (!WordExtentIsValid(currentRequest, word))
+            if (!word.IsSignificant || currentTokenRequest.Type != _documentAnalysis.IDENTIFIER)
             {
-                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);
+                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;
             }
 
-            SnapshotSpan currentWord = word.Span;
-
-            if (CurrentWord.HasValue && currentWord == CurrentWord)
+            var currentWord = word.Span;
+            if (this.currentWord.HasValue && currentWord == this.currentWord)
                 return;
 
-            var navigationItem = navigationTokenService.GetNaviationItem(word);
-            if (navigationItem == null)
+            cancellation.ThrowIfCancellationRequested();
+            var navigationItem = _navigationTokenService.GetNaviationItem(word).AnalysisToken;
+            if (navigationItem == null || navigationItem.Type == RadAsmTokenType.Instruction)
             {
-                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);
+                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;
             }
+            var navigationTokenSpan =  new SnapshotSpan(version, navigationItem.TrackingToken.GetSpan(version));
 
-            var codeBlock = parserManager.ActualParser?.GetBlockByToken(navigationItem);
-            if (codeBlock == null)
+            cancellation.ThrowIfCancellationRequested();
+            var block = _documentAnalysis.LastParserResult.GetBlockBy(navigationItem);
+            var blockSpan = (block.Type == Parser.Blocks.BlockType.Root) ? new Span(0, version.Length) : block.Scope.GetSpan(version);
+            var wordText = currentWord.GetText();
+
+            var lexerTokens = _documentAnalysis.GetTokens(blockSpan).Where(t => t.Type == _documentAnalysis.IDENTIFIER);
+            foreach (var token in lexerTokens)
             {
-                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);
-                return;
+                cancellation.ThrowIfCancellationRequested();
+
+                if (token.GetText(version) == wordText)
+                    wordSpans.Add(new SnapshotSpan(version, token.GetSpan(version)));
             }
 
-            var commentsTokens = codeBlock.GetTokens().Where(token => token.TokenType == TokenType.Comment).ToList();
-
-            var wordSpansInBlock = TextSearchService.FindAll(codeBlock.BlockActualSpan, currentWord.GetText(), FindOptions.WholeWord | FindOptions.MatchCase);
-
-            // Check if requested word in comment
-            foreach (var commentToken in codeBlock.Tokens.Where(token => token.TokenType == TokenType.Comment))
-            {
-                if (commentToken.SymbolSpan.Snapshot != currentWord.Snapshot)
-                    return;
-
-                if (commentToken.SymbolSpan.Contains(currentWord))
-                {
-                    SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null);
-                    return;
-                }
-            }
-
-            // Skip words which in comments
-            foreach (var wordSpan in wordSpansInBlock)
-            {
-                if (!commentsTokens.Any(comment => comment.SymbolSpan.Contains(wordSpan)))
-                    wordSpans.Add(wordSpan);
-            }
-
-            if (currentRequest == RequestedPoint)
-                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(wordSpans), currentWord);
+            if (currentRequest == requestedPoint)
+                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(wordSpans), currentWord, navigationTokenSpan);
         }
 
-        static bool WordExtentIsValid(SnapshotPoint currentRequest, TextExtent word)
-        {
-            return word.IsSignificant && currentRequest.Snapshot.GetText(word.Span).Any(c => char.IsLetter(c));
-        }
-
-        private void SynchronousUpdate(SnapshotPoint currentRequest, NormalizedSnapshotSpanCollection newSpans, SnapshotSpan? newCurrentWord)
+        private void SynchronousUpdate(SnapshotPoint currentRequest, NormalizedSnapshotSpanCollection newSpans, SnapshotSpan? newCurrentWord, SnapshotSpan? navigationTokenSpan)
         {
             lock (updateLock)
             {
-                if (currentRequest != RequestedPoint)
+                if (currentRequest != requestedPoint)
                     return;
 
-                WordSpans = newSpans;
-                CurrentWord = newCurrentWord;
+                wordSpans = newSpans;
+                currentWord = newCurrentWord;
+                navigationWordSpans = navigationTokenSpan;
 
-                TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(SourceBuffer.CurrentSnapshot, 0, SourceBuffer.CurrentSnapshot.Length)));
+                TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
             }
         }
 
-        #endregion
-
-        #region ITagger<HighlightWordTag> Members
-
-        public IEnumerable<ITagSpan<HighlightWordTag>> GetTags(NormalizedSnapshotSpanCollection spans)
+        public IEnumerable<ITagSpan<TextMarkerTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            if (CurrentWord == null)
+            if (this.currentWord == null)
                 yield break;
 
-            SnapshotSpan currentWord = CurrentWord.Value;
-            NormalizedSnapshotSpanCollection wordSpans = WordSpans;
+            var currentWord = this.currentWord.Value;
+            var wordSpans = this.wordSpans;
 
-            if (spans.Count == 0 || WordSpans.Count == 0)
+            if (spans.Count == 0 || this.wordSpans.Count == 0)
                 yield break;
 
             if (spans[0].Snapshot != wordSpans[0].Snapshot)
@@ -189,15 +196,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             }
 
             if (spans.OverlapsWith(new NormalizedSnapshotSpanCollection(currentWord)))
-                yield return new TagSpan<HighlightWordTag>(currentWord, new HighlightWordTag());
+                yield return new TagSpan<ReferenceHighlightWordTag>(currentWord, new ReferenceHighlightWordTag());
 
             foreach (SnapshotSpan span in NormalizedSnapshotSpanCollection.Overlap(spans, wordSpans))
-                yield return new TagSpan<HighlightWordTag>(span, new HighlightWordTag());
+                yield return new TagSpan<ReferenceHighlightWordTag>(span, new ReferenceHighlightWordTag());
 
+            if (navigationWordSpans != null)
+                yield return new TagSpan<DefinitionHighlightWordTag>(navigationWordSpans.Value, new DefinitionHighlightWordTag());
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
-
-        #endregion
     }
 }

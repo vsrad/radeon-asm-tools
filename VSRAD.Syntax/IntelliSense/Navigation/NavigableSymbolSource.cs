@@ -3,6 +3,8 @@ using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.SyntaxHighlighter;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
@@ -18,11 +20,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
         {
             var extent = triggerSpan.Start.GetExtent();
-            var navigableToken = _navigationService.GetNaviationItem(extent, false);
+            var navigableToken = _navigationService.GetNaviationItem(extent, true);
 
-            return (navigableToken == null) 
-                ? Task.FromResult<INavigableSymbol>(null) 
-                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, navigableToken.SymbolSpan.Start, _navigationService));
+            return (navigableToken == NavigationToken.Empty)
+                ? Task.FromResult<INavigableSymbol>(null)
+                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, new SnapshotPoint(navigableToken.Snapshot, navigableToken.GetEnd()), _navigationService));
         }
 
         public void Dispose()

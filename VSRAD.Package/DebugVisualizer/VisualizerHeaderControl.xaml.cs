@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Windows;
 using System.Windows.Controls;
-using VSRAD.Package.ToolWindows;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer

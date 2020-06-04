@@ -44,9 +44,9 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal("test stdout", resultData.Item1.Stdout);
 
             outputWriterMock.Verify((w) => w.PrintMessageAsync(
-                "[Test] Captured stdout", "test stdout"), Times.Once);
+                "[Test] Captured stdout (exit code 0)", "test stdout"), Times.Once);
             outputWriterMock.Verify((w) => w.PrintMessageAsync(
-                "[Test] Captured stderr", "test stderr"), Times.Once);
+                "[Test] Captured stderr (exit code 0)", "test stderr"), Times.Once);
         }
 
         [Fact]
@@ -55,28 +55,30 @@ namespace VSRAD.PackageTests.Server
             var channel = new MockCommunicationChannel();
             var (outputWindow, outputWriterMock) = MockOutputWindow();
             var errorListManager = MockErrorListManager();
-            var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow, errorListManager);
+            var executor = new RemoteCommandExecutor("RCETest", channel.Object, outputWindow, errorListManager);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch });
 
             var result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile("", "h"));
             Assert.False(result.TryGetResult(out _, out var error));
-            Assert.Equal("RAD Test", error.Title);
-            Assert.Equal(RemoteCommandExecutor.ErrorCouldNotLaunch, error.Message);
-            outputWriterMock.Verify((w) => w.PrintMessageAsync("[Test] No stdout/stderr captured", null), Times.Once);
+            Assert.Equal("RAD RCETest", error.Title);
+            Assert.Equal("RCETest process could not be started on the target machine. Make sure the path to the executable is specified correctly.", error.Message);
+            outputWriterMock.Verify((w) => w.PrintMessageAsync("[RCETest] No stdout/stderr captured (could not launch)", null), Times.Once);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 666 });
             result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile("", "h"));
             Assert.False(result.TryGetResult(out _, out error));
-            Assert.Equal(RemoteCommandExecutor.ErrorNonZeroExitCode(666), error.Message);
+            Assert.Equal("RCETest command on the target machine returned a non-zero exit code (666). Check your application or debug script output in Output -> RAD Debug.", error.Message);
+            outputWriterMock.Verify((w) => w.PrintMessageAsync("[RCETest] No stdout/stderr captured (exit code 666)", null), Times.Once);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.TimedOut });
             result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile("", "h"));
             Assert.False(result.TryGetResult(out _, out error));
-            Assert.Equal(RemoteCommandExecutor.ErrorTimedOut, error.Message);
+            Assert.Equal("Execution timeout is exceeded. RCETest command on the target machine is terminated.", error.Message);
+            outputWriterMock.Verify((w) => w.PrintMessageAsync("[RCETest] No stdout/stderr captured (timed out)", null), Times.Once);
 
             Assert.True(channel.AllInteractionsHandled);
         }
@@ -85,16 +87,17 @@ namespace VSRAD.PackageTests.Server
         public async Task FetchResultTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var (outputWindow, _) = MockOutputWindow();
+            var (outputWindow, outputWriterMock) = MockOutputWindow();
             var errorListManager = MockErrorListManager();
             var executor = new RemoteCommandExecutor("Test", channel.Object, outputWindow, errorListManager);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
-            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 1 });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound });
-            var result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"));
+            var result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"), checkExitCode: false);
             Assert.False(result.TryGetResult(out _, out var error));
-            Assert.Equal(RemoteCommandExecutor.ErrorFileNotCreated, error.Message);
+            Assert.Equal("Output file is missing on the target machine.", error.Message);
+            outputWriterMock.Verify((w) => w.PrintMessageAsync("[Test] No stdout/stderr captured (exit code 1)", null), Times.Once);
 
             var timestamp = DateTime.Now;
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
@@ -102,7 +105,8 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = timestamp });
             result = await executor.ExecuteWithResultAsync(new Execute(), new OutputFile(@"F:\Is\Pressed\For", "Us"));
             Assert.False(result.TryGetResult(out _, out error));
-            Assert.Equal(RemoteCommandExecutor.ErrorFileUnchanged, error.Message);
+            Assert.Equal("Output file is unchanged on the target machine after running the command.", error.Message);
+            outputWriterMock.Verify((w) => w.PrintMessageAsync("[Test] No stdout/stderr captured (exit code 0)", null), Times.Once);
 
             Assert.True(channel.AllInteractionsHandled);
         }

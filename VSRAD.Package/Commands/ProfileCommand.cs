@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Shell;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -11,8 +10,8 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
-    [ExportCommandGroup(Constants.ProfileCommandSet)]
-    [AppliesTo(Constants.ProjectCapability)]
+    [Export(typeof(ICommandHandler))]
+    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class ProfileCommand : BaseRemoteCommand
     {
         private readonly IProject _project;
@@ -28,7 +27,7 @@ namespace VSRAD.Package.Commands
             IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
             SVsServiceProvider serviceProvider,
-            IErrorListManager errorListManager) : base(Constants.ProfileCommandId, serviceProvider)
+            IErrorListManager errorListManager) : base(Constants.ProfileCommandSet, Constants.ProfileCommandId, serviceProvider)
         {
             _project = project;
             _deployManager = deployManager;
@@ -37,7 +36,7 @@ namespace VSRAD.Package.Commands
             _errorListManager = errorListManager;
         }
 
-        public override async Task RunAsync(long commandId)
+        public override async Task RunAsync()
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
@@ -48,7 +47,7 @@ namespace VSRAD.Package.Commands
             try
             {
                 await _deployManager.SynchronizeRemoteAsync();
-                var executor = new RemoteCommandExecutor("Profile", _channel, _outputWindow, _errorListManager);
+                var executor = new RemoteCommandExecutor("Profiler", _channel, _outputWindow, _errorListManager);
 
                 var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
 

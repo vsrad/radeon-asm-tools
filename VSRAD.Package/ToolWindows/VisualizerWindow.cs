@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 using VSRAD.Package.DebugVisualizer;
+using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.ToolWindows
 {

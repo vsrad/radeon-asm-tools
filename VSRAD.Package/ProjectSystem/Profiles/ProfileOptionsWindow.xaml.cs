@@ -60,6 +60,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public ProfileOptionsWindow(Macros.MacroEditManager macroEditor, ProjectOptions projectOptions)
         {
             _projectOptions = projectOptions;
+            if (!_projectOptions.HasProfiles)
+                _projectOptions.AddProfile("Default", new ProfileOptions());
             DataContext = new Context(_projectOptions, SaveChanges, RemoveProfile);
             InitializeComponent();
             _pageEditor = new PropertyPageEditorWrapper(PropertiesGrid, macroEditor,

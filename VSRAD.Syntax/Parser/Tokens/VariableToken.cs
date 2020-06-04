@@ -1,28 +1,12 @@
-﻿using Microsoft.VisualStudio.Text;
-
-namespace VSRAD.Syntax.Parser.Tokens
+﻿namespace VSRAD.Syntax.Parser.Tokens
 {
-    internal class GlobalVariableToken : VariableToken
+    public class VariableToken : AnalysisToken
     {
-        public GlobalVariableToken(SnapshotSpan symbolSpan, string description) : base(symbolSpan, description, TokenType.GlobalVariable)
-        {
-        }
-    }
+        public TrackingToken DefaultValue { get; }
 
-    internal class LocalVariableToken : VariableToken
-    {
-        public LocalVariableToken(SnapshotSpan symbolSpan, string description) : base(symbolSpan, description, TokenType.LocalVariable)
+        public VariableToken(RadAsmTokenType type, TrackingToken token, TrackingToken defaultValue = default) : base(type, token)
         {
-        }
-    }
-
-    internal class VariableToken : BaseToken, IDescriptionToken
-    {
-        public string Description { get; } = null;
-
-        public VariableToken(SnapshotSpan symbolSpan, string description, TokenType tokenType = TokenType.GlobalVariable) : base(symbolSpan, tokenType)
-        {
-            Description = description;
+            DefaultValue = defaultValue;
         }
     }
 }

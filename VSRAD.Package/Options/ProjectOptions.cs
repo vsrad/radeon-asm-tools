@@ -26,7 +26,9 @@ namespace VSRAD.Package.Options
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
         [JsonIgnore]
-        public ProfileOptions Profile => Profiles[ActiveProfile];
+        public bool HasProfiles => Profiles.Count > 0;
+        [JsonIgnore]
+        public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
 
         /// <summary>
         /// Provides read-only access to all existing profiles.
@@ -41,6 +43,7 @@ namespace VSRAD.Package.Options
             var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
             writeableProfiles[name] = profile;
             ActiveProfile = name;
+            RaisePropertyChanged(nameof(HasProfiles));
         }
 
         public delegate string ResolveImportNameConflict(string profileName);
@@ -50,7 +53,7 @@ namespace VSRAD.Package.Options
             foreach (var updateKv in updates.ToList())
             {
                 var oldName = updateKv.Key;
-                var newName = updateKv.Value.General.ProfileName;
+                var newName = updateKv.Value.General.ProfileName ?? oldName;
                 if (oldName != newName && Profiles.Keys.Contains(newName))
                     newName = nameConflictResolver(newName);
                 if (string.IsNullOrWhiteSpace(newName))
@@ -86,9 +89,7 @@ namespace VSRAD.Package.Options
                 if (!(e is FileNotFoundException)) // File not found => creating a new project, don't show the error
                     Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message} Proceeding with defaults.");
             }
-            if (options.Profiles.Count == 0)
-                options.AddProfile("Default", new ProfileOptions());
-            else if (!options.Profiles.ContainsKey(options.ActiveProfile))
+            if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
         }

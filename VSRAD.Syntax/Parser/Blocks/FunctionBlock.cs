@@ -1,30 +1,14 @@
 ﻿using VSRAD.Syntax.Parser.Tokens;
-using Microsoft.VisualStudio.Text;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace VSRAD.Syntax.Parser.Blocks
 {
-    public class FunctionBlock : BaseBlock
+    internal class FunctionBlock : Block
     {
-        public FunctionToken FunctionToken { get; }
+        public AnalysisToken Name { get; }
 
-        public FunctionBlock(
-            IBaseBlock parrent,
-            SnapshotPoint blockStart,
-            FunctionToken functionToken,
-            int spaceStart) : base(parrent, BlockType.Function, blockStart, spaceStart: spaceStart)
+        public FunctionBlock(IBlock parrent, BlockType type, TrackingToken tokenStart, AnalysisToken name) : base(parrent, type, tokenStart)
         {
-            this.FunctionToken = functionToken;
-            this.Tokens.Add(FunctionToken);
+            Name = name;
         }
-
-        public override void SetActualSpan()
-        {
-            BlockActualSpan = new SnapshotSpan(FunctionToken.SymbolSpan.Start, BlockSpan.End);
-        }
-
-        public IEnumerable<IBaseToken> GetArgumentTokens() =>
-            Tokens.Where(token => token.TokenType == TokenType.Argument);
     }
 }
