@@ -44,8 +44,9 @@ namespace VSRAD.Package.DebugVisualizer
             _channel = channel;
 
             GroupIndex = new GroupIndexSelector(options.VisualizerOptions);
-            GroupIndex.PropertyChanged += GroupIndexPropertyChanged;
             GroupIndex.IndexChanged += GroupIndexChanged;
+            GroupIndex.PropertyChanged += OptionsChanged;
+            Options.DebuggerOptions.PropertyChanged += OptionsChanged;
         }
 
         public void EnterBreak(BreakState breakState)
@@ -56,10 +57,17 @@ namespace VSRAD.Package.DebugVisualizer
                 GroupIndex.Update();
         }
 
-        private void GroupIndexPropertyChanged(object sender, PropertyChangedEventArgs e)
+        private void OptionsChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(GroupIndex.GroupSize))
-                RaisePropertyChanged(nameof(GroupSize));
+            switch (e.PropertyName)
+            {
+                case nameof(GroupIndex.GroupSize):
+                    RaisePropertyChanged(nameof(GroupSize));
+                    break;
+                case nameof(Options.DebuggerOptions.NGroups):
+                    GroupIndex.Update();
+                    break;
+            }
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
@@ -67,21 +75,21 @@ namespace VSRAD.Package.DebugVisualizer
             if (_breakState == null)
                 return;
 
-            e.DataGroupCount = _breakState.Data.GetGroupCount(e.GroupSize);
+            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.NGroups);
             WatchesValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
             if (!WatchesValid)
                 return;
 
-            VSPackage.TaskFactory.RunAsync(() => FetchGroupAsync(e));
+            VSPackage.TaskFactory.RunAsync(() => ChangeGroupAsync(e));
         }
 
-        private async Task FetchGroupAsync(GroupIndexChangedEventArgs e)
+        private async Task ChangeGroupAsync(GroupIndexChangedEventArgs e)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             Status = $"Fetching group {e.Coordinates}";
             GroupIndexEditable = false;
 
-            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize);
+            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize, (int)Options.DebuggerOptions.NGroups);
             GroupFetched(this, new GroupFetchedEventArgs(warning));
 
             var status = new StringBuilder();
