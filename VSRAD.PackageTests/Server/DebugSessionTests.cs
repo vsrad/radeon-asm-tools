@@ -40,7 +40,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
 
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.True(result.TryGetResult(out var breakState, out _));
-            Assert.Collection(breakState.Watches,
+            Assert.Collection(breakState.Data.Watches,
                 (first) => Assert.Equal("jill", first),
                 (second) => Assert.Equal("julianne", second));
 
@@ -66,10 +66,12 @@ namespace VSRAD.Package.ProjectSystem.Tests
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
                 (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 33 }, (_) => { });
+            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now },
+                (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
 
-            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
-            Assert.False(result.TryGetResult(out _, out var error));
-            Assert.Equal("Debugger command on the target machine returned a non-zero exit code (33). Check your application or debug script output in Output -> RAD Debug.", error.Message);
+            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[]  { "jill", "julianne" }.ToList()));
+            Assert.True(result.TryGetResult(out var breakState, out var error));
+            Assert.Equal(33, breakState.ExitCode);
 
             Assert.True(channel.AllInteractionsHandled);
         }

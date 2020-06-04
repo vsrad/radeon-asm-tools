@@ -16,8 +16,6 @@ namespace VSRAD.Package.Server
         private readonly IFileSynchronizationManager _fileSynchronizationManager;
         private readonly RemoteCommandExecutor _remoteExecutor;
 
-        private readonly Stopwatch _timer;
-
         public DebugSession(
             IProject project,
             ICommunicationChannel channel,
@@ -29,12 +27,12 @@ namespace VSRAD.Package.Server
             _channel = channel;
             _fileSynchronizationManager = fileSynchronizationManager;
             _remoteExecutor = new RemoteCommandExecutor("Debugger", channel, outputWindowManager, errorListManager);
-            _timer = new Stopwatch();
         }
 
         public async Task<Result<BreakState>> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
         {
-            _timer.Restart();
+            var execTimer = Stopwatch.StartNew();
+
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
             var outputFile = options.RemoteOutputFile;
@@ -58,9 +56,9 @@ namespace VSRAD.Package.Server
                     RunAsAdministrator = options.RunAsAdmin,
                     ExecutionTimeoutSecs = options.TimeoutSecs,
                     WorkingDirectory = options.RemoteOutputFile.Directory
-                }).ConfigureAwait(false);
+                }, checkExitCode: false).ConfigureAwait(false);
 
-            if (!executionResult.TryGetResult(out var resultData, out var error))
+            if (!executionResult.TryGetResult(out var execution, out var error))
                 return error;
 
             if (options.ParseValidWatches)
@@ -79,7 +77,12 @@ namespace VSRAD.Package.Server
                     return error;
             }
 
-            return await CreateBreakStateAsync(options.RemoteOutputFile, initOutputTimestamp, watches, resultData.ExecutionTime, statusString);
+            var dataResult = await CreateBreakStateDataAsync(options.RemoteOutputFile, initOutputTimestamp, watches).ConfigureAwait(false);
+            if (!dataResult.TryGetResult(out var data, out error))
+                return error;
+
+            execTimer.Stop();
+            return new BreakState(data, execTimer.ElapsedMilliseconds, execution.ExecutionTime, statusString, execution.ExitCode);
         }
 
         private async Task<Result<ReadOnlyCollection<string>>> GetValidWatchesAsync(DateTime initValidWatchesTimestamp, Options.OutputFile validWatchesFile)
@@ -121,7 +124,7 @@ namespace VSRAD.Package.Server
             return statusString;
         }
 
-        private async Task<Result<BreakState>> CreateBreakStateAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches, long execElapsedMilliseconds, string statusString)
+        private async Task<Result<BreakStateData>> CreateBreakStateDataAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches)
         {
             var metadataResponse = await GetMetadataAsync(output).ConfigureAwait(false);
             if (metadataResponse.Status != FetchStatus.Successful)
@@ -129,9 +132,7 @@ namespace VSRAD.Package.Server
             if (metadataResponse.Timestamp == initOutputTimestamp)
                 return new Error($"Output file ({output.File}) was not modified.", title: "Data may be stale");
 
-            _timer.Stop();
-            return new BreakState(output, metadataResponse.Timestamp, (uint)metadataResponse.ByteCount,
-                _project.Options.Profile.Debugger.OutputOffset, watches, _channel, _timer.ElapsedMilliseconds, execElapsedMilliseconds, statusString);
+            return new BreakStateData(watches, output, metadataResponse.Timestamp, metadataResponse.ByteCount, _project.Options.Profile.Debugger.OutputOffset);
         }
 
         private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>

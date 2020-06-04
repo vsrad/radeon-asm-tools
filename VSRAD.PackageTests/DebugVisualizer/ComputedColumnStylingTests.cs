@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using VSRAD.Package.Options;
+using VSRAD.Package.Server;
 using Xunit;
 
 namespace VSRAD.Package.DebugVisualizer.Tests
@@ -24,7 +25,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             system[9] = (uint)tmp[0];
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 64, system: system);
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 64, system: new WatchView(system));
 
             for (int i = 0; i < 5; i++)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
@@ -38,7 +39,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
             for (int i = 46; i < 64; i++)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
 
-            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 64, system: system);
+            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 64, system: new WatchView(system));
 
             for (int i = 0; i < 64; i++)
                 Assert.False((styling.ColumnState[45] & ColumnStates.Inactive) != 0);
@@ -54,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
 
             var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
             var styling = new ComputedColumnStyling();
-            styling.Recompute(visualizerOptions, new ColumnStylingOptions(), groupSize: 256, system: system);
+            styling.Recompute(visualizerOptions, new ColumnStylingOptions(), groupSize: 256, system: new WatchView(system));
 
             for (int i = 0; i < 63; i++)
                 Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
