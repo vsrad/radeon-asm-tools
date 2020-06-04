@@ -1,4 +1,6 @@
-﻿namespace VSRAD.Package.Server
+﻿using System;
+
+namespace VSRAD.Package.Server
 {
     public sealed class BreakState
     {
@@ -7,6 +9,7 @@
         public long ExecElapsedMilliseconds { get; }
         public string StatusString { get; }
         public int ExitCode { get; }
+        public DateTime ExecutedAt { get; } = DateTime.Now;
 
         public BreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, long execElapsedMilliseconds, string statusString, int exitCode)
         {

@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -10,25 +11,25 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private readonly IToolWindowIntegration _integration;
         private readonly VisualizerTable _table;
-
-        private BreakState _breakState;
+        private readonly VisualizerContext _context;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
             InitializeComponent();
             _integration = integration;
-            headerControl.Setup(integration,
-                getGroupCount: (groupSize) => _breakState?.Data.GetGroupCount(groupSize) ?? 0,
-                GroupSelectionChanged);
-            headerControl.GroupSizeChanged += RefreshDataStyling;
-            Application.Current.Deactivated += (sender, e) => WindowFocusLost();
+            _context = new VisualizerContext(integration.ProjectOptions, integration.CommunicationChannel);
+            _context.PropertyChanged += ContextPropertyChanged;
+            _context.GroupFetched += GroupFetched;
 
-            integration.BreakEntered += BreakEntered;
+            integration.BreakEntered += _context.EnterBreak;
             integration.AddWatch += AddWatch;
-            integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerOptionsChanged;
+            integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
-            integration.ProjectOptions.DebuggerOptions.PropertyChanged += DebuggerOptionsChanged;
-            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerOptionsChanged;
+            integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
+
+            headerControl.Setup(_context);
+            Application.Current.Deactivated += (sender, e) => WindowFocusLost();
 
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
@@ -36,7 +37,7 @@ namespace VSRAD.Package.DebugVisualizer
                 _integration.ProjectOptions.VisualizerColumnStyling,
                 _integration.ProjectOptions.VisualizerAppearance,
                 tableFontAndColor,
-                getGroupSize: () => headerControl.GroupSize);
+                getGroupSize: () => _context.GroupSize);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _integration.ProjectOptions.DebuggerOptions.Watches.Clear();
@@ -54,15 +55,37 @@ namespace VSRAD.Package.DebugVisualizer
             _table.HostWindowDeactivated();
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_integration.ProjectOptions, headerControl.GroupSize, _breakState?.Data.GetSystem());
+            _table.ApplyDataStyling(_integration.ProjectOptions, _context.GroupSize, _context.BreakData?.GetSystem());
 
         private void GrayOutWatches() =>
-            _table.GrayOutColumns(headerControl.GroupSize);
+            _table.GrayOutColumns(_context.GroupSize);
 
-        private void DebuggerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(Options.DebuggerOptions.Counter))
-                GrayOutWatches();
+            switch (e.PropertyName)
+            {
+                case nameof(VisualizerContext.GroupSize):
+                    RefreshDataStyling();
+                    break;
+                case nameof(VisualizerContext.WatchesValid):
+                    if (_context.WatchesValid)
+                        RefreshDataStyling();
+                    else
+                        GrayOutWatches();
+                    break;
+            }
+        }
+
+        private void GroupFetched(object sender, GroupFetchedEventArgs e)
+        {
+            if (e.Warning != null)
+                Errors.ShowWarning(e.Warning);
+
+            foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
+                SetRowContentsFromBreakState(row);
+
+            _table.ApplyWatchStyling(_context.BreakData.Watches);
+            RefreshDataStyling();
         }
 
         private void RestoreSavedState()
@@ -81,10 +104,13 @@ namespace VSRAD.Package.DebugVisualizer
             _table.PrepareNewWatchRow();
         }
 
-        private void VisualizerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void OptionsChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
+                case nameof(Options.DebuggerOptions.Counter):
+                    GrayOutWatches();
+                    break;
                 case nameof(Options.VisualizerOptions.ShowSystemVariable):
                     _table.ShowSystemRow = _integration.ProjectOptions.VisualizerOptions.ShowSystemVariable;
                     break;
@@ -116,20 +142,6 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void BreakEntered(BreakState breakState)
-        {
-            _breakState = breakState;
-            if (_breakState != null)
-            {
-                headerControl.OnDataAvailable();
-                _table.ApplyWatchStyling(_breakState.Data.Watches);
-            }
-            else
-            {
-                GrayOutWatches();
-            }
-        }
-
         private void AddWatch(string watchName)
         {
             _table.RemoveNewWatchRow();
@@ -139,38 +151,20 @@ namespace VSRAD.Package.DebugVisualizer
             _integration.ProjectOptions.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
         }
 
-        private void GroupSelectionChanged(uint groupIndex, string coordinates)
-        {
-            headerControl.OnPendingDataRequest(coordinates);
-            VSPackage.TaskFactory.RunAsync(async () =>
-            {
-                var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_integration.CommunicationChannel, (int)groupIndex, (int)headerControl.GroupSize);
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                if (warning != null)
-                    Errors.ShowWarning(warning);
-
-                foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
-                    SetRowContentsFromBreakState(row);
-
-                RefreshDataStyling();
-                headerControl.OnDataRequestCompleted(_breakState.Data.GetGroupCount(headerControl.GroupSize), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds, _breakState.StatusString);
-            });
-        }
-
         private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
-            if (_breakState == null)
+            if (_context.BreakData == null)
                 return;
             if (row.Index == 0)
             {
-                RenderRowData(row, _breakState.Data.GetSystem());
+                RenderRowData(row, _context.GroupSize, _context.BreakData.GetSystem());
             }
             else
             {
                 var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-                var watchData = _breakState.Data.GetWatch(watch);
+                var watchData = _context.BreakData.GetWatch(watch);
                 if (watchData != null)
-                    RenderRowData(row, watchData);
+                    RenderRowData(row, _context.GroupSize, watchData);
                 else
                     EraseRowData(row);
             }
@@ -182,10 +176,10 @@ namespace VSRAD.Package.DebugVisualizer
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
         }
 
-        private void RenderRowData(System.Windows.Forms.DataGridViewRow row, WatchView data)
+        private static void RenderRowData(System.Windows.Forms.DataGridViewRow row, uint groupSize, WatchView data)
         {
             var variableType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
-            for (int i = 0; i < headerControl.GroupSize; i++)
+            for (int i = 0; i < groupSize; i++)
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(variableType, data[i]);
         }
     }

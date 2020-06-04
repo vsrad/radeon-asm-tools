@@ -10,10 +10,28 @@ namespace VSRAD.Package.DebugVisualizer
     public delegate uint CalculateGroupCount(uint groupSize);
     public delegate void GroupSelectionChange(uint groupIndex, string coordinates);
 
+    public class GroupIndexChangedEventArgs : EventArgs
+    {
+        public string Coordinates { get; }
+        public uint GroupIndex { get; }
+        public uint GroupSize { get; }
+        public bool IsValid { get; set; } = true;
+        public uint DataGroupCount { get; set; }
+
+        public GroupIndexChangedEventArgs(string coordinates, uint groupIndex, uint groupSize)
+        {
+            Coordinates = coordinates;
+            GroupIndex = groupIndex;
+            GroupSize = groupSize;
+        }
+    }
+
     public sealed class GroupIndexSelector : INotifyPropertyChanged, INotifyDataErrorInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
+
+        public event EventHandler<GroupIndexChangedEventArgs> IndexChanged;
 
         private uint _x;
         public uint X { get => _x; set => SetField(ref _x, LimitIndex(value, _dimX)); }
@@ -35,8 +53,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         private uint _groupSize = 512;
         public uint GroupSize { get => _groupSize; set { SetField(ref _groupSize, value); } }
-
-        private uint GroupIndex => _visualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
 
         private string _error;
         public bool HasErrors => _error != null;
@@ -69,8 +85,22 @@ namespace VSRAD.Package.DebugVisualizer
         public void OnDataAvailable()
         {
             _dataAvailable = true;
-            Validate();
+            Update();
             RaiseGroupSelectionChanged();
+        }
+
+        public void Update()
+        {
+            var index = _visualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
+            var coordinates = _visualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
+            var args = new GroupIndexChangedEventArgs(coordinates, index, GroupSize);
+            IndexChanged?.Invoke(this, args);
+
+            _error = args.IsValid ? null : $"Invalid group index: {index} >= {args.DataGroupCount}";
+
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(X)));
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Y)));
+            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Z)));
         }
 
         private void RaisePropertyChanged(string propertyName)
@@ -84,20 +114,9 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (HasErrors || !_dataAvailable) return;
             string coordinates = _visualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
-            _groupSelectionChanged(GroupIndex, coordinates);
+            _groupSelectionChanged(0, coordinates);
         }
 
-        private void Validate()
-        {
-            if (!_dataAvailable) return;
-
-            var groupCount = _getGroupCount(GroupSize);
-            _error = (GroupIndex < groupCount) ? null : $"Invalid group index: {GroupIndex} >= {groupCount}";
-
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(X)));
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Y)));
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Z)));
-        }
 
         public IEnumerable GetErrors(string propertyName)
         {
@@ -114,7 +133,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             field = value;
 
-            Validate();
+            Update();
             RaisePropertyChanged(propertyName);
 
             return true;
