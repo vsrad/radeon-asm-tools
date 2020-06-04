@@ -7,24 +7,31 @@
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              mc:Ignorable="d" 
              d:DesignWidth="800">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\..\ToolWindows\ControlStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <StackPanel Orientation="Vertical">
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Watch: "/>
-            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches}" SelectionChanged="NewWatchSelected" Height="24" Width="70"/>
+            <Label Content="Watch: " Height="26" Width="48" />
+            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches}" SelectionChanged="NewWatchSelected" Height="24" Width="160" />
         </StackPanel>
         <StackPanel Orientation="Horizontal">
-            <TextBlock Text="Show columns __ALL__ of each subgroup of " Height="24"/>
-            <viz:NumberInput Value="{Binding DataContext.SubgroupSize, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="24"/>
+            <Label Content="Show columns __ALL__ of each subgroup of " Height="26"/>
+            <viz:NumberInput Value="{Binding DataContext.SubgroupSize, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24"/>
         </StackPanel>
         <DockPanel>
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Show "/>
-                <viz:NumberInput Value="{Binding DataContext.GroupsInRow, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="60" Height="24"/>
-                <TextBlock Text=" groups in one row"/>
+                <Label Content="Show" Width="48"/>
+                <viz:NumberInput Value="{Binding DataContext.GroupsInRow, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24"/>
+                <Label Content=" groups in one row"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <CheckBox Content="Heat Map" IsChecked="{Binding UseHeatMap}"/>
-                <CheckBox Content="Transpose" IsChecked="{Binding TransposedView}"/>
+                <CheckBox Content="Heat Map" VerticalAlignment="Center" IsChecked="{Binding UseHeatMap}"/>
+                <CheckBox Content="Transpose" VerticalAlignment="Center" IsChecked="{Binding TransposedView}" Margin="8,0,4,0"/>
             </StackPanel>
         </DockPanel>
     </StackPanel>

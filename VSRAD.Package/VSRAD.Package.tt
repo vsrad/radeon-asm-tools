@@ -89,22 +89,22 @@
           <ButtonText>Open Visualizer</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="2" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="optionsIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Options</ButtonText>
-        </Strings>
-      </Button>
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="3" type="Button">
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="visualizerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Open Slice Visualizer</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="optionsIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Options</ButtonText>
         </Strings>
       </Button>
       <!-- Editor context menu -->
