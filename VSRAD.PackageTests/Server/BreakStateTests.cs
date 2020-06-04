@@ -42,7 +42,7 @@ namespace VSRAD.PackageTests.Server
             var group2Bin = new byte[sizeof(int) * 512];
             Buffer.BlockCopy(data, group1Bin.Length, group2Bin, 0, group2Bin.Length);
 
-            var breakState = new BreakState(breakStateData, 666, 333, "");
+            var breakState = new BreakState(breakStateData, 666, 333, "", 0);
 
             // Group 1
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group1Bin }, (_) => { });
@@ -110,7 +110,7 @@ namespace VSRAD.PackageTests.Server
                 outputByteCount: 4096,
                 outputOffset: 0);
 
-            var breakState = new BreakState(breakStateData, 666, 333, "");
+            var breakState = new BreakState(breakStateData, 666, 333, "", 0);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>

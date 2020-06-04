@@ -112,18 +112,15 @@ namespace VSRAD.Package.ProjectSystem
             {
                 var result = await _debugSession.ExecuteAsync(breakLines, watches);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                if (result.TryGetResult(out var breakState, out var error))
-                {
-                    ExecutionCompleted(success: true);
-                    BreakEntered(breakState);
-                }
-                else
-                {
-                    ExecutionCompleted(success: false);
+
+                if (!result.TryGetResult(out var breakState, out var error))
                     Errors.Show(error);
-                }
+                else if (breakState.ExitCode != 0)
+                    Errors.ShowWarning(RemoteCommandExecutor.ErrorNonZeroExitCode("RAD Debugger", breakState.ExitCode));
+
+                RaiseExecutionCompleted(breakState);
             },
-            exceptionCallbackOnMainThread: () => ExecutionCompleted(success: false));
+            exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(null));
         }
 
         string IEngineIntegration.GetActiveSourcePath() =>
@@ -145,6 +142,12 @@ namespace VSRAD.Package.ProjectSystem
                 runToLine = 0;
                 return false;
             }
+        }
+
+        private void RaiseExecutionCompleted(BreakState breakState)
+        {
+            ExecutionCompleted(success: breakState != null);
+            BreakEntered(breakState);
         }
     }
 }

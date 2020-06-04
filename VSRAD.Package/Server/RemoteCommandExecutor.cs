@@ -14,7 +14,7 @@ namespace VSRAD.Package.Server
             "Execution timeout is exceeded. " + tag + " command on the target machine is terminated.";
         private static string ErrorCouldNotLaunch(string tag) =>
             tag + " process could not be started on the target machine. Make sure the path to the executable is specified correctly.";
-        private static string ErrorNonZeroExitCode(string tag, int exitCode) =>
+        public static string ErrorNonZeroExitCode(string tag, int exitCode) =>
             tag + $" command on the target machine returned a non-zero exit code ({exitCode}). Check your application or debug script output in Output -> RAD Debug.";
 
         private readonly ICommunicationChannel _channel;

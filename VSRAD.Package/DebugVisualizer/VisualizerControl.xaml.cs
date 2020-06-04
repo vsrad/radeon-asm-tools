@@ -11,7 +11,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly IToolWindowIntegration _integration;
         private readonly VisualizerTable _table;
 
-        private Server.BreakState _breakState;
+        private BreakState _breakState;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
@@ -50,13 +50,19 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
+        public void WindowFocusLost() =>
+            _table.HostWindowDeactivated();
+
         private void RefreshDataStyling() =>
             _table.ApplyDataStyling(_integration.ProjectOptions, headerControl.GroupSize, _breakState?.Data.GetSystem());
+
+        private void GrayOutWatches() =>
+            _table.GrayOutColumns(headerControl.GroupSize);
 
         private void DebuggerOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(Options.DebuggerOptions.Counter))
-                _table.GrayOutColumns(headerControl.GroupSize);
+                GrayOutWatches();
         }
 
         private void RestoreSavedState()
@@ -110,20 +116,21 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public void WindowFocusLost()
+        private void BreakEntered(BreakState breakState)
         {
-            _table.HostWindowDeactivated();
-        }
-
-        public void BreakEntered(Server.BreakState breakState)
-        {
-            Ensure.ArgumentNotNull(breakState, nameof(breakState));
             _breakState = breakState;
-            headerControl.OnDataAvailable();
-            _table.ApplyWatchStyling(_breakState.Data.Watches);
+            if (_breakState != null)
+            {
+                headerControl.OnDataAvailable();
+                _table.ApplyWatchStyling(_breakState.Data.Watches);
+            }
+            else
+            {
+                GrayOutWatches();
+            }
         }
 
-        public void AddWatch(string watchName)
+        private void AddWatch(string watchName)
         {
             _table.RemoveNewWatchRow();
             _table.AppendVariableRow(new Watch(watchName, VariableType.Hex, isAVGPR: false));
