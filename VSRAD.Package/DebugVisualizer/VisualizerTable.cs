@@ -49,7 +49,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private TableState _state;
 
-        public VisualizerTable(ColumnStylingOptions stylingOptions, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
+        public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();
@@ -332,13 +332,7 @@ namespace VSRAD.Package.DebugVisualizer
                 options.VisualizerColumnStyling,
                 _computedStyling,
                 _fontAndColor.FontAndColorState);
-            columnStyling.Apply(_state.DataColumns, groupSize);
-
-            var rowStyling = new RowStyling(
-                Rows.Cast<DataGridViewRow>(),
-                options.VisualizerOptions,
-                _fontAndColor.FontAndColorState);
-            rowStyling.Apply(groupSize, system);
+            columnStyling.Apply(_state.DataColumns);
 
             foreach (DataGridViewRow row in Rows)
                 RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);

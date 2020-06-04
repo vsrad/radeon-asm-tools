@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.DebugVisualizer.SliceVisualizer;
+using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.ToolWindows
 {

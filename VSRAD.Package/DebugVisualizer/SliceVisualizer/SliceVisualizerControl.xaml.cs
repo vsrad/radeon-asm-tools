@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Debugger.Interop;
 using System.Collections.Generic;
 using System.Windows.Controls;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
 
@@ -42,8 +43,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (_breakState == null) return;
             // TODO: fetch all groups
             var data = new List<uint[]>();
-            var groupData = new uint[_breakState.GroupSize];
-            _breakState.TryGetWatch(watchName, out groupData);
+            var groupData = new uint[_breakState.Data.GroupSize];
+            var watch = _breakState.Data.GetWatch(watchName);
             data.Add(groupData);
             _table.DisplayWatch(data);
         }

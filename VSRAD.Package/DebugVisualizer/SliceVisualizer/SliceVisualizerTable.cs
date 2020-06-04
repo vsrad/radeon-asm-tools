@@ -70,8 +70,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public void ApplyDataStyling(Options.ProjectOptions options/*uint groupSize*/)
         {
             // there will be separate options appearance and styling for slice
-            var columnStyling = new ColumnStyling(options.VisualizerOptions, options.VisualizerAppearance, options.VisualizerColumnStyling, _fontAndColor.FontAndColorState);
-            columnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.Green, Color.Red);
+            ColumnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.Green, Color.Red);
         }
 
         public void DisplayWatch(List<uint[]> data)

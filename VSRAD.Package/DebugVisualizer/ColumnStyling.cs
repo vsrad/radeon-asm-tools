@@ -54,7 +54,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public void ApplyHeatMap(IReadOnlyList<DataGridViewRow> rows, Color minColor, Color maxColor)
+        public static void ApplyHeatMap(IReadOnlyList<DataGridViewRow> rows, Color minColor, Color maxColor)
         {
             var minValue = rows
                 .Select(r => r.Cells)
