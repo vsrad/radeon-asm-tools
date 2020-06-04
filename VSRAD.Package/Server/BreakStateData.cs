@@ -47,6 +47,45 @@ namespace VSRAD.Package.Server
         }
     }
 
+    public sealed class SliceWatchWiew
+    {
+        private readonly int _groupsInRow;
+        private readonly int _groupSize;
+        private readonly int _watchCount;
+        private readonly int _laneDataOffset;
+        private readonly int _laneDataSize;
+
+        private readonly uint[] _data;
+
+        public SliceWatchWiew(uint[] data, int groupsInRow, int groupSize, int watchCount, int laneDataOffset, int laneDataSize)
+        {
+            _data = data;
+            _groupsInRow = groupsInRow;
+            _groupSize = groupSize;
+            _watchCount = watchCount;
+            _laneDataOffset = laneDataOffset;
+            _laneDataSize = laneDataSize;
+        }
+
+        // For tests
+        public SliceWatchWiew(uint[] flatWatchData)
+        {
+            _data = flatWatchData;
+        }
+
+        public uint this[int row, int column]
+        {
+            get
+            {
+                var indexInGroup = column % _groupSize;// + 1;
+                var groupNum = column / _groupSize + row * _groupsInRow;
+                var groupOffset = (_watchCount + 1) * _groupSize * groupNum;
+                var dwordIdx = groupOffset + _laneDataOffset + indexInGroup * _laneDataSize * 2;
+                return _data[dwordIdx];
+            }
+        }
+    }
+
     public sealed class BreakStateData
     {
         public ReadOnlyCollection<string> Watches { get; }
