@@ -7,9 +7,6 @@ using System.Runtime.CompilerServices;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public delegate uint CalculateGroupCount(uint groupSize);
-    public delegate void GroupSelectionChange(uint groupIndex, string coordinates);
-
     public class GroupIndexChangedEventArgs : EventArgs
     {
         public string Coordinates { get; }
@@ -57,21 +54,11 @@ namespace VSRAD.Package.DebugVisualizer
         private string _error;
         public bool HasErrors => _error != null;
 
-        private bool _dataAvailable = false;
-
         private readonly Options.VisualizerOptions _visualizerOptions;
-        private readonly CalculateGroupCount _getGroupCount;
-        private readonly GroupSelectionChange _groupSelectionChanged;
 
-        public GroupIndexSelector(
-            Options.VisualizerOptions visualizerOptions,
-            CalculateGroupCount getGroupCount,
-            GroupSelectionChange groupSelectionChanged)
+        public GroupIndexSelector(Options.VisualizerOptions visualizerOptions)
         {
             _visualizerOptions = visualizerOptions;
-            _getGroupCount = getGroupCount;
-            _groupSelectionChanged = groupSelectionChanged;
-
             _visualizerOptions.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == nameof(Options.VisualizerOptions.NDRange3D))
@@ -81,13 +68,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         private uint LimitIndex(uint index, uint limit) =>
             (index < limit || !_visualizerOptions.NDRange3D) ? index : limit - 1;
-
-        public void OnDataAvailable()
-        {
-            _dataAvailable = true;
-            Update();
-            RaiseGroupSelectionChanged();
-        }
 
         public void Update()
         {
@@ -102,21 +82,6 @@ namespace VSRAD.Package.DebugVisualizer
             ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Y)));
             ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Z)));
         }
-
-        private void RaisePropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            if (propertyName == nameof(X) || propertyName == nameof(Y) || propertyName == nameof(Z) || propertyName == nameof(GroupSize))
-                RaiseGroupSelectionChanged();
-        }
-
-        private void RaiseGroupSelectionChanged()
-        {
-            if (HasErrors || !_dataAvailable) return;
-            string coordinates = _visualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
-            _groupSelectionChanged(0, coordinates);
-        }
-
 
         public IEnumerable GetErrors(string propertyName)
         {
@@ -134,7 +99,7 @@ namespace VSRAD.Package.DebugVisualizer
             field = value;
 
             Update();
-            RaisePropertyChanged(propertyName);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
             return true;
         }

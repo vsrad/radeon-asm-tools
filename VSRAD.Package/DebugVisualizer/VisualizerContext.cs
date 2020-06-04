@@ -43,7 +43,7 @@ namespace VSRAD.Package.DebugVisualizer
             Options = options;
             _channel = channel;
 
-            GroupIndex = new GroupIndexSelector(options.VisualizerOptions, null, null);
+            GroupIndex = new GroupIndexSelector(options.VisualizerOptions);
             GroupIndex.PropertyChanged += GroupIndexPropertyChanged;
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
