@@ -57,15 +57,20 @@ namespace VSRAD.Package.Server
             var stdout = result.Stdout.TrimEnd('\r', '\n');
             var stderr = result.Stderr.TrimEnd('\r', '\n');
 
+            var status = result.Status == ExecutionStatus.Completed ? $"exit code {result.ExitCode}"
+                       : result.Status == ExecutionStatus.TimedOut ? "timed out"
+                       : "could not launch";
+
             if (stdout.Length == 0 && stderr.Length == 0)
             {
-                await _outputWriter.PrintMessageAsync($"[{_outputTag}] No stdout/stderr captured").ConfigureAwait(false);
+                await _outputWriter.PrintMessageAsync($"[{_outputTag}] No stdout/stderr captured ({status})").ConfigureAwait(false);
             }
             else
             {
-                await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stdout", stdout).ConfigureAwait(false);
-                await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stderr", stderr).ConfigureAwait(false);
-                if (_errorListManager != null) await _errorListManager.AddToErrorListAsync(stderr).ConfigureAwait(false);
+                await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stdout ({status})", stdout).ConfigureAwait(false);
+                await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stderr ({status})", stderr).ConfigureAwait(false);
+                if (_errorListManager != null)
+                    await _errorListManager.AddToErrorListAsync(stderr).ConfigureAwait(false);
             }
 
             switch (result.Status)
