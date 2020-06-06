@@ -132,6 +132,15 @@ namespace VSRAD.Package.Server
             return new WatchView(_data, groupOffset, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
         }
 
+        public SliceWatchWiew GetSliceWatch(string watch, int groupsInRow)
+        {
+            var watchIndex = Watches.IndexOf(watch);
+            if (watchIndex == -1)
+                return null;
+
+            return new SliceWatchWiew(_data, groupsInRow, GroupSize, Watches.Count, watchIndex + 1 /* system */, _laneDataSize);
+        }
+
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize)
         {
             int byteOffset = 4 * groupIndex * groupSize * _laneDataSize;
@@ -149,12 +158,13 @@ namespace VSRAD.Package.Server
                 {
                     FilePath = _outputFile.Path,
                     BinaryOutput = _outputFile.BinaryOutput,
-                    ByteOffset = byteOffset,
-                    ByteCount = byteCount,
+                    ByteOffset = 0,//byteOffset,
+                    ByteCount = 0,//byteCount,
                     OutputOffset = _outputOffset
                 }).ConfigureAwait(false);
 
-            SetGroupData(byteOffset, byteCount, response.Data);
+            //SetGroupData(byteOffset, byteCount, response.Data);
+            SetGroupData(0, 0, response.Data);
             GroupIndex = groupIndex;
             GroupSize = groupSize;
 
@@ -184,7 +194,9 @@ namespace VSRAD.Package.Server
             Buffer.BlockCopy(groupData, 0, _data, byteOffset, groupData.Length);
 
             const int waveSize = 4 * 64; // 64 dwords
-            for (int i = byteOffset / waveSize; i < (byteOffset + byteCount) / waveSize; ++i)
+            //for (int i = byteOffset / waveSize; i < (byteOffset + byteCount) / waveSize; ++i)
+            //    _fetchedDataWaves[i] = true;
+            for (int i = 0; i < _fetchedDataWaves.Count; i++)
                 _fetchedDataWaves[i] = true;
         }
     }
