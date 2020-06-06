@@ -31,22 +31,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             Ensure.ArgumentNotNull(breakState, nameof(breakState));
             _breakState = breakState;
-            /*  rewrite BreakState
             var selectedWatch = headerControl.GetSelectedWatch();
             if (selectedWatch != null)
                 WatchSelected(selectedWatch);
-            */
         }
 
         private void WatchSelected(string watchName)
         {
             if (_breakState == null) return;
-            // TODO: fetch all groups
-            var data = new List<uint[]>();
-            var groupData = new uint[_breakState.Data.GroupSize];
-            var watch = _breakState.Data.GetWatch(watchName);
-            data.Add(groupData);
-            _table.DisplayWatch(data);
+            var watch = _breakState.Data.GetSliceWatch(watchName, headerControl.GroupsInRow());
+            _table.DisplayWatch(watch);
         }
 
         private void ToggleHeatMap(bool heatMapActive)

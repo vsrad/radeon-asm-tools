@@ -67,6 +67,9 @@ namespace VSRAD.Package.Server
             _laneDataSize = laneDataSize;
         }
 
+        public int RowCount() => _data.Length / _laneDataSize / _groupSize / _groupsInRow;
+        public int RowLength() => _groupSize * _groupsInRow;
+
         // For tests
         public SliceWatchWiew(uint[] flatWatchData)
         {
@@ -80,7 +83,7 @@ namespace VSRAD.Package.Server
                 var indexInGroup = column % _groupSize;// + 1;
                 var groupNum = column / _groupSize + row * _groupsInRow;
                 var groupOffset = (_watchCount + 1) * _groupSize * groupNum;
-                var dwordIdx = groupOffset + _laneDataOffset + indexInGroup * _laneDataSize * 2;
+                var dwordIdx = groupOffset + _laneDataOffset + indexInGroup * _laneDataSize;
                 return _data[dwordIdx];
             }
         }

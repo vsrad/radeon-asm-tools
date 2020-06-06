@@ -32,6 +32,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private Context _context;
 
+        public int GroupsInRow() => _context.GroupsInRow;
+
         public sealed class Context : DefaultNotifyPropertyChanged
         {
             public ProjectOptions Options { get; }

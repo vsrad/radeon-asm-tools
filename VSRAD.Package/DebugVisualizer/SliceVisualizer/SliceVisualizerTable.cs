@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Forms;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
@@ -73,11 +74,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             ColumnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.Green, Color.Red);
         }
 
-        public void DisplayWatch(List<uint[]> data)
+        public void DisplayWatch(SliceWatchWiew watchWiew)
         {
             Rows.Clear();
 
-            for (int i = 1; i <= data.Count; i++)
+            var rowsCount = watchWiew.RowCount();
+            var rowLength = watchWiew.RowLength();
+
+            for (int i = 1; i <= rowsCount; i++)
             {
                 var index = Rows.Add(new DataGridViewRow());
                 Rows[index].HeaderCell.Value = i;
@@ -85,10 +89,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             
             for (int i = 0; i < DataColumnCount; i++)
             {
-                if (i < data[0].Length)
+                if (i < rowLength)
                 {
-                    for (int j = 0; j < data.Count; j++)
-                        Rows[j].Cells[i].Value = data[j][i];
+                    for (int j = 0; j < rowsCount; j++)
+                        Rows[j].Cells[i].Value = watchWiew[j, i];
                 }
                 else
                 {
