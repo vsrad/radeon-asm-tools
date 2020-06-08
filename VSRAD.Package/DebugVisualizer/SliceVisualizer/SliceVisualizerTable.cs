@@ -67,16 +67,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public void DisplayWatch(SliceWatchWiew watchWiew)
         {
             SelectedWatch = watchWiew;
-
-            var rowCount = watchWiew.RowCount();
-            var rowLength = watchWiew.RowLength();
-
-            if (Rows.Count < rowCount)
-                Rows.AddCopies(0, rowCount - Rows.Count);
+            if (Rows.Count < watchWiew.RowCount)
+                Rows.AddCopies(0, watchWiew.RowCount - Rows.Count);
 
             for (int i = 0; i < Rows.Count; i++)
             {
-                if (i < rowCount)
+                if (i < watchWiew.RowCount)
                 {
                     Rows[i].Visible = true;
                     Rows[i].HeaderCell.Value = i;
@@ -88,10 +84,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             for (int i = 0; i < DataColumnCount; i++)
             {
-                if (i < rowLength)
+                if (i < watchWiew.ColumnCount)
                 {
                     Columns[i].Visible = true;
-                    for (int j = 0; j < rowCount; j++)
+                    for (int j = 0; j < watchWiew.RowCount; j++)
                         Rows[j].Cells[i].Value = watchWiew[j, i];
                 }
                 else

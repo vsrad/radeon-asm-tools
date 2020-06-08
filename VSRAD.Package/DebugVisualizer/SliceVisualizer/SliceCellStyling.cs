@@ -21,7 +21,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (_table.SelectedWatch == null ||
                 e.RowIndex < 0 ||
                 e.ColumnIndex < SliceVisualizerTable.DataColumnOffset ||
-                e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.RowLength())
+                e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.ColumnCount)
                 return;
 
             var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);

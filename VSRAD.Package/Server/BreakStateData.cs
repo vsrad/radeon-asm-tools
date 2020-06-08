@@ -50,9 +50,11 @@ namespace VSRAD.Package.Server
 
     public sealed class SliceWatchWiew
     {
+        public int RowCount { get; }
+        public int ColumnCount { get; }
+
         private readonly int _groupsInRow;
         private readonly int _groupSize;
-        private readonly int _watchCount;
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
 
@@ -61,22 +63,31 @@ namespace VSRAD.Package.Server
         private readonly int _minValue;
         private readonly int _maxValue;
 
-        public SliceWatchWiew(uint[] data, int groupsInRow, int groupSize, int watchCount, int laneDataOffset, int laneDataSize)
+        public SliceWatchWiew(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize)
         {
             _data = data;
             _groupsInRow = groupsInRow;
             _groupSize = groupSize;
-            _watchCount = watchCount;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
 
-            // TODO: pass VariableType and cast appropriately (union via StructLayout?)
-            _minValue = _data.Cast<int>().Min();
-            _maxValue = _data.Cast<int>().Max();
-        }
+            RowCount = _data.Length / _laneDataSize / _groupSize / _groupsInRow;
+            ColumnCount = _groupSize * _groupsInRow;
 
-        public int RowCount() => _data.Length / _laneDataSize / _groupSize / _groupsInRow;
-        public int RowLength() => _groupSize * _groupsInRow;
+            // TODO: pass VariableType and cast appropriately (union via StructLayout?)
+            _minValue = int.MaxValue;
+            _maxValue = int.MinValue;
+            for (int row = 0; row < RowCount; ++row)
+            {
+                for (int col = 0; col < ColumnCount; ++col)
+                {
+                    if ((int)this[row, col] < _minValue)
+                        _minValue = (int)this[row, col];
+                    if ((int)this[row, col] > _maxValue)
+                        _maxValue = (int)this[row, col];
+                }
+            }
+        }
 
         // For tests
         public SliceWatchWiew(uint[] flatWatchData)
@@ -90,7 +101,7 @@ namespace VSRAD.Package.Server
             {
                 var indexInGroup = column % _groupSize;// + 1;
                 var groupNum = column / _groupSize + row * _groupsInRow;
-                var groupOffset = (_watchCount + 1) * _groupSize * groupNum;
+                var groupOffset = _laneDataSize * _groupSize * groupNum;
                 var dwordIdx = groupOffset + _laneDataOffset + indexInGroup * _laneDataSize;
                 return _data[dwordIdx];
             }
@@ -152,7 +163,7 @@ namespace VSRAD.Package.Server
             if (watchIndex == -1)
                 return null;
 
-            return new SliceWatchWiew(_data, groupsInRow, GroupSize, Watches.Count, watchIndex + 1 /* system */, _laneDataSize);
+            return new SliceWatchWiew(_data, groupsInRow, GroupSize, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize)
