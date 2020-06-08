@@ -23,5 +23,7 @@ namespace VSRAD.Package.DebugVisualizer
             DataColumns = dataColumns;
             ResizeController = resizeController;
         }
+
+        public void IncrementPhantomColumnIndex() => PhantomColumnIndex++;
     }
 }

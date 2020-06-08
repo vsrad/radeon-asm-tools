@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -9,10 +10,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     class SliceVisualizerTable : DataGridView
     {
         private const int DataColumnCount = 512;
-        private const int PhantomColumnIndex = DataColumnCount;
         public const int DataColumnOffset = 0;
 
         public SliceWatchWiew SelectedWatch { get; private set; }
+        private int PhantomColumnIndex = DataColumnCount;
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
@@ -26,6 +27,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             DoubleBuffered = true;
             AllowUserToAddRows = false;
+            AutoGenerateColumns = false;
+
+            ColumnAdded += FixFillWeight;
 
             var dataColumns = SetupColumns();
             Rows.Add(new DataGridViewRow() { Visible = false }); // phantom row for scaling
@@ -36,6 +40,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
             _ = new SliceCellStyling(this, fontAndColor);
+        }
+
+        private void FixFillWeight(object sender, DataGridViewColumnEventArgs e)
+        {
+            e.Column.FillWeight = 1;
         }
 
         private IReadOnlyList<DataGridViewColumn> SetupColumns()
@@ -69,6 +78,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             SelectedWatch = watchWiew;
             if (Rows.Count < watchWiew.RowCount)
                 Rows.AddCopies(0, watchWiew.RowCount - Rows.Count);
+            
+            // TODO: handle odd number of rows
+            var rowsCount = watchWiew.RowCount;
+            var rowLength = watchWiew.RowLength;
 
             for (int i = 0; i < Rows.Count; i++)
             {
@@ -82,9 +95,27 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     Rows[i].Visible = false;
                 }
             }
-            for (int i = 0; i < DataColumnCount; i++)
+
+            var columnsNeeded = Math.Max(rowLength, Columns.Count); 
+
+            for (int i = 0; i < columnsNeeded; i++)
             {
-                if (i < watchWiew.ColumnCount)
+                if (i == Columns.Count - 1)
+                {
+                    var column = new DataGridViewTextBoxColumn()
+                    {
+                        HeaderText = i.ToString(),
+                        ReadOnly = true,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                        Width = 60
+                    };
+                    Columns.Insert(i, column);
+                    _state.DataColumns.Append(Columns[i]);
+                    PhantomColumnIndex++;
+                    _state.IncrementPhantomColumnIndex();
+                }
+
+                if (i < rowLength)
                 {
                     Columns[i].Visible = true;
                     for (int j = 0; j < watchWiew.RowCount; j++)

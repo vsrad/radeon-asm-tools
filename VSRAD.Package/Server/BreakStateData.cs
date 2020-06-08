@@ -81,6 +81,9 @@ namespace VSRAD.Package.Server
                 }
             }
         }
+        //public int RowCount() => _data.Length / _laneDataSize / _groupSize / _groupsInRow;
+        public int RowLength => _groupSize * _groupsInRow;
+        public int GroupsInRow => _groupsInRow;
 
         // For tests
         public SliceWatchWiew(uint[] flatWatchData)
