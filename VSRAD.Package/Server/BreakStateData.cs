@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 
@@ -17,8 +16,7 @@ namespace VSRAD.Package.Server
 
     public sealed class WatchView
     {
-        private readonly int _groupOffset;
-        private readonly int _laneDataOffset;
+        private readonly int _startOffset;
         private readonly int _laneDataSize;
 
         private readonly uint[] _data;
@@ -26,8 +24,7 @@ namespace VSRAD.Package.Server
         public WatchView(uint[] data, int groupOffset, int laneDataOffset, int laneDataSize)
         {
             _data = data;
-            _groupOffset = groupOffset;
-            _laneDataOffset = laneDataOffset;
+            _startOffset = groupOffset + laneDataOffset;
             _laneDataSize = laneDataSize;
         }
 
@@ -42,7 +39,7 @@ namespace VSRAD.Package.Server
         {
             get
             {
-                var dwordIdx = _groupOffset + _laneDataOffset + index * _laneDataSize;
+                var dwordIdx = _startOffset + index * _laneDataSize;
                 return _data[dwordIdx];
             }
         }
@@ -50,11 +47,9 @@ namespace VSRAD.Package.Server
 
     public sealed class SliceWatchWiew
     {
-        public int RowCount { get; }
         public int ColumnCount { get; }
+        public int RowCount { get; }
 
-        private readonly int _groupsInRow;
-        private readonly int _groupSize;
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
 
@@ -66,13 +61,11 @@ namespace VSRAD.Package.Server
         public SliceWatchWiew(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize)
         {
             _data = data;
-            _groupsInRow = groupsInRow;
-            _groupSize = groupSize;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
 
-            RowCount = _data.Length / _laneDataSize / _groupSize / _groupsInRow;
-            ColumnCount = _groupSize * _groupsInRow;
+            ColumnCount = groupsInRow * groupSize;
+            RowCount = _data.Length / _laneDataSize / ColumnCount;
 
             // TODO: pass VariableType and cast appropriately (union via StructLayout?)
             _minValue = int.MaxValue;
@@ -99,10 +92,8 @@ namespace VSRAD.Package.Server
         {
             get
             {
-                var indexInGroup = column % _groupSize;// + 1;
-                var groupNum = column / _groupSize + row * _groupsInRow;
-                var groupOffset = _laneDataSize * _groupSize * groupNum;
-                var dwordIdx = groupOffset + _laneDataOffset + indexInGroup * _laneDataSize;
+                var groupIdx = row * ColumnCount + column;
+                var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
                 return _data[dwordIdx];
             }
         }
@@ -121,10 +112,12 @@ namespace VSRAD.Package.Server
         private readonly OutputFile _outputFile;
         private readonly DateTime _outputFileTimestamp;
         private readonly int _outputOffset;
-        private readonly int _laneDataSize;
+        private readonly int _laneDataSize; // in dwords
+        private readonly int _waveDataSize;
 
         private readonly uint[] _data;
-        private readonly BitArray _fetchedDataWaves; // 1 bit per 64 lanes
+        private const int _wavefrontSize = 64;
+        private readonly BitArray _fetchedDataWaves; // 1 bit per wavefront data
 
         public BreakStateData(ReadOnlyCollection<string> watches, OutputFile file, DateTime fileTimestamp, int outputByteCount, int outputOffset)
         {
@@ -133,10 +126,12 @@ namespace VSRAD.Package.Server
             _outputFileTimestamp = fileTimestamp;
             _outputOffset = outputOffset;
             _laneDataSize = 1 /* system */ + watches.Count;
+            _waveDataSize = _laneDataSize * _wavefrontSize;
 
             var outputDwordCount = outputByteCount / 4;
+            var outputWaveCount = outputDwordCount / _waveDataSize;
             _data = new uint[outputDwordCount];
-            _fetchedDataWaves = new BitArray(outputDwordCount / 64);
+            _fetchedDataWaves = new BitArray(outputWaveCount);
         }
 
         public uint GetGroupCount(uint groupSize) => (uint)(_data.Length / groupSize / _laneDataSize);
@@ -168,6 +163,9 @@ namespace VSRAD.Package.Server
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize)
         {
+            if (groupSize % _wavefrontSize != 0)
+                throw new NotImplementedException($"BreakStateData assumes that group sizes are a multiple of {_wavefrontSize} (wavefront size)");
+
             int byteOffset = 4 * groupIndex * groupSize * _laneDataSize;
             int byteCount = 4 * groupSize * _laneDataSize;
 
@@ -183,13 +181,12 @@ namespace VSRAD.Package.Server
                 {
                     FilePath = _outputFile.Path,
                     BinaryOutput = _outputFile.BinaryOutput,
-                    ByteOffset = 0,//byteOffset,
-                    ByteCount = 0,//byteCount,
+                    ByteOffset = byteOffset,
+                    ByteCount = byteCount,
                     OutputOffset = _outputOffset
                 }).ConfigureAwait(false);
 
-            //SetGroupData(byteOffset, byteCount, response.Data);
-            SetGroupData(0, 0, response.Data);
+            SetGroupData(byteOffset, byteCount, response.Data);
             GroupIndex = groupIndex;
             GroupSize = groupSize;
 
@@ -207,8 +204,8 @@ namespace VSRAD.Package.Server
 
         private bool IsGroupFetched(int byteOffset, int byteCount)
         {
-            const int waveSize = 4 * 64; // 64 dwords
-            for (int i = byteOffset / waveSize; i < (byteOffset + byteCount) / waveSize; ++i)
+            int byteWaveSize = 4 * _waveDataSize;
+            for (int i = byteOffset / byteWaveSize; i < (byteOffset + byteCount) / byteWaveSize; ++i)
                 if (!_fetchedDataWaves[i])
                     return false;
             return true;
@@ -218,10 +215,8 @@ namespace VSRAD.Package.Server
         {
             Buffer.BlockCopy(groupData, 0, _data, byteOffset, groupData.Length);
 
-            const int waveSize = 4 * 64; // 64 dwords
-            //for (int i = byteOffset / waveSize; i < (byteOffset + byteCount) / waveSize; ++i)
-            //    _fetchedDataWaves[i] = true;
-            for (int i = 0; i < _fetchedDataWaves.Count; i++)
+            int byteWaveSize = 4 * _waveDataSize;
+            for (int i = byteOffset / byteWaveSize; i < (byteOffset + byteCount) / byteWaveSize; ++i)
                 _fetchedDataWaves[i] = true;
         }
     }
