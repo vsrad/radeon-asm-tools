@@ -71,6 +71,12 @@ namespace VSRAD.Package.DebugVisualizer
             return GetInfo(highlight.GetDisplayName());
         }
 
+        public (Color fg, Color bg, bool bold) GetInfo(HeatmapColor item)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            return GetInfo(item.GetDisplayName());
+        }
+
         private (Color fg, Color bg, bool bold) GetInfo(string item)
         {
             ThreadHelper.ThrowIfNotOnUIThread();

@@ -10,6 +10,8 @@ namespace VSRAD.Package.DebugVisualizer
         public Color[] HighlightBackground { get; }
         public bool[] HighlightBold { get; }
 
+        public Color[] HeatmapBackground { get; }
+
         public Color HeaderForeground { get; }
         public Color HeaderBackground { get; }
         public Color WatchNameBackground { get; }
@@ -28,17 +30,23 @@ namespace VSRAD.Package.DebugVisualizer
             ThreadHelper.ThrowIfNotOnUIThread();
 
             var highlightColors = (DataHighlightColor[])Enum.GetValues(typeof(DataHighlightColor));
-
             HighlightForeground = new Color[highlightColors.Length];
             HighlightBackground = new Color[highlightColors.Length];
             HighlightBold = new bool[highlightColors.Length];
-
             foreach (var color in highlightColors)
             {
                 var (fg, bg, bold) = provider.GetHighlightInfo(color);
                 HighlightForeground[(int)color] = fg;
                 HighlightBackground[(int)color] = bg;
                 HighlightBold[(int)color] = bold;
+            }
+
+            var heatmapColors = (HeatmapColor[])Enum.GetValues(typeof(HeatmapColor));
+            HeatmapBackground = new Color[heatmapColors.Length];
+            foreach (var color in heatmapColors)
+            {
+                var (_, bg, _) = provider.GetInfo(color);
+                HeatmapBackground[(int)color] = bg;
             }
 
             (HeaderForeground, HeaderBackground, HeaderBold) = provider.GetInfo(FontAndColorItem.Header);

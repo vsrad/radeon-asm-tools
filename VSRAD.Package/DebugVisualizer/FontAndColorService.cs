@@ -15,6 +15,11 @@ namespace VSRAD.Package.DebugVisualizer
         Header, WatchNames, ColumnSeparator, HiddenColumnSeparator
     }
 
+    public enum HeatmapColor
+    {
+        Cold, Mean, Hot
+    }
+
     static class FontAndColorItems
     {
         public static string GetDisplayName(this FontAndColorItem item)
@@ -41,6 +46,17 @@ namespace VSRAD.Package.DebugVisualizer
             }
             throw new NotImplementedException();
         }
+
+        public static string GetDisplayName(this HeatmapColor item)
+        {
+            switch (item)
+            {
+                case HeatmapColor.Cold: return "Heatmap - Cold Color";
+                case HeatmapColor.Mean: return "Heatmap - Mean Color";
+                case HeatmapColor.Hot: return "Heatmap - Hot Color";
+            }
+            throw new NotImplementedException();
+        }
     }
 
     [Guid(Constants.FontAndColorDefaultsServiceId)]
@@ -62,7 +78,10 @@ namespace VSRAD.Package.DebugVisualizer
             CreateItem(DataHighlightColor.Inactive.GetDisplayName(), bg: Color.LightGray, hasText: false),
             CreateItem(DataHighlightColor.Red.GetDisplayName(), fg: Color.Red, bg: Color.FromArgb(245, 226, 227)),
             CreateItem(DataHighlightColor.Green.GetDisplayName(), fg: Color.Green, bg: Color.FromArgb(227, 245, 226)),
-            CreateItem(DataHighlightColor.Blue.GetDisplayName(), fg: Color.Blue, bg: Color.FromArgb(226, 230, 245))
+            CreateItem(DataHighlightColor.Blue.GetDisplayName(), fg: Color.Blue, bg: Color.FromArgb(226, 230, 245)),
+            CreateItem(HeatmapColor.Cold.GetDisplayName(), bg: Color.FromArgb(162, 201, 229)),
+            CreateItem(HeatmapColor.Mean.GetDisplayName(), bg: Color.FromArgb(255, 255, 255)),
+            CreateItem(HeatmapColor.Hot.GetDisplayName(), bg: Color.FromArgb(215, 145, 132)),
         };
 
         // Changes to ProvideFontAndColorsCategory will not be registered until this method is run.

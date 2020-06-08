@@ -97,7 +97,7 @@ namespace VSRAD.Package.Server
         }
 
         public float GetRelativeValue(int row, int column) =>
-            ((float)(this[row, column] - _minValue)) / (_maxValue - _minValue);
+            ((float)((int)this[row, column] - _minValue)) / (_maxValue - _minValue);
     }
 
     public sealed class BreakStateData
