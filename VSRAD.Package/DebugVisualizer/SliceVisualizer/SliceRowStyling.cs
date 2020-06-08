@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    class CustomSliceTableGraphics
+    sealed class SliceRowStyling
     {
         private readonly SliceVisualizerTable _table;
 
-        public CustomSliceTableGraphics(SliceVisualizerTable table)
+        public SliceRowStyling(SliceVisualizerTable table)
         {
             _table = table;
             _table.RowPostPaint += ReplaceDefaultRowHeaderBitmap;
         }
-
 
         private void ReplaceDefaultRowHeaderBitmap(object sender, DataGridViewRowPostPaintEventArgs e)
         {

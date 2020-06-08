@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Text;
-using System.Linq;
 using System.Windows.Forms;
-using Microsoft.VisualStudio.Shell.Interop;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -50,45 +46,6 @@ namespace VSRAD.Package.DebugVisualizer
                     var fgColor = DataHighlightColors.GetFromColorString(_columnForegroundColors, i);
                     columns[i].DefaultCellStyle.BackColor = _fontAndColor.HighlightBackground[(int)bgColor];
                     columns[i].DefaultCellStyle.ForeColor = _fontAndColor.HighlightForeground[(int)fgColor];
-                }
-            }
-        }
-
-        public static void ApplyHeatMap(IReadOnlyList<DataGridViewRow> rows, Color minColor, Color maxColor)
-        {
-            var minValue = rows
-                .Select(r => r.Cells)
-                .Select(c => c
-                    .Cast<DataGridViewCell>()
-                    .Where(cell => cell.Value != null)
-                    .Min(cell => int.Parse(cell.Value?.ToString())))
-                .Min();
-            var maxValue = rows
-                .Select(r => r.Cells)
-                .Select(c => c
-                    .Cast<DataGridViewCell>()
-                    .Where(cell => cell.Value != null)
-                    .Max(cell => int.Parse(cell.Value?.ToString())))
-                .Max();
-
-            var valueDiff = maxValue - minValue;
-            var rDiff = maxColor.R - minColor.R;
-            var gDiff = maxColor.G - minColor.G;
-            var bDiff = maxColor.B - minColor.B;
-
-            foreach (var row in rows)
-            {
-                foreach (var cell in row.Cells.Cast<DataGridViewCell>())
-                {
-                    if (cell.Value == null) continue;
-                    var value = int.Parse(cell.Value.ToString());
-                    var relDiff = ((float)(value - minValue)) / valueDiff;
-                    var color = Color.FromArgb(
-                        (byte)(minColor.R + (rDiff * relDiff)),
-                        (byte)(minColor.G + (gDiff * relDiff)),
-                        (byte)(minColor.B + (bDiff * relDiff))
-                    );
-                    cell.Style.BackColor = color;
                 }
             }
         }

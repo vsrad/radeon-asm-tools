@@ -1,12 +1,6 @@
-﻿using Microsoft.VisualStudio.Utilities;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Controls;
 using System.Windows.Forms;
 using VSRAD.Package.Server;
 
@@ -16,27 +10,32 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         private const int DataColumnCount = 512;
         private const int PhantomColumnIndex = DataColumnCount;
+        public const int DataColumnOffset = 0;
+
+        public SliceWatchWiew SelectedWatch { get; private set; }
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
-        private readonly FontAndColorProvider _fontAndColor;
+        private readonly IFontAndColorProvider _fontAndColor;
 
-        private TableState _state;
+        private readonly TableState _state;
 
-        public SliceVisualizerTable(FontAndColorProvider fontAndColor) : base()
+        public SliceVisualizerTable(IFontAndColorProvider fontAndColor) : base()
         {
             _fontAndColor = fontAndColor;
 
+            DoubleBuffered = true;
             AllowUserToAddRows = false;
 
             var dataColumns = SetupColumns();
             Rows.Add(new DataGridViewRow() { Visible = false }); // phantom row for scaling
 
-            _state = new TableState(0, PhantomColumnIndex, 60, dataColumns, new ColumnResizeController(this));
+            _state = new TableState(DataColumnOffset, PhantomColumnIndex, 60, dataColumns, new ColumnResizeController(this));
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
-            _ = new CustomSliceTableGraphics(this);
+            _ = new SliceRowStyling(this);
+            _ = new SliceCellStyling(this, fontAndColor);
         }
 
         private IReadOnlyList<DataGridViewColumn> SetupColumns()
@@ -54,44 +53,45 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 Columns.Add(dataColumns[i]);
             }
 
+            // phantom column
             Columns.Add(new DataGridViewTextBoxColumn()
             {
                 MinimumWidth = 2,
                 Width = 2,
                 ReadOnly = true,
-                SortMode = DataGridViewColumnSortMode.NotSortable,
-                Visible = true
+                SortMode = DataGridViewColumnSortMode.NotSortable
             });
-            Columns[PhantomColumnIndex].DefaultCellStyle.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].HeaderCell.Style.BackColor = System.Drawing.ColorTranslator.FromHtml("#ABABAB");
-            Columns[PhantomColumnIndex].ReadOnly = true;
             return dataColumns;
-        }
-
-        public void ApplyDataStyling(Options.ProjectOptions options/*uint groupSize*/)
-        {
-            // there will be separate options appearance and styling for slice
-            ColumnStyling.ApplyHeatMap(Rows.Cast<DataGridViewRow>().ToList(), Color.Green, Color.Red);
         }
 
         public void DisplayWatch(SliceWatchWiew watchWiew)
         {
-            Rows.Clear();
+            SelectedWatch = watchWiew;
 
-            var rowsCount = watchWiew.RowCount();
+            var rowCount = watchWiew.RowCount();
             var rowLength = watchWiew.RowLength();
 
-            for (int i = 1; i <= rowsCount; i++)
+            if (Rows.Count < rowCount)
+                Rows.AddCopies(0, rowCount - Rows.Count);
+
+            for (int i = 0; i < Rows.Count; i++)
             {
-                var index = Rows.Add(new DataGridViewRow());
-                Rows[index].HeaderCell.Value = i;
+                if (i < rowCount)
+                {
+                    Rows[i].Visible = true;
+                    Rows[i].HeaderCell.Value = i;
+                }
+                else
+                {
+                    Rows[i].Visible = false;
+                }
             }
-            
             for (int i = 0; i < DataColumnCount; i++)
             {
                 if (i < rowLength)
                 {
-                    for (int j = 0; j < rowsCount; j++)
+                    Columns[i].Visible = true;
+                    for (int j = 0; j < rowCount; j++)
                         Rows[j].Cells[i].Value = watchWiew[j, i];
                 }
                 else

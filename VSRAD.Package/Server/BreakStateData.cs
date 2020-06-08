@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 
@@ -57,6 +58,9 @@ namespace VSRAD.Package.Server
 
         private readonly uint[] _data;
 
+        private readonly int _minValue;
+        private readonly int _maxValue;
+
         public SliceWatchWiew(uint[] data, int groupsInRow, int groupSize, int watchCount, int laneDataOffset, int laneDataSize)
         {
             _data = data;
@@ -65,6 +69,10 @@ namespace VSRAD.Package.Server
             _watchCount = watchCount;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
+
+            // TODO: pass VariableType and cast appropriately (union via StructLayout?)
+            _minValue = _data.Cast<int>().Min();
+            _maxValue = _data.Cast<int>().Max();
         }
 
         public int RowCount() => _data.Length / _laneDataSize / _groupSize / _groupsInRow;
@@ -87,6 +95,9 @@ namespace VSRAD.Package.Server
                 return _data[dwordIdx];
             }
         }
+
+        public float GetRelativeValue(int row, int column) =>
+            ((float)(this[row, column] - _minValue)) / (_maxValue - _minValue);
     }
 
     public sealed class BreakStateData

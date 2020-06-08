@@ -45,8 +45,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void ToggleHeatMap(bool heatMapActive)
         {
-            if (heatMapActive)
-                _table.ApplyDataStyling(_integration.ProjectOptions);
+            // TODO: options
         }
     }
 }
