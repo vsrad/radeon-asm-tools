@@ -1,36 +1,29 @@
-﻿using Microsoft.VisualStudio.Debugger.Interop;
-using System.Collections.Generic;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ToolWindows;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    /// <summary>
-    /// Interaction logic for SliceVisualizerControl.xaml
-    /// </summary>
     public partial class SliceVisualizerControl : UserControl
     {
-        private Server.BreakState _breakState;
-        private SliceVisualizerTable _table;
-        private readonly IToolWindowIntegration _integration;
+        private readonly SliceVisualizerTable _table;
+        private readonly VisualizerContext _context;
 
         public SliceVisualizerControl(IToolWindowIntegration integration)
         {
-            _integration = integration;
+            _context = integration.GetVisualizerContext();
+            _context.GroupFetched += GroupFetched;
+
             var tableFontAndColor = new FontAndColorProvider();
             InitializeComponent();
-            integration.BreakEntered += BreakEntered;
             _table = new SliceVisualizerTable(tableFontAndColor);
             headerControl.Setup(integration, WatchSelected, ToggleHeatMap);
             tableHost.Setup(_table);
         }
 
-        public void BreakEntered(Server.BreakState breakState)
+        private void GroupFetched(object sender, GroupFetchedEventArgs e)
         {
-            Ensure.ArgumentNotNull(breakState, nameof(breakState));
-            _breakState = breakState;
+            if (!_context.SliceContext.WindowVisibile)
+                return;
             var selectedWatch = headerControl.GetSelectedWatch();
             if (selectedWatch != null)
                 WatchSelected(selectedWatch);
@@ -38,8 +31,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void WatchSelected(string watchName)
         {
-            if (_breakState == null) return;
-            var watch = _breakState.Data.GetSliceWatch(watchName, headerControl.GroupsInRow());
+            if (_context.BreakData == null)
+                return;
+            var watch = _context.BreakData.GetSliceWatch(watchName, headerControl.GroupsInRow());
             _table.DisplayWatch(watch);
         }
 

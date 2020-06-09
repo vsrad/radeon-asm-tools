@@ -167,43 +167,45 @@ namespace VSRAD.Package.Server
             return new SliceWatchWiew(_data, groupsInRow, GroupSize, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
         }
 
-        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups)
+        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)
         {
-            if (groupSize % _wavefrontSize != 0)
-                throw new NotImplementedException($"BreakStateData assumes that group sizes are a multiple of {_wavefrontSize} (wavefront size)");
+            var warning = await FetchFilePartAsync(channel, groupIndex, groupSize, nGroups, fetchWholeFile);
+            GroupIndex = groupIndex;
+            GroupSize = groupSize;
+            return warning;
+        }
 
-            int byteOffset = 4 * groupIndex * groupSize * _laneDataSize;
-            int byteCount = 4 * groupSize * _laneDataSize;
-
-            if (IsGroupFetched(byteOffset, byteCount))
-            {
-                GroupIndex = groupIndex;
-                GroupSize = groupSize;
+        private async Task<string> FetchFilePartAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile)
+        {
+            GetRequestedFilePart(groupIndex, groupSize, nGroups, fetchWholeFile, out var waveOffset, out var waveCount);
+            if (IsFilePartFetched(waveOffset, waveCount))
                 return null;
-            }
+
+            var requestedByteOffset = waveOffset * _waveDataSize * 4;
+            var requestedByteCount = waveCount * _waveDataSize * 4;
 
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
                 {
                     FilePath = _outputFile.Path,
                     BinaryOutput = _outputFile.BinaryOutput,
-                    ByteOffset = byteOffset,
-                    ByteCount = byteCount,
+                    ByteOffset = requestedByteOffset,
+                    ByteCount = requestedByteCount,
                     OutputOffset = _outputOffset
                 }).ConfigureAwait(false);
-
-            SetGroupData(byteOffset, byteCount, response.Data);
-            GroupIndex = groupIndex;
-            GroupSize = groupSize;
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
                 return "Output file could not be opened.";
 
+            Buffer.BlockCopy(response.Data, 0, _data, requestedByteOffset, response.Data.Length);
+            var fetchedWaveCount = response.Data.Length / _waveDataSize / 4;
+            MarkFilePartAsFetched(waveOffset, fetchedWaveCount);
+
             if (response.Timestamp != _outputFileTimestamp)
                 return "Output file has changed since the last debugger execution.";
 
-            if (response.Data.Length < byteCount)
-                return $"Group #{groupIndex} is incomplete: expected to read {byteCount} bytes but the output file contains {response.Data.Length}.";
+            if (response.Data.Length < requestedByteCount)
+                return $"Group #{groupIndex} is incomplete: expected to read {requestedByteCount} bytes but the output file contains {response.Data.Length}.";
 
             if (_data.Length < nGroups * groupSize * _laneDataSize)
                 return $"Output file has fewer groups than requested (NGroups = {nGroups}, but the file contains only {GetGroupCount(groupSize, nGroups)})";
@@ -211,21 +213,36 @@ namespace VSRAD.Package.Server
             return null;
         }
 
-        private bool IsGroupFetched(int byteOffset, int byteCount)
+        private void GetRequestedFilePart(int groupIndex, int groupSize, int nGroups, bool fetchWholeFile, out int waveOffset, out int waveCount)
         {
-            int byteWaveSize = 4 * _waveDataSize;
-            for (int i = byteOffset / byteWaveSize; i < (byteOffset + byteCount) / byteWaveSize; ++i)
+            if (groupSize % _wavefrontSize != 0)
+                throw new ArgumentException($"Group sizes are assumed to be a multiple of {_wavefrontSize} (wavefront size)", nameof(groupSize));
+
+            if (fetchWholeFile)
+            {
+                waveCount = nGroups * groupSize / _wavefrontSize;
+                if (waveCount == 0 || waveCount > _fetchedDataWaves.Length)
+                    waveCount = _fetchedDataWaves.Length;
+                waveOffset = 0;
+            }
+            else // single group
+            {
+                waveCount = groupSize / _wavefrontSize;
+                waveOffset = groupIndex * waveCount;
+            }
+        }
+
+        private bool IsFilePartFetched(int waveOffset, int waveCount)
+        {
+            for (int i = waveOffset; i < waveOffset + waveCount; ++i)
                 if (!_fetchedDataWaves[i])
                     return false;
             return true;
         }
 
-        private void SetGroupData(int byteOffset, int byteCount, byte[] groupData)
+        private void MarkFilePartAsFetched(int waveOffset, int waveCount)
         {
-            Buffer.BlockCopy(groupData, 0, _data, byteOffset, groupData.Length);
-
-            int byteWaveSize = 4 * _waveDataSize;
-            for (int i = byteOffset / byteWaveSize; i < (byteOffset + byteCount) / byteWaveSize; ++i)
+            for (int i = waveOffset; i < waveOffset + waveCount; ++i)
                 _fetchedDataWaves[i] = true;
         }
     }

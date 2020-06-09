@@ -14,13 +14,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
-            _context = new VisualizerContext(integration.ProjectOptions, integration.CommunicationChannel);
+            _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
             _context.GroupFetched += GroupFetched;
             DataContext = _context;
             InitializeComponent();
 
-            integration.BreakEntered += _context.EnterBreak;
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();

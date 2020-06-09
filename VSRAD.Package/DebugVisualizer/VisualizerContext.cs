@@ -2,6 +2,8 @@
 using System.ComponentModel;
 using System.Text;
 using System.Threading.Tasks;
+using VSRAD.Package.DebugVisualizer.SliceVisualizer;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
@@ -22,6 +24,7 @@ namespace VSRAD.Package.DebugVisualizer
         public event EventHandler<GroupFetchedEventArgs> GroupFetched;
         public Options.ProjectOptions Options { get; }
         public GroupIndexSelector GroupIndex { get; }
+        public SliceVisualizerContext SliceContext { get; }
 
         private string _status = "No data available";
         public string Status { get => _status; set => SetField(ref _status, value); }
@@ -38,10 +41,13 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly ICommunicationChannel _channel;
         private BreakState _breakState;
 
-        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel)
+        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, DebuggerIntegration debugger, SliceVisualizerContext sliceContext)
         {
             Options = options;
             _channel = channel;
+            SliceContext = sliceContext;
+
+            debugger.BreakEntered += EnterBreak;
 
             GroupIndex = new GroupIndexSelector(options.VisualizerOptions);
             GroupIndex.IndexChanged += GroupIndexChanged;
@@ -49,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer
             Options.DebuggerOptions.PropertyChanged += OptionsChanged;
         }
 
-        public void EnterBreak(BreakState breakState)
+        private void EnterBreak(BreakState breakState)
         {
             _breakState = breakState;
             WatchesValid = breakState != null;
@@ -86,10 +92,13 @@ namespace VSRAD.Package.DebugVisualizer
         private async Task ChangeGroupAsync(GroupIndexChangedEventArgs e)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            Status = $"Fetching group {e.Coordinates}";
+            var fetchWholeFile = SliceContext.WindowVisibile;
+
+            Status = fetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
             GroupIndexEditable = false;
 
-            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize, (int)Options.DebuggerOptions.NGroups);
+            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
+                (int)Options.DebuggerOptions.NGroups, fetchWholeFile);
             GroupFetched(this, new GroupFetchedEventArgs(warning));
 
             var status = new StringBuilder();
