@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel>
-        <local:SliceVisualizerHeaderControl x:Name="headerControl" DockPanel.Dock="Top"/>
-        <local:SliceVisualizerTableHost DockPanel.Dock="Bottom" x:Name="tableHost"/>
+        <local:SliceVisualizerHeaderControl DataContext="{Binding}" DockPanel.Dock="Top"/>
+        <local:SliceVisualizerTableHost DockPanel.Dock="Bottom" x:Name="TableHost"/>
     </DockPanel>
 </UserControl>

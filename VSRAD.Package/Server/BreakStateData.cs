@@ -81,9 +81,6 @@ namespace VSRAD.Package.Server
                 }
             }
         }
-        //public int RowCount() => _data.Length / _laneDataSize / _groupSize / _groupsInRow;
-        public int RowLength => _groupSize * _groupsInRow;
-        public int GroupsInRow => _groupsInRow;
 
         // For tests
         public SliceWatchWiew(uint[] flatWatchData)
@@ -163,11 +160,19 @@ namespace VSRAD.Package.Server
 
         public SliceWatchWiew GetSliceWatch(string watch, int groupsInRow)
         {
-            var watchIndex = Watches.IndexOf(watch);
-            if (watchIndex == -1)
-                return null;
-
-            return new SliceWatchWiew(_data, groupsInRow, GroupSize, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
+            int laneDataOffset;
+            if (watch == "System")
+            {
+                laneDataOffset = 0;
+            }
+            else
+            {
+                var watchIndex = Watches.IndexOf(watch);
+                if (watchIndex == -1)
+                    return null;
+                laneDataOffset = watchIndex + 1;
+            }
+            return new SliceWatchWiew(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize);
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)

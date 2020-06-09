@@ -17,7 +17,7 @@
     <StackPanel Orientation="Vertical">
         <StackPanel Orientation="Horizontal">
             <Label Content="Watch: " Height="26" Width="48" />
-            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches}" SelectionChanged="NewWatchSelected" Height="24" Width="160" />
+            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches}" SelectedItem="{Binding SelectedWatch}" Height="24" Width="160" />
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <Label Content="Show columns __ALL__ of each subgroup of " Height="26"/>

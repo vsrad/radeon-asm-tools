@@ -73,19 +73,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             return dataColumns;
         }
 
-        public void DisplayWatch(SliceWatchWiew watchWiew)
+        public void DisplayWatch(SliceWatchWiew watchView)
         {
-            SelectedWatch = watchWiew;
-            if (Rows.Count < watchWiew.RowCount)
-                Rows.AddCopies(0, watchWiew.RowCount - Rows.Count);
+            SelectedWatch = watchView;
+            if (Rows.Count < watchView.RowCount)
+                Rows.AddCopies(0, watchView.RowCount - Rows.Count);
             
             // TODO: handle odd number of rows
-            var rowsCount = watchWiew.RowCount;
-            var rowLength = watchWiew.RowLength;
-
             for (int i = 0; i < Rows.Count; i++)
             {
-                if (i < watchWiew.RowCount)
+                if (i < watchView.RowCount)
                 {
                     Rows[i].Visible = true;
                     Rows[i].HeaderCell.Value = i;
@@ -96,7 +93,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 }
             }
 
-            var columnsNeeded = Math.Max(rowLength, Columns.Count); 
+            var columnsNeeded = Math.Max(watchView.ColumnCount, Columns.Count); 
 
             for (int i = 0; i < columnsNeeded; i++)
             {
@@ -115,11 +112,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     _state.IncrementPhantomColumnIndex();
                 }
 
-                if (i < rowLength)
+                if (i < watchView.ColumnCount)
                 {
                     Columns[i].Visible = true;
-                    for (int j = 0; j < watchWiew.RowCount; j++)
-                        Rows[j].Cells[i].Value = watchWiew[j, i];
+                    for (int j = 0; j < watchView.RowCount; j++)
+                        Rows[j].Cells[i].Value = watchView[j, i];
                 }
                 else
                 {

@@ -21,6 +21,7 @@ namespace VSRAD.Package.ProjectSystem
         event AddWatch AddWatch;
 
         VisualizerContext GetVisualizerContext();
+        SliceVisualizerContext GetSliceVisualizerContext();
 
         void AddWatchFromEditor(string watch);
     }
@@ -54,15 +55,23 @@ namespace VSRAD.Package.ProjectSystem
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             if (_visualizerContext == null)
+                _visualizerContext = new VisualizerContext(ProjectOptions, CommunicationChannel, _debugger);
+            return _visualizerContext;
+        }
+
+        private SliceVisualizerContext _sliceVisualizerContext;
+        public SliceVisualizerContext GetSliceVisualizerContext()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (_sliceVisualizerContext == null)
             {
                 var dte = (EnvDTE.DTE)_serviceProvider.GetService(typeof(EnvDTE.DTE));
                 Assumes.Present(dte);
                 var dteEvents = (EnvDTE80.Events2)dte.Events;
 
-                var sliceVisibility = new SliceVisualizerContext(dteEvents.WindowVisibilityEvents);
-                _visualizerContext = new VisualizerContext(ProjectOptions, CommunicationChannel, _debugger, sliceVisibility);
+                _sliceVisualizerContext = new SliceVisualizerContext(GetVisualizerContext(), dteEvents.WindowVisibilityEvents);
             }
-            return _visualizerContext;
+            return _sliceVisualizerContext;
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);

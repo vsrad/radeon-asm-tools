@@ -6,40 +6,21 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     public partial class SliceVisualizerControl : UserControl
     {
         private readonly SliceVisualizerTable _table;
-        private readonly VisualizerContext _context;
+        private readonly SliceVisualizerContext _context;
 
         public SliceVisualizerControl(IToolWindowIntegration integration)
         {
-            _context = integration.GetVisualizerContext();
-            _context.GroupFetched += GroupFetched;
+            _context = integration.GetSliceVisualizerContext();
+            _context.WatchSelected += WatchSelected;
+            DataContext = _context;
+            InitializeComponent();
 
             var tableFontAndColor = new FontAndColorProvider();
-            InitializeComponent();
             _table = new SliceVisualizerTable(tableFontAndColor);
-            headerControl.Setup(integration, WatchSelected, ToggleHeatMap);
-            tableHost.Setup(_table);
+            TableHost.Setup(_table);
         }
 
-        private void GroupFetched(object sender, GroupFetchedEventArgs e)
-        {
-            if (!_context.SliceContext.WindowVisibile)
-                return;
-            var selectedWatch = headerControl.GetSelectedWatch();
-            if (selectedWatch != null)
-                WatchSelected(selectedWatch);
-        }
-
-        private void WatchSelected(string watchName)
-        {
-            if (_context.BreakData == null)
-                return;
-            var watch = _context.BreakData.GetSliceWatch(watchName, headerControl.GroupsInRow());
+        private void WatchSelected(object sender, Server.SliceWatchWiew watch) =>
             _table.DisplayWatch(watch);
-        }
-
-        private void ToggleHeatMap(bool heatMapActive)
-        {
-            // TODO: options
-        }
     }
 }
