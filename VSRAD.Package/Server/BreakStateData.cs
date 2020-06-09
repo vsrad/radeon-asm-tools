@@ -134,7 +134,13 @@ namespace VSRAD.Package.Server
             _fetchedDataWaves = new BitArray(outputWaveCount);
         }
 
-        public uint GetGroupCount(uint groupSize) => (uint)(_data.Length / groupSize / _laneDataSize);
+        public int GetGroupCount(int groupSize, int nGroups)
+        {
+            var realCount = _data.Length / groupSize / _laneDataSize;
+            if (nGroups != 0 && nGroups < realCount)
+                return nGroups;
+            return realCount;
+        }
 
         public WatchView GetSystem()
         {
@@ -161,7 +167,7 @@ namespace VSRAD.Package.Server
             return new SliceWatchWiew(_data, groupsInRow, GroupSize, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
         }
 
-        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize)
+        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups)
         {
             if (groupSize % _wavefrontSize != 0)
                 throw new NotImplementedException($"BreakStateData assumes that group sizes are a multiple of {_wavefrontSize} (wavefront size)");
@@ -198,6 +204,9 @@ namespace VSRAD.Package.Server
 
             if (response.Data.Length < byteCount)
                 return $"Group #{groupIndex} is incomplete: expected to read {byteCount} bytes but the output file contains {response.Data.Length}.";
+
+            if (_data.Length < nGroups * groupSize * _laneDataSize)
+                return $"Output file has fewer groups than requested (NGroups = {nGroups}, but the file contains only {GetGroupCount(groupSize, nGroups)})";
 
             return null;
         }

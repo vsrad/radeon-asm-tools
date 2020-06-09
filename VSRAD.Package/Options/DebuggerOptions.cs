@@ -20,6 +20,9 @@ namespace VSRAD.Package.Options
         public ReadOnlyCollection<string> GetAWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => w.IsAVGPR).Select(w => w.Name).Distinct().ToList());
 
+        private uint _nGroups;
+        public uint NGroups { get => _nGroups; set => SetField(ref _nGroups, value); }
+
         private uint _counter;
         public uint Counter { get => _counter; set => SetField(ref _counter, value); }
 

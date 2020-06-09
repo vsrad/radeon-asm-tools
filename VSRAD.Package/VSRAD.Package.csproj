@@ -166,6 +166,7 @@
       <DependentUpon>NumberInput.xaml</DependentUpon>
     </Compile>
     <Compile Include="DebugVisualizer\SelectionController.cs" />
+    <Compile Include="DebugVisualizer\VisualizerContext.cs" />
     <Compile Include="DebugVisualizer\VisualizerHeaderControl.xaml.cs">
       <DependentUpon>VisualizerHeaderControl.xaml</DependentUpon>
     </Compile>
