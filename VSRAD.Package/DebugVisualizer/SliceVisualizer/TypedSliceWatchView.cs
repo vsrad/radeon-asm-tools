@@ -9,6 +9,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         public int RowCount => _view.RowCount;
         public int ColumnCount => _view.ColumnCount;
+        public bool IsSingleWordValue => _type == VariableType.Half;
 
         private readonly SliceWatchView _view;
         private readonly VariableType _type;
@@ -28,7 +29,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             get => DataFormatter.FormatDword(_type, _view[row, column]);
         }
 
-        public float GetRelativeValue(int row, int column)
+        public float GetRelativeValue(int row, int column, int word = 0)
         {
             switch (_type)
             {
@@ -40,6 +41,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     return ((float)((int)_view[row, column] - _minValue.intValue)) / (_maxValue.intValue - _minValue.intValue);
                 case VariableType.Float:
                     var floatValue = BitConverter.ToSingle(BitConverter.GetBytes(_view[row, column]), 0);
+                    return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
+                case VariableType.Half:
+                    floatValue = Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(_view[row, column]), startIndex: word * 2));
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
             }
             throw new NotImplementedException();
@@ -93,6 +97,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                         for (int col = 0; col < view.ColumnCount; ++col)
                         {
                             float value = BitConverter.ToSingle(BitConverter.GetBytes(view[row, col]), 0);
+                            if (float.IsNaN(value))
+                                continue;
                             if (value < fmin)
                                 fmin = value;
                             if (value > fmax)
@@ -112,14 +118,20 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                             byte[] bytes = BitConverter.GetBytes(view[row, col]);
                             float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
                             float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
-                            if (firstHalf < fmin)
-                                fmin = firstHalf;
-                            if (secondHalf < fmin)
-                                fmin = secondHalf;
-                            if (firstHalf > fmax)
-                                fmax = firstHalf;
-                            if (secondHalf > fmax)
-                                fmax = secondHalf;
+                            if (!float.IsNaN(firstHalf))
+                            {
+                                if (firstHalf < fmin)
+                                    fmin = firstHalf;
+                                if (firstHalf > fmax)
+                                    fmax = firstHalf;
+                            }
+                            if (!float.IsNaN(secondHalf))
+                            {
+                                if (secondHalf < fmin)
+                                    fmin = secondHalf;
+                                if (secondHalf > fmax)
+                                    fmax = secondHalf;
+                            }
                         }
                     }
                     min = new TypedWatchValue { floatValue = fmin };
@@ -139,9 +151,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             [FieldOffset(0)]
             public int intValue;           // VariableType.Int
             [FieldOffset(0)]
-            public float floatValue;       // VariableType.Float
-            [FieldOffset(sizeof(float))]
-            public float secondFloatValue; // VariableType.Float, VariableType.Half
+            public float floatValue;       // VariableType.Float, VariableType.Half
         };
     }
 }

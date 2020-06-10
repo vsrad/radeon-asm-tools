@@ -24,7 +24,29 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.ColumnCount)
                 return;
 
-            var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
+            if (_table.SelectedWatch.IsSingleWordValue)
+            {
+                var rel1 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 0);
+                var rel2 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 1);
+                var brush1 = new SolidBrush(GetHeatmapColor(rel1));
+                var brush2 = new SolidBrush(GetHeatmapColor(rel2));
+
+                e.Graphics.FillRectangle(brush1, new Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
+                e.Graphics.FillRectangle(brush2, new Rectangle(e.CellBounds.Left + e.CellBounds.Width / 2, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
+                e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Background);
+                e.Handled = true;
+            }
+            else
+            {
+                var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
+                e.CellStyle.BackColor = GetHeatmapColor(relValue);
+            }
+        }
+
+        private Color GetHeatmapColor(float relValue)
+        {
+            if (float.IsNaN(relValue))
+                return _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
 
             Color maxColor, minColor;
             if (relValue < 0.5f)
@@ -44,13 +66,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             var gDiff = maxColor.G - minColor.G;
             var bDiff = maxColor.B - minColor.B;
 
-            var color = Color.FromArgb(
+            return Color.FromArgb(
                 (byte)(minColor.R + (rDiff * relValue)),
                 (byte)(minColor.G + (gDiff * relValue)),
                 (byte)(minColor.B + (bDiff * relValue))
             );
-
-            e.CellStyle.BackColor = color;
         }
     }
 }
