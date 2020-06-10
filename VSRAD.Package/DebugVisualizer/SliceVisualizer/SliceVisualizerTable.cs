@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
     sealed class SliceVisualizerTable : DataGridView
     {
-        public const int DataColumnOffset = 0;
+        public const int DataColumnOffset = 1; // including phantom column
 
         public TypedSliceWatchView SelectedWatch { get; private set; }
 
@@ -26,20 +26,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AutoGenerateColumns = false;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
-            ColumnAdded += FixFillWeight;
-
-            // Phantom column for scaling
-            Columns.Add(new DataGridViewTextBoxColumn()
-            {
-                MinimumWidth = 2,
-                Width = 2,
-                ReadOnly = true,
-                SortMode = DataGridViewColumnSortMode.NotSortable
-            });
-            // Scaling requires at least one row in the table, we'll reuse it later for data
-            Rows.Add(new DataGridViewRow() { Visible = false });
-
-            _state = new TableState(this, DataColumnOffset, 60, new List<DataGridViewColumn>());
+            _state = new TableState(this, 60);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
@@ -47,68 +34,48 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _ = new SliceCellStyling(this, fontAndColor);
         }
 
-        private void FixFillWeight(object sender, DataGridViewColumnEventArgs e)
-        {
-            e.Column.FillWeight = 1;
-        }
-
         public void DisplayWatch(TypedSliceWatchView watchView)
         {
             SelectedWatch = watchView;
-            if (Rows.Count < watchView.RowCount)
-                Rows.AddCopies(0, watchView.RowCount - Rows.Count);
-
-            // TODO: handle odd number of rows
-            for (int i = 0; i < Rows.Count; i++)
-            {
-                if (i < watchView.RowCount)
-                {
-                    Rows[i].Visible = true;
-                    Rows[i].HeaderCell.Value = i;
-                }
-                else
-                {
-                    Rows[i].Visible = false;
-                }
-            }
 
             // Mind the phantom column at the end!
             var columnsMissing = watchView.ColumnCount - (Columns.Count - 1);
             if (columnsMissing > 0)
             {
-                var missingColumnsStartAt = _state.PhantomColumnIndex;
+                var missingColumnsStartAt = _state.DataColumns.Count;
                 var columns = new DataGridViewColumn[columnsMissing];
                 for (int i = 0; i < columnsMissing; ++i)
                 {
-                    columns[i] = new DataGridViewTextBoxColumn()
+                    columns[i] = new DataGridViewTextBoxColumn
                     {
+                        FillWeight = 1,
                         HeaderText = (missingColumnsStartAt + i).ToString(),
                         ReadOnly = true,
                         SortMode = DataGridViewColumnSortMode.NotSortable,
-                        Width = 60
+                        Width = _state.ColumnWidth
                     };
                 }
-                _state.DataColumns.AddRange(columns);
-                Columns.AddRange(columns);
-
-                // Put phantom column at the end
-                var oldPhantomColumn = Columns[missingColumnsStartAt];
-                Columns.Remove(oldPhantomColumn);
-                oldPhantomColumn.DisplayIndex = -1;
-                Columns.Add(oldPhantomColumn);
+                _state.AddDataColumns(columns);
+                Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             }
-            var totalColumns = Columns.Count - 1;
-            for (int i = 0; i < totalColumns; i++)
+            for (int i = 0; i < _state.DataColumns.Count; ++i)
+                _state.DataColumns[i].Visible = i < watchView.ColumnCount;
+
+            if (Rows.Count < watchView.RowCount)
+                Rows.Add(watchView.RowCount - Rows.Count);
+            for (int i = 0; i < Rows.Count; ++i)
             {
-                if (i < watchView.ColumnCount)
+                var row = Rows[i];
+                if (i < watchView.RowCount)
                 {
-                    Columns[i].Visible = true;
-                    for (int j = 0; j < watchView.RowCount; j++)
-                        Rows[j].Cells[i].Value = watchView[j, i];
+                    for (int j = 0; j < watchView.ColumnCount; ++j)
+                        row.Cells[DataColumnOffset + j].Value = watchView[i, j];
+                    row.HeaderCell.Value = i;
+                    row.Visible = true;
                 }
                 else
                 {
-                    Columns[i].Visible = false;
+                    row.Visible = false;
                 }
             }
         }

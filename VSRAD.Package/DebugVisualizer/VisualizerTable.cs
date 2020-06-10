@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
@@ -16,9 +17,9 @@ namespace VSRAD.Package.DebugVisualizer
         public event ChangeWatchState WatchStateChanged;
 
         public const int NameColumnIndex = 0;
+        public const int PhantomColumnIndex = 1;
         public const int DataColumnCount = 512;
-        public const int DataColumnOffset = 1;
-        public const int PhantomColumnIndex = DataColumnCount + DataColumnOffset;
+        public const int DataColumnOffset = 2; // name + phantom column
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
@@ -47,7 +48,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private string _editedWatchName;
 
-        private TableState _state;
+        private readonly TableState _state;
 
         public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
         {
@@ -77,8 +78,10 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            var dataColumns = SetupColumns();
-            _state = new TableState(this, DataColumnOffset, 60, dataColumns);
+            _state = new TableState(this, columnWidth: 60);
+            SetupColumns();
+            Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
+            Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
@@ -194,9 +197,9 @@ namespace VSRAD.Package.DebugVisualizer
             ClearSelection();
         }
 
-        private List<DataGridViewColumn> SetupColumns()
+        private void SetupColumns()
         {
-            Columns.Add(new DataGridViewTextBoxColumn()
+            Columns.Add(new DataGridViewTextBoxColumn
             {
                 HeaderText = "Name",
                 ReadOnly = false,
@@ -205,28 +208,16 @@ namespace VSRAD.Package.DebugVisualizer
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
 
-            var dataColumns = new List<DataGridViewColumn>(DataColumnCount);
+            var dataColumns = new DataGridViewColumn[DataColumnCount];
             for (int i = 0; i < DataColumnCount; i++)
-            {
-                dataColumns.Add(new DataGridViewTextBoxColumn()
+                dataColumns[i] = new DataGridViewTextBoxColumn
                 {
                     HeaderText = i.ToString(),
                     ReadOnly = true,
                     SortMode = DataGridViewColumnSortMode.NotSortable,
                     Width = 60
-                });
-                Columns.Add(dataColumns[i]);
-            }
-
-            // phantom column
-            Columns.Add(new DataGridViewTextBoxColumn()
-            {
-                MinimumWidth = 2,
-                Width = 2,
-                ReadOnly = true,
-                SortMode = DataGridViewColumnSortMode.NotSortable
-            });
-            return dataColumns;
+                };
+            _state.AddDataColumns(dataColumns);
         }
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)

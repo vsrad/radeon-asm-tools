@@ -62,11 +62,17 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
-        public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x) =>
-            hit.Type == DataGridViewHitTestType.ColumnHeader &&
-            (Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider ||
-            Math.Abs(x - hit.ColumnX - state.ColumnWidth) <= _maxDistanceFromDivider) &&
-            hit.ColumnIndex > state.GetFirstVisibleDataColumnIndex(); // can't scale the first visible column
+        public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x)
+        {
+            if (hit.Type != DataGridViewHitTestType.ColumnHeader)
+                return false;
+            if (Math.Abs(x - hit.ColumnX) > _maxDistanceFromDivider && Math.Abs(x - hit.ColumnX - state.ColumnWidth) > _maxDistanceFromDivider)
+                return false;
+
+            // can't scale the first visible column
+            var firstVisibleIndex = state.GetFirstVisibleDataColumnIndex();
+            return firstVisibleIndex != -1 && hit.ColumnIndex > firstVisibleIndex;
+        }
 
         public bool HandleMouseMove(MouseEventArgs e)
         {
