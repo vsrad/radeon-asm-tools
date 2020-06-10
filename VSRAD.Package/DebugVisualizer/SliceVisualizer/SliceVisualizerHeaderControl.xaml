@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer.SliceVisualizer"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              mc:Ignorable="d" 
              d:DesignWidth="800">
@@ -12,12 +13,19 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="..\..\ToolWindows\ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <ObjectDataProvider x:Key="VarableType" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="viz:VariableType"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
         </ResourceDictionary>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical">
         <StackPanel Orientation="Horizontal">
-            <Label Content="Watch: " Height="26" Width="48" />
-            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches}" SelectedItem="{Binding SelectedWatch}" Height="24" Width="160" />
+            <Label Content="Watch: " Height="26" Width="48"/>
+            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches}" SelectedItem="{Binding SelectedWatch}" Height="24" Width="160" VerticalContentAlignment="Center"/>
+            <Label Content="Type: " Height="26"/>
+            <ComboBox ItemsSource="{Binding Source={StaticResource VarableType}}" SelectedItem="{Binding SelectedType}" Height="24" Width="60" VerticalContentAlignment="Center"/>
         </StackPanel>
         <StackPanel Orientation="Horizontal">
             <Label Content="Show columns __ALL__ of each subgroup of " Height="26"/>

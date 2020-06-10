@@ -10,7 +10,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     public sealed class SliceVisualizerContext : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<Server.SliceWatchWiew> WatchSelected;
+        public event EventHandler<TypedSliceWatchView> WatchSelected;
 
         private int _subgroupSize = 64;
         public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
@@ -20,6 +20,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private string _selectedWatch;
         public string SelectedWatch { get => _selectedWatch; set => SetField(ref _selectedWatch, value); }
+
+        private VariableType _selectedType;
+        public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
 
         public List<string> Watches { get; } = new List<string>();
 
@@ -55,7 +58,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (_windowVisible && !string.IsNullOrEmpty(SelectedWatch))
             {
                 var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, GroupsInRow);
-                WatchSelected(this, watchView);
+                var typedView = new TypedSliceWatchView(watchView, SelectedType);
+                WatchSelected(this, typedView);
             }
         }
 
@@ -75,6 +79,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 case nameof(SubgroupSize):
                 case nameof(GroupsInRow):
                 case nameof(SelectedWatch):
+                case nameof(SelectedType):
                     WatchSelectionChanged();
                     break;
             }

@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    class SliceVisualizerTable : DataGridView
+    sealed class SliceVisualizerTable : DataGridView
     {
         private const int DataColumnCount = 512;
         public const int DataColumnOffset = 0;
 
-        public SliceWatchWiew SelectedWatch { get; private set; }
+        public TypedSliceWatchView SelectedWatch { get; private set; }
         private int PhantomColumnIndex = DataColumnCount;
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
@@ -73,12 +71,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             return dataColumns;
         }
 
-        public void DisplayWatch(SliceWatchWiew watchView)
+        public void DisplayWatch(TypedSliceWatchView watchView)
         {
             SelectedWatch = watchView;
             if (Rows.Count < watchView.RowCount)
                 Rows.AddCopies(0, watchView.RowCount - Rows.Count);
-            
+
             // TODO: handle odd number of rows
             for (int i = 0; i < Rows.Count; i++)
             {
@@ -93,7 +91,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 }
             }
 
-            var columnsNeeded = Math.Max(watchView.ColumnCount, Columns.Count); 
+            var columnsNeeded = Math.Max(watchView.ColumnCount, Columns.Count);
 
             for (int i = 0; i < columnsNeeded; i++)
             {

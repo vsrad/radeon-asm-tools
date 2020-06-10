@@ -45,7 +45,7 @@ namespace VSRAD.Package.Server
         }
     }
 
-    public sealed class SliceWatchWiew
+    public sealed class SliceWatchView
     {
         public int ColumnCount { get; }
         public int RowCount { get; }
@@ -55,10 +55,7 @@ namespace VSRAD.Package.Server
 
         private readonly uint[] _data;
 
-        private readonly int _minValue;
-        private readonly int _maxValue;
-
-        public SliceWatchWiew(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
@@ -66,24 +63,10 @@ namespace VSRAD.Package.Server
 
             ColumnCount = groupsInRow * groupSize;
             RowCount = _data.Length / _laneDataSize / ColumnCount;
-
-            // TODO: pass VariableType and cast appropriately (union via StructLayout?)
-            _minValue = int.MaxValue;
-            _maxValue = int.MinValue;
-            for (int row = 0; row < RowCount; ++row)
-            {
-                for (int col = 0; col < ColumnCount; ++col)
-                {
-                    if ((int)this[row, col] < _minValue)
-                        _minValue = (int)this[row, col];
-                    if ((int)this[row, col] > _maxValue)
-                        _maxValue = (int)this[row, col];
-                }
-            }
         }
 
         // For tests
-        public SliceWatchWiew(uint[] flatWatchData)
+        public SliceWatchView(uint[] flatWatchData)
         {
             _data = flatWatchData;
         }
@@ -97,9 +80,6 @@ namespace VSRAD.Package.Server
                 return _data[dwordIdx];
             }
         }
-
-        public float GetRelativeValue(int row, int column) =>
-            ((float)((int)this[row, column] - _minValue)) / (_maxValue - _minValue);
     }
 
     public sealed class BreakStateData
@@ -158,7 +138,7 @@ namespace VSRAD.Package.Server
             return new WatchView(_data, groupOffset, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
         }
 
-        public SliceWatchWiew GetSliceWatch(string watch, int groupsInRow)
+        public SliceWatchView GetSliceWatch(string watch, int groupsInRow)
         {
             int laneDataOffset;
             if (watch == "System")
@@ -172,7 +152,7 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchWiew(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize);
+            return new SliceWatchView(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize);
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)

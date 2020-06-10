@@ -20,7 +20,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             TableHost.Setup(_table);
         }
 
-        private void WatchSelected(object sender, Server.SliceWatchWiew watch) =>
+        private void WatchSelected(object sender, TypedSliceWatchView watch) =>
             _table.DisplayWatch(watch);
     }
 }
