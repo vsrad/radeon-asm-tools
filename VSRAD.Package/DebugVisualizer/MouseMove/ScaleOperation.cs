@@ -34,7 +34,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (!ShouldChangeCursor(hit, _table, _state, e.X))
+            if (!ShouldChangeCursor(hit, _state, e.X))
                 return false;
 
             _lastX = Cursor.Position.X;
@@ -50,8 +50,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             _tableDataAreaWidth = _table.GetRowDisplayRectangle(0, false).Width - _table.RowHeadersWidth;
             _visibleColumnsToLeft = _state.DataColumns.Count(c => c.Visible && c.Index < index);
-            _firstVisibleIndex = _state.DataColumns.First(x => x.Visible).Index;
-            _lastVisibleIndex = _state.DataColumns.Last(c => c.Visible).Index;
+            _firstVisibleIndex = _state.GetFirstVisibleDataColumnIndex();
+            _lastVisibleIndex = _state.GetLastVisibleDataColumnIndex();
             _targetColumn = _table.Columns[index];
             _currentWidth = _state.ColumnWidth;
 
@@ -62,11 +62,11 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
-        public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, DataGridView table, TableState state, int x) =>
+        public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x) =>
             hit.Type == DataGridViewHitTestType.ColumnHeader &&
             (Math.Abs(x - hit.ColumnX) <= _maxDistanceFromDivider ||
             Math.Abs(x - hit.ColumnX - state.ColumnWidth) <= _maxDistanceFromDivider) &&
-            hit.ColumnIndex > state.DataColumns.First(c => c.Visible).Index; // can't scale the first visible column
+            hit.ColumnIndex > state.GetFirstVisibleDataColumnIndex(); // can't scale the first visible column
 
         public bool HandleMouseMove(MouseEventArgs e)
         {

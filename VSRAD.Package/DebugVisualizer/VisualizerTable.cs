@@ -78,7 +78,7 @@ namespace VSRAD.Package.DebugVisualizer
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
             var dataColumns = SetupColumns();
-            _state = new TableState(DataColumnOffset, 60, dataColumns, new ColumnResizeController(this));
+            _state = new TableState(this, DataColumnOffset, 60, dataColumns);
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
@@ -449,7 +449,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), this, _state, e.X)
+            Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), _state, e.X)
                 ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))
                 base.OnMouseMove(e);
@@ -457,7 +457,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
-            if (!_state.ResizeController.HandleColumnWidthChangeEvent())
+            if (!_state.ResizeController.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
 

@@ -39,7 +39,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             // Scaling requires at least one row in the table, we'll reuse it later for data
             Rows.Add(new DataGridViewRow() { Visible = false });
 
-            _state = new TableState(DataColumnOffset, 60, new List<DataGridViewColumn>(), new ColumnResizeController(this));
+            _state = new TableState(this, DataColumnOffset, 60, new List<DataGridViewColumn>());
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
@@ -115,7 +115,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
-            if (!_state.ResizeController.HandleColumnWidthChangeEvent())
+            if (!_state.ResizeController.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
 
@@ -144,7 +144,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
-            Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), this, _state, e.X)
+            Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), _state, e.X)
                 ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))
                 base.OnMouseMove(e);
