@@ -6,18 +6,28 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     sealed class SliceCellStyling
     {
         private readonly SliceVisualizerTable _table;
+        private readonly TableState _state;
         private readonly IFontAndColorProvider _fontAndColor;
+        private readonly SolidBrush _tableBackgroundBrush;
 
-        public SliceCellStyling(SliceVisualizerTable table, IFontAndColorProvider fontAndColor)
+        public SliceCellStyling(SliceVisualizerTable table, TableState state, IFontAndColorProvider fontAndColor)
         {
             _table = table;
+            _state = state;
             _fontAndColor = fontAndColor;
+            _tableBackgroundBrush = new SolidBrush(table.BackgroundColor);
 
             _table.CellPainting += HandleCellPaint;
         }
 
         private void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
+            if (e.ColumnIndex == _state.PhantomColumnIndex)
+            {
+                HidePhantomColumn(e);
+                return;
+            }
+
             if (_table.SelectedWatch == null ||
                 e.RowIndex < 0 ||
                 e.ColumnIndex < SliceVisualizerTable.DataColumnOffset ||
@@ -41,6 +51,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
                 e.CellStyle.BackColor = GetHeatmapColor(relValue);
             }
+        }
+
+        private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
+        {
+            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+            e.Handled = true;
         }
 
         private Color GetHeatmapColor(float relValue)

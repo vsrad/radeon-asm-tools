@@ -31,14 +31,13 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, fontAndColor);
+            _ = new SliceCellStyling(this, _state, fontAndColor);
         }
 
         public void DisplayWatch(TypedSliceWatchView watchView)
         {
             SelectedWatch = watchView;
 
-            // Mind the phantom column at the end!
             var columnsMissing = watchView.ColumnCount - (Columns.Count - 1);
             if (columnsMissing > 0)
             {
