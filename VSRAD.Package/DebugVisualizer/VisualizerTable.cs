@@ -78,7 +78,7 @@ namespace VSRAD.Package.DebugVisualizer
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
             var dataColumns = SetupColumns();
-            _state = new TableState(DataColumnOffset, PhantomColumnIndex, 60, dataColumns, new ColumnResizeController(this));
+            _state = new TableState(DataColumnOffset, 60, dataColumns, new ColumnResizeController(this));
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
@@ -194,7 +194,7 @@ namespace VSRAD.Package.DebugVisualizer
             ClearSelection();
         }
 
-        private IReadOnlyList<DataGridViewColumn> SetupColumns()
+        private List<DataGridViewColumn> SetupColumns()
         {
             Columns.Add(new DataGridViewTextBoxColumn()
             {

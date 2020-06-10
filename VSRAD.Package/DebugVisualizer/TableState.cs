@@ -1,29 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     public class TableState
     {
-        public int DataColumnOffset { get; private set; }
-        public int PhantomColumnIndex { get; private set; }
-        public IReadOnlyList<DataGridViewColumn> DataColumns { get; private set; }
-        public readonly ColumnResizeController ResizeController;
-        public int ColumnWidth;
+        public int DataColumnOffset { get; }
+        public int PhantomColumnIndex => DataColumnOffset + DataColumns.Count;
+        public List<DataGridViewColumn> DataColumns { get; }
+        public ColumnResizeController ResizeController { get; }
+        public int ColumnWidth { get; set; }
 
-        public TableState(int dataColumnOffset, int phantomColumnIndex, int columnWidth, IReadOnlyList<DataGridViewColumn> dataColumns, ColumnResizeController resizeController)
+        public TableState(int dataColumnOffset, int columnWidth, List<DataGridViewColumn> dataColumns, ColumnResizeController resizeController)
         {
             DataColumnOffset = dataColumnOffset;
-            PhantomColumnIndex = phantomColumnIndex;
             ColumnWidth = columnWidth;
             DataColumns = dataColumns;
             ResizeController = resizeController;
         }
-
-        public void IncrementPhantomColumnIndex() => PhantomColumnIndex++;
     }
 }

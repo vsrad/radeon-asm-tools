@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
     sealed class SliceVisualizerTable : DataGridView
     {
-        private const int DataColumnCount = 512;
         public const int DataColumnOffset = 0;
 
         public TypedSliceWatchView SelectedWatch { get; private set; }
-        private int PhantomColumnIndex = DataColumnCount;
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
@@ -25,14 +21,25 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             DoubleBuffered = true;
             AllowUserToAddRows = false;
+            AllowUserToResizeColumns = false;
+            AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
+            ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             ColumnAdded += FixFillWeight;
 
-            var dataColumns = SetupColumns();
-            Rows.Add(new DataGridViewRow() { Visible = false }); // phantom row for scaling
+            // Phantom column for scaling
+            Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                MinimumWidth = 2,
+                Width = 2,
+                ReadOnly = true,
+                SortMode = DataGridViewColumnSortMode.NotSortable
+            });
+            // Scaling requires at least one row in the table, we'll reuse it later for data
+            Rows.Add(new DataGridViewRow() { Visible = false });
 
-            _state = new TableState(DataColumnOffset, PhantomColumnIndex, 60, dataColumns, new ColumnResizeController(this));
+            _state = new TableState(DataColumnOffset, 60, new List<DataGridViewColumn>(), new ColumnResizeController(this));
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
@@ -43,32 +50,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private void FixFillWeight(object sender, DataGridViewColumnEventArgs e)
         {
             e.Column.FillWeight = 1;
-        }
-
-        private IReadOnlyList<DataGridViewColumn> SetupColumns()
-        {
-            var dataColumns = new List<DataGridViewColumn>(DataColumnCount);
-            for (int i = 0; i < DataColumnCount; i++)
-            {
-                dataColumns.Add(new DataGridViewTextBoxColumn()
-                {
-                    HeaderText = i.ToString(),
-                    ReadOnly = true,
-                    SortMode = DataGridViewColumnSortMode.NotSortable,
-                    Width = 60
-                });
-                Columns.Add(dataColumns[i]);
-            }
-
-            // phantom column
-            Columns.Add(new DataGridViewTextBoxColumn()
-            {
-                MinimumWidth = 2,
-                Width = 2,
-                ReadOnly = true,
-                SortMode = DataGridViewColumnSortMode.NotSortable
-            });
-            return dataColumns;
         }
 
         public void DisplayWatch(TypedSliceWatchView watchView)
@@ -91,25 +72,34 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 }
             }
 
-            var columnsNeeded = Math.Max(watchView.ColumnCount, Columns.Count);
-
-            for (int i = 0; i < columnsNeeded; i++)
+            // Mind the phantom column at the end!
+            var columnsMissing = watchView.ColumnCount - (Columns.Count - 1);
+            if (columnsMissing > 0)
             {
-                if (i == Columns.Count - 1)
+                var missingColumnsStartAt = _state.PhantomColumnIndex;
+                var columns = new DataGridViewColumn[columnsMissing];
+                for (int i = 0; i < columnsMissing; ++i)
                 {
-                    var column = new DataGridViewTextBoxColumn()
+                    columns[i] = new DataGridViewTextBoxColumn()
                     {
-                        HeaderText = i.ToString(),
+                        HeaderText = (missingColumnsStartAt + i).ToString(),
                         ReadOnly = true,
                         SortMode = DataGridViewColumnSortMode.NotSortable,
                         Width = 60
                     };
-                    Columns.Insert(i, column);
-                    _state.DataColumns.Append(Columns[i]);
-                    PhantomColumnIndex++;
-                    _state.IncrementPhantomColumnIndex();
                 }
+                _state.DataColumns.AddRange(columns);
+                Columns.AddRange(columns);
 
+                // Put phantom column at the end
+                var oldPhantomColumn = Columns[missingColumnsStartAt];
+                Columns.Remove(oldPhantomColumn);
+                oldPhantomColumn.DisplayIndex = -1;
+                Columns.Add(oldPhantomColumn);
+            }
+            var totalColumns = Columns.Count - 1;
+            for (int i = 0; i < totalColumns; i++)
+            {
                 if (i < watchView.ColumnCount)
                 {
                     Columns[i].Visible = true;
@@ -121,6 +111,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     Columns[i].Visible = false;
                 }
             }
+        }
+
+        protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
+        {
+            if (!_state.ResizeController.HandleColumnWidthChangeEvent())
+                base.OnColumnWidthChanged(e);
         }
 
         #region Standard functions overriding
