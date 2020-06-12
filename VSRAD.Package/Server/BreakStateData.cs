@@ -52,17 +52,19 @@ namespace VSRAD.Package.Server
 
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
+        private readonly int _lastValidIndex;
 
         private readonly uint[] _data;
 
-        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize, int nGroups)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
+            _lastValidIndex = groupSize * nGroups * laneDataSize;
 
             ColumnCount = groupsInRow * groupSize;
-            RowCount = _data.Length / _laneDataSize / ColumnCount;
+            RowCount = (_data.Length / _laneDataSize / ColumnCount) + nGroups % groupsInRow;
         }
 
         // For tests
@@ -71,13 +73,20 @@ namespace VSRAD.Package.Server
             _data = flatWatchData;
         }
 
+        public bool IsActiveCell(int row, int column)
+        {
+            var groupIdx = row * ColumnCount + column;
+            var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
+            return dwordIdx <= _lastValidIndex;
+        }
+
         public uint this[int row, int column]
         {
             get
             {
                 var groupIdx = row * ColumnCount + column;
                 var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
-                return _data[dwordIdx];
+                return dwordIdx <= _lastValidIndex ? _data[dwordIdx] : 0;
             }
         }
     }
@@ -138,7 +147,7 @@ namespace VSRAD.Package.Server
             return new WatchView(_data, groupOffset, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
         }
 
-        public SliceWatchView GetSliceWatch(string watch, int groupsInRow)
+        public SliceWatchView GetSliceWatch(string watch, int groupsInRow, int nGroups)
         {
             int laneDataOffset;
             if (watch == "System")
@@ -152,7 +161,7 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchView(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize);
+            return new SliceWatchView(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize, nGroups);
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)

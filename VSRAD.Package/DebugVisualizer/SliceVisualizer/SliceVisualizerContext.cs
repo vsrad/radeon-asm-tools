@@ -57,7 +57,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             if (_windowVisible && !string.IsNullOrEmpty(SelectedWatch))
             {
-                var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, GroupsInRow);
+                var nGroups = _visualizerContext.BreakData.GetGroupCount((int)_visualizerContext.GroupSize,
+                    (int)_visualizerContext.Options.DebuggerOptions.NGroups);
+                var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, GroupsInRow, nGroups);
                 var typedView = new TypedSliceWatchView(watchView, SelectedType);
                 WatchSelected(this, typedView);
             }
