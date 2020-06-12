@@ -48,7 +48,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     columns[i] = new DataGridViewTextBoxColumn
                     {
                         FillWeight = 1,
-                        HeaderText = ((missingColumnsStartAt + i) /* * groupsInRow */).ToString(),
+                        HeaderText = (missingColumnsStartAt + i).ToString(),
                         ReadOnly = true,
                         SortMode = DataGridViewColumnSortMode.NotSortable,
                         Width = _state.ColumnWidth

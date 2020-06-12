@@ -30,6 +30,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             get => DataFormatter.FormatDword(_type, _view[row, column]);
         }
 
+        public bool IsInactiveCell(int row, int column) => _view.IsInactiveCell(row, column);
+
         public float GetRelativeValue(int row, int column, int word = 0)
         {
             switch (_type)

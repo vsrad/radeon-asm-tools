@@ -61,7 +61,7 @@ namespace VSRAD.Package.Server
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
-            _lastValidIndex = groupSize * nGroups * laneDataSize;
+            _lastValidIndex = groupSize * nGroups * laneDataSize + _laneDataOffset;
 
             ColumnCount = groupsInRow * groupSize;
             RowCount = (_data.Length / _laneDataSize / ColumnCount) + nGroups % groupsInRow;
@@ -73,11 +73,11 @@ namespace VSRAD.Package.Server
             _data = flatWatchData;
         }
 
-        public bool IsActiveCell(int row, int column)
+        public bool IsInactiveCell(int row, int column)
         {
             var groupIdx = row * ColumnCount + column;
             var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
-            return dwordIdx <= _lastValidIndex;
+            return dwordIdx > _lastValidIndex;
         }
 
         public uint this[int row, int column]
