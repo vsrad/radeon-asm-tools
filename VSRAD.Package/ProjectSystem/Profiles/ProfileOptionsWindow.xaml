@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+        xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
         mc:Ignorable="d"
         Title="Profiles" Height="450" Width="820" MinHeight="450" MinWidth="820"
         WindowStartupLocation="CenterScreen"
@@ -51,13 +52,14 @@
             </ListView.View>
         </ListView>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Margin="0,8,8,8">
-            <Grid x:Name="PropertiesGrid">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-            </Grid>
+            <local:ActionSequenceEditor></local:ActionSequenceEditor>
         </ScrollViewer>
+        <Grid x:Name="PropertiesGrid" Visibility="Hidden">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+        </Grid>
         <DockPanel Grid.Row="2" Grid.Column="1" Margin="0,0,8,8">
             <Separator Height="10" DockPanel.Dock="Top"/>
             <TextBlock x:Name="DescriptionTextBlock" TextWrapping="Wrap"/>
