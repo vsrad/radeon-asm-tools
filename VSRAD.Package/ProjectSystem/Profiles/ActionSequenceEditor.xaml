@@ -15,9 +15,9 @@
             <Setter Property="Background" Value="White"/>
         </Style>
     </d:DesignerProperties.DesignStyle>
-    <UserControl.DataContext>
-        <local:ActionSequenceEditorDesignTimeData />
-    </UserControl.DataContext>
+    <d:UserControl.DataContext>
+        <local:ActionSequenceEditorDesignTimeCollection />
+    </d:UserControl.DataContext>
     <UserControl.Resources>
         <ObjectDataProvider x:Key="ActionTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
@@ -77,8 +77,19 @@
     <StackPanel Orientation="Vertical">
         <DockPanel Height="26" Margin="6,4">
             <Label Content="Actions"/>
-            <Button Content="➕" Width="22" Height="22" HorizontalAlignment="Right"/>
+            <Button x:Name="NewActionButton" Content="➕" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewActionPopup"/>
         </DockPanel>
+        <Popup x:Name="NewActionPopup" PlacementTarget="{Binding ElementName=NewActionButton}" Placement="Left" StaysOpen="False">
+            <Menu Background="{DynamicResource {x:Static vsshell:VsBrushes.MenuKey}}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.MenuTextKey}}">
+                <Menu.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel Orientation="Vertical"/>
+                    </ItemsPanelTemplate>
+                </Menu.ItemsPanel>
+                <MenuItem Header="Execute" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:ExecuteAction}" />
+                <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:CopyFileAction}" />
+            </Menu>
+        </Popup>
         <ListView ItemsSource="{Binding}" Height="200">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
@@ -107,12 +118,12 @@
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
                                       Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
-                            
+
                             <Label Content="Local Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding LocalPath}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                                      Tag="LocalPath" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
-                            
+
                             <Label Content="Remote Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
                             <TextBox Text="{Binding RemotePath}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"

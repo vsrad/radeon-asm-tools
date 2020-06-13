@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -7,11 +8,9 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-#pragma warning disable CA1710
-    public sealed class ActionSequenceEditorDesignTimeData : ObservableCollection<IAction>
-#pragma warning restore CA1710
+    public sealed class ActionSequenceEditorDesignTimeCollection : ObservableCollection<IAction>
     {
-        public ActionSequenceEditorDesignTimeData()
+        public ActionSequenceEditorDesignTimeCollection()
         {
             Add(new CopyFileAction { Direction = FileCopyDirection.RemoteToLocal, LocalPath = @"C:\Local\Path", RemotePath = "/remote/path", CheckTimestamp = true });
             Add(new ExecuteAction { Type = ActionType.Remote, Executable = "exe", Arguments = "--args" });
@@ -20,6 +19,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
     public partial class ActionSequenceEditor : UserControl
     {
+        public ICommand AddCommand { get; }
         public ICommand MoveUpCommand { get; }
         public ICommand MoveDownCommand { get; }
         public ICommand DeleteCommand { get; }
@@ -27,12 +27,19 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public ActionSequenceEditor()
         {
-            DataContext = new ActionSequenceEditorDesignTimeData();
+            AddCommand = new WpfDelegateCommand(AddAction);
             MoveUpCommand = new WpfDelegateCommand((i) => MoveAction(i, moveUp: true));
             MoveDownCommand = new WpfDelegateCommand((i) => MoveAction(i, moveUp: false));
             DeleteCommand = new WpfDelegateCommand(DeleteAction);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
             InitializeComponent();
+        }
+
+        private void AddAction(object actionKind)
+        {
+            var action = (IAction)Activator.CreateInstance((Type)actionKind);
+            ((ObservableCollection<IAction>)DataContext).Add(action);
+            NewActionPopup.IsOpen = false;
         }
 
         private void MoveAction(object item, bool moveUp)
@@ -63,5 +70,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var newValue = "(Edited " + (string)property.GetValue(action) + ")";
             property.SetValue(action, newValue);
         }
+
+        private void OpenNewActionPopup(object sender, System.Windows.RoutedEventArgs e) =>
+            NewActionPopup.IsOpen = true;
     }
 }

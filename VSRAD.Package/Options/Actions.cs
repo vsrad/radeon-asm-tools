@@ -25,10 +25,10 @@ namespace VSRAD.Package.Options
         private FileCopyDirection _direction;
         public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
 
-        private string _localPath;
+        private string _localPath = "";
         public string LocalPath { get => _localPath; set => SetField(ref _localPath, value); }
 
-        private string _remotePath;
+        private string _remotePath = "";
         public string RemotePath { get => _remotePath; set => SetField(ref _remotePath, value); }
 
         private bool _checkTimestamp;
@@ -42,10 +42,10 @@ namespace VSRAD.Package.Options
         private ActionType _type;
         public ActionType Type { get => _type; set => SetField(ref _type, value); }
 
-        private string _executable;
+        private string _executable = "";
         public string Executable { get => _executable; set => SetField(ref _executable, value); }
 
-        private string _arguments;
+        private string _arguments = "";
         public string Arguments { get => _arguments; set => SetField(ref _arguments, value); }
     }
 }
