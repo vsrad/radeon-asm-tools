@@ -12,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             _context = integration.GetSliceVisualizerContext();
             _context.WatchSelected += WatchSelected;
+            _context.HeatMapStateChanged += HeatMapStateChanged;
             DataContext = _context;
             InitializeComponent();
 
@@ -22,5 +23,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void WatchSelected(object sender, TypedSliceWatchView watch) =>
             _table.DisplayWatch(watch);
+
+        private void HeatMapStateChanged(object sender, bool state) =>
+            _table.SetHeatMapMode(state);
     }
 }

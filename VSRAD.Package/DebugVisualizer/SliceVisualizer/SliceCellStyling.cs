@@ -41,23 +41,30 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 return;
             }
 
-
-            if (_table.SelectedWatch.IsSingleWordValue)
+            if (_table.HeatMapMode)
             {
-                var rel1 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 0);
-                var rel2 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 1);
-                var brush1 = new SolidBrush(GetHeatmapColor(rel1));
-                var brush2 = new SolidBrush(GetHeatmapColor(rel2));
+                if (_table.SelectedWatch.IsSingleWordValue)
+                {
+                    var rel1 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 0);
+                    var rel2 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 1);
+                    var brush1 = new SolidBrush(GetHeatmapColor(rel1));
+                    var brush2 = new SolidBrush(GetHeatmapColor(rel2));
 
-                e.Graphics.FillRectangle(brush1, new Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
-                e.Graphics.FillRectangle(brush2, new Rectangle(e.CellBounds.Left + e.CellBounds.Width / 2, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
-                e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Background);
-                e.Handled = true;
+                    e.Graphics.FillRectangle(brush1, new Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
+                    e.Graphics.FillRectangle(brush2, new Rectangle(e.CellBounds.Left + e.CellBounds.Width / 2, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
+                    e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Background);
+                    e.Handled = true;
+                }
+                else
+                {
+                    var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
+                    e.CellStyle.BackColor = GetHeatmapColor(relValue);
+                }
             }
             else
             {
-                var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
-                e.CellStyle.BackColor = GetHeatmapColor(relValue);
+                e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
+                e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.None];
             }
         }
 

@@ -11,6 +11,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<TypedSliceWatchView> WatchSelected;
+        public event EventHandler<bool> HeatMapStateChanged;
 
         private int _subgroupSize = 64;
         public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
@@ -23,6 +24,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private VariableType _selectedType;
         public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
+
+        private bool _useHeatMap = false;
+        public bool UseHeatMap { get => _useHeatMap; set => SetField(ref _useHeatMap, value); }
 
         public List<string> Watches { get; } = new List<string>();
 
@@ -83,6 +87,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 case nameof(SelectedWatch):
                 case nameof(SelectedType):
                     WatchSelectionChanged();
+                    break;
+                case nameof(UseHeatMap):
+                    HeatMapStateChanged(this, UseHeatMap);
                     break;
             }
         }

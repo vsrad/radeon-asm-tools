@@ -8,6 +8,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public const int DataColumnOffset = 1; // including phantom column
 
         public TypedSliceWatchView SelectedWatch { get; private set; }
+        public bool HeatMapMode { get; private set; }
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
@@ -24,6 +25,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeColumns = false;
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
+            HeatMapMode = false;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             _state = new TableState(this, 60);
@@ -32,6 +34,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
             _ = new SliceCellStyling(this, _state, fontAndColor);
+        }
+
+        public void SetHeatMapMode(bool value)
+        {
+            HeatMapMode = value;
+            Invalidate();   // redraw
         }
 
         public void DisplayWatch(TypedSliceWatchView watchView)
