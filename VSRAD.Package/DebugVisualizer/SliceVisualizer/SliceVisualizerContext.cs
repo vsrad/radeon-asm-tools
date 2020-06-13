@@ -13,6 +13,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public event EventHandler<TypedSliceWatchView> WatchSelected;
         public event EventHandler<bool> HeatMapStateChanged;
 
+        public Options.ProjectOptions Options { get; }
+
         private int _subgroupSize = 64;
         public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
 
@@ -35,8 +37,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private bool _windowVisible;
 
-        public SliceVisualizerContext(VisualizerContext visualizerContext, EnvDTE80.WindowVisibilityEvents visibilityEvents)
+        public SliceVisualizerContext(Options.ProjectOptions options, VisualizerContext visualizerContext, EnvDTE80.WindowVisibilityEvents visibilityEvents)
         {
+            Options = options;
             _visualizerContext = visualizerContext;
             _visualizerContext.GroupFetching += SetupDataFetch;
             _visualizerContext.GroupFetched += DisplayFetchedData;

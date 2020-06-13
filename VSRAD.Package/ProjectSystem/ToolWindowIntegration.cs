@@ -69,7 +69,7 @@ namespace VSRAD.Package.ProjectSystem
                 Assumes.Present(dte);
                 var dteEvents = (EnvDTE80.Events2)dte.Events;
 
-                _sliceVisualizerContext = new SliceVisualizerContext(GetVisualizerContext(), dteEvents.WindowVisibilityEvents);
+                _sliceVisualizerContext = new SliceVisualizerContext(ProjectOptions, GetVisualizerContext(), dteEvents.WindowVisibilityEvents);
             }
             return _sliceVisualizerContext;
         }
