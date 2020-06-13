@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
@@ -70,7 +71,7 @@ namespace VSRAD.Package.Options
     {
         [JsonIgnore]
         [Description("The name of current profile."), DisplayName("Profile Name")]
-        public string ProfileName { get; }
+        public string ProfileName { get; set; }
 
         [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
         [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
@@ -110,6 +111,8 @@ namespace VSRAD.Package.Options
 
     public sealed class DebuggerProfileOptions
     {
+        public ObservableCollection<IAction> Actions { get; } = new ObservableCollection<IAction>();
+
         [Macro(RadMacros.DebuggerExecutable)]
         [Description("Path to the debugger executable on the remote machine.")]
         [DefaultValue(DefaultOptionValues.DebuggerExecutable)]

@@ -79,7 +79,7 @@
             <Label Content="Actions"/>
             <Button Content="➕" Width="22" Height="22" HorizontalAlignment="Right"/>
         </DockPanel>
-        <ListView ItemsSource="{Binding Sequence}" Height="200">
+        <ListView ItemsSource="{Binding}" Height="200">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="MinHeight" Value="22" />

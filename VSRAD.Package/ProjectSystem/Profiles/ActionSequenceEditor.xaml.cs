@@ -7,17 +7,14 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public sealed class ActionSequenceEditorDesignTimeData
+#pragma warning disable CA1710
+    public sealed class ActionSequenceEditorDesignTimeData : ObservableCollection<IAction>
+#pragma warning restore CA1710
     {
-        public ObservableCollection<IAction> Sequence { get; }
-
         public ActionSequenceEditorDesignTimeData()
         {
-            Sequence = new ObservableCollection<IAction>()
-            {
-                new CopyFileAction { Direction = FileCopyDirection.RemoteToLocal, LocalPath = @"C:\Local\Path", RemotePath = "/remote/path", CheckTimestamp = true },
-                new ExecuteAction { Type = ActionType.Remote, Executable = "exe", Arguments = "--args" }
-            };
+            Add(new CopyFileAction { Direction = FileCopyDirection.RemoteToLocal, LocalPath = @"C:\Local\Path", RemotePath = "/remote/path", CheckTimestamp = true });
+            Add(new ExecuteAction { Type = ActionType.Remote, Executable = "exe", Arguments = "--args" });
         }
     }
 
@@ -40,7 +37,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void MoveAction(object item, bool moveUp)
         {
-            var sequence = ((ActionSequenceEditorDesignTimeData)DataContext).Sequence;
+            var sequence = ((ObservableCollection<IAction>)DataContext);
             var index = sequence.IndexOf((IAction)item);
             Debug.Assert(index >= 0);
             if (moveUp && index > 0)
@@ -52,7 +49,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private void DeleteAction(object item)
         {
             Debug.Assert(item != null);
-            ((ActionSequenceEditorDesignTimeData)DataContext).Sequence.Remove((IAction)item);
+            ((ObservableCollection<IAction>)DataContext).Remove((IAction)item);
         }
 
         private void OpenMacroEditor(object sender)

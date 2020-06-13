@@ -15,10 +15,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             public ProjectOptions Options { get; }
 
-            public static List<PropertyPage> Pages => ProfileOptionsReflector.PropertyPages.Value;
+            public List<object> Pages { get; }
 
-            private PropertyPage _selectedPage;
-            public PropertyPage SelectedPage { get => _selectedPage; set => SetField(ref _selectedPage, value); }
+            private object _selectedPage;
+            public object SelectedPage { get => _selectedPage; set => SetField(ref _selectedPage, value); }
 
             public IReadOnlyList<string> ProfileNames => Options.Profiles.Keys.ToList();
 
@@ -30,6 +30,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             public Context(ProjectOptions projectOptions, Action saveCommand, Action removeCommand)
             {
                 Options = projectOptions;
+                Pages = new List<object>()
+                {
+                    Options.Profile.General,
+                    Options.Profile.Debugger,
+                };
+
+
                 SaveCommand = new WpfDelegateCommand((_) => saveCommand(), isEnabled: false);
                 RemoveCommand = new WpfDelegateCommand((_) => removeCommand(), isEnabled: ProfileNames.Count > 1);
                 Options.Profiles.PropertyChanged += (s, e) =>
@@ -44,18 +51,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private readonly PropertyPageEditorWrapper _pageEditor;
 
         private readonly ProjectOptions _projectOptions;
-        private readonly Dictionary<string, Dictionary<PropertyPage, Dictionary<Property, object>>> _propertyValues =
-            new Dictionary<string, Dictionary<PropertyPage, Dictionary<Property, object>>>();
-        private Dictionary<PropertyPage, Dictionary<Property, object>> SelectedPropertyValues
-        {
-            get
-            {
-                if (_propertyValues.TryGetValue(_projectOptions.ActiveProfile, out var values)) return values;
-                values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.ActiveProfile, _projectOptions.Profile);
-                _propertyValues[_projectOptions.ActiveProfile] = values;
-                return values;
-            }
-        }
+        //private readonly Dictionary<string, Dictionary<PropertyPage, Dictionary<Property, object>>> _propertyValues =
+        //    new Dictionary<string, Dictionary<PropertyPage, Dictionary<Property, object>>>();
+        //private Dictionary<PropertyPage, Dictionary<Property, object>> SelectedPropertyValues
+        //{
+        //    get
+        //    {
+        //        if (_propertyValues.TryGetValue(_projectOptions.ActiveProfile, out var values)) return values;
+        //        values = ProfileOptionsReflector.GetPropertyValues(_projectOptions.ActiveProfile, _projectOptions.Profile);
+        //        _propertyValues[_projectOptions.ActiveProfile] = values;
+        //        return values;
+        //    }
+        //}
 
         public ProfileOptionsWindow(Macros.MacroEditManager macroEditor, ProjectOptions projectOptions)
         {
@@ -64,42 +71,42 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 _projectOptions.AddProfile("Default", new ProfileOptions());
             DataContext = new Context(_projectOptions, SaveChanges, RemoveProfile);
             InitializeComponent();
-            _pageEditor = new PropertyPageEditorWrapper(PropertiesGrid, macroEditor,
-                getValue: (page, property) => SelectedPropertyValues[page][property],
-                setValue: (page, property, value) =>
-                {
-                    ((Context)DataContext).UnsavedChanges = true;
-                    SelectedPropertyValues[page][property] = value;
-                },
-                updateDescription: (description) => DescriptionTextBlock.Text = description,
-                getProfileOptions: () => _projectOptions.Profile
-                );
-            _projectOptions.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(_projectOptions.ActiveProfile))
-                    _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
-            };
-            ((Context)DataContext).PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(Context.SelectedPage))
-                    _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
-            };
-            ((Context)DataContext).SelectedPage = Context.Pages.First();
-            OkButton.Click += (s, e) =>
-            {
-                SaveChanges();
-                Close();
-            };
-            CancelButton.Click += (s, e) => Close();
+            //_pageEditor = new PropertyPageEditorWrapper(PropertiesGrid, macroEditor,
+            //    getValue: (page, property) => SelectedPropertyValues[page][property],
+            //    setValue: (page, property, value) =>
+            //    {
+            //        ((Context)DataContext).UnsavedChanges = true;
+            //        SelectedPropertyValues[page][property] = value;
+            //    },
+            //    updateDescription: (description) => DescriptionTextBlock.Text = description,
+            //    getProfileOptions: () => _projectOptions.Profile
+            //    );
+            //_projectOptions.PropertyChanged += (s, e) =>
+            //{
+            //    if (e.PropertyName == nameof(_projectOptions.ActiveProfile))
+            //        _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
+            //};
+            //((Context)DataContext).PropertyChanged += (s, e) =>
+            //{
+            //    if (e.PropertyName == nameof(Context.SelectedPage))
+            //        _pageEditor.SetupPropertyPageGrid(((Context)DataContext).SelectedPage);
+            //};
+            //((Context)DataContext).SelectedPage = Context.Pages.First();
+            //OkButton.Click += (s, e) =>
+            //{
+            //    SaveChanges();
+            //    Close();
+            //};
+            //CancelButton.Click += (s, e) => Close();
         }
 
         private void SaveChanges()
         {
-            var profileUpdate = _propertyValues.Select((profileKv) =>
-                new KeyValuePair<string, ProfileOptions>(profileKv.Key, ProfileOptionsReflector.ConstructProfileOptions(profileKv.Value)));
-            _projectOptions.UpdateProfiles(profileUpdate, (name) => AskProfileName("Rename", ProfileNameWindow.NameConflictMessage(name), name));
-            _propertyValues.Clear();
-            ((Context)DataContext).UnsavedChanges = false;
+            //var profileUpdate = _propertyValues.Select((profileKv) =>
+            //    new KeyValuePair<string, ProfileOptions>(profileKv.Key, ProfileOptionsReflector.ConstructProfileOptions(profileKv.Value)));
+            //_projectOptions.UpdateProfiles(profileUpdate, (name) => AskProfileName("Rename", ProfileNameWindow.NameConflictMessage(name), name));
+            //_propertyValues.Clear();
+            //((Context)DataContext).UnsavedChanges = false;
         }
 
         private void Import(object sender, RoutedEventArgs e)
@@ -132,18 +139,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void RemoveProfile()
         {
-            _propertyValues.Remove(_projectOptions.ActiveProfile);
-            _projectOptions.RemoveProfile(_projectOptions.ActiveProfile);
+            //_propertyValues.Remove(_projectOptions.ActiveProfile);
+            //_projectOptions.RemoveProfile(_projectOptions.ActiveProfile);
         }
 
         private void CreateNewProfile(string dialogTitle, string dialogLabel, ProfileOptions profileOptions)
         {
-            var name = AskProfileName(dialogTitle, dialogLabel, "");
-            if (string.IsNullOrWhiteSpace(name)) return;
+            //var name = AskProfileName(dialogTitle, dialogLabel, "");
+            //if (string.IsNullOrWhiteSpace(name)) return;
 
-            _projectOptions.AddProfile(name, profileOptions);
-            _propertyValues.Remove(name);
-            SaveChanges();
+            //_projectOptions.AddProfile(name, profileOptions);
+            //_propertyValues.Remove(name);
+            //SaveChanges();
         }
 
         private void CreateNewProfile(object sender, RoutedEventArgs e)
