@@ -113,6 +113,7 @@ namespace VSRAD.Package.Options
 
     public sealed class DebuggerProfileOptions
     {
+        [JsonProperty(ItemConverterType = typeof(ActionJsonConverter))]
         public ObservableCollection<IAction> Actions { get; } = new ObservableCollection<IAction>();
 
         [Macro(RadMacros.DebuggerExecutable)]

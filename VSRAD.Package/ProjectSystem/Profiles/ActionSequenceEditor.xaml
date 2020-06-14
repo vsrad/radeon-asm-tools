@@ -21,7 +21,7 @@
     <UserControl.Resources>
         <ObjectDataProvider x:Key="ActionTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="opts:ActionType"/>
+                <x:Type TypeName="opts:ActionEnvironment"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <ObjectDataProvider x:Key="FileCopyDirections" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">

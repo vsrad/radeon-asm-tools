@@ -13,7 +13,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public ActionSequenceEditorDesignTimeCollection()
         {
             Add(new CopyFileAction { Direction = FileCopyDirection.RemoteToLocal, LocalPath = @"C:\Local\Path", RemotePath = "/remote/path", CheckTimestamp = true });
-            Add(new ExecuteAction { Type = ActionType.Remote, Executable = "exe", Arguments = "--args" });
+            Add(new ExecuteAction { Environment = ActionEnvironment.Remote, Executable = "exe", Arguments = "--args" });
         }
     }
 
