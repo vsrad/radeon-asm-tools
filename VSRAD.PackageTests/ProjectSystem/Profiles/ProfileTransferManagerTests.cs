@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
 using static VSRAD.Package.Options.ProjectOptions;
 
-namespace VSRAD.Package.ProjectSystem.Profiles.Tests
+namespace VSRAD.PackageTests.ProjectSystem.Profiles
 {
     public class ProfileTransferManagerTests
     {

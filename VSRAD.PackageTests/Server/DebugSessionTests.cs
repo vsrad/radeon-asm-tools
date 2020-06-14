@@ -5,13 +5,13 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
-using VSRAD.PackageTests;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
-namespace VSRAD.Package.ProjectSystem.Tests
+namespace VSRAD.PackageTests.Server
 {
     [Collection("Sequential")]
     public class DebugSessionTests
@@ -69,7 +69,7 @@ namespace VSRAD.Package.ProjectSystem.Tests
             channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now },
                 (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
 
-            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[]  { "jill", "julianne" }.ToList()));
+            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.True(result.TryGetResult(out var breakState, out var error));
             Assert.Equal(33, breakState.ExitCode);
 

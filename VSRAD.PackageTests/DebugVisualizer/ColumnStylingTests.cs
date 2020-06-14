@@ -2,11 +2,11 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
-using VSRAD.PackageTests;
 using Xunit;
 
-namespace VSRAD.Package.DebugVisualizer.Tests
+namespace VSRAD.PackageTests.DebugVisualizer
 {
     public class ColumnStylingTests
     {
