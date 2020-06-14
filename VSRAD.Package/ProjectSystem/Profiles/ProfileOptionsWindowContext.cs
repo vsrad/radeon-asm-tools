@@ -65,6 +65,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name), existingNames: ProfileNames, initialName: name);
             Options.UpdateProfiles(_dirtyOptions, ResolveNameConflict);
             _dirtyOptions.Clear();
+            OpenActiveProfilePages();
         }
 
         private void OpenActiveProfilePages()

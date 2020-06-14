@@ -71,6 +71,7 @@
     <Compile Include="DebugVisualizer\ComputedColumnStylingTests.cs" />
     <Compile Include="MockCommunicationChannel.cs" />
     <Compile Include="ProjectSystem\MacroEvaluatorTests.cs" />
+    <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContextTests.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileTransferManagerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\BreakStateTests.cs" />

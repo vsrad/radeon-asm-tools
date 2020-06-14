@@ -42,7 +42,16 @@ namespace VSRAD.Package.Options
         private bool _checkTimestamp;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 
-        public override string ToString() => "CopyFileAction";
+        public override string ToString() => "Copy File";
+
+        public override bool Equals(object obj) =>
+            obj is CopyFileAction action &&
+            LocalPath == action.LocalPath &&
+            RemotePath == action.RemotePath &&
+            CheckTimestamp == action.CheckTimestamp;
+
+        public override int GetHashCode() =>
+            (LocalPath, RemotePath, CheckTimestamp).GetHashCode();
     }
 
     public sealed class ExecuteAction : DefaultNotifyPropertyChanged, IAction
@@ -55,6 +64,17 @@ namespace VSRAD.Package.Options
 
         private string _arguments = "";
         public string Arguments { get => _arguments; set => SetField(ref _arguments, value); }
+
+        public override string ToString() => "Execute";
+
+        public override bool Equals(object obj) =>
+            obj is ExecuteAction action &&
+            Environment == action.Environment &&
+            Executable == action.Executable &&
+            Arguments == action.Arguments;
+
+        public override int GetHashCode() =>
+            (Environment, Executable, Arguments).GetHashCode();
     }
 
     public sealed class ActionJsonConverter : JsonConverter
