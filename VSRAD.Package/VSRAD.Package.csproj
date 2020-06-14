@@ -169,6 +169,7 @@
     <Compile Include="ProjectSystem\Profiles\ActionSequenceEditor.xaml.cs">
       <DependentUpon>ActionSequenceEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

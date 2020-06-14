@@ -107,6 +107,8 @@ namespace VSRAD.Package.Options
             AdditionalSources = additionalSources;
             CopySources = copySources;
         }
+
+        public override string ToString() => "General";
     }
 
     public sealed class DebuggerProfileOptions
@@ -191,6 +193,8 @@ namespace VSRAD.Package.Options
             ValidWatchesFilePath = validWatchesFilePath;
             StatusStringFilePath = statusStringFilePath;
         }
+
+        public override string ToString() => "Debugger";
     }
 
     public sealed class DisassemblerProfileOptions

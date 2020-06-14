@@ -37,11 +37,11 @@
             <ComboBox ItemsSource="{Binding ProfileNames}" SelectedItem="{Binding Options.ActiveProfile, Mode=TwoWay}"
                       Width="178" Height="22"/>
             <Button Content="+" ToolTip="Create a new profile" Click="CreateNewProfile" Width="22" Height="22" Margin="4,0,0,0"/>
-            <Button Content="-" ToolTip="Delete selected profile" Command="{Binding RemoveCommand}" Width="22" Height="22" Margin="4,0,0,0"/>
+            <Button Content="-" ToolTip="Delete selected profile" Command="{Binding RemoveProfileCommand}" Width="22" Height="22" Margin="4,0,0,0"/>
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Horizontal">
-            <Button Content="Export" Click="Export" Height="22" Width="74" HorizontalAlignment="Stretch"/>
-            <Button Content="Import" Click="Import" Height="22" Width="74" Margin="4,0,0,0" HorizontalAlignment="Stretch"/>
+            <Button Content="Export" Click="ExportProfiles" Height="22" Width="74" HorizontalAlignment="Stretch"/>
+            <Button Content="Import" Click="ImportProfiles" Height="22" Width="74" Margin="4,0,0,0" HorizontalAlignment="Stretch"/>
             <Button Content="Copy" Click="CopyProfile" Height="22" Width="74" Margin="4,0,0,0" HorizontalAlignment="Stretch"/>
         </StackPanel>
         <ListView ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage, Mode=TwoWay}"
@@ -82,9 +82,9 @@
             </ContentControl>
         </ScrollViewer>
         <StackPanel Grid.Row="3" Grid.Column="1" Margin="4" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-            <Button Content="Apply" Width="61" Height="22" Command="{Binding SaveCommand}"/>
-            <Button x:Name="OkButton" Content="OK" Margin="16,0,0,0" Width="61" Height="22"/>
-            <Button x:Name="CancelButton" Content="Cancel" Margin="4,0,0,0" Width="61" Height="22"/>
+            <Button Content="Apply" Click="ApplyChanges" Width="61" Height="22"/>
+            <Button Content="OK" Click="ApplyChangesAndClose" Margin="16,0,0,0" Width="61" Height="22"/>
+            <Button Content="Cancel" Click="Close" Margin="4,0,0,0" Width="61" Height="22"/>
         </StackPanel>
     </Grid>
 </Window>
