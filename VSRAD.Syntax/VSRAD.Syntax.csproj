@@ -115,9 +115,6 @@
       <DependentUpon>NavigationListControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
-    <Compile Include="Options\BaseOptionPage.cs">
-      <SubType>Component</SubType>
-    </Compile>
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\InstructionListManager.cs" />
