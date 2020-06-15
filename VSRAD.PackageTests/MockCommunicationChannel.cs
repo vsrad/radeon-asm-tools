@@ -21,7 +21,10 @@ namespace VSRAD.PackageTests
         private readonly Queue<Action<ICommand>> _nonReplyInteractions =
             new Queue<Action<ICommand>>();
 
-        public bool AllInteractionsHandled => _replyInteractions.Count == 0 && _nonReplyInteractions.Count == 0;
+        private readonly Queue<(IResponse[] response, Action<List<ICommand>>)> _bundledInteractions =
+            new Queue<(IResponse[] response, Action<List<ICommand>>)>();
+
+        public bool AllInteractionsHandled => _replyInteractions.Count == 0 && _nonReplyInteractions.Count == 0 && _bundledInteractions.Count == 0;
 
         public void RaiseConnectionStateChanged() => _mock.Raise((m) => m.ConnectionStateChanged += null);
 
@@ -44,6 +47,9 @@ namespace VSRAD.PackageTests
                     HandleCommand(c, withReply: false);
                     return Task.CompletedTask;
                 });
+            _mock
+                .Setup((c) => c.SendBundleAsync(It.IsAny<List<ICommand>>()))
+                .Returns<List<ICommand>>((c) => Task.FromResult(HandleBundle(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)
@@ -53,6 +59,9 @@ namespace VSRAD.PackageTests
         public void ThenRespond<TResponse>(TResponse response)
             where TResponse : IResponse =>
             _replyInteractions.Enqueue((response, null));
+
+        public void ThenRespond(IResponse[] response, Action<List<ICommand>> callback) =>
+            _bundledInteractions.Enqueue((response, callback));
 
         public void ThenExpect<TCommand>(Action<TCommand> processCallback)
             where TCommand : ICommand =>
@@ -68,7 +77,7 @@ namespace VSRAD.PackageTests
             {
                 if (_replyInteractions.Count == 0)
                 {
-                    throw new Xunit.Sdk.XunitException("The test class has sent a request (and is waiting for a reply) when none was expected.");
+                    throw new Xunit.Sdk.XunitException("The test method has sent a request (and is waiting for a reply) when none was expected.");
                 }
                 var (response, callback) = _replyInteractions.Dequeue();
                 callback?.Invoke(command);
@@ -78,11 +87,21 @@ namespace VSRAD.PackageTests
             {
                 if (_nonReplyInteractions.Count == 0)
                 {
-                    throw new Xunit.Sdk.XunitException("The test class has sent a request (without waiting for a reply) when none was expected.");
+                    throw new Xunit.Sdk.XunitException("The test method has sent a request (without waiting for a reply) when none was expected.");
                 }
                 _nonReplyInteractions.Dequeue()?.Invoke(command);
                 return null;
             }
+        }
+
+        private IResponse[] HandleBundle(List<ICommand> bundle)
+        {
+            if (_bundledInteractions.Count == 0)
+                throw new Xunit.Sdk.XunitException($"The test method has sent a request bundle when none was expected.");
+
+            var (responses, callback) = _bundledInteractions.Dequeue();
+            callback?.Invoke(bundle);
+            return responses;
         }
     }
 }

@@ -27,6 +27,8 @@ namespace VSRAD.Package.Server
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
+        Task<IResponse[]> SendBundleAsync(List<ICommand> commands);
+
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
 
         void ForceDisconnect();
@@ -119,6 +121,11 @@ namespace VSRAD.Package.Server
                 ForceDisconnect();
                 throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
             }
+        }
+
+        public Task<IResponse[]> SendBundleAsync(List<ICommand> commands)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()

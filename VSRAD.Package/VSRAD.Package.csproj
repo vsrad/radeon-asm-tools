@@ -161,6 +161,7 @@
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="Options\Actions.cs" />
+    <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
@@ -183,6 +184,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
+    <Compile Include="Server\ActionSequenceRunner.cs" />
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>

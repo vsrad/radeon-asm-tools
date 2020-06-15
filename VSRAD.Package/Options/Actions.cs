@@ -15,6 +15,7 @@ namespace VSRAD.Package.Options
         ActionEnvironment Environment { get; }
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum ActionEnvironment
     {
         Local, Remote

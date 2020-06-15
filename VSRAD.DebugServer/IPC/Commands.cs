@@ -86,7 +86,7 @@ namespace VSRAD.DebugServer.IPC.Commands
     {
         public string[] FilePath { get; set; }
 
-        public bool BinaryOutput { get; set; }
+        public bool BinaryOutput { get; set; } = true;
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -112,7 +112,7 @@ namespace VSRAD.DebugServer.IPC.Commands
     {
         public string[] FilePath { get; set; }
 
-        public bool BinaryOutput { get; set; }
+        public bool BinaryOutput { get; set; } = true;
 
         public int ByteOffset { get; set; }
 
