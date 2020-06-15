@@ -31,7 +31,8 @@ namespace VSRAD.Syntax
         internal const string FileExtensionS = ".s";
         internal const string FileExtensionAsm1 = ".gas";
         internal const string FileExtensionAsm2 = ".asm2";
-        internal const string FileExtensionAsmDoc = ".radasm";
+        internal const string FileExtensionAsm1Doc = ".radasm1";
+        internal const string FileExtensionAsm2Doc = ".radasm2";
         internal static readonly List<string> DefaultFileExtensionAsm1 = new List<string>()
         {
             FileExtensionAsm1,

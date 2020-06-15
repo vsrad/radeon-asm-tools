@@ -66,16 +66,17 @@ namespace VSRAD.Syntax.Options
             {
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
-                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsmDoc)
+                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
                     {
-                        var extension = Path.GetExtension(filepath.TrimSuffix(Constants.FileExtensionAsmDoc, StringComparison.OrdinalIgnoreCase));
-                        if (_optionsProvider.Asm1FileExtensions.Contains(extension))
-                            LoadInstructionsFromFile(filepath, AsmType.RadAsm);
-                        else if (_optionsProvider.Asm2FileExtensions.Contains(extension))
-                            LoadInstructionsFromFile(filepath, AsmType.RadAsm2);
+                        LoadInstructionsFromFile(filepath, AsmType.RadAsm);
+                    }
+                    else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
+                    {
+                        LoadInstructionsFromFile(filepath, AsmType.RadAsm2);
                     }
                 }
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Error.ShowError(e, "instrunction folder paths");
             }
