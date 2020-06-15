@@ -69,7 +69,9 @@ namespace VSRAD.Syntax.FunctionList
                 if (Utils.IsDocumentOpen(this, openWindowPath, out var buffer))
                 {
                     var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
-                    if (textBuffer.CurrentSnapshot.IsRadeonAsmContentType())
+                    var asmType = textBuffer.CurrentSnapshot.GetAsmType();
+
+                    if (asmType == AsmType.RadAsm || asmType == AsmType.RadAsm2)
                         UpdateFunctionList(textBuffer);
                 }
             }

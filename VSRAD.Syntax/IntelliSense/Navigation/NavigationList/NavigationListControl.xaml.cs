@@ -26,9 +26,9 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             navigationTokens.Items.Clear();
-            foreach (var navigationToken in navitaionList)
+            foreach (var token in definitionlist)
             {
-                navigationTokens.Items.Add(navigationToken);
+                navigationTokens.Items.Add(token);
             }
         }
 
@@ -48,8 +48,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
         {
             try
             {
-                var navigationToken = (NavigationToken)navigationTokens.SelectedItem;
-                _navigationTokenService.GoToPoint(navigationToken);
+                var navigationToken = (DefinitionToken)navigationTokens.SelectedItem;
+                _navigationTokenService.GoToPoint(navigationToken.NavigationToken);
             }
             catch (Exception e)
             {

@@ -129,12 +129,18 @@ namespace VSRAD.Syntax.IntelliSense
             if (currentBlock == null || currentBlock.Type == BlockType.Comment)
                 return EmptyNavigations;
 
+            var asmType = version.GetAsmType();
             if (_instructionListManager.InstructionList.TryGetValue(text, out var navigationTokens))
             {
-                return navigationTokens;
+                if (asmType == AsmType.RadAsmDoc)
+                    return navigationTokens.Select(p => p.Key).ToList();
+                else if (asmType == AsmType.RadAsm2)
+                    return navigationTokens.Where(p => p.Value == AsmType.RadAsm2).Select(p => p.Key).ToList();
+                else if (asmType == AsmType.RadAsm)
+                    return navigationTokens.Where(p => p.Value == AsmType.RadAsm).Select(p => p.Key).ToList();
             }
 
-            if (FindNavigationTokenInBlock(version, currentBlock, text, out var token))
+            if (FindNavigationTokenInBlock(version, asmType, currentBlock, text, out var token))
                 return new List<NavigationToken>() { token };
 
             if (FindNavigationTokenInFunctionList(version, documentAnalysis.LastParserResult, text, out var functionToken))
@@ -146,9 +152,9 @@ namespace VSRAD.Syntax.IntelliSense
             return EmptyNavigations;
         }
 
-        private static bool FindNavigationTokenInBlock(ITextSnapshot version, IBlock currentBlock, string text, out NavigationToken outToken)
+        private static bool FindNavigationTokenInBlock(ITextSnapshot version, AsmType asmType, IBlock currentBlock, string text, out NavigationToken outToken)
         {
-            if (version.IsRadeonAsmDocContentType())
+            if (asmType == AsmType.RadAsmDoc)
             {
                 foreach (var token in currentBlock.Tokens)
                 {
@@ -163,7 +169,7 @@ namespace VSRAD.Syntax.IntelliSense
                 outToken = NavigationToken.Empty;
                 return true;
             }
-            else if (version.IsRadeonAsm2ContentType())
+            else if (asmType == AsmType.RadAsm2)
             {
                 while (currentBlock != null)
                 {
@@ -184,7 +190,7 @@ namespace VSRAD.Syntax.IntelliSense
                     currentBlock = currentBlock.Parrent;
                 }
             }
-            else if (version.IsRadeonAsmContentType())
+            else if (asmType == AsmType.RadAsm)
             {
                 var codeBlockStack = new Stack<IBlock>();
                 while (currentBlock != null)

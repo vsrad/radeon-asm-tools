@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.IntelliSense
                 if (fb == null)
                     return null;
 
-                var addBrackets = version.IsRadeonAsm2ContentType();
+                var addBrackets = version.GetAsmType() == AsmType.RadAsm2;
                 var nameTextRuns = new List<ClassifiedTextRun>()
                 {
                     new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Functions, token.TrackingToken.GetText(version)),

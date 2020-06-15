@@ -16,24 +16,26 @@ namespace VSRAD.Syntax.Options
     [Export(typeof(InstructionListManager))]
     internal sealed class InstructionListManager
     {
-        public delegate void InstructionsUpdateDelegate(IReadOnlyDictionary<string, List<NavigationToken>> instructions);
+        public delegate void InstructionsUpdateDelegate(IReadOnlyList<string> instructions);
         public event InstructionsUpdateDelegate InstructionUpdated;
 
         private readonly RadeonServiceProvider _serviceProvider;
+        private readonly OptionsProvider _optionsProvider;
         private readonly IContentType _contentType;
         private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
 
-        public Dictionary<string, List<NavigationToken>> InstructionList { get; }
+        public Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>> InstructionList { get; }
 
         [ImportingConstructor]
         public InstructionListManager(OptionsProvider optionsEventProvider, RadeonServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
+            _optionsProvider = optionsEventProvider;
             _contentType = _serviceProvider.ContentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
 
             _documentAnalysisProvoder = new DocumentAnalysisProvoder(this);
-            InstructionList = new Dictionary<string, List<NavigationToken>>();
-            optionsEventProvider.OptionsUpdated += InstructionPathsUpdated;
+            InstructionList = new Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>>();
+            _optionsProvider.OptionsUpdated += InstructionPathsUpdated;
         }
 
         private void InstructionPathsUpdated(OptionsProvider provider) =>
@@ -54,7 +56,7 @@ namespace VSRAD.Syntax.Options
                 LoadInstructionsFromDirectory(path);
             }
 
-            InstructionUpdated?.Invoke(InstructionList);
+            InstructionUpdated?.Invoke(InstructionList.Keys.ToList());
             return Task.CompletedTask;
         }
 
@@ -64,8 +66,14 @@ namespace VSRAD.Syntax.Options
             {
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
-                    if (Path.GetExtension(filepath) == Constants.InstructionsFileExtension)
-                        LoadInstructionsFromFile(filepath);
+                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsmDoc)
+                    {
+                        var extension = Path.GetExtension(filepath.TrimSuffix(Constants.FileExtensionAsmDoc, StringComparison.OrdinalIgnoreCase));
+                        if (_optionsProvider.Asm1FileExtensions.Contains(extension))
+                            LoadInstructionsFromFile(filepath, AsmType.RadAsm);
+                        else if (_optionsProvider.Asm2FileExtensions.Contains(extension))
+                            LoadInstructionsFromFile(filepath, AsmType.RadAsm2);
+                    }
                 }
             }catch (Exception e)
             {
@@ -73,7 +81,7 @@ namespace VSRAD.Syntax.Options
             }
         }
 
-        private void LoadInstructionsFromFile(string path)
+        private void LoadInstructionsFromFile(string path, AsmType asmType)
         {
             try
             {
@@ -93,13 +101,14 @@ namespace VSRAD.Syntax.Options
                     foreach (var instruction in instructions)
                     {
                         var text = instruction.TrackingToken.GetText(version);
+                        var pair = new KeyValuePair<NavigationToken, AsmType>(new NavigationToken(instruction, version), asmType);
                         if (InstructionList.TryGetValue(text, out var navigationTokens))
                         {
-                            navigationTokens.Add(new NavigationToken(instruction, version));
+                            navigationTokens.Add(pair);
                         }
                         else
                         {
-                            InstructionList.Add(text, new List<NavigationToken>() { new NavigationToken(instruction, version) });
+                            InstructionList.Add(text, new List<KeyValuePair<NavigationToken, AsmType>>() { pair });
                         }
                     }
                 }

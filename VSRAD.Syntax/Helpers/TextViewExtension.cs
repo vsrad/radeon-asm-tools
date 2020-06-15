@@ -82,7 +82,7 @@ namespace VSRAD.Syntax.Helpers
                     UncommentRegion(mappedStart.Value, mappedEnd.Value);
                 }
 
-                if (textView.TextSnapshot.IsRadeonAsmOrAsm2ContentType())
+                if (textView.TextSnapshot.GetAsmType() == AsmType.RadAsm || textView.TextSnapshot.GetAsmType() == AsmType.RadAsm2)
                 {
                     UpdateSelection(textView, start, end);
                 }
@@ -97,7 +97,7 @@ namespace VSRAD.Syntax.Helpers
             return view.BufferGraph.MapDownToFirstMatch(
                point,
                PointTrackingMode.Positive,
-               SnapshotExtension.IsRadeonAsmOrAsm2ContentType,
+               (snap) => snap.GetAsmType() == AsmType.RadAsm || snap.GetAsmType() == AsmType.RadAsm2,
                PositionAffinity.Successor
             );
         }

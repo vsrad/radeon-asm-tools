@@ -14,7 +14,6 @@ using System.Threading;
 using VSRAD.Syntax.Parser.RadAsm2;
 using VSRAD.Syntax.Parser.RadAsm;
 using VSRAD.Syntax.Parser.RadAsmDoc;
-using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Parser
 {
@@ -31,9 +30,10 @@ namespace VSRAD.Syntax.Parser
 
         public DocumentAnalysis CreateDocumentAnalysis(ITextBuffer buffer)
         {
-            if (buffer.CurrentSnapshot.IsRadeonAsm2ContentType())
+            var asmType = buffer.CurrentSnapshot.GetAsmType();
+            if (asmType == AsmType.RadAsm2)
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(), buffer, _instructionListManager));
-            else if (buffer.CurrentSnapshot.IsRadeonAsmDocContentType())
+            else if (asmType == AsmType.RadAsmDoc)
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(), buffer, _instructionListManager));
             else
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmLexer(), new AsmParser(), buffer, _instructionListManager));
@@ -108,9 +108,9 @@ namespace VSRAD.Syntax.Parser
         private void BufferChanged(object src, TextContentChangedEventArgs arg) =>
             ThreadHelper.JoinableTaskFactory.RunAsync(() => ApplyTextChangesAsync(arg));
 
-        private void InstructionListUpdated(IReadOnlyDictionary<string, List<NavigationToken>> instructions)
+        private void InstructionListUpdated(IReadOnlyList<string> instructions)
         {
-            _parser.UpdateInstructionSet(instructions.Keys.ToList());
+            _parser.UpdateInstructionSet(instructions);
             LastLexerResult.UpdateVersion();
             RunParser();
         }

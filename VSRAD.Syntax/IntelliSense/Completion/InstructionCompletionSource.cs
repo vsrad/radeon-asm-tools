@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _completions = ImmutableArray<CompletionItem>.Empty;
             instructionListManager.InstructionUpdated += InstructionUpdated;
 
-            InstructionUpdated(instructionListManager.InstructionList);
+            InstructionUpdated(instructionListManager.InstructionList.Keys.ToList());
             DisplayOptionsUpdated(optionsProvider);
         }
 
@@ -57,9 +57,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         protected override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocompleteInstructions = sender.AutocompleteInstructions;
 
-        private void InstructionUpdated(IReadOnlyDictionary<string, List<NavigationToken>> instructions) =>
+        private void InstructionUpdated(IReadOnlyList<string> instructions) =>
             _completions = instructions
-                .Select(i => i.Key)
                 .OrderBy(i => i)
                 .Select(i => new CompletionItem(i, this, Icon));
     }
