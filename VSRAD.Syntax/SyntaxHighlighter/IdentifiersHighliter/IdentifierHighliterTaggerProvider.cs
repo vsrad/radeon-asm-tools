@@ -13,11 +13,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
     [TagType(typeof(TextMarkerTag))]
     internal sealed class IdentifierHighliterTaggerProvider : IViewTaggerProvider
     {
-        private readonly NavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationTokenService;
         private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
 
         [ImportingConstructor]
-        public IdentifierHighliterTaggerProvider(NavigationTokenService navigationTokenService, DocumentAnalysisProvoder documentAnalysisProvoder)
+        public IdentifierHighliterTaggerProvider(INavigationTokenService navigationTokenService, DocumentAnalysisProvoder documentAnalysisProvoder)
         {
             _navigationTokenService = navigationTokenService;
             _documentAnalysisProvoder = documentAnalysisProvoder;

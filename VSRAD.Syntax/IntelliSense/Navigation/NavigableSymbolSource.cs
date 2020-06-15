@@ -3,16 +3,14 @@ using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser.Tokens;
-using VSRAD.Syntax.SyntaxHighlighter;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
     internal class NavigableSymbolSource : INavigableSymbolSource
     {
-        private readonly NavigationTokenService _navigationService;
+        private readonly INavigationTokenService _navigationService;
 
-        public NavigableSymbolSource(NavigationTokenService navigationService)
+        public NavigableSymbolSource(INavigationTokenService navigationService)
         {
             _navigationService = navigationService;
         }
@@ -20,11 +18,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
         {
             var extent = triggerSpan.Start.GetExtent();
-            var navigableToken = _navigationService.GetNaviationItem(extent, true);
+            var navigableTokens = _navigationService.GetNaviationItem(extent, true);
 
-            return (navigableToken == NavigationToken.Empty)
+            return (navigableTokens.Count == 0)
                 ? Task.FromResult<INavigableSymbol>(null)
-                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, new SnapshotPoint(navigableToken.Snapshot, navigableToken.GetEnd()), _navigationService));
+                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, navigableTokens, _navigationService));
         }
 
         public void Dispose()

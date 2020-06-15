@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
 
@@ -56,8 +57,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         protected override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocompleteInstructions = sender.AutocompleteInstructions;
 
-        private void InstructionUpdated(IReadOnlyList<string> instructions) =>
+        private void InstructionUpdated(IReadOnlyDictionary<string, List<NavigationToken>> instructions) =>
             _completions = instructions
+                .Select(i => i.Key)
                 .OrderBy(i => i)
                 .Select(i => new CompletionItem(i, this, Icon));
     }

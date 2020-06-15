@@ -4,12 +4,16 @@ using Microsoft.VisualStudio.Text.Editor;
 using System;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text.Operations;
 
 namespace VSRAD.Syntax.Helpers
 {
     public static class TextViewExtension
     {
         private const double OffsetLineFromTextView = 60.0;
+
+        public static TextExtent GetTextExtentOnCursor(this ITextView view) =>
+            view.Caret.Position.BufferPosition.GetExtent();
 
         public static void ChangeCaretPosition(this ITextView textView, int lineNumber)
         {

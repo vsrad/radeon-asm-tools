@@ -10,6 +10,9 @@ namespace VSRAD.Syntax.Helpers
         public static bool IsRadeonAsm2ContentType(this ITextSnapshot textSnapshot) =>
             textSnapshot.ContentType.IsOfType(Constants.RadeonAsm2SyntaxContentType);
 
+        public static bool IsRadeonAsmDocContentType(this ITextSnapshot textSnapshot) =>
+            textSnapshot.ContentType.IsOfType(Constants.RadeonAsmDocumentationContentType);
+
         internal static bool IsRadeonAsmOrAsm2ContentType(this ITextSnapshot buffer) =>
             buffer.ContentType.IsOfType(Constants.RadeonAsmSyntaxContentType) || buffer.ContentType.IsOfType(Constants.RadeonAsm2SyntaxContentType);
     }

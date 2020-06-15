@@ -11,6 +11,10 @@ using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Options;
 using System.ComponentModel.Composition;
 using System.Threading;
+using VSRAD.Syntax.Parser.RadAsm2;
+using VSRAD.Syntax.Parser.RadAsm;
+using VSRAD.Syntax.Parser.RadAsmDoc;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Parser
 {
@@ -29,6 +33,8 @@ namespace VSRAD.Syntax.Parser
         {
             if (buffer.CurrentSnapshot.IsRadeonAsm2ContentType())
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(), buffer, _instructionListManager));
+            else if (buffer.CurrentSnapshot.IsRadeonAsmDocContentType())
+                return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(), buffer, _instructionListManager));
             else
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmLexer(), new AsmParser(), buffer, _instructionListManager));
         }
@@ -77,7 +83,7 @@ namespace VSRAD.Syntax.Parser
 
             buffer.Changed += BufferChanged;
             instructionListManager.InstructionUpdated += InstructionListUpdated;
-            _parser.UpdateInstructionSet(instructionListManager.InstructionList);
+            _parser.UpdateInstructionSet(instructionListManager.InstructionList.Keys.ToList());
             Initialize();
         }
 
@@ -102,9 +108,9 @@ namespace VSRAD.Syntax.Parser
         private void BufferChanged(object src, TextContentChangedEventArgs arg) =>
             ThreadHelper.JoinableTaskFactory.RunAsync(() => ApplyTextChangesAsync(arg));
 
-        private void InstructionListUpdated(IReadOnlyList<string> instructions)
+        private void InstructionListUpdated(IReadOnlyDictionary<string, List<NavigationToken>> instructions)
         {
-            _parser.UpdateInstructionSet(instructions);
+            _parser.UpdateInstructionSet(instructions.Keys.ToList());
             LastLexerResult.UpdateVersion();
             RunParser();
         }

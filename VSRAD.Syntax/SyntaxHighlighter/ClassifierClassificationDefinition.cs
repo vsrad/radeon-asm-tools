@@ -23,6 +23,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         internal static ContentTypeDefinition asm2ContentTypeDefinition = null;
 
         [Export]
+        [Name(Constants.RadeonAsmDocumentationContentType)]
+        [BaseDefinition(Constants.RadeonAsmSyntaxContentType)]
+        internal static ContentTypeDefinition asmDocContentTypeDefinition = null;
+
+        [Export]
         [FileExtension(Constants.FileExtensionAsm2)]
         [ContentType(Constants.RadeonAsm2SyntaxContentType)]
         internal static FileExtensionToContentTypeDefinition asm2FileExtensionDefinition = null;
@@ -41,6 +46,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         [FileExtension(Constants.FileExtensionInc)]
         [ContentType(Constants.RadeonAsmSyntaxContentType)]
         internal static FileExtensionToContentTypeDefinition incFileExtensionDefinition = null;
+
+        [Export]
+        [FileExtension(Constants.FileExtensionAsmDoc)]
+        [ContentType(Constants.RadeonAsmDocumentationContentType)]
+        internal static FileExtensionToContentTypeDefinition docFileExtensionDefinition = null;
 
         #endregion
 

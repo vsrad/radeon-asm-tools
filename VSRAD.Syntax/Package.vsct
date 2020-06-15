@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <Extern href="stdidcmd.h"/>
+  <Extern href="stdidcmd.h" />
 
-  <Extern href="vsshlids.h"/>
+  <Extern href="vsshlids.h" />
 
   <Commands package="guidExtensionPackage">
     <Menus>
@@ -17,15 +17,15 @@
     <Groups>
 
       <Group guid="guidExtensionPackageCmdSet" id="FunctionListGroup" priority="0x0100">
-        <Parent guid="guidExtensionPackageCmdSet" id="FunctionListMenu"/>
+        <Parent guid="guidExtensionPackageCmdSet" id="FunctionListMenu" />
       </Group>
 
     </Groups>
 
     <Buttons>
       <Button guid="guidExtensionPackageCmdSet" id="FunctionListCommandId" priority="0x0100" type="Button">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"/>
-        <Icon guid="guidImages" id="functionListIcon"/>
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="guidImages" id="functionListIcon" />
         <Strings>
           <ButtonText>Radeon Asm Function List</ButtonText>
           <LocCanonicalName>FunctionList</LocCanonicalName>
@@ -33,28 +33,22 @@
       </Button>
 
       <Button guid="guidExtensionPackageCmdSet" id="FunctionListCommandId" priority="0x9999" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
-        <Icon guid="guidImages" id="functionListIcon"/>
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="functionListIcon" />
         <Strings>
           <ButtonText>Radeon Asm Function List</ButtonText>
           <LocCanonicalName>FunctionList</LocCanonicalName>
         </Strings>
       </Button>
 
-      <Button guid="guidExtensionPackageCmdSet"
-          id="FunctionListClearSearchId"
-          priority="0x0100"
-          type="Button">
+      <Button guid="guidExtensionPackageCmdSet" id="FunctionListClearSearchId" priority="0x0100" type="Button">
         <Strings>
           <ButtonText>Clear Search Function List Field</ButtonText>
           <LocCanonicalName>FunctionList.Clear</LocCanonicalName>
         </Strings>
       </Button>
 
-      <Button guid="guidExtensionPackageCmdSet"
-          id="FunctionListSelectItemCommandId"
-          priority="0x0100"
-          type="Button">
+      <Button guid="guidExtensionPackageCmdSet" id="FunctionListSelectItemCommandId" priority="0x0100" type="Button">
         <Strings>
           <ButtonText>Select function list item</ButtonText>
           <LocCanonicalName>FunctionList.Select</LocCanonicalName>
@@ -68,6 +62,13 @@
         </Strings>
       </Button>
 
+      <Button guid="guidNavigationListCmdSet" id="cmdidNavigationListCommand" priority="0x0100" type="Button">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
+        <Icon guid="guidImages" id="functionListIcon" />
+        <Strings>
+          <ButtonText>Radeon Asm Navigation List</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -78,15 +79,9 @@
   </Commands>
 
   <KeyBindings>
-    <KeyBinding guid="guidExtensionPackageCmdSet"
-                id="FunctionListClearSearchId"
-                editor="guidFunctionListWindowPane"
-                key1="VK_ESCAPE"/>
+    <KeyBinding guid="guidExtensionPackageCmdSet" id="FunctionListClearSearchId" editor="guidFunctionListWindowPane" key1="VK_ESCAPE" />
 
-    <KeyBinding guid="guidExtensionPackageCmdSet"
-            id="FunctionListSelectItemCommandId"
-            editor="guidFunctionListWindowPane"
-            key1="VK_RETURN" mod1="Control"/>
+    <KeyBinding guid="guidExtensionPackageCmdSet" id="FunctionListSelectItemCommandId" editor="guidFunctionListWindowPane" key1="VK_RETURN" mod1="Control" />
   </KeyBindings>
 
   <Symbols>
@@ -98,11 +93,15 @@
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidExtensionPackageCmdSet" value="{a1d46795-2324-4b58-9f8c-aa69414c3e9e}">
       <IDSymbol name="FunctionListCommandId" value="0x0100" />
-      <IDSymbol name="FunctionListClearSearchId" value="0x0200"/>
-      <IDSymbol name="FunctionListSelectItemCommandId" value="0x0201"/>
-      <IDSymbol name="FunctionListMenu" value="0x1000"/>
-      <IDSymbol name="FunctionListGroup" value="0x1100"/>
-      <IDSymbol name="cmdidShowHideLineNumber" value="0x102"/>
+      <IDSymbol name="FunctionListClearSearchId" value="0x0200" />
+      <IDSymbol name="FunctionListSelectItemCommandId" value="0x0201" />
+      <IDSymbol name="FunctionListMenu" value="0x1000" />
+      <IDSymbol name="FunctionListGroup" value="0x1100" />
+      <IDSymbol name="cmdidShowHideLineNumber" value="0x102" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidNavigationListCmdSet" value="{0c7aa63d-bc2a-4d0e-83c2-80bbb30a5ceb}">
+      <IDSymbol name="cmdidNavigationListCommand" value="0x0203" />
     </GuidSymbol>
 
     <!-- VSRAD tool bar menu -->
