@@ -26,8 +26,6 @@ namespace VSRAD.Package.DebugVisualizer
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
 
-            Application.Current.Deactivated += (sender, e) => WindowFocusLost();
-
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
@@ -46,10 +44,13 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
             TableHost.Setup(_table);
             RestoreSavedState();
+
+            Application.Current.Activated += (sender, e) => WindowFocusChanged(hasFocus: true);
+            Application.Current.Deactivated += (sender, e) => WindowFocusChanged(hasFocus: false);
         }
 
-        public void WindowFocusLost() =>
-            _table.HostWindowDeactivated();
+        public void WindowFocusChanged(bool hasFocus) =>
+            _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
             _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());

@@ -48,16 +48,18 @@ namespace VSRAD.Package.ToolWindows
             ThreadHelper.ThrowIfNotOnUIThread();
             var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
             _windowEvents = dte.Events.WindowEvents;
-            _windowEvents.WindowActivated += OnWindowFocusLost;
+            _windowEvents.WindowActivated += OnWindowFocusChanged;
         }
 
-        protected virtual void OnWindowFocusLost() { }
+        protected virtual void OnWindowFocusChanged(bool hasFocus) { }
 
-        private void OnWindowFocusLost(EnvDTE.Window _, EnvDTE.Window lostFocus)
+        private void OnWindowFocusChanged(EnvDTE.Window gotFocus, EnvDTE.Window lostFocus)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            if (lostFocus?.Caption == Caption)
-                OnWindowFocusLost();
+            if (gotFocus?.Caption == Caption)
+                OnWindowFocusChanged(hasFocus: true);
+            else if (lostFocus?.Caption == Caption)
+                OnWindowFocusChanged(hasFocus: false);
         }
     }
 }

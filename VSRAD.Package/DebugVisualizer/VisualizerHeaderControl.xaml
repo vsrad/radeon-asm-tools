@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="VSRAD.Package.DebugVisualizer.VisualizerHeaderControl" x:Name="HeaderControl"
+﻿<UserControl x:Class="VSRAD.Package.DebugVisualizer.VisualizerHeaderControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -20,18 +20,18 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
         <Style x:Key="NDRangeInput" TargetType="local:NumberInput">
-            <Setter Property="IsEnabled" Value="{Binding DataContext.GroupIndexEditable, ElementName=HeaderControl}"/>
+            <Setter Property="IsEnabled" Value="{Binding GroupIndexEditable}"/>
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="true">
-                    <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)/ErrorContent}"/>
+                    <Setter Property="ToolTip" Value="{Binding Path=(Validation.Errors)/ErrorContent, RelativeSource={RelativeSource Self}}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
         <Style x:Key="NDRange3DInput" TargetType="local:NumberInput" BasedOn="{StaticResource NDRangeInput}">
-            <Setter Property="Visibility" Value="{Binding DataContext.Options.VisualizerOptions.NDRange3D, ElementName=HeaderControl, Converter={StaticResource BoolToVisibility}}"/>
+            <Setter Property="Visibility" Value="{Binding Options.VisualizerOptions.NDRange3D, Converter={StaticResource BoolToVisibility}}"/>
         </Style>
         <Style x:Key="NDRange3DLabel" TargetType="Label">
-            <Setter Property="Visibility" Value="{Binding DataContext.Options.VisualizerOptions.NDRange3D, ElementName=HeaderControl, Converter={StaticResource BoolToVisibility}}"/>
+            <Setter Property="Visibility" Value="{Binding Options.VisualizerOptions.NDRange3D, Converter={StaticResource BoolToVisibility}}"/>
         </Style>
     </UserControl.Resources>
     <StackPanel>
@@ -42,34 +42,34 @@
         </StackPanel.Style>
         <WrapPanel>
             <Label Content="Counter:" Height="26" Width="68" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <local:NumberInput Value="{Binding DataContext.Options.DebuggerOptions.Counter, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}"
                                Width="60" Height="24" />
             <StackPanel Orientation="Horizontal">
                 <Label Content="Group #:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.X, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.X, UpdateSourceTrigger=PropertyChanged}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.Y, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.Y, UpdateSourceTrigger=PropertyChanged}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.Z, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.Z, UpdateSourceTrigger=PropertyChanged}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="Groups:" Height="26" Style="{StaticResource NDRange3DLabel}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.DimX, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.DimX, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.DimY, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.DimY, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.DimZ, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.DimZ, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="Group size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding DataContext.GroupIndex.GroupSize, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.GroupSize, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="64" Maximum="512" Step="64" Width="38" Height="24"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="NGroups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding DataContext.Options.DebuggerOptions.NGroups, ElementName=HeaderControl, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding Options.DebuggerOptions.NGroups, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="0" Step="1" Width="38" Height="24"/>
             </StackPanel>
             <Label Content="{Binding Status, Mode=OneWay}" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
