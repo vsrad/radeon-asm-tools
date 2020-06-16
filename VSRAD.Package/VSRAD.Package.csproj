@@ -142,6 +142,21 @@
     <Compile Include="DebugVisualizer\ScalingMode.cs" />
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
     <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceCellStyling.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceRowStyling.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml.cs">
+      <DependentUpon>SliceVisualizerControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerHeaderControl.xaml.cs">
+      <DependentUpon>SliceVisualizerHeaderControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTable.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTableHost.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerContext.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\TypedSliceWatchView.cs" />
+    <Compile Include="DebugVisualizer\TableState.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
     </Compile>
@@ -161,6 +176,7 @@
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
+    <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
@@ -183,6 +199,7 @@
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
+    <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Utils\ObservableDictionary.cs" />
@@ -344,6 +361,14 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerHeaderControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DebugVisualizer\VisualizerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

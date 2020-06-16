@@ -15,6 +15,9 @@ namespace VSRAD.Package.Options
         public VisualizerOptions VisualizerOptions { get; } =
             new VisualizerOptions();
 
+        public SliceVisualizerOptions SliceVisualizerOptions { get; } =
+            new SliceVisualizerOptions();
+
         public VisualizerAppearance VisualizerAppearance { get; } =
             new VisualizerAppearance();
 

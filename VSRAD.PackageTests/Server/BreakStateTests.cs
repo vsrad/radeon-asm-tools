@@ -45,7 +45,12 @@ namespace VSRAD.PackageTests.Server
             var breakState = new BreakState(breakStateData, 666, 333, "", 0);
 
             // Group 1
-            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group1Bin }, (_) => { });
+            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group1Bin },
+                (command) =>
+                {
+                    Assert.Equal(0, command.ByteOffset);
+                    Assert.Equal(2048, command.ByteCount);
+                });
             var warning = await breakState.Data.ChangeGroupWithWarningsAsync(channel.Object, 0, 128, 2);
             Assert.Null(warning);
 
@@ -63,7 +68,12 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal(128, (int)watchGroupSize[i]);
 
             // Group 2
-            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group2Bin }, (_) => { });
+            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group2Bin },
+                (command) =>
+                {
+                    Assert.Equal(2048, command.ByteOffset);
+                    Assert.Equal(2048, command.ByteCount);
+                });
             warning = await breakState.Data.ChangeGroupWithWarningsAsync(channel.Object, 1, 128, 2);
             Assert.Null(warning);
 
@@ -138,6 +148,31 @@ namespace VSRAD.PackageTests.Server
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, 0, 256, nGroups: 4);
 
             Assert.Equal("Output file has fewer groups than requested (NGroups = 4, but the file contains only 2)", warning);
+        }
+
+
+        [Fact]
+        public void SliceWatchViewTest()
+        {
+            var data = new uint[] { 600, 0, 601, 10, 602, 20, 603, 30, 604, 40, 605, 1, 606,
+                                    11, 607, 21, 608, 31, 609, 41, 610, 2, 611, 12, 612, 22, 613, 32, 614, 42, 615, 3, 616, 13,
+                                    617, 23, 618, 33, 619, 43 };
+
+            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, laneDataOffset: 1, laneDataSize: 2);
+            var expected = new uint[,] { { 0, 10, 20, 30, 40, 1, 11, 21, 31, 41 },
+                                         { 2, 12, 22, 32, 42, 3, 13, 23, 33, 43 } };
+
+            for (int row = 0; row < 2; ++row)
+                for (int col = 0; col < 10; ++col)
+                    Assert.Equal(expected[row, col], sliceWatch[row, col]);
+
+            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, laneDataOffset: 0, laneDataSize: 2);
+            expected = new uint[,] { { 600, 601, 602, 603, 604, 605, 606, 607, 608, 609 },
+                                     { 610, 611, 612, 613, 614, 615, 616, 617, 618, 619 } };
+
+            for (int row = 0; row < 2; ++row)
+                for (int col = 0; col < 10; ++col)
+                    Assert.Equal(expected[row, col], sliceWatch[row, col]);
         }
     }
 }

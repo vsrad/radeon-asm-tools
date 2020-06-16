@@ -7,14 +7,15 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 {
     sealed class ReorderOperation : IMouseMoveOperation
     {
-        private readonly VisualizerTable _table;
+        private readonly DataGridView _table;
 
         private bool _operationStarted;
         private int _hoverRowIndex;
+        private int _newWatchRowIndex;
         private List<DataGridViewRow> _selectedRows;
         private List<DataGridViewRow> _rowsToMove;
 
-        public ReorderOperation(VisualizerTable table)
+        public ReorderOperation(DataGridView table)
         {
             _table = table;
         }
@@ -23,9 +24,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         {
             if (hit.Type != DataGridViewHitTestType.RowHeader
                 || hit.RowIndex <= VisualizerTable.SystemRowIndex
-                || hit.RowIndex == _table.NewWatchRowIndex)
+                || hit.RowIndex == _newWatchRowIndex)
                 return false;
-
+            _newWatchRowIndex = _table.RowCount - 1;
             _operationStarted = false;
             _hoverRowIndex = hit.RowIndex;
             return true;
@@ -38,7 +39,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             if (!_operationStarted)
             {
-                _selectedRows = _table.SelectedRows.Cast<DataGridViewRow>().Where(r => r.Index != _table.NewWatchRowIndex).ToList();
+                _selectedRows = _table.SelectedRows.Cast<DataGridViewRow>().Where(r => r.Index != _newWatchRowIndex).ToList();
                 if (_selectedRows.Contains(_table.Rows[_hoverRowIndex]))
                     _rowsToMove = _selectedRows.Where(r => r.Index != VisualizerTable.SystemRowIndex).ToList();
                 else
@@ -50,7 +51,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var indexDiff = hit.RowIndex - _hoverRowIndex;
 
             if (indexDiff != 0
-                && _rowsToMove.Max(r => r.Index) + indexDiff < _table.NewWatchRowIndex
+                && _rowsToMove.Max(r => r.Index) + indexDiff < _newWatchRowIndex
                 && _rowsToMove.Min(r => r.Index) + indexDiff > VisualizerTable.SystemRowIndex)
             {
                 _operationStarted = true;

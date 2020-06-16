@@ -20,6 +20,7 @@ namespace VSRAD.Package.Commands
             {
                 case Constants.ToolWindowVisualizerCommandId:
                 case Constants.ToolWindowOptionsCommandId:
+                case Constants.ToolWindowSliceVisualizerCommandId:
                     return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
                 default:
                     return 0;
@@ -36,6 +37,9 @@ namespace VSRAD.Package.Commands
                     break;
                 case Constants.ToolWindowOptionsCommandId:
                     ErrorHandler.ThrowOnFailure(((IVsWindowFrame)VSPackage.OptionsToolWindow.Frame).Show());
+                    break;
+                case Constants.ToolWindowSliceVisualizerCommandId:
+                    ErrorHandler.ThrowOnFailure(((IVsWindowFrame)VSPackage.SliceVisualizerToolWindow.Frame).Show());
                     break;
             }
         }
