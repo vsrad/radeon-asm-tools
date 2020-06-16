@@ -8,8 +8,6 @@ namespace VSRAD.Package
 {
     public readonly struct Error : IEquatable<Error>
     {
-        public static readonly Error Empty = new Error();
-
         public bool Critical { get; }
         public string Message { get; }
         public string Title { get; }

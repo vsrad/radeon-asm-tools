@@ -2,34 +2,42 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
-    public sealed class ActionRunStats
+    public sealed class ActionRunResult
     {
-        public long InitTimestampFetchMillis { get; private set; }
         public long[] ActionRunMillis { get; }
+        public long InitTimestampFetchMillis { get; private set; }
         public long TotalMillis { get; private set; }
+
+        public (bool success, string log)[] ActionResults { get; }
+
+        public bool Successful => ActionResults.All((r) => r.success);
 
         private readonly Stopwatch _stopwatch;
         private long _lastRecordedTime;
 
-        public ActionRunStats(int actionCount)
+        public ActionRunResult(int actionCount)
         {
             ActionRunMillis = new long[actionCount];
+            ActionResults = new (bool success, string log)[actionCount];
             _stopwatch = Stopwatch.StartNew();
         }
 
         public void RecordInitTimestampFetch() =>
             InitTimestampFetchMillis = MeasureInterval();
 
-        public void RecordAction(int actionIndex) =>
+        public void RecordAction(int actionIndex, (bool, string) status)
+        {
             ActionRunMillis[actionIndex] = MeasureInterval();
+            ActionResults[actionIndex] = status;
+        }
 
         public void FinishRun() =>
             TotalMillis = _stopwatch.ElapsedMilliseconds;
@@ -56,50 +64,52 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<Result<ActionRunStats>> RunAsync(IList<IAction> actions, IEnumerable<BuiltinActionFile> auxFiles)
+        public async Task<ActionRunResult> RunAsync(IList<IAction> actions, IEnumerable<BuiltinActionFile> auxFiles)
         {
-            var runStats = new ActionRunStats(actions.Count);
+            var runStats = new ActionRunResult(actions.Count);
 
             await FillInitialTimestampsAsync(actions, auxFiles);
             runStats.RecordInitTimestampFetch();
 
             for (int i = 0; i < actions.Count; ++i)
             {
-                Error error = Error.Empty;
+                (bool success, string log) status;
                 switch (actions[i])
                 {
                     case CopyFileAction copyFile:
-                        error = await DoCopyFileAsync(copyFile);
+                        status = await DoCopyFileAsync(copyFile);
                         break;
                     case ExecuteAction execute:
-                        error = await DoExecuteAsync(execute);
+                        status = await DoExecuteAsync(execute);
                         break;
+                    default:
+                        throw new NotImplementedException();
                 }
-                runStats.RecordAction(i);
-                if (error != Error.Empty)
-                    return new Error(error.Message, title: $"Error while executing action #{i}");
+                runStats.RecordAction(i, status);
+                if (!status.success)
+                    break;
             }
 
             runStats.FinishRun();
             return runStats;
         }
 
-        private async Task<Error> DoCopyFileAsync(CopyFileAction action)
+        private async Task<(bool success, string log)> DoCopyFileAsync(CopyFileAction action)
         {
             if (action.Direction == FileCopyDirection.LocalToRemote)
                 throw new NotImplementedException();
 
             var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { action.RemotePath } });
             if (response.Status == FetchStatus.FileNotFound)
-                return new Error($"File not found at {action.RemotePath}");
+                return (false, $"File is not found on the remote machine at {action.RemotePath}");
             if (action.CheckTimestamp && GetInitialFileTimestamp(action.RemotePath) == response.Timestamp)
-                return new Error($"File is not changed on the remote machine at {action.RemotePath}");
+                return (false, $"File is not changed on the remote machine at {action.RemotePath}");
             File.WriteAllBytes(action.LocalPath, response.Data);
 
-            return Error.Empty;
+            return (true, $"Copied {action.RemotePath} to {action.LocalPath}");
         }
 
-        private async Task<Error> DoExecuteAsync(ExecuteAction action)
+        private async Task<(bool success, string log)> DoExecuteAsync(ExecuteAction action)
         {
             if (action.Environment == ActionEnvironment.Local)
                 throw new NotImplementedException();
@@ -110,7 +120,7 @@ namespace VSRAD.Package.Server
                 Arguments = action.Arguments,
             });
 
-            return Error.Empty;
+            return (true, "");
         }
 
         private async Task FillInitialTimestampsAsync(IList<IAction> actions, IEnumerable<BuiltinActionFile> auxFiles)
