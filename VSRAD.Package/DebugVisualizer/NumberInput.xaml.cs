@@ -2,7 +2,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Input;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -51,7 +50,8 @@ namespace VSRAD.Package.DebugVisualizer
         public NumberInput()
         {
             InitializeComponent();
-            DataContext = this;
+            // Do not change this.DataContext, it inherits from the control that uses NumberInput
+            Root.DataContext = this;
         }
 
         private void Increment(object sender, RoutedEventArgs e) => RawValue += Step;
@@ -70,10 +70,11 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void EndEditOnKeyDown(object sender, KeyEventArgs e)
+        private void ResetValueIfInvalid(object sender, RoutedEventArgs e)
         {
-            if (e.Key == Key.Enter && sender is TextBox textBox)
-                BindingOperations.GetBindingExpression(textBox, TextBox.TextProperty).UpdateSource();
+            // If the text is empty, reset it to the current value of the source property (RawValue)
+            if (sender is TextBox textBox)
+                BindingOperations.GetBindingExpression(textBox, TextBox.TextProperty).UpdateTarget();
         }
     }
 }

@@ -65,7 +65,7 @@
             <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
         </Style>
     </UserControl.Resources>
-    <DockPanel LastChildFill="True">
+    <DockPanel LastChildFill="True" x:Name="Root">
         <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" KeyboardNavigation.TabNavigation="None">
             <RepeatButton Click="Increment" Height="12" Width="12" Margin="0" Style="{DynamicResource NumberInputButton}">
                 <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6">
@@ -87,7 +87,7 @@
                 </TextBlock>
             </RepeatButton>
         </StackPanel>
-        <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="EndEditOnKeyDown"
+        <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" LostFocus="ResetValueIfInvalid"
                  VerticalContentAlignment="Center" Height="24"
                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
