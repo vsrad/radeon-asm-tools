@@ -87,7 +87,7 @@
                 </TextBlock>
             </RepeatButton>
         </StackPanel>
-        <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" KeyDown="EndEditOnKeyDown"
+        <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" KeyDown="EndEditOnKeyDown"
                  VerticalContentAlignment="Center" Height="24"
                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
