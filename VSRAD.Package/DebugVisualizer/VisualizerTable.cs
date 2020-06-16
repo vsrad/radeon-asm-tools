@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
@@ -139,9 +140,17 @@ namespace VSRAD.Package.DebugVisualizer
             Invalidate(); // redraw custom avgpr graphics
         }
 
-        public void HostWindowDeactivated()
+        public void HostWindowFocusChanged(bool hasFocus)
         {
-            CancelEdit();
+            if (hasFocus)
+            {
+                DefaultCellStyle.SelectionBackColor = SystemColors.Highlight;
+            }
+            else
+            {
+                DefaultCellStyle.SelectionBackColor = SystemColors.ControlDark;
+                CancelEdit();
+            }
         }
 
         public List<Watch> GetCurrentWatchState() =>
