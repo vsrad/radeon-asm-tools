@@ -61,14 +61,6 @@
           <ButtonText>Show/Hide line number</ButtonText>
         </Strings>
       </Button>
-
-      <Button guid="guidNavigationListCmdSet" id="cmdidNavigationListCommand" priority="0x0100" type="Button">
-        <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1" />
-        <Icon guid="guidImages" id="functionListIcon" />
-        <Strings>
-          <ButtonText>Radeon Asm Navigation List</ButtonText>
-        </Strings>
-      </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
