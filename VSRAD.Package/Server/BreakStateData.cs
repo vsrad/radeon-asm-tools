@@ -56,21 +56,15 @@ namespace VSRAD.Package.Server
 
         private readonly uint[] _data;
 
-        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize, int nGroups)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
-            _lastValidIndex = groupSize * nGroups * laneDataSize + _laneDataOffset;
+            _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
 
             ColumnCount = groupsInRow * groupSize;
-            RowCount = (_data.Length / _laneDataSize / ColumnCount) + nGroups % groupsInRow;
-        }
-
-        // For tests
-        public SliceWatchView(uint[] flatWatchData)
-        {
-            _data = flatWatchData;
+            RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
         }
 
         public bool IsInactiveCell(int row, int column)
@@ -161,7 +155,7 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchView(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize, nGroups);
+            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, nGroups), laneDataOffset, _laneDataSize);
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)

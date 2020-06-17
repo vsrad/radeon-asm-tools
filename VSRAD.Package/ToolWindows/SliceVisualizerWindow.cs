@@ -23,10 +23,5 @@ namespace VSRAD.Package.ToolWindows
             _sliceVisualizerControl = new SliceVisualizerControl(integration);
             return _sliceVisualizerControl;
         }
-
-        protected override void OnWindowFocusLost()
-        {
-            //_sliceVisualizerControl.WindowFocusLost();
-        }
     }
 }
