@@ -76,7 +76,7 @@
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
-                        <local:ActionSequenceEditor DataContext="{Binding Actions}" />
+                        <local:ActionEditor DataContext="{Binding Actions}" />
                     </DataTemplate>
                 </ContentControl.Resources>
             </ContentControl>

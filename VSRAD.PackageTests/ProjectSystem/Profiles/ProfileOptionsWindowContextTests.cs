@@ -22,15 +22,15 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var options = CreateTestOptions();
             options.ActiveProfile = "midori";
             var context = new ProfileOptionsWindowContext(options, null);
-            GetPage<DebuggerProfileOptions>(context).Actions.Add(new ExecuteAction { Executable = "bun" });
+            GetPage<DebuggerProfileOptions>(context).Actions.Add(new ExecuteStep { Executable = "bun" });
             Assert.Empty(options.Profile.Debugger.Actions);
             context.SaveChanges();
-            Assert.Equal(options.Profile.Debugger.Actions[0], new ExecuteAction { Executable = "bun" });
+            Assert.Equal(options.Profile.Debugger.Actions[0], new ExecuteStep { Executable = "bun" });
 
-            ((ExecuteAction)GetPage<DebuggerProfileOptions>(context).Actions[0]).Arguments = "--stuffed";
-            Assert.Equal("", ((ExecuteAction)options.Profile.Debugger.Actions[0]).Arguments);
+            ((ExecuteStep)GetPage<DebuggerProfileOptions>(context).Actions[0]).Arguments = "--stuffed";
+            Assert.Equal("", ((ExecuteStep)options.Profile.Debugger.Actions[0]).Arguments);
             context.SaveChanges();
-            Assert.Equal("--stuffed", ((ExecuteAction)options.Profile.Debugger.Actions[0]).Arguments);
+            Assert.Equal("--stuffed", ((ExecuteStep)options.Profile.Debugger.Actions[0]).Arguments);
         }
     }
 }

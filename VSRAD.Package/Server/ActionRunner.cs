@@ -12,31 +12,31 @@ namespace VSRAD.Package.Server
 {
     public sealed class ActionRunResult
     {
-        public long[] ActionRunMillis { get; }
+        public long[] StepRunMillis { get; }
         public long InitTimestampFetchMillis { get; private set; }
         public long TotalMillis { get; private set; }
 
-        public (bool success, string log)[] ActionResults { get; }
+        public (bool success, string log)[] StepResults { get; }
 
-        public bool Successful => ActionResults.All((r) => r.success);
+        public bool Successful => StepResults.All((r) => r.success);
 
         private readonly Stopwatch _stopwatch;
         private long _lastRecordedTime;
 
-        public ActionRunResult(int actionCount)
+        public ActionRunResult(int stepCount)
         {
-            ActionRunMillis = new long[actionCount];
-            ActionResults = new (bool success, string log)[actionCount];
+            StepRunMillis = new long[stepCount];
+            StepResults = new (bool success, string log)[stepCount];
             _stopwatch = Stopwatch.StartNew();
         }
 
         public void RecordInitTimestampFetch() =>
             InitTimestampFetchMillis = MeasureInterval();
 
-        public void RecordAction(int actionIndex, (bool, string) status)
+        public void RecordStep(int stepIndex, (bool, string) status)
         {
-            ActionRunMillis[actionIndex] = MeasureInterval();
-            ActionResults[actionIndex] = status;
+            StepRunMillis[stepIndex] = MeasureInterval();
+            StepResults[stepIndex] = status;
         }
 
         public void FinishRun() =>
@@ -51,12 +51,12 @@ namespace VSRAD.Package.Server
         }
     }
 
-    public sealed class ActionSequenceRunner
+    public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
 
-        public ActionSequenceRunner(ICommunicationChannel channel)
+        public ActionRunner(ICommunicationChannel channel)
         {
             _channel = channel;
         }
@@ -64,28 +64,28 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(IList<IAction> actions, IEnumerable<BuiltinActionFile> auxFiles)
+        public async Task<ActionRunResult> RunAsync(IList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
         {
-            var runStats = new ActionRunResult(actions.Count);
+            var runStats = new ActionRunResult(steps.Count);
 
-            await FillInitialTimestampsAsync(actions, auxFiles);
+            await FillInitialTimestampsAsync(steps, auxFiles);
             runStats.RecordInitTimestampFetch();
 
-            for (int i = 0; i < actions.Count; ++i)
+            for (int i = 0; i < steps.Count; ++i)
             {
                 (bool success, string log) status;
-                switch (actions[i])
+                switch (steps[i])
                 {
-                    case CopyFileAction copyFile:
+                    case CopyFileStep copyFile:
                         status = await DoCopyFileAsync(copyFile);
                         break;
-                    case ExecuteAction execute:
+                    case ExecuteStep execute:
                         status = await DoExecuteAsync(execute);
                         break;
                     default:
                         throw new NotImplementedException();
                 }
-                runStats.RecordAction(i, status);
+                runStats.RecordStep(i, status);
                 if (!status.success)
                     break;
             }
@@ -94,42 +94,42 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<(bool success, string log)> DoCopyFileAsync(CopyFileAction action)
+        private async Task<(bool success, string log)> DoCopyFileAsync(CopyFileStep step)
         {
-            if (action.Direction == FileCopyDirection.LocalToRemote)
+            if (step.Direction == FileCopyDirection.LocalToRemote)
                 throw new NotImplementedException();
 
-            var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { action.RemotePath } });
+            var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { step.RemotePath } });
             if (response.Status == FetchStatus.FileNotFound)
-                return (false, $"File is not found on the remote machine at {action.RemotePath}");
-            if (action.CheckTimestamp && GetInitialFileTimestamp(action.RemotePath) == response.Timestamp)
-                return (false, $"File is not changed on the remote machine at {action.RemotePath}");
-            File.WriteAllBytes(action.LocalPath, response.Data);
+                return (false, $"File is not found on the remote machine at {step.RemotePath}");
+            if (step.CheckTimestamp && GetInitialFileTimestamp(step.RemotePath) == response.Timestamp)
+                return (false, $"File is not changed on the remote machine at {step.RemotePath}");
+            File.WriteAllBytes(step.LocalPath, response.Data);
 
-            return (true, $"Copied {action.RemotePath} to {action.LocalPath}");
+            return (true, $"Copied {step.RemotePath} to {step.LocalPath}");
         }
 
-        private async Task<(bool success, string log)> DoExecuteAsync(ExecuteAction action)
+        private async Task<(bool success, string log)> DoExecuteAsync(ExecuteStep step)
         {
-            if (action.Environment == ActionEnvironment.Local)
+            if (step.Environment == StepEnvironment.Local)
                 throw new NotImplementedException();
 
             var response = await _channel.SendWithReplyAsync<ExecutionCompleted>(new Execute
             {
-                Executable = action.Executable,
-                Arguments = action.Arguments,
+                Executable = step.Executable,
+                Arguments = step.Arguments,
             });
 
             return (true, "");
         }
 
-        private async Task FillInitialTimestampsAsync(IList<IAction> actions, IEnumerable<BuiltinActionFile> auxFiles)
+        private async Task FillInitialTimestampsAsync(IList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
         {
             var remoteCommands = new List<ICommand>();
 
-            foreach (var action in actions)
+            foreach (var step in steps)
             {
-                if (action is CopyFileAction copyFile && copyFile.CheckTimestamp)
+                if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
                     remoteCommands.Add(new FetchMetadata { FilePath = new[] { copyFile.RemotePath } });
             }
 
@@ -137,7 +137,7 @@ namespace VSRAD.Package.Server
             {
                 if (!auxFile.CheckTimestamp)
                     continue;
-                if (auxFile.Type == ActionEnvironment.Remote)
+                if (auxFile.Type == StepEnvironment.Remote)
                     remoteCommands.Add(new FetchMetadata { FilePath = new[] { auxFile.Path } });
                 else
                     _initialTimestamps[auxFile.Path] = GetLocalFileTimestamp(auxFile.Path);

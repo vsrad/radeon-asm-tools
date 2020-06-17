@@ -7,16 +7,16 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
-    // Note: when adding a new action, don't forget to add the new type to ActionJsonConverter.
+    // Note: when adding a new step, don't forget to add the new type to ActionStepJsonConverter.
 
-    public interface IAction : INotifyPropertyChanged
+    public interface IActionStep : INotifyPropertyChanged
     {
         [JsonIgnore]
-        ActionEnvironment Environment { get; }
+        StepEnvironment Environment { get; }
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum ActionEnvironment
+    public enum StepEnvironment
     {
         Local, Remote
     }
@@ -27,9 +27,9 @@ namespace VSRAD.Package.Options
         LocalToRemote, RemoteToLocal
     }
 
-    public sealed class CopyFileAction : DefaultNotifyPropertyChanged, IAction
+    public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        public ActionEnvironment Environment => ActionEnvironment.Remote;
+        public StepEnvironment Environment => StepEnvironment.Remote;
 
         private FileCopyDirection _direction;
         public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
@@ -46,19 +46,19 @@ namespace VSRAD.Package.Options
         public override string ToString() => "Copy File";
 
         public override bool Equals(object obj) =>
-            obj is CopyFileAction action &&
-            LocalPath == action.LocalPath &&
-            RemotePath == action.RemotePath &&
-            CheckTimestamp == action.CheckTimestamp;
+            obj is CopyFileStep step &&
+            LocalPath == step.LocalPath &&
+            RemotePath == step.RemotePath &&
+            CheckTimestamp == step.CheckTimestamp;
 
         public override int GetHashCode() =>
             (LocalPath, RemotePath, CheckTimestamp).GetHashCode();
     }
 
-    public sealed class ExecuteAction : DefaultNotifyPropertyChanged, IAction
+    public sealed class ExecuteStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        private ActionEnvironment _type;
-        public ActionEnvironment Environment { get => _type; set => SetField(ref _type, value); }
+        private StepEnvironment _type;
+        public StepEnvironment Environment { get => _type; set => SetField(ref _type, value); }
 
         private string _executable = "";
         public string Executable { get => _executable; set => SetField(ref _executable, value); }
@@ -69,53 +69,53 @@ namespace VSRAD.Package.Options
         public override string ToString() => "Execute";
 
         public override bool Equals(object obj) =>
-            obj is ExecuteAction action &&
-            Environment == action.Environment &&
-            Executable == action.Executable &&
-            Arguments == action.Arguments;
+            obj is ExecuteStep step &&
+            Environment == step.Environment &&
+            Executable == step.Executable &&
+            Arguments == step.Arguments;
 
         public override int GetHashCode() =>
             (Environment, Executable, Arguments).GetHashCode();
     }
 
-    public sealed class ActionJsonConverter : JsonConverter
+    public sealed class ActionStepJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) =>
-            typeof(IAction).IsAssignableFrom(objectType);
+            typeof(IActionStep).IsAssignableFrom(objectType);
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var obj = JObject.Load(reader);
-            var action = InstantiateActionFromTypeField((string)obj["Type"]);
-            serializer.Populate(obj.CreateReader(), action);
-            return action;
+            var step = InstantiateStepFromTypeField((string)obj["Type"]);
+            serializer.Populate(obj.CreateReader(), step);
+            return step;
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var serialized = JObject.FromObject(value);
-            serialized["Type"] = GetActionType(value);
+            serialized["Type"] = GetStepType(value);
             serialized.WriteTo(writer);
         }
 
-        private static IAction InstantiateActionFromTypeField(string type)
+        private static IActionStep InstantiateStepFromTypeField(string type)
         {
             switch (type)
             {
-                case "Execute": return new ExecuteAction();
-                case "CopyFile": return new CopyFileAction();
+                case "Execute": return new ExecuteStep();
+                case "CopyFile": return new CopyFileStep();
             }
-            throw new ArgumentException($"Unknown action type identifer {type}", nameof(type));
+            throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
         }
 
-        private static string GetActionType(object action)
+        private static string GetStepType(object step)
         {
-            switch (action)
+            switch (step)
             {
-                case ExecuteAction _: return "Execute";
-                case CopyFileAction _: return "CopyFile";
+                case ExecuteStep _: return "Execute";
+                case CopyFileStep _: return "CopyFile";
             }
-            throw new ArgumentException($"Action type identifier is not defined for {action.GetType()}", nameof(action));
+            throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));
         }
     }
 }

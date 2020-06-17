@@ -113,8 +113,8 @@ namespace VSRAD.Package.Options
 
     public sealed class DebuggerProfileOptions
     {
-        [JsonProperty(ItemConverterType = typeof(ActionJsonConverter))]
-        public ObservableCollection<IAction> Actions { get; } = new ObservableCollection<IAction>();
+        [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
+        public ObservableCollection<IActionStep> Actions { get; } = new ObservableCollection<IActionStep>();
 
         [Macro(RadMacros.DebuggerExecutable)]
         [Description("Path to the debugger executable on the remote machine.")]

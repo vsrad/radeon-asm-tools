@@ -2,7 +2,7 @@
 {
     public sealed class BuiltinActionFile
     {
-        public ActionEnvironment Type { get; set; }
+        public StepEnvironment Type { get; set; }
 
         public string Path { get; set; }
 

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="VSRAD.Package.ProjectSystem.Profiles.ActionSequenceEditor"
+﻿<UserControl x:Class="VSRAD.Package.ProjectSystem.Profiles.ActionEditor"
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -16,12 +16,12 @@
         </Style>
     </d:DesignerProperties.DesignStyle>
     <d:UserControl.DataContext>
-        <local:ActionSequenceEditorDesignTimeCollection />
+        <local:ActionEditorDesignTimeCollection />
     </d:UserControl.DataContext>
     <UserControl.Resources>
-        <ObjectDataProvider x:Key="ActionTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider x:Key="StepTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
-                <x:Type TypeName="opts:ActionEnvironment"/>
+                <x:Type TypeName="opts:StepEnvironment"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <ObjectDataProvider x:Key="FileCopyDirections" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
@@ -29,7 +29,8 @@
                 <x:Type TypeName="opts:FileCopyDirection"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
-        <ControlTemplate x:Key="ActionExpander" TargetType="Expander">
+        <local:StepDescriptionConverter x:Key="StepDescriptionConverter"/>
+        <ControlTemplate x:Key="StepExpander" TargetType="Expander">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -44,7 +45,7 @@
                         <ControlTemplate TargetType="ToggleButton">
                             <DockPanel>
                                 <Path Name="Arrow" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 6 6 L 12 0 Z"/>
-                                <Label Height="22" Content="Heading" Padding="4,2" />
+                                <Label Height="22" Content="{Binding Converter={StaticResource StepDescriptionConverter}}" Padding="4,2" />
                             </DockPanel>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="ToggleButton.IsMouseOver" Value="false">
@@ -76,18 +77,18 @@
     </UserControl.Resources>
     <StackPanel Orientation="Vertical">
         <DockPanel Height="26" Margin="6,4">
-            <Label Content="Actions"/>
-            <Button x:Name="NewActionButton" Content="➕" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewActionPopup"/>
+            <Label Content="Steps"/>
+            <Button x:Name="NewStepButton" Content="➕" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewStepPopup"/>
         </DockPanel>
-        <Popup x:Name="NewActionPopup" PlacementTarget="{Binding ElementName=NewActionButton}" Placement="Left" StaysOpen="False">
+        <Popup x:Name="NewStepPopup" PlacementTarget="{Binding ElementName=NewStepButton}" Placement="Left" StaysOpen="False">
             <Menu Background="{DynamicResource {x:Static vsshell:VsBrushes.MenuKey}}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.MenuTextKey}}">
                 <Menu.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Vertical"/>
                     </ItemsPanelTemplate>
                 </Menu.ItemsPanel>
-                <MenuItem Header="Execute" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:ExecuteAction}" />
-                <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:CopyFileAction}" />
+                <MenuItem Header="Execute" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:ExecuteStep}" />
+                <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:CopyFileStep}" />
             </Menu>
         </Popup>
         <ListView ItemsSource="{Binding}" Height="200">
@@ -102,8 +103,8 @@
                 <Style TargetType="GridViewColumnHeader">
                     <Setter Property="Visibility" Value="Collapsed" />
                 </Style>
-                <DataTemplate DataType="{x:Type opts:CopyFileAction}">
-                    <Expander Template="{Binding Source={StaticResource ActionExpander}}" IsExpanded="True" Tag="{Binding}">
+                <DataTemplate DataType="{x:Type opts:CopyFileStep}">
+                    <Expander Tag="{Binding}" Template="{Binding Source={StaticResource StepExpander}}" IsExpanded="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*"/>
@@ -131,8 +132,8 @@
                         </Grid>
                     </Expander>
                 </DataTemplate>
-                <DataTemplate DataType="{x:Type opts:ExecuteAction}">
-                    <Expander Template="{Binding Source={StaticResource ActionExpander}}" IsExpanded="True" Tag="{Binding}">
+                <DataTemplate DataType="{x:Type opts:ExecuteStep}">
+                    <Expander Tag="{Binding}" Template="{Binding Source={StaticResource StepExpander}}" IsExpanded="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="1*"/>

@@ -167,8 +167,8 @@
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
-    <Compile Include="ProjectSystem\Profiles\ActionSequenceEditor.xaml.cs">
-      <DependentUpon>ActionSequenceEditor.xaml</DependentUpon>
+    <Compile Include="ProjectSystem\Profiles\ActionEditor.xaml.cs">
+      <DependentUpon>ActionEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
@@ -184,7 +184,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
-    <Compile Include="Server\ActionSequenceRunner.cs" />
+    <Compile Include="Server\ActionRunner.cs" />
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
@@ -367,7 +367,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ProjectSystem\Profiles\ActionSequenceEditor.xaml">
+    <Page Include="ProjectSystem\Profiles\ActionEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
