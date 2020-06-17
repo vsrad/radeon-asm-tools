@@ -44,9 +44,6 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
             TableHost.Setup(_table);
             RestoreSavedState();
-
-            Application.Current.Activated += (sender, e) => WindowFocusChanged(hasFocus: true);
-            Application.Current.Deactivated += (sender, e) => WindowFocusChanged(hasFocus: false);
         }
 
         public void WindowFocusChanged(bool hasFocus) =>
