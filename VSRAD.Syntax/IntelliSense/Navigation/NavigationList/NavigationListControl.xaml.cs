@@ -20,15 +20,22 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
         public async Task UpdateNavigationListAsync(IEnumerable<NavigationToken> navitaionList)
         {
-            var definitionlist = navitaionList
+            var definitionGroups = navitaionList
                 .Select(n => new DefinitionToken(n))
+                .GroupBy(d => d.FilePath)
                 .ToList();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            navigationTokens.Items.Clear();
-            foreach (var token in definitionlist)
+            NavigationTokens.Items.Clear();
+            foreach (var group in definitionGroups)
             {
-                navigationTokens.Items.Add(token);
+                var navigationListGroupItem = new NavigationListItem(group.Key);
+                foreach (var definitionItem in group)
+                {
+                    navigationListGroupItem.Items.Add(new NavigationListDefinitionItem(definitionItem));
+                }
+
+                NavigationTokens.Items.Add(navigationListGroupItem);
             }
         }
 
@@ -48,8 +55,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
         {
             try
             {
-                var navigationToken = (DefinitionToken)navigationTokens.SelectedItem;
-                _navigationTokenService.GoToPoint(navigationToken.NavigationToken);
+                if (NavigationTokens.SelectedItem is NavigationListDefinitionItem item)
+                    _navigationTokenService.GoToPoint(item.DefinitionToken.NavigationToken);
             }
             catch (Exception e)
             {

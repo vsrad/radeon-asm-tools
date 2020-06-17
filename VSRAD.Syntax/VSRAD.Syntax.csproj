@@ -114,6 +114,8 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListControl.xaml.cs">
       <DependentUpon>NavigationListControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListItem.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
