@@ -15,9 +15,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public Options.ProjectOptions Options { get; }
 
-        private int _subgroupSize = 64;
-        public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
-
         private int _groupsInRow = 1;
         public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
 
@@ -90,7 +87,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             switch (propertyName)
             {
-                case nameof(SubgroupSize):
                 case nameof(GroupsInRow):
                 case nameof(SelectedWatch):
                 case nameof(SelectedType):
