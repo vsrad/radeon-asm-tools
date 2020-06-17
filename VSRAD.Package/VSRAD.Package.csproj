@@ -158,6 +158,7 @@
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
     <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceCellStyling.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceColumnStyling.cs" />
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceRowStyling.cs" />
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml.cs">
       <DependentUpon>SliceVisualizerControl.xaml</DependentUpon>

@@ -122,6 +122,16 @@
           <LocCanonicalName>RadDebug.DisassembleAction</LocCanonicalName>
         </Strings>
       </Button>
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="disassemblyIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Disassemble file</ButtonText>
+        </Strings>
+      </Button>
       <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="7" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="preprocessIcon" />
@@ -132,6 +142,16 @@
           <ButtonText>Preprocess File</ButtonText>
           <CanonicalName>RadDebug.PreprocessAction</CanonicalName>
           <LocCanonicalName>RadDebug.PreprocessAction</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="preprocessIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Preprocess file</ButtonText>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DebugActionCommandId" priority="8" type="Button">

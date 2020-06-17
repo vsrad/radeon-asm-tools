@@ -27,6 +27,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             switch (e.PropertyName)
             {
                 case nameof(Options.SliceVisualizerOptions.VisibleColumns):
+                case nameof(Options.SliceVisualizerOptions.SubgroupSize):
+                    _table.ColumnStyling.Recompute(
+                        _context.Options.SliceVisualizerOptions.SubgroupSize,
+                        _context.Options.SliceVisualizerOptions.VisibleColumns
+                    );
                     break;
                 default:
                     break;

@@ -9,6 +9,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public TypedSliceWatchView SelectedWatch { get; private set; }
         public bool HeatMapMode { get; private set; }
+        public SliceColumnStyling ColumnStyling { get; private set; }
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
@@ -26,6 +27,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
             HeatMapMode = false;
+            ColumnStyling = new SliceColumnStyling(this);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             _state = new TableState(this, 60);
