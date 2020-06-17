@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -10,47 +9,6 @@ using VSRAD.Package.Options;
 
 namespace VSRAD.Package.Server
 {
-    public sealed class ActionRunResult
-    {
-        public long[] StepRunMillis { get; }
-        public long InitTimestampFetchMillis { get; private set; }
-        public long TotalMillis { get; private set; }
-
-        public (bool success, string log)[] StepResults { get; }
-
-        public bool Successful => StepResults.All((r) => r.success);
-
-        private readonly Stopwatch _stopwatch;
-        private long _lastRecordedTime;
-
-        public ActionRunResult(int stepCount)
-        {
-            StepRunMillis = new long[stepCount];
-            StepResults = new (bool success, string log)[stepCount];
-            _stopwatch = Stopwatch.StartNew();
-        }
-
-        public void RecordInitTimestampFetch() =>
-            InitTimestampFetchMillis = MeasureInterval();
-
-        public void RecordStep(int stepIndex, (bool, string) status)
-        {
-            StepRunMillis[stepIndex] = MeasureInterval();
-            StepResults[stepIndex] = status;
-        }
-
-        public void FinishRun() =>
-            TotalMillis = _stopwatch.ElapsedMilliseconds;
-
-        private long MeasureInterval()
-        {
-            var currentTime = _stopwatch.ElapsedMilliseconds;
-            var elapsed = currentTime - _lastRecordedTime;
-            _lastRecordedTime = currentTime;
-            return elapsed;
-        }
-    }
-
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
@@ -73,20 +31,20 @@ namespace VSRAD.Package.Server
 
             for (int i = 0; i < steps.Count; ++i)
             {
-                (bool success, string log) status;
+                StepResult result;
                 switch (steps[i])
                 {
                     case CopyFileStep copyFile:
-                        status = await DoCopyFileAsync(copyFile);
+                        result = await DoCopyFileAsync(copyFile);
                         break;
                     case ExecuteStep execute:
-                        status = await DoExecuteAsync(execute);
+                        result = await DoExecuteAsync(execute);
                         break;
                     default:
                         throw new NotImplementedException();
                 }
-                runStats.RecordStep(i, status);
-                if (!status.success)
+                runStats.RecordStep(i, result);
+                if (!result.Successful)
                     break;
             }
 
@@ -94,22 +52,22 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<(bool success, string log)> DoCopyFileAsync(CopyFileStep step)
+        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
             if (step.Direction == FileCopyDirection.LocalToRemote)
                 throw new NotImplementedException();
 
             var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { step.RemotePath } });
             if (response.Status == FetchStatus.FileNotFound)
-                return (false, $"File is not found on the remote machine at {step.RemotePath}");
+                return new StepResult(false, $"File is not found on the remote machine at {step.RemotePath}", "");
             if (step.CheckTimestamp && GetInitialFileTimestamp(step.RemotePath) == response.Timestamp)
-                return (false, $"File is not changed on the remote machine at {step.RemotePath}");
-            File.WriteAllBytes(step.LocalPath, response.Data);
+                return new StepResult(false, $"File is not changed on the remote machine at {step.RemotePath}", "");
 
-            return (true, $"Copied {step.RemotePath} to {step.LocalPath}");
+            File.WriteAllBytes(step.LocalPath, response.Data);
+            return new StepResult(true, "", "");
         }
 
-        private async Task<(bool success, string log)> DoExecuteAsync(ExecuteStep step)
+        private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
         {
             if (step.Environment == StepEnvironment.Local)
                 throw new NotImplementedException();
@@ -120,7 +78,30 @@ namespace VSRAD.Package.Server
                 Arguments = step.Arguments,
             });
 
-            return (true, "");
+            var log = new StringBuilder();
+            var status = response.Status == ExecutionStatus.Completed ? $"exit code {response.ExitCode}"
+                       : response.Status == ExecutionStatus.TimedOut ? "timed out"
+                       : "could not launch";
+            var stdout = response.Stdout.TrimEnd('\r', '\n');
+            var stderr = response.Stderr.TrimEnd('\r', '\n');
+            if (stdout.Length == 0 && stderr.Length == 0)
+                log.AppendFormat("No stdout/stderr captured ({0})\r\n", status);
+            if (stdout.Length != 0)
+                log.AppendFormat("Captured stdout ({0}):\r\n{1}\r\n", status, stdout);
+            if (stderr.Length != 0)
+                log.AppendFormat("Captured stderr ({0}):\r\n{1}\r\n", status, stderr);
+
+            switch (response.Status)
+            {
+                case ExecutionStatus.Completed when response.ExitCode == 0:
+                    return new StepResult(true, "", log.ToString());
+                case ExecutionStatus.Completed:
+                    return new StepResult(true, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString());
+                case ExecutionStatus.TimedOut:
+                    return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the remote machine is terminated.", log.ToString());
+                default:
+                    return new StepResult(false, $"{step.Executable} process could not be started on the remote machine. Make sure the path to the executable is specified correctly.", log.ToString());
+            }
         }
 
         private async Task FillInitialTimestampsAsync(IList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)

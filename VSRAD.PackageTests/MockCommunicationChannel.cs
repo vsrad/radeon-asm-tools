@@ -60,7 +60,7 @@ namespace VSRAD.PackageTests
             where TResponse : IResponse =>
             _replyInteractions.Enqueue((response, null));
 
-        public void ThenRespond(IResponse[] response, Action<List<ICommand>> callback) =>
+        public void ThenRespond(IResponse[] response, Action<List<ICommand>> callback = null) =>
             _bundledInteractions.Enqueue((response, callback));
 
         public void ThenExpect<TCommand>(Action<TCommand> processCallback)
