@@ -31,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer
             GroupSize = groupSize;
 
             Array.Clear(ColumnState, 0, ColumnState.Length);
-            foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns))
+            foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)groupSize))
                 ColumnState[i] |= ColumnStates.Visible;
 
             ComputeInactiveLanes(options, system);

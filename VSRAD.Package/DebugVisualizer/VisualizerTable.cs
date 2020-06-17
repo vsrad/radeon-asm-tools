@@ -318,8 +318,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void ApplyDataStyling(ProjectOptions options, uint groupSize, Server.WatchView system)
         {
-            // Prevent the scrollbar from jerking due to visibility changes
-            var scrollingOffset = HorizontalScrollingOffset;
             ((Control)this).SuspendDrawing();
             _disableColumnWidthChangeHandler = true;
 
@@ -339,7 +337,6 @@ namespace VSRAD.Package.DebugVisualizer
 
             _disableColumnWidthChangeHandler = false;
             ((Control)this).ResumeDrawing();
-            HorizontalScrollingOffset = scrollingOffset;
         }
 
         private void ApplyFontAndColorInfo()
