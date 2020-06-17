@@ -26,8 +26,6 @@ namespace VSRAD.Package.DebugVisualizer
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
 
-        public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
-
         public bool ShowSystemRow
         {
             get => Rows.Count > 0 && Rows[0].Visible;
@@ -96,6 +94,8 @@ namespace VSRAD.Package.DebugVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
         }
+
+        public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
 
         public void ScaleControls(float scaleFactor)
         {

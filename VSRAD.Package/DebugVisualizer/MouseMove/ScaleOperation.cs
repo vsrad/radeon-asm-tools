@@ -11,10 +11,12 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
     {
         public int TableDataAreaWidth;
         public int VisibleColumnsToLeft;
+        public int VisibleColumnsToLeftOutOfView;
         public int FirstVisibleIndex;
         public int LastVisibleIndex;
         public int CurrentWidth;
         public DataGridViewColumn TargetColumn;
+        public DataGridViewColumn FirstVisibleColumn;
 
         public bool FirstIsTarget => TargetColumn.Index == FirstVisibleIndex;
     }
@@ -26,6 +28,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private ScaleState _scaleState;
 
         private ColumnLockScaling _columnLockScaling;
+        private ViewLockScaling _viewLockScaling;
 
         private const int _maxDistanceFromDivider = 7;
 
@@ -38,6 +41,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _tableState = state;
             _scaleState = new ScaleState();
             _columnLockScaling = new ColumnLockScaling(_table, _tableState, _scaleState);
+            _viewLockScaling = new ViewLockScaling(_table, _tableState, _scaleState);
         }
 
         public bool OperationStarted() => _operationStarted;
@@ -62,7 +66,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _scaleState.VisibleColumnsToLeft = _tableState.DataColumns.Count(c => c.Visible && c.Index < index);
             _scaleState.FirstVisibleIndex = _tableState.GetFirstVisibleDataColumnIndex();
             _scaleState.LastVisibleIndex = _tableState.GetLastVisibleDataColumnIndex();
+            _scaleState.VisibleColumnsToLeftOutOfView = _tableState.DataColumns.Count(c => c.Visible && c.Index < _tableState.GetFirstDisplayedColumnIndex());
             _scaleState.TargetColumn = _table.Columns[index];
+            _scaleState.FirstVisibleColumn = _table.Columns[_scaleState.FirstVisibleIndex];
             _scaleState.CurrentWidth = _tableState.ColumnWidth;
 
 #if DEBUG
@@ -89,14 +95,21 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if ((e.Button & MouseButtons.Left) != MouseButtons.Left)
             {
                 // Check scaling mode
-                _columnLockScaling.NormalizeSpecialColumnsWidth();
+                //_columnLockScaling.NormalizeSpecialColumnsWidth();
                 return false;
             }
             var x = Cursor.Position.X;
             var diff = x - _lastX;
 
-            // Check scaling mode
-            _columnLockScaling.ApplyScaling(diff);
+            switch (_tableState.ScalingMode)
+            {
+                case ScalingMode.ResizeColumn:
+                    _columnLockScaling.ApplyScaling(diff);
+                    break;
+                default:
+                    _viewLockScaling.ApplyScaling(diff);
+                    break;
+            }
 
             _lastX = x;
             _operationStarted = true;

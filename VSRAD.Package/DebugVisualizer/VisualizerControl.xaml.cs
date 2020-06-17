@@ -41,7 +41,7 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
-            _table.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
+            _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
 
@@ -113,7 +113,7 @@ namespace VSRAD.Package.DebugVisualizer
                     _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
                     break;
                 case nameof(Options.VisualizerAppearance.ScalingMode):
-                    _table.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
+                    _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.LaneGrouping):
