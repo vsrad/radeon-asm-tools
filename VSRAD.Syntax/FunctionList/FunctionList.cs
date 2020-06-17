@@ -66,24 +66,13 @@ namespace VSRAD.Syntax.FunctionList
             if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
             {
                 var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
-                if (VsShellUtilities.IsDocumentOpen(
-                  this,
-                  openWindowPath,
-                  Guid.Empty,
-                  out _,
-                  out _,
-                  out var windowFrame))
+                if (Utils.IsDocumentOpen(this, openWindowPath, out var buffer))
                 {
-                    var view = VsShellUtilities.GetTextView(windowFrame);
-                    if (view.GetBuffer(out var lines) == 0)
-                    {
-                        if (lines is IVsTextBuffer buffer)
-                        {
-                            var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
-                            if (textBuffer.CurrentSnapshot.IsRadeonAsmContentType())
-                                UpdateFunctionList(textBuffer);
-                        }
-                    }
+                    var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
+                    var asmType = textBuffer.CurrentSnapshot.GetAsmType();
+
+                    if (asmType == AsmType.RadAsm || asmType == AsmType.RadAsm2)
+                        UpdateFunctionList(textBuffer);
                 }
             }
         }

@@ -49,7 +49,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private readonly ITextView _view;
         private readonly ITextBuffer _buffer;
         private readonly DocumentAnalysis _documentAnalysis;
-        private readonly NavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationTokenService;
 
         private NormalizedSnapshotSpanCollection wordSpans;
         private SnapshotSpan? navigationWordSpans;
@@ -60,7 +60,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         internal HighlightWordTagger(ITextView view, 
             ITextBuffer sourceBuffer, 
             DocumentAnalysis documentAnalysis,
-            NavigationTokenService definitionService)
+            INavigationTokenService definitionService)
         {
             _view = view;
             _buffer = sourceBuffer;
@@ -135,12 +135,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return;
 
             cancellation.ThrowIfCancellationRequested();
-            var navigationItem = _navigationTokenService.GetNaviationItem(word).AnalysisToken;
-            if (navigationItem == null || navigationItem.Type == RadAsmTokenType.Instruction)
+            var navigationItems = _navigationTokenService.GetNaviationItem(word);
+            if (navigationItems.Count != 1)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;
             }
+            var navigationItem = navigationItems[0].AnalysisToken;
             var navigationTokenSpan =  new SnapshotSpan(version, navigationItem.TrackingToken.GetSpan(version));
 
             cancellation.ThrowIfCancellationRequested();

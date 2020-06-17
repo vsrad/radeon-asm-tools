@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
@@ -11,11 +11,11 @@ namespace VSRAD.Syntax.IntelliSense.Peek
     {
         private readonly IPeekResultFactory _peekResultFactory;
         private readonly ITextDocumentFactoryService _textDocumentFactory;
-        private readonly NavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationTokenService;
 
         public PeekableItemSource(IPeekResultFactory peekResultFactory,
             ITextDocumentFactoryService textDocumentFactory,
-            NavigationTokenService definitionService)
+            INavigationTokenService definitionService)
         {
             _peekResultFactory = peekResultFactory ?? throw new ArgumentNullException(nameof(peekResultFactory));
             _textDocumentFactory = textDocumentFactory ?? throw new ArgumentNullException(nameof(textDocumentFactory));
@@ -42,10 +42,10 @@ namespace VSRAD.Syntax.IntelliSense.Peek
         {
             if (view != null)
             {
-                var extent = NavigationTokenService.GetTextExtentOnCursor(view);
-                var token = _navigationTokenService.GetNaviationItem(extent, true);
-                if (token != NavigationToken.Empty)
-                    return new PeekableItem(peekResultFactory, _textDocumentFactory, token.Snapshot, token.AnalysisToken);
+                var extent = view.GetTextExtentOnCursor();
+                var tokens = _navigationTokenService.GetNaviationItem(extent, true);
+                if (tokens.Count == 1)
+                    return new PeekableItem(peekResultFactory, _textDocumentFactory, tokens[0].Snapshot, tokens[0].AnalysisToken);
             }
             return null;
         }

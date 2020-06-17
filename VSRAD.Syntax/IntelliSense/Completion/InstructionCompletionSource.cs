@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
 
@@ -28,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _completions = ImmutableArray<CompletionItem>.Empty;
             instructionListManager.InstructionUpdated += InstructionUpdated;
 
-            InstructionUpdated(instructionListManager.InstructionList);
+            InstructionUpdated(instructionListManager.InstructionList.Keys.ToList());
             DisplayOptionsUpdated(optionsProvider);
         }
 

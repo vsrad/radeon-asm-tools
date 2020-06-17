@@ -1,10 +1,15 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.Parser;
+using Task = System.Threading.Tasks.Task;
+using Microsoft.VisualStudio.Utilities;
 
 namespace VSRAD.Syntax.Options
 {
@@ -14,17 +19,27 @@ namespace VSRAD.Syntax.Options
         public delegate void InstructionsUpdateDelegate(IReadOnlyList<string> instructions);
         public event InstructionsUpdateDelegate InstructionUpdated;
 
-        public List<string> InstructionList { get; }
+        private readonly RadeonServiceProvider _serviceProvider;
+        private readonly OptionsProvider _optionsProvider;
+        private readonly IContentType _contentType;
+        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+
+        public Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>> InstructionList { get; }
 
         [ImportingConstructor]
-        public InstructionListManager(OptionsProvider optionsEventProvider)
+        public InstructionListManager(OptionsProvider optionsEventProvider, RadeonServiceProvider serviceProvider)
         {
-            InstructionList = new List<string>();
-            optionsEventProvider.OptionsUpdated += InstructionPathsUpdated;
+            _serviceProvider = serviceProvider;
+            _optionsProvider = optionsEventProvider;
+            _contentType = _serviceProvider.ContentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
+
+            _documentAnalysisProvoder = new DocumentAnalysisProvoder(this);
+            InstructionList = new Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>>();
+            _optionsProvider.OptionsUpdated += InstructionPathsUpdated;
         }
 
         private void InstructionPathsUpdated(OptionsProvider provider) =>
-            Microsoft.VisualStudio.Shell.ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
 
         public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {
@@ -41,7 +56,7 @@ namespace VSRAD.Syntax.Options
                 LoadInstructionsFromDirectory(path);
             }
 
-            InstructionUpdated?.Invoke(InstructionList);
+            InstructionUpdated?.Invoke(InstructionList.Keys.ToList());
             return Task.CompletedTask;
         }
 
@@ -51,26 +66,51 @@ namespace VSRAD.Syntax.Options
             {
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
-                    if (Path.GetExtension(filepath) == Constants.InstructionsFileExtension)
-                        LoadInstructionsFromFile(filepath);
+                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
+                    {
+                        LoadInstructionsFromFile(filepath, AsmType.RadAsm);
+                    }
+                    else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
+                    {
+                        LoadInstructionsFromFile(filepath, AsmType.RadAsm2);
+                    }
                 }
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Error.ShowError(e, "instrunction folder paths");
             }
         }
 
-        private void LoadInstructionsFromFile(string path)
+        private void LoadInstructionsFromFile(string path, AsmType asmType)
         {
             try
             {
-                using (var fileStream = File.OpenRead(path))
-                using (var streamReader = new StreamReader(fileStream))
+                var buffer = CreateTextDocument(path);
+                if (buffer == null)
+                    throw new InvalidDataException($"Cannot create ITextBuffer for the {path}");
+
+                var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(buffer);
+                if (documentAnalysis.LastParserResult.Count > 0)
                 {
-                    string line;
-                    while ((line = streamReader.ReadLine()) != null)
+                    var instructions = documentAnalysis
+                        .LastParserResult[0]
+                        .Tokens
+                        .Where(t => t.Type == Parser.Tokens.RadAsmTokenType.Instruction);
+
+                    var version = documentAnalysis.CurrentSnapshot;
+                    foreach (var instruction in instructions)
                     {
-                        InstructionList.Add(line.Trim());
+                        var text = instruction.TrackingToken.GetText(version);
+                        var pair = new KeyValuePair<NavigationToken, AsmType>(new NavigationToken(instruction, version), asmType);
+                        if (InstructionList.TryGetValue(text, out var navigationTokens))
+                        {
+                            navigationTokens.Add(pair);
+                        }
+                        else
+                        {
+                            InstructionList.Add(text, new List<KeyValuePair<NavigationToken, AsmType>>() { pair });
+                        }
                     }
                 }
             }
@@ -78,6 +118,12 @@ namespace VSRAD.Syntax.Options
             {
                 Error.ShowError(e, "instrunction file paths");
             }
+        }
+
+        private ITextBuffer CreateTextDocument(string name)
+        {
+            var document = _serviceProvider.TextDocumentFactoryService.CreateAndLoadTextDocument(name, _contentType);
+            return document.TextBuffer;
         }
     }
 }

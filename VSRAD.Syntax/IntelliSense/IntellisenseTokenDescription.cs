@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.IntelliSense
                 if (fb == null)
                     return null;
 
-                var addBrackets = version.IsRadeonAsm2ContentType();
+                var addBrackets = version.GetAsmType() == AsmType.RadAsm2;
                 var nameTextRuns = new List<ClassifiedTextRun>()
                 {
                     new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Functions, token.TrackingToken.GetText(version)),
@@ -168,14 +168,14 @@ namespace VSRAD.Syntax.IntelliSense
 
         private static bool GetDescriptionFromComment(DocumentAnalysis documentAnalysis, ITextSnapshot version, IEnumerable<TrackingToken> tokens, out string description)
         {
-            var commentTokens = tokens.Where(t => t.Type == documentAnalysis.LINE_COMMENT || t.Type == documentAnalysis.LINE_COMMENT);
+            var commentTokens = tokens.Where(t => t.Type == documentAnalysis.LINE_COMMENT || t.Type == documentAnalysis.BLOCK_COMMENT);
 
             if (commentTokens.Any())
             {
                 description = commentTokens
                     .First()
                     .GetText(version)
-                    .Trim(new char[] { '/', '*', ' ' });
+                    .Trim(new char[] { '/', '*', ' ', '\r', '\n' });
                 return true;
             }
             else

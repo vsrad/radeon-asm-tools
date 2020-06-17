@@ -96,6 +96,7 @@
     <Compile Include="Helpers\ParserResultExtension.cs" />
     <Compile Include="Helpers\SnapshotPointExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
+    <Compile Include="Helpers\Utils.cs" />
     <Compile Include="IntelliSense\Completion\BasicCompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
     <Compile Include="IntelliSense\Completion\FunctionCompletionSource.cs" />
@@ -107,10 +108,15 @@
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
-    <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
-    <Compile Include="Options\BaseOptionPage.cs">
-      <SubType>Component</SubType>
+    <Compile Include="IntelliSense\Navigation\NavigationList\DefinitionToken.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationList.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListCommand.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListControl.xaml.cs">
+      <DependentUpon>NavigationListControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListItem.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\InstructionListManager.cs" />
@@ -126,6 +132,12 @@
     <Compile Include="Parser\Parser.cs" />
     <Compile Include="Parser\Helper\SortedSet.cs" />
     <Compile Include="Parser\Helper\SortedSetHelper.cs" />
+    <Compile Include="Parser\RadAsm2\Asm2Parser.cs" />
+    <Compile Include="Parser\RadAsm2\Asm2Lexer.cs" />
+    <Compile Include="Parser\RadAsmDoc\AsmDocLexer.cs" />
+    <Compile Include="Parser\RadAsmDoc\AsmDocParser.cs" />
+    <Compile Include="Parser\RadAsm\AsmLexer.cs" />
+    <Compile Include="Parser\RadAsm\AsmParser.cs" />
     <Compile Include="Parser\Tokens\AnalysisToken.cs" />
     <Compile Include="Parser\Tokens\TokenSpan.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
@@ -177,6 +189,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="FunctionList\FunctionListControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IntelliSense\Navigation\NavigationList\NavigationListControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -247,7 +263,7 @@
       <Version>15.9.28307</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
-      <Version>15.8.209</Version>
+      <Version>16.4.45</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.2</Version>
@@ -265,5 +281,4 @@
       <Name>VSRAD.SyntaxParser</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
 </Project>
