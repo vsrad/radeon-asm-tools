@@ -3,7 +3,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 
 namespace VSRAD.Package.Options
@@ -114,7 +113,11 @@ namespace VSRAD.Package.Options
     public sealed class DebuggerProfileOptions
     {
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
-        public ObservableCollection<IActionStep> Actions { get; } = new ObservableCollection<IActionStep>();
+        public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
+
+        public BuiltinActionFile OutputFile { get; }
+        public BuiltinActionFile WatchesFile { get; }
+        public BuiltinActionFile StatusFile { get; }
 
         [Macro(RadMacros.DebuggerExecutable)]
         [Description("Path to the debugger executable on the remote machine.")]
@@ -166,8 +169,9 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public OutputFile StatusStringFile => new OutputFile(WorkingDirectory, StatusStringFilePath);
 
-        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
-            new DebuggerProfileOptions(
+        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator)
+        {
+            var evaluated = new DebuggerProfileOptions(
                 executable: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerExecutable),
                 arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerArguments),
                 workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerWorkingDirectory),
@@ -178,9 +182,16 @@ namespace VSRAD.Package.Options
                 timeoutSecs: TimeoutSecs,
                 parseValidWatches: ParseValidWatches,
                 validWatchesFilePath: ValidWatchesFilePath,
-                statusStringFilePath: StatusStringFilePath);
+                statusStringFilePath: StatusStringFilePath,
+                outputFile: OutputFile,
+                watchesFile: WatchesFile,
+                statusFile: StatusFile);
+            foreach (var step in Steps)
+                evaluated.Steps.Add(step);
+            return evaluated;
+        }
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, string statusStringFilePath = DefaultOptionValues.DebuggerStatusStringFilePath)
+        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, string statusStringFilePath = DefaultOptionValues.DebuggerStatusStringFilePath, BuiltinActionFile outputFile = null, BuiltinActionFile watchesFile = null, BuiltinActionFile statusFile = null)
         {
             Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
             Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
@@ -193,6 +204,9 @@ namespace VSRAD.Package.Options
             ParseValidWatches = parseValidWatches;
             ValidWatchesFilePath = validWatchesFilePath;
             StatusStringFilePath = statusStringFilePath;
+            OutputFile = outputFile ?? new BuiltinActionFile();
+            WatchesFile = watchesFile ?? new BuiltinActionFile();
+            StatusFile = statusFile ?? new BuiltinActionFile();
         }
 
         public override string ToString() => "Debugger";

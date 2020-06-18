@@ -113,12 +113,13 @@ namespace VSRAD.Package.ProjectSystem
                 var result = await _debugSession.ExecuteAsync(breakLines, watches);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-                if (!result.TryGetResult(out var breakState, out var error))
-                    Errors.Show(error);
-                else if (breakState.ExitCode != 0)
-                    Errors.ShowWarning(RemoteCommandExecutor.ErrorNonZeroExitCode("RAD Debugger", breakState.ExitCode));
+                throw new NotImplementedException();
+                //if (!result.TryGetResult(out var breakState, out var error))
+                //    Errors.Show(error);
+                //else if (breakState.ExitCode != 0)
+                //    Errors.ShowWarning(RemoteCommandExecutor.ErrorNonZeroExitCode("RAD Debugger", breakState.ExitCode));
 
-                RaiseExecutionCompleted(breakState);
+                RaiseExecutionCompleted(null);
             },
             exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(null));
         }

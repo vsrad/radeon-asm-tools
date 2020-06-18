@@ -1,12 +1,10 @@
 ﻿using Moq;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using VSRAD.DebugServer.IPC.Commands;
+using System.Text;
 using VSRAD.DebugServer.IPC.Responses;
-using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Options;
 using VSRAD.Package.Server;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
@@ -20,60 +18,53 @@ namespace VSRAD.PackageTests.Server
         public async Task SuccessfulRunTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>()
+            var project = TestHelper.MakeProjectWithProfile().Object;
+            project.Options.AddProfile("Default", new ProfileOptions());
+            project.Options.Profile.Debugger.Steps.Add(new ExecuteStep { Executable = "va11" });
+            project.Options.Profile.Debugger.OutputFile.CheckTimestamp = true;
+            project.Options.Profile.Debugger.OutputFile.Path = "/glitch/city";
+            project.Options.Profile.Debugger.WatchesFile.CheckTimestamp = false;
+            project.Options.Profile.Debugger.WatchesFile.Path = "/glitch/city/bar";
+
+            // Init timestamp fetch (output file)
+            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
+            channel.ThenRespond(new IResponse[]
             {
-                { RadMacros.DebuggerWorkingDirectory, "/glitch/city" },
-                { RadMacros.DebuggerOutputPath, "va11" }
-            }).Object;
+                new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("jill\njulianne") }, // valid watches
+                new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now } // output
+            });
 
-            var outputWindow = new Mock<IOutputWindowManager>();
-            outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
-            var errorListManager = new Mock<IErrorListManager>();
-            errorListManager.Setup((m) => m.AddToErrorListAsync("")).Returns(Task.CompletedTask);
-            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, outputWindow.Object, errorListManager.Object);
-
-            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
-                (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
-            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (_) => { });
-            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now },
-                (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
-
-            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
-            Assert.True(result.TryGetResult(out var breakState, out _));
+            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, null, null);
+            var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "invalid", "watches" }.ToList()));
+            Assert.True(channel.AllInteractionsHandled);
+            Assert.Null(result.Error);
+            var breakState = result.SuccessfulState;
             Assert.Collection(breakState.Data.Watches,
                 (first) => Assert.Equal("jill", first),
                 (second) => Assert.Equal("julianne", second));
-
-            Assert.True(channel.AllInteractionsHandled);
         }
 
         [Fact]
         public async Task NonZeroExitCodeTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var project = TestHelper.MakeProjectWithProfile(new Dictionary<string, string>()
-            {
-                { RadMacros.DebuggerWorkingDirectory, "/glitch/city" },
-                { RadMacros.DebuggerOutputPath, "va11" }
-            }).Object;
+            var project = TestHelper.MakeProjectWithProfile().Object;
+            project.Options.AddProfile("Default", new ProfileOptions());
+            project.Options.Profile.Debugger.Steps.Add(new ExecuteStep { Executable = "va11" });
+            project.Options.Profile.Debugger.OutputFile.CheckTimestamp = true;
+            project.Options.Profile.Debugger.OutputFile.Path = "/glitch/city";
 
-            var outputWindow = new Mock<IOutputWindowManager>();
-            outputWindow.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
-            var errorListManager = new Mock<IErrorListManager>();
-            errorListManager.Setup((m) => m.AddToErrorListAsync("")).Returns(Task.CompletedTask);
-            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, outputWindow.Object, errorListManager.Object);
+            // Init timestamp fetch (output file)
+            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 33 });
+            channel.ThenRespond(new IResponse[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now } });
 
-            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.FileNotFound },
-                (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
-            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 33 }, (_) => { });
-            channel.ThenRespond<FetchMetadata, MetadataFetched>(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now },
-                (command) => Assert.Equal(new[] { "/glitch/city", "va11" }, command.FilePath));
-
+            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, null, null);
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
-            Assert.True(result.TryGetResult(out var breakState, out var error));
-            Assert.Equal(33, breakState.ExitCode);
-
             Assert.True(channel.AllInteractionsHandled);
+            Assert.Null(result.Error);
+            Assert.Equal("va11 process exited with a non-zero code (33). Check your application or debug script output in Output -> RAD Debug.", result.ActionResult.StepResults[0].Warning);
         }
     }
 }

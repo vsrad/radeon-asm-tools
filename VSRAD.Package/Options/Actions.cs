@@ -18,13 +18,13 @@ namespace VSRAD.Package.Options
     [JsonConverter(typeof(StringEnumConverter))]
     public enum StepEnvironment
     {
-        Local, Remote
+        Remote, Local
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
     public enum FileCopyDirection
     {
-        LocalToRemote, RemoteToLocal
+        RemoteToLocal, LocalToRemote
     }
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep

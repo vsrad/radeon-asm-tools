@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
@@ -14,7 +17,6 @@ namespace VSRAD.Package.Server
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
         private readonly IFileSynchronizationManager _fileSynchronizationManager;
-        private readonly RemoteCommandExecutor _remoteExecutor;
 
         public DebugSession(
             IProject project,
@@ -26,116 +28,85 @@ namespace VSRAD.Package.Server
             _project = project;
             _channel = channel;
             _fileSynchronizationManager = fileSynchronizationManager;
-            _remoteExecutor = new RemoteCommandExecutor("Debugger", channel, outputWindowManager, errorListManager);
         }
 
-        public async Task<Result<BreakState>> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
+        public async Task<DebugRunResult> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
         {
             var execTimer = Stopwatch.StartNew();
-
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
-            var outputFile = options.RemoteOutputFile;
-
-            var initOutputTimestamp = (await GetMetadataAsync(outputFile).ConfigureAwait(false)).Timestamp;
-            var initValidWatchesTimestamp = options.ParseValidWatches
-                ? (await GetMetadataAsync(options.ValidWatchesFile).ConfigureAwait(false)).Timestamp
-                : default;
-
-            var initStatusStringTimestamp = !string.IsNullOrEmpty(options.StatusStringFilePath)
-                ? (await GetMetadataAsync(options.ValidWatchesFile).ConfigureAwait(false)).Timestamp
-                : default;
 
             await _fileSynchronizationManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
-            var executionResult = await _remoteExecutor.ExecuteAsync(
-                new Execute
-                {
-                    Executable = options.Executable,
-                    Arguments = options.Arguments,
-                    RunAsAdministrator = options.RunAsAdmin,
-                    ExecutionTimeoutSecs = options.TimeoutSecs,
-                    WorkingDirectory = options.RemoteOutputFile.Directory
-                }, checkExitCode: false).ConfigureAwait(false);
+            var runner = new ActionRunner(_channel);
+            var result = await runner.RunAsync(options.Steps, new[] { options.OutputFile, options.WatchesFile, options.StatusFile }).ConfigureAwait(false);
 
-            if (!executionResult.TryGetResult(out var execution, out var error))
-                return error;
+            if (!result.Successful)
+                return new DebugRunResult(result, null, null);
 
-            if (options.ParseValidWatches)
+            var fetchCommands = new List<ICommand>();
+            if (!string.IsNullOrEmpty(options.WatchesFile.Path))
+                fetchCommands.Add(new FetchResultRange { FilePath = new[] { options.WatchesFile.Path } });
+            if (!string.IsNullOrEmpty(options.StatusFile.Path))
+                fetchCommands.Add(new FetchResultRange { FilePath = new[] { options.StatusFile.Path } });
+            fetchCommands.Add(new FetchMetadata { FilePath = new[] { options.OutputFile.Path } });
+
+            var fetchReplies = await _channel.SendBundleAsync(fetchCommands);
+            var fetchIndex = 0;
+            if (!string.IsNullOrEmpty(options.WatchesFile.Path))
             {
-                var validWatchesResult = await GetValidWatchesAsync(initValidWatchesTimestamp, options.ValidWatchesFile).ConfigureAwait(false);
-                if (!validWatchesResult.TryGetResult(out watches, out error))
-                    return error;
+                var watchesResponse = (ResultRangeFetched)fetchReplies[fetchIndex++];
+                var parseResult = ReadValidWatches(watchesResponse, options.WatchesFile, runner.GetInitialFileTimestamp(options.WatchesFile.Path));
+                if (!parseResult.TryGetResult(out watches, out var parseError))
+                    return new DebugRunResult(result, parseError, null);
             }
-
             var statusString = "";
-
-            if (!string.IsNullOrEmpty(options.StatusStringFilePath))
+            if (!string.IsNullOrEmpty(options.StatusFile.Path))
             {
-                var statusStringResult = await GetStatusStringAsync(initStatusStringTimestamp, options.StatusStringFile);
-                if (!statusStringResult.TryGetResult(out statusString, out error))
-                    return error;
+                var statusResponse = (ResultRangeFetched)fetchReplies[fetchIndex++];
+                var parseResult = ReadStatus(statusResponse, options.StatusFile, runner.GetInitialFileTimestamp(options.StatusFile.Path));
+                if (!parseResult.TryGetResult(out statusString, out var parseError))
+                    return new DebugRunResult(result, parseError, null);
             }
+            var outputResponse = (MetadataFetched)fetchReplies[fetchIndex];
+            var dataResult = ReadOutput(outputResponse, options.OutputFile, runner.GetInitialFileTimestamp(options.OutputFile.Path), watches, options.BinaryOutput, options.OutputOffset);
+            if (!dataResult.TryGetResult(out var data, out var error))
+                return new DebugRunResult(result, error, null);
 
-            var dataResult = await CreateBreakStateDataAsync(options.RemoteOutputFile, initOutputTimestamp, watches).ConfigureAwait(false);
-            if (!dataResult.TryGetResult(out var data, out error))
-                return error;
-
-            execTimer.Stop();
-            return new BreakState(data, execTimer.ElapsedMilliseconds, execution.ExecutionTime, statusString, execution.ExitCode);
+            return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
         }
 
-        private async Task<Result<ReadOnlyCollection<string>>> GetValidWatchesAsync(DateTime initValidWatchesTimestamp, Options.OutputFile validWatchesFile)
+        private static Result<ReadOnlyCollection<string>> ReadValidWatches(ResultRangeFetched response, BuiltinActionFile file, DateTime initTimestamp)
         {
-            var validWatchesMetadata = await GetMetadataAsync(validWatchesFile).ConfigureAwait(false);
-            if (validWatchesMetadata.Status != FetchStatus.Successful)
-                return new Error($"Valid watches file ({validWatchesFile.File}) could not be found.", title: "Valid watches file is missing");
-            if (validWatchesMetadata.Timestamp == initValidWatchesTimestamp)
-                return new Error($"Valid watches file ({validWatchesFile.File}) was not modified.", title: "Data may be stale");
+            if (response.Status == FetchStatus.FileNotFound)
+                return new Error($"Valid watches file ({file.Path}) could not be found.", title: "Valid watches file is missing");
+            if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                return new Error($"Valid watches file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            var validWatchesData = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                new FetchResultRange { FilePath = validWatchesFile.Path, BinaryOutput = validWatchesFile.BinaryOutput }).ConfigureAwait(false);
-            if (validWatchesData.Status != FetchStatus.Successful)
-                return new Error($"Valid watches file ({validWatchesFile.File}) could not be opened.");
-
-            var validWatches = System.Text.Encoding.Default.GetString(validWatchesData.Data)
-                .Replace("\r\n", "\n")
-                .Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            return Array.AsReadOnly(validWatches);
+            var watches = Encoding.UTF8.GetString(response.Data).Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            return Array.AsReadOnly(watches);
         }
 
-        private async Task<Result<string>> GetStatusStringAsync(DateTime initStatusStringFileTimeStamp, Options.OutputFile statusStringFile)
+        private static Result<string> ReadStatus(ResultRangeFetched response, BuiltinActionFile file, DateTime initTimestamp)
         {
-            var statusStringFileMetadata = await GetMetadataAsync(statusStringFile).ConfigureAwait(false);
-            if (statusStringFileMetadata.Status != FetchStatus.Successful)
-                return new Error($"Status string file ({statusStringFile.File}) could not be found.", title: "Status string file is missing");
-            if (statusStringFileMetadata.Timestamp == initStatusStringFileTimeStamp)
-                return new Error($"Status string file ({statusStringFile.File}) was not modified.", title: "Data may be stale");
+            if (response.Status == FetchStatus.FileNotFound)
+                return new Error($"Status string file ({file.Path}) could not be found.", title: "Status string file is missing");
+            if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                return new Error($"Status string file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            var statusStringData = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                new FetchResultRange { FilePath = statusStringFile.Path, BinaryOutput = statusStringFile.BinaryOutput }).ConfigureAwait(false);
-            if (statusStringData.Status != FetchStatus.Successful)
-                return new Error($"Status string file ({statusStringFile.File}) could not be opened.");
-
-            var statusString = System.Text.Encoding.Default.GetString(statusStringData.Data)
-                .Replace("\r\n", "\n");
-
-            return statusString;
+            return Encoding.UTF8.GetString(response.Data).Replace("\n", "\r\n");
         }
 
-        private async Task<Result<BreakStateData>> CreateBreakStateDataAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches)
+        private static Result<BreakStateData> ReadOutput(MetadataFetched response, BuiltinActionFile file, DateTime initTimestamp, ReadOnlyCollection<string> watches, bool binaryOutput, int outputOffset)
         {
-            var metadataResponse = await GetMetadataAsync(output).ConfigureAwait(false);
-            if (metadataResponse.Status != FetchStatus.Successful)
-                return new Error($"Output file ({output.File}) could not be found.", title: "Output file is missing");
-            if (metadataResponse.Timestamp == initOutputTimestamp)
-                return new Error($"Output file ({output.File}) was not modified.", title: "Data may be stale");
+            if (response.Status == FetchStatus.FileNotFound)
+                return new Error($"Output file ({file.Path}) could not be found.", title: "Output file is missing");
+            if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                return new Error($"Output file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            return new BreakStateData(watches, output, metadataResponse.Timestamp, metadataResponse.ByteCount, _project.Options.Profile.Debugger.OutputOffset);
+            // TODO: refactor OutputFile away
+            var output = new OutputFile(directory: "", file: file.Path, binaryOutput);
+            return new BreakStateData(watches, output, response.Timestamp, response.ByteCount, outputOffset);
         }
-
-        private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>
-            _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = file.Path, BinaryOutput = file.BinaryOutput });
     }
 }

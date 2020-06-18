@@ -33,7 +33,7 @@ namespace VSRAD.PackageTests
             sta.Join();
         }
 
-        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros, string projectRoot = "", Package.Options.ProfileOptions profile = null)
+        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros = null, string projectRoot = "", Package.Options.ProfileOptions profile = null)
         {
             var mock = new Mock<IProject>(MockBehavior.Strict);
             var options = new Package.Options.ProjectOptions();
@@ -42,8 +42,9 @@ namespace VSRAD.PackageTests
             mock.Setup((m) => m.RootPath).Returns(projectRoot);
 
             var evaluator = new Mock<IMacroEvaluator>();
-            foreach (var macro in macros)
-                evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
+            if (macros != null)
+                foreach (var macro in macros)
+                    evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
 
             mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
             return mock;

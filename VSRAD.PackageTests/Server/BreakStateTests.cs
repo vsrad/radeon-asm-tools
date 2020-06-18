@@ -42,59 +42,57 @@ namespace VSRAD.PackageTests.Server
             var group2Bin = new byte[sizeof(int) * 512];
             Buffer.BlockCopy(data, group1Bin.Length, group2Bin, 0, group2Bin.Length);
 
-            var breakState = new BreakState(breakStateData, 666, 333, "", 0);
-
             // Group 1
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group1Bin }, (_) => { });
-            var warning = await breakState.Data.ChangeGroupWithWarningsAsync(channel.Object, 0, 128, 2);
+            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, 0, 128, 2);
             Assert.Null(warning);
 
-            var system = breakState.Data.GetSystem();
+            var system = breakStateData.GetSystem();
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(i, (int)system[i]);
-            var watchLocalId = breakState.Data.GetWatch("local_id");
+            var watchLocalId = breakStateData.GetWatch("local_id");
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(i % 64, (int)watchLocalId[i]);
-            var watchGroupId = breakState.Data.GetWatch("group_id");
+            var watchGroupId = breakStateData.GetWatch("group_id");
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(0, (int)watchGroupId[i]);
-            var watchGroupSize = breakState.Data.GetWatch("group_size");
+            var watchGroupSize = breakStateData.GetWatch("group_size");
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(128, (int)watchGroupSize[i]);
 
             // Group 2
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = group2Bin }, (_) => { });
-            warning = await breakState.Data.ChangeGroupWithWarningsAsync(channel.Object, 1, 128, 2);
+            warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, 1, 128, 2);
             Assert.Null(warning);
 
-            system = breakState.Data.GetSystem();
+            system = breakStateData.GetSystem();
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(128 + i, (int)system[i]);
-            watchLocalId = breakState.Data.GetWatch("local_id");
+            watchLocalId = breakStateData.GetWatch("local_id");
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(i % 64, (int)watchLocalId[i]);
-            watchGroupId = breakState.Data.GetWatch("group_id");
+            watchGroupId = breakStateData.GetWatch("group_id");
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(1, (int)watchGroupId[i]);
-            watchGroupSize = breakState.Data.GetWatch("group_size");
+            watchGroupSize = breakStateData.GetWatch("group_size");
             for (var i = 0; i < 128; ++i)
                 Assert.Equal(128, (int)watchGroupSize[i]);
 
             // Switching to a smaller group that was already fetched doesn't send any requests
             // Group 1 of size 64 = second half of group 1 of size 128
-            warning = await breakState.Data.ChangeGroupWithWarningsAsync(channel.Object, 1, 64, 4);
+            warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, 1, 64, 4);
             Assert.Null(warning);
 
-            system = breakState.Data.GetSystem();
+            system = breakStateData.GetSystem();
             for (var i = 0; i < 64; ++i)
                 Assert.Equal(64 + i, (int)system[i]);
-            watchLocalId = breakState.Data.GetWatch("local_id");
+            watchLocalId = breakStateData.GetWatch("local_id");
             for (var i = 0; i < 64; ++i)
                 Assert.Equal(i % 64, (int)watchLocalId[i]);
-            watchGroupId = breakState.Data.GetWatch("group_id");
+            watchGroupId = breakStateData.GetWatch("group_id");
             for (var i = 0; i < 64; ++i)
                 Assert.Equal(0, (int)watchGroupId[i]);
-            watchGroupSize = breakState.Data.GetWatch("group_size");
+            watchGroupSize = breakStateData.GetWatch("group_size");
             for (var i = 0; i < 64; ++i)
                 Assert.Equal(128, (int)watchGroupSize[i]);
         }
