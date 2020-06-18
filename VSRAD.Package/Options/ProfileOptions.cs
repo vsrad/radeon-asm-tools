@@ -119,22 +119,6 @@ namespace VSRAD.Package.Options
         public BuiltinActionFile WatchesFile { get; }
         public BuiltinActionFile StatusFile { get; }
 
-        [Macro(RadMacros.DebuggerExecutable)]
-        [Description("Path to the debugger executable on the remote machine.")]
-        [DefaultValue(DefaultOptionValues.DebuggerExecutable)]
-        public string Executable { get; }
-        [Macro(RadMacros.DebuggerArguments)]
-        [Description("Arguments for Executable.")]
-        [DefaultValue(DefaultOptionValues.DebuggerArguments)]
-        public string Arguments { get; }
-        [Macro(RadMacros.DebuggerWorkingDirectory), DisplayName("Working Directory")]
-        [Description("Debugger working directory.")]
-        [DefaultValue(DefaultOptionValues.DebuggerWorkingDirectory)]
-        public string WorkingDirectory { get; }
-        [Macro(RadMacros.DebuggerOutputPath), DisplayName("Output Path")]
-        [Description("Path to the debug script output file (can be relative to Working Directory).")]
-        [DefaultValue(DefaultOptionValues.DebuggerOutputPath)]
-        public string OutputPath { get; }
         [DisplayName("Output Mode"), BinaryChoice("Binary", "Text")]
         [Description("Specifies how the debug script output file is parsed: 'Text': each line is read as a hexadecimal string (0x...), 'Binary': 4-byte blocks are read as a single dword value.")]
         [DefaultValue(DefaultOptionValues.DebuggerBinaryOutput)]
@@ -142,68 +126,24 @@ namespace VSRAD.Package.Options
         [Description("Output file offset: bytes if output mode is binary, lines if output mode is text"), DisplayName("Output Offset")]
         [DefaultValue(DefaultOptionValues.OutputOffset)]
         public int OutputOffset { get; }
-        [DisplayName("Parse Valid Watches File")]
-        [Description("Specifies whether the file specified in Valid Watches File Path should be used to filter valid watches.")]
-        [DefaultValue(DefaultOptionValues.DebuggerParseValidWatches)]
-        public bool ParseValidWatches { get; }
-        [DisplayName("Valid Watches File Path")]
-        [Description("Path to the file with valid watch names on the remote machine.")]
-        [DefaultValue(DefaultOptionValues.DebuggerValidWatchesFilePath)]
-        public string ValidWatchesFilePath { get; }
-        [DisplayName("Status String File Path")]
-        [Description("Path to the file with status string on the remote machine.")]
-        [DefaultValue(DefaultOptionValues.DebuggerStatusStringFilePath)]
-        public string StatusStringFilePath { get; }
-        [DisplayName("Run As Administrator")]
-        [Description("Specifies whether the `Executable` is run with administrator rights.")]
-        [DefaultValue(DefaultOptionValues.DebuggerRunAsAdmin)]
-        public bool RunAsAdmin { get; }
-        [Description("Debugger Timeout (seconds), 0 - timeout disabled"), DisplayName("Timeout")]
-        [DefaultValue(DefaultOptionValues.DebuggerTimeoutSecs)]
-        public int TimeoutSecs { get; }
 
-        [JsonIgnore]
-        public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
-        [JsonIgnore]
-        public OutputFile ValidWatchesFile => new OutputFile(WorkingDirectory, ValidWatchesFilePath);
-        [JsonIgnore]
-        public OutputFile StatusStringFile => new OutputFile(WorkingDirectory, StatusStringFilePath);
-
-        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator)
+        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator)
         {
             var evaluated = new DebuggerProfileOptions(
-                executable: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerExecutable),
-                arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerArguments),
-                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerWorkingDirectory),
-                outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerOutputPath),
                 outputOffset: OutputOffset,
                 binaryOutput: BinaryOutput,
-                runAsAdmin: RunAsAdmin,
-                timeoutSecs: TimeoutSecs,
-                parseValidWatches: ParseValidWatches,
-                validWatchesFilePath: ValidWatchesFilePath,
-                statusStringFilePath: StatusStringFilePath,
-                outputFile: OutputFile,
-                watchesFile: WatchesFile,
-                statusFile: StatusFile);
+                outputFile: await OutputFile.EvaluateAsync(evaluator),
+                watchesFile: await WatchesFile.EvaluateAsync(evaluator),
+                statusFile: await StatusFile.EvaluateAsync(evaluator));
             foreach (var step in Steps)
-                evaluated.Steps.Add(step);
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator));
             return evaluated;
         }
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, string statusStringFilePath = DefaultOptionValues.DebuggerStatusStringFilePath, BuiltinActionFile outputFile = null, BuiltinActionFile watchesFile = null, BuiltinActionFile statusFile = null)
+        public DebuggerProfileOptions(bool binaryOutput = true, int outputOffset = 0, BuiltinActionFile outputFile = null, BuiltinActionFile watchesFile = null, BuiltinActionFile statusFile = null)
         {
-            Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
-            Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
-            WorkingDirectory = workingDirectory;
-            OutputPath = outputPath;
             BinaryOutput = binaryOutput;
             OutputOffset = outputOffset;
-            RunAsAdmin = runAsAdmin;
-            TimeoutSecs = timeoutSecs;
-            ParseValidWatches = parseValidWatches;
-            ValidWatchesFilePath = validWatchesFilePath;
-            StatusStringFilePath = statusStringFilePath;
             OutputFile = outputFile ?? new BuiltinActionFile();
             WatchesFile = watchesFile ?? new BuiltinActionFile();
             StatusFile = statusFile ?? new BuiltinActionFile();

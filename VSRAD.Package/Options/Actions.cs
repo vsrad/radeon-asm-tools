@@ -3,6 +3,8 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
@@ -13,6 +15,8 @@ namespace VSRAD.Package.Options
     {
         [JsonIgnore]
         StepEnvironment Environment { get; }
+
+        Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator);
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -53,6 +57,15 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() =>
             (LocalPath, RemotePath, CheckTimestamp).GetHashCode();
+
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+            new CopyFileStep
+            {
+                Direction = Direction,
+                LocalPath = await evaluator.EvaluateAsync(LocalPath),
+                RemotePath = await evaluator.EvaluateAsync(RemotePath),
+                CheckTimestamp = CheckTimestamp
+            };
     }
 
     public sealed class ExecuteStep : DefaultNotifyPropertyChanged, IActionStep
@@ -76,6 +89,14 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() =>
             (Environment, Executable, Arguments).GetHashCode();
+
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+            new ExecuteStep
+            {
+                Environment = Environment,
+                Executable = await evaluator.EvaluateAsync(Executable),
+                Arguments = await evaluator.EvaluateAsync(Arguments)
+            };
     }
 
     public sealed class ActionStepJsonConverter : JsonConverter

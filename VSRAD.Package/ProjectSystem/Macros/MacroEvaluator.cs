@@ -134,11 +134,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
             {
                 case RadMacros.DeployDirectory: unevaluated = _profileOptions.General.DeployDirectory; break;
 
-                case RadMacros.DebuggerExecutable: unevaluated = _profileOptions.Debugger.Executable; break;
-                case RadMacros.DebuggerArguments: unevaluated = _profileOptions.Debugger.Arguments; break;
-                case RadMacros.DebuggerWorkingDirectory: unevaluated = _profileOptions.Debugger.WorkingDirectory; break;
-                case RadMacros.DebuggerOutputPath: unevaluated = _profileOptions.Debugger.OutputPath; break;
-
                 case RadMacros.DisassemblerExecutable: unevaluated = _profileOptions.Disassembler.Executable; break;
                 case RadMacros.DisassemblerArguments: unevaluated = _profileOptions.Disassembler.Arguments; break;
                 case RadMacros.DisassemblerWorkingDirectory: unevaluated = _profileOptions.Disassembler.WorkingDirectory; break;
