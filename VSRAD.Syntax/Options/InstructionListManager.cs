@@ -60,6 +60,24 @@ namespace VSRAD.Syntax.Options
             return Task.CompletedTask;
         }
 
+        public bool TryGetInstructions(string text, AsmType asmType, out IEnumerable<NavigationToken> instructions)
+        {
+            if (InstructionList.TryGetValue(text, out var navigationTokens))
+            {
+                if (asmType == AsmType.RadAsmDoc)
+                    instructions = navigationTokens.Select(p => p.Key);
+                else if (asmType == AsmType.RadAsm2)
+                    instructions = navigationTokens.Where(p => p.Value == AsmType.RadAsm2).Select(p => p.Key);
+                else
+                    instructions = navigationTokens.Where(p => p.Value == AsmType.RadAsm).Select(p => p.Key);
+
+                return true;
+            }
+
+            instructions = Enumerable.Empty<NavigationToken>();
+            return false;
+        }
+
         private void LoadInstructionsFromDirectory(string path)
         {
             try

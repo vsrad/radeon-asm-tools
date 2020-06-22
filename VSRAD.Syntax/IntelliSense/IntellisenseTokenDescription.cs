@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
@@ -13,11 +15,11 @@ namespace VSRAD.Syntax.IntelliSense
 {
     internal static class IntellisenseTokenDescription
     {
-        public static object GetColorizedTokenDescription(DocumentAnalysis documentAnalysis, AnalysisToken token)
+        public static object GetColorizedTokenDescription(NavigationToken token)
         {
             try
             {
-                return GetColorizedDescription(documentAnalysis, token);
+                return GetColorizedDescription(token);
             }
             catch (Exception e)
             {
@@ -25,16 +27,66 @@ namespace VSRAD.Syntax.IntelliSense
                 return null;
             }
         }
-        private static object GetColorizedDescription(DocumentAnalysis documentAnalysis, AnalysisToken token)
+
+        public static object GetColorizedDescription(IEnumerable<NavigationToken> tokens) =>
+            tokens.Count() == 1
+                ? GetColorizedTokenDescription(tokens.First())
+                : GetColorizedTokensDescription(tokens);
+
+        private static object GetColorizedTokensDescription(IEnumerable<NavigationToken> tokens)
         {
-            var version = documentAnalysis.CurrentSnapshot;
-            string description = null;
-            if (token.Type == RadAsmTokenType.FunctionName
-                || token.Type == RadAsmTokenType.GlobalVariable
-                || token.Type == RadAsmTokenType.LocalVariable
-                || token.Type == RadAsmTokenType.Label)
+            try
             {
-                var tokenSpan = token.TrackingToken.GetSpan(version);
+                var elements = new List<object>();
+                foreach (var navigationToken in tokens)
+                {
+                    var token = new DefinitionToken(navigationToken);
+                    elements.Add(new ClassifiedTextElement(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, token.FilePath)));
+
+                    var analysisToken = navigationToken.AnalysisToken;
+                    var typeName = analysisToken.Type.GetName();
+                    var nameElement = GetNameElement(analysisToken.Type, navigationToken.GetText());
+
+                    elements.Add(new ContainerElement(
+                        ContainerElementStyle.Wrapped,
+                        new ClassifiedTextElement(
+                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, $"({typeName}) ")
+                        ),
+                        nameElement,
+                        new ClassifiedTextElement(
+                            new ClassifiedTextRun(PredefinedClassificationTypeNames.FormalLanguage, $": {token.LineText}")
+                        )
+                    ));
+                    elements.Add(new ClassifiedTextElement(
+                        new ClassifiedTextRun(PredefinedClassificationTypeNames.FormalLanguage, "")
+                    ));
+                }
+
+                return new ContainerElement(
+                    ContainerElementStyle.Stacked,
+                    elements);
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e, "Colorized description list");
+                return null;
+            }
+        }
+
+        private static object GetColorizedDescription(NavigationToken token)
+        {
+            var version = token.Snapshot;
+            if (!version.TryGetDocumentAnalysis(out var documentAnalysis))
+                return null;
+
+            var type = token.AnalysisToken.Type;
+            string description = null;
+            if (type == RadAsmTokenType.FunctionName
+                || type == RadAsmTokenType.GlobalVariable
+                || type == RadAsmTokenType.LocalVariable
+                || type == RadAsmTokenType.Label)
+            {
+                var tokenSpan = token.AnalysisToken.TrackingToken.GetSpan(version);
                 var line = version.GetLineFromPosition(tokenSpan.Start);
                 var tokens = documentAnalysis.GetTokens(new Span(tokenSpan.End, line.EndIncludingLineBreak - tokenSpan.End));
 
@@ -46,17 +98,22 @@ namespace VSRAD.Syntax.IntelliSense
                     GetDescriptionFromComment(documentAnalysis, version, tokens, out description);
                 }
             }
-
-            if (token.Type == RadAsmTokenType.FunctionName)
+            else if (type == RadAsmTokenType.Instruction)
             {
-                var fb = GetFunctionBlockByToken(documentAnalysis, token);
+                var definition = new DefinitionToken(token);
+                description = definition.LineText;
+            }
+
+            if (type == RadAsmTokenType.FunctionName)
+            {
+                var fb = GetFunctionBlockByToken(documentAnalysis, token.AnalysisToken);
                 if (fb == null)
                     return null;
 
                 var addBrackets = version.GetAsmType() == AsmType.RadAsm2;
                 var nameTextRuns = new List<ClassifiedTextRun>()
                 {
-                    new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Functions, token.TrackingToken.GetText(version)),
+                    new ClassifiedTextRun(SyntaxHighlighter.PredefinedClassificationTypeNames.Functions, token.GetText()),
                     new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, addBrackets ? "(" : " "),
                 };
 
@@ -74,14 +131,14 @@ namespace VSRAD.Syntax.IntelliSense
                 if (addBrackets)
                     nameTextRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ")"));
 
-                return GetDescriptionElement(token.Type.GetName(), new ClassifiedTextElement(nameTextRuns), description);
+                return GetDescriptionElement(token.AnalysisToken.Type.GetName(), new ClassifiedTextElement(nameTextRuns), description);
             }
-            else if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.LocalVariable)
+            else if (type == RadAsmTokenType.GlobalVariable || type == RadAsmTokenType.LocalVariable)
             {
-                var variable = (VariableToken)token;
+                var variable = (VariableToken)token.AnalysisToken;
                 var nameTextRuns = new List<ClassifiedTextRun>()
                 {
-                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, token.TrackingToken.GetText(version)),
+                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, token.GetText()),
                 };
 
                 if (variable.DefaultValue != TrackingToken.Empty)
@@ -90,13 +147,13 @@ namespace VSRAD.Syntax.IntelliSense
                     nameTextRuns.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Number, variable.DefaultValue.GetText(version)));
                 }
 
-                return GetDescriptionElement(token.Type.GetName(), new ClassifiedTextElement(nameTextRuns), description);
+                return GetDescriptionElement(token.AnalysisToken.Type.GetName(), new ClassifiedTextElement(nameTextRuns), description);
             }
             else
             {
                 return GetColorizedDescription(
-                    token.Type,
-                    token.TrackingToken.GetText(version),
+                    token.AnalysisToken.Type,
+                    token.GetText(),
                     description);
             }
         }

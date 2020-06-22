@@ -134,15 +134,8 @@ namespace VSRAD.Syntax.IntelliSense
                 return EmptyNavigations;
 
             var asmType = version.GetAsmType();
-            if (_instructionListManager.InstructionList.TryGetValue(text, out var navigationTokens))
-            {
-                if (asmType == AsmType.RadAsmDoc)
-                    return navigationTokens.Select(p => p.Key).ToList();
-                else if (asmType == AsmType.RadAsm2)
-                    return navigationTokens.Where(p => p.Value == AsmType.RadAsm2).Select(p => p.Key).ToList();
-                else if (asmType == AsmType.RadAsm)
-                    return navigationTokens.Where(p => p.Value == AsmType.RadAsm).Select(p => p.Key).ToList();
-            }
+            if (_instructionListManager.TryGetInstructions(text, asmType, out var navigationTokens))
+                return navigationTokens.ToList();
 
             if (FindNavigationTokenInBlock(version, asmType, currentBlock, text, out var token))
                 return new List<NavigationToken>() { token };

@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Tokens;
@@ -85,7 +86,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 if (_completions.TryGetValue(tokenType, out var pairs)
                     && pairs.Select(p => p.Value.DisplayText).Contains(item.DisplayText))
                 {
-                    description = IntellisenseTokenDescription.GetColorizedTokenDescription(DocumentAnalysis, pairs.Single(p => p.Value.DisplayText == item.DisplayText).Key);
+                    description = IntellisenseTokenDescription.GetColorizedTokenDescription(new NavigationToken(pairs.Single(p => p.Value.DisplayText == item.DisplayText).Key, DocumentAnalysis.CurrentSnapshot));
                     return true;
                 }
             }

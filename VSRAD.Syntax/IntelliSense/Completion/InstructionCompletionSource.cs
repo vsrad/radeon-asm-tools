@@ -19,6 +19,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     {
         private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
         private IEnumerable<CompletionItem> _completions;
+        private readonly InstructionListManager _instructionListManager;
         private bool _autocompleteInstructions;
 
         public InstructionCompletionSource(
@@ -27,6 +28,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             DocumentAnalysis documentAnalysis) : base(optionsProvider, documentAnalysis)
         {
             _completions = ImmutableArray<CompletionItem>.Empty;
+            _instructionListManager = instructionListManager;
             instructionListManager.InstructionUpdated += InstructionUpdated;
 
             InstructionUpdated(instructionListManager.InstructionList.Keys.ToList());
@@ -51,8 +53,12 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 : Task.FromResult<CompletionContext>(null);
         }
 
-        public override Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token) =>
-            Task.FromResult(IntellisenseTokenDescription.GetColorizedDescription(Parser.Tokens.RadAsmTokenType.Instruction, item.DisplayText));
+        public override Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
+        {
+            return _instructionListManager.TryGetInstructions(item.DisplayText, DocumentAnalysis.CurrentSnapshot.GetAsmType(), out var navigations)
+                ? Task.FromResult(IntellisenseTokenDescription.GetColorizedDescription(navigations))
+                : Task.FromResult(IntellisenseTokenDescription.GetColorizedDescription(Parser.Tokens.RadAsmTokenType.Instruction, item.DisplayText));
+        }
 
         protected override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocompleteInstructions = sender.AutocompleteInstructions;

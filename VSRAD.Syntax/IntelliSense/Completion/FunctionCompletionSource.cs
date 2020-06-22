@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Blocks;
@@ -54,7 +55,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (fb == null)
                 return Task.FromResult<object>(null);
 
-            return Task.FromResult(IntellisenseTokenDescription.GetColorizedTokenDescription(DocumentAnalysis, fb.Name));
+            return Task.FromResult(IntellisenseTokenDescription.GetColorizedTokenDescription(new NavigationToken(fb.Name, DocumentAnalysis.CurrentSnapshot)));
         }
 
         protected override void DisplayOptionsUpdated(OptionsProvider sender) =>
