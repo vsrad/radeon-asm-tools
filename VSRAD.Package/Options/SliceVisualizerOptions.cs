@@ -14,5 +14,14 @@ namespace VSRAD.Package.Options
 
         private int _subgroupSize = 64;
         public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
+
+        private bool _useHeatMap = false;
+        public bool UseHeatMap { get => _useHeatMap; set => SetField(ref _useHeatMap, value); }
+
+        private bool _transposedView = false;
+        public bool TransposedView { get => _transposedView; set => SetField(ref _transposedView, value); }
+
+        private int _groupsInRow = 1;
+        public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
     }
 }

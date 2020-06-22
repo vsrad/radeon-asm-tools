@@ -44,7 +44,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             Invalidate();   // redraw
         }
 
-        public void DisplayWatch(TypedSliceWatchView watchView)
+        public void DisplayWatch(TypedSliceWatchView watchView, int subgroupSize, string columnSelector)
         {
             SelectedWatch = watchView;
 
@@ -87,6 +87,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     row.Visible = false;
                 }
             }
+            ColumnStyling.Recompute(subgroupSize, columnSelector);
         }
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)

@@ -32,17 +32,17 @@
             <TextBox Text="{Binding Options.SliceVisualizerOptions.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
                     Width="100"/>
             <Label Content="of each subgroup of " Height="26"/>
-            <viz:NumberInput Value="{Binding DataContext.Options.SliceVisualizerOptions.SubgroupSize, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24" Step="64" Minimum="64"/>
+            <viz:NumberInput Value="{Binding Options.SliceVisualizerOptions.SubgroupSize, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24" Step="64" Minimum="64"/>
         </StackPanel>
         <DockPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="Show" Width="48"/>
-                <viz:NumberInput Value="{Binding DataContext.GroupsInRow, ElementName=SliceHeaderControl, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24"/>
+                <viz:NumberInput Value="{Binding Options.SliceVisualizerOptions.GroupsInRow, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24"/>
                 <Label Content=" groups in one row"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <CheckBox Content="Heat Map" VerticalAlignment="Center" IsChecked="{Binding UseHeatMap}"/>
-                <CheckBox Content="Transpose" VerticalAlignment="Center" IsChecked="{Binding TransposedView}" Margin="8,0,4,0"/>
+                <CheckBox Content="Heat Map" VerticalAlignment="Center" IsChecked="{Binding Options.SliceVisualizerOptions.UseHeatMap, UpdateSourceTrigger=PropertyChanged}"/>
+                <CheckBox Content="Transpose" VerticalAlignment="Center" IsChecked="{Binding Options.SliceVisualizerOptions.TransposedView, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,4,0"/>
             </StackPanel>
         </DockPanel>
     </StackPanel>
