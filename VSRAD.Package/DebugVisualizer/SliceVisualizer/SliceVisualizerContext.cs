@@ -51,6 +51,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             switch (e.PropertyName)
             {
                 case nameof(Options.SliceVisualizerOptions.GroupsInRow):
+                case nameof(Options.SliceVisualizerOptions.SubgroupSize):
+                case nameof(Options.SliceVisualizerOptions.VisibleColumns):
                     WatchSelectionChanged();
                     break;
                 case nameof(Options.SliceVisualizerOptions.UseHeatMap):
