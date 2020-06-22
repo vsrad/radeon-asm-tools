@@ -79,7 +79,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 {
                     for (int j = 0; j < watchView.ColumnCount; ++j)
                         row.Cells[DataColumnOffset + j].Value = watchView[i, j];
-                    row.HeaderCell.Value = i;
+                    row.HeaderCell.Value = watchView.RowHeader(i);
                     row.Visible = true;
                 }
                 else

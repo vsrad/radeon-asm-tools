@@ -57,6 +57,7 @@ namespace VSRAD.Package.Server
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
         private readonly int _lastValidIndex;
+        private readonly int _groupsInRow;
 
         private readonly uint[] _data;
 
@@ -66,10 +67,13 @@ namespace VSRAD.Package.Server
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
             _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
+            _groupsInRow = groupsInRow;
 
             ColumnCount = groupsInRow * groupSize;
             RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
         }
+
+        public int RowHeader(int row) => row * _groupsInRow;
 
         public bool IsInactiveCell(int row, int column)
         {
