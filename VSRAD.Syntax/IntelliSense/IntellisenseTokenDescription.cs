@@ -175,7 +175,8 @@ namespace VSRAD.Syntax.IntelliSense
                 description = commentTokens
                     .First()
                     .GetText(version)
-                    .Trim(new char[] { '/', '*', ' ', '\r', '\n' });
+                    .Trim(new char[] { '/', '*', ' ', '\r', '\n' })
+                    .Replace("*", string.Empty);
                 return true;
             }
             else

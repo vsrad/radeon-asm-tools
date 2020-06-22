@@ -1,1154 +1,1916 @@
-buffer_atomic_add
-buffer_atomic_add_x2
-buffer_atomic_and
-buffer_atomic_and_x2
-buffer_atomic_cmpswap
-buffer_atomic_cmpswap_x2
-buffer_atomic_dec
-buffer_atomic_dec_x2
-buffer_atomic_inc
-buffer_atomic_inc_x2
-buffer_atomic_or
-buffer_atomic_or_x2
-buffer_atomic_smax
-buffer_atomic_smax_x2
-buffer_atomic_smin
-buffer_atomic_smin_x2
-buffer_atomic_sub
-buffer_atomic_sub_x2
-buffer_atomic_swap
-buffer_atomic_swap_x2
-buffer_atomic_umax
-buffer_atomic_umax_x2
-buffer_atomic_umin
-buffer_atomic_umin_x2
-buffer_atomic_xor
-buffer_atomic_xor_x2
-buffer_load_dword
-buffer_load_dwordx2
-buffer_load_dwordx3
-buffer_load_dwordx4
-buffer_load_format_d16_hi_x
-buffer_load_format_d16_x
-buffer_load_format_d16_xy
-buffer_load_format_d16_xyz
-buffer_load_format_d16_xyzw
-buffer_load_format_x
-buffer_load_format_xy
-buffer_load_format_xyz
-buffer_load_format_xyzw
-buffer_load_sbyte
-buffer_load_sbyte_d16
-buffer_load_sbyte_d16_hi
-buffer_load_short_d16
-buffer_load_short_d16_hi
-buffer_load_sshort
-buffer_load_ubyte
-buffer_load_ubyte_d16
-buffer_load_ubyte_d16_hi
-buffer_load_ushort
-buffer_store_byte
-buffer_store_byte_d16_hi
-buffer_store_dword
-buffer_store_dwordx2
-buffer_store_dwordx3
-buffer_store_dwordx4
-buffer_store_format_d16_hi_x
-buffer_store_format_d16_x
-buffer_store_format_d16_xy
-buffer_store_format_d16_xyz
-buffer_store_format_d16_xyzw
-buffer_store_format_x
-buffer_store_format_xy
-buffer_store_format_xyz
-buffer_store_format_xyzw
-buffer_store_lds_dword
-buffer_store_short
-buffer_store_short_d16_hi
+/*
+ * Specifies size of image address components: 16 or 32 bits (32 bits by default). GFX9 and GFX10 only. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-a16 
+ */
+let a16 
+
+/*
+ * Interpolation attribute and channel: 
+ * Interpolation attribute and channel: 
+ * attr{0..32}.x	Attribute 0..32 with x channel.
+ * attr{0..32}.y	Attribute 0..32 with y channel.
+ * attr{0..32}.z	Attribute 0..32 with z channel.
+ * attr{0..32}.w	Attribute 0..32 with w channel.
+ *
+ * https://llvm.org/docs/AMDGPU/gfx9_attr.html#amdgpu-synid9-attr 
+ */
+let attr 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let b128 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let b16x2 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let b32 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let b32x2 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let b64 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let b64x2 
+
+/*
+ * Clamp meaning depends on instruction. 
+ * For v_cmp instructions, clamp modifier indicates that the compare signals
+if a floating point exception occurs. By default, signaling is disabled.
+Not supported by GFX7.
+ *
+ * For integer operations, clamp modifier indicates that the result must be clamped
+to the largest and smallest representable value. By default, there is no clamping.
+Integer clamping is not supported by GFX7.
+ *
+ * For floating point operations, clamp modifier indicates that the result must be clamped
+to the range [0.0, 1.0]. By default, there is no clamping.
+ *
+ * Note: clamp modifier is applied after output modifiers (if any). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-clamp 
+ */
+let clamp 
+
+/*
+ * Indicates if the data are compressed (data are not compressed by default). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-compr 
+ */
+let compr 
+
+/*
+ * Specifies data size: 16 or 32 bits (32 bits by default). Not supported by GFX7. 
+ *
+ * Enables 16-bits data mode. 
+ * On loads, convert data in memory to 16-bit
+format before storing it in VGPRs. 
+ *
+ * For stores, convert 16-bit data in VGPRs to
+32 bits before going to memory. 
+ *
+ * Note that GFX8.0 does not support data packing.
+Each 16-bit data element occupies 1 VGPR. 
+ *
+ * GFX8.1, GFX9 and GFX10 support data packing.
+Each pair of 16-bit data elements
+occupies 1 VGPR. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-d16 
+ */
+let d16 
+
+/*
+ * Specifies if an array index must be sent to TA. By default, array index is not sent. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-da 
+ */
+let da 
+
+/*
+ * Specifies which channels (image components) are used by the operation. By default, no channels
+are used. 
+ *
+ * Specifies image channels as a positive
+integer number
+or an absolute expression. 
+ * Each bit corresponds to one of 4 image components (RGBA). 
+ * If the specified bit value is 0, the component is not used,
+value 1 means that the component is used. 
+ *
+ * This modifier has some limitations depending on instruction kind
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-dmask 
+ */
+let dmask 
+
+/*
+ * Specifies if this is the last export from the shader to the target. By default,
+exp instruction does not finish an export sequence. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-done 
+ */
+let done 
+
+/*
+ * This is an input operand. It may optionally serve as a destination if glc is specified. 
+ * https://llvm.org/docs/AMDGPU/gfx9_ret.html#amdgpu-synid9-ret 
+ */
+let dst 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let f16x2 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let f32 
+
+/*
+ * Specifies whether to use GDS or LDS memory (LDS is the default). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-gds 
+ */
+let gds 
+
+/*
+ * This modifier has different meaning for loads, stores, and atomic operations.
+The default value is off (0). 
+ * See AMD documentation for details. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-glc 
+ */
+let glc 
+
+/*
+ * Specifies which half of the LDS word to use. Low half of LDS word is used by default.
+GFX9 and GFX10 only. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-high 
+ */
+let high 
+
+/*
+ * Bits of a hardware register being accessed. 
+ *
+ * The bits of this operand have the following meaning: 
+ *      5:0     Register id         0..63
+ *      10:6    First bit offset    0..31
+ *      15:11   Size in Bits        1..32
+ *
+ * This operand may be specified as one of the following: 
+ * - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ * - An hwreg value described below. 
+ *
+ * Numeric values may be specified as positive integer numbers
+or absolute expressions. 
+ * Defined register names include: 
+ *      HW_REG_MODE         Shader writeable mode bits.
+ *      HW_REG_STATUS       Shader read-only status.
+ *      HW_REG_TRAPSTS      Trap status.
+ *      HW_REG_HW_ID        Id of wave, simd, compute unit, etc.
+ *      HW_REG_GPR_ALLOC    Per-wave SGPR and VGPR allocation.
+ *      HW_REG_LDS_ALLOC    Per-wave LDS allocation.
+ *      HW_REG_IB_STS       Counters of outstanding instructions.
+ *      HW_REG_SH_MEM_BASES Memory aperture.
+ * https://llvm.org/docs/AMDGPU/gfx9_hwreg.html#amdgpu-synid9-hwreg 
+ */
+let hwreg 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let i16 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let i32 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let i64 
+
+/*
+ * Specifies whether address components include an index. By default, no components are used. 
+ * Can be used together with offen. 
+ * Cannot be used with addr64. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-idxen 
+ */
+let idxen 
+
+/*
+ * This operand is a mask which controls indexing mode for operands of subsequent instructions.
+Bits 0, 1 and 2 control indexing of src0, src1 and src2, while bit 3 controls indexing of dst.
+Value 1 enables indexing and value 0 disables it. 
+ * This operand may be specified as one of the following: 
+ * An integer_number or an absolute_expression. The value must be in the range 0..15. 
+ * A gpr_idx value described below. 
+ * Enable indexing for specified operands
+and disable it for the rest.
+Operands is a comma-separated list of
+values which may include: 
+ * Each of these values may be specified only
+once. 
+ * Operands list may be empty; this syntax
+disables indexing for all operands. 
+ * https://llvm.org/docs/AMDGPU/gfx9_imask.html#amdgpu-synid9-imask 
+ */
+let imask 
+
+/*
+ * An integer_number or an absolute_expression. The value must be in the range -32768..65535. 
+ * https://llvm.org/docs/AMDGPU/gfx9_simm16.html#amdgpu-synid9-simm16 
+ */
+let imm16 
+
+/*
+ * A bit mask which indicates request permissions. 
+ * This operand must be specified as an integer_number or an absolute_expression.
+The value is truncated to 7 bits, but only 3 low bits are significant. 
+ * https://llvm.org/docs/AMDGPU/gfx9_perm_smem.html#amdgpu-synid9-perm-smem 
+ */
+let imm3 
+
+/*
+ * An integer_number or an absolute_expression. The value is truncated to 32 bits. 
+ * https://llvm.org/docs/AMDGPU/gfx9_bimm32.html#amdgpu-synid9-bimm32 
+ */
+let imm32 
+
+/*
+ * A branch target which is a 16-bit signed integer treated as a PC-relative dword offset. 
+ * This operand may be specified as one of the following: 
+ 
+ * https://llvm.org/docs/AMDGPU/gfx9_label.html#amdgpu-synid9-label 
+ */
+let label 
+
+/*
+ * Specifies where to store the result: VGPRs or LDS (VGPRs by default). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-lds 
+ */
+let lds 
+
+/*
+ * Specifies LOD warning status (LOD warning is disabled by default). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-lwe 
+ */
+let lwe 
+
+/*
+ * This operand may be used with floating point operand modifiers abs and neg. 
+ * https://llvm.org/docs/AMDGPU/gfx9_mod_vop3_abs_neg.html#amdgpu-synid9-mod-vop3-abs-neg 
+ */
+let m 
+
+/*
+ * A 16-bit message code. The bits of this operand have the following meaning: 
+ * This operand may be specified as one of the following: 
+ * An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ * A sendmsg value described below. 
+ * Type may be specified using message name or message id. 
+ * Op may be specified using operation name or operation id. 
+ * Stream id is an integer in the range 0..3. 
+ * Numeric values may be specified as positive integer numbers
+or absolute expressions. 
+ * Each message type supports specific operations: 
+ * Sendmsg arguments are validated depending on how type value is specified: 
+ 
+ * https://llvm.org/docs/AMDGPU/gfx9_msg.html#amdgpu-synid9-msg 
+ */
+let msg 
+
+/*
+ * Specifies whether to change sign of operand values selected by
+op_sel_hi. These values are then used
+as input to the operation which results in the upper-half of the destination. 
+ * The number of values specified by this modifier must match the number of source
+operands. First value controls src0, second value controls src1 and so on. 
+ * The value 0 indicates that the corresponding operand value is used unmodified,
+the value 1 indicates that negative value of the operand must be used. 
+ * By default, operand values are used unmodified. 
+ * This modifier is valid for floating point operands only. 
+ * Note: numeric values may be specified as either
+integer numbers or
+absolute expressions. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-neg-hi 
+ */
+let neg_hi 
+
+/*
+ * Specifies whether to change sign of operand values selected by
+op_sel. These values are then used
+as input to the operation which results in the upper-half of the destination. 
+ * The number of values specified by this modifier must match the number of source
+operands. First value controls src0, second value controls src1 and so on. 
+ * The value 0 indicates that the corresponding operand value is used unmodified,
+the value 1 indicates that negative value of the operand must be used. 
+ * By default, operand values are used unmodified. 
+ * This modifier is valid for floating point operands only. 
+ * Note: numeric values may be specified as either
+integer numbers or
+absolute expressions. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-neg-lo 
+ */
+let neg_lo 
+
+/*
+ * Specifies whether address components include an offset. By default, no components are used. 
+ * Can be used together with idxen. 
+ * Cannot be used with addr64. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-offen 
+ */
+let offen 
+
+/*
+ * Specifies an immediate unsigned 12-bit offset, in bytes. The default value is 0. 
+ * Cannot be used with global/scratch opcodes. GFX9 only. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-flat-offset12 
+ */
+let offset12 
+
+/*
+ * Specifies an immediate signed 13-bit offset, in bytes. The default value is 0. 
+ * Can be used with global/scratch opcodes only. GFX9 only. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-flat-offset13s 
+ */
+let offset13s 
+
+/*
+ * Specifies an immediate unsigned 16-bit offset, in bytes. The default value is 0. 
+ * Used with DS instructions which have 1 address. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-ds-offset16 
+ */
+let offset16 
+
+/*
+ * Specifies an immediate unsigned 8-bit offset, in bytes. The default value is 0. 
+ * Used with DS instructions which have 2 addresses. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-ds-offset8 
+ */
+let offset8 
+
+/*
+ * Specifies if an output modifier must be applied to the result.
+By default, no output modifiers are applied. 
+ * Note: output modifiers are applied before clamping (if any). 
+ * Output modifiers are valid for f32 and f64 floating point results only.
+They must not be used with f16. 
+ * Note: v_cvt_f16_f32 is an exception. This instruction produces f16 result
+but accepts output modifiers. 
+ * Note: numeric values may be specified as either integer numbers or
+absolute expressions. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-omod 
+ */
+let omod 
+
+/*
+ * Selects the low [15:0] or high [31:16] operand bits for source and destination operands.
+By default, low bits are used for all operands. 
+ * The number of values specified with the op_sel modifier must match the number of instruction
+operands (both source and destination). First value controls src0, second value controls src1
+and so on, except that the last value controls destination.
+The value 0 selects the low bits, while 1 selects the high bits. 
+ * Note: op_sel modifier affects 16-bit operands only. For 32-bit operands the value specified
+by op_sel must be 0. 
+ * GFX9 and GFX10 only. 
+ * Note: numeric values may be specified as either
+integer numbers or
+absolute expressions. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-vop3-op-sel 
+ */
+let op_sel 
+
+/*
+ * Selects the low [15:0] or high [31:16] operand bits as input to the operation
+which results in the upper-half of the destination.
+By default, high bits are used for all operands. 
+ * The number of values specified by the op_sel_hi modifier must match the number of source
+operands. First value controls src0, second value controls src1 and so on. 
+ * The value 0 selects the low bits, while 1 selects the high bits. 
+ * Note: numeric values may be specified as either
+integer numbers or
+absolute expressions. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-op-sel-hi 
+ */
+let op_sel_hi 
+
+/*
+ * This is an optional operand. It must be used if and only if glc is specified. 
+ * https://llvm.org/docs/AMDGPU/gfx9_opt.html#amdgpu-synid9-opt 
+ */
+let opt 
+
+/*
+ * Interpolation parameter to read: 
+ * https://llvm.org/docs/AMDGPU/gfx9_param.html#amdgpu-synid9-param 
+ */
+let param 
+
+/*
+ * This is a special modifier which may be used with ds_swizzle_b32 instruction only.
+It specifies a swizzle pattern in numeric or symbolic form. The default value is 0. 
+ * See AMD documentation for more information. 
+ * Specifies a quad permute mode pattern 
+ * Each number is a lane id. 
+ * Specifies a bitmask permute mode pattern. 
+ * The pattern converts a 5-bit lane id to another
+lane id with which the lane interacts. 
+ * mask is a 5 character sequence which
+specifies how to transform the bits of the
+lane id. 
+ * The following characters are allowed: 
+ * Specifies a broadcast mode. 
+ * Broadcasts the value of any particular lane to
+all lanes in its group. 
+ * The first numeric parameter is a group
+size and must be equal to 2, 4, 8, 16 or 32. 
+ * The second numeric parameter is an index of the
+lane being broadcasted. 
+ * The index must not exceed group size. 
+ * Specifies a swap mode. 
+ * Swaps the neighboring groups of
+1, 2, 4, 8 or 16 lanes. 
+ * Specifies a reverse mode. 
+ * Reverses the lanes for groups of 2, 4, 8, 16 or 32 lanes. 
+ * Note: numeric values may be specified as either integer numbers or
+absolute expressions. 
+ 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-sw-offset16 
+ */
+let pattern 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let s32 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let s64 
+
+/*
+ * An optional 64-bit flat global address. Must be specified as off if not used. 
+ * See vaddr for description of available addressing modes. 
+ * Size: 2 dwords. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp, exec, off 
+ * https://llvm.org/docs/AMDGPU/gfx9_saddr_flat_global.html#amdgpu-synid9-saddr-flat-global 
+ */
+let saddr 
+
+/*
+ * A 64-bit base address for scalar memory operations. 
+ * Size: 2 dwords. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp 
+ * https://llvm.org/docs/AMDGPU/gfx9_base_smem_addr.html#amdgpu-synid9-base-smem-addr 
+ */
+let sbase 
+
+/*
+ * Input data for an atomic instruction. 
+ * Optionally may serve as an output data: 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp 
+ * https://llvm.org/docs/AMDGPU/gfx9_data_smem_atomic32.html#amdgpu-synid9-data-smem-atomic32 
+ */
+let sdata 
+
+/*
+ * Instruction output. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp 
+ * https://llvm.org/docs/AMDGPU/gfx9_sdst32_0.html#amdgpu-synid9-sdst32-0 
+ */
+let sdst 
+
+/*
+ * Specifies cache policy. The default value is off (0). 
+ * See AMD documentation for details. 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-slc 
+ */
+let slc 
+
+/*
+ * An unsigned byte offset. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, constant 
+ * https://llvm.org/docs/AMDGPU/gfx9_offset_buf.html#amdgpu-synid9-offset-buf 
+ */
+let soffset 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, lds_direct, constant, literal 
+ * https://llvm.org/docs/AMDGPU/gfx9_src32_0.html#amdgpu-synid9-src32-0 
+ */
+let src 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, lds_direct, constant, literal 
+ * https://llvm.org/docs/AMDGPU/gfx9_src32_0.html#amdgpu-synid9-src32-0 
+ */
+let src0 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, constant 
+ * https://llvm.org/docs/AMDGPU/gfx9_src32_3.html#amdgpu-synid9-src32-3 
+ */
+let src1 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, constant 
+ * https://llvm.org/docs/AMDGPU/gfx9_src32_3.html#amdgpu-synid9-src32-3 
+ */
+let src2 
+
+/*
+ * Image resource constant which defines the location of the image buffer in memory, its dimensions, tiling, and data format. 
+ * Size: 8 dwords. 
+ * Operands: s, ttmp 
+ * https://llvm.org/docs/AMDGPU/gfx9_rsrc_mimg.html#amdgpu-synid9-rsrc-mimg 
+ */
+let srsrc 
+
+/*
+ * Sampler constant used to specify filtering options applied to the image data after it is read. 
+ * Size: 4 dwords. 
+ * Operands: s, ttmp 
+ * https://llvm.org/docs/AMDGPU/gfx9_samp_mimg.html#amdgpu-synid9-samp-mimg 
+ */
+let ssamp 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, constant, literal 
+ * https://llvm.org/docs/AMDGPU/gfx9_ssrc32_0.html#amdgpu-synid9-ssrc32-0 
+ */
+let ssrc 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, constant, literal 
+ * https://llvm.org/docs/AMDGPU/gfx9_ssrc32_0.html#amdgpu-synid9-ssrc32-0 
+ */
+let ssrc0 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, ttmp, m0, exec, vccz, execz, scc, constant, literal 
+ * https://llvm.org/docs/AMDGPU/gfx9_ssrc32_0.html#amdgpu-synid9-ssrc32-0 
+ */
+let ssrc1 
+
+/*
+ * An export target: 
+ * https://llvm.org/docs/AMDGPU/gfx9_tgt.html#amdgpu-synid9-tgt 
+ */
+let tgt 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let u16 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let u16x2 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let u32 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let u64 
+
+/*
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * https://llvm.org/docs/AMDGPU/gfx9_type_dev.html#amdgpu-synid9-type-dev 
+ */
+let u8x4 
+
+/*
+ * Specifies whether the address is normalized or not (the address is normalized by default). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-unorm 
+ */
+let unorm 
+
+/*
+ * An offset from the start of GDS/LDS memory. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * https://llvm.org/docs/AMDGPU/gfx9_addr_ds.html#amdgpu-synid9-addr-ds 
+ */
+let vaddr 
+
+/*
+ * Vector condition code. 
+ * Size: 2 dwords. 
+ * Operands: vcc 
+ * https://llvm.org/docs/AMDGPU/gfx9_vcc_64.html#amdgpu-synid9-vcc-64 
+ */
+let vcc 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * https://llvm.org/docs/AMDGPU/gfx9_vdata32_0.html#amdgpu-synid9-vdata32-0 
+ */
+let vdata 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * https://llvm.org/docs/AMDGPU/gfx9_vdata32_0.html#amdgpu-synid9-vdata32-0 
+ */
+let vdata0 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * https://llvm.org/docs/AMDGPU/gfx9_vdata32_0.html#amdgpu-synid9-vdata32-0 
+ */
+let vdata1 
+
+/*
+ * Instruction output. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * https://llvm.org/docs/AMDGPU/gfx9_vdst32_0.html#amdgpu-synid9-vdst32-0 
+ */
+let vdst 
+
+/*
+ * Specifies valid mask flag state (off by default). 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-vm 
+ */
+let vm 
+
+/*
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * https://llvm.org/docs/AMDGPU/gfx9_vsrc32_0.html#amdgpu-synid9-vsrc32-0 
+ */
+let vsrc 
+
+/*
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * https://llvm.org/docs/AMDGPU/gfx9_src_exp.html#amdgpu-synid9-src-exp 
+ */
+let vsrc0 
+
+/*
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * https://llvm.org/docs/AMDGPU/gfx9_src_exp.html#amdgpu-synid9-src-exp 
+ */
+let vsrc1 
+
+/*
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * https://llvm.org/docs/AMDGPU/gfx9_src_exp.html#amdgpu-synid9-src-exp 
+ */
+let vsrc2 
+
+/*
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * https://llvm.org/docs/AMDGPU/gfx9_src_exp.html#amdgpu-synid9-src-exp 
+ */
+let vsrc3 
+
+/*
+ * Counts of outstanding instructions to wait for. 
+ * The bits of this operand have the following meaning: 
+ * This operand may be specified as one of the following: 
+ * An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ * A combination of vmcnt, expcnt, lgkmcnt and other values described below. 
+ * These values may be specified in any order. Spaces, ampersands and commas may be used as optional separators. 
+ * N is either an
+integer number or an
+absolute expression. 
+ 
+ * https://llvm.org/docs/AMDGPU/gfx9_waitcnt.html#amdgpu-synid9-waitcnt 
+ */
+let waitcnt 
+
+ds_add_f32                                 vaddr,    vdata                    offset16 gds
+ds_add_rtn_f32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_add_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_add_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_add_src2_f32                            vaddr                              offset16 gds
+ds_add_src2_u32                            vaddr                              offset16 gds
+ds_add_src2_u64                            vaddr                              offset16 gds
+ds_add_u32                                 vaddr,    vdata                    offset16 gds
+ds_add_u64                                 vaddr,    vdata                    offset16 gds
+ds_and_b32                                 vaddr,    vdata                    offset16 gds
+ds_and_b64                                 vaddr,    vdata                    offset16 gds
+ds_and_rtn_b32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_and_rtn_b64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_and_src2_b32                            vaddr                              offset16 gds
+ds_and_src2_b64                            vaddr                              offset16 gds
+ds_append                      vdst                                           offset16 gds
+ds_bpermute_b32                vdst,       vaddr,    vdata                    offset16
+ds_cmpst_b32                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_b64                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_f32                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_f64                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_b32               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_b64               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_f32               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_f64               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_condxchg32_rtn_b64          vdst,       vaddr,    vdata                    offset16 gds
+ds_consume                     vdst                                           offset16 gds
+ds_dec_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_dec_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_dec_src2_u32                            vaddr                              offset16 gds
+ds_dec_src2_u64                            vaddr                              offset16 gds
+ds_dec_u32                                 vaddr,    vdata                    offset16 gds
+ds_dec_u64                                 vaddr,    vdata                    offset16 gds
+ds_gws_barrier                             vdata                              offset16 gds
+ds_gws_init                                vdata                              offset16 gds
+ds_gws_sema_br                             vdata                              offset16 gds
+ds_gws_sema_p                                                                 offset16 gds
+ds_gws_sema_release_all                                                       offset16 gds
+ds_gws_sema_v                                                                 offset16 gds
+ds_inc_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_inc_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_inc_src2_u32                            vaddr                              offset16 gds
+ds_inc_src2_u64                            vaddr                              offset16 gds
+ds_inc_u32                                 vaddr,    vdata                    offset16 gds
+ds_inc_u64                                 vaddr,    vdata                    offset16 gds
+ds_max_f32                                 vaddr,    vdata                    offset16 gds
+ds_max_f64                                 vaddr,    vdata                    offset16 gds
+ds_max_i32                                 vaddr,    vdata                    offset16 gds
+ds_max_i64                                 vaddr,    vdata                    offset16 gds
+ds_max_rtn_f32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_f64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_i32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_i64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_src2_f32                            vaddr                              offset16 gds
+ds_max_src2_f64                            vaddr                              offset16 gds
+ds_max_src2_i32                            vaddr                              offset16 gds
+ds_max_src2_i64                            vaddr                              offset16 gds
+ds_max_src2_u32                            vaddr                              offset16 gds
+ds_max_src2_u64                            vaddr                              offset16 gds
+ds_max_u32                                 vaddr,    vdata                    offset16 gds
+ds_max_u64                                 vaddr,    vdata                    offset16 gds
+ds_min_f32                                 vaddr,    vdata                    offset16 gds
+ds_min_f64                                 vaddr,    vdata                    offset16 gds
+ds_min_i32                                 vaddr,    vdata                    offset16 gds
+ds_min_i64                                 vaddr,    vdata                    offset16 gds
+ds_min_rtn_f32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_f64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_i32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_i64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_src2_f32                            vaddr                              offset16 gds
+ds_min_src2_f64                            vaddr                              offset16 gds
+ds_min_src2_i32                            vaddr                              offset16 gds
+ds_min_src2_i64                            vaddr                              offset16 gds
+ds_min_src2_u32                            vaddr                              offset16 gds
+ds_min_src2_u64                            vaddr                              offset16 gds
+ds_min_u32                                 vaddr,    vdata                    offset16 gds
+ds_min_u64                                 vaddr,    vdata                    offset16 gds
+ds_mskor_b32                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_mskor_b64                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_mskor_rtn_b32               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_mskor_rtn_b64               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_nop
+ds_or_b32                                  vaddr,    vdata                    offset16 gds
+ds_or_b64                                  vaddr,    vdata                    offset16 gds
+ds_or_rtn_b32                  vdst,       vaddr,    vdata                    offset16 gds
+ds_or_rtn_b64                  vdst,       vaddr,    vdata                    offset16 gds
+ds_or_src2_b32                             vaddr                              offset16 gds
+ds_or_src2_b64                             vaddr                              offset16 gds
+ds_ordered_count               vdst,       vaddr                              offset16 gds
+ds_permute_b32                 vdst,       vaddr,    vdata                    offset16
+ds_read2_b32                   vdst:b32x2, vaddr                              offset8 offset8 gds
+ds_read2_b64                   vdst:b64x2, vaddr                              offset8 offset8 gds
+ds_read2st64_b32               vdst:b32x2, vaddr                              offset8 offset8 gds
+ds_read2st64_b64               vdst:b64x2, vaddr                              offset8 offset8 gds
+ds_read_b128                   vdst,       vaddr                              offset16 gds
+ds_read_b32                    vdst,       vaddr                              offset16 gds
+ds_read_b64                    vdst,       vaddr                              offset16 gds
+ds_read_b96                    vdst,       vaddr                              offset16 gds
+ds_read_i16                    vdst,       vaddr                              offset16 gds
+ds_read_i8                     vdst,       vaddr                              offset16 gds
+ds_read_i8_d16                 vdst,       vaddr                              offset16 gds
+ds_read_i8_d16_hi              vdst,       vaddr                              offset16 gds
+ds_read_u16                    vdst,       vaddr                              offset16 gds
+ds_read_u16_d16                vdst,       vaddr                              offset16 gds
+ds_read_u16_d16_hi             vdst,       vaddr                              offset16 gds
+ds_read_u8                     vdst,       vaddr                              offset16 gds
+ds_read_u8_d16                 vdst,       vaddr                              offset16 gds
+ds_read_u8_d16_hi              vdst,       vaddr                              offset16 gds
+ds_rsub_rtn_u32                vdst,       vaddr,    vdata                    offset16 gds
+ds_rsub_rtn_u64                vdst,       vaddr,    vdata                    offset16 gds
+ds_rsub_src2_u32                           vaddr                              offset16 gds
+ds_rsub_src2_u64                           vaddr                              offset16 gds
+ds_rsub_u32                                vaddr,    vdata                    offset16 gds
+ds_rsub_u64                                vaddr,    vdata                    offset16 gds
+ds_sub_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_sub_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_sub_src2_u32                            vaddr                              offset16 gds
+ds_sub_src2_u64                            vaddr                              offset16 gds
+ds_sub_u32                                 vaddr,    vdata                    offset16 gds
+ds_sub_u64                                 vaddr,    vdata                    offset16 gds
+ds_swizzle_b32                 vdst,       vaddr                              pattern gds
+ds_wrap_rtn_b32                vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_write2_b32                              vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write2_b64                              vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write2st64_b32                          vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write2st64_b64                          vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write_b128                              vaddr,    vdata                    offset16 gds
+ds_write_b16                               vaddr,    vdata                    offset16 gds
+ds_write_b16_d16_hi                        vaddr,    vdata                    offset16 gds
+ds_write_b32                               vaddr,    vdata                    offset16 gds
+ds_write_b64                               vaddr,    vdata                    offset16 gds
+ds_write_b8                                vaddr,    vdata                    offset16 gds
+ds_write_b8_d16_hi                         vaddr,    vdata                    offset16 gds
+ds_write_b96                               vaddr,    vdata                    offset16 gds
+ds_write_src2_b32                          vaddr                              offset16 gds
+ds_write_src2_b64                          vaddr                              offset16 gds
+ds_wrxchg2_rtn_b32             vdst:b32x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg2_rtn_b64             vdst:b64x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg2st64_rtn_b32         vdst:b32x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg2st64_rtn_b64         vdst:b64x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg_rtn_b32              vdst,       vaddr,    vdata                    offset16 gds
+ds_wrxchg_rtn_b64              vdst,       vaddr,    vdata                    offset16 gds
+ds_xor_b32                                 vaddr,    vdata                    offset16 gds
+ds_xor_b64                                 vaddr,    vdata                    offset16 gds
+ds_xor_rtn_b32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_xor_rtn_b64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_xor_src2_b32                            vaddr                              offset16 gds
+ds_xor_src2_b64                            vaddr                              offset16 gds
+exp                            tgt,      vsrc0,    vsrc1,    vsrc2,    vsrc3          done compr vm
+flat_atomic_add                vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_add_x2             vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_and                vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_and_x2             vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_cmpswap            vdst:opt,     vaddr,    vdata:b32x2                 offset12 glc slc
+flat_atomic_cmpswap_x2         vdst:opt,     vaddr,    vdata:b64x2                 offset12 glc slc
+flat_atomic_dec                vdst:opt:u32, vaddr,    vdata:u32                   offset12 glc slc
+flat_atomic_dec_x2             vdst:opt:u64, vaddr,    vdata:u64                   offset12 glc slc
+flat_atomic_inc                vdst:opt:u32, vaddr,    vdata:u32                   offset12 glc slc
+flat_atomic_inc_x2             vdst:opt:u64, vaddr,    vdata:u64                   offset12 glc slc
+flat_atomic_or                 vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_or_x2              vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_smax               vdst:opt:s32, vaddr,    vdata:s32                   offset12 glc slc
+flat_atomic_smax_x2            vdst:opt:s64, vaddr,    vdata:s64                   offset12 glc slc
+flat_atomic_smin               vdst:opt:s32, vaddr,    vdata:s32                   offset12 glc slc
+flat_atomic_smin_x2            vdst:opt:s64, vaddr,    vdata:s64                   offset12 glc slc
+flat_atomic_sub                vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_sub_x2             vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_swap               vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_swap_x2            vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_umax               vdst:opt:u32, vaddr,    vdata:u32                   offset12 glc slc
+flat_atomic_umax_x2            vdst:opt:u64, vaddr,    vdata:u64                   offset12 glc slc
+flat_atomic_umin               vdst:opt:u32, vaddr,    vdata:u32                   offset12 glc slc
+flat_atomic_umin_x2            vdst:opt:u64, vaddr,    vdata:u64                   offset12 glc slc
+flat_atomic_xor                vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_atomic_xor_x2             vdst:opt,     vaddr,    vdata                       offset12 glc slc
+flat_load_dword                vdst,         vaddr                                 offset12 glc slc
+flat_load_dwordx2              vdst,         vaddr                                 offset12 glc slc
+flat_load_dwordx3              vdst,         vaddr                                 offset12 glc slc
+flat_load_dwordx4              vdst,         vaddr                                 offset12 glc slc
+flat_load_sbyte                vdst,         vaddr                                 offset12 glc slc
+flat_load_sbyte_d16            vdst,         vaddr                                 offset12 glc slc
+flat_load_sbyte_d16_hi         vdst,         vaddr                                 offset12 glc slc
+flat_load_short_d16            vdst,         vaddr                                 offset12 glc slc
+flat_load_short_d16_hi         vdst,         vaddr                                 offset12 glc slc
+flat_load_sshort               vdst,         vaddr                                 offset12 glc slc
+flat_load_ubyte                vdst,         vaddr                                 offset12 glc slc
+flat_load_ubyte_d16            vdst,         vaddr                                 offset12 glc slc
+flat_load_ubyte_d16_hi         vdst,         vaddr                                 offset12 glc slc
+flat_load_ushort               vdst,         vaddr                                 offset12 glc slc
+flat_store_byte                              vaddr,    vdata                       offset12 glc slc
+flat_store_byte_d16_hi                       vaddr,    vdata                       offset12 glc slc
+flat_store_dword                             vaddr,    vdata                       offset12 glc slc
+flat_store_dwordx2                           vaddr,    vdata                       offset12 glc slc
+flat_store_dwordx3                           vaddr,    vdata                       offset12 glc slc
+flat_store_dwordx4                           vaddr,    vdata                       offset12 glc slc
+flat_store_short                             vaddr,    vdata                       offset12 glc slc
+flat_store_short_d16_hi                      vaddr,    vdata                       offset12 glc slc
+global_atomic_add              vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_add_x2           vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_and              vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_and_x2           vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_cmpswap          vdst:opt,     vaddr,    vdata:b32x2, saddr          offset13s glc slc
+global_atomic_cmpswap_x2       vdst:opt,     vaddr,    vdata:b64x2, saddr          offset13s glc slc
+global_atomic_dec              vdst:opt:u32, vaddr,    vdata:u32,   saddr          offset13s glc slc
+global_atomic_dec_x2           vdst:opt:u64, vaddr,    vdata:u64,   saddr          offset13s glc slc
+global_atomic_inc              vdst:opt:u32, vaddr,    vdata:u32,   saddr          offset13s glc slc
+global_atomic_inc_x2           vdst:opt:u64, vaddr,    vdata:u64,   saddr          offset13s glc slc
+global_atomic_or               vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_or_x2            vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_smax             vdst:opt:s32, vaddr,    vdata:s32,   saddr          offset13s glc slc
+global_atomic_smax_x2          vdst:opt:s64, vaddr,    vdata:s64,   saddr          offset13s glc slc
+global_atomic_smin             vdst:opt:s32, vaddr,    vdata:s32,   saddr          offset13s glc slc
+global_atomic_smin_x2          vdst:opt:s64, vaddr,    vdata:s64,   saddr          offset13s glc slc
+global_atomic_sub              vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_sub_x2           vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_swap             vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_swap_x2          vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_umax             vdst:opt:u32, vaddr,    vdata:u32,   saddr          offset13s glc slc
+global_atomic_umax_x2          vdst:opt:u64, vaddr,    vdata:u64,   saddr          offset13s glc slc
+global_atomic_umin             vdst:opt:u32, vaddr,    vdata:u32,   saddr          offset13s glc slc
+global_atomic_umin_x2          vdst:opt:u64, vaddr,    vdata:u64,   saddr          offset13s glc slc
+global_atomic_xor              vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_atomic_xor_x2           vdst:opt,     vaddr,    vdata,       saddr          offset13s glc slc
+global_load_dword              vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_dwordx2            vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_dwordx3            vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_dwordx4            vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_sbyte              vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_sbyte_d16          vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_sbyte_d16_hi       vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_short_d16          vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_short_d16_hi       vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_sshort             vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_ubyte              vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_ubyte_d16          vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_ubyte_d16_hi       vdst,         vaddr,    saddr                       offset13s glc slc
+global_load_ushort             vdst,         vaddr,    saddr                       offset13s glc slc
+global_store_byte                            vaddr,    vdata,       saddr          offset13s glc slc
+global_store_byte_d16_hi                     vaddr,    vdata,       saddr          offset13s glc slc
+global_store_dword                           vaddr,    vdata,       saddr          offset13s glc slc
+global_store_dwordx2                         vaddr,    vdata,       saddr          offset13s glc slc
+global_store_dwordx3                         vaddr,    vdata,       saddr          offset13s glc slc
+global_store_dwordx4                         vaddr,    vdata,       saddr          offset13s glc slc
+global_store_short                           vaddr,    vdata,       saddr          offset13s glc slc
+global_store_short_d16_hi                    vaddr,    vdata,       saddr          offset13s glc slc
+scratch_load_dword             vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_dwordx2           vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_dwordx3           vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_dwordx4           vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_sbyte             vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_sbyte_d16         vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_sbyte_d16_hi      vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_short_d16         vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_short_d16_hi      vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_sshort            vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_ubyte             vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_ubyte_d16         vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_ubyte_d16_hi      vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_load_ushort            vdst,         vaddr,    saddr                       offset13s glc slc
+scratch_store_byte                           vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_byte_d16_hi                    vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_dword                          vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_dwordx2                        vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_dwordx3                        vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_dwordx4                        vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_short                          vaddr,    vdata,       saddr          offset13s glc slc
+scratch_store_short_d16_hi                   vaddr,    vdata,       saddr          offset13s glc slc
+image_atomic_add                vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_and                vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_cmpswap            vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_dec                vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_inc                vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_or                 vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_smax               vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_smin               vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_sub                vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_swap               vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_umax               vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_umin               vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_atomic_xor                vdata:dst, vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_gather4          vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_b        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_b_cl     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_b_cl_o   vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_b_o      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_b      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_b_cl   vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_b_cl_o vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_b_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_cl     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_cl_o   vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_l      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_l_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_lz     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_lz_o   vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_c_o      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_cl       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_cl_o     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_l        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_l_o      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_lz       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_lz_o     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_gather4_o        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_get_lod          vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da
+image_get_resinfo      vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da
+image_load             vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da d16
+image_load_mip         vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da d16
+image_load_mip_pck     vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da
+image_load_mip_pck_sgn vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da
+image_load_pck         vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da
+image_load_pck_sgn     vdst,    vaddr,     srsrc               dmask unorm glc slc a16 lwe da
+image_sample           vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_b         vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc lwe da d16
+image_sample_b_cl      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_b_cl_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_b_o       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc lwe da d16
+image_sample_c         vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_b       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_b_cl    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_b_cl_o  vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_b_o     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_cd      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_cd_cl   vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_cd_cl_o vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_cd_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_cl      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_cl_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_d       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_d_cl    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_d_cl_o  vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_d_o     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_l       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_l_o     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_lz      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_lz_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_c_o       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_cd        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_cd_cl     vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_cd_cl_o   vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_cd_o      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_cl        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_cl_o      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_d         vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_d_cl      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_d_cl_o    vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_d_o       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_l         vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_l_o       vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_lz        vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_lz_o      vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_sample_o         vdst,    vaddr,     srsrc,   ssamp      dmask unorm glc slc a16 lwe da d16
+image_store                     vdata,     vaddr,   srsrc      dmask unorm glc slc a16 lwe da d16
+image_store_mip                 vdata,     vaddr,   srsrc      dmask unorm glc slc a16 lwe da d16
+image_store_mip_pck             vdata,     vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+image_store_pck                 vdata,     vaddr,   srsrc      dmask unorm glc slc a16 lwe da
+buffer_atomic_add                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_add_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_and                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_and_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_cmpswap              vdata:dst:b32x2, vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_cmpswap_x2           vdata:dst:b64x2, vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_dec                  vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_dec_x2               vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_inc                  vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_inc_x2               vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_or                   vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_or_x2                vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smax                 vdata:dst:s32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smax_x2              vdata:dst:s64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smin                 vdata:dst:s32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smin_x2              vdata:dst:s64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_sub                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_sub_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_swap                 vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_swap_x2              vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umax                 vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umax_x2              vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umin                 vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umin_x2              vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_xor                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_xor_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_load_dword            vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_dwordx2          vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_dwordx3          vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_dwordx4          vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_hi_x  vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_x     vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_xy    vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_xyz   vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_xyzw  vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_x         vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_format_xy        vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_xyz       vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_xyzw      vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_sbyte            vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_sbyte_d16        vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_sbyte_d16_hi     vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_short_d16        vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_short_d16_hi     vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_sshort           vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_ubyte            vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_ubyte_d16        vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_ubyte_d16_hi     vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_ushort           vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_store_byte                  vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_byte_d16_hi           vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dword                 vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dwordx2               vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dwordx3               vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dwordx4               vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_hi_x       vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_x          vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_xy         vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_xyz        vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_xyzw       vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_x              vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_xy             vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_xyz            vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_xyzw           vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_lds_dword             srsrc,           soffset                 offset12 lds
+buffer_store_short                 vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_short_d16_hi          vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
 buffer_wbinvl1
 buffer_wbinvl1_vol
-ds_add_f32
-ds_add_rtn_f32
-ds_add_rtn_u32
-ds_add_rtn_u64
-ds_add_src2_f32
-ds_add_src2_u32
-ds_add_src2_u64
-ds_add_u32
-ds_add_u64
-ds_and_b32
-ds_and_b64
-ds_and_rtn_b32
-ds_and_rtn_b64
-ds_and_src2_b32
-ds_and_src2_b64
-ds_append
-ds_bpermute_b32
-ds_cmpst_b32
-ds_cmpst_b64
-ds_cmpst_f32
-ds_cmpst_f64
-ds_cmpst_rtn_b32
-ds_cmpst_rtn_b64
-ds_cmpst_rtn_f32
-ds_cmpst_rtn_f64
-ds_condxchg32_rtn_b64
-ds_consume
-ds_dec_rtn_u32
-ds_dec_rtn_u64
-ds_dec_src2_u32
-ds_dec_src2_u64
-ds_dec_u32
-ds_dec_u64
-ds_gws_barrier
-ds_gws_init
-ds_gws_sema_br
-ds_gws_sema_p
-ds_gws_sema_release_all
-ds_gws_sema_v
-ds_inc_rtn_u32
-ds_inc_rtn_u64
-ds_inc_src2_u32
-ds_inc_src2_u64
-ds_inc_u32
-ds_inc_u64
-ds_max_f32
-ds_max_f64
-ds_max_i32
-ds_max_i64
-ds_max_rtn_f32
-ds_max_rtn_f64
-ds_max_rtn_i32
-ds_max_rtn_i64
-ds_max_rtn_u32
-ds_max_rtn_u64
-ds_max_src2_f32
-ds_max_src2_f64
-ds_max_src2_i32
-ds_max_src2_i64
-ds_max_src2_u32
-ds_max_src2_u64
-ds_max_u32
-ds_max_u64
-ds_min_f32
-ds_min_f64
-ds_min_i32
-ds_min_i64
-ds_min_rtn_f32
-ds_min_rtn_f64
-ds_min_rtn_i32
-ds_min_rtn_i64
-ds_min_rtn_u32
-ds_min_rtn_u64
-ds_min_src2_f32
-ds_min_src2_f64
-ds_min_src2_i32
-ds_min_src2_i64
-ds_min_src2_u32
-ds_min_src2_u64
-ds_min_u32
-ds_min_u64
-ds_mskor_b32
-ds_mskor_b64
-ds_mskor_rtn_b32
-ds_mskor_rtn_b64
-ds_nop
-ds_or_b32
-ds_or_b64
-ds_or_rtn_b32
-ds_or_rtn_b64
-ds_or_src2_b32
-ds_or_src2_b64
-ds_ordered_count
-ds_permute_b32
-ds_read2_b32
-ds_read2_b64
-ds_read2st64_b32
-ds_read2st64_b64
-ds_read_b128
-ds_read_b32
-ds_read_b64
-ds_read_b96
-ds_read_i16
-ds_read_i8
-ds_read_i8_d16
-ds_read_i8_d16_hi
-ds_read_u16
-ds_read_u16_d16
-ds_read_u16_d16_hi
-ds_read_u8
-ds_read_u8_d16
-ds_read_u8_d16_hi
-ds_rsub_rtn_u32
-ds_rsub_rtn_u64
-ds_rsub_src2_u32
-ds_rsub_src2_u64
-ds_rsub_u32
-ds_rsub_u64
-ds_sub_rtn_u32
-ds_sub_rtn_u64
-ds_sub_src2_u32
-ds_sub_src2_u64
-ds_sub_u32
-ds_sub_u64
-ds_swizzle_b32
-ds_wrap_rtn_b32
-ds_write2_b32
-ds_write2_b64
-ds_write2st64_b32
-ds_write2st64_b64
-ds_write_b128
-ds_write_b16
-ds_write_b16_d16_hi
-ds_write_b32
-ds_write_b64
-ds_write_b8
-ds_write_b8_d16_hi
-ds_write_b96
-ds_write_src2_b32
-ds_write_src2_b64
-ds_wrxchg2_rtn_b32
-ds_wrxchg2_rtn_b64
-ds_wrxchg2st64_rtn_b32
-ds_wrxchg2st64_rtn_b64
-ds_wrxchg_rtn_b32
-ds_wrxchg_rtn_b64
-ds_xor_b32
-ds_xor_b64
-ds_xor_rtn_b32
-ds_xor_rtn_b64
-ds_xor_src2_b32
-ds_xor_src2_b64
-exp
-flat_atomic_add
-flat_atomic_add_x2
-flat_atomic_and
-flat_atomic_and_x2
-flat_atomic_cmpswap
-flat_atomic_cmpswap_x2
-flat_atomic_dec
-flat_atomic_dec_x2
-flat_atomic_inc
-flat_atomic_inc_x2
-flat_atomic_or
-flat_atomic_or_x2
-flat_atomic_smax
-flat_atomic_smax_x2
-flat_atomic_smin
-flat_atomic_smin_x2
-flat_atomic_sub
-flat_atomic_sub_x2
-flat_atomic_swap
-flat_atomic_swap_x2
-flat_atomic_umax
-flat_atomic_umax_x2
-flat_atomic_umin
-flat_atomic_umin_x2
-flat_atomic_xor
-flat_atomic_xor_x2
-flat_load_dword
-flat_load_dwordx2
-flat_load_dwordx3
-flat_load_dwordx4
-flat_load_sbyte
-flat_load_sbyte_d16
-flat_load_sbyte_d16_hi
-flat_load_short_d16
-flat_load_short_d16_hi
-flat_load_sshort
-flat_load_ubyte
-flat_load_ubyte_d16
-flat_load_ubyte_d16_hi
-flat_load_ushort
-flat_store_byte
-flat_store_byte_d16_hi
-flat_store_dword
-flat_store_dwordx2
-flat_store_dwordx3
-flat_store_dwordx4
-flat_store_short
-flat_store_short_d16_hi
-global_atomic_add
-global_atomic_add_x2
-global_atomic_and
-global_atomic_and_x2
-global_atomic_cmpswap
-global_atomic_cmpswap_x2
-global_atomic_dec
-global_atomic_dec_x2
-global_atomic_inc
-global_atomic_inc_x2
-global_atomic_or
-global_atomic_or_x2
-global_atomic_smax
-global_atomic_smax_x2
-global_atomic_smin
-global_atomic_smin_x2
-global_atomic_sub
-global_atomic_sub_x2
-global_atomic_swap
-global_atomic_swap_x2
-global_atomic_umax
-global_atomic_umax_x2
-global_atomic_umin
-global_atomic_umin_x2
-global_atomic_xor
-global_atomic_xor_x2
-global_load_dword
-global_load_dwordx2
-global_load_dwordx3
-global_load_dwordx4
-global_load_sbyte
-global_load_sbyte_d16
-global_load_sbyte_d16_hi
-global_load_short_d16
-global_load_short_d16_hi
-global_load_sshort
-global_load_ubyte
-global_load_ubyte_d16
-global_load_ubyte_d16_hi
-global_load_ushort
-global_store_byte
-global_store_byte_d16_hi
-global_store_dword
-global_store_dwordx2
-global_store_dwordx3
-global_store_dwordx4
-global_store_short
-global_store_short_d16_hi
-image_atomic_add
-image_atomic_and
-image_atomic_cmpswap
-image_atomic_dec
-image_atomic_inc
-image_atomic_or
-image_atomic_smax
-image_atomic_smin
-image_atomic_sub
-image_atomic_swap
-image_atomic_umax
-image_atomic_umin
-image_atomic_xor
-image_gather4
-image_gather4_b
-image_gather4_b_cl
-image_gather4_b_cl_o
-image_gather4_b_o
-image_gather4_c
-image_gather4_c_b
-image_gather4_c_b_cl
-image_gather4_c_b_cl_o
-image_gather4_c_b_o
-image_gather4_c_cl
-image_gather4_c_cl_o
-image_gather4_c_l
-image_gather4_c_l_o
-image_gather4_c_lz
-image_gather4_c_lz_o
-image_gather4_c_o
-image_gather4_cl
-image_gather4_cl_o
-image_gather4_l
-image_gather4_l_o
-image_gather4_lz
-image_gather4_lz_o
-image_gather4_o
-image_get_lod
-image_get_resinfo
-image_load
-image_load_mip
-image_load_mip_pck
-image_load_mip_pck_sgn
-image_load_pck
-image_load_pck_sgn
-image_sample
-image_sample_b
-image_sample_b_cl
-image_sample_b_cl_o
-image_sample_b_o
-image_sample_c
-image_sample_c_b
-image_sample_c_b_cl
-image_sample_c_b_cl_o
-image_sample_c_b_o
-image_sample_c_cd
-image_sample_c_cd_cl
-image_sample_c_cd_cl_o
-image_sample_c_cd_o
-image_sample_c_cl
-image_sample_c_cl_o
-image_sample_c_d
-image_sample_c_d_cl
-image_sample_c_d_cl_o
-image_sample_c_d_o
-image_sample_c_l
-image_sample_c_l_o
-image_sample_c_lz
-image_sample_c_lz_o
-image_sample_c_o
-image_sample_cd
-image_sample_cd_cl
-image_sample_cd_cl_o
-image_sample_cd_o
-image_sample_cl
-image_sample_cl_o
-image_sample_d
-image_sample_d_cl
-image_sample_d_cl_o
-image_sample_d_o
-image_sample_l
-image_sample_l_o
-image_sample_lz
-image_sample_lz_o
-image_sample_o
-image_store
-image_store_mip
-image_store_mip_pck
-image_store_pck
-s_abs_i32
-s_absdiff_i32
-s_add_i32
-s_add_u32
-s_addc_u32
-s_addk_i32
-s_and_b32
-s_and_b64
-s_and_saveexec_b64
-s_andn1_saveexec_b64
-s_andn1_wrexec_b64
-s_andn2_b32
-s_andn2_b64
-s_andn2_saveexec_b64
-s_andn2_wrexec_b64
-s_ashr_i32
-s_ashr_i64
-s_atc_probe
-s_atc_probe_buffer
-s_atomic_add
-s_atomic_add_x2
-s_atomic_and
-s_atomic_and_x2
-s_atomic_cmpswap
-s_atomic_cmpswap_x2
-s_atomic_dec
-s_atomic_dec_x2
-s_atomic_inc
-s_atomic_inc_x2
-s_atomic_or
-s_atomic_or_x2
-s_atomic_smax
-s_atomic_smax_x2
-s_atomic_smin
-s_atomic_smin_x2
-s_atomic_sub
-s_atomic_sub_x2
-s_atomic_swap
-s_atomic_swap_x2
-s_atomic_umax
-s_atomic_umax_x2
-s_atomic_umin
-s_atomic_umin_x2
-s_atomic_xor
-s_atomic_xor_x2
-s_barrier
-s_bcnt0_i32_b32
-s_bcnt0_i32_b64
-s_bcnt1_i32_b32
-s_bcnt1_i32_b64
-s_bfe_i32
-s_bfe_i64
-s_bfe_u32
-s_bfe_u64
-s_bfm_b32
-s_bfm_b64
-s_bitcmp0_b32
-s_bitcmp0_b64
-s_bitcmp1_b32
-s_bitcmp1_b64
-s_bitreplicate_b64_b32
-s_bitset0_b32
-s_bitset0_b64
-s_bitset1_b32
-s_bitset1_b64
-s_branch
-s_brev_b32
-s_brev_b64
-s_buffer_atomic_add
-s_buffer_atomic_add_x2
-s_buffer_atomic_and
-s_buffer_atomic_and_x2
-s_buffer_atomic_cmpswap
-s_buffer_atomic_cmpswap_x2
-s_buffer_atomic_dec
-s_buffer_atomic_dec_x2
-s_buffer_atomic_inc
-s_buffer_atomic_inc_x2
-s_buffer_atomic_or
-s_buffer_atomic_or_x2
-s_buffer_atomic_smax
-s_buffer_atomic_smax_x2
-s_buffer_atomic_smin
-s_buffer_atomic_smin_x2
-s_buffer_atomic_sub
-s_buffer_atomic_sub_x2
-s_buffer_atomic_swap
-s_buffer_atomic_swap_x2
-s_buffer_atomic_umax
-s_buffer_atomic_umax_x2
-s_buffer_atomic_umin
-s_buffer_atomic_umin_x2
-s_buffer_atomic_xor
-s_buffer_atomic_xor_x2
-s_buffer_load_dword
-s_buffer_load_dwordx16
-s_buffer_load_dwordx2
-s_buffer_load_dwordx4
-s_buffer_load_dwordx8
-s_buffer_store_dword
-s_buffer_store_dwordx2
-s_buffer_store_dwordx4
-s_call_b64
-s_cbranch_cdbgsys
-s_cbranch_cdbgsys_and_user
-s_cbranch_cdbgsys_or_user
-s_cbranch_cdbguser
-s_cbranch_execnz
-s_cbranch_execz
-s_cbranch_g_fork
-s_cbranch_i_fork
-s_cbranch_join
-s_cbranch_scc0
-s_cbranch_scc1
-s_cbranch_vccnz
-s_cbranch_vccz
-s_cmov_b32
-s_cmov_b64
-s_cmovk_i32
-s_cmp_eq_i32
-s_cmp_eq_u32
-s_cmp_eq_u64
-s_cmp_ge_i32
-s_cmp_ge_u32
-s_cmp_gt_i32
-s_cmp_gt_u32
-s_cmp_le_i32
-s_cmp_le_u32
-s_cmp_lg_i32
-s_cmp_lg_u32
-s_cmp_lg_u64
-s_cmp_lt_i32
-s_cmp_lt_u32
-s_cmpk_eq_i32
-s_cmpk_eq_u32
-s_cmpk_ge_i32
-s_cmpk_ge_u32
-s_cmpk_gt_i32
-s_cmpk_gt_u32
-s_cmpk_le_i32
-s_cmpk_le_u32
-s_cmpk_lg_i32
-s_cmpk_lg_u32
-s_cmpk_lt_i32
-s_cmpk_lt_u32
-s_cselect_b32
-s_cselect_b64
-s_dcache_discard
-s_dcache_discard_x2
+s_atc_probe                              imm3,            sbase,    soffset
+s_atc_probe_buffer                       imm3,            sbase,    soffset
+s_atomic_add                             sdata:dst,       sbase,    soffset        glc
+s_atomic_add_x2                          sdata:dst,       sbase,    soffset        glc
+s_atomic_and                             sdata:dst,       sbase,    soffset        glc
+s_atomic_and_x2                          sdata:dst,       sbase,    soffset        glc
+s_atomic_cmpswap                         sdata:dst:b32x2, sbase,    soffset        glc
+s_atomic_cmpswap_x2                      sdata:dst:b64x2, sbase,    soffset        glc
+s_atomic_dec                             sdata:dst:u32,   sbase,    soffset        glc
+s_atomic_dec_x2                          sdata:dst:u64,   sbase,    soffset        glc
+s_atomic_inc                             sdata:dst:u32,   sbase,    soffset        glc
+s_atomic_inc_x2                          sdata:dst:u64,   sbase,    soffset        glc
+s_atomic_or                              sdata:dst,       sbase,    soffset        glc
+s_atomic_or_x2                           sdata:dst,       sbase,    soffset        glc
+s_atomic_smax                            sdata:dst:s32,   sbase,    soffset        glc
+s_atomic_smax_x2                         sdata:dst:s64,   sbase,    soffset        glc
+s_atomic_smin                            sdata:dst:s32,   sbase,    soffset        glc
+s_atomic_smin_x2                         sdata:dst:s64,   sbase,    soffset        glc
+s_atomic_sub                             sdata:dst,       sbase,    soffset        glc
+s_atomic_sub_x2                          sdata:dst,       sbase,    soffset        glc
+s_atomic_swap                            sdata:dst,       sbase,    soffset        glc
+s_atomic_swap_x2                         sdata:dst,       sbase,    soffset        glc
+s_atomic_umax                            sdata:dst:u32,   sbase,    soffset        glc
+s_atomic_umax_x2                         sdata:dst:u64,   sbase,    soffset        glc
+s_atomic_umin                            sdata:dst:u32,   sbase,    soffset        glc
+s_atomic_umin_x2                         sdata:dst:u64,   sbase,    soffset        glc
+s_atomic_xor                             sdata:dst,       sbase,    soffset        glc
+s_atomic_xor_x2                          sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_add                      sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_add_x2                   sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_and                      sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_and_x2                   sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_cmpswap                  sdata:dst:b32x2, sbase,    soffset        glc
+s_buffer_atomic_cmpswap_x2               sdata:dst:b64x2, sbase,    soffset        glc
+s_buffer_atomic_dec                      sdata:dst:u32,   sbase,    soffset        glc
+s_buffer_atomic_dec_x2                   sdata:dst:u64,   sbase,    soffset        glc
+s_buffer_atomic_inc                      sdata:dst:u32,   sbase,    soffset        glc
+s_buffer_atomic_inc_x2                   sdata:dst:u64,   sbase,    soffset        glc
+s_buffer_atomic_or                       sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_or_x2                    sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_smax                     sdata:dst:s32,   sbase,    soffset        glc
+s_buffer_atomic_smax_x2                  sdata:dst:s64,   sbase,    soffset        glc
+s_buffer_atomic_smin                     sdata:dst:s32,   sbase,    soffset        glc
+s_buffer_atomic_smin_x2                  sdata:dst:s64,   sbase,    soffset        glc
+s_buffer_atomic_sub                      sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_sub_x2                   sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_swap                     sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_swap_x2                  sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_umax                     sdata:dst:u32,   sbase,    soffset        glc
+s_buffer_atomic_umax_x2                  sdata:dst:u64,   sbase,    soffset        glc
+s_buffer_atomic_umin                     sdata:dst:u32,   sbase,    soffset        glc
+s_buffer_atomic_umin_x2                  sdata:dst:u64,   sbase,    soffset        glc
+s_buffer_atomic_xor                      sdata:dst,       sbase,    soffset        glc
+s_buffer_atomic_xor_x2                   sdata:dst,       sbase,    soffset        glc
+s_buffer_load_dword            sdst,     sbase,           soffset                  glc
+s_buffer_load_dwordx16         sdst,     sbase,           soffset                  glc
+s_buffer_load_dwordx2          sdst,     sbase,           soffset                  glc
+s_buffer_load_dwordx4          sdst,     sbase,           soffset                  glc
+s_buffer_load_dwordx8          sdst,     sbase,           soffset                  glc
+s_buffer_store_dword                     sdata,           sbase,    soffset        glc
+s_buffer_store_dwordx2                   sdata,           sbase,    soffset        glc
+s_buffer_store_dwordx4                   sdata,           sbase,    soffset        glc
+s_dcache_discard                         sbase,           soffset
+s_dcache_discard_x2                      sbase,           soffset
 s_dcache_inv
 s_dcache_inv_vol
 s_dcache_wb
 s_dcache_wb_vol
-s_decperflevel
+s_load_dword                   sdst,     sbase,           soffset                  glc
+s_load_dwordx16                sdst,     sbase,           soffset                  glc
+s_load_dwordx2                 sdst,     sbase,           soffset                  glc
+s_load_dwordx4                 sdst,     sbase,           soffset                  glc
+s_load_dwordx8                 sdst,     sbase,           soffset                  glc
+s_memrealtime                  sdst
+s_memtime                      sdst
+s_scratch_load_dword           sdst,     sbase,           soffset                  glc
+s_scratch_load_dwordx2         sdst,     sbase,           soffset                  glc
+s_scratch_load_dwordx4         sdst,     sbase,           soffset                  glc
+s_scratch_store_dword                    sdata,           sbase,    soffset        glc
+s_scratch_store_dwordx2                  sdata,           sbase,    soffset        glc
+s_scratch_store_dwordx4                  sdata,           sbase,    soffset        glc
+s_store_dword                            sdata,           sbase,    soffset        glc
+s_store_dwordx2                          sdata,           sbase,    soffset        glc
+s_store_dwordx4                          sdata,           sbase,    soffset        glc
+s_abs_i32                      sdst,     ssrc
+s_and_saveexec_b64             sdst,     ssrc
+s_andn1_saveexec_b64           sdst,     ssrc
+s_andn1_wrexec_b64             sdst,     ssrc
+s_andn2_saveexec_b64           sdst,     ssrc
+s_andn2_wrexec_b64             sdst,     ssrc
+s_bcnt0_i32_b32                sdst,     ssrc
+s_bcnt0_i32_b64                sdst,     ssrc
+s_bcnt1_i32_b32                sdst,     ssrc
+s_bcnt1_i32_b64                sdst,     ssrc
+s_bitreplicate_b64_b32         sdst,     ssrc
+s_bitset0_b32                  sdst,     ssrc
+s_bitset0_b64                  sdst,     ssrc:b32
+s_bitset1_b32                  sdst,     ssrc
+s_bitset1_b64                  sdst,     ssrc:b32
+s_brev_b32                     sdst,     ssrc
+s_brev_b64                     sdst,     ssrc
+s_cbranch_join                           ssrc
+s_cmov_b32                     sdst,     ssrc
+s_cmov_b64                     sdst,     ssrc
+s_ff0_i32_b32                  sdst,     ssrc
+s_ff0_i32_b64                  sdst,     ssrc
+s_ff1_i32_b32                  sdst,     ssrc
+s_ff1_i32_b64                  sdst,     ssrc
+s_flbit_i32                    sdst,     ssrc
+s_flbit_i32_b32                sdst,     ssrc
+s_flbit_i32_b64                sdst,     ssrc
+s_flbit_i32_i64                sdst,     ssrc
+s_getpc_b64                    sdst
+s_mov_b32                      sdst,     ssrc
+s_mov_b64                      sdst,     ssrc
+s_mov_fed_b32                  sdst,     ssrc
+s_movreld_b32                  sdst,     ssrc
+s_movreld_b64                  sdst,     ssrc
+s_movrels_b32                  sdst,     ssrc
+s_movrels_b64                  sdst,     ssrc
+s_nand_saveexec_b64            sdst,     ssrc
+s_nor_saveexec_b64             sdst,     ssrc
+s_not_b32                      sdst,     ssrc
+s_not_b64                      sdst,     ssrc
+s_or_saveexec_b64              sdst,     ssrc
+s_orn1_saveexec_b64            sdst,     ssrc
+s_orn2_saveexec_b64            sdst,     ssrc
+s_quadmask_b32                 sdst,     ssrc
+s_quadmask_b64                 sdst,     ssrc
+s_rfe_b64                                ssrc
+s_set_gpr_idx_idx                        ssrc
+s_setpc_b64                              ssrc
+s_sext_i32_i16                 sdst,     ssrc
+s_sext_i32_i8                  sdst,     ssrc
+s_swappc_b64                   sdst,     ssrc
+s_wqm_b32                      sdst,     ssrc
+s_wqm_b64                      sdst,     ssrc
+s_xnor_saveexec_b64            sdst,     ssrc
+s_xor_saveexec_b64             sdst,     ssrc
+s_absdiff_i32                  sdst,     ssrc0,       ssrc1
+s_add_i32                      sdst,     ssrc0,       ssrc1
+s_add_u32                      sdst,     ssrc0,       ssrc1
+s_addc_u32                     sdst,     ssrc0,       ssrc1
+s_and_b32                      sdst,     ssrc0,       ssrc1
+s_and_b64                      sdst,     ssrc0,       ssrc1
+s_andn2_b32                    sdst,     ssrc0,       ssrc1
+s_andn2_b64                    sdst,     ssrc0,       ssrc1
+s_ashr_i32                     sdst,     ssrc0,       ssrc1:u32
+s_ashr_i64                     sdst,     ssrc0,       ssrc1:u32
+s_bfe_i32                      sdst,     ssrc0,       ssrc1:u32
+s_bfe_i64                      sdst,     ssrc0,       ssrc1:u32
+s_bfe_u32                      sdst,     ssrc0,       ssrc1
+s_bfe_u64                      sdst,     ssrc0,       ssrc1:u32
+s_bfm_b32                      sdst,     ssrc0,       ssrc1
+s_bfm_b64                      sdst,     ssrc0:b32,   ssrc1:b32
+s_cbranch_g_fork                         ssrc0,       ssrc1
+s_cselect_b32                  sdst,     ssrc0,       ssrc1
+s_cselect_b64                  sdst,     ssrc0,       ssrc1
+s_lshl1_add_u32                sdst,     ssrc0,       ssrc1
+s_lshl2_add_u32                sdst,     ssrc0,       ssrc1
+s_lshl3_add_u32                sdst,     ssrc0,       ssrc1
+s_lshl4_add_u32                sdst,     ssrc0,       ssrc1
+s_lshl_b32                     sdst,     ssrc0,       ssrc1:u32
+s_lshl_b64                     sdst,     ssrc0,       ssrc1:u32
+s_lshr_b32                     sdst,     ssrc0,       ssrc1:u32
+s_lshr_b64                     sdst,     ssrc0,       ssrc1:u32
+s_max_i32                      sdst,     ssrc0,       ssrc1
+s_max_u32                      sdst,     ssrc0,       ssrc1
+s_min_i32                      sdst,     ssrc0,       ssrc1
+s_min_u32                      sdst,     ssrc0,       ssrc1
+s_mul_hi_i32                   sdst,     ssrc0,       ssrc1
+s_mul_hi_u32                   sdst,     ssrc0,       ssrc1
+s_mul_i32                      sdst,     ssrc0,       ssrc1
+s_nand_b32                     sdst,     ssrc0,       ssrc1
+s_nand_b64                     sdst,     ssrc0,       ssrc1
+s_nor_b32                      sdst,     ssrc0,       ssrc1
+s_nor_b64                      sdst,     ssrc0,       ssrc1
+s_or_b32                       sdst,     ssrc0,       ssrc1
+s_or_b64                       sdst,     ssrc0,       ssrc1
+s_orn2_b32                     sdst,     ssrc0,       ssrc1
+s_orn2_b64                     sdst,     ssrc0,       ssrc1
+s_pack_hh_b32_b16              sdst,     ssrc0:b16x2, ssrc1:b16x2
+s_pack_lh_b32_b16              sdst,     ssrc0,       ssrc1:b16x2
+s_pack_ll_b32_b16              sdst,     ssrc0,       ssrc1
+s_rfe_restore_b64                        ssrc0,       ssrc1:b32
+s_sub_i32                      sdst,     ssrc0,       ssrc1
+s_sub_u32                      sdst,     ssrc0,       ssrc1
+s_subb_u32                     sdst,     ssrc0,       ssrc1
+s_xnor_b32                     sdst,     ssrc0,       ssrc1
+s_xnor_b64                     sdst,     ssrc0,       ssrc1
+s_xor_b32                      sdst,     ssrc0,       ssrc1
+s_xor_b64                      sdst,     ssrc0,       ssrc1
+s_bitcmp0_b32                  ssrc0,    ssrc1
+s_bitcmp0_b64                  ssrc0,    ssrc1:u32
+s_bitcmp1_b32                  ssrc0,    ssrc1
+s_bitcmp1_b64                  ssrc0,    ssrc1:u32
+s_cmp_eq_i32                   ssrc0,    ssrc1
+s_cmp_eq_u32                   ssrc0,    ssrc1
+s_cmp_eq_u64                   ssrc0,    ssrc1
+s_cmp_ge_i32                   ssrc0,    ssrc1
+s_cmp_ge_u32                   ssrc0,    ssrc1
+s_cmp_gt_i32                   ssrc0,    ssrc1
+s_cmp_gt_u32                   ssrc0,    ssrc1
+s_cmp_le_i32                   ssrc0,    ssrc1
+s_cmp_le_u32                   ssrc0,    ssrc1
+s_cmp_lg_i32                   ssrc0,    ssrc1
+s_cmp_lg_u32                   ssrc0,    ssrc1
+s_cmp_lg_u64                   ssrc0,    ssrc1
+s_cmp_lt_i32                   ssrc0,    ssrc1
+s_cmp_lt_u32                   ssrc0,    ssrc1
+s_set_gpr_idx_on               ssrc,     imask
+s_setvskip                     ssrc0,    ssrc1
+s_addk_i32                     sdst,     imm16
+s_call_b64                     sdst,     label
+s_cbranch_i_fork                         ssrc,     label
+s_cmovk_i32                    sdst,     imm16
+s_cmpk_eq_i32                            ssrc,     imm16
+s_cmpk_eq_u32                            ssrc,     imm16
+s_cmpk_ge_i32                            ssrc,     imm16
+s_cmpk_ge_u32                            ssrc,     imm16
+s_cmpk_gt_i32                            ssrc,     imm16
+s_cmpk_gt_u32                            ssrc,     imm16
+s_cmpk_le_i32                            ssrc,     imm16
+s_cmpk_le_u32                            ssrc,     imm16
+s_cmpk_lg_i32                            ssrc,     imm16
+s_cmpk_lg_u32                            ssrc,     imm16
+s_cmpk_lt_i32                            ssrc,     imm16
+s_cmpk_lt_u32                            ssrc,     imm16
+s_getreg_b32                   sdst,     hwreg
+s_movk_i32                     sdst,     imm16
+s_mulk_i32                     sdst,     imm16
+s_setreg_b32                   hwreg,    ssrc
+s_setreg_imm32_b32             hwreg,    imm32
+s_barrier
+s_branch                       label
+s_cbranch_cdbgsys              label
+s_cbranch_cdbgsys_and_user     label
+s_cbranch_cdbgsys_or_user      label
+s_cbranch_cdbguser             label
+s_cbranch_execnz               label
+s_cbranch_execz                label
+s_cbranch_scc0                 label
+s_cbranch_scc1                 label
+s_cbranch_vccnz                label
+s_cbranch_vccz                 label
+s_decperflevel                 imm16
 s_endpgm
 s_endpgm_ordered_ps_done
 s_endpgm_saved
-s_ff0_i32_b32
-s_ff0_i32_b64
-s_ff1_i32_b32
-s_ff1_i32_b64
-s_flbit_i32
-s_flbit_i32_b32
-s_flbit_i32_b64
-s_flbit_i32_i64
-s_getpc_b64
-s_getreg_b32
 s_icache_inv
-s_incperflevel
-s_load_dword
-s_load_dwordx16
-s_load_dwordx2
-s_load_dwordx4
-s_load_dwordx8
-s_lshl1_add_u32
-s_lshl2_add_u32
-s_lshl3_add_u32
-s_lshl4_add_u32
-s_lshl_b32
-s_lshl_b64
-s_lshr_b32
-s_lshr_b64
-s_max_i32
-s_max_u32
-s_memrealtime
-s_memtime
-s_min_i32
-s_min_u32
-s_mov_b32
-s_mov_b64
-s_mov_fed_b32
-s_movk_i32
-s_movreld_b32
-s_movreld_b64
-s_movrels_b32
-s_movrels_b64
-s_mul_hi_i32
-s_mul_hi_u32
-s_mul_i32
-s_mulk_i32
-s_nand_b32
-s_nand_b64
-s_nand_saveexec_b64
-s_nop
-s_nor_b32
-s_nor_b64
-s_nor_saveexec_b64
-s_not_b32
-s_not_b64
-s_or_b32
-s_or_b64
-s_or_saveexec_b64
-s_orn1_saveexec_b64
-s_orn2_b32
-s_orn2_b64
-s_orn2_saveexec_b64
-s_pack_hh_b32_b16
-s_pack_lh_b32_b16
-s_pack_ll_b32_b16
-s_quadmask_b32
-s_quadmask_b64
-s_rfe_b64
-s_rfe_restore_b64
-s_scratch_load_dword
-s_scratch_load_dwordx2
-s_scratch_load_dwordx4
-s_scratch_store_dword
-s_scratch_store_dwordx2
-s_scratch_store_dwordx4
-s_sendmsg
-s_sendmsghalt
-s_set_gpr_idx_idx
-s_set_gpr_idx_mode
+s_incperflevel                 imm16
+s_nop                          imm16
+s_sendmsg                      msg
+s_sendmsghalt                  msg
+s_set_gpr_idx_mode             imask
 s_set_gpr_idx_off
-s_set_gpr_idx_on
-s_sethalt
-s_setkill
-s_setpc_b64
-s_setprio
-s_setreg_b32
-s_setreg_imm32_b32
-s_setvskip
-s_sext_i32_i16
-s_sext_i32_i8
-s_sleep
-s_store_dword
-s_store_dwordx2
-s_store_dwordx4
-s_sub_i32
-s_sub_u32
-s_subb_u32
-s_swappc_b64
-s_trap
+s_sethalt                      imm16
+s_setkill                      imm16
+s_setprio                      imm16
+s_sleep                        imm16
+s_trap                         imm16
 s_ttracedata
-s_waitcnt
+s_waitcnt                      waitcnt
 s_wakeup
-s_wqm_b32
-s_wqm_b64
-s_xnor_b32
-s_xnor_b64
-s_xnor_saveexec_b64
-s_xor_b32
-s_xor_b64
-s_xor_saveexec_b64
-scratch_load_dword
-scratch_load_dwordx2
-scratch_load_dwordx3
-scratch_load_dwordx4
-scratch_load_sbyte
-scratch_load_sbyte_d16
-scratch_load_sbyte_d16_hi
-scratch_load_short_d16
-scratch_load_short_d16_hi
-scratch_load_sshort
-scratch_load_ubyte
-scratch_load_ubyte_d16
-scratch_load_ubyte_d16_hi
-scratch_load_ushort
-scratch_store_byte
-scratch_store_byte_d16_hi
-scratch_store_dword
-scratch_store_dwordx2
-scratch_store_dwordx3
-scratch_store_dwordx4
-scratch_store_short
-scratch_store_short_d16_hi
-v_add3_u32
-v_add_co_u32
-v_add_f16
-v_add_f32
-v_add_f64
-v_add_i16
-v_add_i32
-v_add_lshl_u32
-v_add_u16
-v_add_u32
-v_addc_co_u32
-v_alignbit_b32
-v_alignbyte_b32
-v_and_b32
-v_and_or_b32
-v_ashrrev_i16
-v_ashrrev_i32
-v_ashrrev_i64
-v_bcnt_u32_b32
-v_bfe_i32
-v_bfe_u32
-v_bfi_b32
-v_bfm_b32
-v_bfrev_b32
-v_ceil_f16
-v_ceil_f32
-v_ceil_f64
+v_interp_mov_f32               vdst,     param:b32, attr:b32
+v_interp_p1_f32                vdst,     vsrc,      attr:b32
+v_interp_p2_f32                vdst,     vsrc,      attr:b32
+v_bfrev_b32                     vdst,     src
+v_ceil_f16                      vdst,     src
+v_ceil_f32                      vdst,     src
+v_ceil_f64                      vdst,     src
 v_clrexcp
-v_cmp_class_f16
-v_cmp_class_f32
-v_cmp_class_f64
-v_cmp_eq_f16
-v_cmp_eq_f32
-v_cmp_eq_f64
-v_cmp_eq_i16
-v_cmp_eq_i32
-v_cmp_eq_i64
-v_cmp_eq_u16
-v_cmp_eq_u32
-v_cmp_eq_u64
-v_cmp_f_f16
-v_cmp_f_f32
-v_cmp_f_f64
-v_cmp_f_i16
-v_cmp_f_i32
-v_cmp_f_i64
-v_cmp_f_u16
-v_cmp_f_u32
-v_cmp_f_u64
-v_cmp_ge_f16
-v_cmp_ge_f32
-v_cmp_ge_f64
-v_cmp_ge_i16
-v_cmp_ge_i32
-v_cmp_ge_i64
-v_cmp_ge_u16
-v_cmp_ge_u32
-v_cmp_ge_u64
-v_cmp_gt_f16
-v_cmp_gt_f32
-v_cmp_gt_f64
-v_cmp_gt_i16
-v_cmp_gt_i32
-v_cmp_gt_i64
-v_cmp_gt_u16
-v_cmp_gt_u32
-v_cmp_gt_u64
-v_cmp_le_f16
-v_cmp_le_f32
-v_cmp_le_f64
-v_cmp_le_i16
-v_cmp_le_i32
-v_cmp_le_i64
-v_cmp_le_u16
-v_cmp_le_u32
-v_cmp_le_u64
-v_cmp_lg_f16
-v_cmp_lg_f32
-v_cmp_lg_f64
-v_cmp_lt_f16
-v_cmp_lt_f32
-v_cmp_lt_f64
-v_cmp_lt_i16
-v_cmp_lt_i32
-v_cmp_lt_i64
-v_cmp_lt_u16
-v_cmp_lt_u32
-v_cmp_lt_u64
-v_cmp_ne_i16
-v_cmp_ne_i32
-v_cmp_ne_i64
-v_cmp_ne_u16
-v_cmp_ne_u32
-v_cmp_ne_u64
-v_cmp_neq_f16
-v_cmp_neq_f32
-v_cmp_neq_f64
-v_cmp_nge_f16
-v_cmp_nge_f32
-v_cmp_nge_f64
-v_cmp_ngt_f16
-v_cmp_ngt_f32
-v_cmp_ngt_f64
-v_cmp_nle_f16
-v_cmp_nle_f32
-v_cmp_nle_f64
-v_cmp_nlg_f16
-v_cmp_nlg_f32
-v_cmp_nlg_f64
-v_cmp_nlt_f16
-v_cmp_nlt_f32
-v_cmp_nlt_f64
-v_cmp_o_f16
-v_cmp_o_f32
-v_cmp_o_f64
-v_cmp_t_i16
-v_cmp_t_i32
-v_cmp_t_i64
-v_cmp_t_u16
-v_cmp_t_u32
-v_cmp_t_u64
-v_cmp_tru_f16
-v_cmp_tru_f32
-v_cmp_tru_f64
-v_cmp_u_f16
-v_cmp_u_f32
-v_cmp_u_f64
-v_cmpx_class_f16
-v_cmpx_class_f32
-v_cmpx_class_f64
-v_cmpx_eq_f16
-v_cmpx_eq_f32
-v_cmpx_eq_f64
-v_cmpx_eq_i16
-v_cmpx_eq_i32
-v_cmpx_eq_i64
-v_cmpx_eq_u16
-v_cmpx_eq_u32
-v_cmpx_eq_u64
-v_cmpx_f_f16
-v_cmpx_f_f32
-v_cmpx_f_f64
-v_cmpx_f_i16
-v_cmpx_f_i32
-v_cmpx_f_i64
-v_cmpx_f_u16
-v_cmpx_f_u32
-v_cmpx_f_u64
-v_cmpx_ge_f16
-v_cmpx_ge_f32
-v_cmpx_ge_f64
-v_cmpx_ge_i16
-v_cmpx_ge_i32
-v_cmpx_ge_i64
-v_cmpx_ge_u16
-v_cmpx_ge_u32
-v_cmpx_ge_u64
-v_cmpx_gt_f16
-v_cmpx_gt_f32
-v_cmpx_gt_f64
-v_cmpx_gt_i16
-v_cmpx_gt_i32
-v_cmpx_gt_i64
-v_cmpx_gt_u16
-v_cmpx_gt_u32
-v_cmpx_gt_u64
-v_cmpx_le_f16
-v_cmpx_le_f32
-v_cmpx_le_f64
-v_cmpx_le_i16
-v_cmpx_le_i32
-v_cmpx_le_i64
-v_cmpx_le_u16
-v_cmpx_le_u32
-v_cmpx_le_u64
-v_cmpx_lg_f16
-v_cmpx_lg_f32
-v_cmpx_lg_f64
-v_cmpx_lt_f16
-v_cmpx_lt_f32
-v_cmpx_lt_f64
-v_cmpx_lt_i16
-v_cmpx_lt_i32
-v_cmpx_lt_i64
-v_cmpx_lt_u16
-v_cmpx_lt_u32
-v_cmpx_lt_u64
-v_cmpx_ne_i16
-v_cmpx_ne_i32
-v_cmpx_ne_i64
-v_cmpx_ne_u16
-v_cmpx_ne_u32
-v_cmpx_ne_u64
-v_cmpx_neq_f16
-v_cmpx_neq_f32
-v_cmpx_neq_f64
-v_cmpx_nge_f16
-v_cmpx_nge_f32
-v_cmpx_nge_f64
-v_cmpx_ngt_f16
-v_cmpx_ngt_f32
-v_cmpx_ngt_f64
-v_cmpx_nle_f16
-v_cmpx_nle_f32
-v_cmpx_nle_f64
-v_cmpx_nlg_f16
-v_cmpx_nlg_f32
-v_cmpx_nlg_f64
-v_cmpx_nlt_f16
-v_cmpx_nlt_f32
-v_cmpx_nlt_f64
-v_cmpx_o_f16
-v_cmpx_o_f32
-v_cmpx_o_f64
-v_cmpx_t_i16
-v_cmpx_t_i32
-v_cmpx_t_i64
-v_cmpx_t_u16
-v_cmpx_t_u32
-v_cmpx_t_u64
-v_cmpx_tru_f16
-v_cmpx_tru_f32
-v_cmpx_tru_f64
-v_cmpx_u_f16
-v_cmpx_u_f32
-v_cmpx_u_f64
-v_cndmask_b32
-v_cos_f16
-v_cos_f32
-v_cubeid_f32
-v_cubema_f32
-v_cubesc_f32
-v_cubetc_f32
-v_cvt_f16_f32
-v_cvt_f16_i16
-v_cvt_f16_u16
-v_cvt_f32_f16
-v_cvt_f32_f64
-v_cvt_f32_i32
-v_cvt_f32_u32
-v_cvt_f32_ubyte0
-v_cvt_f32_ubyte1
-v_cvt_f32_ubyte2
-v_cvt_f32_ubyte3
-v_cvt_f64_f32
-v_cvt_f64_i32
-v_cvt_f64_u32
-v_cvt_flr_i32_f32
-v_cvt_i16_f16
-v_cvt_i32_f32
-v_cvt_i32_f64
-v_cvt_norm_i16_f16
-v_cvt_norm_u16_f16
-v_cvt_off_f32_i4
-v_cvt_pk_i16_i32
-v_cvt_pk_u16_u32
-v_cvt_pk_u8_f32
-v_cvt_pkaccum_u8_f32
-v_cvt_pknorm_i16_f16
-v_cvt_pknorm_i16_f32
-v_cvt_pknorm_u16_f16
-v_cvt_pknorm_u16_f32
-v_cvt_pkrtz_f16_f32
-v_cvt_rpi_i32_f32
-v_cvt_u16_f16
-v_cvt_u32_f32
-v_cvt_u32_f64
-v_div_fixup_f16
-v_div_fixup_f32
-v_div_fixup_f64
-v_div_fixup_legacy_f16
-v_div_fmas_f32
-v_div_fmas_f64
-v_div_scale_f32
-v_div_scale_f64
-v_exp_f16
-v_exp_f32
-v_exp_legacy_f32
-v_ffbh_i32
-v_ffbh_u32
-v_ffbl_b32
-v_floor_f16
-v_floor_f32
-v_floor_f64
-v_fma_f16
-v_fma_f32
-v_fma_f64
-v_fma_legacy_f16
-v_fract_f16
-v_fract_f32
-v_fract_f64
-v_frexp_exp_i16_f16
-v_frexp_exp_i32_f32
-v_frexp_exp_i32_f64
-v_frexp_mant_f16
-v_frexp_mant_f32
-v_frexp_mant_f64
-v_interp_mov_f32
-v_interp_p1_f32
-v_interp_p1ll_f16
-v_interp_p1lv_f16
-v_interp_p2_f16
-v_interp_p2_f32
-v_interp_p2_legacy_f16
-v_ldexp_f16
-v_ldexp_f32
-v_ldexp_f64
-v_lerp_u8
-v_log_f16
-v_log_f32
-v_log_legacy_f32
-v_lshl_add_u32
-v_lshl_or_b32
-v_lshlrev_b16
-v_lshlrev_b32
-v_lshlrev_b64
-v_lshrrev_b16
-v_lshrrev_b32
-v_lshrrev_b64
-v_mac_f16
-v_mac_f32
-v_mad_f16
-v_mad_f32
-v_mad_i16
-v_mad_i32_i16
-v_mad_i32_i24
-v_mad_i64_i32
-v_mad_legacy_f16
-v_mad_legacy_f32
-v_mad_legacy_i16
-v_mad_legacy_u16
-v_mad_u16
-v_mad_u32_u16
-v_mad_u32_u24
-v_mad_u64_u32
-v_madak_f16
-v_madak_f32
-v_madmk_f16
-v_madmk_f32
-v_max3_f16
-v_max3_f32
-v_max3_i16
-v_max3_i32
-v_max3_u16
-v_max3_u32
-v_max_f16
-v_max_f32
-v_max_f64
-v_max_i16
-v_max_i32
-v_max_u16
-v_max_u32
-v_mbcnt_hi_u32_b32
-v_mbcnt_lo_u32_b32
-v_med3_f16
-v_med3_f32
-v_med3_i16
-v_med3_i32
-v_med3_u16
-v_med3_u32
-v_min3_f16
-v_min3_f32
-v_min3_i16
-v_min3_i32
-v_min3_u16
-v_min3_u32
-v_min_f16
-v_min_f32
-v_min_f64
-v_min_i16
-v_min_i32
-v_min_u16
-v_min_u32
-v_mov_b32
-v_mov_fed_b32
-v_mqsad_pk_u16_u8
-v_mqsad_u32_u8
-v_msad_u8
-v_mul_f16
-v_mul_f32
-v_mul_f64
-v_mul_hi_i32
-v_mul_hi_i32_i24
-v_mul_hi_u32
-v_mul_hi_u32_u24
-v_mul_i32_i24
-v_mul_legacy_f32
-v_mul_lo_u16
-v_mul_lo_u32
-v_mul_u32_u24
+v_cos_f16                       vdst,     src
+v_cos_f32                       vdst,     src
+v_cvt_f16_f32                   vdst,     src
+v_cvt_f16_i16                   vdst,     src
+v_cvt_f16_u16                   vdst,     src
+v_cvt_f32_f16                   vdst,     src
+v_cvt_f32_f64                   vdst,     src
+v_cvt_f32_i32                   vdst,     src
+v_cvt_f32_u32                   vdst,     src
+v_cvt_f32_ubyte0                vdst,     src
+v_cvt_f32_ubyte1                vdst,     src
+v_cvt_f32_ubyte2                vdst,     src
+v_cvt_f32_ubyte3                vdst,     src
+v_cvt_f64_f32                   vdst,     src
+v_cvt_f64_i32                   vdst,     src
+v_cvt_f64_u32                   vdst,     src
+v_cvt_flr_i32_f32               vdst,     src
+v_cvt_i16_f16                   vdst,     src
+v_cvt_i32_f32                   vdst,     src
+v_cvt_i32_f64                   vdst,     src
+v_cvt_norm_i16_f16              vdst,     src
+v_cvt_norm_u16_f16              vdst,     src
+v_cvt_off_f32_i4                vdst,     src
+v_cvt_rpi_i32_f32               vdst,     src
+v_cvt_u16_f16                   vdst,     src
+v_cvt_u32_f32                   vdst,     src
+v_cvt_u32_f64                   vdst,     src
+v_exp_f16                       vdst,     src
+v_exp_f32                       vdst,     src
+v_exp_legacy_f32                vdst,     src
+v_ffbh_i32                      vdst,     src
+v_ffbh_u32                      vdst,     src
+v_ffbl_b32                      vdst,     src
+v_floor_f16                     vdst,     src
+v_floor_f32                     vdst,     src
+v_floor_f64                     vdst,     src
+v_fract_f16                     vdst,     src
+v_fract_f32                     vdst,     src
+v_fract_f64                     vdst,     src
+v_frexp_exp_i16_f16             vdst,     src
+v_frexp_exp_i32_f32             vdst,     src
+v_frexp_exp_i32_f64             vdst,     src
+v_frexp_mant_f16                vdst,     src
+v_frexp_mant_f32                vdst,     src
+v_frexp_mant_f64                vdst,     src
+v_log_f16                       vdst,     src
+v_log_f32                       vdst,     src
+v_log_legacy_f32                vdst,     src
+v_mov_b32                       vdst,     src
+v_mov_fed_b32                   vdst,     src
 v_nop
-v_not_b32
-v_or3_b32
-v_or_b32
-v_pack_b32_f16
-v_perm_b32
-v_pk_add_f16
-v_pk_add_i16
-v_pk_add_u16
-v_pk_ashrrev_i16
-v_pk_fma_f16
-v_pk_lshlrev_b16
-v_pk_lshrrev_b16
-v_pk_mad_i16
-v_pk_mad_u16
-v_pk_max_f16
-v_pk_max_i16
-v_pk_max_u16
-v_pk_min_f16
-v_pk_min_i16
-v_pk_min_u16
-v_pk_mul_f16
-v_pk_mul_lo_u16
-v_pk_sub_i16
-v_pk_sub_u16
-v_qsad_pk_u16_u8
-v_rcp_f16
-v_rcp_f32
-v_rcp_f64
-v_rcp_iflag_f32
-v_readfirstlane_b32
-v_readlane_b32
-v_rndne_f16
-v_rndne_f32
-v_rndne_f64
-v_rsq_f16
-v_rsq_f32
-v_rsq_f64
-v_sad_hi_u8
-v_sad_u16
-v_sad_u32
-v_sad_u8
-v_sat_pk_u8_i16
-v_screen_partition_4se_b32
-v_sin_f16
-v_sin_f32
-v_sqrt_f16
-v_sqrt_f32
-v_sqrt_f64
-v_sub_co_u32
-v_sub_f16
-v_sub_f32
-v_sub_i16
-v_sub_i32
-v_sub_u16
-v_sub_u32
-v_subb_co_u32
-v_subbrev_co_u32
-v_subrev_co_u32
-v_subrev_f16
-v_subrev_f32
-v_subrev_u16
-v_subrev_u32
-v_swap_b32
-v_trig_preop_f64
-v_trunc_f16
-v_trunc_f32
-v_trunc_f64
-v_writelane_b32
-v_xad_u32
-v_xor_b32
+v_not_b32                       vdst,     src
+v_rcp_f16                       vdst,     src
+v_rcp_f32                       vdst,     src
+v_rcp_f64                       vdst,     src
+v_rcp_iflag_f32                 vdst,     src
+v_readfirstlane_b32             sdst,     vsrc
+v_rndne_f16                     vdst,     src
+v_rndne_f32                     vdst,     src
+v_rndne_f64                     vdst,     src
+v_rsq_f16                       vdst,     src
+v_rsq_f32                       vdst,     src
+v_rsq_f64                       vdst,     src
+v_sat_pk_u8_i16                 vdst,     src
+v_screen_partition_4se_b32      vdst,     src
+v_sin_f16                       vdst,     src
+v_sin_f32                       vdst,     src
+v_sqrt_f16                      vdst,     src
+v_sqrt_f32                      vdst,     src
+v_sqrt_f64                      vdst,     src
+v_swap_b32                      vdst,     vsrc
+v_trunc_f16                     vdst,     src
+v_trunc_f32                     vdst,     src
+v_trunc_f64                     vdst,     src
+v_add_co_u32          vdst, vcc, src0,       vsrc1
+v_add_f16             vdst,      src0,       vsrc1
+v_add_f32             vdst,      src0,       vsrc1
+v_add_u16             vdst,      src0,       vsrc1
+v_add_u32             vdst,      src0,       vsrc1
+v_addc_co_u32         vdst, vcc, src0,       vsrc1,      vcc
+v_and_b32             vdst,      src0,       vsrc1
+v_ashrrev_i16         vdst,      src0:u16,   vsrc1
+v_ashrrev_i32         vdst,      src0:u32,   vsrc1
+v_cndmask_b32         vdst,      src0,       vsrc1,      vcc
+v_ldexp_f16           vdst,      src0,       vsrc1:i16
+v_lshlrev_b16         vdst,      src0:u16,   vsrc1
+v_lshlrev_b32         vdst,      src0:u32,   vsrc1
+v_lshrrev_b16         vdst,      src0:u16,   vsrc1
+v_lshrrev_b32         vdst,      src0:u32,   vsrc1
+v_mac_f16             vdst,      src0,       vsrc1
+v_mac_f32             vdst,      src0,       vsrc1
+v_madak_f16           vdst,      src0,       vsrc1,      imm32
+v_madak_f32           vdst,      src0,       vsrc1,      imm32
+v_madmk_f16           vdst,      src0,       imm32,      vsrc2
+v_madmk_f32           vdst,      src0,       imm32,      vsrc2
+v_max_f16             vdst,      src0,       vsrc1
+v_max_f32             vdst,      src0,       vsrc1
+v_max_i16             vdst,      src0,       vsrc1
+v_max_i32             vdst,      src0,       vsrc1
+v_max_u16             vdst,      src0,       vsrc1
+v_max_u32             vdst,      src0,       vsrc1
+v_min_f16             vdst,      src0,       vsrc1
+v_min_f32             vdst,      src0,       vsrc1
+v_min_i16             vdst,      src0,       vsrc1
+v_min_i32             vdst,      src0,       vsrc1
+v_min_u16             vdst,      src0,       vsrc1
+v_min_u32             vdst,      src0,       vsrc1
+v_mul_f16             vdst,      src0,       vsrc1
+v_mul_f32             vdst,      src0,       vsrc1
+v_mul_hi_i32_i24      vdst,      src0,       vsrc1
+v_mul_hi_u32_u24      vdst,      src0,       vsrc1
+v_mul_i32_i24         vdst,      src0,       vsrc1
+v_mul_legacy_f32      vdst,      src0,       vsrc1
+v_mul_lo_u16          vdst,      src0,       vsrc1
+v_mul_u32_u24         vdst,      src0,       vsrc1
+v_or_b32              vdst,      src0,       vsrc1
+v_sub_co_u32          vdst, vcc, src0,       vsrc1
+v_sub_f16             vdst,      src0,       vsrc1
+v_sub_f32             vdst,      src0,       vsrc1
+v_sub_u16             vdst,      src0,       vsrc1
+v_sub_u32             vdst,      src0,       vsrc1
+v_subb_co_u32         vdst, vcc, src0,       vsrc1,      vcc
+v_subbrev_co_u32      vdst, vcc, src0,       vsrc1,      vcc
+v_subrev_co_u32       vdst, vcc, src0,       vsrc1
+v_subrev_f16          vdst,      src0,       vsrc1
+v_subrev_f32          vdst,      src0,       vsrc1
+v_subrev_u16          vdst,      src0,       vsrc1
+v_subrev_u32          vdst,      src0,       vsrc1
+v_xor_b32             vdst,      src0,       vsrc1
+v_add3_u32                     vdst,               src0,        src1,       src2
+v_add_f64                      vdst,               src0:m,      src1:m                      clamp omod
+v_add_i16                      vdst,               src0,        src1                        op_sel clamp
+v_add_i32                      vdst,               src0,        src1
+v_add_lshl_u32                 vdst,               src0,        src1,       src2
+v_alignbit_b32                 vdst,               src0,        src1,       src2
+v_alignbyte_b32                vdst,               src0,        src1,       src2
+v_and_or_b32                   vdst,               src0,        src1,       src2
+v_ashrrev_i64                  vdst,               src0:u32,    src1
+v_bcnt_u32_b32                 vdst,               src0,        src1
+v_bfe_i32                      vdst,               src0,        src1:u32,   src2:u32
+v_bfe_u32                      vdst,               src0,        src1,       src2
+v_bfi_b32                      vdst,               src0,        src1,       src2
+v_bfm_b32                      vdst,               src0,        src1
+v_cubeid_f32                   vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cubema_f32                   vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cubesc_f32                   vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cubetc_f32                   vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cvt_pk_i16_i32               vdst,               src0,        src1
+v_cvt_pk_u16_u32               vdst,               src0,        src1
+v_cvt_pk_u8_f32                vdst,               src0:m,      src1:u32,   src2:u32
+v_cvt_pkaccum_u8_f32           vdst,               src0:m,      src1:u32
+v_cvt_pknorm_i16_f16           vdst,               src0:m,      src1:m                      op_sel
+v_cvt_pknorm_i16_f32           vdst,               src0:m,      src1:m
+v_cvt_pknorm_u16_f16           vdst,               src0:m,      src1:m                      op_sel
+v_cvt_pknorm_u16_f32           vdst,               src0:m,      src1:m
+v_cvt_pkrtz_f16_f32            vdst,               src0:m,      src1:m
+v_div_fixup_f16                vdst,               src0:m,      src1:m,     src2:m          op_sel clamp
+v_div_fixup_f32                vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_fixup_f64                vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_fixup_legacy_f16         vdst,               src0:m,      src1:m,     src2:m          clamp
+v_div_fmas_f32                 vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_fmas_f64                 vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_scale_f32                vdst,      vcc,     src0,        src1,       src2
+v_div_scale_f64                vdst,      vcc,     src0,        src1,       src2
+v_fma_f16                      vdst,               src0:m,      src1:m,     src2:m          op_sel clamp
+v_fma_f32                      vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_fma_f64                      vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_fma_legacy_f16               vdst,               src0:m,      src1:m,     src2:m          clamp
+v_interp_p1ll_f16              vdst:f32,           vsrc:m:f32,  attr:b32                    high clamp omod
+v_interp_p1lv_f16              vdst:f32,           vsrc0:m:f32, attr:b32,   vsrc2:m:f16x2   high clamp omod
+v_interp_p2_f16                vdst,               vsrc0:m:f32, attr:b32,   vsrc2:m:f32     high clamp
+v_interp_p2_legacy_f16         vdst,               vsrc0:m:f32, attr:b32,   vsrc2:m:f32     high clamp
+v_ldexp_f32                    vdst,               src0:m,      src1:i32                    clamp omod
+v_ldexp_f64                    vdst,               src0:m,      src1:i32                    clamp omod
+v_lerp_u8                      vdst:u32,           src0:b32,    src1:b32,   src2:b32
+v_lshl_add_u32                 vdst,               src0,        src1,       src2
+v_lshl_or_b32                  vdst,               src0,        src1:u32,   src2
+v_lshlrev_b64                  vdst,               src0:u32,    src1
+v_lshrrev_b64                  vdst,               src0:u32,    src1
+v_mad_f16                      vdst,               src0:m,      src1:m,     src2:m          op_sel clamp
+v_mad_f32                      vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_mad_i16                      vdst,               src0,        src1,       src2            op_sel clamp
+v_mad_i32_i16                  vdst,               src0,        src1,       src2:i32        op_sel clamp
+v_mad_i32_i24                  vdst,               src0,        src1,       src2:i32        clamp
+v_mad_i64_i32                  vdst,      sdst,    src0,        src1,       src2:i64        clamp
+v_mad_legacy_f16               vdst,               src0:m,      src1:m,     src2:m          clamp
+v_mad_legacy_f32               vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_mad_legacy_i16               vdst,               src0,        src1,       src2            clamp
+v_mad_legacy_u16               vdst,               src0,        src1,       src2            clamp
+v_mad_u16                      vdst,               src0,        src1,       src2            op_sel clamp
+v_mad_u32_u16                  vdst,               src0,        src1,       src2:u32        op_sel clamp
+v_mad_u32_u24                  vdst,               src0,        src1,       src2:u32        clamp
+v_mad_u64_u32                  vdst,      sdst,    src0,        src1,       src2:u64        clamp
+v_max3_f16                     vdst,               src0:m,      src1:m,     src2:m          op_sel clamp
+v_max3_f32                     vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_max3_i16                     vdst,               src0,        src1,       src2            op_sel
+v_max3_i32                     vdst,               src0,        src1,       src2
+v_max3_u16                     vdst,               src0,        src1,       src2            op_sel
+v_max3_u32                     vdst,               src0,        src1,       src2
+v_max_f64                      vdst,               src0:m,      src1:m                      clamp omod
+v_mbcnt_hi_u32_b32             vdst,               src0,        src1
+v_mbcnt_lo_u32_b32             vdst,               src0,        src1
+v_med3_f16                     vdst,               src0:m,      src1:m,     src2:m          op_sel clamp
+v_med3_f32                     vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_med3_i16                     vdst,               src0,        src1,       src2            op_sel
+v_med3_i32                     vdst,               src0,        src1,       src2
+v_med3_u16                     vdst,               src0,        src1,       src2            op_sel
+v_med3_u32                     vdst,               src0,        src1,       src2
+v_min3_f16                     vdst,               src0:m,      src1:m,     src2:m          op_sel clamp
+v_min3_f32                     vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_min3_i16                     vdst,               src0,        src1,       src2            op_sel
+v_min3_i32                     vdst,               src0,        src1,       src2
+v_min3_u16                     vdst,               src0,        src1,       src2            op_sel
+v_min3_u32                     vdst,               src0,        src1,       src2
+v_min_f64                      vdst,               src0:m,      src1:m                      clamp omod
+v_mqsad_pk_u16_u8              vdst:b64,           src0:b64,    src1:b32,   src2:b64        clamp
+v_mqsad_u32_u8                 vdst:b128,          src0:b64,    src1:b32,   vsrc2:b128      clamp
+v_msad_u8                      vdst:u32,           src0:b32,    src1:b32,   src2:b32        clamp
+v_mul_f64                      vdst,               src0:m,      src1:m                      clamp omod
+v_mul_hi_i32                   vdst,               src0,        src1
+v_mul_hi_u32                   vdst,               src0,        src1
+v_mul_lo_u32                   vdst,               src0,        src1
+v_or3_b32                      vdst,               src0,        src1,       src2
+v_pack_b32_f16                 vdst,               src0:m,      src1:m                      op_sel
+v_perm_b32                     vdst,               src0,        src1,       src2
+v_qsad_pk_u16_u8               vdst:b64,           src0:b64,    src1:b32,   src2:b64        clamp
+v_readlane_b32                 sdst,               vsrc0,       ssrc1
+v_sad_hi_u8                    vdst:u32,           src0:u8x4,   src1:u8x4,  src2:u32        clamp
+v_sad_u16                      vdst:u32,           src0:u16x2,  src1:u16x2, src2:u32        clamp
+v_sad_u32                      vdst,               src0,        src1,       src2            clamp
+v_sad_u8                       vdst:u32,           src0:u8x4,   src1:u8x4,  src2:u32        clamp
+v_sub_i16                      vdst,               src0,        src1                        op_sel clamp
+v_sub_i32                      vdst,               src0,        src1
+v_trig_preop_f64               vdst,               src0:m,      src1:u32                    clamp omod
+v_writelane_b32                vdst,               ssrc0,       ssrc1
+v_xad_u32                      vdst,               src0,        src1,       src2
+v_pk_add_f16          vdst,    src0,       src1                op_sel op_sel_hi neg_lo neg_hi clamp
+v_pk_add_i16          vdst,    src0,       src1                op_sel op_sel_hi clamp
+v_pk_add_u16          vdst,    src0,       src1                op_sel op_sel_hi clamp
+v_pk_ashrrev_i16      vdst,    src0:u16x2, src1                op_sel op_sel_hi
+v_pk_fma_f16          vdst,    src0,       src1,    src2       op_sel op_sel_hi neg_lo neg_hi clamp
+v_pk_lshlrev_b16      vdst,    src0:u16x2, src1                op_sel op_sel_hi
+v_pk_lshrrev_b16      vdst,    src0:u16x2, src1                op_sel op_sel_hi
+v_pk_mad_i16          vdst,    src0,       src1,    src2       op_sel op_sel_hi clamp
+v_pk_mad_u16          vdst,    src0,       src1,    src2       op_sel op_sel_hi clamp
+v_pk_max_f16          vdst,    src0,       src1                op_sel op_sel_hi neg_lo neg_hi clamp
+v_pk_max_i16          vdst,    src0,       src1                op_sel op_sel_hi
+v_pk_max_u16          vdst,    src0,       src1                op_sel op_sel_hi
+v_pk_min_f16          vdst,    src0,       src1                op_sel op_sel_hi neg_lo neg_hi clamp
+v_pk_min_i16          vdst,    src0,       src1                op_sel op_sel_hi
+v_pk_min_u16          vdst,    src0,       src1                op_sel op_sel_hi
+v_pk_mul_f16          vdst,    src0,       src1                op_sel op_sel_hi neg_lo neg_hi clamp
+v_pk_mul_lo_u16       vdst,    src0,       src1                op_sel op_sel_hi
+v_pk_sub_i16          vdst,    src0,       src1                op_sel op_sel_hi clamp
+v_pk_sub_u16          vdst,    src0,       src1                op_sel op_sel_hi clamp
+v_cmp_class_f16                vcc,      src0,     vsrc1:b32
+v_cmp_class_f32                vcc,      src0,     vsrc1:b32
+v_cmp_class_f64                vcc,      src0,     vsrc1:b32
+v_cmp_eq_f16                   vcc,      src0,     vsrc1
+v_cmp_eq_f32                   vcc,      src0,     vsrc1
+v_cmp_eq_f64                   vcc,      src0,     vsrc1
+v_cmp_eq_i16                   vcc,      src0,     vsrc1
+v_cmp_eq_i32                   vcc,      src0,     vsrc1
+v_cmp_eq_i64                   vcc,      src0,     vsrc1
+v_cmp_eq_u16                   vcc,      src0,     vsrc1
+v_cmp_eq_u32                   vcc,      src0,     vsrc1
+v_cmp_eq_u64                   vcc,      src0,     vsrc1
+v_cmp_f_f16                    vcc,      src0,     vsrc1
+v_cmp_f_f32                    vcc,      src0,     vsrc1
+v_cmp_f_f64                    vcc,      src0,     vsrc1
+v_cmp_f_i16                    vcc,      src0,     vsrc1
+v_cmp_f_i32                    vcc,      src0,     vsrc1
+v_cmp_f_i64                    vcc,      src0,     vsrc1
+v_cmp_f_u16                    vcc,      src0,     vsrc1
+v_cmp_f_u32                    vcc,      src0,     vsrc1
+v_cmp_f_u64                    vcc,      src0,     vsrc1
+v_cmp_ge_f16                   vcc,      src0,     vsrc1
+v_cmp_ge_f32                   vcc,      src0,     vsrc1
+v_cmp_ge_f64                   vcc,      src0,     vsrc1
+v_cmp_ge_i16                   vcc,      src0,     vsrc1
+v_cmp_ge_i32                   vcc,      src0,     vsrc1
+v_cmp_ge_i64                   vcc,      src0,     vsrc1
+v_cmp_ge_u16                   vcc,      src0,     vsrc1
+v_cmp_ge_u32                   vcc,      src0,     vsrc1
+v_cmp_ge_u64                   vcc,      src0,     vsrc1
+v_cmp_gt_f16                   vcc,      src0,     vsrc1
+v_cmp_gt_f32                   vcc,      src0,     vsrc1
+v_cmp_gt_f64                   vcc,      src0,     vsrc1
+v_cmp_gt_i16                   vcc,      src0,     vsrc1
+v_cmp_gt_i32                   vcc,      src0,     vsrc1
+v_cmp_gt_i64                   vcc,      src0,     vsrc1
+v_cmp_gt_u16                   vcc,      src0,     vsrc1
+v_cmp_gt_u32                   vcc,      src0,     vsrc1
+v_cmp_gt_u64                   vcc,      src0,     vsrc1
+v_cmp_le_f16                   vcc,      src0,     vsrc1
+v_cmp_le_f32                   vcc,      src0,     vsrc1
+v_cmp_le_f64                   vcc,      src0,     vsrc1
+v_cmp_le_i16                   vcc,      src0,     vsrc1
+v_cmp_le_i32                   vcc,      src0,     vsrc1
+v_cmp_le_i64                   vcc,      src0,     vsrc1
+v_cmp_le_u16                   vcc,      src0,     vsrc1
+v_cmp_le_u32                   vcc,      src0,     vsrc1
+v_cmp_le_u64                   vcc,      src0,     vsrc1
+v_cmp_lg_f16                   vcc,      src0,     vsrc1
+v_cmp_lg_f32                   vcc,      src0,     vsrc1
+v_cmp_lg_f64                   vcc,      src0,     vsrc1
+v_cmp_lt_f16                   vcc,      src0,     vsrc1
+v_cmp_lt_f32                   vcc,      src0,     vsrc1
+v_cmp_lt_f64                   vcc,      src0,     vsrc1
+v_cmp_lt_i16                   vcc,      src0,     vsrc1
+v_cmp_lt_i32                   vcc,      src0,     vsrc1
+v_cmp_lt_i64                   vcc,      src0,     vsrc1
+v_cmp_lt_u16                   vcc,      src0,     vsrc1
+v_cmp_lt_u32                   vcc,      src0,     vsrc1
+v_cmp_lt_u64                   vcc,      src0,     vsrc1
+v_cmp_ne_i16                   vcc,      src0,     vsrc1
+v_cmp_ne_i32                   vcc,      src0,     vsrc1
+v_cmp_ne_i64                   vcc,      src0,     vsrc1
+v_cmp_ne_u16                   vcc,      src0,     vsrc1
+v_cmp_ne_u32                   vcc,      src0,     vsrc1
+v_cmp_ne_u64                   vcc,      src0,     vsrc1
+v_cmp_neq_f16                  vcc,      src0,     vsrc1
+v_cmp_neq_f32                  vcc,      src0,     vsrc1
+v_cmp_neq_f64                  vcc,      src0,     vsrc1
+v_cmp_nge_f16                  vcc,      src0,     vsrc1
+v_cmp_nge_f32                  vcc,      src0,     vsrc1
+v_cmp_nge_f64                  vcc,      src0,     vsrc1
+v_cmp_ngt_f16                  vcc,      src0,     vsrc1
+v_cmp_ngt_f32                  vcc,      src0,     vsrc1
+v_cmp_ngt_f64                  vcc,      src0,     vsrc1
+v_cmp_nle_f16                  vcc,      src0,     vsrc1
+v_cmp_nle_f32                  vcc,      src0,     vsrc1
+v_cmp_nle_f64                  vcc,      src0,     vsrc1
+v_cmp_nlg_f16                  vcc,      src0,     vsrc1
+v_cmp_nlg_f32                  vcc,      src0,     vsrc1
+v_cmp_nlg_f64                  vcc,      src0,     vsrc1
+v_cmp_nlt_f16                  vcc,      src0,     vsrc1
+v_cmp_nlt_f32                  vcc,      src0,     vsrc1
+v_cmp_nlt_f64                  vcc,      src0,     vsrc1
+v_cmp_o_f16                    vcc,      src0,     vsrc1
+v_cmp_o_f32                    vcc,      src0,     vsrc1
+v_cmp_o_f64                    vcc,      src0,     vsrc1
+v_cmp_t_i16                    vcc,      src0,     vsrc1
+v_cmp_t_i32                    vcc,      src0,     vsrc1
+v_cmp_t_i64                    vcc,      src0,     vsrc1
+v_cmp_t_u16                    vcc,      src0,     vsrc1
+v_cmp_t_u32                    vcc,      src0,     vsrc1
+v_cmp_t_u64                    vcc,      src0,     vsrc1
+v_cmp_tru_f16                  vcc,      src0,     vsrc1
+v_cmp_tru_f32                  vcc,      src0,     vsrc1
+v_cmp_tru_f64                  vcc,      src0,     vsrc1
+v_cmp_u_f16                    vcc,      src0,     vsrc1
+v_cmp_u_f32                    vcc,      src0,     vsrc1
+v_cmp_u_f64                    vcc,      src0,     vsrc1
+v_cmpx_class_f16               vcc,      src0,     vsrc1:b32
+v_cmpx_class_f32               vcc,      src0,     vsrc1:b32
+v_cmpx_class_f64               vcc,      src0,     vsrc1:b32
+v_cmpx_eq_f16                  vcc,      src0,     vsrc1
+v_cmpx_eq_f32                  vcc,      src0,     vsrc1
+v_cmpx_eq_f64                  vcc,      src0,     vsrc1
+v_cmpx_eq_i16                  vcc,      src0,     vsrc1
+v_cmpx_eq_i32                  vcc,      src0,     vsrc1
+v_cmpx_eq_i64                  vcc,      src0,     vsrc1
+v_cmpx_eq_u16                  vcc,      src0,     vsrc1
+v_cmpx_eq_u32                  vcc,      src0,     vsrc1
+v_cmpx_eq_u64                  vcc,      src0,     vsrc1
+v_cmpx_f_f16                   vcc,      src0,     vsrc1
+v_cmpx_f_f32                   vcc,      src0,     vsrc1
+v_cmpx_f_f64                   vcc,      src0,     vsrc1
+v_cmpx_f_i16                   vcc,      src0,     vsrc1
+v_cmpx_f_i32                   vcc,      src0,     vsrc1
+v_cmpx_f_i64                   vcc,      src0,     vsrc1
+v_cmpx_f_u16                   vcc,      src0,     vsrc1
+v_cmpx_f_u32                   vcc,      src0,     vsrc1
+v_cmpx_f_u64                   vcc,      src0,     vsrc1
+v_cmpx_ge_f16                  vcc,      src0,     vsrc1
+v_cmpx_ge_f32                  vcc,      src0,     vsrc1
+v_cmpx_ge_f64                  vcc,      src0,     vsrc1
+v_cmpx_ge_i16                  vcc,      src0,     vsrc1
+v_cmpx_ge_i32                  vcc,      src0,     vsrc1
+v_cmpx_ge_i64                  vcc,      src0,     vsrc1
+v_cmpx_ge_u16                  vcc,      src0,     vsrc1
+v_cmpx_ge_u32                  vcc,      src0,     vsrc1
+v_cmpx_ge_u64                  vcc,      src0,     vsrc1
+v_cmpx_gt_f16                  vcc,      src0,     vsrc1
+v_cmpx_gt_f32                  vcc,      src0,     vsrc1
+v_cmpx_gt_f64                  vcc,      src0,     vsrc1
+v_cmpx_gt_i16                  vcc,      src0,     vsrc1
+v_cmpx_gt_i32                  vcc,      src0,     vsrc1
+v_cmpx_gt_i64                  vcc,      src0,     vsrc1
+v_cmpx_gt_u16                  vcc,      src0,     vsrc1
+v_cmpx_gt_u32                  vcc,      src0,     vsrc1
+v_cmpx_gt_u64                  vcc,      src0,     vsrc1
+v_cmpx_le_f16                  vcc,      src0,     vsrc1
+v_cmpx_le_f32                  vcc,      src0,     vsrc1
+v_cmpx_le_f64                  vcc,      src0,     vsrc1
+v_cmpx_le_i16                  vcc,      src0,     vsrc1
+v_cmpx_le_i32                  vcc,      src0,     vsrc1
+v_cmpx_le_i64                  vcc,      src0,     vsrc1
+v_cmpx_le_u16                  vcc,      src0,     vsrc1
+v_cmpx_le_u32                  vcc,      src0,     vsrc1
+v_cmpx_le_u64                  vcc,      src0,     vsrc1
+v_cmpx_lg_f16                  vcc,      src0,     vsrc1
+v_cmpx_lg_f32                  vcc,      src0,     vsrc1
+v_cmpx_lg_f64                  vcc,      src0,     vsrc1
+v_cmpx_lt_f16                  vcc,      src0,     vsrc1
+v_cmpx_lt_f32                  vcc,      src0,     vsrc1
+v_cmpx_lt_f64                  vcc,      src0,     vsrc1
+v_cmpx_lt_i16                  vcc,      src0,     vsrc1
+v_cmpx_lt_i32                  vcc,      src0,     vsrc1
+v_cmpx_lt_i64                  vcc,      src0,     vsrc1
+v_cmpx_lt_u16                  vcc,      src0,     vsrc1
+v_cmpx_lt_u32                  vcc,      src0,     vsrc1
+v_cmpx_lt_u64                  vcc,      src0,     vsrc1
+v_cmpx_ne_i16                  vcc,      src0,     vsrc1
+v_cmpx_ne_i32                  vcc,      src0,     vsrc1
+v_cmpx_ne_i64                  vcc,      src0,     vsrc1
+v_cmpx_ne_u16                  vcc,      src0,     vsrc1
+v_cmpx_ne_u32                  vcc,      src0,     vsrc1
+v_cmpx_ne_u64                  vcc,      src0,     vsrc1
+v_cmpx_neq_f16                 vcc,      src0,     vsrc1
+v_cmpx_neq_f32                 vcc,      src0,     vsrc1
+v_cmpx_neq_f64                 vcc,      src0,     vsrc1
+v_cmpx_nge_f16                 vcc,      src0,     vsrc1
+v_cmpx_nge_f32                 vcc,      src0,     vsrc1
+v_cmpx_nge_f64                 vcc,      src0,     vsrc1
+v_cmpx_ngt_f16                 vcc,      src0,     vsrc1
+v_cmpx_ngt_f32                 vcc,      src0,     vsrc1
+v_cmpx_ngt_f64                 vcc,      src0,     vsrc1
+v_cmpx_nle_f16                 vcc,      src0,     vsrc1
+v_cmpx_nle_f32                 vcc,      src0,     vsrc1
+v_cmpx_nle_f64                 vcc,      src0,     vsrc1
+v_cmpx_nlg_f16                 vcc,      src0,     vsrc1
+v_cmpx_nlg_f32                 vcc,      src0,     vsrc1
+v_cmpx_nlg_f64                 vcc,      src0,     vsrc1
+v_cmpx_nlt_f16                 vcc,      src0,     vsrc1
+v_cmpx_nlt_f32                 vcc,      src0,     vsrc1
+v_cmpx_nlt_f64                 vcc,      src0,     vsrc1
+v_cmpx_o_f16                   vcc,      src0,     vsrc1
+v_cmpx_o_f32                   vcc,      src0,     vsrc1
+v_cmpx_o_f64                   vcc,      src0,     vsrc1
+v_cmpx_t_i16                   vcc,      src0,     vsrc1
+v_cmpx_t_i32                   vcc,      src0,     vsrc1
+v_cmpx_t_i64                   vcc,      src0,     vsrc1
+v_cmpx_t_u16                   vcc,      src0,     vsrc1
+v_cmpx_t_u32                   vcc,      src0,     vsrc1
+v_cmpx_t_u64                   vcc,      src0,     vsrc1
+v_cmpx_tru_f16                 vcc,      src0,     vsrc1
+v_cmpx_tru_f32                 vcc,      src0,     vsrc1
+v_cmpx_tru_f64                 vcc,      src0,     vsrc1
+v_cmpx_u_f16                   vcc,      src0,     vsrc1
+v_cmpx_u_f32                   vcc,      src0,     vsrc1
+v_cmpx_u_f64                   vcc,      src0,     vsrc1

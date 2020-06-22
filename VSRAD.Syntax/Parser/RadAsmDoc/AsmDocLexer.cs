@@ -26,6 +26,8 @@ namespace VSRAD.Syntax.Parser.RadAsmDoc
         private static readonly Dictionary<int, RadAsmTokenType> _tt = new Dictionary<int, RadAsmTokenType>()
         {
             { RadAsmDocLexer.LET, RadAsmTokenType.Keyword },
+            { RadAsmDocLexer.COMMA, RadAsmTokenType.Structural },
+            { RadAsmDocLexer.COLON, RadAsmTokenType.Structural },
             { RadAsmDocLexer.IDENTIFIER, RadAsmTokenType.Identifier },
             { RadAsmDocLexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
             { RadAsmDocLexer.WHITESPACE, RadAsmTokenType.Whitespace },

@@ -4,6 +4,11 @@ rule    : LET  ;
 
 LET     : 'let';
 
+/* "Structural symbols" */
+
+COMMA      : ',' ;
+COLON      : ':' ;
+
 IDENTIFIER
     : [a-zA-Z] [a-zA-Z0-9_]*
     ;
@@ -17,5 +22,5 @@ BLOCK_COMMENT
     ;
 
 UNKNOWN
-    : ~[ \t\r\n]+
+    : ~[ \t\r\n,:]+
     ;
