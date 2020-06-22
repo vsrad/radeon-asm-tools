@@ -15,17 +15,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public Options.ProjectOptions Options { get; }
 
-        private int _groupsInRow = 1;
-        public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
-
         private string _selectedWatch;
         public string SelectedWatch { get => _selectedWatch; set => SetField(ref _selectedWatch, value); }
 
         private VariableType _selectedType;
         public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
-
-        private bool _useHeatMap = false;
-        public bool UseHeatMap { get => _useHeatMap; set => SetField(ref _useHeatMap, value); }
 
         public List<string> Watches { get; } = new List<string>();
 
@@ -37,6 +31,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public SliceVisualizerContext(Options.ProjectOptions options, VisualizerContext visualizerContext, EnvDTE80.WindowVisibilityEvents visibilityEvents)
         {
             Options = options;
+            Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
             _visualizerContext = visualizerContext;
             _visualizerContext.GroupFetching += SetupDataFetch;
             _visualizerContext.GroupFetched += DisplayFetchedData;
@@ -49,6 +44,19 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             _windowVisibilityEvents.WindowShowing -= OnToolWindowVisibilityChanged;
             _windowVisibilityEvents.WindowHiding -= OnToolWindowVisibilityChanged;
+        }
+
+        private void SliceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.SliceVisualizerOptions.GroupsInRow):
+                    WatchSelectionChanged();
+                    break;
+                case nameof(Options.SliceVisualizerOptions.UseHeatMap):
+                    HeatMapStateChanged(this, Options.SliceVisualizerOptions.UseHeatMap);
+                    break;
+            }
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
@@ -67,7 +75,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             if (_windowVisible && !string.IsNullOrEmpty(SelectedWatch))
             {
-                var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, GroupsInRow,
+                var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, Options.SliceVisualizerOptions.GroupsInRow,
                     (int)_visualizerContext.Options.DebuggerOptions.NGroups);
                 var typedView = new TypedSliceWatchView(watchView, SelectedType);
                 WatchSelected(this, typedView);
@@ -87,13 +95,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             switch (propertyName)
             {
-                case nameof(GroupsInRow):
                 case nameof(SelectedWatch):
                 case nameof(SelectedType):
                     WatchSelectionChanged();
-                    break;
-                case nameof(UseHeatMap):
-                    HeatMapStateChanged(this, UseHeatMap);
                     break;
             }
         }
