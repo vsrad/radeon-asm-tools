@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using Microsoft.VisualStudio.PlatformUI;
 using VSRAD.Syntax.Parser;
-using VSRAD.SyntaxParser;
+using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
@@ -97,12 +97,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             var version = currentRequest.Snapshot;
             var wordSpans = new List<SnapshotSpan>();
             var bracketType = BracketType.Lbracket;
-            var lbracketType = -1;
-            var rbracketType = -1;
+            var lbracketType = RadAsmTokenType.Unknown;
+            var rbracketType = RadAsmTokenType.Unknown;
 
             cancellation.ThrowIfCancellationRequested();
             var currentToken = _documentAnalysis.GetToken(currentRequest);
-            if (currentToken.Type == _documentAnalysis.LINE_COMMENT || currentToken.Type == _documentAnalysis.BLOCK_COMMENT)
+            if (_documentAnalysis.LexerTokenToRadAsmToken(currentToken.Type) == RadAsmTokenType.Comment)
             {
                 SynchronousUpdate(new NormalizedSnapshotSpanCollection(), null);
                 return;
@@ -111,42 +111,42 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             var ch = currentRequest.GetChar();
             if (ch == '(')
             {
-                lbracketType = _documentAnalysis.LPAREN;
-                rbracketType = _documentAnalysis.RPAREN;
+                lbracketType = RadAsmTokenType.Lparen;
+                rbracketType = RadAsmTokenType.Rparen;
             }
             else if (ch == '[')
             {
-                lbracketType = _documentAnalysis.LSQUAREBRACKET;
-                rbracketType = _documentAnalysis.RSQUAREBRACKET;
+                lbracketType = RadAsmTokenType.LsquareBracket;
+                rbracketType = RadAsmTokenType.RsquareBracket;
             }
             else if (ch == '{')
             {
-                lbracketType = _documentAnalysis.LCURVEBRACKET;
-                rbracketType = _documentAnalysis.RCURVEBRACKET;
+                lbracketType = RadAsmTokenType.LcurveBracket;
+                rbracketType = RadAsmTokenType.RcurveBracket;
             }
             else if (TryGetPreviousChar(currentRequest, out ch))
             {
                 if (ch == ')')
                 {
-                    lbracketType = _documentAnalysis.LPAREN;
-                    rbracketType = _documentAnalysis.RPAREN;
+                    lbracketType = RadAsmTokenType.Lparen;
+                    rbracketType = RadAsmTokenType.Rparen;
                 }
                 else if (ch == ']')
                 {
-                    lbracketType = _documentAnalysis.LSQUAREBRACKET;
-                    rbracketType = _documentAnalysis.RSQUAREBRACKET;
+                    lbracketType = RadAsmTokenType.LsquareBracket;
+                    rbracketType = RadAsmTokenType.RsquareBracket;
                 }
                 else if (ch == '}')
                 {
-                    lbracketType = _documentAnalysis.LCURVEBRACKET;
-                    rbracketType = _documentAnalysis.RCURVEBRACKET;
+                    lbracketType = RadAsmTokenType.LcurveBracket;
+                    rbracketType = RadAsmTokenType.RcurveBracket;
                 }
 
                 bracketType = BracketType.Rbracket;
                 currentRequest -= 1;
             }
 
-            if (lbracketType == -1 || rbracketType == -1)
+            if (lbracketType == RadAsmTokenType.Unknown || rbracketType == RadAsmTokenType.Unknown)
             {
                 SynchronousUpdate(new NormalizedSnapshotSpanCollection(), null);
                 return;
@@ -159,13 +159,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             {
                 var searchTokens = _documentAnalysis
                     .GetTokens(new Span(currentWord.End, _documentAnalysis.CurrentSnapshot.Length - currentWord.End))
-                    .Where(t => t.Type == lbracketType || t.Type == rbracketType);
+                    .Where(t => IsLeftOrRightBracket(t.Type, lbracketType, rbracketType));
 
                 foreach (var token in searchTokens)
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    if (token.Type == lbracketType)
+                    if (_documentAnalysis.LexerTokenToRadAsmToken(token.Type) == lbracketType)
                     {
                         bracketCounter++;
                     }
@@ -183,13 +183,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             {
                 var searchTokens = _documentAnalysis
                     .GetTokens(new Span(0, currentWord.Start))
-                    .Where(t => t.Type == lbracketType || t.Type == rbracketType);
+                    .Where(t => IsLeftOrRightBracket(t.Type, lbracketType, rbracketType));
 
                 foreach (var token in searchTokens.Reverse())
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    if (token.Type == rbracketType)
+                    if (_documentAnalysis.LexerTokenToRadAsmToken(token.Type) == rbracketType)
                     {
                         bracketCounter++;
                     }
@@ -269,6 +269,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
             ch = char.MinValue;
             return false;
+        }
+
+        private bool IsLeftOrRightBracket(int type, RadAsmTokenType lBracket, RadAsmTokenType rBracket)
+        {
+            var tokenType = _documentAnalysis.LexerTokenToRadAsmToken(type);
+            return tokenType == lBracket || tokenType == rBracket;
         }
     }
 }

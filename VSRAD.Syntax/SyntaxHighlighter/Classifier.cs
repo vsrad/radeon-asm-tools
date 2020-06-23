@@ -115,7 +115,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 foreach (var token in _documentAnalysis.GetTokens(span))
                 {
-                    if (token.IsEmpty || token.Type == _documentAnalysis.IDENTIFIER)
+                    if (token.IsEmpty || _documentAnalysis.LexerTokenToRadAsmToken(token.Type) == RadAsmTokenType.Identifier)
                         continue;
 
                     var tag = new ClassificationTag(_tokenClassification[_documentAnalysis.LexerTokenToRadAsmToken(token.Type)]);
@@ -138,6 +138,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.Operation, typeService.Operator },
                 { RadAsmTokenType.String, typeService.StringLiteral },
                 { RadAsmTokenType.Structural, typeService.FormalLanguage },
+                { RadAsmTokenType.Comma, typeService.FormalLanguage },
+                { RadAsmTokenType.Semi, typeService.FormalLanguage },
+                { RadAsmTokenType.Colon, typeService.FormalLanguage },
+                { RadAsmTokenType.Lparen, typeService.FormalLanguage },
+                { RadAsmTokenType.Rparen, typeService.FormalLanguage },
+                { RadAsmTokenType.LsquareBracket, typeService.FormalLanguage },
+                { RadAsmTokenType.RsquareBracket, typeService.FormalLanguage },
+                { RadAsmTokenType.LcurveBracket, typeService.FormalLanguage },
+                { RadAsmTokenType.RcurveBracket, typeService.FormalLanguage },
                 { RadAsmTokenType.Whitespace, typeService.WhiteSpace },
                 { RadAsmTokenType.Keyword, typeService.Keyword },
                 { RadAsmTokenType.Preprocessor, typeService.PreprocessorKeyword },

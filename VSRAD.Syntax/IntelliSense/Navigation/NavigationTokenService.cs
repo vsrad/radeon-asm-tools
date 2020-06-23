@@ -121,8 +121,7 @@ namespace VSRAD.Syntax.IntelliSense
             var version = extent.Span.Snapshot;
             var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(version.TextBuffer);
 
-            var pointTokenType = documentAnalysis.GetToken(extent.Span.Start).Type;
-            if (pointTokenType == documentAnalysis.BLOCK_COMMENT || pointTokenType == documentAnalysis.LINE_COMMENT)
+            if (documentAnalysis.LexerTokenToRadAsmToken(documentAnalysis.GetToken(extent.Span.Start).Type) == RadAsmTokenType.Comment)
                 return EmptyNavigations;
 
             if (documentAnalysis.LastParserResult.Count == 0)

@@ -26,22 +26,12 @@ namespace VSRAD.Syntax.Parser.RadAsmDoc
         private static readonly Dictionary<int, RadAsmTokenType> _tt = new Dictionary<int, RadAsmTokenType>()
         {
             { RadAsmDocLexer.LET, RadAsmTokenType.Keyword },
-            { RadAsmDocLexer.COMMA, RadAsmTokenType.Structural },
-            { RadAsmDocLexer.COLON, RadAsmTokenType.Structural },
+            { RadAsmDocLexer.COMMA, RadAsmTokenType.Comma },
+            { RadAsmDocLexer.COLON, RadAsmTokenType.Colon },
             { RadAsmDocLexer.IDENTIFIER, RadAsmTokenType.Identifier },
             { RadAsmDocLexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
             { RadAsmDocLexer.WHITESPACE, RadAsmTokenType.Whitespace },
             { RadAsmDocLexer.UNKNOWN, RadAsmTokenType.Unknown },
         };
-
-        public int IDENTIFIER => RadAsmDocLexer.IDENTIFIER;
-        public int LINE_COMMENT => RadAsmDocLexer.BLOCK_COMMENT;
-        public int BLOCK_COMMENT => RadAsmDocLexer.BLOCK_COMMENT;
-        public int LPAREN => throw new NotImplementedException();
-        public int RPAREN => throw new NotImplementedException();
-        public int LSQUAREBRACKET => throw new NotImplementedException();
-        public int RSQUAREBRACKET => throw new NotImplementedException();
-        public int LCURVEBRACKET => throw new NotImplementedException();
-        public int RCURVEBRACKET => throw new NotImplementedException();
     }
 }

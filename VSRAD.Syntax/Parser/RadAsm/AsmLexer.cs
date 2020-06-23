@@ -121,15 +121,15 @@ namespace VSRAD.Syntax.Parser.RadAsm
             { RadAsmLexer.PP_ELIF, RadAsmTokenType.Preprocessor },
             { RadAsmLexer.PP_ENDIF, RadAsmTokenType.Preprocessor },
 
-            { RadAsmLexer.COMMA, RadAsmTokenType.Structural },
-            { RadAsmLexer.SEMI, RadAsmTokenType.Structural },
-            { RadAsmLexer.COLON, RadAsmTokenType.Structural },
-            { RadAsmLexer.LPAREN, RadAsmTokenType.Structural },
-            { RadAsmLexer.RPAREN, RadAsmTokenType.Structural },
-            { RadAsmLexer.LSQUAREBRACKET, RadAsmTokenType.Structural },
-            { RadAsmLexer.RSQUAREBRACKET, RadAsmTokenType.Structural },
-            { RadAsmLexer.LCURVEBRACKET, RadAsmTokenType.Structural },
-            { RadAsmLexer.RCURVEBRACKET, RadAsmTokenType.Structural },
+            { RadAsmLexer.COMMA, RadAsmTokenType.Comma },
+            { RadAsmLexer.SEMI, RadAsmTokenType.Semi },
+            { RadAsmLexer.COLON, RadAsmTokenType.Colon },
+            { RadAsmLexer.LPAREN, RadAsmTokenType.Lparen },
+            { RadAsmLexer.RPAREN, RadAsmTokenType.Rparen },
+            { RadAsmLexer.LSQUAREBRACKET, RadAsmTokenType.LsquareBracket },
+            { RadAsmLexer.RSQUAREBRACKET, RadAsmTokenType.RsquareBracket },
+            { RadAsmLexer.LCURVEBRACKET, RadAsmTokenType.LcurveBracket },
+            { RadAsmLexer.RCURVEBRACKET, RadAsmTokenType.RcurveBracket },
 
             { RadAsmLexer.CONSTANT, RadAsmTokenType.Number },
             { RadAsmLexer.STRING_LITERAL, RadAsmTokenType.String },
@@ -142,15 +142,5 @@ namespace VSRAD.Syntax.Parser.RadAsm
             { RadAsmLexer.LINE_COMMENT, RadAsmTokenType.Comment },
             { RadAsmLexer.UNKNOWN, RadAsmTokenType.Unknown },
         };
-
-        public int IDENTIFIER => RadAsmLexer.IDENTIFIER;
-        public int LINE_COMMENT => RadAsmLexer.LINE_COMMENT;
-        public int BLOCK_COMMENT => RadAsmLexer.BLOCK_COMMENT;
-        public int LPAREN => RadAsmLexer.LPAREN;
-        public int RPAREN => RadAsmLexer.RPAREN;
-        public int LSQUAREBRACKET => RadAsmLexer.LSQUAREBRACKET;
-        public int RSQUAREBRACKET => RadAsmLexer.RSQUAREBRACKET;
-        public int LCURVEBRACKET => RadAsmLexer.LCURVEBRACKET;
-        public int RCURVEBRACKET => RadAsmLexer.RCURVEBRACKET;
     }
 }

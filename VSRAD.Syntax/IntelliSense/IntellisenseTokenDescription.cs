@@ -225,7 +225,7 @@ namespace VSRAD.Syntax.IntelliSense
 
         private static bool GetDescriptionFromComment(DocumentAnalysis documentAnalysis, ITextSnapshot version, IEnumerable<TrackingToken> tokens, out string description)
         {
-            var commentTokens = tokens.Where(t => t.Type == documentAnalysis.LINE_COMMENT || t.Type == documentAnalysis.BLOCK_COMMENT);
+            var commentTokens = tokens.Where(t => documentAnalysis.LexerTokenToRadAsmToken(t.Type) == RadAsmTokenType.Comment);
 
             if (commentTokens.Any())
             {

@@ -56,16 +56,6 @@ namespace VSRAD.Syntax.Parser
         public Helper.SortedSet<TrackingToken> LastLexerResult;
         public IReadOnlyList<IBlock> LastParserResult;
 
-        public int IDENTIFIER => _lexer.IDENTIFIER;
-        public int LINE_COMMENT => _lexer.LINE_COMMENT;
-        public int BLOCK_COMMENT => _lexer.BLOCK_COMMENT;
-        public int LPAREN => _lexer.LPAREN;
-        public int RPAREN => _lexer.RPAREN;
-        public int LSQUAREBRACKET => _lexer.LSQUAREBRACKET;
-        public int RSQUAREBRACKET => _lexer.RSQUAREBRACKET;
-        public int LCURVEBRACKET => _lexer.LCURVEBRACKET;
-        public int RCURVEBRACKET => _lexer.RCURVEBRACKET;
-
         public ITextSnapshot CurrentSnapshot
         {
             get { return _comparer.Version; }

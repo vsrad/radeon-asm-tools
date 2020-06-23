@@ -8,15 +8,6 @@ namespace VSRAD.Syntax.Parser
     {
         IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset);
         RadAsmTokenType LexerTokenToRadAsmToken(int type);
-        int IDENTIFIER { get; }
-        int LINE_COMMENT { get; }
-        int BLOCK_COMMENT { get; }
-        int LPAREN { get; }
-        int RPAREN { get; }
-        int LSQUAREBRACKET { get; }
-        int RSQUAREBRACKET { get; }
-        int LCURVEBRACKET { get; }
-        int RCURVEBRACKET { get; }
     }
 
     public class TextSegmentsCharStream : TextReader

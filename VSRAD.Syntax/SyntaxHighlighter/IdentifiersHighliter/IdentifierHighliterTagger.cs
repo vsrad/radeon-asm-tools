@@ -124,7 +124,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             var word = currentRequest.GetExtent();
             var currentTokenRequest = _documentAnalysis.GetToken(currentRequest.Position);
 
-            if (!word.IsSignificant || currentTokenRequest.Type != _documentAnalysis.IDENTIFIER)
+            if (!word.IsSignificant || _documentAnalysis.LexerTokenToRadAsmToken(currentTokenRequest.Type) != RadAsmTokenType.Identifier)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;
@@ -149,7 +149,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             var blockSpan = (block.Type == Parser.Blocks.BlockType.Root) ? new Span(0, version.Length) : block.Scope.GetSpan(version);
             var wordText = currentWord.GetText();
 
-            var lexerTokens = _documentAnalysis.GetTokens(blockSpan).Where(t => t.Type == _documentAnalysis.IDENTIFIER);
+            var lexerTokens = _documentAnalysis
+                .GetTokens(blockSpan)
+                .Where(t => _documentAnalysis.LexerTokenToRadAsmToken(t.Type) == RadAsmTokenType.Identifier);
             foreach (var token in lexerTokens)
             {
                 cancellation.ThrowIfCancellationRequested();
