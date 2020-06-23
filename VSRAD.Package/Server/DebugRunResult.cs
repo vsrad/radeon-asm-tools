@@ -6,13 +6,13 @@
 
         public Error? Error { get; }
 
-        public BreakState SuccessfulState { get; }
+        public BreakState BreakState { get; }
 
-        public DebugRunResult(ActionRunResult actionResult, Error? error, BreakState successfulState)
+        public DebugRunResult(ActionRunResult actionResult, Error? error, BreakState breakState)
         {
             ActionResult = actionResult;
             Error = error;
-            SuccessfulState = successfulState;
+            BreakState = breakState;
         }
     }
 }

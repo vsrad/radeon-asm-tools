@@ -26,6 +26,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
         private readonly IErrorListManager _errorListManager;
+        private readonly IActionLogger _actionLogger;
 
         public bool DebugInProgress { get; private set; } = false;
 
@@ -40,7 +41,8 @@ namespace VSRAD.Package.ProjectSystem
             IFileSynchronizationManager deployManager,
             IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
-            IErrorListManager errorListManager)
+            IErrorListManager errorListManager,
+            IActionLogger actionLogger)
         {
             _project = project;
             _serviceProvider = serviceProvider;
@@ -49,6 +51,7 @@ namespace VSRAD.Package.ProjectSystem
             _outputWindow = outputWindow;
             _channel = channel;
             _errorListManager = errorListManager;
+            _actionLogger = actionLogger;
 
             DebugEngine.InitializationCallback = RegisterEngine;
             DebugEngine.TerminationCallback = DeregisterEngine;
@@ -79,7 +82,7 @@ namespace VSRAD.Package.ProjectSystem
                 return false;
             }
 
-            _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow, _errorListManager);
+            _debugSession = new DebugSession(_project, _channel, _deployManager);
             return true;
         }
 
@@ -113,13 +116,13 @@ namespace VSRAD.Package.ProjectSystem
                 var result = await _debugSession.ExecuteAsync(breakLines, watches);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-                throw new NotImplementedException();
-                //if (!result.TryGetResult(out var breakState, out var error))
-                //    Errors.Show(error);
-                //else if (breakState.ExitCode != 0)
-                //    Errors.ShowWarning(RemoteCommandExecutor.ErrorNonZeroExitCode("RAD Debugger", breakState.ExitCode));
+                var actionError = await _actionLogger.LogActionWithWarningsAsync("Debugger", result.ActionResult);
+                if (actionError is Error e1)
+                    Errors.Show(e1);
+                if (result.Error is Error e2)
+                    Errors.Show(e2);
 
-                RaiseExecutionCompleted(null);
+                RaiseExecutionCompleted(result.BreakState);
             },
             exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(null));
         }

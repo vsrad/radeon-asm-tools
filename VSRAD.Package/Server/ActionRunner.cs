@@ -22,9 +22,9 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(IList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        public async Task<ActionRunResult> RunAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
         {
-            var runStats = new ActionRunResult(steps.Count);
+            var runStats = new ActionRunResult(steps);
 
             await FillInitialTimestampsAsync(steps, auxFiles);
             runStats.RecordInitTimestampFetch();
@@ -104,7 +104,7 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private async Task FillInitialTimestampsAsync(IList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
         {
             var remoteCommands = new List<ICommand>();
 

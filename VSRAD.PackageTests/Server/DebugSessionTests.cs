@@ -35,11 +35,11 @@ namespace VSRAD.PackageTests.Server
                 new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now } // output
             });
 
-            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, null, null);
+            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object);
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "invalid", "watches" }.ToList()));
             Assert.True(channel.AllInteractionsHandled);
             Assert.Null(result.Error);
-            var breakState = result.SuccessfulState;
+            var breakState = result.BreakState;
             Assert.Collection(breakState.Data.Watches,
                 (first) => Assert.Equal("jill", first),
                 (second) => Assert.Equal("julianne", second));
@@ -60,7 +60,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 33 });
             channel.ThenRespond(new IResponse[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now } });
 
-            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, null, null);
+            var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object);
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
             Assert.True(channel.AllInteractionsHandled);
             Assert.Null(result.Error);

@@ -16,18 +16,13 @@ namespace VSRAD.Package.Server
     {
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
-        private readonly IFileSynchronizationManager _fileSynchronizationManager;
+        private readonly IFileSynchronizationManager _deployManager;
 
-        public DebugSession(
-            IProject project,
-            ICommunicationChannel channel,
-            IFileSynchronizationManager fileSynchronizationManager,
-            IOutputWindowManager outputWindowManager,
-            IErrorListManager errorListManager)
+        public DebugSession(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager)
         {
             _project = project;
             _channel = channel;
-            _fileSynchronizationManager = fileSynchronizationManager;
+            _deployManager = deployManager;
         }
 
         public async Task<DebugRunResult> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
@@ -36,7 +31,7 @@ namespace VSRAD.Package.Server
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
 
-            await _fileSynchronizationManager.SynchronizeRemoteAsync().ConfigureAwait(false);
+            await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var runner = new ActionRunner(_channel);
             var result = await runner.RunAsync(options.Steps, new[] { options.OutputFile, options.WatchesFile, options.StatusFile }).ConfigureAwait(false);

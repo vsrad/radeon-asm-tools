@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using VSRAD.Package.Options;
 
 namespace VSRAD.Package.Server
 {
@@ -10,6 +12,7 @@ namespace VSRAD.Package.Server
         public long InitTimestampFetchMillis { get; private set; }
         public long TotalMillis { get; private set; }
 
+        public IReadOnlyList<IActionStep> Steps { get; }
         public StepResult[] StepResults { get; }
 
         public bool Successful => StepResults.All(r => r.Successful);
@@ -17,10 +20,11 @@ namespace VSRAD.Package.Server
         private readonly Stopwatch _stopwatch;
         private long _lastRecordedTime;
 
-        public ActionRunResult(int stepCount)
+        public ActionRunResult(IReadOnlyList<IActionStep> steps)
         {
-            StepRunMillis = new long[stepCount];
-            StepResults = new StepResult[stepCount];
+            Steps = steps;
+            StepRunMillis = new long[steps.Count];
+            StepResults = new StepResult[steps.Count];
             _stopwatch = Stopwatch.StartNew();
         }
 
