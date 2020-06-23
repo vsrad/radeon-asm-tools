@@ -76,6 +76,9 @@ namespace VSRAD.Package.Server
             {
                 Executable = step.Executable,
                 Arguments = step.Arguments,
+                WorkingDirectory = step.WorkingDirectory,
+                RunAsAdministrator = step.RunAsAdmin,
+                ExecutionTimeoutSecs = step.WaitForCompletion ? step.TimeoutSecs : 0
             });
 
             var log = new StringBuilder();

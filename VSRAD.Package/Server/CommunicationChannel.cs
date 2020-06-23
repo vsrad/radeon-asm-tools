@@ -123,9 +123,13 @@ namespace VSRAD.Package.Server
             }
         }
 
-        public Task<IResponse[]> SendBundleAsync(List<ICommand> commands)
+        public async Task<IResponse[]> SendBundleAsync(List<ICommand> commands)
         {
-            throw new NotImplementedException();
+            // TODO: send in a single packet (opt)
+            var responses = new IResponse[commands.Count];
+            for (int i = 0; i < commands.Count; ++i)
+                responses[i] = await SendWithReplyAsync<IResponse>(commands[i]);
+            return responses;
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()

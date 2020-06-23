@@ -15,7 +15,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public ActionEditorDesignTimeCollection()
         {
             Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, LocalPath = @"C:\Local\Path", RemotePath = "/remote/path", CheckTimestamp = true });
-            Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "exe", Arguments = "--args" });
+            Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "exe", Arguments = "--args", WorkingDirectory = "/workdir" });
         }
     }
 

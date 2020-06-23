@@ -3,6 +3,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -70,8 +71,8 @@ namespace VSRAD.Package.Options
 
     public sealed class ExecuteStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        private StepEnvironment _type;
-        public StepEnvironment Environment { get => _type; set => SetField(ref _type, value); }
+        private StepEnvironment _environment;
+        public StepEnvironment Environment { get => _environment; set => SetField(ref _environment, value); }
 
         private string _executable = "";
         public string Executable { get => _executable; set => SetField(ref _executable, value); }
@@ -79,23 +80,43 @@ namespace VSRAD.Package.Options
         private string _arguments = "";
         public string Arguments { get => _arguments; set => SetField(ref _arguments, value); }
 
+        private string _workingDirectory = "";
+        public string WorkingDirectory { get => _workingDirectory; set => SetField(ref _workingDirectory, value); }
+
+        private bool _runAsAdmin;
+        public bool RunAsAdmin { get => _runAsAdmin; set => SetField(ref _runAsAdmin, value); }
+
+        private bool _waitForCompletion = true;
+        public bool WaitForCompletion { get => _waitForCompletion; set => SetField(ref _waitForCompletion, value); }
+
+        private int _timeoutSecs = 0;
+        public int TimeoutSecs { get => _timeoutSecs; set => SetField(ref _timeoutSecs, value); }
+
         public override string ToString() => "Execute";
 
         public override bool Equals(object obj) =>
             obj is ExecuteStep step &&
             Environment == step.Environment &&
             Executable == step.Executable &&
-            Arguments == step.Arguments;
+            Arguments == step.Arguments &&
+            WorkingDirectory == step.WorkingDirectory &&
+            RunAsAdmin == step.RunAsAdmin &&
+            WaitForCompletion == step.WaitForCompletion &&
+            TimeoutSecs == step.TimeoutSecs;
 
         public override int GetHashCode() =>
-            (Environment, Executable, Arguments).GetHashCode();
+            (Environment, Executable, Arguments, WorkingDirectory, RunAsAdmin, WaitForCompletion, TimeoutSecs).GetHashCode();
 
         public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
             new ExecuteStep
             {
                 Environment = Environment,
                 Executable = await evaluator.EvaluateAsync(Executable),
-                Arguments = await evaluator.EvaluateAsync(Arguments)
+                Arguments = await evaluator.EvaluateAsync(Arguments),
+                WorkingDirectory = await evaluator.EvaluateAsync(WorkingDirectory),
+                RunAsAdmin = RunAsAdmin,
+                WaitForCompletion = WaitForCompletion,
+                TimeoutSecs = TimeoutSecs
             };
     }
 

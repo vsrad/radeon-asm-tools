@@ -19,7 +19,7 @@
         <local:ActionEditorDesignTimeCollection />
     </d:UserControl.DataContext>
     <UserControl.Resources>
-        <ObjectDataProvider x:Key="StepTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+        <ObjectDataProvider x:Key="StepEnvironments" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
             <ObjectDataProvider.MethodParameters>
                 <x:Type TypeName="opts:StepEnvironment"/>
             </ObjectDataProvider.MethodParameters>
@@ -147,11 +147,43 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
-                            <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <TextBox Text="{Binding Executable}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
+                            <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Environment, Mode=TwoWay}"
+                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+
+                            <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding Executable}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                                     Tag="Executable" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Arguments:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox Text="{Binding Arguments}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
+                                    Tag="Arguments" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <TextBox Text="{Binding WorkingDirectory}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
+                                    Tag="WorkingDirectory" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Run as Administrator:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
+                                      IsChecked="{Binding RunAsAdmin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Label Content="Wait for Completion:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
+                                      IsChecked="{Binding WaitForCompletion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <Label Content="Timeout in Seconds:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
+                            <TextBox Text="{Binding TimeoutSecs}" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="22" Width="160" Grid.Row="6" Grid.Column="1"
+                                     IsEnabled="{Binding WaitForCompletion}" ToolTip="0 - timeout disabled"/>
                         </Grid>
                     </Expander>
                 </DataTemplate>

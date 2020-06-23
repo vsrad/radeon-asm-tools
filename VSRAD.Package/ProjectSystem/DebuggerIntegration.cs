@@ -23,9 +23,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IFileSynchronizationManager _deployManager;
-        private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
-        private readonly IErrorListManager _errorListManager;
         private readonly IActionLogger _actionLogger;
 
         public bool DebugInProgress { get; private set; } = false;
@@ -39,18 +37,14 @@ namespace VSRAD.Package.ProjectSystem
             SVsServiceProvider serviceProvider,
             IActiveCodeEditor codeEditor,
             IFileSynchronizationManager deployManager,
-            IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
-            IErrorListManager errorListManager,
             IActionLogger actionLogger)
         {
             _project = project;
             _serviceProvider = serviceProvider;
             _codeEditor = codeEditor;
             _deployManager = deployManager;
-            _outputWindow = outputWindow;
             _channel = channel;
-            _errorListManager = errorListManager;
             _actionLogger = actionLogger;
 
             DebugEngine.InitializationCallback = RegisterEngine;
