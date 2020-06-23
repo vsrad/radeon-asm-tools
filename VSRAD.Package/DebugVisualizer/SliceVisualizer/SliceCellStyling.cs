@@ -9,13 +9,15 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly TableState _state;
         private readonly IFontAndColorProvider _fontAndColor;
         private readonly SolidBrush _tableBackgroundBrush;
+        private readonly SliceColumnStyling _columnStyling;
 
-        public SliceCellStyling(SliceVisualizerTable table, TableState state, IFontAndColorProvider fontAndColor)
+        public SliceCellStyling(SliceVisualizerTable table, TableState state, SliceColumnStyling styling, IFontAndColorProvider fontAndColor)
         {
             _table = table;
             _state = state;
             _fontAndColor = fontAndColor;
             _tableBackgroundBrush = new SolidBrush(table.BackgroundColor);
+            _columnStyling = styling;
 
             _table.CellPainting += HandleCellPaint;
         }

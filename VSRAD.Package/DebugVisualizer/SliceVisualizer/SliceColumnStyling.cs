@@ -10,7 +10,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
     class SliceColumnStyling
     {
-        public List<ColumnStates> ColumnStates { get; } = new List<ColumnStates>();
+        public List<ColumnStates> ColumnState { get; } = new List<ColumnStates>();
         public uint SubgroupSize { get; private set; }
 
         private readonly SliceVisualizerTable _table;
@@ -20,22 +20,34 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _table = table;
         }
         
-        public void GrayOutColumns() => ColumnStates.ForEach(s => s |= DebugVisualizer.ColumnStates.Inactive);
+        public void GrayOutColumns() => ColumnState.ForEach(s => s |= DebugVisualizer.ColumnStates.Inactive);
 
         public void Recompute(int subgroupSize, string columnSelector)
         {
-            ColumnStates.Clear();
-            ColumnStates.AddRange(new ColumnStates[subgroupSize]);
+            ColumnState.Clear();
+            ColumnState.AddRange(new ColumnStates[subgroupSize]);
             foreach (var i in ColumnSelector.ToIndexes(columnSelector))
-                ColumnStates[i] |= DebugVisualizer.ColumnStates.Visible;
+                ColumnState[i] |= ColumnStates.Visible;
+            ComputeHiddenColumnSeparators(subgroupSize);
             Apply(subgroupSize);
         }
 
         private void Apply(int subgroupSize)
         {
             for (int i = 0; i < _table.SelectedWatch.ColumnCount; i++)
+            {
                 _table.Columns[i + SliceVisualizerTable.DataColumnOffset].Visible =
-                    ((ColumnStates[i % subgroupSize] & DebugVisualizer.ColumnStates.Visible) != 0);
+                    (ColumnState[i % subgroupSize] & ColumnStates.Visible) != 0;
+                if ((ColumnState[i % subgroupSize] & ColumnStates.HasHiddenColumnSeparator) != 0)
+                    _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = 8;//_hiddenColumnSeparatorWidth;
+            }
+        }
+
+        private void ComputeHiddenColumnSeparators(int subgroupSize)
+        {
+            for (int i = 0; i < subgroupSize; i++)
+                if ((ColumnState[i] & ColumnStates.Visible) != 0 && (ColumnState[i + 1] & ColumnStates.Visible) == 0)
+                    ColumnState[i] |= ColumnStates.HasHiddenColumnSeparator;
         }
     }
 }
