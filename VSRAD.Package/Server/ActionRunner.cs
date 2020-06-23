@@ -116,9 +116,9 @@ namespace VSRAD.Package.Server
 
             foreach (var auxFile in auxFiles)
             {
-                if (!auxFile.CheckTimestamp)
+                if (!auxFile.CheckTimestamp || string.IsNullOrEmpty(auxFile.Path))
                     continue;
-                if (auxFile.Type == StepEnvironment.Remote)
+                if (auxFile.Location == StepEnvironment.Remote)
                     remoteCommands.Add(new FetchMetadata { FilePath = new[] { auxFile.Path } });
                 else
                     _initialTimestamps[auxFile.Path] = GetLocalFileTimestamp(auxFile.Path);

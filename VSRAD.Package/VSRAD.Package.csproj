@@ -170,6 +170,9 @@
     <Compile Include="ProjectSystem\Profiles\ActionEditor.xaml.cs">
       <DependentUpon>ActionEditor.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ProjectSystem\Profiles\BuiltinActionFileEditor.xaml.cs">
+      <DependentUpon>BuiltinActionFileEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -193,6 +196,7 @@
     </Compile>
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\WpfBoolToIndexConverter.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Utils\ObservableDictionary.cs" />
     <Compile Include="Options\ProfileOptions.cs" />
@@ -370,6 +374,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ProjectSystem\Profiles\ActionEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\BuiltinActionFileEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -119,13 +119,8 @@ namespace VSRAD.Package.Options
         public BuiltinActionFile WatchesFile { get; }
         public BuiltinActionFile StatusFile { get; }
 
-        [DisplayName("Output Mode"), BinaryChoice("Binary", "Text")]
-        [Description("Specifies how the debug script output file is parsed: 'Text': each line is read as a hexadecimal string (0x...), 'Binary': 4-byte blocks are read as a single dword value.")]
-        [DefaultValue(DefaultOptionValues.DebuggerBinaryOutput)]
-        public bool BinaryOutput { get; }
-        [Description("Output file offset: bytes if output mode is binary, lines if output mode is text"), DisplayName("Output Offset")]
-        [DefaultValue(DefaultOptionValues.OutputOffset)]
-        public int OutputOffset { get; }
+        public bool BinaryOutput { get; set; }
+        public int OutputOffset { get; set; }
 
         public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator)
         {

@@ -1,0 +1,100 @@
+﻿<UserControl x:Class="VSRAD.Package.ProjectSystem.Profiles.BuiltinActionFileEditor" x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:opts="clr-namespace:VSRAD.Package.Options"
+             xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d"
+             d:DesignHeight="200" d:DesignWidth="800">
+    <d:DesignerProperties.DesignStyle>
+        <Style TargetType="UserControl">
+            <Setter Property="Background" Value="White"/>
+        </Style>
+    </d:DesignerProperties.DesignStyle>
+    <d:UserControl.DataContext>
+        <opts:BuiltinActionFile />
+    </d:UserControl.DataContext>
+    <UserControl.Resources>
+        <ObjectDataProvider x:Key="LocationTypes" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="opts:StepEnvironment"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+        <ControlTemplate x:Key="FileExpander" TargetType="Expander">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Name="ContentRow" Height="0"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <ToggleButton IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Grid.Row="0">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <DockPanel>
+                                <Path Name="Arrow" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 6 6 L 12 0 Z"/>
+                                <Label Height="22" Content="{Binding Header, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Expander}}}" Padding="4,2" />
+                            </DockPanel>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="ToggleButton.IsMouseOver" Value="false">
+                                    <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}" />
+                                </Trigger>
+                                <Trigger Property="ToggleButton.IsMouseOver" Value="true">
+                                    <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverGlyphKey}}" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="true">
+                                    <Setter TargetName="Arrow" Property="Data" Value="M 0 6 L 6 0 L 12 6 Z" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+                <ContentPresenter Margin="0,4" Grid.Row="1"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsExpanded" Value="True">
+                    <Setter TargetName="ContentRow" Property="Height" Value="{Binding ElementName=Content, Path=DesiredHeight}" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </UserControl.Resources>
+    <ListViewItem>
+        <ListViewItem.Style>
+            <Style TargetType="ListViewItem">
+                <Setter Property="MinHeight" Value="24" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            </Style>
+        </ListViewItem.Style>
+        <Expander Template="{Binding Source={StaticResource FileExpander}}" Header="{Binding Header, ElementName=Root}" IsExpanded="True">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="22"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="26"/>
+                    <RowDefinition Height="26"/>
+                    <RowDefinition Height="26"/>
+                </Grid.RowDefinitions>
+                <Label Content="Location:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
+                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+
+                <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                    Tag="LocalPath" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
+                      IsChecked="{Binding CheckTimestamp, UpdateSourceTrigger=PropertyChanged}"/>
+            </Grid>
+        </Expander>
+    </ListViewItem>
+</UserControl>

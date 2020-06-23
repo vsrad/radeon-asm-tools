@@ -45,6 +45,7 @@ namespace VSRAD.PackageTests
             if (macros != null)
                 foreach (var macro in macros)
                     evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
+            evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult(val));
 
             mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
             return mock;

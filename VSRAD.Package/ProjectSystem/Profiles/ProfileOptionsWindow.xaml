@@ -6,6 +6,8 @@
         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
         xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
         xmlns:opts="clr-namespace:VSRAD.Package.Options"
+        xmlns:utils="clr-namespace:VSRAD.Package.Utils"
+        xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
         mc:Ignorable="d"
         Title="Profiles" Height="450" Width="820" MinHeight="450" MinWidth="820"
         WindowStartupLocation="CenterScreen"
@@ -16,6 +18,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../ToolWindows/ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+            <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <Grid Margin="4">
@@ -76,7 +79,35 @@
                         </StackPanel>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
-                        <local:ActionEditor DataContext="{Binding Actions}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="176"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Output Mode:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
+                                      ToolTip="{Binding Path=SelectedItem.ToolTip, RelativeSource={RelativeSource Self}}"
+                                      SelectedIndex="{Binding BinaryOutput, Converter={StaticResource BoolToIndexConverter}, Mode=TwoWay}">
+                                <ComboBoxItem Content="Binary" ToolTip="32-bit values are packed into consecutive DWORDs"/>
+                                <ComboBoxItem Content="Text" ToolTip="Each 32-bit value is written on a separate line as a hexadecimal string (0x...)"/>
+                            </ComboBox>
+                            <Label Content="Output Offset:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding OutputOffset, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"/>
+                            <local:BuiltinActionFileEditor Margin="0,6,0,0" DataContext="{Binding OutputFile}" Header="Output File" Grid.Row="2" Grid.ColumnSpan="2"/>
+                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" Header="Valid Watches File" Grid.Row="3" Grid.ColumnSpan="2"/>
+                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" Header="Status String File" Grid.Row="4" Grid.ColumnSpan="2"/>
+                            <local:ActionEditor DataContext="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"/>
+                        </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>
             </ContentControl>

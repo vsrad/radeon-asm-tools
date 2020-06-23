@@ -110,10 +110,10 @@ namespace VSRAD.PackageTests.Server
             };
             var auxFiles = new List<BuiltinActionFile>
             {
-                new BuiltinActionFile { Type = StepEnvironment.Remote, CheckTimestamp = true, Path = "/home/parker/audio/master" },
-                new BuiltinActionFile { Type = StepEnvironment.Remote, CheckTimestamp = false, Path = "/home/parker/audio/copy" },
-                new BuiltinActionFile { Type = StepEnvironment.Local, CheckTimestamp = true, Path = ((CopyFileStep)steps[0]).LocalPath },
-                new BuiltinActionFile { Type = StepEnvironment.Local, CheckTimestamp = false, Path = "non-existent-local-path" }
+                new BuiltinActionFile { Location = StepEnvironment.Remote, CheckTimestamp = true, Path = "/home/parker/audio/master" },
+                new BuiltinActionFile { Location = StepEnvironment.Remote, CheckTimestamp = false, Path = "/home/parker/audio/copy" },
+                new BuiltinActionFile { Location = StepEnvironment.Local, CheckTimestamp = true, Path = ((CopyFileStep)steps[0]).LocalPath },
+                new BuiltinActionFile { Location = StepEnvironment.Local, CheckTimestamp = false, Path = "non-existent-local-path" }
             };
             channel.ThenRespond(new IResponse[]
             {

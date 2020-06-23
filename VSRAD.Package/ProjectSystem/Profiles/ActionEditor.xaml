@@ -91,7 +91,7 @@
                 <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:CopyFileStep}" />
             </Menu>
         </Popup>
-        <ListView ItemsSource="{Binding}" Height="200">
+        <ListView ItemsSource="{Binding}">
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="MinHeight" Value="22" />
@@ -99,6 +99,11 @@
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 </Style>
             </ListView.ItemContainerStyle>
+            <ListBox.Template>
+                <ControlTemplate>
+                    <ItemsPresenter />
+                </ControlTemplate>
+            </ListBox.Template>
             <ListBox.Resources>
                 <Style TargetType="GridViewColumnHeader">
                     <Setter Property="Visibility" Value="Collapsed" />
@@ -107,8 +112,8 @@
                     <Expander Tag="{Binding}" Template="{Binding Source={StaticResource StepExpander}}" IsExpanded="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="170"/>
+                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="22"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
@@ -136,8 +141,8 @@
                     <Expander Tag="{Binding}" Template="{Binding Source={StaticResource StepExpander}}" IsExpanded="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="1*"/>
-                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="170"/>
+                                <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="22"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
