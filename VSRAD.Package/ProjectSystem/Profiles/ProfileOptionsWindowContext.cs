@@ -5,6 +5,20 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
+    public sealed class ProfileOptionsActionsPage
+    {
+        public List<object> Actions { get; }
+
+        public ProfileOptionsActionsPage(ProfileOptions profile)
+        {
+            Actions = new List<object>
+            {
+                profile.Debugger
+            };
+            Actions.AddRange(profile.General.Actions);
+        }
+    }
+
     public sealed class ProfileOptionsWindowContext : DefaultNotifyPropertyChanged
     {
         public delegate string AskProfileNameDelegate(string title, string message, IEnumerable<string> existingNames, string initialName);
@@ -75,7 +89,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var currentPages = _dirtyOptions[Options.ActiveProfile];
             Pages.Clear();
             Pages.Add(currentPages.General);
-            Pages.Add(currentPages.Debugger);
+            Pages.Add(new ProfileOptionsActionsPage(currentPages));
             RaisePropertyChanged(nameof(Pages));
         }
 

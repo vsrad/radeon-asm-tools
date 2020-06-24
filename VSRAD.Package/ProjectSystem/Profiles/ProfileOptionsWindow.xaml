@@ -47,19 +47,29 @@
             <Button Content="Import" Click="ImportProfiles" Height="22" Width="74" Margin="4,0,0,0" HorizontalAlignment="Stretch"/>
             <Button Content="Copy" Click="CopyProfile" Height="22" Width="74" Margin="4,0,0,0" HorizontalAlignment="Stretch"/>
         </StackPanel>
-        <ListView ItemsSource="{Binding Pages}" SelectedItem="{Binding SelectedPage, Mode=TwoWay}"
-                  Grid.Row="2" Grid.RowSpan="3" Grid.Column="0" Margin="4">
-            <ListView.Resources>
-                <Style TargetType="GridViewColumnHeader">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </Style>
-            </ListView.Resources>
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn/>
-                </GridView>
-            </ListView.View>
-        </ListView>
+        <local:ExtendedTreeView ItemsSource="{Binding Pages}" BindableSelectedItem="{Binding SelectedPage, Mode=TwoWay}"
+                                Grid.Row="2" Grid.RowSpan="3" Grid.Column="0" Margin="4">
+            <local:ExtendedTreeView.Resources>
+                <DataTemplate DataType="{x:Type opts:GeneralProfileOptions}">
+                    <Label Content="General" />
+                </DataTemplate>
+                <HierarchicalDataTemplate DataType="{x:Type local:ProfileOptionsActionsPage}" ItemsSource="{Binding Actions}">
+                    <DockPanel LastChildFill="False">
+                        <Label Content="Actions" Margin="0,0,4,0"/>
+                        <Button DockPanel.Dock="Right" Content="+" Height="22" Width="22"/>
+                    </DockPanel>
+                </HierarchicalDataTemplate>
+                <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
+                    <DockPanel LastChildFill="False">
+                        <Label Content="{Binding Name}" Margin="0,0,4,0"/>
+                        <Button DockPanel.Dock="Right" Content="-" Height="22" Width="22"/>
+                    </DockPanel>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
+                    <Label Content="Debug" />
+                </DataTemplate>
+            </local:ExtendedTreeView.Resources>
+        </local:ExtendedTreeView>
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="4">
             <ContentControl DataContext="{Binding}">
                 <ContentControl.Content>

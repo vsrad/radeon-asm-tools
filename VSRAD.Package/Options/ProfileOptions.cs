@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -66,11 +67,29 @@ namespace VSRAD.Package.Options
         }
     }
 
+    public sealed class ActionProfileOptions
+    {
+        public string Name { get; set; }
+
+        [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
+        public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
+
+        public async Task<ActionProfileOptions> EvaluateAsync(IMacroEvaluator evaluator)
+        {
+            var evaluated = new ActionProfileOptions { Name = Name };
+            foreach (var step in Steps)
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator));
+            return evaluated;
+        }
+    }
+
     public sealed class GeneralProfileOptions
     {
         [JsonIgnore]
         [Description("The name of current profile."), DisplayName("Profile Name")]
         public string ProfileName { get; set; }
+
+        public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
 
         [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
         [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
@@ -106,8 +125,6 @@ namespace VSRAD.Package.Options
             AdditionalSources = additionalSources;
             CopySources = copySources;
         }
-
-        public override string ToString() => "General";
     }
 
     public sealed class DebuggerProfileOptions
@@ -143,8 +160,6 @@ namespace VSRAD.Package.Options
             WatchesFile = watchesFile ?? new BuiltinActionFile();
             StatusFile = statusFile ?? new BuiltinActionFile();
         }
-
-        public override string ToString() => "Debugger";
     }
 
     public sealed class DisassemblerProfileOptions
