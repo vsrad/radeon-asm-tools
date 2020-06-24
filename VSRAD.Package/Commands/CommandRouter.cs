@@ -13,7 +13,7 @@ namespace VSRAD.Package.Commands
     {
         Guid CommandSet { get; }
 
-        OLECMDF GetCommandStatus(uint commandId);
+        OLECMDF GetCommandStatus(uint commandId, IntPtr commandText);
 
         void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut);
     }
@@ -32,7 +32,7 @@ namespace VSRAD.Package.Commands
                 if (handler.CommandSet == cmdSet)
                 {
                     for (var cmd = 0; cmd < commands.Length; ++cmd)
-                        commands[cmd].cmdf = (uint)handler.GetCommandStatus(commands[cmd].cmdID);
+                        commands[cmd].cmdf = (uint)handler.GetCommandStatus(commands[cmd].cmdID, pCmdText);
                     break;
                 }
             }

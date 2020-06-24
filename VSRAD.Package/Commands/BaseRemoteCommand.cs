@@ -26,7 +26,7 @@ namespace VSRAD.Package.Commands
             _serviceProvider = serviceProvider;
         }
 
-        public OLECMDF GetCommandStatus(uint commandId)
+        public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
             if (commandId == _commandId)
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;

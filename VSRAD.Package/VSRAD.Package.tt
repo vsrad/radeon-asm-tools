@@ -23,6 +23,14 @@
           <CommandName>RAD Debug</CommandName>
         </Strings>
       </Menu>
+      <!-- Tools -> RAD Debug -> Actions -->
+      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="0x700" type="Menu">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
+        <Strings>
+          <ButtonText>Actions</ButtonText>
+          <CommandName>Actions</CommandName>
+        </Strings>
+      </Menu>
       <!-- View -> Toolbars -> RAD Debug -->
       <Menu guid="guidCmdSetToolbar" id="ToolbarId" type="Toolbar">
         <Strings>
@@ -52,6 +60,15 @@
 
     <Buttons>
       <!-- Tools menu -->
+	  <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="0" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ActionsMenuGroup" />
+        <CommandFlag>DynamicItemStart</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+	    <Strings>
+          <ButtonText>(No actions available)</ButtonText>
+        </Strings>
+      </Button>
       <Button guid="guidCmdSetProfile" id="ProfileCommandId" priority="0" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="profilerIcon" />
@@ -169,6 +186,9 @@
       <Group guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0600">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
       </Group>
+	  <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="0x0600">
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuId" />
+      </Group>
       <Group guid="guidCmdSetProfile" id="StandardToolbarGroup" priority="0xF000">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
       </Group>
@@ -226,6 +246,12 @@
     <GuidSymbol name="guidCmdSetToolsMenu" value="{E57C1D19-4B4F-4824-8C4B-3B08C52348B7}">
       <IDSymbol name="ToolsMenuId" value="0x1021" />
       <IDSymbol name="ToolsMenuGroup" value="0x0600" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetActionsMenu" value="{7CF54FFE-BCAC-4751-BEEC-D103FD953C8B}">
+      <IDSymbol name="ActionsMenuId" value="0x900" />
+	  <IDSymbol name="ActionCommandId" value="0x0100" />
+      <IDSymbol name="ActionsMenuGroup" value="0x0700" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">

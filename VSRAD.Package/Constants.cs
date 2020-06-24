@@ -28,6 +28,7 @@ namespace VSRAD.Package
         public const int DisassembleCommandId = 0x0100;
         public const int PreprocessCommandId = 0x0100;
         public const int EvaluateSelectedCommandId = 0x0100;
+        public const int ActionsMenuCommandId = 0x0100;
         public const int AddArrayToWatchesIndexCount = 16;
         public const int AddArrayToWatchesFromHeaderId = 0x1031;
         public const int AddArrayToWatchesToIdOffset = 0x1400;
@@ -42,6 +43,7 @@ namespace VSRAD.Package
         public static readonly Guid DisassemblyCommandSet = new Guid("03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE");
         public static readonly Guid PreprocessCommandSet = new Guid("7D6BA5AC-29C2-4E44-BD92-376A7A62FCA1");
         public static readonly Guid ToolbarCommandSet = new Guid("E1436EB5-1D47-4714-85CB-6177E62AB2AD");
+        public static readonly Guid ActionsMenuCommandSet = new Guid("7CF54FFE-BCAC-4751-BEEC-D103FD953C8B");
 
         public const string OutputPaneServerTitle = "RAD Debug Server";
         public const string OutputPaneServerId = "A183AE1B-765F-4804-B188-9E1543C4B954";

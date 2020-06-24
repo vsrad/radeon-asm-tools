@@ -14,7 +14,7 @@ namespace VSRAD.Package.Commands
     {
         public Guid CommandSet => Constants.ToolWindowCommandSet;
 
-        public OLECMDF GetCommandStatus(uint commandId)
+        public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
             switch (commandId)
             {

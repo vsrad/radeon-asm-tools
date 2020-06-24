@@ -118,6 +118,7 @@
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
     <Compile Include="BuildTools\Errors\Parser.cs" />
+    <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
     <Compile Include="Commands\BaseBuildWithPreviewCommand.cs" />
@@ -200,6 +201,8 @@
     </Compile>
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\OleCommandText.cs" />
+    <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfBoolToIndexConverter.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Utils\ObservableDictionary.cs" />
