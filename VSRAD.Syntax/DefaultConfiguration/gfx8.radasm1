@@ -1,659 +1,938 @@
-/*
+/* 
  * Interpolation attribute and channel: 
- * attr{0..32}.x	Attribute 0..32 with x channel.
- * attr{0..32}.y	Attribute 0..32 with y channel.
- * attr{0..32}.z	Attribute 0..32 with z channel.
- * attr{0..32}.w	Attribute 0..32 with w channel.
- *
+ * 
+ *   Syntax         Description
+ *   -------------  -------------------------------
+ *   attr{0..32}.x  Attribute 0..32 with x channel.
+ *   attr{0..32}.y  Attribute 0..32 with y channel.
+ *   attr{0..32}.z  Attribute 0..32 with z channel.
+ *   attr{0..32}.w  Attribute 0..32 with w channel.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_attr.html#amdgpu-synid8-attr 
  */
 let attr 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let b128 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let b32 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let b32x2 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let b64 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let b64x2 
 
-/*
+/* 
  * Clamp meaning depends on instruction. 
- * For v_cmp instructions, clamp modifier indicates that the compare signals
-if a floating point exception occurs. By default, signaling is disabled.
-Not supported by GFX7. 
- *
- * For integer operations, clamp modifier indicates that the result must be clamped
-to the largest and smallest representable value. By default, there is no clamping.
-Integer clamping is not supported by GFX7.
- *
- * For floating point operations, clamp modifier indicates that the result must be clamped
-to the range [0.0, 1.0]. By default, there is no clamping.
- *
+ * For v_cmp instructions, clamp modifier indicates that the compare signals if a floating point exception occurs. By default, signaling is disabled. Not supported by GFX7. 
+ * For integer operations, clamp modifier indicates that the result must be clamped to the largest and smallest representable value. By default, there is no clamping. Integer clamping is not supported by GFX7. 
+ * For floating point operations, clamp modifier indicates that the result must be clamped to the range [0.0, 1.0]. By default, there is no clamping. 
  * Note: clamp modifier is applied after output modifiers (if any). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------------------
+ *   clamp     Enables clamping (or signaling).
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-clamp 
  */
 let clamp 
 
-/*
+/* 
  * Indicates if the data are compressed (data are not compressed by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   compr     Data are compressed.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-compr 
  */
 let compr 
 
-/*
- * Specifies data size: 16 or 32 bits (32 bits by default). Not supported by GFX7.
- *
- * Enables 16-bits data mode. 
- * On loads, convert data in memory to 16-bit
-format before storing it in VGPRs. 
- *
- * For stores, convert 16-bit data in VGPRs to
-32 bits before going to memory. 
- *
- * Note that GFX8.0 does not support data packing.
-Each 16-bit data element occupies 1 VGPR. 
- *
- * GFX8.1, GFX9 and GFX10 support data packing.
-Each pair of 16-bit data elements
-occupies 1 VGPR. 
+/* 
+ * Specifies data size: 16 or 32 bits (32 bits by default). Not supported by GFX7. 
+ * 
+ *   Syntax    Description
+ *   --------  -----------------------------------------------------------------------------------------------
+ *   d16       Enables 16-bits data mode.
+ *             On loads, convert data in memory to 16-bit format before storing it in VGPRs.
+ *             For stores, convert 16-bit data in VGPRs to 32 bits before going to memory.
+ *             Note that GFX8.0 does not support data packing. Each 16-bit data element occupies 1 VGPR.
+ *             GFX8.1, GFX9 and GFX10 support data packing. Each pair of 16-bit data elements occupies 1 VGPR.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-d16 
  */
 let d16 
 
-/*
+/* 
  * Specifies if an array index must be sent to TA. By default, array index is not sent. 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------------
+ *   da        Send an array-index to TA.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-da 
  */
 let da 
 
-/*
- * Specifies which channels (image components) are used by the operation. By default, no channels
-are used. 
- *
- * Specifies image channels as a positive
-integer number
-or an absolute expression. 
- * Each bit corresponds to one of 4 image components (RGBA). 
- * If the specified bit value is 0, the component is not used,
-value 1 means that the component is used. 
- *
- * This modifier has some limitations depending on instruction kind
+/* 
+ * Specifies which channels (image components) are used by the operation. By default, no channels are used. 
+ * 
+ *   Syntax         Description
+ *   -------------  -----------------------------------------------------------------------------------------------------
+ *   dmask:{0..15}  Specifies image channels as a positive integer number or an absolute expression.
+ *                  Each bit corresponds to one of 4 image components (RGBA).
+ *                  If the specified bit value is 0, the component is not used, value 1 means that the component is used.
+ * 
+ * This modifier has some limitations depending on instruction kind: 
+ * 
+ *   Instruction Kind                               Valid dmask Values
+ *   ---------------------------------------------  --------------------
+ *   32-bit atomic cmpswap                          0x3
+ *   32-bit atomic instructions except for cmpswap  0x1
+ *   64-bit atomic cmpswap                          0xF
+ *   64-bit atomic instructions except for cmpswap  0x3
+ *   gather4                                        0x1, 0x2, 0x4, 0x8
+ *   Other instructions                             any value
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-dmask 
  */
 let dmask 
 
-/*
- * Specifies if this is the last export from the shader to the target. By default,
-exp instruction does not finish an export sequence. 
+/* 
+ * Specifies if this is the last export from the shader to the target. By default, exp instruction does not finish an export sequence. 
+ * 
+ *   Syntax    Description
+ *   --------  ------------------------------------
+ *   done      Indicates the last export operation.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-done 
  */
 let done 
 
-/*
+/* 
  * This is an input operand. It may optionally serve as a destination if glc is specified. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_ret.html#amdgpu-synid8-ret 
  */
 let dst 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let f16x2 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let f32 
 
-/*
+/* 
  * Specifies whether to use GDS or LDS memory (LDS is the default). 
+ * 
+ *   Syntax    Description
+ *   --------  ---------------
+ *   gds       Use GDS memory.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-gds 
  */
 let gds 
 
-/*
- * This modifier has different meaning for loads, stores, and atomic operations.
-The default value is off (0). 
+/* 
+ * This modifier has different meaning for loads, stores, and atomic operations. The default value is off (0). 
  * See AMD documentation for details. 
+ * 
+ *   Syntax    Description
+ *   --------  -----------------
+ *   glc       Set glc bit to 1.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-glc 
  */
 let glc 
 
-/*
- * Specifies which half of the LDS word to use. Low half of LDS word is used by default.
-GFX9 and GFX10 only. 
+/* 
+ * Specifies which half of the LDS word to use. Low half of LDS word is used by default. GFX9 and GFX10 only. 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------------
+ *   high      Use high half of LDS word.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-high 
  */
 let high 
 
-/*
+/* 
  * Bits of a hardware register being accessed. 
- *
  * The bits of this operand have the following meaning: 
- *      5:0     Register id         0..63
- *      10:6    First bit offset    0..31
- *      15:11   Size in Bits        1..32
- *
+ * 
+ *   Bits    Description        Value Range
+ *   ------  -----------------  -------------
+ *   5:0     Register id.       0..63
+ *   10:6    First bit offset.  0..31
+ *   15:11   Size in bits.      1..32
+ * 
  * This operand may be specified as one of the following: 
- * - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
- * - An hwreg value described below. 
- *
- * Numeric values may be specified as positive integer numbers
-or absolute expressions. 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ *  - An hwreg value described below. 
+ *    
+ *      Hwreg Value Syntax                Description
+ *      --------------------------------  --------------------------------------------------------------------
+ *      hwreg({0..63})                    All bits of a register indicated by its id.
+ *      hwreg(<name>)                     All bits of a register indicated by its name.
+ *      hwreg({0..63}, {0..31}, {1..32})  Register bits indicated by register id, first bit offset and size.
+ *      hwreg(<name>, {0..31}, {1..32})   Register bits indicated by register name, first bit offset and size.
+ *    
+ * 
+ * Numeric values may be specified as positive integer numbers or absolute expressions. 
  * Defined register names include: 
- *      HW_REG_MODE         Shader writeable mode bits.
- *      HW_REG_STATUS       Shader read-only status.
- *      HW_REG_TRAPSTS      Trap status.
- *      HW_REG_HW_ID        Id of wave, simd, compute unit, etc.
- *      HW_REG_GPR_ALLOC    Per-wave SGPR and VGPR allocation.
- *      HW_REG_LDS_ALLOC    Per-wave LDS allocation.
- *      HW_REG_IB_STS       Counters of outstanding instructions.
+ * 
+ *   Name              Description
+ *   ----------------  -------------------------------------
+ *   HW_REG_MODE       Shader writeable mode bits.
+ *   HW_REG_STATUS     Shader read-only status.
+ *   HW_REG_TRAPSTS    Trap status.
+ *   HW_REG_HW_ID      Id of wave, simd, compute unit, etc.
+ *   HW_REG_GPR_ALLOC  Per-wave SGPR and VGPR allocation.
+ *   HW_REG_LDS_ALLOC  Per-wave LDS allocation.
+ *   HW_REG_IB_STS     Counters of outstanding instructions.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_hwreg.html#amdgpu-synid8-hwreg 
  */
 let hwreg 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let i16 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let i32 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let i64 
 
-/*
+/* 
  * Specifies whether address components include an index. By default, no components are used. 
  * Can be used together with offen. 
  * Cannot be used with addr64. 
+ * 
+ *   Syntax    Description
+ *   --------  ------------------------------------
+ *   idxen     Address components include an index.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-idxen 
  */
 let idxen 
 
-/*
- * This operand is a mask which controls indexing mode for operands of subsequent instructions.
-Bits 0, 1 and 2 control indexing of src0, src1 and src2, while bit 3 controls indexing of dst.
-Value 1 enables indexing and value 0 disables it. 
+/* 
+ * This operand is a mask which controls indexing mode for operands of subsequent instructions. Bits 0, 1 and 2 control indexing of src0, src1 and src2, while bit 3 controls indexing of dst. Value 1 enables indexing and value 0 disables it. 
+ * 
+ *     Bit  Meaning
+ *   -----  ----------------------------------
+ *      0   Enables or disables src0 indexing.
+ *      1   Enables or disables src1 indexing.
+ *      2   Enables or disables src2 indexing.
+ *      3   Enables or disables dst indexing.
+ * 
  * This operand may be specified as one of the following: 
- * An integer_number or an absolute_expression. The value must be in the range 0..15. 
- * A gpr_idx value described below. 
- * Enable indexing for specified operands
-and disable it for the rest.
-Operands is a comma-separated list of
-values which may include: 
- * Each of these values may be specified only
-once. 
- * Operands list may be empty; this syntax
-disables indexing for all operands. 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..15. 
+ *  - A gpr_idx value described below. 
+ *    
+ *      Gpr_idx Value Syntax    Description
+ *      ----------------------  ------------------------------------------------------------------------------------------------------------------------------------
+ *      gpr_idx(<operands>)     Enable indexing for specified operands and disable it for the rest. Operands is a comma-separated list of values which may include:
+ *      
+ *                               - "SRC0" - enable src0 indexing.
+ *                               - "SRC1" - enable src1 indexing.
+ *                               - "SRC2" - enable src2 indexing.
+ *                               - "DST"  - enable dst indexing.
+ *      
+ *                              Each of these values may be specified only once.
+ *                              Operands list may be empty; this syntax disables indexing for all operands.
+ *    
+ *  - "SRC0" - enable src0 indexing. 
+ *  - "SRC1" - enable src1 indexing. 
+ *  - "SRC2" - enable src2 indexing. 
+ *  - "DST"  - enable dst indexing. 
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_imask.html#amdgpu-synid8-imask 
  */
 let imask 
 
-/*
+/* 
  * An integer_number or an absolute_expression. The value must be in the range -32768..65535. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_simm16.html#amdgpu-synid8-simm16 
  */
 let imm16 
 
-/*
+/* 
  * A bit mask which indicates request permissions. 
- * This operand must be specified as an integer_number or an absolute_expression.
-The value is truncated to 7 bits, but only 3 low bits are significant. 
+ * This operand must be specified as an integer_number or an absolute_expression. The value is truncated to 7 bits, but only 3 low bits are significant. 
+ * 
+ *     Bit Number  Description
+ *   ------------  ---------------------------
+ *             0   Request read permission.
+ *             1   Request write permission.
+ *             2   Request execute permission.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_perm_smem.html#amdgpu-synid8-perm-smem 
  */
 let imm3 
 
-/*
+/* 
  * An integer_number or an absolute_expression. The value is truncated to 32 bits. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_bimm32.html#amdgpu-synid8-bimm32 
  */
 let imm32 
 
-/*
+/* 
  * A branch target which is a 16-bit signed integer treated as a PC-relative dword offset. 
  * This operand may be specified as one of the following: 
- 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range -32768..65535. 
+ *  - A symbol (for example, a label) representing a relocatable address in the same compilation unit where it is referred from. The value is handled as a 16-bit PC-relative dword offset to be resolved by a linker. 
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_label.html#amdgpu-synid8-label 
  */
 let label 
 
-/*
+/* 
  * Specifies where to store the result: VGPRs or LDS (VGPRs by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   lds       Store result in LDS.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-lds 
  */
 let lds 
 
-/*
+/* 
  * Specifies LOD warning status (LOD warning is disabled by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   lwe       Enables LOD warning.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-lwe 
  */
 let lwe 
 
-/*
+/* 
  * This operand may be used with floating point operand modifiers abs and neg. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_mod_vop3_abs_neg.html#amdgpu-synid8-mod-vop3-abs-neg 
  */
 let m 
 
-/*
+/* 
  * A 16-bit message code. The bits of this operand have the following meaning: 
+ * 
+ *   Bits    Description          Value Range
+ *   ------  -------------------  -------------
+ *   3:0     Message type.        0..15
+ *   6:4     Optional operation.  0..7
+ *   7:7     Unused.              -
+ *   9:8     Optional stream.     0..3
+ *   15:10   Unused.              -
+ * 
  * This operand may be specified as one of the following: 
- * An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
- * A sendmsg value described below. 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ *  - A sendmsg value described below. 
+ *    
+ *      Sendmsg Value Syntax           Description
+ *      -----------------------------  ----------------------------------------------------------------
+ *      sendmsg(<type>)                A message identified by its type.
+ *      sendmsg(<type>,<op>)           A message identified by its type and operation.
+ *      sendmsg(<type>,<op>,<stream>)  A message identified by its type and operation with a stream id.
+ *    
+ * 
  * Type may be specified using message name or message id. 
  * Op may be specified using operation name or operation id. 
  * Stream id is an integer in the range 0..3. 
- * Numeric values may be specified as positive integer numbers
-or absolute expressions. 
+ * Numeric values may be specified as positive integer numbers or absolute expressions. 
  * Each message type supports specific operations: 
+ * 
+ *   Message name    Message Id    Supported Operations         Operation Id    Stream Id
+ *   --------------  ------------  ---------------------------  --------------  -----------
+ *   MSG_INTERRUPT   1             -                            -               -
+ *   MSG_GS          2             GS_OP_CUT                    1               Optional
+ *                                 GS_OP_EMIT                   2               Optional
+ *                                 GS_OP_EMIT_CUT               3               Optional
+ *   MSG_GS_DONE     3             GS_OP_NOP                    0               -
+ *                                 GS_OP_CUT                    1               Optional
+ *                                 GS_OP_EMIT                   2               Optional
+ *                                 GS_OP_EMIT_CUT               3               Optional
+ *   MSG_SYSMSG      15            SYSMSG_OP_ECC_ERR_INTERRUPT  1               -
+ *                                 SYSMSG_OP_REG_RD             2               -
+ *                                 SYSMSG_OP_HOST_TRAP_ACK      3               -
+ *                                 SYSMSG_OP_TTRACE_PC          4               -
+ * 
  * Sendmsg arguments are validated depending on how type value is specified: 
- 
+ * 
+ *  - If message type is specified by name, arguments values must satisfy limitations detailed in the table above. 
+ *  - If message type is specified as a number, each argument must not exceed corresponding value range (see the first table). 
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_msg.html#amdgpu-synid8-msg 
  */
 let msg 
 
-/*
+/* 
  * Specifies whether address components include an offset. By default, no components are used. 
  * Can be used together with idxen. 
  * Cannot be used with addr64. 
+ * 
+ *   Syntax    Description
+ *   --------  -------------------------------------
+ *   offen     Address components include an offset.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-offen 
  */
 let offen 
 
-/*
+/* 
  * Specifies an immediate unsigned 12-bit offset, in bytes. The default value is 0. 
- 
+ * 
+ *   Syntax             Description
+ *   -----------------  ------------------------------------------------------------------------------------------
+ *   offset:{0..0xFFF}  Specifies a 12-bit unsigned offset as a positive integer number or an absolute expression.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-buf-offset12 
  */
 let offset12 
 
-/*
+/* 
  * Specifies an immediate unsigned 16-bit offset, in bytes. The default value is 0. 
  * Used with DS instructions which have 1 address. 
- 
+ * 
+ *   Syntax              Description
+ *   ------------------  -------------------------------------------------------------------------------------------
+ *   offset:{0..0xFFFF}  Specifies an unsigned 16-bit offset as a positive integer number or an absolute expression.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-ds-offset16 
  */
 let offset16 
 
-/*
+/* 
  * Specifies an immediate unsigned 8-bit offset, in bytes. The default value is 0. 
  * Used with DS instructions which have 2 addresses. 
- 
+ * 
+ *   Syntax            Description
+ *   ----------------  ------------------------------------------------------------------------------------------
+ *   offset:{0..0xFF}  Specifies an unsigned 8-bit offset as a positive integer number or an absolute expression.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-ds-offset8 
  */
 let offset8 
 
-/*
- * Specifies if an output modifier must be applied to the result.
-By default, no output modifiers are applied. 
+/* 
+ * Specifies if an output modifier must be applied to the result. By default, no output modifiers are applied. 
  * Note: output modifiers are applied before clamping (if any). 
- * Output modifiers are valid for f32 and f64 floating point results only.
-They must not be used with f16. 
- * Note: v_cvt_f16_f32 is an exception. This instruction produces f16 result
-but accepts output modifiers. 
- * Note: numeric values may be specified as either integer numbers or
-absolute expressions. 
- 
+ * Output modifiers are valid for f32 and f64 floating point results only. They must not be used with f16. 
+ * Note: v_cvt_f16_f32 is an exception. This instruction produces f16 result but accepts output modifiers. 
+ * 
+ *   Syntax    Description
+ *   --------  ---------------------------
+ *   mul:2     Multiply the result by 2.
+ *   mul:4     Multiply the result by 4.
+ *   div:2     Multiply the result by 0.5.
+ * 
+ * Note: numeric values may be specified as either integer numbers or absolute expressions. 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-omod 
  */
 let omod 
 
-/*
+/* 
  * This is an optional operand. It must be used if and only if glc is specified. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_opt.html#amdgpu-synid8-opt 
  */
 let opt 
 
-/*
+/* 
  * Interpolation parameter to read: 
+ * 
+ *   Syntax    Description
+ *   --------  --------------
+ *   p0        Parameter P0.
+ *   p10       Parameter P10.
+ *   p20       Parameter P20.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_param.html#amdgpu-synid8-param 
  */
 let param 
 
-/*
- * This is a special modifier which may be used with ds_swizzle_b32 instruction only.
-It specifies a swizzle pattern in numeric or symbolic form. The default value is 0. 
+/* 
+ * This is a special modifier which may be used with ds_swizzle_b32 instruction only. It specifies a swizzle pattern in numeric or symbolic form. The default value is 0. 
  * See AMD documentation for more information. 
- * Specifies a quad permute mode pattern 
- * Each number is a lane id. 
- * Specifies a bitmask permute mode pattern. 
- * The pattern converts a 5-bit lane id to another
-lane id with which the lane interacts. 
- * mask is a 5 character sequence which
-specifies how to transform the bits of the
-lane id. 
- * The following characters are allowed: 
- * Specifies a broadcast mode. 
- * Broadcasts the value of any particular lane to
-all lanes in its group. 
- * The first numeric parameter is a group
-size and must be equal to 2, 4, 8, 16 or 32. 
- * The second numeric parameter is an index of the
-lane being broadcasted. 
- * The index must not exceed group size. 
- * Specifies a swap mode. 
- * Swaps the neighboring groups of
-1, 2, 4, 8 or 16 lanes. 
- * Specifies a reverse mode. 
- * Reverses the lanes for groups of 2, 4, 8, 16 or 32 lanes. 
- * Note: numeric values may be specified as either integer numbers or
-absolute expressions. 
- 
+ * 
+ *   Syntax                                                 Description
+ *   -----------------------------------------------------  -----------------------------------------------------------------------------------------
+ *   offset:{0..0xFFFF}                                     Specifies a 16-bit swizzle pattern.
+ *   offset:swizzle(QUAD_PERM,{0..3},{0..3},{0..3},{0..3})  Specifies a quad permute mode pattern
+ *                                                          Each number is a lane id.
+ *   offset:swizzle(BITMASK_PERM, "<mask>")                 Specifies a bitmask permute mode pattern.
+ *                                                          The pattern converts a 5-bit lane id to another lane id with which the lane interacts.
+ *                                                          mask is a 5 character sequence which specifies how to transform the bits of the lane id.
+ *                                                          The following characters are allowed:
+ *   
+ *                                                           - "0" - set bit to 0.
+ *                                                           - "1" - set bit to 1.
+ *                                                           - "p" - preserve bit.
+ *                                                           - "i" - inverse bit.
+ *   offset:swizzle(BROADCAST,{2..32},{0..N})               Specifies a broadcast mode.
+ *                                                          Broadcasts the value of any particular lane to all lanes in its group.
+ *                                                          The first numeric parameter is a group size and must be equal to 2, 4, 8, 16 or 32.
+ *                                                          The second numeric parameter is an index of the lane being broadcasted.
+ *                                                          The index must not exceed group size.
+ *   offset:swizzle(SWAP,{1..16})                           Specifies a swap mode.
+ *                                                          Swaps the neighboring groups of 1, 2, 4, 8 or 16 lanes.
+ *   offset:swizzle(REVERSE,{2..32})                        Specifies a reverse mode.
+ *                                                          Reverses the lanes for groups of 2, 4, 8, 16 or 32 lanes.
+ * 
+ * Note: numeric values may be specified as either integer numbers or absolute expressions. 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-sw-offset16 
  */
 let pattern 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let s32 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let s64 
 
-/*
+/* 
  * A 64-bit base address for scalar memory operations. 
  * Size: 2 dwords. 
  * Operands: s, flat_scratch, xnack, vcc, trap 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_base_smem_addr.html#amdgpu-synid8-base-smem-addr 
  */
 let sbase 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: s, flat_scratch, xnack, vcc, trap 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_sdata32_0.html#amdgpu-synid8-sdata32-0 
  */
 let sdata 
 
-/*
+/* 
  * Instruction output. 
  * Size: 1 dword. 
  * Operands: s, flat_scratch, xnack, vcc, trap 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_sdst32_0.html#amdgpu-synid8-sdst32-0 
  */
 let sdst 
 
-/*
+/* 
  * Specifies cache policy. The default value is off (0). 
  * See AMD documentation for details. 
+ * 
+ *   Syntax    Description
+ *   --------  -----------------
+ *   slc       Set slc bit to 1.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-slc 
  */
 let slc 
 
-/*
+/* 
  * An unsigned byte offset. 
  * Size: 1 dword. 
  * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_offset_buf.html#amdgpu-synid8-offset-buf 
  */
 let soffset 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v, s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, lds_direct, constant, literal 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src32_0.html#amdgpu-synid8-src32-0 
  */
 let src 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v, s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, lds_direct, constant, literal 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src32_0.html#amdgpu-synid8-src32-0 
  */
 let src0 
 
-/*
+/* 
  * Instruction input. 
  * Size: 2 dwords. 
  * Operands: v, s, flat_scratch, xnack, vcc, trap, exec, vccz, execz, scc, constant 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src64_1.html#amdgpu-synid8-src64-1 
  */
 let src1 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v, s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src32_3.html#amdgpu-synid8-src32-3 
  */
 let src2 
 
-/*
+/* 
  * Image resource constant which defines the location of the image buffer in memory, its dimensions, tiling, and data format. 
  * Size: 8 dwords by default, 4 dwords if r128 is specified. 
  * Operands: s, ttmp 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_rsrc_mimg.html#amdgpu-synid8-rsrc-mimg 
  */
 let srsrc 
 
-/*
+/* 
  * Sampler constant used to specify filtering options applied to the image data after it is read. 
  * Size: 4 dwords. 
  * Operands: s, ttmp 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_samp_mimg.html#amdgpu-synid8-samp-mimg 
  */
 let ssamp 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant, literal 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_ssrc32_0.html#amdgpu-synid8-ssrc32-0 
  */
 let ssrc 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant, literal 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_ssrc32_0.html#amdgpu-synid8-ssrc32-0 
  */
 let ssrc0 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant, literal 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_ssrc32_0.html#amdgpu-synid8-ssrc32-0 
  */
 let ssrc1 
 
-/*
+/* 
  * An export target: 
+ * 
+ *   Syntax        Description
+ *   ------------  ----------------------------------
+ *   pos{0..3}     Copy vertex position 0..3.
+ *   param{0..31}  Copy vertex parameter 0..31.
+ *   mrt{0..7}     Copy pixel color to the MRTs 0..7.
+ *   mrtz          Copy pixel depth (Z) data.
+ *   null          Copy nothing.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_tgt.html#amdgpu-synid8-tgt 
  */
 let tgt 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let u16 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let u16x2 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let u32 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let u64 
 
-/*
+/* 
  * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
  */
 let u8x4 
 
-/*
+/* 
  * Specifies whether the address is normalized or not (the address is normalized by default). 
+ * 
+ *   Syntax    Description
+ *   --------  -------------------------------------
+ *   unorm     Force the address to be unnormalized.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-unorm 
  */
 let unorm 
 
-/*
+/* 
  * An offset from the start of GDS/LDS memory. 
  * Size: 1 dword. 
  * Operands: v 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_addr_ds.html#amdgpu-synid8-addr-ds 
  */
 let vaddr 
 
-/*
+/* 
  * Vector condition code. 
  * Size: 2 dwords. 
  * Operands: vcc 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_vcc_64.html#amdgpu-synid8-vcc-64 
  */
 let vcc 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_vdata32_0.html#amdgpu-synid8-vdata32-0 
  */
 let vdata 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_vdata32_0.html#amdgpu-synid8-vdata32-0 
  */
 let vdata0 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_vdata32_0.html#amdgpu-synid8-vdata32-0 
  */
 let vdata1 
 
-/*
+/* 
  * Instruction output. 
  * Size: 1 dword. 
  * Operands: v 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_vdst32_0.html#amdgpu-synid8-vdst32-0 
  */
 let vdst 
 
-/*
+/* 
  * Specifies valid mask flag state (off by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   vm        Set valid mask flag.
+ * 
+ * 
  * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-vm 
  */
 let vm 
 
-/*
+/* 
  * Instruction input. 
  * Size: 1 dword. 
  * Operands: v 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_vsrc32_0.html#amdgpu-synid8-vsrc32-0 
  */
 let vsrc 
 
-/*
+/* 
  * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
  * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
- 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
  * Size: 1 dword. 
  * Operands: v, off 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
  */
 let vsrc0 
 
-/*
+/* 
  * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
  * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
- 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
  * Size: 1 dword. 
  * Operands: v, off 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
  */
 let vsrc1 
 
-/*
+/* 
  * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
  * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
-
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
  * Size: 1 dword. 
  * Operands: v, off 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
  */
 let vsrc2 
 
-/*
+/* 
  * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
  * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
- 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
  * Size: 1 dword. 
  * Operands: v, off 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
  */
 let vsrc3 
 
-/*
+/* 
  * Counts of outstanding instructions to wait for. 
  * The bits of this operand have the following meaning: 
+ * 
+ *   Bits    Description                                      Value Range
+ *   ------  -----------------------------------------------  -------------
+ *   3:0     VM_CNT: vector memory operations count.          0..15
+ *   6:4     EXP_CNT: export count.                           0..7
+ *   11:8    LGKM_CNT: LDS, GDS, Constant and Message count.  0..15
+ * 
  * This operand may be specified as one of the following: 
- * An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
- * A combination of vmcnt, expcnt, lgkmcnt and other values described below. 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ *  - A combination of vmcnt, expcnt, lgkmcnt and other values described below. 
+ *    
+ *      Syntax            Description
+ *      ----------------  -----------------------------------------------------------------
+ *      vmcnt(<N>)        A VM_CNT value. N must not exceed the largest VM_CNT value.
+ *      expcnt(<N>)       An EXP_CNT value. N must not exceed the largest EXP_CNT value.
+ *      lgkmcnt(<N>)      An LGKM_CNT value. N must not exceed the largest LGKM_CNT value.
+ *      vmcnt_sat(<N>)    A VM_CNT value computed as min(N, the largest VM_CNT value).
+ *      expcnt_sat(<N>)   An EXP_CNT value computed as min(N, the largest EXP_CNT value).
+ *      lgkmcnt_sat(<N>)  An LGKM_CNT value computed as min(N, the largest LGKM_CNT value).
+ *    
+ * 
  * These values may be specified in any order. Spaces, ampersands and commas may be used as optional separators. 
- * N is either an
-integer number or an
-absolute expression. 
- 
+ * N is either an integer number or an absolute expression. 
+ * 
  * https://llvm.org/docs/AMDGPU/gfx8_waitcnt.html#amdgpu-synid8-waitcnt 
  */
 let waitcnt 
