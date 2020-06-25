@@ -99,6 +99,25 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
+        public async Task LocalExecuteTestAsync()
+        {
+            var file = Path.GetTempFileName();
+            var steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = $"-c \"print('success', file=open(r'{file}', 'w'))\"" }
+            };
+            var runner = new ActionRunner(channel: null, serviceProvider: null);
+            var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(result.Successful);
+            Assert.Equal("", result.StepResults[0].Warning);
+            Assert.Equal("No stdout/stderr captured (exit code 0)\r\n", result.StepResults[0].Log);
+
+            var output = File.ReadAllText(file);
+            File.Delete(file);
+            Assert.Equal("success\r\n", output);
+        }
+
+        [Fact]
         public async Task VerifiesTimestampsTestAsync()
         {
             var channel = new MockCommunicationChannel();

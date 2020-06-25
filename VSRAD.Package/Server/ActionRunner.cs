@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
@@ -77,17 +78,20 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
         {
-            if (step.Environment == StepEnvironment.Local)
-                throw new NotImplementedException();
-
-            var response = await _channel.SendWithReplyAsync<ExecutionCompleted>(new Execute
+            var command = new Execute
             {
                 Executable = step.Executable,
                 Arguments = step.Arguments,
                 WorkingDirectory = step.WorkingDirectory,
                 RunAsAdministrator = step.RunAsAdmin,
-                ExecutionTimeoutSecs = step.WaitForCompletion ? step.TimeoutSecs : 0
-            });
+                WaitForCompletion = step.WaitForCompletion,
+                ExecutionTimeoutSecs = step.TimeoutSecs
+            };
+            ExecutionCompleted response;
+            if (step.Environment == StepEnvironment.Local)
+                response = await new ObservableProcess(command).StartAndObserveAsync();
+            else
+                response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command);
 
             var log = new StringBuilder();
             var status = response.Status == ExecutionStatus.Completed ? $"exit code {response.ExitCode}"
@@ -102,6 +106,7 @@ namespace VSRAD.Package.Server
             if (stderr.Length != 0)
                 log.AppendFormat("Captured stderr ({0}):\r\n{1}\r\n", status, stderr);
 
+            var machine = step.Environment == StepEnvironment.Local ? "local" : "remote";
             switch (response.Status)
             {
                 case ExecutionStatus.Completed when response.ExitCode == 0:
@@ -109,9 +114,9 @@ namespace VSRAD.Package.Server
                 case ExecutionStatus.Completed:
                     return new StepResult(true, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString());
                 case ExecutionStatus.TimedOut:
-                    return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the remote machine is terminated.", log.ToString());
+                    return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
                 default:
-                    return new StepResult(false, $"{step.Executable} process could not be started on the remote machine. Make sure the path to the executable is specified correctly.", log.ToString());
+                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. Make sure the path to the executable is specified correctly.", log.ToString());
             }
         }
 

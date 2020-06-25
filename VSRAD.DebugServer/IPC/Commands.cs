@@ -51,6 +51,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public bool RunAsAdministrator { get; set; }
 
+        public bool WaitForCompletion { get; set; } = true;
+
         public int ExecutionTimeoutSecs { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
@@ -60,7 +62,8 @@ namespace VSRAD.DebugServer.IPC.Commands
             $"Executable = {Executable}",
             $"Arguments = {Arguments}",
             $"RunAsAdministrator = {RunAsAdministrator}",
-            $"ExecutionTimeoutSecs = {ExecutionTimeoutSecs}",
+            $"WaitForCompletion = {WaitForCompletion}",
+            $"ExecutionTimeoutSecs = {ExecutionTimeoutSecs}"
         });
 
         public static Execute Deserialize(IPCReader reader) => new Execute
@@ -69,6 +72,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             Executable = reader.ReadString(),
             Arguments = reader.ReadString(),
             RunAsAdministrator = reader.ReadBoolean(),
+            WaitForCompletion = reader.ReadBoolean(),
             ExecutionTimeoutSecs = reader.ReadInt32()
         };
 
@@ -78,6 +82,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(Executable);
             writer.Write(Arguments);
             writer.Write(RunAsAdministrator);
+            writer.Write(WaitForCompletion);
             writer.Write(ExecutionTimeoutSecs);
         }
     }
