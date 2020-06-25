@@ -95,6 +95,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
         private void UpdateWordAdornments(SnapshotPoint currentRequest, CancellationToken cancellation)
         {
             var version = currentRequest.Snapshot;
+            if (currentRequest == version.Length)
+                return;
+
             var wordSpans = new List<SnapshotSpan>();
             var bracketType = BracketType.Lbracket;
             var lbracketType = RadAsmTokenType.Unknown;

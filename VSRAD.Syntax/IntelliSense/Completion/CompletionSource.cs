@@ -72,6 +72,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         private bool ShouldTriggerCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation)
         {
+            if (triggerLocation == triggerLocation.Snapshot.Length)
+                return false;
+
             var currentTokenType = _documentAnalysis.LexerTokenToRadAsmToken(_documentAnalysis.GetToken(triggerLocation).Type);
             if (currentTokenType == RadAsmTokenType.Comment)
             {

@@ -120,6 +120,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         {
             var currentRequest = requestedPoint;
             var version = currentRequest.Snapshot;
+
+            if (currentRequest == version.Length)
+                return;
+
             var wordSpans = new List<SnapshotSpan>();
             var word = currentRequest.GetExtent();
             var currentTokenRequest = _documentAnalysis.GetToken(currentRequest.Position);

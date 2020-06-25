@@ -64,6 +64,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 filterText,
                 new PatternMatcherCreationOptions(System.Globalization.CultureInfo.CurrentCulture, PatternMatcherCreationFlags.IncludeMatchedSpans | PatternMatcherCreationFlags.AllowFuzzyMatching));
 
+            token.ThrowIfCancellationRequested();
             var matches = data.InitialSortedList
                 // Perform pattern matching
                 .Select(completionItem => (completionItem, patternMatcher.TryMatch(completionItem.FilterText)))
@@ -86,6 +87,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var bestMatch = filterFilteredList.OrderByDescending(n => n.Item2.HasValue).ThenBy(n => n.Item2).FirstOrDefault();
             var listWithHighlights = filterFilteredList.Select(n =>
             {
+                token.ThrowIfCancellationRequested();
+
                 var safeMatchedSpans = ImmutableArray<Span>.Empty;
                 if (n.completionItem.DisplayText == n.completionItem.FilterText)
                 {
@@ -126,6 +129,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             {
                 for (int i = 0; i < listWithHighlights.Length; i++)
                 {
+                    token.ThrowIfCancellationRequested();
                     if (listWithHighlights[i].CompletionItem == bestMatch.completionItem)
                     {
                         selectedItemIndex = i;
