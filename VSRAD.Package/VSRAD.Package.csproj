@@ -202,6 +202,7 @@
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
+    <Compile Include="Utils\VsEditor.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfBoolToIndexConverter.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />

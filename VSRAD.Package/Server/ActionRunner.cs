@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -6,17 +7,21 @@ using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
+using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
+        private readonly SVsServiceProvider _serviceProvider;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
 
-        public ActionRunner(ICommunicationChannel channel)
+        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider)
         {
             _channel = channel;
+            _serviceProvider = serviceProvider;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
@@ -39,6 +44,9 @@ namespace VSRAD.Package.Server
                         break;
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute);
+                        break;
+                    case OpenInEditorStep openInEditor:
+                        result = await DoOpenInEditorAsync(openInEditor);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -105,6 +113,13 @@ namespace VSRAD.Package.Server
                 default:
                     return new StepResult(false, $"{step.Executable} process could not be started on the remote machine. Make sure the path to the executable is specified correctly.", log.ToString());
             }
+        }
+
+        private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker);
+            return new StepResult(true, "", "");
         }
 
         private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)

@@ -25,7 +25,7 @@ namespace VSRAD.PackageTests.Server
             };
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } }); // init timestamp fetch
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound });
-            var runner = new ActionRunner(channel.Object);
+            var runner = new ActionRunner(channel.Object, null);
             var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
@@ -49,7 +49,7 @@ namespace VSRAD.PackageTests.Server
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, RemotePath = "/home/parker/audio/unchecked", LocalPath = "" }, // should not be run
             };
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stdout = "", Stderr = "" });
-            var runner = new ActionRunner(channel.Object);
+            var runner = new ActionRunner(channel.Object, null);
             var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
@@ -85,7 +85,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } }); // init timestamp fetch
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
-            var runner = new ActionRunner(channel.Object);
+            var runner = new ActionRunner(channel.Object, null);
             var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.True(result.Successful);
             Assert.True(result.StepResults[0].Successful);
@@ -131,7 +131,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(
                 new ResultRangeFetched { Data = Encoding.UTF8.GetBytes("TestCopyStepUnchecked") },
                 (command) => Assert.Equal(new[] { "/home/parker/audio/unchecked" }, command.FilePath));
-            var runner = new ActionRunner(channel.Object);
+            var runner = new ActionRunner(channel.Object, null);
             await runner.RunAsync(steps, auxFiles);
             Assert.True(channel.AllInteractionsHandled);
 

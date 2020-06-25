@@ -76,7 +76,7 @@ namespace VSRAD.Package.ProjectSystem
                 return false;
             }
 
-            _debugSession = new DebugSession(_project, _channel, _deployManager);
+            _debugSession = new DebugSession(_project, _channel, _deployManager, _serviceProvider);
             return true;
         }
 

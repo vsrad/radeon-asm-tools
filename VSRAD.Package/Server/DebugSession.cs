@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -17,12 +18,14 @@ namespace VSRAD.Package.Server
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
         private readonly IFileSynchronizationManager _deployManager;
+        private readonly SVsServiceProvider _serviceProvider;
 
-        public DebugSession(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager)
+        public DebugSession(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager, SVsServiceProvider serviceProvider)
         {
             _project = project;
             _channel = channel;
             _deployManager = deployManager;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task<DebugRunResult> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
@@ -33,7 +36,7 @@ namespace VSRAD.Package.Server
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
-            var runner = new ActionRunner(_channel);
+            var runner = new ActionRunner(_channel, _serviceProvider);
             var result = await runner.RunAsync(options.Steps, new[] { options.OutputFile, options.WatchesFile, options.StatusFile }).ConfigureAwait(false);
 
             if (!result.Successful)

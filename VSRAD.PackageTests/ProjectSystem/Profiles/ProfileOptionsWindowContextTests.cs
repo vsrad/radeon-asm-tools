@@ -14,7 +14,19 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             return options;
         }
 
-        private static T GetPage<T>(ProfileOptionsWindowContext context) => (T)context.Pages.Find(p => p is T);
+        private static T GetPage<T>(ProfileOptionsWindowContext context)
+        {
+            foreach (var page in context.Pages)
+            {
+                if (page is T requestedPage)
+                    return requestedPage;
+                if (page is ProfileOptionsActionsPage actions)
+                    foreach (var action in actions.Actions)
+                        if (action is T requestedAction)
+                            return requestedAction;
+            }
+            return default;
+        }
 
         [Fact]
         public void DirtyTrackingTest()

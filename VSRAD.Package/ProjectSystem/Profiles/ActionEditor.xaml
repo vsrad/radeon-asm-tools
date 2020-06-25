@@ -89,6 +89,7 @@
                 </Menu.ItemsPanel>
                 <MenuItem Header="Execute" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:ExecuteStep}" />
                 <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:CopyFileStep}" />
+                <MenuItem Header="Open in Editor" Height="22" Command="{Binding AddCommand, ElementName=Root}" CommandParameter="{x:Type opts:OpenInEditorStep}" />
             </Menu>
         </Popup>
         <ListView ItemsSource="{Binding}">
@@ -184,6 +185,28 @@
                             <Label Content="Timeout in Seconds:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
                             <TextBox Text="{Binding TimeoutSecs}" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="22" Width="160" Grid.Row="6" Grid.Column="1"
                                      IsEnabled="{Binding WaitForCompletion}" ToolTip="0 - timeout disabled"/>
+                        </Grid>
+                    </Expander>
+                </DataTemplate>
+                <DataTemplate DataType="{x:Type opts:OpenInEditorStep}">
+                    <Expander Tag="{Binding}" Template="{Binding Source={StaticResource StepExpander}}" IsExpanded="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="170"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="22"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
+                                     Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Line Marker:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding LineMarker}" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="22" Width="160" Grid.Row="1" Grid.Column="1" />
                         </Grid>
                     </Expander>
                 </DataTemplate>

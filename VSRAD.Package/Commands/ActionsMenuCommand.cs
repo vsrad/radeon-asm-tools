@@ -20,6 +20,7 @@ namespace VSRAD.Package.Commands
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
         private readonly ICommunicationChannel _channel;
+        private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
         private IReadOnlyList<ActionProfileOptions> Actions => _project.Options.Profile.General.Actions;
@@ -30,6 +31,7 @@ namespace VSRAD.Package.Commands
             _project = project;
             _actionLogger = actionLogger;
             _channel = channel;
+            _serviceProvider = serviceProvider;
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
@@ -66,7 +68,7 @@ namespace VSRAD.Package.Commands
             {
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
-                var runner = new ActionRunner(_channel);
+                var runner = new ActionRunner(_channel, _serviceProvider);
                 var result = await runner.RunAsync(action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(action.Name, result).ConfigureAwait(false);
                 if (actionError is Error e1)

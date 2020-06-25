@@ -3,7 +3,6 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
 using System.ComponentModel;
-using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -120,6 +119,32 @@ namespace VSRAD.Package.Options
             };
     }
 
+    public sealed class OpenInEditorStep : DefaultNotifyPropertyChanged, IActionStep
+    {
+        public StepEnvironment Environment => StepEnvironment.Local;
+
+        private string _path = "";
+        public string Path { get => _path; set => SetField(ref _path, value); }
+
+        private string _lineMarker = "";
+        public string LineMarker { get => _lineMarker; set => SetField(ref _lineMarker, value); }
+
+        public override string ToString() => "Open in Editor";
+
+        public override bool Equals(object obj) =>
+            obj is OpenInEditorStep step && Path == step.Path && LineMarker == step.LineMarker;
+
+        public override int GetHashCode() =>
+            (Path, LineMarker).GetHashCode();
+
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+            new OpenInEditorStep
+            {
+                Path = await evaluator.EvaluateAsync(Path),
+                LineMarker = LineMarker
+            };
+    }
+
     public sealed class ActionStepJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) =>
@@ -146,6 +171,7 @@ namespace VSRAD.Package.Options
             {
                 case "Execute": return new ExecuteStep();
                 case "CopyFile": return new CopyFileStep();
+                case "OpenInEditor": return new OpenInEditorStep();
             }
             throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
         }
@@ -156,6 +182,7 @@ namespace VSRAD.Package.Options
             {
                 case ExecuteStep _: return "Execute";
                 case CopyFileStep _: return "CopyFile";
+                case OpenInEditorStep _: return "OpenInEditor";
             }
             throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));
         }
