@@ -46,7 +46,7 @@ namespace VSRAD.Package
             if (e is OperationCanceledException) return;
 
 #if DEBUG
-            ShowCritical($"Message: {e.Message}\n Additional info: {e.StackTrace}");
+            ShowCritical(e.Message + "\r\n\r\n" + e.StackTrace);
 #else
             ShowCritical(e.Message);
 #endif
