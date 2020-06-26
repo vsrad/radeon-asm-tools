@@ -87,7 +87,7 @@
                 </TextBlock>
             </RepeatButton>
         </StackPanel>
-        <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" LostFocus="ResetValueIfInvalid"
+        <TextBox Text="{Binding RawValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" LostFocus="ResetValueIfInvalid"
                  VerticalContentAlignment="Center" Height="24"
                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
