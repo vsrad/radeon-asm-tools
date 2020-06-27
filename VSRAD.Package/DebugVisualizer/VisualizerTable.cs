@@ -99,7 +99,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void GroupSizeChanged(uint groupSize)
         {
-            var columnsMissing = groupSize - (Columns.Count - 1);
+            var columnsMissing = groupSize - (Columns.Count - DataColumnOffset);
 
             if (columnsMissing > 0)
             {
@@ -109,6 +109,7 @@ namespace VSRAD.Package.DebugVisualizer
                 {
                     columns[i] = new DataGridViewTextBoxColumn
                     {
+                        FillWeight = 1,
                         ReadOnly = true,
                         SortMode = DataGridViewColumnSortMode.NotSortable,
                         Width = _state.ColumnWidth,
@@ -117,7 +118,7 @@ namespace VSRAD.Package.DebugVisualizer
                 }
                 _state.AddDataColumns(columns);
                 Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
-                DataColumnCount = (int)groupSize;
+                DataColumnCount = _state.DataColumns.Count;
             }
             for (int i = 0; i < _state.DataColumns.Count; ++i)
                 _state.DataColumns[i].Visible = i < groupSize;
