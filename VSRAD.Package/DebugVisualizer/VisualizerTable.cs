@@ -103,7 +103,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (columnsMissing > 0)
             {
-                var missingColumnStartAt = DataColumnCount;
+                var missingColumnStartAt = _state.DataColumns.Count;
                 var columns = new DataGridViewColumn[columnsMissing];
                 for (int i = 0; i < columnsMissing; ++i)
                 {
@@ -119,7 +119,7 @@ namespace VSRAD.Package.DebugVisualizer
                 Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
                 DataColumnCount = (int)groupSize;
             }
-            for (int i = 0; i < DataColumnCount; ++i)
+            for (int i = 0; i < _state.DataColumns.Count; ++i)
                 _state.DataColumns[i].Visible = i < groupSize;
         }
 

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Windows.Documents;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -17,7 +19,7 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class ComputedColumnStyling
     {
         public uint GroupSize { get; private set; }
-        public ColumnStates[] ColumnState { get; } = new ColumnStates[/*VisualizerTable.DataColumnCount*/ 1024];
+        public List<ColumnStates> ColumnState { get; } = new List<ColumnStates>();
 
         public void GrayOutColumns(uint groupSize)
         {
@@ -30,7 +32,8 @@ namespace VSRAD.Package.DebugVisualizer
         {
             GroupSize = groupSize;
 
-            Array.Clear(ColumnState, 0, ColumnState.Length);
+            ColumnState.Clear();
+            ColumnState.AddRange(new ColumnStates[groupSize]);
             foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)groupSize))
                 ColumnState[i] |= ColumnStates.Visible;
 
