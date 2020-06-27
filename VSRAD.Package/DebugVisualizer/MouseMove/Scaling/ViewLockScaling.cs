@@ -31,9 +31,11 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
             if (diff == 0 || width < 30)
                 return;
 
+            var fullDiff = Cursor.Position.X - _scaleState.InitialX;
+
             _tableState.ResizeController.BeginBulkColumnWidthChange();
 
-            var scrollingOffset = _table.HorizontalScrollingOffset + diff * _scaleState.VisibleColumnsToLeftOutOfView;
+            var scrollingOffset = _table.HorizontalScrollingOffset + diff * (_scaleState.VisibleColumnsToLeftOutOfView) + /*(_scaleState.FirstColumnVisibleSize)*/ + diff / _scaleState.ExtraDiffChunkSize;
 
             for (int i = _tableState.DataColumnOffset; i < _table.ColumnCount; ++i)
             {

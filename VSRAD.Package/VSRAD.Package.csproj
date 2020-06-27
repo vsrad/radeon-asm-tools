@@ -140,6 +140,7 @@
     <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
     <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
     <Compile Include="DebugVisualizer\MouseMove\Scaling\ColumnLockScaling.cs" />
+    <Compile Include="DebugVisualizer\MouseMove\Scaling\ObsoleteColumnLockScaling.cs" />
     <Compile Include="DebugVisualizer\MouseMove\Scaling\ViewLockScaling.cs" />
     <Compile Include="DebugVisualizer\ScalingMode.cs" />
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
