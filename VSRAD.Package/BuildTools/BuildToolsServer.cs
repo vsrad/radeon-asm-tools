@@ -33,7 +33,7 @@ namespace VSRAD.Package.BuildTools
         public const string ErrorPreprocessorFileNotCreated = "Preprocessor output file is missing.";
         public const string ErrorPreprocessorFileUnchanged = "Preprocessor output file is unchanged after running the command.";
 
-        public string PipeName => IPCBuildResult.GetIPCPipeName(_project.RootPath);
+        public string PipeName { get; }
 
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
@@ -42,6 +42,7 @@ namespace VSRAD.Package.BuildTools
         private readonly IBuildErrorProcessor _errorProcessor;
         private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
 
+        private bool _serverStarted;
         private BuildSteps? _buildStepsOverride;
 
         [ImportingConstructor]
@@ -50,7 +51,8 @@ namespace VSRAD.Package.BuildTools
             ICommunicationChannel channel,
             IOutputWindowManager outputWindow,
             IBuildErrorProcessor errorProcessor,
-            IFileSynchronizationManager deployManager)
+            IFileSynchronizationManager deployManager,
+            UnconfiguredProject unconfiguredProject)
         {
             _project = project;
             _channel = channel;
@@ -58,8 +60,14 @@ namespace VSRAD.Package.BuildTools
             _errorProcessor = errorProcessor;
             _deployManager = deployManager;
 
-            _project.Loaded += (_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
-            _project.Unloaded += _serverLoopCts.Cancel;
+            // Build integration is not implemented for VisualC projects
+            if (unconfiguredProject.Capabilities?.Contains("VisualC") != true)
+            {
+                unconfiguredProject.Services.ActiveConfiguredProjectProvider.Changed += SetupPipe;
+                project.Unloaded += _serverLoopCts.Cancel;
+            }
+
+            PipeName = "vsrad-" + Guid.NewGuid();
         }
 
         public void OverrideStepsForNextBuild(BuildSteps steps)
@@ -67,8 +75,23 @@ namespace VSRAD.Package.BuildTools
             _buildStepsOverride = steps;
         }
 
+        private void SetupPipe(object sender, ActiveConfigurationChangedEventArgs e)
+        {
+            if (e.NowActive == null)
+                return;
+
+            var projectProperties = e.NowActive.Services.ProjectPropertiesProvider.GetCommonProperties();
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            {
+                await projectProperties.SetPropertyValueAsync("RadBuildToolsPipe", PipeName);
+                if (!_serverStarted)
+                    await RunServerLoopAsync();
+            });
+        }
+
         public async Task RunServerLoopAsync()
         {
+            _serverStarted = true;
             while (!_serverLoopCts.Token.IsCancellationRequested)
                 try
                 {
@@ -81,9 +104,14 @@ namespace VSRAD.Package.BuildTools
                         {
                             var buildResult = await BuildAsync().ConfigureAwait(false);
                             if (buildResult.TryGetResult(out var result, out var error))
+                            {
+                                result.ServerMessage = $"Using profile {_project.Options.ActiveProfile}. Note that opening the same project in multiple Visual Studio instances may lead to incorrect build results.";
                                 message = result.ToArray();
+                            }
                             else
+                            {
                                 message = new IPCBuildResult { ServerError = error.Message }.ToArray();
+                            }
                         }
                         catch (Exception e)
                         {
