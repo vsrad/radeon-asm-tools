@@ -206,11 +206,9 @@ namespace VSRAD.Package.Server
 
         private void GetRequestedFilePart(int groupIndex, int groupSize, int nGroups, bool fetchWholeFile, out int waveOffset, out int waveCount)
         {
-            if (groupSize % _wavefrontSize != 0)
-                throw new ArgumentException($"Group sizes are assumed to be a multiple of {_wavefrontSize} (wavefront size)", nameof(groupSize));
-
             if (fetchWholeFile)
             {
+                groupSize += groupSize % _wavefrontSize; // round up to a multiple of _wavefrontSize
                 waveCount = nGroups * groupSize / _wavefrontSize;
                 if (waveCount == 0 || waveCount > _fetchedDataWaves.Length)
                     waveCount = _fetchedDataWaves.Length;
@@ -218,8 +216,13 @@ namespace VSRAD.Package.Server
             }
             else // single group
             {
-                waveCount = groupSize / _wavefrontSize;
-                waveOffset = groupIndex * waveCount;
+                var groupStart = groupIndex * groupSize;
+                var groupEnd = (groupIndex + 1) * groupSize;
+                var startWaveIndex = groupStart / _wavefrontSize;
+                var endWaveIndex = groupEnd / _wavefrontSize + (groupEnd % _wavefrontSize != 0 ? 1 : 0); // ceil
+
+                waveCount = endWaveIndex - startWaveIndex;
+                waveOffset = startWaveIndex;
             }
         }
 
