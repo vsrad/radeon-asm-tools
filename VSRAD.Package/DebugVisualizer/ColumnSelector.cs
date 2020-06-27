@@ -7,7 +7,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public static class ColumnSelector
     {
-        public static IEnumerable<int> ToIndexes(string selector, int columnCount = VisualizerTable.DataColumnCount)
+        public static IEnumerable<int> ToIndexes(string selector, int columnCount)
         {
             while (selector.Length > 0)
             {
@@ -99,10 +99,10 @@ namespace VSRAD.Package.DebugVisualizer
             return sb.ToString();
         }
 
-        public static string GetSelectorMultiplication(string currentSelector, string newSelector)
+        public static string GetSelectorMultiplication(string currentSelector, string newSelector, int columnCount)
         {
-            var currentIndexes = ToIndexes(currentSelector);
-            var newIndexes = ToIndexes(newSelector);
+            var currentIndexes = ToIndexes(currentSelector, columnCount);
+            var newIndexes = ToIndexes(newSelector, columnCount);
 
             if (currentIndexes.All(i => newIndexes.Contains(i)))
                 return FromIndexes(newIndexes);

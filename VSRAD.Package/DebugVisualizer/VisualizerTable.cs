@@ -19,12 +19,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         public const int NameColumnIndex = 0;
         public const int PhantomColumnIndex = 1;
-        public const int DataColumnCount = 512;
         public const int DataColumnOffset = 2; // name + phantom column
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
+        public int DataColumnCount { get; private set; } = 512;
 
         public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
 
@@ -95,6 +95,32 @@ namespace VSRAD.Package.DebugVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
+        }
+
+        public void GroupSizeChanged(uint groupSize)
+        {
+            var columnsMissing = groupSize - (Columns.Count - 1);
+
+            if (columnsMissing > 0)
+            {
+                var missingColumnStartAt = DataColumnCount;
+                var columns = new DataGridViewColumn[columnsMissing];
+                for (int i = 0; i < columnsMissing; ++i)
+                {
+                    columns[i] = new DataGridViewTextBoxColumn
+                    {
+                        ReadOnly = true,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                        Width = _state.ColumnWidth,
+                        HeaderText = (missingColumnStartAt + i).ToString()
+                    };
+                }
+                _state.AddDataColumns(columns);
+                Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
+                DataColumnCount = (int)groupSize;
+            }
+            for (int i = 0; i < DataColumnCount; ++i)
+                _state.DataColumns[i].Visible = i < groupSize;
         }
 
         public void ScaleControls(float scaleFactor)

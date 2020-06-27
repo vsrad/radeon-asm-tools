@@ -17,7 +17,7 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class ComputedColumnStyling
     {
         public uint GroupSize { get; private set; }
-        public ColumnStates[] ColumnState { get; } = new ColumnStates[VisualizerTable.DataColumnCount];
+        public ColumnStates[] ColumnState { get; } = new ColumnStates[/*VisualizerTable.DataColumnCount*/ 1024];
 
         public void GrayOutColumns(uint groupSize)
         {
