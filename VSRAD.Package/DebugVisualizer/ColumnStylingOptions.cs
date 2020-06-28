@@ -4,7 +4,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class ColumnStylingOptions : DefaultNotifyPropertyChanged
     {
-        private string _visibleColumns = "0:1-511";
+        private string _visibleColumns = "0:1-8191";
         public string VisibleColumns { get => _visibleColumns; set => SetField(ref _visibleColumns, value); }
 
         private string _backgroundColors;
