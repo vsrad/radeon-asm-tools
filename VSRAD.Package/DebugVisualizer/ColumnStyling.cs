@@ -30,7 +30,7 @@ namespace VSRAD.Package.DebugVisualizer
             for (int i = 0; i < columns.Count; i++)
             {
                 var column = columns[i];
-                if (i >= _computedStyling.ColumnState.Count)
+                if (i >= _computedStyling.ColumnState.Length)
                 {
                     column.Visible = false;
                     continue;

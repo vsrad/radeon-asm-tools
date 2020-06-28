@@ -19,21 +19,23 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class ComputedColumnStyling
     {
         public uint GroupSize { get; private set; }
-        public List<ColumnStates> ColumnState { get; } = new List<ColumnStates>();
+
+        private ColumnStates[] _columnState = new ColumnStates[512];
+        public ColumnStates[] ColumnState { get => _columnState; }
 
         public void GrayOutColumns(uint groupSize)
         {
             GroupSize = groupSize;
             for (int i = 0; i < groupSize; i++)
-                ColumnState[i] |= ColumnStates.Inactive;
+                _columnState[i] |= ColumnStates.Inactive;
         }
 
         public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, Server.WatchView system)
         {
             GroupSize = groupSize;
 
-            ColumnState.Clear();
-            ColumnState.AddRange(new ColumnStates[groupSize]);
+            Array.Resize(ref _columnState, (int)groupSize);
+            Array.Clear(_columnState, 0, _columnState.Length);
             foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)groupSize))
                 ColumnState[i] |= ColumnStates.Visible;
 
@@ -51,14 +53,14 @@ namespace VSRAD.Package.DebugVisualizer
                 if (options.CheckMagicNumber && system[wfrontOffset] != options.MagicNumber)
                 {
                     for (int laneId = 0; laneId < 64; ++laneId)
-                        ColumnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
+                        _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
                 }
                 else if (options.MaskLanes)
                 {
                     var execMask = new BitArray(new[] { (int)system[wfrontOffset + 8], (int)system[wfrontOffset + 9] });
                     for (int laneId = 0; laneId < 64; ++laneId)
                         if (!execMask[laneId])
-                            ColumnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
+                            _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
                 }
             }
         }
@@ -73,9 +75,9 @@ namespace VSRAD.Package.DebugVisualizer
                 for (int lastVisibleInGroup = (int)Math.Min(start + laneGrouping - 1, GroupSize - 1);
                     lastVisibleInGroup >= start; lastVisibleInGroup--)
                 {
-                    if ((ColumnState[lastVisibleInGroup] & ColumnStates.Visible) != 0)
+                    if ((_columnState[lastVisibleInGroup] & ColumnStates.Visible) != 0)
                     {
-                        ColumnState[lastVisibleInGroup] |= ColumnStates.HasLaneSeparator;
+                        _columnState[lastVisibleInGroup] |= ColumnStates.HasLaneSeparator;
                         break;
                     }
                 }
@@ -85,8 +87,8 @@ namespace VSRAD.Package.DebugVisualizer
         private void ComputeHiddenColumnSeparators()
         {
             for (int i = 0; i < GroupSize - 1; i++)
-                if ((ColumnState[i] & ColumnStates.Visible) != 0 && (ColumnState[i + 1] & ColumnStates.Visible) == 0)
-                    ColumnState[i] |= ColumnStates.HasHiddenColumnSeparator;
+                if ((_columnState[i] & ColumnStates.Visible) != 0 && (_columnState[i + 1] & ColumnStates.Visible) == 0)
+                    _columnState[i] |= ColumnStates.HasHiddenColumnSeparator;
         }
     }
 }
