@@ -25,6 +25,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public ProjectOptions Options { get; }
 
+        public List<ActionProfileOptions> Actions { get; } = new List<ActionProfileOptions>();
+
         public List<object> Pages { get; } = new List<object>();
 
         private object _selectedPage;
@@ -91,6 +93,15 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             Pages.Add(currentPages.General);
             Pages.Add(new ProfileOptionsActionsPage(currentPages));
             RaisePropertyChanged(nameof(Pages));
+            currentPages.General.Actions.CollectionChanged += (s, e) => ActionsChanged();
+            ActionsChanged();
+        }
+
+        private void ActionsChanged()
+        {
+            Actions.Clear();
+            Actions.AddRange(_dirtyOptions[Options.ActiveProfile].General.Actions);
+            RaisePropertyChanged(nameof(Actions));
         }
 
         private void AddProfile(string title, string message, ProfileOptions profile)

@@ -13,9 +13,6 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
-        [JsonIgnore]
-        StepEnvironment Environment { get; }
-
         Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator);
     }
 
@@ -33,8 +30,6 @@ namespace VSRAD.Package.Options
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        public StepEnvironment Environment => StepEnvironment.Remote;
-
         private FileCopyDirection _direction;
         public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
 
@@ -121,8 +116,6 @@ namespace VSRAD.Package.Options
 
     public sealed class OpenInEditorStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        public StepEnvironment Environment => StepEnvironment.Local;
-
         private string _path = "";
         public string Path { get => _path; set => SetField(ref _path, value); }
 
@@ -143,6 +136,21 @@ namespace VSRAD.Package.Options
                 Path = await evaluator.EvaluateAsync(Path),
                 LineMarker = LineMarker
             };
+    }
+
+    public sealed class RunActionStep : DefaultNotifyPropertyChanged, IActionStep
+    {
+        private string _name = "";
+        public string Name { get => _name; set { if (value != null) SetField(ref _name, value); } }
+
+        public override string ToString() => "Run Action";
+
+        public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
+
+        public override int GetHashCode() => Name.GetHashCode();
+
+        public Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+            Task.FromResult<IActionStep>(this);
     }
 
     public sealed class ActionStepJsonConverter : JsonConverter
@@ -172,6 +180,7 @@ namespace VSRAD.Package.Options
                 case "Execute": return new ExecuteStep();
                 case "CopyFile": return new CopyFileStep();
                 case "OpenInEditor": return new OpenInEditorStep();
+                case "RunAction": return new RunActionStep();
             }
             throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
         }
@@ -183,6 +192,7 @@ namespace VSRAD.Package.Options
                 case ExecuteStep _: return "Execute";
                 case CopyFileStep _: return "CopyFile";
                 case OpenInEditorStep _: return "OpenInEditor";
+                case RunActionStep _: return "RunAction";
             }
             throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));
         }

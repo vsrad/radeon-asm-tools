@@ -1,4 +1,5 @@
 ﻿<Window x:Class="VSRAD.Package.ProjectSystem.Profiles.ProfileOptionsWindow"
+        x:Name="Root"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -116,7 +117,7 @@
                             <local:BuiltinActionFileEditor Margin="0,6,0,0" DataContext="{Binding OutputFile}" Header="Output File" Grid.Row="2" Grid.ColumnSpan="2"/>
                             <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" Header="Valid Watches File" Grid.Row="3" Grid.ColumnSpan="2"/>
                             <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" Header="Status String File" Grid.Row="4" Grid.ColumnSpan="2"/>
-                            <local:ActionEditor DataContext="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"/>
+                            <local:ActionEditor Steps="{Binding Steps}" CustomActions="{Binding DataContext.Actions, ElementName=Root}" Grid.Row="5" Grid.ColumnSpan="2"/>
                         </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>

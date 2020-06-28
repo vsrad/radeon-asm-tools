@@ -61,7 +61,7 @@
     <Buttons>
       <!-- Tools menu -->
 	  <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="0" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ActionsMenuGroup" />
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <CommandFlag>DynamicItemStart</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
