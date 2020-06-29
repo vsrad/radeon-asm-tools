@@ -12,21 +12,47 @@ using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Options;
+using Microsoft.VisualStudio.Text;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace VSRAD.Syntax.FunctionList
 {
-    public struct FunctionListToken
+    public class FunctionListToken : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public RadAsmTokenType Type { get; }
         public string Text { get; }
         public int LineNumber { get; }
+
+        private bool _isCurrentWorkingItem;
+        public bool IsCurrentWorkingItem
+        {
+            get => _isCurrentWorkingItem;
+            set => OnPropertyChanged(ref _isCurrentWorkingItem, value);
+        }
 
         public FunctionListToken(RadAsmTokenType type, string text, int lineNumber)
         {
             Type = type;
             Text = text;
             LineNumber = lineNumber + 1;
+            _isCurrentWorkingItem = false;
         }
+
+        private void OnPropertyChanged<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value))
+                return;
+
+            field = value;
+            RaisePropertyChanged(propertyName);
+        }
+
+        private void RaisePropertyChanged(string propertyName) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
     }
 
     public partial class FunctionListControl : UserControl
@@ -34,13 +60,16 @@ namespace VSRAD.Syntax.FunctionList
         private readonly OleMenuCommandService commandService;
         private bool isHideLineNumber = false;
         private SortState FunctionListSortState;
-        private IList<FunctionListToken> Tokens;
-        private ListViewItem lastHighlightedItem;
+        private List<FunctionListToken> Tokens;
+        private FunctionListToken LastHighlightedToken;
+        private ITextSnapshot CurrentVersion;
 
         public FunctionListControl(OleMenuCommandService service, OptionsProvider optionsProvider)
         {
             var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
             service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
+            Tokens = new List<FunctionListToken>();
+            LastHighlightedToken = new FunctionListToken(RadAsmTokenType.Unknown, null, 0);
 
             InitializeComponent();
             commandService = service;
@@ -62,10 +91,14 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public Task UpdateFunctionListAsync(IEnumerable<FunctionListToken> newTokens)
+        public Task UpdateFunctionListAsync(ITextSnapshot textSnapshot, IEnumerable<FunctionListToken> newTokens)
         {
             try
             {
+                if (textSnapshot == CurrentVersion)
+                    return Task.CompletedTask;
+                CurrentVersion = textSnapshot;
+
                 Tokens = newTokens.ToList();
                 var shownTokens = SearchByNameFilter(newTokens);
 
@@ -78,18 +111,19 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public async Task HighlightCurrentFunctionAsync(FunctionListToken token)
+        public async Task HighlightCurrentFunctionAsync(RadAsmTokenType tokenType, int lineNumber)
         {
             try
             {
+                var value = Tokens.FirstOrDefault(t => t.Type == tokenType && t.LineNumber == lineNumber);
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                if (lastHighlightedItem != null)
-                    lastHighlightedItem.IsSelected = false;
+                LastHighlightedToken.IsCurrentWorkingItem = false;
+                if (value == null)
+                    return;
 
-                lastHighlightedItem = (ListViewItem)tokens.ItemContainerGenerator.ContainerFromItem(token);
-                if (lastHighlightedItem != null)
-                    lastHighlightedItem.IsSelected = true;
+                value.IsCurrentWorkingItem = true;
+                LastHighlightedToken = value;
             }
             catch (Exception e)
             {
@@ -97,7 +131,7 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private void ReloadFunctionList() => 
+        private void ReloadFunctionList() =>
             ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(Tokens));
 
         private async Task AddTokensToViewAsync(IEnumerable<FunctionListToken> shownTokens)

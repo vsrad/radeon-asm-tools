@@ -15,6 +15,7 @@ using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.Parser;
 using System.Collections.Generic;
 using VSRAD.Syntax.Parser.Blocks;
+using Microsoft.VisualStudio;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -40,7 +41,9 @@ namespace VSRAD.Syntax.FunctionList
             Assumes.Present(_textManager);
             Assumes.Present(_editorAdaptorFactory);
 
-            _textManager.GetActiveView(1, null, out var textViewCurrent);
+            if (_textManager.GetActiveView(1, null, out var textViewCurrent) != VSConstants.S_OK)
+                return null;
+
             return _editorAdaptorFactory.GetWpfTextView(textViewCurrent);
         }
 
@@ -55,7 +58,9 @@ namespace VSRAD.Syntax.FunctionList
             Content = new FunctionListControl(commandService, optionsEventProvider);
 
             Instance = this;
-            UpdateFunctionList(GetActiveTextView()?.TextBuffer);
+            var activeView = GetActiveTextView();
+            if (activeView != null)
+                UpdateFunctionList(activeView.TextBuffer);
 
             var dte = GetService(typeof(DTE)) as DTE;
             dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
@@ -104,7 +109,7 @@ namespace VSRAD.Syntax.FunctionList
                     .Concat(labels)
                     .Select(t => new FunctionListToken(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
 
-                return FunctionListControl.UpdateFunctionListAsync(functionListTokens);
+                return FunctionListControl.UpdateFunctionListAsync(version, functionListTokens);
             }
             catch (Exception e)
             {
@@ -131,13 +136,12 @@ namespace VSRAD.Syntax.FunctionList
             else
             {
                 var functionToken = currentFunction.Name;
-                var text = functionToken.TrackingToken.GetText(documentAnalysis.CurrentSnapshot);
                 var lineNumber = functionToken
                     .TrackingToken.Start
                     .GetPoint(documentAnalysis.CurrentSnapshot)
                     .GetContainingLine().LineNumber;
 
-                return FunctionListControl.HighlightCurrentFunctionAsync(new FunctionListToken(functionToken.Type, text, lineNumber));
+                return FunctionListControl.HighlightCurrentFunctionAsync(functionToken.Type, lineNumber + 1 /* numbering starts from 1 */);
             }
         }
 
