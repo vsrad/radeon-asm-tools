@@ -35,7 +35,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
 
             _tableState.ResizeController.BeginBulkColumnWidthChange();
 
-            var scrollingOffset = _table.HorizontalScrollingOffset + diff * (_scaleState.VisibleColumnsToLeftOutOfView) + /*(_scaleState.FirstColumnVisibleSize)*/ + diff / _scaleState.ExtraDiffChunkSize;
+            var scrollingOffset = (int)(width * _scaleState.VisibleColumnsToLeftOutOfView + width * _scaleState.FirstColumnInvisisblePart);
 
             for (int i = _tableState.DataColumnOffset; i < _table.ColumnCount; ++i)
             {
@@ -53,6 +53,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
                 _table.Columns[_tableState.PhantomColumnIndex].Width += scrollingOffset - maxScrollingOffset;
 
             _scaleState.CurrentWidth = width;
+            _tableState.ColumnWidth = width;
 
             _tableState.ResizeController.CommitBulkColumnWidthChange(scrollingOffset);
         }

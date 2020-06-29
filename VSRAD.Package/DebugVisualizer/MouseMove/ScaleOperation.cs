@@ -18,6 +18,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         public int ExtraDiffChunkSize;
         public int FirstColumnVisibleSize;
         public int InitialX;
+        public float FirstColumnInvisisblePart;
         public DataGridViewColumn TargetColumn;
         public DataGridViewColumn FirstVisibleColumn;
 
@@ -79,6 +80,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _scaleState.ExtraDiffChunkSize = (int)(1 / Math.Abs((((float)columnX % _tableState.ColumnWidth) / _tableState.ColumnWidth)));
             _scaleState.InitialX = Cursor.Position.X;
             _scaleState.FirstColumnVisibleSize = columnX % _tableState.ColumnWidth;
+            _scaleState.FirstColumnInvisisblePart = FirstColumnInvisiblePart();
 
 #if DEBUG
             _columnLockScaling.SetDebugEdge();
@@ -86,6 +88,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             return true;
         }
+
+        private float FirstColumnInvisiblePart() =>
+            ((float)_table.HorizontalScrollingOffset % _tableState.ColumnWidth) / _tableState.ColumnWidth;
 
         public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x)
         {
