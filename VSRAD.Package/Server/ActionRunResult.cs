@@ -56,18 +56,20 @@ namespace VSRAD.Package.Server
         public bool Successful { get; }
         public string Warning { get; }
         public string Log { get; }
+        public ActionRunResult SubAction { get; }
 
-        public StepResult(bool successful, string warning, string log)
+        public StepResult(bool successful, string warning, string log, ActionRunResult subAction = null)
         {
             Successful = successful;
             Warning = warning;
             Log = log;
+            SubAction = subAction;
         }
 
         public bool Equals(StepResult result) =>
-            Successful == result.Successful && Warning == result.Warning && Log == result.Log;
+            Successful == result.Successful && Warning == result.Warning && Log == result.Log && SubAction == result.SubAction;
         public override bool Equals(object obj) => obj is StepResult result && Equals(result);
-        public override int GetHashCode() => (Successful, Warning, Log).GetHashCode();
+        public override int GetHashCode() => (Successful, Warning, Log, SubAction).GetHashCode();
         public static bool operator ==(StepResult left, StepResult right) => left.Equals(right);
         public static bool operator !=(StepResult left, StepResult right) => !(left == right);
     }

@@ -118,6 +118,51 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
+        public async Task RunActionStepTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+
+            var level3Steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "cleanup", Arguments = "--skip" },
+            };
+            var level2Steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
+                new RunActionStep(level3Steps) { Name = "level3" }
+            };
+            var level1Steps = new List<IActionStep>
+            {
+                new RunActionStep(level2Steps) { Name = "level2" },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, RemotePath = "/home/mizu/machete/tweened.tvpp", LocalPath = Path.GetTempFileName() }
+            };
+            // 1. Initial timestamp fetch
+            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } });
+            // 2. Level 2 Execute
+            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "level2", Stderr = "" }, (command) =>
+            {
+                Assert.Equal("autotween", command.Executable);
+            });
+            // 3. Level 3 Execute
+            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "level3", Stderr = "" }, (command) =>
+            {
+                Assert.Equal("cleanup", command.Executable);
+            });
+            // 4. Level 1 Copy File
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
+            var runner = new ActionRunner(channel.Object, null);
+            var result = await runner.RunAsync("HTMT", level1Steps, Enumerable.Empty<BuiltinActionFile>());
+
+            Assert.True(result.Successful);
+            Assert.Equal("level2", result.StepResults[0].SubAction.ActionName);
+            Assert.Null(result.StepResults[0].SubAction.StepResults[0].SubAction);
+            Assert.Equal("Captured stdout (exit code 0):\r\nlevel2\r\n", result.StepResults[0].SubAction.StepResults[0].Log);
+            Assert.Equal("level3", result.StepResults[0].SubAction.StepResults[1].SubAction.ActionName);
+            Assert.Equal("Captured stdout (exit code 0):\r\nlevel3\r\n", result.StepResults[0].SubAction.StepResults[1].SubAction.StepResults[0].Log);
+            Assert.Null(result.StepResults[1].SubAction);
+        }
+
+        [Fact]
         public async Task VerifiesTimestampsTestAsync()
         {
             var channel = new MockCommunicationChannel();

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer;
@@ -48,6 +49,9 @@ namespace VSRAD.Package.Server
                         break;
                     case OpenInEditorStep openInEditor:
                         result = await DoOpenInEditorAsync(openInEditor);
+                        break;
+                    case RunActionStep runAction:
+                        result = await DoRunActionAsync(runAction);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -125,6 +129,12 @@ namespace VSRAD.Package.Server
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker);
             return new StepResult(true, "", "");
+        }
+
+        private async Task<StepResult> DoRunActionAsync(RunActionStep step)
+        {
+            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>());
+            return new StepResult(subActionResult.Successful, "", "", subActionResult);
         }
 
         private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
