@@ -69,7 +69,7 @@ namespace VSRAD.Package.Commands
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var runner = new ActionRunner(_channel, _serviceProvider);
-                var result = await runner.RunAsync(action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
+                var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(action.Name, result).ConfigureAwait(false);
                 if (actionError is Error e1)
                     Errors.Show(e1);

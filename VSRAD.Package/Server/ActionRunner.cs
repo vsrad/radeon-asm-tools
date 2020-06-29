@@ -28,9 +28,9 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
         {
-            var runStats = new ActionRunResult(steps);
+            var runStats = new ActionRunResult(actionName, steps);
 
             await FillInitialTimestampsAsync(steps, auxFiles);
             runStats.RecordInitTimestampFetch();

@@ -12,6 +12,7 @@ namespace VSRAD.Package.Server
         public long InitTimestampFetchMillis { get; private set; }
         public long TotalMillis { get; private set; }
 
+        public string ActionName { get; }
         public IReadOnlyList<IActionStep> Steps { get; }
         public StepResult[] StepResults { get; }
 
@@ -20,8 +21,9 @@ namespace VSRAD.Package.Server
         private readonly Stopwatch _stopwatch;
         private long _lastRecordedTime;
 
-        public ActionRunResult(IReadOnlyList<IActionStep> steps)
+        public ActionRunResult(string actionName, IReadOnlyList<IActionStep> steps)
         {
+            ActionName = actionName;
             Steps = steps;
             StepRunMillis = new long[steps.Count];
             StepResults = new StepResult[steps.Count];

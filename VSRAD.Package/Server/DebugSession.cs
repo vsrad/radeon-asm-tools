@@ -32,12 +32,13 @@ namespace VSRAD.Package.Server
         {
             var execTimer = Stopwatch.StartNew();
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
-            var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
+            var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile).ConfigureAwait(false);
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var runner = new ActionRunner(_channel, _serviceProvider);
-            var result = await runner.RunAsync(options.Steps, new[] { options.OutputFile, options.WatchesFile, options.StatusFile }).ConfigureAwait(false);
+            var auxFiles = new[] { options.OutputFile, options.WatchesFile, options.StatusFile };
+            var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles).ConfigureAwait(false);
 
             if (!result.Successful)
                 return new DebugRunResult(result, null, null);

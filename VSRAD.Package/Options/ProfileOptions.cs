@@ -71,14 +71,16 @@ namespace VSRAD.Package.Options
     {
         public string Name { get; set; }
 
+        public const string BuiltinActionDebug = "Debug";
+
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
         public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
 
-        public async Task<ActionProfileOptions> EvaluateAsync(IMacroEvaluator evaluator)
+        public async Task<ActionProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
         {
             var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator));
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
             return evaluated;
         }
     }
@@ -139,7 +141,7 @@ namespace VSRAD.Package.Options
         public bool BinaryOutput { get; set; }
         public int OutputOffset { get; set; }
 
-        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator)
+        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
         {
             var evaluated = new DebuggerProfileOptions(
                 outputOffset: OutputOffset,
@@ -148,7 +150,7 @@ namespace VSRAD.Package.Options
                 watchesFile: await WatchesFile.EvaluateAsync(evaluator),
                 statusFile: await StatusFile.EvaluateAsync(evaluator));
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator));
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
             return evaluated;
         }
 

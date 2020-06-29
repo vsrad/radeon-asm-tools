@@ -26,14 +26,14 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } }); // init timestamp fetch
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound });
             var runner = new ActionRunner(channel.Object, null);
-            var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("File is not found on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
 
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } }); // init timestamp fetch
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) });
-            result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("File is not changed on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
@@ -50,14 +50,14 @@ namespace VSRAD.PackageTests.Server
             };
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stdout = "", Stderr = "" });
             var runner = new ActionRunner(channel.Object, null);
-            var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            var result = await runner.RunAsync("UFOW", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("dvd-prepare process could not be started on the remote machine. Make sure the path to the executable is specified correctly.", result.StepResults[0].Warning);
             Assert.Equal("No stdout/stderr captured (could not launch)\r\n", result.StepResults[0].Log);
 
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.TimedOut, Stdout = "...\n", Stderr = "Could not prepare master DVD, deadline exceeded.\n\n" });
-            result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            result = await runner.RunAsync("UFOW", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("Execution timeout is exceeded. dvd-prepare process on the remote machine is terminated.", result.StepResults[0].Warning);
@@ -66,7 +66,7 @@ namespace VSRAD.PackageTests.Server
             /* Non-zero exit code results in a successful run with a warning */
             steps = new List<IActionStep> { new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" } };
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 1, Stdout = "", Stderr = "Looks like you fell asleep ¯\\_(ツ)_/¯\n\n" });
-            result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            result = await runner.RunAsync("UFOW", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.True(result.Successful);
             Assert.True(result.StepResults[0].Successful);
             Assert.Equal("dvd-prepare process exited with a non-zero code (1). Check your application or debug script output in Output -> RAD Debug.", result.StepResults[0].Warning);
@@ -86,7 +86,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
             var runner = new ActionRunner(channel.Object, null);
-            var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.True(result.Successful);
             Assert.True(result.StepResults[0].Successful);
             Assert.Equal("", result.StepResults[0].Warning);
@@ -107,7 +107,7 @@ namespace VSRAD.PackageTests.Server
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = $"-c \"print('success', file=open(r'{file}', 'w'))\"" }
             };
             var runner = new ActionRunner(channel: null, serviceProvider: null);
-            var result = await runner.RunAsync(steps, Enumerable.Empty<BuiltinActionFile>());
+            var result = await runner.RunAsync("", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.True(result.Successful);
             Assert.Equal("", result.StepResults[0].Warning);
             Assert.Equal("No stdout/stderr captured (exit code 0)\r\n", result.StepResults[0].Log);
@@ -151,7 +151,7 @@ namespace VSRAD.PackageTests.Server
                 new ResultRangeFetched { Data = Encoding.UTF8.GetBytes("TestCopyStepUnchecked") },
                 (command) => Assert.Equal(new[] { "/home/parker/audio/unchecked" }, command.FilePath));
             var runner = new ActionRunner(channel.Object, null);
-            await runner.RunAsync(steps, auxFiles);
+            await runner.RunAsync("UFOW", steps, auxFiles);
             Assert.True(channel.AllInteractionsHandled);
 
             Assert.Equal(DateTime.FromFileTime(100), runner.GetInitialFileTimestamp("/home/parker/audio/checked"));

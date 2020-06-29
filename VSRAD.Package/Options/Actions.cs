@@ -2,7 +2,9 @@
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -13,7 +15,7 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
-        Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator);
+        Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile);
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -53,7 +55,7 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() =>
             (LocalPath, RemotePath, CheckTimestamp).GetHashCode();
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             new CopyFileStep
             {
                 Direction = Direction,
@@ -101,7 +103,7 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() =>
             (Environment, Executable, Arguments, WorkingDirectory, RunAsAdmin, WaitForCompletion, TimeoutSecs).GetHashCode();
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             new ExecuteStep
             {
                 Environment = Environment,
@@ -130,7 +132,7 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() =>
             (Path, LineMarker).GetHashCode();
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             new OpenInEditorStep
             {
                 Path = await evaluator.EvaluateAsync(Path),
@@ -143,14 +145,49 @@ namespace VSRAD.Package.Options
         private string _name = "";
         public string Name { get => _name; set { if (value != null) SetField(ref _name, value); } }
 
+        [JsonIgnore]
+        public List<IActionStep> EvaluatedSteps { get; }
+
+        public RunActionStep(List<IActionStep> evaluatedSteps = null)
+        {
+            EvaluatedSteps = evaluatedSteps;
+        }
+
         public override string ToString() => "Run Action";
 
         public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
 
         public override int GetHashCode() => Name.GetHashCode();
 
-        public Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator) =>
-            Task.FromResult<IActionStep>(this);
+        public Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
+            EvaluateAsync(evaluator, profile, new Stack<string>());
+
+        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, Stack<string> callers)
+        {
+            if (callers.Contains(Name))
+                throw new Exception("Encountered a circular action: " + string.Join(" -> ", callers.Reverse()) + " -> " + Name);
+
+            var action = profile.General.Actions.FirstOrDefault(a => a.Name == Name);
+            if (action == null)
+                throw new Exception("Action " + Name + " not found" + (callers.Count == 0 ? "" : ", required by " + string.Join(" -> ", callers.Reverse()) + " -> " + Name));
+
+            callers.Push(Name);
+
+            var evaluatedSteps = new List<IActionStep>();
+            foreach (var step in action.Steps)
+            {
+                IActionStep evaluated;
+                if (step is RunActionStep runAction)
+                    evaluated = await runAction.EvaluateAsync(evaluator, profile, callers);
+                else
+                    evaluated = await step.EvaluateAsync(evaluator, profile);
+                evaluatedSteps.Add(evaluated);
+            }
+
+            callers.Pop();
+
+            return new RunActionStep(evaluatedSteps);
+        }
     }
 
     public sealed class ActionStepJsonConverter : JsonConverter
