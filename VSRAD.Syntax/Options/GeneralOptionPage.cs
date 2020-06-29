@@ -22,6 +22,7 @@ namespace VSRAD.Syntax.Options
         public OptionsProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;
+            Autoscroll = false;
             IsEnabledIndentGuides = false;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
@@ -33,6 +34,7 @@ namespace VSRAD.Syntax.Options
     }
 
         public GeneralOptionPage.SortState SortOptions;
+        public bool Autoscroll;
         public bool IsEnabledIndentGuides;
         public IReadOnlyList<string> Asm1FileExtensions;
         public IReadOnlyList<string> Asm2FileExtensions;
@@ -73,6 +75,15 @@ namespace VSRAD.Syntax.Options
         {
             get { return _optionsEventProvider.SortOptions; }
             set { _optionsEventProvider.SortOptions = value; }
+        }
+
+        [Category("Function list")]
+        [DisplayName("Autoscroll function list")]
+        [Description("Scroll to current function in the function list automatically")]
+        public bool Autoscroll
+        {
+            get { return _optionsEventProvider.Autoscroll; }
+            set { _optionsEventProvider.Autoscroll = value; }
         }
 
         [Category("Syntax highlight")]

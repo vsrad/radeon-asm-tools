@@ -132,7 +132,7 @@ namespace VSRAD.Syntax.FunctionList
                 var currentFunction = GetFunctionBy(functions, line);
 
                 if (currentFunction == null)
-                    return Task.CompletedTask;
+                    return FunctionListControl.ClearHighlightCurrentFunctionAsync();
 
                 var functionToken = currentFunction.Name;
                 var lineNumber = functionToken

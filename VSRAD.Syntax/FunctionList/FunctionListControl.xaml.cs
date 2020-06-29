@@ -19,8 +19,9 @@ namespace VSRAD.Syntax.FunctionList
     public partial class FunctionListControl : UserControl
     {
         private readonly OleMenuCommandService commandService;
-        private bool isHideLineNumber = false;
         private SortState FunctionListSortState;
+        private bool Autoscroll;
+        private bool isHideLineNumber = false;
         private List<FunctionListItem> Tokens;
         private FunctionListItem LastHighlightedToken;
         private ITextSnapshot CurrentVersion;
@@ -37,14 +38,16 @@ namespace VSRAD.Syntax.FunctionList
             InitializeComponent();
             commandService = service;
 
+            Autoscroll = optionsProvider.Autoscroll;
             FunctionListSortState = optionsProvider.SortOptions;
-            optionsProvider.OptionsUpdated += SortOptionsUpdated;
+            optionsProvider.OptionsUpdated += OptionsUpdated;
         }
 
-        private void SortOptionsUpdated(OptionsProvider sender)
+        private void OptionsUpdated(OptionsProvider sender)
         {
             try
             {
+                Autoscroll = sender.Autoscroll;
                 FunctionListSortState = sender.SortOptions;
                 SortAndReloadFunctionList();
             }
@@ -67,6 +70,12 @@ namespace VSRAD.Syntax.FunctionList
             await HighlightCurrentFunctionAsync(LastHighlightedToken.Type, LastHighlightedToken.LineNumber);
         }
 
+        public async Task ClearHighlightCurrentFunctionAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            LastHighlightedToken.IsCurrentWorkingItem = false;
+        }
+
         public async Task HighlightCurrentFunctionAsync(RadAsmTokenType tokenType, int lineNumber)
         {
             var value = Tokens.FirstOrDefault(t => t.Type == tokenType && t.LineNumber == lineNumber);
@@ -79,6 +88,9 @@ namespace VSRAD.Syntax.FunctionList
 
             value.IsCurrentWorkingItem = true;
             LastHighlightedToken = value;
+
+            if (Autoscroll)
+                tokens.ScrollIntoView(value);
         }
 
         private void SortAndReloadFunctionList()
