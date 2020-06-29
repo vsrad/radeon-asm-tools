@@ -114,7 +114,7 @@
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsCurrentWorkingItem, NotifyOnSourceUpdated=True}" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarSelectedBorderKey}}"/>
+                    <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarDragHandleShadowKey}}"/>
                     <Setter Property="Foreground" Value="White" />
                 </DataTrigger>
 
