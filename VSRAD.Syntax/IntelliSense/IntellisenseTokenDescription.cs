@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
@@ -41,12 +42,14 @@ namespace VSRAD.Syntax.IntelliSense
                 foreach (var navigationToken in tokens)
                 {
                     var token = new DefinitionToken(navigationToken);
-                    elements.Add(new ClassifiedTextElement(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, token.FilePath)));
-
                     var analysisToken = navigationToken.AnalysisToken;
                     var typeName = analysisToken.Type.GetName();
                     var nameElement = GetNameElement(analysisToken.Type, navigationToken.GetText());
+                    var filePath = analysisToken.Type == RadAsmTokenType.Instruction
+                        ? Path.GetFileNameWithoutExtension(token.FilePath)
+                        : token.FilePath;
 
+                    elements.Add(new ClassifiedTextElement(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, filePath)));
                     elements.Add(new ContainerElement(
                         ContainerElementStyle.Wrapped,
                         new ClassifiedTextElement(
