@@ -107,7 +107,7 @@ namespace VSRAD.Syntax.FunctionList
 
                 var functionListTokens = functionNames
                     .Concat(labels)
-                    .Select(t => new FunctionListToken(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
+                    .Select(t => new FunctionListItem(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
 
                 return FunctionListControl.UpdateFunctionListAsync(version, functionListTokens);
             }
@@ -120,21 +120,20 @@ namespace VSRAD.Syntax.FunctionList
 
         private Task HighlightCurrentFunctionAsync(ITextView textView)
         {
-            var line = textView.Caret.Position.BufferPosition.GetContainingLine();
-
-            if (line == null)
-                return Task.CompletedTask;
-
-            var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(textView.TextBuffer);
-            var functions = documentAnalysis.LastParserResult.GetFunctions();
-            var currentFunction = GetFunctionBy(functions, line);
-
-            if (currentFunction == null)
+            try
             {
-                return Task.CompletedTask;
-            }
-            else
-            {
+                var line = textView.Caret.Position.BufferPosition.GetContainingLine();
+
+                if (line == null)
+                    return Task.CompletedTask;
+
+                var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(textView.TextBuffer);
+                var functions = documentAnalysis.LastParserResult.GetFunctions();
+                var currentFunction = GetFunctionBy(functions, line);
+
+                if (currentFunction == null)
+                    return Task.CompletedTask;
+
                 var functionToken = currentFunction.Name;
                 var lineNumber = functionToken
                     .TrackingToken.Start
@@ -142,6 +141,11 @@ namespace VSRAD.Syntax.FunctionList
                     .GetContainingLine().LineNumber;
 
                 return FunctionListControl.HighlightCurrentFunctionAsync(functionToken.Type, lineNumber + 1 /* numbering starts from 1 */);
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+                return Task.CompletedTask;
             }
         }
 
