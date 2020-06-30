@@ -13,6 +13,7 @@ namespace VSRAD.Package.DebugVisualizer
         public IReadOnlyList<DataGridViewColumn> DataColumns => _dataColumns;
         public ColumnResizeController ResizeController { get; }
         public int ColumnWidth { get; set; }
+        public ScalingMode ScalingMode { get; set; } = ScalingMode.ResizeColumn;
 
         private readonly List<DataGridViewColumn> _dataColumns = new List<DataGridViewColumn>();
 
@@ -46,6 +47,14 @@ namespace VSRAD.Package.DebugVisualizer
         {
             foreach (var column in DataColumns)
                 if (column.Visible)
+                    return column.Index;
+            return -1;
+        }
+
+        public int GetFirstDisplayedColumnIndex()
+        {
+            foreach (var column in DataColumns)
+                if (column.Displayed)
                     return column.Index;
             return -1;
         }

@@ -12,13 +12,11 @@
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
         <ResourceDictionary>
-            <!--
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ScalingMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
-            -->
             <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="deborgar:BreakMode"/>
@@ -157,7 +155,6 @@
                                             Value="{Binding Options.VisualizerAppearance.DarkenAlternatingRowsBy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="%" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <!--
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Scaling mode:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -172,7 +169,6 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
-                        -->
                     </StackPanel>
                 </Expander>
             </StackPanel>

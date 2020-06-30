@@ -26,8 +26,6 @@ namespace VSRAD.Package.DebugVisualizer
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
         public int DataColumnCount { get; private set; } = 512;
 
-        public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
-
         public bool ShowSystemRow
         {
             get => Rows.Count > 0 && Rows[0].Visible;
@@ -97,6 +95,8 @@ namespace VSRAD.Package.DebugVisualizer
             _selectionController = new SelectionController(this);
         }
 
+        public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
+        
         public void GroupSizeChanged(uint groupSize)
         {
             var columnsMissing = groupSize - (Columns.Count - DataColumnOffset);
