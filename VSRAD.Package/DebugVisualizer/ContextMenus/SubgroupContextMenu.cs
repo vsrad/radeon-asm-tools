@@ -88,7 +88,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private void HideColumns(object sender, EventArgs e)
         {
             var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
-            var newColumnIndexes = ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns).Except(selectedColumns);
+            var newColumnIndexes = ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns, _table.DataColumnCount).Except(selectedColumns);
             var newSelector = ColumnSelector.FromIndexes(newColumnIndexes);
             SetColumnSelector(newSelector);
         }
@@ -96,21 +96,21 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
         {
             string subgroupsSelector = ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast);
-            string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector);
+            string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector, _table.DataColumnCount);
             SetColumnSelector(newSelector);
         }
 
         private void SetBackgroundColor(DataHighlightColor color)
         {
             var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
-            _stylingOptions.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.BackgroundColors, selectedColumns, color);
+            _stylingOptions.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.BackgroundColors, selectedColumns, color, _table.DataColumnCount);
             _table.ClearSelection();
         }
 
         private void SetForegroundColor(DataHighlightColor color)
         {
             var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
-            _stylingOptions.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.ForegroundColors, selectedColumns, color);
+            _stylingOptions.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.ForegroundColors, selectedColumns, color, _table.DataColumnCount);
             _table.ClearSelection();
         }
 

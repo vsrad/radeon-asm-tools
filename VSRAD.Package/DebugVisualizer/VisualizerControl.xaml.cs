@@ -60,6 +60,7 @@ namespace VSRAD.Package.DebugVisualizer
             switch (e.PropertyName)
             {
                 case nameof(VisualizerContext.GroupSize):
+                    _table.GroupSizeChanged(_context.GroupSize);
                     RefreshDataStyling();
                     break;
                 case nameof(VisualizerContext.WatchesValid):
@@ -161,13 +162,13 @@ namespace VSRAD.Package.DebugVisualizer
                 if (watchData != null)
                     RenderRowData(row, _context.GroupSize, watchData);
                 else
-                    EraseRowData(row);
+                    EraseRowData(row, _table.DataColumnCount);
             }
         }
 
-        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row)
+        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row, int columnCount)
         {
-            for (int i = 0; i < VisualizerTable.DataColumnCount; ++i)
+            for (int i = 0; i < columnCount; ++i)
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
         }
 

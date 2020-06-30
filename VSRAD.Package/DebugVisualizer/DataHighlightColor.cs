@@ -35,16 +35,16 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public static string UpdateColorStringRange(string colorString, IEnumerable<int> indexes, DataHighlightColor newColor)
+        public static string UpdateColorStringRange(string colorString, IEnumerable<int> indexes, DataHighlightColor newColor, int columnCount)
         {
-            StringBuilder colors = new StringBuilder(VisualizerTable.DataColumnCount);
-            if (colorString?.Length == VisualizerTable.DataColumnCount)
+            StringBuilder colors = new StringBuilder(columnCount);
+            if (colorString?.Length == columnCount)
                 colors.Append(colorString);
             else
-                colors.Append(' ', VisualizerTable.DataColumnCount);
+                colors.Append(' ', columnCount);
 
             foreach (var i in indexes)
-                if (i >= 0 && i < VisualizerTable.DataColumnCount)
+                if (i >= 0 && i < columnCount)
                     colors[i] = newColor.GetCharRepresentation();
 
             colorString = colors.ToString();
