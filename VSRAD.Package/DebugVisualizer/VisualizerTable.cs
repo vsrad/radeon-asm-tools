@@ -19,12 +19,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         public const int NameColumnIndex = 0;
         public const int PhantomColumnIndex = 1;
-        public const int DataColumnCount = 512;
         public const int DataColumnOffset = 2; // name + phantom column
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
+        public int DataColumnCount { get; private set; } = 512;
 
         public bool ShowSystemRow
         {
@@ -96,6 +96,33 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
+        
+        public void GroupSizeChanged(uint groupSize)
+        {
+            var columnsMissing = groupSize - (Columns.Count - DataColumnOffset);
+
+            if (columnsMissing > 0)
+            {
+                var missingColumnStartAt = _state.DataColumns.Count;
+                var columns = new DataGridViewColumn[columnsMissing];
+                for (int i = 0; i < columnsMissing; ++i)
+                {
+                    columns[i] = new DataGridViewTextBoxColumn
+                    {
+                        FillWeight = 1,
+                        ReadOnly = true,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                        Width = _state.ColumnWidth,
+                        HeaderText = (missingColumnStartAt + i).ToString()
+                    };
+                }
+                _state.AddDataColumns(columns);
+                Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
+                DataColumnCount = _state.DataColumns.Count;
+            }
+            for (int i = 0; i < _state.DataColumns.Count; ++i)
+                _state.DataColumns[i].Visible = i < groupSize;
+        }
 
         public void ScaleControls(float scaleFactor)
         {

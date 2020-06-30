@@ -28,7 +28,7 @@ namespace VSRAD.Package.DebugVisualizer
         private void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
             var dataColumnIndex = e.ColumnIndex - VisualizerTable.DataColumnOffset;
-            var isDataColumn = dataColumnIndex >= 0 && dataColumnIndex < VisualizerTable.DataColumnCount;
+            var isDataColumn = dataColumnIndex >= 0 && dataColumnIndex < _table.DataColumnCount;
             var isDataRow = e.RowIndex >= 0;
 
             if (e.ColumnIndex == VisualizerTable.PhantomColumnIndex)
