@@ -1,50 +1,60 @@
 ﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
+using VSRAD.Syntax.IntelliSense.Navigation;
 using System.ComponentModel.Composition;
-using System.ComponentModel.Composition.Primitives;
+using VSRAD.Syntax.Parser.Blocks;
+using VSRAD.Syntax.Parser.Tokens;
+using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using System.IO;
-using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.Options;
+using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
+using Microsoft.VisualStudio.Shell;
 
 namespace VSRAD.Syntax.IntelliSense
 {
-    [Export(typeof(NavigationTokenService))]
-    internal class NavigationTokenService
+    public interface INavigationTokenService
     {
+        void GoToDefinition(ITextView view);
+        void GoToPointOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
+        void GoToPoint(SnapshotPoint point);
+        void GoToPoint(NavigationToken point);
+        IReadOnlyList<NavigationToken> GetNaviationItem(TextExtent extent, bool searchWithInclude = false);
+    }
+
+    [Export(typeof(INavigationTokenService))]
+    internal class NavigationTokenService : INavigationTokenService
+    {
+        private static List<NavigationToken> EmptyNavigations { get { return new List<NavigationToken>(); } }
+
         private readonly RadeonServiceProvider _serviceProvider;
+        private readonly InstructionListManager _instructionListManager;
         private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly IVsTextManager _textManager;
 
         [ImportingConstructor]
-        public NavigationTokenService(RadeonServiceProvider serviceProvider, DocumentAnalysisProvoder documentAnalysisProvoder)
+        public NavigationTokenService(RadeonServiceProvider serviceProvider, InstructionListManager instructionListManager, DocumentAnalysisProvoder documentAnalysisProvoder)
         {
             _serviceProvider = serviceProvider;
+            _instructionListManager = instructionListManager;
             _documentAnalysisProvoder = documentAnalysisProvoder;
             _textManager = serviceProvider.ServiceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
         }
-
-        public static TextExtent GetTextExtentOnCursor(ITextView view) =>
-            view.Caret.Position.BufferPosition.GetExtent();
 
         public void GoToDefinition(ITextView view)
         {
             try
             {
-                var extent = GetTextExtentOnCursor(view);
-                var token = GetNaviationItem(extent, true);
+                var extent = view.GetTextExtentOnCursor();
+                var tokens = GetNaviationItem(extent, true);
 
-                if (token != NavigationToken.Empty)
-                    GoToPoint(new SnapshotPoint(token.Snapshot, token.GetEnd()));
+                GoToPointOrOpenNavigationList(tokens);
             }
             catch (Exception e)
             {
@@ -52,16 +62,44 @@ namespace VSRAD.Syntax.IntelliSense
             }
         }
 
+        public void GoToPointOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations)
+        {
+            if (navigations.Count == 1)
+            {
+                GoToPoint(navigations[0]);
+            }
+            else if (navigations.Count > 1)
+            {
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => NavigationList.UpdateNavigationListAsync(navigations));
+            }
+        }
+
         public void GoToPoint(SnapshotPoint point)
         {
             var buffer = _serviceProvider.EditorAdaptersFactoryService.GetBufferAdapter(point.Snapshot.TextBuffer);
             if (buffer == null)
-                throw new InvalidOperationException("Cannot find IVsTextBuffer associated with point");
+            {
+                if (_serviceProvider.TextDocumentFactoryService.TryGetTextDocument(point.Snapshot.TextBuffer, out var textDocument))
+                {
+                    if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, textDocument.FilePath, out buffer))
+                        throw new InvalidOperationException($"Cannot open IVsTextBuffer associated with {textDocument.FilePath}");
+                }
+                else
+                {
+                    throw new InvalidOperationException("Cannot find IVsTextBuffer associated with point");
+                }
+            }
 
             _textManager.NavigateToPosition(buffer, VSConstants.LOGVIEWID.TextView_guid, point.Position, 0);
         }
 
-        public NavigationToken GetNaviationItem(TextExtent extent, bool searchWithInclude = false)
+        public void GoToPoint(NavigationToken point)
+        {
+            if (point != NavigationToken.Empty)
+                GoToPoint(new SnapshotPoint(point.Snapshot, point.GetEnd()));
+        }
+
+        public IReadOnlyList<NavigationToken> GetNaviationItem(TextExtent extent, bool searchWithInclude = false)
         {
             try
             {
@@ -69,43 +107,65 @@ namespace VSRAD.Syntax.IntelliSense
             }
             catch (Exception e)
             {
-                ActivityLog.LogWarning(Constants.RadeonAsmSyntaxContentType, e.Message);
-                return NavigationToken.Empty;
+                Error.LogError(e, "RadAsm navigation serivce");
+                return EmptyNavigations;
             }
         }
 
-        private NavigationToken GetNaviationToken(TextExtent extent, bool searchWithInclude)
+        private IReadOnlyList<NavigationToken> GetNaviationToken(TextExtent extent, bool searchWithInclude)
         {
             if (!extent.IsSignificant)
-                return NavigationToken.Empty;
+                return EmptyNavigations;
 
             var text = extent.Span.GetText();
             var version = extent.Span.Snapshot;
             var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(version.TextBuffer);
 
+            if (documentAnalysis.LexerTokenToRadAsmToken(documentAnalysis.GetToken(extent.Span.Start).Type) == RadAsmTokenType.Comment)
+                return EmptyNavigations;
+
             if (documentAnalysis.LastParserResult.Count == 0)
-                return NavigationToken.Empty;
+                return EmptyNavigations;
 
             var currentBlock = documentAnalysis.LastParserResult.GetBlockBy(extent.Span.Start);
 
-            if (currentBlock == null || currentBlock.Type == BlockType.Comment)
-                return NavigationToken.Empty;
+            if (currentBlock == null)
+                return EmptyNavigations;
 
-            if (FindNavigationTokenInBlock(version, currentBlock, text, out var token))
-                return token;
+            var asmType = version.GetAsmType();
+            if (_instructionListManager.TryGetInstructions(text, asmType, out var navigationTokens))
+                return navigationTokens.ToList();
+
+            if (FindNavigationTokenInBlock(version, asmType, currentBlock, text, out var token))
+                return new List<NavigationToken>() { token };
 
             if (FindNavigationTokenInFunctionList(version, documentAnalysis.LastParserResult, text, out var functionToken))
-                return functionToken;
+                return new List<NavigationToken>() { functionToken };
 
             if (searchWithInclude && FindNavigationTokenInFileTree(documentAnalysis, text, out var fileToken))
-                return fileToken;
+                return new List<NavigationToken>() { fileToken };
 
-            return NavigationToken.Empty;
+            return EmptyNavigations;
         }
 
-        private static bool FindNavigationTokenInBlock(ITextSnapshot version, IBlock currentBlock, string text, out NavigationToken outToken)
+        private static bool FindNavigationTokenInBlock(ITextSnapshot version, AsmType asmType, IBlock currentBlock, string text, out NavigationToken outToken)
         {
-            if (version.IsRadeonAsm2ContentType())
+            if (asmType == AsmType.RadAsmDoc)
+            {
+                foreach (var token in currentBlock.Tokens)
+                {
+                    if (token.TrackingToken.GetText(version) == text)
+                    {
+                        outToken = new NavigationToken(token, version);
+                        return true;
+                    }
+                }
+
+                // skip find in function list in the documentation navigation
+                outToken = NavigationToken.Empty;
+                return true;
+            }
+            else if (asmType == AsmType.RadAsm2)
             {
                 while (currentBlock != null)
                 {
@@ -126,7 +186,7 @@ namespace VSRAD.Syntax.IntelliSense
                     currentBlock = currentBlock.Parrent;
                 }
             }
-            else if (version.IsRadeonAsmContentType())
+            else if (asmType == AsmType.RadAsm)
             {
                 var codeBlockStack = new Stack<IBlock>();
                 while (currentBlock != null)
@@ -203,29 +263,20 @@ namespace VSRAD.Syntax.IntelliSense
                 var extension = Path.GetExtension(docFileName);
 
                 var pathToDocument = Path.GetFullPath(Path.Combine(dirPath, docFileName));
-                if (!File.Exists(pathToDocument))
-                    continue;
-
-                if (!VsShellUtilities.IsDocumentOpen(_serviceProvider.ServiceProvider, pathToDocument, Guid.Empty, out _, out _, out var windowFrame))
+                if (!Utils.IsDocumentOpen(_serviceProvider.ServiceProvider, pathToDocument, out var buffer))
                 {
-                    VsShellUtilities.OpenDocument(_serviceProvider.ServiceProvider, pathToDocument, Guid.Empty, out _, out _, out windowFrame);
+                    if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, pathToDocument, out buffer))
+                        continue;
                 }
 
-                var view = VsShellUtilities.GetTextView(windowFrame);
-                if (view.GetBuffer(out var lines) == 0)
-                {
-                    if (lines is IVsTextBuffer buffer)
-                    {
-                        var navigationBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDataBuffer(buffer);
-                        var includeDocumentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(navigationBuffer);
+                var navigationBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDataBuffer(buffer);
+                var includeDocumentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(navigationBuffer);
 
-                        if (FindNavigationTokenInFunctionList(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult, text, out outToken))
-                            return true;
+                if (FindNavigationTokenInFunctionList(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult, text, out outToken))
+                    return true;
 
-                        if (FindNavigationTokenInRootBlock(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult[0], text, out outToken))
-                            return true;
-                    }
-                }
+                if (FindNavigationTokenInRootBlock(includeDocumentAnalysis.CurrentSnapshot, includeDocumentAnalysis.LastParserResult[0], text, out outToken))
+                    return true;
             }
 
             return false;

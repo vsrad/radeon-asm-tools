@@ -74,6 +74,10 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Key.snk" />
+    <Antlr4 Include="RadAsmDoc.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
+    </Antlr4>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

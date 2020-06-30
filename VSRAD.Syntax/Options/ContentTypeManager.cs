@@ -74,6 +74,9 @@ namespace VSRAD.Syntax.Options
             _asm2Extensions = asm2Extensions;
             try
             {
+                DeleteExtensions(_asm1ContentType);
+                DeleteExtensions(_asm2ContentType);
+
                 ChangeExtensions(_asm1ContentType, asm1Extensions);
                 ChangeExtensions(_asm2ContentType, asm2Extensions);
 
@@ -90,11 +93,14 @@ namespace VSRAD.Syntax.Options
         private void FileExtensionChanged(OptionsProvider optionsProvider) =>
             ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(optionsProvider.Asm1FileExtensions, optionsProvider.Asm2FileExtensions));
 
-        private void ChangeExtensions(IContentType contentType, IEnumerable<string> extensions)
+        private void DeleteExtensions(IContentType contentType)
         {
             foreach (var ext in _fileExtensionRegistryService.GetExtensionsForContentType(contentType))
                 _fileExtensionRegistryService.RemoveFileExtension(ext);
+        }
 
+        private void ChangeExtensions(IContentType contentType, IEnumerable<string> extensions)
+        {
             foreach (var ext in extensions)
                 _fileExtensionRegistryService.AddFileExtension(ext, contentType);
         }

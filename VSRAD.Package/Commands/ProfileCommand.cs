@@ -16,24 +16,20 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IFileSynchronizationManager _deployManager;
-        private readonly IOutputWindowManager _outputWindow;
-        private readonly ICommunicationChannel _channel;
-        private readonly IErrorListManager _errorListManager;
+        private readonly RemoteCommandExecutor _executor;
 
         [ImportingConstructor]
         public ProfileCommand(
             IProject project,
             IFileSynchronizationManager deployManager,
-            IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
-            SVsServiceProvider serviceProvider,
-            IErrorListManager errorListManager) : base(Constants.ProfileCommandSet, Constants.ProfileCommandId, serviceProvider)
+            IOutputWindowManager outputWindow,
+            IErrorListManager errorList,
+            SVsServiceProvider serviceProvider) : base(Constants.ProfileCommandSet, Constants.ProfileCommandId, serviceProvider)
         {
             _project = project;
             _deployManager = deployManager;
-            _outputWindow = outputWindow;
-            _channel = channel;
-            _errorListManager = errorListManager;
+            _executor = new RemoteCommandExecutor("Profiler", channel, outputWindow, errorList);
         }
 
         public override async Task RunAsync()
@@ -47,12 +43,10 @@ namespace VSRAD.Package.Commands
             try
             {
                 await _deployManager.SynchronizeRemoteAsync();
-                var executor = new RemoteCommandExecutor("Profiler", _channel, _outputWindow, _errorListManager);
 
-                var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
-
+                var result = await _executor.ExecuteWithResultAsync(command, options.RemoteOutputFile);
                 if (!result.TryGetResult(out var execResult, out var error))
-                    throw new System.Exception(error.Message);
+                    throw new System.Exception(error.Title + ": " + error.Message);
                 var (_, data) = execResult;
 
                 File.WriteAllBytes(options.LocalOutputCopyPath, data);

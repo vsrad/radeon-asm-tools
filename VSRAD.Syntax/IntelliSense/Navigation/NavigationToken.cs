@@ -19,6 +19,9 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public int GetEnd() =>
             AnalysisToken.TrackingToken.GetEnd(Snapshot);
 
+        public string GetText() =>
+            AnalysisToken.TrackingToken.GetText(Snapshot);
+
         public static bool operator ==(NavigationToken left, NavigationToken right) =>
             left.AnalysisToken == right.AnalysisToken && left.Snapshot == right.Snapshot;
 

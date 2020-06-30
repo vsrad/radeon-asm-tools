@@ -10,11 +10,11 @@ namespace VSRAD.BuildTools
         public const string ServerErrorPrefix = "Build server error: ";
 
         [Required]
-        public string ProjectDir { get; set; }
+        public string PipeName { get; set; }
 
         public override bool Execute()
         {
-            var bridge = new IPCBridge(ProjectDir);
+            var bridge = new IPCBridge(PipeName);
 
             try
             {
@@ -40,6 +40,8 @@ namespace VSRAD.BuildTools
                 Log.LogError(ServerErrorPrefix + result.ServerError);
                 return false;
             }
+            if (!string.IsNullOrEmpty(result.ServerMessage))
+                Log.LogMessage(MessageImportance.High, result.ServerMessage);
 
             foreach (var message in result.ErrorMessages)
                 switch (message.Kind)

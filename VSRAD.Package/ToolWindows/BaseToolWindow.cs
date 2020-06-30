@@ -9,6 +9,7 @@ namespace VSRAD.Package.ToolWindows
     public abstract class BaseToolWindow : ToolWindowPane
     {
         private EnvDTE.WindowEvents _windowEvents;
+        private bool _dteWindowHasFocus;
 
         private readonly UIElement _projectStateMissingMessage = new TextBlock
         {
@@ -48,18 +49,32 @@ namespace VSRAD.Package.ToolWindows
             ThreadHelper.ThrowIfNotOnUIThread();
             var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
             _windowEvents = dte.Events.WindowEvents;
-            _windowEvents.WindowActivated += OnWindowFocusChanged;
+            _windowEvents.WindowActivated += OnDteWindowFocusChanged;
+            Application.Current.Activated += (sender, e) => OnVsWindowFocusChanged(hasFocus: true);
+            Application.Current.Deactivated += (sender, e) => OnVsWindowFocusChanged(hasFocus: false);
         }
 
         protected virtual void OnWindowFocusChanged(bool hasFocus) { }
 
-        private void OnWindowFocusChanged(EnvDTE.Window gotFocus, EnvDTE.Window lostFocus)
+        private void OnDteWindowFocusChanged(EnvDTE.Window gotFocus, EnvDTE.Window lostFocus)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             if (gotFocus?.Caption == Caption)
-                OnWindowFocusChanged(hasFocus: true);
+            {
+                _dteWindowHasFocus = true;
+                OnWindowFocusChanged(_dteWindowHasFocus);
+            }
             else if (lostFocus?.Caption == Caption)
-                OnWindowFocusChanged(hasFocus: false);
+            {
+                _dteWindowHasFocus = false;
+                OnWindowFocusChanged(_dteWindowHasFocus);
+            }
+        }
+
+        private void OnVsWindowFocusChanged(bool hasFocus)
+        {
+            if (_dteWindowHasFocus)
+                OnWindowFocusChanged(hasFocus);
         }
     }
 }

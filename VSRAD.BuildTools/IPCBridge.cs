@@ -8,9 +8,9 @@ namespace VSRAD.BuildTools
 
         private readonly NamedPipeClientStream _pipe;
 
-        public IPCBridge(string project)
+        public IPCBridge(string pipeName)
         {
-            _pipe = new NamedPipeClientStream(".", IPCBuildResult.GetIPCPipeName(project), PipeDirection.In, PipeOptions.Asynchronous);
+            _pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.In, PipeOptions.Asynchronous);
         }
 
         public IPCBuildResult Build()

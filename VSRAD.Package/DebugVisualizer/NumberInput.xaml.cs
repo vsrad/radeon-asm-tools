@@ -1,43 +1,44 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections;
+using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public sealed partial class NumberInput : UserControl, INotifyPropertyChanged
+    public sealed partial class NumberInput : UserControl, INotifyPropertyChanged, INotifyDataErrorInfo
     {
         public static readonly DependencyProperty ValueProperty =
             DependencyProperty.Register(nameof(Value), typeof(uint), typeof(NumberInput),
-                new FrameworkPropertyMetadata((uint)0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, PropertyChanged));
+                new FrameworkPropertyMetadata((uint)0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
         public static readonly DependencyProperty StepProperty =
             DependencyProperty.Register(nameof(Step), typeof(uint), typeof(NumberInput),
-                new FrameworkPropertyMetadata((uint)1, PropertyChanged));
+                new FrameworkPropertyMetadata((uint)1, DependencyPropertyChanged));
         public static readonly DependencyProperty MinimumProperty =
             DependencyProperty.Register(nameof(Minimum), typeof(uint), typeof(NumberInput),
-                new FrameworkPropertyMetadata((uint)0, PropertyChanged));
+                new FrameworkPropertyMetadata((uint)0, DependencyPropertyChanged));
         public static readonly DependencyProperty MaximumProperty =
             DependencyProperty.Register(nameof(Maximum), typeof(uint), typeof(NumberInput),
-                new FrameworkPropertyMetadata(uint.MaxValue, PropertyChanged));
+                new FrameworkPropertyMetadata(uint.MaxValue, DependencyPropertyChanged));
 
-        public event PropertyChangedEventHandler NotifyPropertyChanged;
-
-        event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged
-        { add => NotifyPropertyChanged += value; remove => NotifyPropertyChanged -= value; }
-
-        public uint RawValue
-        {
-            get => Value;
-            set => Value = (value < Minimum) ? Minimum : (value > Maximum) ? Maximum : value;
-        }
+        public event PropertyChangedEventHandler PropertyChanged;
+        public event EventHandler<DataErrorsChangedEventArgs> ErrorsChanged;
 
         public uint Value
         {
             get => (uint)GetValue(ValueProperty);
             set
             {
-                SetValue(ValueProperty, value);
-                NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
+                var newValue = value;
+                if (newValue < Minimum)
+                    newValue = Minimum;
+                if (newValue > Maximum)
+                    newValue = Maximum;
+
+                SetValue(ValueProperty, newValue);
+                if (!(uint.TryParse(RawValue, out var enteredValue) && enteredValue == newValue))
+                    RawValue = newValue.ToString();
             }
         }
 
@@ -47,6 +48,37 @@ namespace VSRAD.Package.DebugVisualizer
 
         public uint Maximum { get => (uint)GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
 
+        private string _rawValue = "0";
+        public string RawValue
+        {
+            get => _rawValue;
+            set
+            {
+                _rawValue = value;
+                if (uint.TryParse(value, out var enteredValue) && enteredValue >= Minimum && enteredValue <= Maximum)
+                {
+                    Value = enteredValue;
+                    _rawValueError = null;
+                }
+                else
+                {
+                    _rawValueError = $"Enter a numeric value between {Minimum} and {Maximum}";
+                }
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
+                ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(RawValue)));
+            }
+        }
+
+        private string _rawValueError = null;
+        public bool HasErrors => _rawValueError != null;
+
+        public IEnumerable GetErrors(string propertyName)
+        {
+            if (propertyName == nameof(RawValue) && _rawValueError != null)
+                return new[] { _rawValueError };
+            return Enumerable.Empty<string>();
+        }
+
         public NumberInput()
         {
             InitializeComponent();
@@ -54,11 +86,19 @@ namespace VSRAD.Package.DebugVisualizer
             Root.DataContext = this;
         }
 
-        private void Increment(object sender, RoutedEventArgs e) => RawValue += Step;
+        private void Increment(object sender, RoutedEventArgs e)
+        {
+            Value += Step - Value % Step;
+        }
 
-        private void Decrement(object sender, RoutedEventArgs e) => RawValue = (Value > Step) ? Value - Step : 0;
+        private void Decrement(object sender, RoutedEventArgs e)
+        {
+            var stepRem = Value % Step;
+            var dec = stepRem == 0 ? Step : stepRem;
+            Value = (Value > dec) ? Value - dec : 0;
+        }
 
-        private static void PropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+        private static void DependencyPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
         {
             var numberInput = (NumberInput)dependencyObject;
             switch (args.Property.Name)
@@ -72,9 +112,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void ResetValueIfInvalid(object sender, RoutedEventArgs e)
         {
-            // If the text is empty, reset it to the current value of the source property (RawValue)
-            if (sender is TextBox textBox)
-                BindingOperations.GetBindingExpression(textBox, TextBox.TextProperty).UpdateTarget();
+            // When the control loses focus, the displayed value should match the external binding (Value).
+            RawValue = Value.ToString();
         }
     }
 }

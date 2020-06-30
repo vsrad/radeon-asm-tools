@@ -1,4 +1,6 @@
-﻿using Moq;
+﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -141,8 +143,19 @@ namespace VSRAD.Package.BuildTools
             var output = new Mock<IOutputWindowManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(projectMock.Object, channel, output.Object, errorProcessor, deployManager);
-            projectMock.Raise((p) => p.Loaded += null, projectMock.Object.Options); // starts the server
+            var properties = new Mock<IProjectProperties>(MockBehavior.Strict);
+            properties.Setup((p) => p.SetPropertyValueAsync("RadBuildToolsPipe", It.IsAny<string>(), null)).Returns(Task.CompletedTask);
+            var configuredProject = new Mock<ConfiguredProject>(MockBehavior.Strict);
+            configuredProject.Setup((p) => p.Services.ProjectPropertiesProvider.GetCommonProperties()).Returns(properties.Object);
+            var projectChangeEvent = new Mock<ActiveConfigurationChangedEventArgs>(MockBehavior.Strict);
+            projectChangeEvent.Setup((e) => e.NowActive).Returns(configuredProject.Object);
+            var configuredProjectProvider = new Mock<IActiveConfiguredProjectProvider>();
+            var unconfiguredProject = new Mock<UnconfiguredProject>();
+            unconfiguredProject.Setup((p) => p.Services.ActiveConfiguredProjectProvider).Returns(configuredProjectProvider.Object);
+
+            var server = new BuildToolsServer(projectMock.Object, channel, output.Object, errorProcessor, deployManager, unconfiguredProject.Object);
+
+            configuredProjectProvider.Raise((p) => p.Changed += null, null, projectChangeEvent.Object); // starts the server
             return server;
         }
 

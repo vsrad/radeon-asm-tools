@@ -15,6 +15,7 @@ using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.Parser;
 using System.Collections.Generic;
 using VSRAD.Syntax.Parser.Blocks;
+using Microsoft.VisualStudio;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -40,7 +41,9 @@ namespace VSRAD.Syntax.FunctionList
             Assumes.Present(_textManager);
             Assumes.Present(_editorAdaptorFactory);
 
-            _textManager.GetActiveView(1, null, out var textViewCurrent);
+            if (_textManager.GetActiveView(1, null, out var textViewCurrent) != VSConstants.S_OK)
+                return null;
+
             return _editorAdaptorFactory.GetWpfTextView(textViewCurrent);
         }
 
@@ -55,7 +58,9 @@ namespace VSRAD.Syntax.FunctionList
             Content = new FunctionListControl(commandService, optionsEventProvider);
 
             Instance = this;
-            UpdateFunctionList(GetActiveTextView()?.TextBuffer);
+            var activeView = GetActiveTextView();
+            if (activeView != null)
+                UpdateFunctionList(activeView.TextBuffer);
 
             var dte = GetService(typeof(DTE)) as DTE;
             dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
@@ -66,24 +71,13 @@ namespace VSRAD.Syntax.FunctionList
             if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
             {
                 var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
-                if (VsShellUtilities.IsDocumentOpen(
-                  this,
-                  openWindowPath,
-                  Guid.Empty,
-                  out _,
-                  out _,
-                  out var windowFrame))
+                if (Utils.IsDocumentOpen(this, openWindowPath, out var buffer))
                 {
-                    var view = VsShellUtilities.GetTextView(windowFrame);
-                    if (view.GetBuffer(out var lines) == 0)
-                    {
-                        if (lines is IVsTextBuffer buffer)
-                        {
-                            var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
-                            if (textBuffer.CurrentSnapshot.IsRadeonAsmContentType())
-                                UpdateFunctionList(textBuffer);
-                        }
-                    }
+                    var textBuffer = _editorAdaptorFactory.GetDataBuffer(buffer);
+                    var asmType = textBuffer.CurrentSnapshot.GetAsmType();
+
+                    if (asmType == AsmType.RadAsm || asmType == AsmType.RadAsm2)
+                        UpdateFunctionList(textBuffer);
                 }
             }
         }
@@ -113,9 +107,9 @@ namespace VSRAD.Syntax.FunctionList
 
                 var functionListTokens = functionNames
                     .Concat(labels)
-                    .Select(t => new FunctionListToken(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
+                    .Select(t => new FunctionListItem(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
 
-                return FunctionListControl.UpdateFunctionListAsync(functionListTokens);
+                return FunctionListControl.UpdateFunctionListAsync(version, functionListTokens);
             }
             catch (Exception e)
             {
@@ -126,29 +120,32 @@ namespace VSRAD.Syntax.FunctionList
 
         private Task HighlightCurrentFunctionAsync(ITextView textView)
         {
-            var line = textView.Caret.Position.BufferPosition.GetContainingLine();
-
-            if (line == null)
-                return Task.CompletedTask;
-
-            var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(textView.TextBuffer);
-            var functions = documentAnalysis.LastParserResult.GetFunctions();
-            var currentFunction = GetFunctionBy(functions, line);
-
-            if (currentFunction == null)
+            try
             {
-                return Task.CompletedTask;
-            }
-            else
-            {
+                var line = textView.Caret.Position.BufferPosition.GetContainingLine();
+
+                if (line == null)
+                    return Task.CompletedTask;
+
+                var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(textView.TextBuffer);
+                var functions = documentAnalysis.LastParserResult.GetFunctions();
+                var currentFunction = GetFunctionBy(functions, line);
+
+                if (currentFunction == null)
+                    return FunctionListControl.ClearHighlightCurrentFunctionAsync();
+
                 var functionToken = currentFunction.Name;
-                var text = functionToken.TrackingToken.GetText(documentAnalysis.CurrentSnapshot);
                 var lineNumber = functionToken
                     .TrackingToken.Start
                     .GetPoint(documentAnalysis.CurrentSnapshot)
                     .GetContainingLine().LineNumber;
 
-                return FunctionListControl.HighlightCurrentFunctionAsync(new FunctionListToken(functionToken.Type, text, lineNumber));
+                return FunctionListControl.HighlightCurrentFunctionAsync(functionToken.Type, lineNumber + 1 /* numbering starts from 1 */);
+            }
+            catch (Exception e)
+            {
+                Error.LogError(e);
+                return Task.CompletedTask;
             }
         }
 

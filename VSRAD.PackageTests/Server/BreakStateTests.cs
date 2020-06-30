@@ -16,7 +16,7 @@ namespace VSRAD.PackageTests.Server
             var channel = new MockCommunicationChannel();
             var breakStateData = new BreakStateData(
                 watches: new ReadOnlyCollection<string>(new[] { "local_id", "group_id", "group_size" }),
-                file: new Package.Options.OutputFile("/home/journey", "hermes", true),
+                file: new Package.Options.OutputFile("/home/kyubey/projects", "madoka", true),
                 fileTimestamp: default,
                 outputByteCount: 4096,
                 outputOffset: 0);
@@ -110,6 +110,42 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
+        public async Task UnevenGroupSizeTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var breakStateData = new BreakStateData(
+                watches: new ReadOnlyCollection<string>(new[] { "const" }),
+                file: new Package.Options.OutputFile("/home/kyubey/projects", "madoka", true),
+                fileTimestamp: default,
+                outputByteCount: 2 * 256 * sizeof(int),
+                outputOffset: 0);
+
+            var data = new int[2 * 256];
+            for (int i = 0; i < 256; ++i)
+            {
+                data[2 * i + 0] = i; // system = global id
+                data[2 * i + 1] = 777; // first watch = const
+            }
+
+            // Assuming a group size of 65, the second group (65-129) requires two waves, 64-127 and 128-191, i.e. byte offset (2 watches)*64*4 and byte cound (2 watches)*(2 waves)*64*4
+
+            var requestedData = new byte[sizeof(int) * 128 * 2];
+            Buffer.BlockCopy(data, sizeof(int) * 64 * 2, requestedData, 0, requestedData.Length);
+            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = requestedData },
+                (command) =>
+                {
+                    Assert.Equal(2 * 64 * 4, command.ByteOffset);
+                    Assert.Equal(2 * 2 * 64 * 4, command.ByteCount);
+                });
+            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 1, groupSize: 65, nGroups: 2);
+            Assert.Null(warning);
+
+            var system = breakStateData.GetSystem();
+            for (var i = 0; i < 65; ++i)
+                Assert.Equal(65 + i, (int)system[i]);
+        }
+
+        [Fact]
         public async Task EmptyResultRangeTestAsync()
         {
             var channel = new MockCommunicationChannel();
@@ -158,7 +194,7 @@ namespace VSRAD.PackageTests.Server
                                     11, 607, 21, 608, 31, 609, 41, 610, 2, 611, 12, 612, 22, 613, 32, 614, 42, 615, 3, 616, 13,
                                     617, 23, 618, 33, 619, 43 };
 
-            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, laneDataOffset: 1, laneDataSize: 2);
+            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, groupCount: 4, laneDataOffset: 1, laneDataSize: 2);
             var expected = new uint[,] { { 0, 10, 20, 30, 40, 1, 11, 21, 31, 41 },
                                          { 2, 12, 22, 32, 42, 3, 13, 23, 33, 43 } };
 
@@ -166,7 +202,7 @@ namespace VSRAD.PackageTests.Server
                 for (int col = 0; col < 10; ++col)
                     Assert.Equal(expected[row, col], sliceWatch[row, col]);
 
-            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, laneDataOffset: 0, laneDataSize: 2);
+            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, groupCount: 4, laneDataOffset: 0, laneDataSize: 2);
             expected = new uint[,] { { 600, 601, 602, 603, 604, 605, 606, 607, 608, 609 },
                                      { 610, 611, 612, 613, 614, 615, 616, 617, 618, 619 } };
 

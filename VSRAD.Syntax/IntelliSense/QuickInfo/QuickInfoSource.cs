@@ -10,13 +10,13 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {
-        private readonly NavigationTokenService _navigationService;
+        private readonly INavigationTokenService _navigationService;
         private readonly ITextBuffer _textBuffer;
         private readonly DocumentAnalysis _documentAnalysis;
 
         public QuickInfoSource(ITextBuffer textBuffer, 
             DocumentAnalysis documentAnalysis,
-            NavigationTokenService navigationService)
+            INavigationTokenService navigationService)
         {
             _textBuffer = textBuffer;
             _documentAnalysis = documentAnalysis;
@@ -31,14 +31,14 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
 
             var extent = triggerPoint.Value.GetExtent();
 
-            var navigationToken = _navigationService.GetNaviationItem(extent).AnalysisToken;
-            if (navigationToken != null)
+            var navigationTokens = _navigationService.GetNaviationItem(extent);
+            if (navigationTokens.Count > 0)
             {
-                var dataElement = IntellisenseTokenDescription.GetColorizedTokenDescription(_documentAnalysis, navigationToken);
+                var dataElement = IntellisenseTokenDescription.GetColorizedDescription(navigationTokens);
                 if (dataElement == null)
                     return Task.FromResult<QuickInfoItem>(null);
 
-                var applicableToSpan = _documentAnalysis.CurrentSnapshot.CreateTrackingSpan(extent.Span.Start, navigationToken.TrackingToken.Length, SpanTrackingMode.EdgeInclusive);
+                var applicableToSpan = _documentAnalysis.CurrentSnapshot.CreateTrackingSpan(extent.Span.Start, extent.Span.Length, SpanTrackingMode.EdgeInclusive);
                 return Task.FromResult(new QuickInfoItem(applicableToSpan, dataElement));
             }
 

@@ -56,21 +56,15 @@ namespace VSRAD.Package.Server
 
         private readonly uint[] _data;
 
-        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int laneDataOffset, int laneDataSize, int nGroups)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
-            _lastValidIndex = groupSize * nGroups * laneDataSize + _laneDataOffset;
+            _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
 
             ColumnCount = groupsInRow * groupSize;
-            RowCount = (_data.Length / _laneDataSize / ColumnCount) + nGroups % groupsInRow;
-        }
-
-        // For tests
-        public SliceWatchView(uint[] flatWatchData)
-        {
-            _data = flatWatchData;
+            RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
         }
 
         public bool IsInactiveCell(int row, int column)
@@ -161,7 +155,7 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchView(_data, groupsInRow, GroupSize, laneDataOffset, _laneDataSize, nGroups);
+            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, nGroups), laneDataOffset, _laneDataSize);
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)
@@ -212,11 +206,9 @@ namespace VSRAD.Package.Server
 
         private void GetRequestedFilePart(int groupIndex, int groupSize, int nGroups, bool fetchWholeFile, out int waveOffset, out int waveCount)
         {
-            if (groupSize % _wavefrontSize != 0)
-                throw new ArgumentException($"Group sizes are assumed to be a multiple of {_wavefrontSize} (wavefront size)", nameof(groupSize));
-
             if (fetchWholeFile)
             {
+                groupSize += groupSize % _wavefrontSize; // round up to a multiple of _wavefrontSize
                 waveCount = nGroups * groupSize / _wavefrontSize;
                 if (waveCount == 0 || waveCount > _fetchedDataWaves.Length)
                     waveCount = _fetchedDataWaves.Length;
@@ -224,8 +216,13 @@ namespace VSRAD.Package.Server
             }
             else // single group
             {
-                waveCount = groupSize / _wavefrontSize;
-                waveOffset = groupIndex * waveCount;
+                var groupStart = groupIndex * groupSize;
+                var groupEnd = (groupIndex + 1) * groupSize;
+                var startWaveIndex = groupStart / _wavefrontSize;
+                var endWaveIndex = groupEnd / _wavefrontSize + (groupEnd % _wavefrontSize != 0 ? 1 : 0); // ceil
+
+                waveCount = endWaveIndex - startWaveIndex;
+                waveOffset = startWaveIndex;
             }
         }
 

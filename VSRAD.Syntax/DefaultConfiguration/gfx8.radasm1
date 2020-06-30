@@ -1,0 +1,1866 @@
+/* 
+ * Interpolation attribute and channel: 
+ * 
+ *   Syntax         Description
+ *   -------------  -------------------------------
+ *   attr{0..32}.x  Attribute 0..32 with x channel.
+ *   attr{0..32}.y  Attribute 0..32 with y channel.
+ *   attr{0..32}.z  Attribute 0..32 with z channel.
+ *   attr{0..32}.w  Attribute 0..32 with w channel.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_attr.html#amdgpu-synid8-attr 
+ */
+let attr 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let b128 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let b32 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let b32x2 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let b64 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let b64x2 
+
+/* 
+ * Clamp meaning depends on instruction. 
+ * For v_cmp instructions, clamp modifier indicates that the compare signals if a floating point exception occurs. By default, signaling is disabled. Not supported by GFX7. 
+ * For integer operations, clamp modifier indicates that the result must be clamped to the largest and smallest representable value. By default, there is no clamping. Integer clamping is not supported by GFX7. 
+ * For floating point operations, clamp modifier indicates that the result must be clamped to the range [0.0, 1.0]. By default, there is no clamping. 
+ * Note: clamp modifier is applied after output modifiers (if any). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------------------
+ *   clamp     Enables clamping (or signaling).
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-clamp 
+ */
+let clamp 
+
+/* 
+ * Indicates if the data are compressed (data are not compressed by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   compr     Data are compressed.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-compr 
+ */
+let compr 
+
+/* 
+ * Specifies data size: 16 or 32 bits (32 bits by default). Not supported by GFX7. 
+ * 
+ *   Syntax    Description
+ *   --------  -----------------------------------------------------------------------------------------------
+ *   d16       Enables 16-bits data mode.
+ *             On loads, convert data in memory to 16-bit format before storing it in VGPRs.
+ *             For stores, convert 16-bit data in VGPRs to 32 bits before going to memory.
+ *             Note that GFX8.0 does not support data packing. Each 16-bit data element occupies 1 VGPR.
+ *             GFX8.1, GFX9 and GFX10 support data packing. Each pair of 16-bit data elements occupies 1 VGPR.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-d16 
+ */
+let d16 
+
+/* 
+ * Specifies if an array index must be sent to TA. By default, array index is not sent. 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------------
+ *   da        Send an array-index to TA.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-da 
+ */
+let da 
+
+/* 
+ * Specifies which channels (image components) are used by the operation. By default, no channels are used. 
+ * 
+ *   Syntax         Description
+ *   -------------  -----------------------------------------------------------------------------------------------------
+ *   dmask:{0..15}  Specifies image channels as a positive integer number or an absolute expression.
+ *                  Each bit corresponds to one of 4 image components (RGBA).
+ *                  If the specified bit value is 0, the component is not used, value 1 means that the component is used.
+ * 
+ * This modifier has some limitations depending on instruction kind: 
+ * 
+ *   Instruction Kind                               Valid dmask Values
+ *   ---------------------------------------------  --------------------
+ *   32-bit atomic cmpswap                          0x3
+ *   32-bit atomic instructions except for cmpswap  0x1
+ *   64-bit atomic cmpswap                          0xF
+ *   64-bit atomic instructions except for cmpswap  0x3
+ *   gather4                                        0x1, 0x2, 0x4, 0x8
+ *   Other instructions                             any value
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-dmask 
+ */
+let dmask 
+
+/* 
+ * Specifies if this is the last export from the shader to the target. By default, exp instruction does not finish an export sequence. 
+ * 
+ *   Syntax    Description
+ *   --------  ------------------------------------
+ *   done      Indicates the last export operation.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-done 
+ */
+let done 
+
+/* 
+ * This is an input operand. It may optionally serve as a destination if glc is specified. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_ret.html#amdgpu-synid8-ret 
+ */
+let dst 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let f16x2 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let f32 
+
+/* 
+ * Specifies whether to use GDS or LDS memory (LDS is the default). 
+ * 
+ *   Syntax    Description
+ *   --------  ---------------
+ *   gds       Use GDS memory.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-gds 
+ */
+let gds 
+
+/* 
+ * This modifier has different meaning for loads, stores, and atomic operations. The default value is off (0). 
+ * See AMD documentation for details. 
+ * 
+ *   Syntax    Description
+ *   --------  -----------------
+ *   glc       Set glc bit to 1.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-glc 
+ */
+let glc 
+
+/* 
+ * Specifies which half of the LDS word to use. Low half of LDS word is used by default. GFX9 and GFX10 only. 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------------
+ *   high      Use high half of LDS word.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-high 
+ */
+let high 
+
+/* 
+ * Bits of a hardware register being accessed. 
+ * The bits of this operand have the following meaning: 
+ * 
+ *   Bits    Description        Value Range
+ *   ------  -----------------  -------------
+ *   5:0     Register id.       0..63
+ *   10:6    First bit offset.  0..31
+ *   15:11   Size in bits.      1..32
+ * 
+ * This operand may be specified as one of the following: 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ *  - An hwreg value described below. 
+ *    
+ *      Hwreg Value Syntax                Description
+ *      --------------------------------  --------------------------------------------------------------------
+ *      hwreg({0..63})                    All bits of a register indicated by its id.
+ *      hwreg(<name>)                     All bits of a register indicated by its name.
+ *      hwreg({0..63}, {0..31}, {1..32})  Register bits indicated by register id, first bit offset and size.
+ *      hwreg(<name>, {0..31}, {1..32})   Register bits indicated by register name, first bit offset and size.
+ *    
+ * 
+ * Numeric values may be specified as positive integer numbers or absolute expressions. 
+ * Defined register names include: 
+ * 
+ *   Name              Description
+ *   ----------------  -------------------------------------
+ *   HW_REG_MODE       Shader writeable mode bits.
+ *   HW_REG_STATUS     Shader read-only status.
+ *   HW_REG_TRAPSTS    Trap status.
+ *   HW_REG_HW_ID      Id of wave, simd, compute unit, etc.
+ *   HW_REG_GPR_ALLOC  Per-wave SGPR and VGPR allocation.
+ *   HW_REG_LDS_ALLOC  Per-wave LDS allocation.
+ *   HW_REG_IB_STS     Counters of outstanding instructions.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_hwreg.html#amdgpu-synid8-hwreg 
+ */
+let hwreg 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let i16 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let i32 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let i64 
+
+/* 
+ * Specifies whether address components include an index. By default, no components are used. 
+ * Can be used together with offen. 
+ * Cannot be used with addr64. 
+ * 
+ *   Syntax    Description
+ *   --------  ------------------------------------
+ *   idxen     Address components include an index.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-idxen 
+ */
+let idxen 
+
+/* 
+ * This operand is a mask which controls indexing mode for operands of subsequent instructions. Bits 0, 1 and 2 control indexing of src0, src1 and src2, while bit 3 controls indexing of dst. Value 1 enables indexing and value 0 disables it. 
+ * 
+ *     Bit  Meaning
+ *   -----  ----------------------------------
+ *      0   Enables or disables src0 indexing.
+ *      1   Enables or disables src1 indexing.
+ *      2   Enables or disables src2 indexing.
+ *      3   Enables or disables dst indexing.
+ * 
+ * This operand may be specified as one of the following: 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..15. 
+ *  - A gpr_idx value described below. 
+ *    
+ *      Gpr_idx Value Syntax    Description
+ *      ----------------------  ------------------------------------------------------------------------------------------------------------------------------------
+ *      gpr_idx(<operands>)     Enable indexing for specified operands and disable it for the rest. Operands is a comma-separated list of values which may include:
+ *      
+ *                               - "SRC0" - enable src0 indexing.
+ *                               - "SRC1" - enable src1 indexing.
+ *                               - "SRC2" - enable src2 indexing.
+ *                               - "DST"  - enable dst indexing.
+ *      
+ *                              Each of these values may be specified only once.
+ *                              Operands list may be empty; this syntax disables indexing for all operands.
+ *    
+ *  - "SRC0" - enable src0 indexing. 
+ *  - "SRC1" - enable src1 indexing. 
+ *  - "SRC2" - enable src2 indexing. 
+ *  - "DST"  - enable dst indexing. 
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_imask.html#amdgpu-synid8-imask 
+ */
+let imask 
+
+/* 
+ * An integer_number or an absolute_expression. The value must be in the range -32768..65535. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_simm16.html#amdgpu-synid8-simm16 
+ */
+let imm16 
+
+/* 
+ * A bit mask which indicates request permissions. 
+ * This operand must be specified as an integer_number or an absolute_expression. The value is truncated to 7 bits, but only 3 low bits are significant. 
+ * 
+ *     Bit Number  Description
+ *   ------------  ---------------------------
+ *             0   Request read permission.
+ *             1   Request write permission.
+ *             2   Request execute permission.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_perm_smem.html#amdgpu-synid8-perm-smem 
+ */
+let imm3 
+
+/* 
+ * An integer_number or an absolute_expression. The value is truncated to 32 bits. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_bimm32.html#amdgpu-synid8-bimm32 
+ */
+let imm32 
+
+/* 
+ * A branch target which is a 16-bit signed integer treated as a PC-relative dword offset. 
+ * This operand may be specified as one of the following: 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range -32768..65535. 
+ *  - A symbol (for example, a label) representing a relocatable address in the same compilation unit where it is referred from. The value is handled as a 16-bit PC-relative dword offset to be resolved by a linker. 
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_label.html#amdgpu-synid8-label 
+ */
+let label 
+
+/* 
+ * Specifies where to store the result: VGPRs or LDS (VGPRs by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   lds       Store result in LDS.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-lds 
+ */
+let lds 
+
+/* 
+ * Specifies LOD warning status (LOD warning is disabled by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   lwe       Enables LOD warning.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-lwe 
+ */
+let lwe 
+
+/* 
+ * This operand may be used with floating point operand modifiers abs and neg. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_mod_vop3_abs_neg.html#amdgpu-synid8-mod-vop3-abs-neg 
+ */
+let m 
+
+/* 
+ * A 16-bit message code. The bits of this operand have the following meaning: 
+ * 
+ *   Bits    Description          Value Range
+ *   ------  -------------------  -------------
+ *   3:0     Message type.        0..15
+ *   6:4     Optional operation.  0..7
+ *   7:7     Unused.              -
+ *   9:8     Optional stream.     0..3
+ *   15:10   Unused.              -
+ * 
+ * This operand may be specified as one of the following: 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ *  - A sendmsg value described below. 
+ *    
+ *      Sendmsg Value Syntax           Description
+ *      -----------------------------  ----------------------------------------------------------------
+ *      sendmsg(<type>)                A message identified by its type.
+ *      sendmsg(<type>,<op>)           A message identified by its type and operation.
+ *      sendmsg(<type>,<op>,<stream>)  A message identified by its type and operation with a stream id.
+ *    
+ * 
+ * Type may be specified using message name or message id. 
+ * Op may be specified using operation name or operation id. 
+ * Stream id is an integer in the range 0..3. 
+ * Numeric values may be specified as positive integer numbers or absolute expressions. 
+ * Each message type supports specific operations: 
+ * 
+ *   Message name    Message Id    Supported Operations         Operation Id    Stream Id
+ *   --------------  ------------  ---------------------------  --------------  -----------
+ *   MSG_INTERRUPT   1             -                            -               -
+ *   MSG_GS          2             GS_OP_CUT                    1               Optional
+ *                                 GS_OP_EMIT                   2               Optional
+ *                                 GS_OP_EMIT_CUT               3               Optional
+ *   MSG_GS_DONE     3             GS_OP_NOP                    0               -
+ *                                 GS_OP_CUT                    1               Optional
+ *                                 GS_OP_EMIT                   2               Optional
+ *                                 GS_OP_EMIT_CUT               3               Optional
+ *   MSG_SYSMSG      15            SYSMSG_OP_ECC_ERR_INTERRUPT  1               -
+ *                                 SYSMSG_OP_REG_RD             2               -
+ *                                 SYSMSG_OP_HOST_TRAP_ACK      3               -
+ *                                 SYSMSG_OP_TTRACE_PC          4               -
+ * 
+ * Sendmsg arguments are validated depending on how type value is specified: 
+ * 
+ *  - If message type is specified by name, arguments values must satisfy limitations detailed in the table above. 
+ *  - If message type is specified as a number, each argument must not exceed corresponding value range (see the first table). 
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_msg.html#amdgpu-synid8-msg 
+ */
+let msg 
+
+/* 
+ * Specifies whether address components include an offset. By default, no components are used. 
+ * Can be used together with idxen. 
+ * Cannot be used with addr64. 
+ * 
+ *   Syntax    Description
+ *   --------  -------------------------------------
+ *   offen     Address components include an offset.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-offen 
+ */
+let offen 
+
+/* 
+ * Specifies an immediate unsigned 12-bit offset, in bytes. The default value is 0. 
+ * 
+ *   Syntax             Description
+ *   -----------------  ------------------------------------------------------------------------------------------
+ *   offset:{0..0xFFF}  Specifies a 12-bit unsigned offset as a positive integer number or an absolute expression.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-buf-offset12 
+ */
+let offset12 
+
+/* 
+ * Specifies an immediate unsigned 16-bit offset, in bytes. The default value is 0. 
+ * Used with DS instructions which have 1 address. 
+ * 
+ *   Syntax              Description
+ *   ------------------  -------------------------------------------------------------------------------------------
+ *   offset:{0..0xFFFF}  Specifies an unsigned 16-bit offset as a positive integer number or an absolute expression.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-ds-offset16 
+ */
+let offset16 
+
+/* 
+ * Specifies an immediate unsigned 8-bit offset, in bytes. The default value is 0. 
+ * Used with DS instructions which have 2 addresses. 
+ * 
+ *   Syntax            Description
+ *   ----------------  ------------------------------------------------------------------------------------------
+ *   offset:{0..0xFF}  Specifies an unsigned 8-bit offset as a positive integer number or an absolute expression.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-ds-offset8 
+ */
+let offset8 
+
+/* 
+ * Specifies if an output modifier must be applied to the result. By default, no output modifiers are applied. 
+ * Note: output modifiers are applied before clamping (if any). 
+ * Output modifiers are valid for f32 and f64 floating point results only. They must not be used with f16. 
+ * Note: v_cvt_f16_f32 is an exception. This instruction produces f16 result but accepts output modifiers. 
+ * 
+ *   Syntax    Description
+ *   --------  ---------------------------
+ *   mul:2     Multiply the result by 2.
+ *   mul:4     Multiply the result by 4.
+ *   div:2     Multiply the result by 0.5.
+ * 
+ * Note: numeric values may be specified as either integer numbers or absolute expressions. 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-omod 
+ */
+let omod 
+
+/* 
+ * This is an optional operand. It must be used if and only if glc is specified. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_opt.html#amdgpu-synid8-opt 
+ */
+let opt 
+
+/* 
+ * Interpolation parameter to read: 
+ * 
+ *   Syntax    Description
+ *   --------  --------------
+ *   p0        Parameter P0.
+ *   p10       Parameter P10.
+ *   p20       Parameter P20.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_param.html#amdgpu-synid8-param 
+ */
+let param 
+
+/* 
+ * This is a special modifier which may be used with ds_swizzle_b32 instruction only. It specifies a swizzle pattern in numeric or symbolic form. The default value is 0. 
+ * See AMD documentation for more information. 
+ * 
+ *   Syntax                                                 Description
+ *   -----------------------------------------------------  -----------------------------------------------------------------------------------------
+ *   offset:{0..0xFFFF}                                     Specifies a 16-bit swizzle pattern.
+ *   offset:swizzle(QUAD_PERM,{0..3},{0..3},{0..3},{0..3})  Specifies a quad permute mode pattern
+ *                                                          Each number is a lane id.
+ *   offset:swizzle(BITMASK_PERM, "<mask>")                 Specifies a bitmask permute mode pattern.
+ *                                                          The pattern converts a 5-bit lane id to another lane id with which the lane interacts.
+ *                                                          mask is a 5 character sequence which specifies how to transform the bits of the lane id.
+ *                                                          The following characters are allowed:
+ *   
+ *                                                           - "0" - set bit to 0.
+ *                                                           - "1" - set bit to 1.
+ *                                                           - "p" - preserve bit.
+ *                                                           - "i" - inverse bit.
+ *   offset:swizzle(BROADCAST,{2..32},{0..N})               Specifies a broadcast mode.
+ *                                                          Broadcasts the value of any particular lane to all lanes in its group.
+ *                                                          The first numeric parameter is a group size and must be equal to 2, 4, 8, 16 or 32.
+ *                                                          The second numeric parameter is an index of the lane being broadcasted.
+ *                                                          The index must not exceed group size.
+ *   offset:swizzle(SWAP,{1..16})                           Specifies a swap mode.
+ *                                                          Swaps the neighboring groups of 1, 2, 4, 8 or 16 lanes.
+ *   offset:swizzle(REVERSE,{2..32})                        Specifies a reverse mode.
+ *                                                          Reverses the lanes for groups of 2, 4, 8, 16 or 32 lanes.
+ * 
+ * Note: numeric values may be specified as either integer numbers or absolute expressions. 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-sw-offset16 
+ */
+let pattern 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let s32 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let s64 
+
+/* 
+ * A 64-bit base address for scalar memory operations. 
+ * Size: 2 dwords. 
+ * Operands: s, flat_scratch, xnack, vcc, trap 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_base_smem_addr.html#amdgpu-synid8-base-smem-addr 
+ */
+let sbase 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, trap 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_sdata32_0.html#amdgpu-synid8-sdata32-0 
+ */
+let sdata 
+
+/* 
+ * Instruction output. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, trap 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_sdst32_0.html#amdgpu-synid8-sdst32-0 
+ */
+let sdst 
+
+/* 
+ * Specifies cache policy. The default value is off (0). 
+ * See AMD documentation for details. 
+ * 
+ *   Syntax    Description
+ *   --------  -----------------
+ *   slc       Set slc bit to 1.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-slc 
+ */
+let slc 
+
+/* 
+ * An unsigned byte offset. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_offset_buf.html#amdgpu-synid8-offset-buf 
+ */
+let soffset 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, lds_direct, constant, literal 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src32_0.html#amdgpu-synid8-src32-0 
+ */
+let src 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, lds_direct, constant, literal 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src32_0.html#amdgpu-synid8-src32-0 
+ */
+let src0 
+
+/* 
+ * Instruction input. 
+ * Size: 2 dwords. 
+ * Operands: v, s, flat_scratch, xnack, vcc, trap, exec, vccz, execz, scc, constant 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src64_1.html#amdgpu-synid8-src64-1 
+ */
+let src1 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v, s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src32_3.html#amdgpu-synid8-src32-3 
+ */
+let src2 
+
+/* 
+ * Image resource constant which defines the location of the image buffer in memory, its dimensions, tiling, and data format. 
+ * Size: 8 dwords by default, 4 dwords if r128 is specified. 
+ * Operands: s, ttmp 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_rsrc_mimg.html#amdgpu-synid8-rsrc-mimg 
+ */
+let srsrc 
+
+/* 
+ * Sampler constant used to specify filtering options applied to the image data after it is read. 
+ * Size: 4 dwords. 
+ * Operands: s, ttmp 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_samp_mimg.html#amdgpu-synid8-samp-mimg 
+ */
+let ssamp 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant, literal 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_ssrc32_0.html#amdgpu-synid8-ssrc32-0 
+ */
+let ssrc 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant, literal 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_ssrc32_0.html#amdgpu-synid8-ssrc32-0 
+ */
+let ssrc0 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: s, flat_scratch, xnack, vcc, trap, m0, exec, vccz, execz, scc, constant, literal 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_ssrc32_0.html#amdgpu-synid8-ssrc32-0 
+ */
+let ssrc1 
+
+/* 
+ * An export target: 
+ * 
+ *   Syntax        Description
+ *   ------------  ----------------------------------
+ *   pos{0..3}     Copy vertex position 0..3.
+ *   param{0..31}  Copy vertex parameter 0..31.
+ *   mrt{0..7}     Copy pixel color to the MRTs 0..7.
+ *   mrtz          Copy pixel depth (Z) data.
+ *   null          Copy nothing.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_tgt.html#amdgpu-synid8-tgt 
+ */
+let tgt 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let u16 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let u16x2 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let u32 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let u64 
+
+/* 
+ * Type of this operand differs from type implied by the opcode. This tag specifies actual operand type. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_type_dev.html#amdgpu-synid8-type-dev 
+ */
+let u8x4 
+
+/* 
+ * Specifies whether the address is normalized or not (the address is normalized by default). 
+ * 
+ *   Syntax    Description
+ *   --------  -------------------------------------
+ *   unorm     Force the address to be unnormalized.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-unorm 
+ */
+let unorm 
+
+/* 
+ * An offset from the start of GDS/LDS memory. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_addr_ds.html#amdgpu-synid8-addr-ds 
+ */
+let vaddr 
+
+/* 
+ * Vector condition code. 
+ * Size: 2 dwords. 
+ * Operands: vcc 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_vcc_64.html#amdgpu-synid8-vcc-64 
+ */
+let vcc 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_vdata32_0.html#amdgpu-synid8-vdata32-0 
+ */
+let vdata 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_vdata32_0.html#amdgpu-synid8-vdata32-0 
+ */
+let vdata0 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_vdata32_0.html#amdgpu-synid8-vdata32-0 
+ */
+let vdata1 
+
+/* 
+ * Instruction output. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_vdst32_0.html#amdgpu-synid8-vdst32-0 
+ */
+let vdst 
+
+/* 
+ * Specifies valid mask flag state (off by default). 
+ * 
+ *   Syntax    Description
+ *   --------  --------------------
+ *   vm        Set valid mask flag.
+ * 
+ * 
+ * https://llvm.org/docs/AMDGPU/../AMDGPUModifierSyntax.html#amdgpu-synid-vm 
+ */
+let vm 
+
+/* 
+ * Instruction input. 
+ * Size: 1 dword. 
+ * Operands: v 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_vsrc32_0.html#amdgpu-synid8-vsrc32-0 
+ */
+let vsrc 
+
+/* 
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
+ */
+let vsrc0 
+
+/* 
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
+ */
+let vsrc1 
+
+/* 
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
+ */
+let vsrc2 
+
+/* 
+ * Data to copy to export buffers. This is an optional operand. Must be specified as off if not used. 
+ * compr modifier indicates use of compressed (16-bit) data. This limits number of source operands from 4 to 2: 
+ * 
+ *  - src0 and src1 must specify the first register (or off). 
+ *  - src2 and src3 must specify the second register (or off). 
+ * 
+ * An example: 
+ * Size: 1 dword. 
+ * Operands: v, off 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_src_exp.html#amdgpu-synid8-src-exp 
+ */
+let vsrc3 
+
+/* 
+ * Counts of outstanding instructions to wait for. 
+ * The bits of this operand have the following meaning: 
+ * 
+ *   Bits    Description                                      Value Range
+ *   ------  -----------------------------------------------  -------------
+ *   3:0     VM_CNT: vector memory operations count.          0..15
+ *   6:4     EXP_CNT: export count.                           0..7
+ *   11:8    LGKM_CNT: LDS, GDS, Constant and Message count.  0..15
+ * 
+ * This operand may be specified as one of the following: 
+ * 
+ *  - An integer_number or an absolute_expression. The value must be in the range 0..0xFFFF. 
+ *  - A combination of vmcnt, expcnt, lgkmcnt and other values described below. 
+ *    
+ *      Syntax            Description
+ *      ----------------  -----------------------------------------------------------------
+ *      vmcnt(<N>)        A VM_CNT value. N must not exceed the largest VM_CNT value.
+ *      expcnt(<N>)       An EXP_CNT value. N must not exceed the largest EXP_CNT value.
+ *      lgkmcnt(<N>)      An LGKM_CNT value. N must not exceed the largest LGKM_CNT value.
+ *      vmcnt_sat(<N>)    A VM_CNT value computed as min(N, the largest VM_CNT value).
+ *      expcnt_sat(<N>)   An EXP_CNT value computed as min(N, the largest EXP_CNT value).
+ *      lgkmcnt_sat(<N>)  An LGKM_CNT value computed as min(N, the largest LGKM_CNT value).
+ *    
+ * 
+ * These values may be specified in any order. Spaces, ampersands and commas may be used as optional separators. 
+ * N is either an integer number or an absolute expression. 
+ * 
+ * https://llvm.org/docs/AMDGPU/gfx8_waitcnt.html#amdgpu-synid8-waitcnt 
+ */
+let waitcnt 
+
+ds_add_f32                                 vaddr,    vdata                    offset16 gds
+ds_add_rtn_f32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_add_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_add_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_add_src2_f32                            vaddr                              offset16 gds
+ds_add_src2_u32                            vaddr                              offset16 gds
+ds_add_src2_u64                            vaddr                              offset16 gds
+ds_add_u32                                 vaddr,    vdata                    offset16 gds
+ds_add_u64                                 vaddr,    vdata                    offset16 gds
+ds_and_b32                                 vaddr,    vdata                    offset16 gds
+ds_and_b64                                 vaddr,    vdata                    offset16 gds
+ds_and_rtn_b32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_and_rtn_b64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_and_src2_b32                            vaddr                              offset16 gds
+ds_and_src2_b64                            vaddr                              offset16 gds
+ds_append                      vdst                                           offset16 gds
+ds_bpermute_b32                vdst,       vaddr,    vdata                    offset16
+ds_cmpst_b32                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_b64                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_f32                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_f64                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_b32               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_b64               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_f32               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_cmpst_rtn_f64               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_condxchg32_rtn_b64          vdst,       vaddr,    vdata                    offset16 gds
+ds_consume                     vdst                                           offset16 gds
+ds_dec_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_dec_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_dec_src2_u32                            vaddr                              offset16 gds
+ds_dec_src2_u64                            vaddr                              offset16 gds
+ds_dec_u32                                 vaddr,    vdata                    offset16 gds
+ds_dec_u64                                 vaddr,    vdata                    offset16 gds
+ds_gws_barrier                             vdata                              offset16 gds
+ds_gws_init                                vdata                              offset16 gds
+ds_gws_sema_br                             vdata                              offset16 gds
+ds_gws_sema_p                                                                 offset16 gds
+ds_gws_sema_release_all                                                       offset16 gds
+ds_gws_sema_v                                                                 offset16 gds
+ds_inc_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_inc_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_inc_src2_u32                            vaddr                              offset16 gds
+ds_inc_src2_u64                            vaddr                              offset16 gds
+ds_inc_u32                                 vaddr,    vdata                    offset16 gds
+ds_inc_u64                                 vaddr,    vdata                    offset16 gds
+ds_max_f32                                 vaddr,    vdata                    offset16 gds
+ds_max_f64                                 vaddr,    vdata                    offset16 gds
+ds_max_i32                                 vaddr,    vdata                    offset16 gds
+ds_max_i64                                 vaddr,    vdata                    offset16 gds
+ds_max_rtn_f32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_f64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_i32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_i64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_max_src2_f32                            vaddr                              offset16 gds
+ds_max_src2_f64                            vaddr                              offset16 gds
+ds_max_src2_i32                            vaddr                              offset16 gds
+ds_max_src2_i64                            vaddr                              offset16 gds
+ds_max_src2_u32                            vaddr                              offset16 gds
+ds_max_src2_u64                            vaddr                              offset16 gds
+ds_max_u32                                 vaddr,    vdata                    offset16 gds
+ds_max_u64                                 vaddr,    vdata                    offset16 gds
+ds_min_f32                                 vaddr,    vdata                    offset16 gds
+ds_min_f64                                 vaddr,    vdata                    offset16 gds
+ds_min_i32                                 vaddr,    vdata                    offset16 gds
+ds_min_i64                                 vaddr,    vdata                    offset16 gds
+ds_min_rtn_f32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_f64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_i32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_i64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_min_src2_f32                            vaddr                              offset16 gds
+ds_min_src2_f64                            vaddr                              offset16 gds
+ds_min_src2_i32                            vaddr                              offset16 gds
+ds_min_src2_i64                            vaddr                              offset16 gds
+ds_min_src2_u32                            vaddr                              offset16 gds
+ds_min_src2_u64                            vaddr                              offset16 gds
+ds_min_u32                                 vaddr,    vdata                    offset16 gds
+ds_min_u64                                 vaddr,    vdata                    offset16 gds
+ds_mskor_b32                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_mskor_b64                               vaddr,    vdata0,   vdata1         offset16 gds
+ds_mskor_rtn_b32               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_mskor_rtn_b64               vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_nop
+ds_or_b32                                  vaddr,    vdata                    offset16 gds
+ds_or_b64                                  vaddr,    vdata                    offset16 gds
+ds_or_rtn_b32                  vdst,       vaddr,    vdata                    offset16 gds
+ds_or_rtn_b64                  vdst,       vaddr,    vdata                    offset16 gds
+ds_or_src2_b32                             vaddr                              offset16 gds
+ds_or_src2_b64                             vaddr                              offset16 gds
+ds_ordered_count               vdst,       vaddr                              offset16 gds
+ds_permute_b32                 vdst,       vaddr,    vdata                    offset16
+ds_read2_b32                   vdst:b32x2, vaddr                              offset8 offset8 gds
+ds_read2_b64                   vdst:b64x2, vaddr                              offset8 offset8 gds
+ds_read2st64_b32               vdst:b32x2, vaddr                              offset8 offset8 gds
+ds_read2st64_b64               vdst:b64x2, vaddr                              offset8 offset8 gds
+ds_read_b128                   vdst,       vaddr                              offset16 gds
+ds_read_b32                    vdst,       vaddr                              offset16 gds
+ds_read_b64                    vdst,       vaddr                              offset16 gds
+ds_read_b96                    vdst,       vaddr                              offset16 gds
+ds_read_i16                    vdst,       vaddr                              offset16 gds
+ds_read_i8                     vdst,       vaddr                              offset16 gds
+ds_read_u16                    vdst,       vaddr                              offset16 gds
+ds_read_u8                     vdst,       vaddr                              offset16 gds
+ds_rsub_rtn_u32                vdst,       vaddr,    vdata                    offset16 gds
+ds_rsub_rtn_u64                vdst,       vaddr,    vdata                    offset16 gds
+ds_rsub_src2_u32                           vaddr                              offset16 gds
+ds_rsub_src2_u64                           vaddr                              offset16 gds
+ds_rsub_u32                                vaddr,    vdata                    offset16 gds
+ds_rsub_u64                                vaddr,    vdata                    offset16 gds
+ds_sub_rtn_u32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_sub_rtn_u64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_sub_src2_u32                            vaddr                              offset16 gds
+ds_sub_src2_u64                            vaddr                              offset16 gds
+ds_sub_u32                                 vaddr,    vdata                    offset16 gds
+ds_sub_u64                                 vaddr,    vdata                    offset16 gds
+ds_swizzle_b32                 vdst,       vaddr                              pattern gds
+ds_wrap_rtn_b32                vdst,       vaddr,    vdata0,   vdata1         offset16 gds
+ds_write2_b32                              vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write2_b64                              vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write2st64_b32                          vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write2st64_b64                          vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_write_b128                              vaddr,    vdata                    offset16 gds
+ds_write_b16                               vaddr,    vdata                    offset16 gds
+ds_write_b32                               vaddr,    vdata                    offset16 gds
+ds_write_b64                               vaddr,    vdata                    offset16 gds
+ds_write_b8                                vaddr,    vdata                    offset16 gds
+ds_write_b96                               vaddr,    vdata                    offset16 gds
+ds_write_src2_b32                          vaddr                              offset16 gds
+ds_write_src2_b64                          vaddr                              offset16 gds
+ds_wrxchg2_rtn_b32             vdst:b32x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg2_rtn_b64             vdst:b64x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg2st64_rtn_b32         vdst:b32x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg2st64_rtn_b64         vdst:b64x2, vaddr,    vdata0,   vdata1         offset8 offset8 gds
+ds_wrxchg_rtn_b32              vdst,       vaddr,    vdata                    offset16 gds
+ds_wrxchg_rtn_b64              vdst,       vaddr,    vdata                    offset16 gds
+ds_xor_b32                                 vaddr,    vdata                    offset16 gds
+ds_xor_b64                                 vaddr,    vdata                    offset16 gds
+ds_xor_rtn_b32                 vdst,       vaddr,    vdata                    offset16 gds
+ds_xor_rtn_b64                 vdst,       vaddr,    vdata                    offset16 gds
+ds_xor_src2_b32                            vaddr                              offset16 gds
+ds_xor_src2_b64                            vaddr                              offset16 gds
+exp                            tgt,      vsrc0,    vsrc1,    vsrc2,    vsrc3          done compr vm
+flat_atomic_add                vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_add_x2             vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_and                vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_and_x2             vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_cmpswap            vdst:opt,     vaddr,    vdata:b32x2      glc slc
+flat_atomic_cmpswap_x2         vdst:opt,     vaddr,    vdata:b64x2      glc slc
+flat_atomic_dec                vdst:opt:u32, vaddr,    vdata:u32        glc slc
+flat_atomic_dec_x2             vdst:opt:u64, vaddr,    vdata:u64        glc slc
+flat_atomic_inc                vdst:opt:u32, vaddr,    vdata:u32        glc slc
+flat_atomic_inc_x2             vdst:opt:u64, vaddr,    vdata:u64        glc slc
+flat_atomic_or                 vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_or_x2              vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_smax               vdst:opt:s32, vaddr,    vdata:s32        glc slc
+flat_atomic_smax_x2            vdst:opt:s64, vaddr,    vdata:s64        glc slc
+flat_atomic_smin               vdst:opt:s32, vaddr,    vdata:s32        glc slc
+flat_atomic_smin_x2            vdst:opt:s64, vaddr,    vdata:s64        glc slc
+flat_atomic_sub                vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_sub_x2             vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_swap               vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_swap_x2            vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_umax               vdst:opt:u32, vaddr,    vdata:u32        glc slc
+flat_atomic_umax_x2            vdst:opt:u64, vaddr,    vdata:u64        glc slc
+flat_atomic_umin               vdst:opt:u32, vaddr,    vdata:u32        glc slc
+flat_atomic_umin_x2            vdst:opt:u64, vaddr,    vdata:u64        glc slc
+flat_atomic_xor                vdst:opt,     vaddr,    vdata            glc slc
+flat_atomic_xor_x2             vdst:opt,     vaddr,    vdata            glc slc
+flat_load_dword                vdst,         vaddr                      glc slc
+flat_load_dwordx2              vdst,         vaddr                      glc slc
+flat_load_dwordx3              vdst,         vaddr                      glc slc
+flat_load_dwordx4              vdst,         vaddr                      glc slc
+flat_load_sbyte                vdst,         vaddr                      glc slc
+flat_load_sshort               vdst,         vaddr                      glc slc
+flat_load_ubyte                vdst,         vaddr                      glc slc
+flat_load_ushort               vdst,         vaddr                      glc slc
+flat_store_byte                              vaddr,    vdata            glc slc
+flat_store_dword                             vaddr,    vdata            glc slc
+flat_store_dwordx2                           vaddr,    vdata            glc slc
+flat_store_dwordx3                           vaddr,    vdata            glc slc
+flat_store_dwordx4                           vaddr,    vdata            glc slc
+flat_store_short                             vaddr,    vdata            glc slc
+image_atomic_add                         vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_and                         vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_cmpswap                     vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_dec                         vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_inc                         vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_or                          vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_smax                        vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_smin                        vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_sub                         vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_swap                        vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_umax                        vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_umin                        vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_atomic_xor                         vdata:dst, vaddr,    srsrc          dmask unorm glc slc lwe da
+image_gather4                  vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_b                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_b_cl             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_b_cl_o           vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_b_o              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_b              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_b_cl           vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_b_cl_o         vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_b_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_cl             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_cl_o           vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_l              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_l_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_lz             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_lz_o           vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_c_o              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_cl               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_cl_o             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_l                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_l_o              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_lz               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_lz_o             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_gather4_o                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_get_lod                  vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da
+image_get_resinfo              vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da
+image_load                     vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da d16
+image_load_mip                 vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da d16
+image_load_mip_pck             vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da
+image_load_mip_pck_sgn         vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da
+image_load_pck                 vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da
+image_load_pck_sgn             vdst,     vaddr,     srsrc                    dmask unorm glc slc lwe da
+image_sample                   vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_b                 vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_b_cl              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_b_cl_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_b_o               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c                 vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_b               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_b_cl            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_b_cl_o          vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_b_o             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_cd              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_cd_cl           vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_cd_cl_o         vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_cd_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_cl              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_cl_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_d               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_d_cl            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_d_cl_o          vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_d_o             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_l               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_l_o             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_lz              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_lz_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_c_o               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_cd                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_cd_cl             vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_cd_cl_o           vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_cd_o              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_cl                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_cl_o              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_d                 vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_d_cl              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_d_cl_o            vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_d_o               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_l                 vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_l_o               vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_lz                vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_lz_o              vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_sample_o                 vdst,     vaddr,     srsrc,    ssamp          dmask unorm glc slc lwe da d16
+image_store                              vdata,     vaddr,    srsrc          dmask unorm glc slc lwe da d16
+image_store_mip                          vdata,     vaddr,    srsrc          dmask unorm glc slc lwe da d16
+image_store_mip_pck                      vdata,     vaddr,    srsrc          dmask unorm glc slc lwe da
+image_store_pck                          vdata,     vaddr,    srsrc          dmask unorm glc slc lwe da
+buffer_atomic_add                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_add_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_and                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_and_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_cmpswap              vdata:dst:b32x2, vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_cmpswap_x2           vdata:dst:b64x2, vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_dec                  vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_dec_x2               vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_inc                  vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_inc_x2               vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_or                   vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_or_x2                vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smax                 vdata:dst:s32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smax_x2              vdata:dst:s64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smin                 vdata:dst:s32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_smin_x2              vdata:dst:s64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_sub                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_sub_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_swap                 vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_swap_x2              vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umax                 vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umax_x2              vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umin                 vdata:dst:u32,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_umin_x2              vdata:dst:u64,   vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_xor                  vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_atomic_xor_x2               vdata:dst,       vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_load_dword            vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_dwordx2          vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_dwordx3          vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_dwordx4          vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_x     vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_xy    vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_xyz   vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_d16_xyzw  vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_x         vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_format_xy        vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_xyz       vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_format_xyzw      vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc
+buffer_load_sbyte            vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_sshort           vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_ubyte            vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_load_ushort           vdst, vaddr,           srsrc,  soffset         idxen offen offset12 glc slc lds
+buffer_store_byte                  vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dword                 vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dwordx2               vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dwordx3               vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_dwordx4               vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_x          vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_xy         vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_xyz        vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_d16_xyzw       vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_x              vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_xy             vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_xyz            vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_format_xyzw           vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_store_lds_dword             srsrc,           soffset                 offset12 lds glc slc
+buffer_store_short                 vdata,           vaddr,  srsrc,  soffset idxen offen offset12 glc slc
+buffer_wbinvl1
+buffer_wbinvl1_vol
+s_atc_probe                              imm3,     sbase,    soffset
+s_atc_probe_buffer                       imm3,     sbase,    soffset
+s_buffer_load_dword            sdst,     sbase,    soffset                  glc
+s_buffer_load_dwordx16         sdst,     sbase,    soffset                  glc
+s_buffer_load_dwordx2          sdst,     sbase,    soffset                  glc
+s_buffer_load_dwordx4          sdst,     sbase,    soffset                  glc
+s_buffer_load_dwordx8          sdst,     sbase,    soffset                  glc
+s_buffer_store_dword                     sdata,    sbase,    soffset        glc
+s_buffer_store_dwordx2                   sdata,    sbase,    soffset        glc
+s_buffer_store_dwordx4                   sdata,    sbase,    soffset        glc
+s_dcache_inv
+s_dcache_inv_vol
+s_dcache_wb
+s_dcache_wb_vol
+s_load_dword                   sdst,     sbase,    soffset                  glc
+s_load_dwordx16                sdst,     sbase,    soffset                  glc
+s_load_dwordx2                 sdst,     sbase,    soffset                  glc
+s_load_dwordx4                 sdst,     sbase,    soffset                  glc
+s_load_dwordx8                 sdst,     sbase,    soffset                  glc
+s_memrealtime                  sdst
+s_memtime                      sdst
+s_store_dword                            sdata,    sbase,    soffset        glc
+s_store_dwordx2                          sdata,    sbase,    soffset        glc
+s_store_dwordx4                          sdata,    sbase,    soffset        glc
+s_abs_i32                      sdst,     ssrc
+s_and_saveexec_b64             sdst,     ssrc
+s_andn2_saveexec_b64           sdst,     ssrc
+s_bcnt0_i32_b32                sdst,     ssrc
+s_bcnt0_i32_b64                sdst,     ssrc
+s_bcnt1_i32_b32                sdst,     ssrc
+s_bcnt1_i32_b64                sdst,     ssrc
+s_bitset0_b32                  sdst,     ssrc
+s_bitset0_b64                  sdst,     ssrc:b32
+s_bitset1_b32                  sdst,     ssrc
+s_bitset1_b64                  sdst,     ssrc:b32
+s_brev_b32                     sdst,     ssrc
+s_brev_b64                     sdst,     ssrc
+s_cbranch_join                           ssrc
+s_cmov_b32                     sdst,     ssrc
+s_cmov_b64                     sdst,     ssrc
+s_ff0_i32_b32                  sdst,     ssrc
+s_ff0_i32_b64                  sdst,     ssrc
+s_ff1_i32_b32                  sdst,     ssrc
+s_ff1_i32_b64                  sdst,     ssrc
+s_flbit_i32                    sdst,     ssrc
+s_flbit_i32_b32                sdst,     ssrc
+s_flbit_i32_b64                sdst,     ssrc
+s_flbit_i32_i64                sdst,     ssrc
+s_getpc_b64                    sdst
+s_mov_b32                      sdst,     ssrc
+s_mov_b64                      sdst,     ssrc
+s_mov_fed_b32                  sdst,     ssrc
+s_movreld_b32                  sdst,     ssrc
+s_movreld_b64                  sdst,     ssrc
+s_movrels_b32                  sdst,     ssrc
+s_movrels_b64                  sdst,     ssrc
+s_nand_saveexec_b64            sdst,     ssrc
+s_nor_saveexec_b64             sdst,     ssrc
+s_not_b32                      sdst,     ssrc
+s_not_b64                      sdst,     ssrc
+s_or_saveexec_b64              sdst,     ssrc
+s_orn2_saveexec_b64            sdst,     ssrc
+s_quadmask_b32                 sdst,     ssrc
+s_quadmask_b64                 sdst,     ssrc
+s_rfe_b64                                ssrc
+s_set_gpr_idx_idx                        ssrc
+s_setpc_b64                              ssrc
+s_sext_i32_i16                 sdst,     ssrc
+s_sext_i32_i8                  sdst,     ssrc
+s_swappc_b64                   sdst,     ssrc
+s_wqm_b32                      sdst,     ssrc
+s_wqm_b64                      sdst,     ssrc
+s_xnor_saveexec_b64            sdst,     ssrc
+s_xor_saveexec_b64             sdst,     ssrc
+s_absdiff_i32                  sdst,     ssrc0,     ssrc1
+s_add_i32                      sdst,     ssrc0,     ssrc1
+s_add_u32                      sdst,     ssrc0,     ssrc1
+s_addc_u32                     sdst,     ssrc0,     ssrc1
+s_and_b32                      sdst,     ssrc0,     ssrc1
+s_and_b64                      sdst,     ssrc0,     ssrc1
+s_andn2_b32                    sdst,     ssrc0,     ssrc1
+s_andn2_b64                    sdst,     ssrc0,     ssrc1
+s_ashr_i32                     sdst,     ssrc0,     ssrc1:u32
+s_ashr_i64                     sdst,     ssrc0,     ssrc1:u32
+s_bfe_i32                      sdst,     ssrc0,     ssrc1:u32
+s_bfe_i64                      sdst,     ssrc0,     ssrc1:u32
+s_bfe_u32                      sdst,     ssrc0,     ssrc1
+s_bfe_u64                      sdst,     ssrc0,     ssrc1:u32
+s_bfm_b32                      sdst,     ssrc0,     ssrc1
+s_bfm_b64                      sdst,     ssrc0:b32, ssrc1:b32
+s_cbranch_g_fork                         ssrc0,     ssrc1
+s_cselect_b32                  sdst,     ssrc0,     ssrc1
+s_cselect_b64                  sdst,     ssrc0,     ssrc1
+s_lshl_b32                     sdst,     ssrc0,     ssrc1:u32
+s_lshl_b64                     sdst,     ssrc0,     ssrc1:u32
+s_lshr_b32                     sdst,     ssrc0,     ssrc1:u32
+s_lshr_b64                     sdst,     ssrc0,     ssrc1:u32
+s_max_i32                      sdst,     ssrc0,     ssrc1
+s_max_u32                      sdst,     ssrc0,     ssrc1
+s_min_i32                      sdst,     ssrc0,     ssrc1
+s_min_u32                      sdst,     ssrc0,     ssrc1
+s_mul_i32                      sdst,     ssrc0,     ssrc1
+s_nand_b32                     sdst,     ssrc0,     ssrc1
+s_nand_b64                     sdst,     ssrc0,     ssrc1
+s_nor_b32                      sdst,     ssrc0,     ssrc1
+s_nor_b64                      sdst,     ssrc0,     ssrc1
+s_or_b32                       sdst,     ssrc0,     ssrc1
+s_or_b64                       sdst,     ssrc0,     ssrc1
+s_orn2_b32                     sdst,     ssrc0,     ssrc1
+s_orn2_b64                     sdst,     ssrc0,     ssrc1
+s_rfe_restore_b64                        ssrc0,     ssrc1:b32
+s_sub_i32                      sdst,     ssrc0,     ssrc1
+s_sub_u32                      sdst,     ssrc0,     ssrc1
+s_subb_u32                     sdst,     ssrc0,     ssrc1
+s_xnor_b32                     sdst,     ssrc0,     ssrc1
+s_xnor_b64                     sdst,     ssrc0,     ssrc1
+s_xor_b32                      sdst,     ssrc0,     ssrc1
+s_xor_b64                      sdst,     ssrc0,     ssrc1
+s_bitcmp0_b32                  ssrc0,    ssrc1
+s_bitcmp0_b64                  ssrc0,    ssrc1:u32
+s_bitcmp1_b32                  ssrc0,    ssrc1
+s_bitcmp1_b64                  ssrc0,    ssrc1:u32
+s_cmp_eq_i32                   ssrc0,    ssrc1
+s_cmp_eq_u32                   ssrc0,    ssrc1
+s_cmp_eq_u64                   ssrc0,    ssrc1
+s_cmp_ge_i32                   ssrc0,    ssrc1
+s_cmp_ge_u32                   ssrc0,    ssrc1
+s_cmp_gt_i32                   ssrc0,    ssrc1
+s_cmp_gt_u32                   ssrc0,    ssrc1
+s_cmp_le_i32                   ssrc0,    ssrc1
+s_cmp_le_u32                   ssrc0,    ssrc1
+s_cmp_lg_i32                   ssrc0,    ssrc1
+s_cmp_lg_u32                   ssrc0,    ssrc1
+s_cmp_lg_u64                   ssrc0,    ssrc1
+s_cmp_lt_i32                   ssrc0,    ssrc1
+s_cmp_lt_u32                   ssrc0,    ssrc1
+s_set_gpr_idx_on               ssrc,     imask
+s_setvskip                     ssrc0,    ssrc1
+s_addk_i32                     sdst,     imm16
+s_cbranch_i_fork                         ssrc,     label
+s_cmovk_i32                    sdst,     imm16
+s_cmpk_eq_i32                            ssrc,     imm16
+s_cmpk_eq_u32                            ssrc,     imm16
+s_cmpk_ge_i32                            ssrc,     imm16
+s_cmpk_ge_u32                            ssrc,     imm16
+s_cmpk_gt_i32                            ssrc,     imm16
+s_cmpk_gt_u32                            ssrc,     imm16
+s_cmpk_le_i32                            ssrc,     imm16
+s_cmpk_le_u32                            ssrc,     imm16
+s_cmpk_lg_i32                            ssrc,     imm16
+s_cmpk_lg_u32                            ssrc,     imm16
+s_cmpk_lt_i32                            ssrc,     imm16
+s_cmpk_lt_u32                            ssrc,     imm16
+s_getreg_b32                   sdst,     hwreg
+s_movk_i32                     sdst,     imm16
+s_mulk_i32                     sdst,     imm16
+s_setreg_b32                   hwreg,    ssrc
+s_setreg_imm32_b32             hwreg,    imm32
+s_barrier
+s_branch                       label
+s_cbranch_cdbgsys              label
+s_cbranch_cdbgsys_and_user     label
+s_cbranch_cdbgsys_or_user      label
+s_cbranch_cdbguser             label
+s_cbranch_execnz               label
+s_cbranch_execz                label
+s_cbranch_scc0                 label
+s_cbranch_scc1                 label
+s_cbranch_vccnz                label
+s_cbranch_vccz                 label
+s_decperflevel                 imm16
+s_endpgm
+s_endpgm_saved
+s_icache_inv
+s_incperflevel                 imm16
+s_nop                          imm16
+s_sendmsg                      msg
+s_sendmsghalt                  msg
+s_set_gpr_idx_mode             imask
+s_set_gpr_idx_off
+s_sethalt                      imm16
+s_setkill                      imm16
+s_setprio                      imm16
+s_sleep                        imm16
+s_trap                         imm16
+s_ttracedata
+s_waitcnt                      waitcnt
+s_wakeup
+v_interp_mov_f32               vdst,     param:b32, attr:b32
+v_interp_p1_f32                vdst,     vsrc,      attr:b32
+v_interp_p2_f32                vdst,     vsrc,      attr:b32
+v_bfrev_b32                    vdst,     src
+v_ceil_f16                     vdst,     src
+v_ceil_f32                     vdst,     src
+v_ceil_f64                     vdst,     src
+v_clrexcp
+v_cos_f16                      vdst,     src
+v_cos_f32                      vdst,     src
+v_cvt_f16_f32                  vdst,     src
+v_cvt_f16_i16                  vdst,     src
+v_cvt_f16_u16                  vdst,     src
+v_cvt_f32_f16                  vdst,     src
+v_cvt_f32_f64                  vdst,     src
+v_cvt_f32_i32                  vdst,     src
+v_cvt_f32_u32                  vdst,     src
+v_cvt_f32_ubyte0               vdst,     src
+v_cvt_f32_ubyte1               vdst,     src
+v_cvt_f32_ubyte2               vdst,     src
+v_cvt_f32_ubyte3               vdst,     src
+v_cvt_f64_f32                  vdst,     src
+v_cvt_f64_i32                  vdst,     src
+v_cvt_f64_u32                  vdst,     src
+v_cvt_flr_i32_f32              vdst,     src
+v_cvt_i16_f16                  vdst,     src
+v_cvt_i32_f32                  vdst,     src
+v_cvt_i32_f64                  vdst,     src
+v_cvt_off_f32_i4               vdst,     src
+v_cvt_rpi_i32_f32              vdst,     src
+v_cvt_u16_f16                  vdst,     src
+v_cvt_u32_f32                  vdst,     src
+v_cvt_u32_f64                  vdst,     src
+v_exp_f16                      vdst,     src
+v_exp_f32                      vdst,     src
+v_exp_legacy_f32               vdst,     src
+v_ffbh_i32                     vdst,     src
+v_ffbh_u32                     vdst,     src
+v_ffbl_b32                     vdst,     src
+v_floor_f16                    vdst,     src
+v_floor_f32                    vdst,     src
+v_floor_f64                    vdst,     src
+v_fract_f16                    vdst,     src
+v_fract_f32                    vdst,     src
+v_fract_f64                    vdst,     src
+v_frexp_exp_i16_f16            vdst,     src
+v_frexp_exp_i32_f32            vdst,     src
+v_frexp_exp_i32_f64            vdst,     src
+v_frexp_mant_f16               vdst,     src
+v_frexp_mant_f32               vdst,     src
+v_frexp_mant_f64               vdst,     src
+v_log_f16                      vdst,     src
+v_log_f32                      vdst,     src
+v_log_legacy_f32               vdst,     src
+v_mov_b32                      vdst,     src
+v_mov_fed_b32                  vdst,     src
+v_movreld_b32                  vdst,     src
+v_movrels_b32                  vdst,     vsrc
+v_movrelsd_b32                 vdst,     vsrc
+v_nop
+v_not_b32                      vdst,     src
+v_rcp_f16                      vdst,     src
+v_rcp_f32                      vdst,     src
+v_rcp_f64                      vdst,     src
+v_rcp_iflag_f32                vdst,     src
+v_readfirstlane_b32            sdst,     vsrc
+v_rndne_f16                    vdst,     src
+v_rndne_f32                    vdst,     src
+v_rndne_f64                    vdst,     src
+v_rsq_f16                      vdst,     src
+v_rsq_f32                      vdst,     src
+v_rsq_f64                      vdst,     src
+v_sin_f16                      vdst,     src
+v_sin_f32                      vdst,     src
+v_sqrt_f16                     vdst,     src
+v_sqrt_f32                     vdst,     src
+v_sqrt_f64                     vdst,     src
+v_trunc_f16                    vdst,     src
+v_trunc_f32                    vdst,     src
+v_trunc_f64                    vdst,     src
+v_add_f16             vdst,      src0,        vsrc1
+v_add_f32             vdst,      src0,        vsrc1
+v_add_u16             vdst,      src0,        vsrc1
+v_add_u32             vdst, vcc, src0,        vsrc1
+v_addc_u32            vdst, vcc, src0,        vsrc1,      vcc
+v_and_b32             vdst,      src0,        vsrc1
+v_ashrrev_i16         vdst,      src0:u16,    vsrc1
+v_ashrrev_i32         vdst,      src0:u32,    vsrc1
+v_cndmask_b32         vdst,      src0,        vsrc1,      vcc
+v_ldexp_f16           vdst,      src0,        vsrc1:i16
+v_lshlrev_b16         vdst,      src0:u16,    vsrc1
+v_lshlrev_b32         vdst,      src0:u32,    vsrc1
+v_lshrrev_b16         vdst,      src0:u16,    vsrc1
+v_lshrrev_b32         vdst,      src0:u32,    vsrc1
+v_mac_f16             vdst,      src0,        vsrc1
+v_mac_f32             vdst,      src0,        vsrc1
+v_madak_f16           vdst,      src0,        vsrc1,      imm32
+v_madak_f32           vdst,      src0,        vsrc1,      imm32
+v_madmk_f16           vdst,      src0,        imm32,      vsrc2
+v_madmk_f32           vdst,      src0,        imm32,      vsrc2
+v_max_f16             vdst,      src0,        vsrc1
+v_max_f32             vdst,      src0,        vsrc1
+v_max_i16             vdst,      src0,        vsrc1
+v_max_i32             vdst,      src0,        vsrc1
+v_max_u16             vdst,      src0,        vsrc1
+v_max_u32             vdst,      src0,        vsrc1
+v_min_f16             vdst,      src0,        vsrc1
+v_min_f32             vdst,      src0,        vsrc1
+v_min_i16             vdst,      src0,        vsrc1
+v_min_i32             vdst,      src0,        vsrc1
+v_min_u16             vdst,      src0,        vsrc1
+v_min_u32             vdst,      src0,        vsrc1
+v_mul_f16             vdst,      src0,        vsrc1
+v_mul_f32             vdst,      src0,        vsrc1
+v_mul_hi_i32_i24      vdst,      src0,        vsrc1
+v_mul_hi_u32_u24      vdst,      src0,        vsrc1
+v_mul_i32_i24         vdst,      src0,        vsrc1
+v_mul_legacy_f32      vdst,      src0,        vsrc1
+v_mul_lo_u16          vdst,      src0,        vsrc1
+v_mul_u32_u24         vdst,      src0,        vsrc1
+v_or_b32              vdst,      src0,        vsrc1
+v_sub_f16             vdst,      src0,        vsrc1
+v_sub_f32             vdst,      src0,        vsrc1
+v_sub_u16             vdst,      src0,        vsrc1
+v_sub_u32             vdst, vcc, src0,        vsrc1
+v_subb_u32            vdst, vcc, src0,        vsrc1,      vcc
+v_subbrev_u32         vdst, vcc, src0,        vsrc1,      vcc
+v_subrev_f16          vdst,      src0,        vsrc1
+v_subrev_f32          vdst,      src0,        vsrc1
+v_subrev_u16          vdst,      src0,        vsrc1
+v_subrev_u32          vdst, vcc, src0,        vsrc1
+v_xor_b32             vdst,      src0,        vsrc1
+v_add_f64               vdst,               src0:m,      src1:m                      clamp omod
+v_alignbit_b32          vdst,               src0,        src1,       src2
+v_alignbyte_b32         vdst,               src0,        src1,       src2
+v_ashrrev_i64           vdst,               src0:u32,    src1
+v_bcnt_u32_b32          vdst,               src0,        src1
+v_bfe_i32               vdst,               src0,        src1:u32,   src2:u32
+v_bfe_u32               vdst,               src0,        src1,       src2
+v_bfi_b32               vdst,               src0,        src1,       src2
+v_bfm_b32               vdst,               src0,        src1
+v_cubeid_f32            vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cubema_f32            vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cubesc_f32            vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cubetc_f32            vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_cvt_pk_i16_i32        vdst,               src0,        src1
+v_cvt_pk_u16_u32        vdst,               src0,        src1
+v_cvt_pk_u8_f32         vdst,               src0:m,      src1:u32,   src2:u32
+v_cvt_pkaccum_u8_f32    vdst,               src0:m,      src1:u32
+v_cvt_pknorm_i16_f32    vdst,               src0:m,      src1:m
+v_cvt_pknorm_u16_f32    vdst,               src0:m,      src1:m
+v_cvt_pkrtz_f16_f32     vdst,               src0:m,      src1:m
+v_div_fixup_f16         vdst,               src0:m,      src1:m,     src2:m          clamp
+v_div_fixup_f32         vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_fixup_f64         vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_fmas_f32          vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_fmas_f64          vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_div_scale_f32         vdst,      vcc,     src0,        src1,       src2
+v_div_scale_f64         vdst,      vcc,     src0,        src1,       src2
+v_fma_f16               vdst,               src0:m,      src1:m,     src2:m          clamp
+v_fma_f32               vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_fma_f64               vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_interp_p1ll_f16       vdst:f32,           vsrc:m:f32,  attr:b32                    high clamp omod
+v_interp_p1lv_f16       vdst:f32,           vsrc0:m:f32, attr:b32,   vsrc2:m:f16x2   high clamp omod
+v_interp_p2_f16         vdst,               vsrc0:m:f32, attr:b32,   vsrc2:m:f32     high clamp
+v_ldexp_f32             vdst,               src0:m,      src1:i32                    clamp omod
+v_ldexp_f64             vdst,               src0:m,      src1:i32                    clamp omod
+v_lerp_u8               vdst:u32,           src0:b32,    src1:b32,   src2:b32
+v_lshlrev_b64           vdst,               src0:u32,    src1
+v_lshrrev_b64           vdst,               src0:u32,    src1
+v_mad_f16               vdst,               src0:m,      src1:m,     src2:m          clamp
+v_mad_f32               vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_mad_i16               vdst,               src0,        src1,       src2            clamp
+v_mad_i32_i24           vdst,               src0,        src1,       src2:i32        clamp
+v_mad_i64_i32           vdst,      sdst,    src0,        src1,       src2:i64        clamp
+v_mad_legacy_f32        vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_mad_u16               vdst,               src0,        src1,       src2            clamp
+v_mad_u32_u24           vdst,               src0,        src1,       src2:u32        clamp
+v_mad_u64_u32           vdst,      sdst,    src0,        src1,       src2:u64        clamp
+v_max3_f32              vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_max3_i32              vdst,               src0,        src1,       src2
+v_max3_u32              vdst,               src0,        src1,       src2
+v_max_f64               vdst,               src0:m,      src1:m                      clamp omod
+v_mbcnt_hi_u32_b32      vdst,               src0,        src1
+v_mbcnt_lo_u32_b32      vdst,               src0,        src1
+v_med3_f32              vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_med3_i32              vdst,               src0,        src1,       src2
+v_med3_u32              vdst,               src0,        src1,       src2
+v_min3_f32              vdst,               src0:m,      src1:m,     src2:m          clamp omod
+v_min3_i32              vdst,               src0,        src1,       src2
+v_min3_u32              vdst,               src0,        src1,       src2
+v_min_f64               vdst,               src0:m,      src1:m                      clamp omod
+v_mqsad_pk_u16_u8       vdst:b64,           src0:b64,    src1:b32,   src2:b64        clamp
+v_mqsad_u32_u8          vdst:b128,          src0:b64,    src1:b32,   vsrc2:b128      clamp
+v_msad_u8               vdst:u32,           src0:b32,    src1:b32,   src2:b32        clamp
+v_mul_f64               vdst,               src0:m,      src1:m                      clamp omod
+v_mul_hi_i32            vdst,               src0,        src1
+v_mul_hi_u32            vdst,               src0,        src1
+v_mul_lo_u32            vdst,               src0,        src1
+v_perm_b32              vdst,               src0,        src1,       src2
+v_qsad_pk_u16_u8        vdst:b64,           src0:b64,    src1:b32,   src2:b64        clamp
+v_readlane_b32          sdst,               vsrc0,       ssrc1
+v_sad_hi_u8             vdst:u32,           src0:u8x4,   src1:u8x4,  src2:u32        clamp
+v_sad_u16               vdst:u32,           src0:u16x2,  src1:u16x2, src2:u32        clamp
+v_sad_u32               vdst,               src0,        src1,       src2            clamp
+v_sad_u8                vdst:u32,           src0:u8x4,   src1:u8x4,  src2:u32        clamp
+v_trig_preop_f64        vdst,               src0:m,      src1:u32                    clamp omod
+v_writelane_b32         vdst,               ssrc0,       ssrc1
+v_cmp_class_f16                vcc,      src0,     vsrc1:b32
+v_cmp_class_f32                vcc,      src0,     vsrc1:b32
+v_cmp_class_f64                vcc,      src0,     vsrc1:b32
+v_cmp_eq_f16                   vcc,      src0,     vsrc1
+v_cmp_eq_f32                   vcc,      src0,     vsrc1
+v_cmp_eq_f64                   vcc,      src0,     vsrc1
+v_cmp_eq_i16                   vcc,      src0,     vsrc1
+v_cmp_eq_i32                   vcc,      src0,     vsrc1
+v_cmp_eq_i64                   vcc,      src0,     vsrc1
+v_cmp_eq_u16                   vcc,      src0,     vsrc1
+v_cmp_eq_u32                   vcc,      src0,     vsrc1
+v_cmp_eq_u64                   vcc,      src0,     vsrc1
+v_cmp_f_f16                    vcc,      src0,     vsrc1
+v_cmp_f_f32                    vcc,      src0,     vsrc1
+v_cmp_f_f64                    vcc,      src0,     vsrc1
+v_cmp_f_i16                    vcc,      src0,     vsrc1
+v_cmp_f_i32                    vcc,      src0,     vsrc1
+v_cmp_f_i64                    vcc,      src0,     vsrc1
+v_cmp_f_u16                    vcc,      src0,     vsrc1
+v_cmp_f_u32                    vcc,      src0,     vsrc1
+v_cmp_f_u64                    vcc,      src0,     vsrc1
+v_cmp_ge_f16                   vcc,      src0,     vsrc1
+v_cmp_ge_f32                   vcc,      src0,     vsrc1
+v_cmp_ge_f64                   vcc,      src0,     vsrc1
+v_cmp_ge_i16                   vcc,      src0,     vsrc1
+v_cmp_ge_i32                   vcc,      src0,     vsrc1
+v_cmp_ge_i64                   vcc,      src0,     vsrc1
+v_cmp_ge_u16                   vcc,      src0,     vsrc1
+v_cmp_ge_u32                   vcc,      src0,     vsrc1
+v_cmp_ge_u64                   vcc,      src0,     vsrc1
+v_cmp_gt_f16                   vcc,      src0,     vsrc1
+v_cmp_gt_f32                   vcc,      src0,     vsrc1
+v_cmp_gt_f64                   vcc,      src0,     vsrc1
+v_cmp_gt_i16                   vcc,      src0,     vsrc1
+v_cmp_gt_i32                   vcc,      src0,     vsrc1
+v_cmp_gt_i64                   vcc,      src0,     vsrc1
+v_cmp_gt_u16                   vcc,      src0,     vsrc1
+v_cmp_gt_u32                   vcc,      src0,     vsrc1
+v_cmp_gt_u64                   vcc,      src0,     vsrc1
+v_cmp_le_f16                   vcc,      src0,     vsrc1
+v_cmp_le_f32                   vcc,      src0,     vsrc1
+v_cmp_le_f64                   vcc,      src0,     vsrc1
+v_cmp_le_i16                   vcc,      src0,     vsrc1
+v_cmp_le_i32                   vcc,      src0,     vsrc1
+v_cmp_le_i64                   vcc,      src0,     vsrc1
+v_cmp_le_u16                   vcc,      src0,     vsrc1
+v_cmp_le_u32                   vcc,      src0,     vsrc1
+v_cmp_le_u64                   vcc,      src0,     vsrc1
+v_cmp_lg_f16                   vcc,      src0,     vsrc1
+v_cmp_lg_f32                   vcc,      src0,     vsrc1
+v_cmp_lg_f64                   vcc,      src0,     vsrc1
+v_cmp_lt_f16                   vcc,      src0,     vsrc1
+v_cmp_lt_f32                   vcc,      src0,     vsrc1
+v_cmp_lt_f64                   vcc,      src0,     vsrc1
+v_cmp_lt_i16                   vcc,      src0,     vsrc1
+v_cmp_lt_i32                   vcc,      src0,     vsrc1
+v_cmp_lt_i64                   vcc,      src0,     vsrc1
+v_cmp_lt_u16                   vcc,      src0,     vsrc1
+v_cmp_lt_u32                   vcc,      src0,     vsrc1
+v_cmp_lt_u64                   vcc,      src0,     vsrc1
+v_cmp_ne_i16                   vcc,      src0,     vsrc1
+v_cmp_ne_i32                   vcc,      src0,     vsrc1
+v_cmp_ne_i64                   vcc,      src0,     vsrc1
+v_cmp_ne_u16                   vcc,      src0,     vsrc1
+v_cmp_ne_u32                   vcc,      src0,     vsrc1
+v_cmp_ne_u64                   vcc,      src0,     vsrc1
+v_cmp_neq_f16                  vcc,      src0,     vsrc1
+v_cmp_neq_f32                  vcc,      src0,     vsrc1
+v_cmp_neq_f64                  vcc,      src0,     vsrc1
+v_cmp_nge_f16                  vcc,      src0,     vsrc1
+v_cmp_nge_f32                  vcc,      src0,     vsrc1
+v_cmp_nge_f64                  vcc,      src0,     vsrc1
+v_cmp_ngt_f16                  vcc,      src0,     vsrc1
+v_cmp_ngt_f32                  vcc,      src0,     vsrc1
+v_cmp_ngt_f64                  vcc,      src0,     vsrc1
+v_cmp_nle_f16                  vcc,      src0,     vsrc1
+v_cmp_nle_f32                  vcc,      src0,     vsrc1
+v_cmp_nle_f64                  vcc,      src0,     vsrc1
+v_cmp_nlg_f16                  vcc,      src0,     vsrc1
+v_cmp_nlg_f32                  vcc,      src0,     vsrc1
+v_cmp_nlg_f64                  vcc,      src0,     vsrc1
+v_cmp_nlt_f16                  vcc,      src0,     vsrc1
+v_cmp_nlt_f32                  vcc,      src0,     vsrc1
+v_cmp_nlt_f64                  vcc,      src0,     vsrc1
+v_cmp_o_f16                    vcc,      src0,     vsrc1
+v_cmp_o_f32                    vcc,      src0,     vsrc1
+v_cmp_o_f64                    vcc,      src0,     vsrc1
+v_cmp_t_i16                    vcc,      src0,     vsrc1
+v_cmp_t_i32                    vcc,      src0,     vsrc1
+v_cmp_t_i64                    vcc,      src0,     vsrc1
+v_cmp_t_u16                    vcc,      src0,     vsrc1
+v_cmp_t_u32                    vcc,      src0,     vsrc1
+v_cmp_t_u64                    vcc,      src0,     vsrc1
+v_cmp_tru_f16                  vcc,      src0,     vsrc1
+v_cmp_tru_f32                  vcc,      src0,     vsrc1
+v_cmp_tru_f64                  vcc,      src0,     vsrc1
+v_cmp_u_f16                    vcc,      src0,     vsrc1
+v_cmp_u_f32                    vcc,      src0,     vsrc1
+v_cmp_u_f64                    vcc,      src0,     vsrc1
+v_cmpx_class_f16               vcc,      src0,     vsrc1:b32
+v_cmpx_class_f32               vcc,      src0,     vsrc1:b32
+v_cmpx_class_f64               vcc,      src0,     vsrc1:b32
+v_cmpx_eq_f16                  vcc,      src0,     vsrc1
+v_cmpx_eq_f32                  vcc,      src0,     vsrc1
+v_cmpx_eq_f64                  vcc,      src0,     vsrc1
+v_cmpx_eq_i16                  vcc,      src0,     vsrc1
+v_cmpx_eq_i32                  vcc,      src0,     vsrc1
+v_cmpx_eq_i64                  vcc,      src0,     vsrc1
+v_cmpx_eq_u16                  vcc,      src0,     vsrc1
+v_cmpx_eq_u32                  vcc,      src0,     vsrc1
+v_cmpx_eq_u64                  vcc,      src0,     vsrc1
+v_cmpx_f_f16                   vcc,      src0,     vsrc1
+v_cmpx_f_f32                   vcc,      src0,     vsrc1
+v_cmpx_f_f64                   vcc,      src0,     vsrc1
+v_cmpx_f_i16                   vcc,      src0,     vsrc1
+v_cmpx_f_i32                   vcc,      src0,     vsrc1
+v_cmpx_f_i64                   vcc,      src0,     vsrc1
+v_cmpx_f_u16                   vcc,      src0,     vsrc1
+v_cmpx_f_u32                   vcc,      src0,     vsrc1
+v_cmpx_f_u64                   vcc,      src0,     vsrc1
+v_cmpx_ge_f16                  vcc,      src0,     vsrc1
+v_cmpx_ge_f32                  vcc,      src0,     vsrc1
+v_cmpx_ge_f64                  vcc,      src0,     vsrc1
+v_cmpx_ge_i16                  vcc,      src0,     vsrc1
+v_cmpx_ge_i32                  vcc,      src0,     vsrc1
+v_cmpx_ge_i64                  vcc,      src0,     vsrc1
+v_cmpx_ge_u16                  vcc,      src0,     vsrc1
+v_cmpx_ge_u32                  vcc,      src0,     vsrc1
+v_cmpx_ge_u64                  vcc,      src0,     vsrc1
+v_cmpx_gt_f16                  vcc,      src0,     vsrc1
+v_cmpx_gt_f32                  vcc,      src0,     vsrc1
+v_cmpx_gt_f64                  vcc,      src0,     vsrc1
+v_cmpx_gt_i16                  vcc,      src0,     vsrc1
+v_cmpx_gt_i32                  vcc,      src0,     vsrc1
+v_cmpx_gt_i64                  vcc,      src0,     vsrc1
+v_cmpx_gt_u16                  vcc,      src0,     vsrc1
+v_cmpx_gt_u32                  vcc,      src0,     vsrc1
+v_cmpx_gt_u64                  vcc,      src0,     vsrc1
+v_cmpx_le_f16                  vcc,      src0,     vsrc1
+v_cmpx_le_f32                  vcc,      src0,     vsrc1
+v_cmpx_le_f64                  vcc,      src0,     vsrc1
+v_cmpx_le_i16                  vcc,      src0,     vsrc1
+v_cmpx_le_i32                  vcc,      src0,     vsrc1
+v_cmpx_le_i64                  vcc,      src0,     vsrc1
+v_cmpx_le_u16                  vcc,      src0,     vsrc1
+v_cmpx_le_u32                  vcc,      src0,     vsrc1
+v_cmpx_le_u64                  vcc,      src0,     vsrc1
+v_cmpx_lg_f16                  vcc,      src0,     vsrc1
+v_cmpx_lg_f32                  vcc,      src0,     vsrc1
+v_cmpx_lg_f64                  vcc,      src0,     vsrc1
+v_cmpx_lt_f16                  vcc,      src0,     vsrc1
+v_cmpx_lt_f32                  vcc,      src0,     vsrc1
+v_cmpx_lt_f64                  vcc,      src0,     vsrc1
+v_cmpx_lt_i16                  vcc,      src0,     vsrc1
+v_cmpx_lt_i32                  vcc,      src0,     vsrc1
+v_cmpx_lt_i64                  vcc,      src0,     vsrc1
+v_cmpx_lt_u16                  vcc,      src0,     vsrc1
+v_cmpx_lt_u32                  vcc,      src0,     vsrc1
+v_cmpx_lt_u64                  vcc,      src0,     vsrc1
+v_cmpx_ne_i16                  vcc,      src0,     vsrc1
+v_cmpx_ne_i32                  vcc,      src0,     vsrc1
+v_cmpx_ne_i64                  vcc,      src0,     vsrc1
+v_cmpx_ne_u16                  vcc,      src0,     vsrc1
+v_cmpx_ne_u32                  vcc,      src0,     vsrc1
+v_cmpx_ne_u64                  vcc,      src0,     vsrc1
+v_cmpx_neq_f16                 vcc,      src0,     vsrc1
+v_cmpx_neq_f32                 vcc,      src0,     vsrc1
+v_cmpx_neq_f64                 vcc,      src0,     vsrc1
+v_cmpx_nge_f16                 vcc,      src0,     vsrc1
+v_cmpx_nge_f32                 vcc,      src0,     vsrc1
+v_cmpx_nge_f64                 vcc,      src0,     vsrc1
+v_cmpx_ngt_f16                 vcc,      src0,     vsrc1
+v_cmpx_ngt_f32                 vcc,      src0,     vsrc1
+v_cmpx_ngt_f64                 vcc,      src0,     vsrc1
+v_cmpx_nle_f16                 vcc,      src0,     vsrc1
+v_cmpx_nle_f32                 vcc,      src0,     vsrc1
+v_cmpx_nle_f64                 vcc,      src0,     vsrc1
+v_cmpx_nlg_f16                 vcc,      src0,     vsrc1
+v_cmpx_nlg_f32                 vcc,      src0,     vsrc1
+v_cmpx_nlg_f64                 vcc,      src0,     vsrc1
+v_cmpx_nlt_f16                 vcc,      src0,     vsrc1
+v_cmpx_nlt_f32                 vcc,      src0,     vsrc1
+v_cmpx_nlt_f64                 vcc,      src0,     vsrc1
+v_cmpx_o_f16                   vcc,      src0,     vsrc1
+v_cmpx_o_f32                   vcc,      src0,     vsrc1
+v_cmpx_o_f64                   vcc,      src0,     vsrc1
+v_cmpx_t_i16                   vcc,      src0,     vsrc1
+v_cmpx_t_i32                   vcc,      src0,     vsrc1
+v_cmpx_t_i64                   vcc,      src0,     vsrc1
+v_cmpx_t_u16                   vcc,      src0,     vsrc1
+v_cmpx_t_u32                   vcc,      src0,     vsrc1
+v_cmpx_t_u64                   vcc,      src0,     vsrc1
+v_cmpx_tru_f16                 vcc,      src0,     vsrc1
+v_cmpx_tru_f32                 vcc,      src0,     vsrc1
+v_cmpx_tru_f64                 vcc,      src0,     vsrc1
+v_cmpx_u_f16                   vcc,      src0,     vsrc1
+v_cmpx_u_f32                   vcc,      src0,     vsrc1
+v_cmpx_u_f64                   vcc,      src0,     vsrc1

@@ -11,10 +11,10 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
     [Name(nameof(NavigableSymbolSourceProvider))]
     internal sealed class NavigableSymbolSourceProvider : INavigableSymbolSourceProvider
     {
-        private readonly NavigationTokenService _navigationService;
+        private readonly INavigationTokenService _navigationService;
 
         [ImportingConstructor]
-        public NavigableSymbolSourceProvider(NavigationTokenService navigationService)
+        public NavigableSymbolSourceProvider(INavigationTokenService navigationService)
         {
             _navigationService = navigationService;
         }

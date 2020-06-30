@@ -11,6 +11,9 @@ using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Options;
 using System.ComponentModel.Composition;
 using System.Threading;
+using VSRAD.Syntax.Parser.RadAsm2;
+using VSRAD.Syntax.Parser.RadAsm;
+using VSRAD.Syntax.Parser.RadAsmDoc;
 
 namespace VSRAD.Syntax.Parser
 {
@@ -27,8 +30,11 @@ namespace VSRAD.Syntax.Parser
 
         public DocumentAnalysis CreateDocumentAnalysis(ITextBuffer buffer)
         {
-            if (buffer.CurrentSnapshot.IsRadeonAsm2ContentType())
+            var asmType = buffer.CurrentSnapshot.GetAsmType();
+            if (asmType == AsmType.RadAsm2)
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(), buffer, _instructionListManager));
+            else if (asmType == AsmType.RadAsmDoc)
+                return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(), buffer, _instructionListManager));
             else
                 return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmLexer(), new AsmParser(), buffer, _instructionListManager));
         }
@@ -50,16 +56,6 @@ namespace VSRAD.Syntax.Parser
         public Helper.SortedSet<TrackingToken> LastLexerResult;
         public IReadOnlyList<IBlock> LastParserResult;
 
-        public int IDENTIFIER => _lexer.IDENTIFIER;
-        public int LINE_COMMENT => _lexer.LINE_COMMENT;
-        public int BLOCK_COMMENT => _lexer.BLOCK_COMMENT;
-        public int LPAREN => _lexer.LPAREN;
-        public int RPAREN => _lexer.RPAREN;
-        public int LSQUAREBRACKET => _lexer.LSQUAREBRACKET;
-        public int RSQUAREBRACKET => _lexer.RSQUAREBRACKET;
-        public int LCURVEBRACKET => _lexer.LCURVEBRACKET;
-        public int RCURVEBRACKET => _lexer.RCURVEBRACKET;
-
         public ITextSnapshot CurrentSnapshot
         {
             get { return _comparer.Version; }
@@ -77,7 +73,7 @@ namespace VSRAD.Syntax.Parser
 
             buffer.Changed += BufferChanged;
             instructionListManager.InstructionUpdated += InstructionListUpdated;
-            _parser.UpdateInstructionSet(instructionListManager.InstructionList);
+            _parser.UpdateInstructionSet(instructionListManager.InstructionList.Keys.ToList());
             Initialize();
         }
 
