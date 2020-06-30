@@ -125,8 +125,8 @@ namespace VSRAD.Syntax.FunctionList
         private void ByName_Click(object sender, RoutedEventArgs e)
         {
             FunctionListSortState = FunctionListSortState != SortState.ByName
-                ? SortState.ByNameDescending
-                : SortState.ByName;
+                ? SortState.ByName
+                : SortState.ByNameDescending;
 
             SortAndReloadFunctionList();
         }
@@ -164,10 +164,11 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ResizeFunctionListColumns()
         {
-            functionsGridView.Columns[0].Width = isHideLineNumber ? 0 : double.NaN;
+            functionsGridView.Columns[0].Width = 0;
+            if (!isHideLineNumber)
+                functionsGridView.Columns[0].Width = double.NaN;
 
-            functionsGridView.Columns[1].Width = 0;
-            functionsGridView.Columns[1].Width = double.NaN;
+            functionsGridView.Columns[1].Width = tokens.ActualWidth - functionsGridView.Columns[0].ActualWidth;
 
             tokens.UpdateLayout();
             LineNumberButtonColumn.Width = new GridLength(functionsGridView.Columns[0].ActualWidth);
