@@ -31,8 +31,6 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
             if (diff == 0 || width < 30)
                 return;
 
-            var fullDiff = Cursor.Position.X - _scaleState.InitialX;
-
             _tableState.ResizeController.BeginBulkColumnWidthChange();
 
             var scrollingOffset = (int)(width * _scaleState.VisibleColumnsToLeftOutOfView + width * _scaleState.FirstColumnInvisisblePart);

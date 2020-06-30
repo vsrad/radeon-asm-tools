@@ -111,46 +111,6 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
             }
         }
 
-
-
-        public void NormalizeSpecialColumnsWidth()
-        {
-            _tableState.ResizeController.BeginBulkColumnWidthChange();
-            var offset = _table.HorizontalScrollingOffset;
-            // if first column is not displayed - make it as wide as others
-            if (!_table.Columns[_scaleState.FirstVisibleIndex].Displayed)
-            {
-                var firstVisibleWidth = _table.Columns[_scaleState.FirstVisibleIndex].Width;
-                _table.Columns[_scaleState.FirstVisibleIndex].Width = _scaleState.CurrentWidth;
-                offset -= firstVisibleWidth - _scaleState.CurrentWidth;
-            }
-            // if first column is dislpayed partly - shrink it
-            else if (_table.Columns[_scaleState.FirstVisibleIndex].Width != _scaleState.CurrentWidth
-                && offset != 0)
-            {
-                var initialWidth = _table.Columns[_scaleState.FirstVisibleIndex].Width;
-                var fistColumnWidth = Math.Max(_table.Columns[_scaleState.FirstVisibleIndex].Width - offset, _scaleState.CurrentWidth);
-                _table.Columns[_scaleState.FirstVisibleIndex].Width = fistColumnWidth;
-                offset = _table.Columns[_scaleState.FirstVisibleIndex].Width != _scaleState.CurrentWidth
-                    ? 0
-                    : _scaleState.CurrentWidth - initialWidth + offset;
-            }
-            // if phantom column is not displayed - hide it
-            if (!_table.Columns[_tableState.PhantomColumnIndex].Displayed)
-                _table.Columns[_tableState.PhantomColumnIndex].Width = 2; // minimum width
-            // if phantom column is displayed partly - shrink it
-            else
-            {
-                var totalWidth = _tableState.ResizeController.GetTotalWidthInBulkColumnWidthChange();
-                var phantomColumnX = totalWidth - _table.Columns[_tableState.PhantomColumnIndex].Width;
-                var currentViewEnd = offset + _scaleState.TableDataAreaWidth;
-                _table.Columns[_tableState.PhantomColumnIndex].Width = currentViewEnd - phantomColumnX;
-            }
-
-            _tableState.ColumnWidth = _scaleState.CurrentWidth;
-            _tableState.ResizeController.CommitBulkColumnWidthChange(offset);
-        }
-
 #if DEBUG
         private int DebugEdgePosition()
         {
