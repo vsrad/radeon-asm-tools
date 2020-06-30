@@ -15,10 +15,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         public int FirstVisibleIndex;
         public int LastVisibleIndex;
         public int CurrentWidth;
-        public int ExtraDiffChunkSize;
-        public int FirstColumnVisibleSize;
-        public int InitialX;
         public float FirstColumnInvisisblePart;
+        public float VisibleBetweenFirstAndTarget;
         public DataGridViewColumn TargetColumn;
         public DataGridViewColumn FirstVisibleColumn;
 
@@ -76,11 +74,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _scaleState.TargetColumn = _table.Columns[index];
             _scaleState.FirstVisibleColumn = _table.Columns[_scaleState.FirstVisibleIndex];
             _scaleState.CurrentWidth = _tableState.ColumnWidth;
-            var columnX = _table.HorizontalScrollingOffset;//_table.GetColumnDisplayRectangle(firstDisplayedIndex, false).X - _table.RowHeadersWidth;
-            _scaleState.ExtraDiffChunkSize = (int)(1 / Math.Abs((((float)columnX % _tableState.ColumnWidth) / _tableState.ColumnWidth)));
-            _scaleState.InitialX = Cursor.Position.X;
-            _scaleState.FirstColumnVisibleSize = columnX % _tableState.ColumnWidth;
             _scaleState.FirstColumnInvisisblePart = FirstColumnInvisiblePart();
+            _scaleState.VisibleBetweenFirstAndTarget = ((float)(_tableState.DataColumns
+                .Where(c => c.Displayed && c.Index < _scaleState.TargetColumn.Index)
+                .Sum(c => c.Width)) / _scaleState.CurrentWidth) + (1.0f - _scaleState.FirstColumnInvisisblePart);
 
 #if DEBUG
             _columnLockScaling.SetDebugEdge();
