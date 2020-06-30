@@ -96,9 +96,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             if (Math.Abs(x - hit.ColumnX) > _maxDistanceFromDivider && Math.Abs(x - hit.ColumnX - state.ColumnWidth) > _maxDistanceFromDivider)
                 return false;
 
-            // can't scale the first visible column
-            var firstVisibleIndex = state.GetFirstVisibleDataColumnIndex();
-            return firstVisibleIndex != -1 && hit.ColumnIndex > firstVisibleIndex;
+            return true;
         }
 
         public void NormalizeSpecialColumnsWidth()
