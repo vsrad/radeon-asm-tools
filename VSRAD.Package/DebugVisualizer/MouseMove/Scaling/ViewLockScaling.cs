@@ -12,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
         private readonly DataGridView _table;
         private TableState _tableState;
         private ScaleState _scaleState;
+        private float _currentFullDiff = 0;
 
         public ViewLockScaling(DataGridView table, TableState tableState, ScaleState scaleState)
         {
@@ -27,8 +28,15 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove.Scaling
 
         public void ScaleDataColumns(int diff)
         {
+            _currentFullDiff += diff;
+            if (diff == 0 || Math.Abs(_currentFullDiff) < _scaleState.VisibleBetweenFirstAndTarget)
+                return;
+
+            diff = (int)(_currentFullDiff / _scaleState.VisibleBetweenFirstAndTarget);
+            _currentFullDiff = 0;
+
             var width = _scaleState.TargetColumn.Width + diff;
-            if (diff == 0 || width < 30)
+            if (width < 30)
                 return;
 
             _tableState.ResizeController.BeginBulkColumnWidthChange();

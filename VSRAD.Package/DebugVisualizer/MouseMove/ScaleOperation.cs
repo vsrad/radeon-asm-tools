@@ -75,9 +75,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _scaleState.FirstVisibleColumn = _table.Columns[_scaleState.FirstVisibleIndex];
             _scaleState.CurrentWidth = _tableState.ColumnWidth;
             _scaleState.FirstColumnInvisisblePart = FirstColumnInvisiblePart();
-            _scaleState.VisibleBetweenFirstAndTarget = ((float)(_tableState.DataColumns
+            _scaleState.VisibleBetweenFirstAndTarget = Math.Max(((float)(_tableState.DataColumns
                 .Where(c => c.Displayed && c.Index < _scaleState.TargetColumn.Index)
-                .Sum(c => c.Width)) / _scaleState.CurrentWidth) + (1.0f - _scaleState.FirstColumnInvisisblePart);
+                .Sum(c => c.Width)) / _scaleState.CurrentWidth), 1.0f);
 
 #if DEBUG
             _columnLockScaling.SetDebugEdge();
