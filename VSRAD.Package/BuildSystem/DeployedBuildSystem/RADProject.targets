@@ -50,10 +50,10 @@
              AssemblyFile="$(MSBuildThisFileDirectory)\VSRAD.BuildTools.dll"/>
 
   <Target Name="Build">
-    <RemoteBuildTask PipeName="$(RadBuildToolsPipe)" />
+    <RemoteBuildTask ProjectDir="$(MSBuildProjectDirectory)" />
   </Target>
 
   <Target Name="Rebuild">
-    <RemoteBuildTask PipeName="$(RadBuildToolsPipe)" />
+    <RemoteBuildTask ProjectDir="$(MSBuildProjectDirectory)" />
   </Target>
 </Project>
