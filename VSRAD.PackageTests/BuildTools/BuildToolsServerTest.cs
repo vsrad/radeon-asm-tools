@@ -141,7 +141,7 @@ namespace VSRAD.Package.BuildTools
             var output = new Mock<IOutputWindowManager>();
             output.Setup((w) => w.GetExecutionResultPane()).Returns(new Mock<IOutputWindowWriter>().Object);
 
-            var server = new BuildToolsServer(projectMock.Object, channel, output.Object, errorProcessor, deployManager);
+            var server = new BuildToolsServer(projectMock.Object, channel, output.Object, errorProcessor, deployManager, null);
             projectMock.Raise((p) => p.Loaded += null, projectMock.Object.Options); // starts the server
             return server;
         }
