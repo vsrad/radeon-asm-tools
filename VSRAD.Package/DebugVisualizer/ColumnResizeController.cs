@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -53,13 +52,39 @@ namespace VSRAD.Package.DebugVisualizer
         {
             BeginBulkColumnWidthChange();
 
-            var widestColumnWidth = _state.DataColumns.Where(c => c.Visible)
-                .Max(c => c.GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true));
+            int widestColumnIndex = 0;
+            int maxApproxWidth = 0;
+
+            var font = _state.Table.DefaultCellStyle.Font;
+
+            // DataGridViewColumn.GetPreferredWidth is expensive, so we call it only once for the widest column,
+            // which is approximated by measuring text width for every cell
+            foreach (DataGridViewRow row in _state.Table.Rows)
+            {
+                foreach (var column in _state.DataColumns)
+                {
+                    if (!column.Visible)
+                        continue;
+
+                    var value = (string)row.Cells[column.Index].Value;
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        var width = TextRenderer.MeasureText(value, font).Width + column.DividerWidth;
+                        if (width > maxApproxWidth)
+                        {
+                            maxApproxWidth = width;
+                            widestColumnIndex = column.Index;
+                        }
+                    }
+                }
+            }
+
+            var preferredWidth = _state.DataColumns[widestColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
 
             foreach (var column in _state.DataColumns)
-                column.Width = widestColumnWidth;
+                column.Width = preferredWidth;
 
-            var scrollingOffset = widestColumnWidth * scrollingOffsetColumnIndex - scrollingOffsetColumnRelStart;
+            var scrollingOffset = preferredWidth * scrollingOffsetColumnIndex - scrollingOffsetColumnRelStart;
             CommitBulkColumnWidthChange(scrollingOffset);
         }
     }
