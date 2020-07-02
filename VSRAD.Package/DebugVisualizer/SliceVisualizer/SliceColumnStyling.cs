@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Documents;
@@ -19,16 +20,29 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             _table = table;
         }
+
+        public ColumnStates this[int index]
+        {
+            get {
+                if (SubgroupSize == 0) return default;
+                var i = index % (int)SubgroupSize;
+                if (i >= ColumnState.Count) return default;
+                return ColumnState[i];
+            }
+        }
         
-        public void GrayOutColumns() => ColumnState.ForEach(s => s |= DebugVisualizer.ColumnStates.Inactive);
+        public void GrayOutColumns() => ColumnState.ForEach(s => s |= ColumnStates.Inactive);
 
         public void Recompute(int subgroupSize, string columnSelector)
         {
+            if (subgroupSize == 0) return;
+            SubgroupSize = (uint)subgroupSize;
             ColumnState.Clear();
             ColumnState.AddRange(new ColumnStates[subgroupSize]);
-            foreach (var i in ColumnSelector.ToIndexes(columnSelector))
+            foreach (var i in ColumnSelector.ToIndexes(columnSelector, 512)) // TODO: remove 512
                 ColumnState[i] |= ColumnStates.Visible;
             ComputeHiddenColumnSeparators(subgroupSize);
+            if (_table.SelectedWatch == null) return;
             Apply(subgroupSize);
         }
 
@@ -45,7 +59,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void ComputeHiddenColumnSeparators(int subgroupSize)
         {
-            for (int i = 0; i < subgroupSize; i++)
+            for (int i = 0; i < subgroupSize - 1; i++)
                 if ((ColumnState[i] & ColumnStates.Visible) != 0 && (ColumnState[i + 1] & ColumnStates.Visible) == 0)
                     ColumnState[i] |= ColumnStates.HasHiddenColumnSeparator;
         }
