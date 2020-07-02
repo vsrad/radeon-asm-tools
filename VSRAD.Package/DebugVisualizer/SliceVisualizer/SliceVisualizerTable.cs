@@ -36,7 +36,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
             _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor);
+            ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
         }
+
+        private void FontAndColorChanged() => Invalidate();
 
         public void SetHeatMapMode(bool value)
         {
