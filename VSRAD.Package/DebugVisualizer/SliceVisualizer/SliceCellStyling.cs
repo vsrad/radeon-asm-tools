@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if ((_columnStyling[dataColumnIndex] & ColumnStates.HasHiddenColumnSeparator) != 0)
             {
                 width = 8;//_appearance.HiddenColumnSeparatorWidth;
-                color = _fontAndColor.FontAndColorState.HiddenColumnSeparatorBrush;
+                color = _fontAndColor.FontAndColorState.SliceHiddenColumnSeparatorBrush;
             }
             else return;
 
