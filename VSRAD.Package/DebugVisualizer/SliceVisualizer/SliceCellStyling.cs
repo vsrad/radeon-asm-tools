@@ -10,14 +10,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly IFontAndColorProvider _fontAndColor;
         private readonly SolidBrush _tableBackgroundBrush;
         private readonly SliceColumnStyling _columnStyling;
+        private readonly Options.VisualizerAppearance _appearance;
 
-        public SliceCellStyling(SliceVisualizerTable table, TableState state, SliceColumnStyling styling, IFontAndColorProvider fontAndColor)
+        public SliceCellStyling(SliceVisualizerTable table, TableState state, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance)
         {
             _table = table;
             _state = state;
             _fontAndColor = fontAndColor;
             _tableBackgroundBrush = new SolidBrush(table.BackgroundColor);
             _columnStyling = styling;
+            _appearance = appearance;
 
             _table.CellPainting += HandleCellPaint;
         }
@@ -60,7 +62,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             if ((_columnStyling[dataColumnIndex] & ColumnStates.HasHiddenColumnSeparator) != 0)
             {
-                width = 8;//_appearance.HiddenColumnSeparatorWidth;
+                width = _appearance.SliceHiddenColumnSeparatorWidth;
                 color = _fontAndColor.FontAndColorState.SliceHiddenColumnSeparatorBrush;
             }
             else return;
