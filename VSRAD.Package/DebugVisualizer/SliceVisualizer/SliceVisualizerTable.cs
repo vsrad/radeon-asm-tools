@@ -14,12 +14,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
         private readonly IFontAndColorProvider _fontAndColor;
+        private readonly Options.VisualizerAppearance _appearance;
 
         private readonly TableState _state;
 
-        public SliceVisualizerTable(IFontAndColorProvider fontAndColor) : base()
+        public SliceVisualizerTable(IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance) : base()
         {
             _fontAndColor = fontAndColor;
+            _appearance = appearance;
 
             DoubleBuffered = true;
             AllowUserToAddRows = false;
@@ -27,7 +29,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
             HeatMapMode = false;
-            ColumnStyling = new SliceColumnStyling(this);
+            ColumnStyling = new SliceColumnStyling(this, _appearance);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
             _state = new TableState(this, 60);
@@ -35,7 +37,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor);
+            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _appearance);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
         }
 
@@ -90,7 +92,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     row.Visible = false;
                 }
             }
-            ColumnStyling.Recompute(subgroupSize, columnSelector);
+            ColumnStyling.Recompute(subgroupSize, columnSelector, _appearance);
         }
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)

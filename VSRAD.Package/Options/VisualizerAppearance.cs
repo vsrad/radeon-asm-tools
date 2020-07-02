@@ -41,6 +41,13 @@ namespace VSRAD.Package.Options
             get => _hiddenColumnSeparatorWidth;
             set => SetField(ref _hiddenColumnSeparatorWidth, value);
         }
+
+        private int _sliceHiddenColumnSeparatorWidth = 8;
+        public int SliceHiddenColumnSeparatorWidth
+        {
+            get => _sliceHiddenColumnSeparatorWidth;
+            set => SetField(ref _sliceHiddenColumnSeparatorWidth, value);
+        }
         #endregion
         private ScalingMode _scalingMode = ScalingMode.ResizeColumn;
 

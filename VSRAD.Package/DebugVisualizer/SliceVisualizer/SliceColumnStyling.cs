@@ -15,10 +15,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public uint SubgroupSize { get; private set; }
 
         private readonly SliceVisualizerTable _table;
+        private readonly Options.VisualizerAppearance _appearance;
 
-        public SliceColumnStyling(SliceVisualizerTable table)
+        public SliceColumnStyling(SliceVisualizerTable table, Options.VisualizerAppearance appearance)
         {
             _table = table;
+            _appearance = appearance;
         }
 
         public ColumnStates this[int index]
@@ -33,7 +35,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         
         public void GrayOutColumns() => ColumnState.ForEach(s => s |= ColumnStates.Inactive);
 
-        public void Recompute(int subgroupSize, string columnSelector)
+        public void Recompute(int subgroupSize, string columnSelector, Options.VisualizerAppearance appearance)
         {
             if (subgroupSize == 0) return;
             SubgroupSize = (uint)subgroupSize;
@@ -53,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 _table.Columns[i + SliceVisualizerTable.DataColumnOffset].Visible =
                     (ColumnState[i % subgroupSize] & ColumnStates.Visible) != 0;
                 if ((ColumnState[i % subgroupSize] & ColumnStates.HasHiddenColumnSeparator) != 0)
-                    _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = 8;//_hiddenColumnSeparatorWidth;
+                    _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = _appearance.SliceHiddenColumnSeparatorWidth;
                 else
                     _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = 0;
             }

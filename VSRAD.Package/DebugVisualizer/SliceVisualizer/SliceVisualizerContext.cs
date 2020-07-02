@@ -12,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<TypedSliceWatchView> WatchSelected;
         public event EventHandler<bool> HeatMapStateChanged;
+        public Action DivierWidthChanged;
 
         public Options.ProjectOptions Options { get; }
 
@@ -32,6 +33,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             Options = options;
             Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
+            Options.VisualizerAppearance.PropertyChanged += AppearanceOptionChanged;
             _visualizerContext = visualizerContext;
             _visualizerContext.GroupFetching += SetupDataFetch;
             _visualizerContext.GroupFetched += DisplayFetchedData;
@@ -44,6 +46,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             _windowVisibilityEvents.WindowShowing -= OnToolWindowVisibilityChanged;
             _windowVisibilityEvents.WindowHiding -= OnToolWindowVisibilityChanged;
+        }
+
+        private void AppearanceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
+                    DivierWidthChanged();
+                    break;
+            }
         }
 
         private void SliceOptionChanged(object sender, PropertyChangedEventArgs e)

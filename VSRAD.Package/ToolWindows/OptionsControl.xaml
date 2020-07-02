@@ -160,6 +160,13 @@
                             <TextBlock Text="%" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Slice Visualizer Hidden Column Separator Width:" VerticalAlignment="Center"/>
+                            <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
+                                            Value="{Binding Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <!--
+>>>>>>> 61717b5... slice visualizer hidden column separator width control
+                        <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Scaling mode:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalAlignment="Center" Margin="5,0,0,0">
@@ -179,6 +186,8 @@
                                             Value="{Binding Options.VisualizerOptions.WavemapElementSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="px" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
+                        
+                        -->
                     </StackPanel>
                 </Expander>
             </StackPanel>
