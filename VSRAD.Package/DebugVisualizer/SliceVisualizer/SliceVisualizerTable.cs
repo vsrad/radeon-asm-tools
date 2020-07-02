@@ -35,7 +35,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, _state, fontAndColor);
+            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor);
         }
 
         public void SetHeatMapMode(bool value)

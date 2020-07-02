@@ -25,7 +25,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (_table.SelectedWatch == null ||
-                e.RowIndex < 0 ||
                 e.ColumnIndex < SliceVisualizerTable.DataColumnOffset ||
                 e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.ColumnCount)
                 return;
@@ -37,30 +36,69 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 return;
             }
 
-            if (_table.HeatMapMode)
+            if (_table.HeatMapMode && e.RowIndex >= 0)
             {
-                if (_table.SelectedWatch.IsSingleWordValue)
-                {
-                    var rel1 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 0);
-                    var rel2 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 1);
-                    var brush1 = new SolidBrush(GetHeatmapColor(rel1));
-                    var brush2 = new SolidBrush(GetHeatmapColor(rel2));
-
-                    e.Graphics.FillRectangle(brush1, new Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
-                    e.Graphics.FillRectangle(brush2, new Rectangle(e.CellBounds.Left + e.CellBounds.Width / 2, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
-                    e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Background);
-                    e.Handled = true;
-                }
-                else
-                {
-                    var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
-                    e.CellStyle.BackColor = GetHeatmapColor(relValue);
-                }
+                HandleHeatMap(e);
             }
             else
             {
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.None];
+            }
+            PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
+        }
+        private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
+        {
+            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+            e.Handled = true;
+        }
+
+        private void PaintColumnSeparators(int dataColumnIndex, DataGridViewCellPaintingEventArgs e)
+        {
+            int width;
+            SolidBrush color;
+
+            if ((_columnStyling[dataColumnIndex] & ColumnStates.HasHiddenColumnSeparator) != 0)
+            {
+                width = 8;//_appearance.HiddenColumnSeparatorWidth;
+                color = _fontAndColor.FontAndColorState.HiddenColumnSeparatorBrush;
+            }
+            else return;
+
+            // We doing force paint of _visible_ part of cell.
+            // Since we have frozen columns visible part of cell
+            // is not necessarily whole cell.
+            var r = e.CellBounds.Left > _table.RowHeadersWidth
+                ? e.CellBounds
+                : new Rectangle(_table.RowHeadersWidth + 1, e.CellBounds.Top, e.CellBounds.Right - _table.RowHeadersWidth - 1, e.CellBounds.Height);
+            r.Width -= width;
+            e.Graphics.SetClip(r);
+            e.Paint(r, DataGridViewPaintParts.All);
+            e.Graphics.SetClip(e.CellBounds);
+            r = new Rectangle(r.Right - 1, r.Top, width + 1, r.Height);
+            e.Graphics.FillRectangle(color, r);
+            e.Graphics.ResetClip();
+            e.Handled = true;
+        }
+
+        private void HandleHeatMap(DataGridViewCellPaintingEventArgs e)
+        {
+            if (_table.SelectedWatch.IsSingleWordValue)
+            {
+                var rel1 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 0);
+                var rel2 = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, word: 1);
+                var brush1 = new SolidBrush(GetHeatmapColor(rel1));
+                var brush2 = new SolidBrush(GetHeatmapColor(rel2));
+
+                e.Graphics.FillRectangle(brush1, new Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
+                e.Graphics.FillRectangle(brush2, new Rectangle(e.CellBounds.Left + e.CellBounds.Width / 2, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
+                e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Background);
+                e.Handled = true;
+            }
+            else
+            {
+                var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
+                e.CellStyle.BackColor = GetHeatmapColor(relValue);
             }
         }
 

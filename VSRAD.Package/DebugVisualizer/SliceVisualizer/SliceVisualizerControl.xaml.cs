@@ -21,6 +21,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             var tableFontAndColor = new FontAndColorProvider();
             _table = new SliceVisualizerTable(tableFontAndColor);
+            _table.ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
             TableHost.Setup(_table);
         }
 
