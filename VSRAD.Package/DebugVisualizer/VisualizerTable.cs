@@ -251,7 +251,7 @@ namespace VSRAD.Package.DebugVisualizer
                     HeaderText = i.ToString(),
                     ReadOnly = true,
                     SortMode = DataGridViewColumnSortMode.NotSortable,
-                    Width = 60
+                    Width = 100
                 };
             _state.AddDataColumns(dataColumns);
         }
@@ -383,6 +383,8 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
             RowHeadersDefaultCellStyle.SelectionForeColor = state.WatchNameForeground;
             RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
+
+            DefaultCellStyle.Font = state.RegularFont;
         }
 
         public void AlignmentChanged(
