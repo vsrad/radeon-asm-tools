@@ -48,17 +48,19 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (system == null)
                 return;
+
+            var wfrontSize = Math.Min(64, GroupSize);
             for (int wfrontOffset = 0; wfrontOffset < GroupSize; wfrontOffset += 64)
             {
                 if (options.CheckMagicNumber && system[wfrontOffset] != options.MagicNumber)
                 {
-                    for (int laneId = 0; laneId < 64; ++laneId)
+                    for (int laneId = 0; laneId < wfrontSize; ++laneId)
                         _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
                 }
                 else if (options.MaskLanes)
                 {
                     var execMask = new BitArray(new[] { (int)system[wfrontOffset + 8], (int)system[wfrontOffset + 9] });
-                    for (int laneId = 0; laneId < 64; ++laneId)
+                    for (int laneId = 0; laneId < wfrontSize; ++laneId)
                         if (!execMask[laneId])
                             _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
                 }
@@ -68,7 +70,7 @@ namespace VSRAD.Package.DebugVisualizer
         private void ComputeLaneGrouping(VisualizerOptions options)
         {
             var laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
-            if (laneGrouping == 0)
+            if (laneGrouping == 0 || laneGrouping > GroupSize)
                 return;
             for (uint start = 0; start < GroupSize - laneGrouping; start += laneGrouping)
             {
