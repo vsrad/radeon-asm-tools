@@ -31,8 +31,6 @@ namespace VSRAD.Package.DebugVisualizer
             var isDataColumn = dataColumnIndex >= 0 && dataColumnIndex < _table.DataColumnCount;
             var isDataRow = e.RowIndex >= 0;
 
-            if (e.ColumnIndex == VisualizerTable.PhantomColumnIndex)
-                HidePhantomColumn(e);
             if (isDataRow)
                 PaintInvalidWatchName(e);
             if (isDataColumn && isDataRow)
@@ -43,11 +41,6 @@ namespace VSRAD.Package.DebugVisualizer
                 PaintColumnSeparators(dataColumnIndex, e);
         }
 
-        private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
-        {
-            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
-            e.Handled = true;
-        }
 
         private void DarkenAlternatingRows(DataGridViewCellPaintingEventArgs e)
         {

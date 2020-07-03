@@ -18,8 +18,7 @@ namespace VSRAD.Package.DebugVisualizer
         public event ChangeWatchState WatchStateChanged;
 
         public const int NameColumnIndex = 0;
-        public const int PhantomColumnIndex = 1;
-        public const int DataColumnOffset = 2; // name + phantom column
+        public const int DataColumnOffset = 1; // name
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
@@ -31,9 +30,6 @@ namespace VSRAD.Package.DebugVisualizer
             get => Rows.Count > 0 && Rows[0].Visible;
             set { if (Rows.Count > 0) Rows[0].Visible = value; }
         }
-
-        //public ContentAlignment NameColumnAlignment = ContentAlignment.Left;
-        //public ContentAlignment DataColumnAlignment = ContentAlignment.Left;
 
         public IEnumerable<DataGridViewRow> DataRows => Rows
             .Cast<DataGridViewRow>()
@@ -77,10 +73,9 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            _state = new TableState(this, columnWidth: 100);
+            _state = new TableState(this, columnWidth: 60);
             SetupColumns();
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
-            Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
@@ -441,6 +436,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
+            if (_state.ScalingMode == ScalingMode.ResizeColumn) // TODO: move to appropriate place
+                _state.RemoveScrollPadding();
+
             if (_mouseMoveController.OperationDidNotFinishOnMouseUp())
                 base.OnMouseDown(e);
 
@@ -471,7 +469,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
-            if (!_state.ResizeController.TableShouldSuppressOnColumnWidthChangedEvent)
+            if (!_state.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
 

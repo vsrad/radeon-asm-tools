@@ -22,12 +22,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (e.ColumnIndex == _state.PhantomColumnIndex)
-            {
-                HidePhantomColumn(e);
-                return;
-            }
-
             if (_table.SelectedWatch == null ||
                 e.RowIndex < 0 ||
                 e.ColumnIndex < SliceVisualizerTable.DataColumnOffset ||
@@ -66,12 +60,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.None];
             }
-        }
-
-        private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
-        {
-            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
-            e.Handled = true;
         }
 
         private Color GetHeatmapColor(float relValue)
