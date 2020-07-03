@@ -60,7 +60,7 @@ namespace VSRAD.Package.DebugVisualizer
             switch (e.PropertyName)
             {
                 case nameof(VisualizerContext.GroupSize):
-                    _table.GroupSizeChanged(_context.GroupSize);
+                    _table.CreateMissingDataColumns((int)_context.GroupSize);
                     RefreshDataStyling();
                     break;
                 case nameof(VisualizerContext.WatchesValid):

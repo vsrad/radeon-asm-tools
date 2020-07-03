@@ -77,7 +77,7 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            _state = new TableState(this, columnWidth: 60);
+            _state = new TableState(this, columnWidth: 100);
             SetupColumns();
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
@@ -96,33 +96,6 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
-        
-        public void GroupSizeChanged(uint groupSize)
-        {
-            var columnsMissing = groupSize - (Columns.Count - DataColumnOffset);
-
-            if (columnsMissing > 0)
-            {
-                var missingColumnStartAt = _state.DataColumns.Count;
-                var columns = new DataGridViewColumn[columnsMissing];
-                for (int i = 0; i < columnsMissing; ++i)
-                {
-                    columns[i] = new DataGridViewTextBoxColumn
-                    {
-                        FillWeight = 1,
-                        ReadOnly = true,
-                        SortMode = DataGridViewColumnSortMode.NotSortable,
-                        Width = _state.ColumnWidth,
-                        HeaderText = (missingColumnStartAt + i).ToString()
-                    };
-                }
-                _state.AddDataColumns(columns);
-                Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
-                DataColumnCount = _state.DataColumns.Count;
-            }
-            for (int i = 0; i < _state.DataColumns.Count; ++i)
-                _state.DataColumns[i].Visible = i < groupSize;
-        }
 
         public void ScaleControls(float scaleFactor)
         {
@@ -233,6 +206,31 @@ namespace VSRAD.Package.DebugVisualizer
             ClearSelection();
         }
 
+        // Make sure ApplyDataStyling is called after creating columns to set column visibility
+        public void CreateMissingDataColumns(int groupSize)
+        {
+            var columnsMissing = groupSize - (Columns.Count - DataColumnOffset);
+            if (columnsMissing > 0)
+            {
+                var missingColumnStartAt = _state.DataColumns.Count;
+                var columns = new DataGridViewColumn[columnsMissing];
+                for (int i = 0; i < columnsMissing; ++i)
+                {
+                    columns[i] = new DataGridViewTextBoxColumn
+                    {
+                        FillWeight = 1,
+                        ReadOnly = true,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                        Width = _state.ColumnWidth,
+                        HeaderText = (missingColumnStartAt + i).ToString()
+                    };
+                }
+                _state.AddDataColumns(columns);
+                Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
+                DataColumnCount = _state.DataColumns.Count;
+            }
+        }
+
         private void SetupColumns()
         {
             Columns.Add(new DataGridViewTextBoxColumn
@@ -243,17 +241,7 @@ namespace VSRAD.Package.DebugVisualizer
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
-
-            var dataColumns = new DataGridViewColumn[DataColumnCount];
-            for (int i = 0; i < DataColumnCount; i++)
-                dataColumns[i] = new DataGridViewTextBoxColumn
-                {
-                    HeaderText = i.ToString(),
-                    ReadOnly = true,
-                    SortMode = DataGridViewColumnSortMode.NotSortable,
-                    Width = 100
-                };
-            _state.AddDataColumns(dataColumns);
+            CreateMissingDataColumns(DataColumnCount);
         }
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
