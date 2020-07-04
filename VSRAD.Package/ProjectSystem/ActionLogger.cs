@@ -30,29 +30,9 @@ namespace VSRAD.Package.ProjectSystem
             var title = tag + " action " + (runResult.Successful ? "SUCCEEDED" : "FAILED") + $" in {runResult.TotalMillis}ms";
 
             var log = new StringBuilder();
-            log.AppendFormat("* Initial timestamp fetch took {0}ms\r\n", runResult.InitTimestampFetchMillis);
-
             var warnings = new StringBuilder();
 
-            var prevStepsSucceeded = true;
-            for (int i = 0; i < runResult.Steps.Count; ++i)
-            {
-                var step = runResult.Steps[i];
-                if (prevStepsSucceeded)
-                {
-                    var result = runResult.StepResults[i];
-                    log.AppendFormat("* [{0}] {1} step {2} in {3}ms\r\n", i, step, result.Successful ? "SUCCEEDED" : "FAILED", runResult.StepRunMillis[i]);
-                    if (!string.IsNullOrEmpty(result.Log))
-                        log.Append(result.Log);
-                    if (!string.IsNullOrEmpty(result.Warning))
-                        warnings.AppendFormat("* {0}\r\n", result.Warning);
-                    prevStepsSucceeded = result.Successful;
-                }
-                else
-                {
-                    log.AppendFormat("* [{0}] {1} step SKIPPED\r\n", i, step);
-                }
-            }
+            var actionSucceeded = LogAction(log, warnings, runResult);
 
             var logString = log.ToString();
             await _outputWriter.PrintMessageAsync(title, logString);
@@ -60,9 +40,41 @@ namespace VSRAD.Package.ProjectSystem
 
             if (warnings.Length == 0)
                 return null;
-            if (!prevStepsSucceeded)
+            if (!actionSucceeded)
                 return new Error(message: warnings.ToString(), critical: true, title: "RAD Action Execution Failed");
             return new Error(message: warnings.ToString(), critical: false, title: "RAD Action Execution Warnings");
+        }
+
+        private bool LogAction(StringBuilder log, StringBuilder warnings, ActionRunResult run, int depth = 0)
+        {
+            var logIndent = new string('=', 2 * depth);
+
+            log.AppendFormat("{0}=> Fetched initial timestamps in {1}ms\r\n", logIndent, run.InitTimestampFetchMillis);
+
+            var prevStepsSucceeded = true;
+            for (int i = 0; i < run.Steps.Count; ++i)
+            {
+                var step = run.Steps[i];
+                if (prevStepsSucceeded)
+                {
+                    var result = run.StepResults[i];
+                    log.AppendFormat("{0}=> [{1}] {2} {3} in {4}ms\r\n", logIndent, i, step, result.Successful ? "SUCCEEDED" : "FAILED", run.StepRunMillis[i]);
+                    if (!string.IsNullOrEmpty(result.Log))
+                        log.Append(result.Log);
+                    if (!string.IsNullOrEmpty(result.Warning))
+                        warnings.AppendFormat("* {0}\r\n", result.Warning);
+                    prevStepsSucceeded = result.Successful;
+
+                    if (run.StepResults[i].SubAction != null)
+                        LogAction(log, warnings, run.StepResults[i].SubAction, depth: depth + 1);
+                }
+                else
+                {
+                    log.AppendFormat("{0}=> [{1}] {2} SKIPPED\r\n", logIndent, i, step);
+                }
+            }
+
+            return prevStepsSucceeded;
         }
     }
 }

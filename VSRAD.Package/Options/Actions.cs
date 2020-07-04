@@ -153,7 +153,7 @@ namespace VSRAD.Package.Options
             EvaluatedSteps = evaluatedSteps;
         }
 
-        public override string ToString() => "Run Action";
+        public override string ToString() => string.IsNullOrEmpty(Name) ? "Run Action" : "Run " + Name;
 
         public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
 

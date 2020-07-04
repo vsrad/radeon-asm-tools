@@ -53,10 +53,13 @@ namespace VSRAD.PackageTests
 
         public static T MakeWithReadOnlyProps<T>(params (string prop, object value)[] properties) where T : new()
         {
-            var state = new T();
+            var obj = new T();
             foreach (var (prop, value) in properties)
-                typeof(T).GetField($"<{prop}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(state, value);
-            return state;
+                SetReadOnlyProp(obj, prop, value);
+            return obj;
         }
+
+        public static void SetReadOnlyProp<T>(T obj, string prop, object value) =>
+            typeof(T).GetField($"<{prop}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(obj, value);
     }
 }
