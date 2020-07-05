@@ -41,7 +41,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _orgMouseX = Cursor.Position.X;
             _orgWidth = _tableState.ColumnWidth;
             _orgScroll = _tableState.GetCurrentScroll();
-            _orgNColumns = _tableState.CountVisibleColumns(hit.ColumnIndex, !leftedge);
+            _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, !leftedge);
             _orgSColumns = _orgScroll / _orgWidth;
             _orgSPixels = _orgScroll % _orgWidth;
 

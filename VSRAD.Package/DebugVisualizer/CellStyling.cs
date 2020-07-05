@@ -29,8 +29,11 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var dataColumnIndex = e.ColumnIndex - VisualizerTable.DataColumnOffset;
             var isDataColumn = dataColumnIndex >= 0 && dataColumnIndex < _table.DataColumnCount;
+            var isPhantomColumn = e.ColumnIndex == VisualizerTable.PhantomColumnIndex;
             var isDataRow = e.RowIndex >= 0;
 
+            if (isPhantomColumn)
+                PaintBackground(e);
             if (isDataRow)
                 PaintInvalidWatchName(e);
             if (isDataColumn && isDataRow)
@@ -41,6 +44,11 @@ namespace VSRAD.Package.DebugVisualizer
                 PaintColumnSeparators(dataColumnIndex, e);
         }
 
+        private void PaintBackground(DataGridViewCellPaintingEventArgs e)
+        {
+            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+            e.Handled = true;
+        }
 
         private void DarkenAlternatingRows(DataGridViewCellPaintingEventArgs e)
         {

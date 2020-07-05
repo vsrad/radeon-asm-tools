@@ -22,6 +22,12 @@ namespace VSRAD.Package.DebugVisualizer
         // and setting AdditionalScrollOffset to negative value
         private int AdditionalScrollOffset = 0;
 
+        // In some cases we want to scroll beyond the last data column
+        // We emulate such scrolling by adding inactive "phantom" column after all data columns
+        // Note that phantom column index in Columns[] list is constant "1", but it always
+        // displayed after all data columns
+        public int PhantomColumnIndex { get; private set; } = -1;
+
         public int GetCurrentScroll()
         {
             return Table.HorizontalScrollingOffset + AdditionalScrollOffset;
@@ -43,8 +49,21 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void AddDataColumns(DataGridViewColumn[] columns)
         {
+            if (PhantomColumnIndex == -1)
+            {
+                PhantomColumnIndex = Table.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    FillWeight = 1,
+                    MinimumWidth = 2,
+                    Width = 2,
+                    ReadOnly = true,
+                    SortMode = DataGridViewColumnSortMode.NotSortable
+                });
+                DataColumnOffset = Table.Columns.Count;
+            }
             _dataColumns.AddRange(columns);
             Table.Columns.AddRange(columns);
+            Table.Columns[PhantomColumnIndex].DisplayIndex = Table.Columns.Count - 1;
         }
 
         public int GetFirstVisibleDataColumnIndex()
@@ -81,6 +100,8 @@ namespace VSRAD.Package.DebugVisualizer
         public void SetWidthAndScroll(int w, int s)
         {
             var firstVisible = GetFirstVisibleDataColumnIndex();
+            var n = DataColumns.Count(c => c.Visible);
+            var phantomWidth = Math.Max(2, Table.Width - Table.Columns[0].Width - Table.TopLeftHeaderCell.Size.Width - w);
             TableShouldSuppressOnColumnWidthChangedEvent = true;
 
             foreach (var column in DataColumns)
@@ -88,6 +109,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (firstVisible >= 0 && s < 0)
                 Table.Columns[firstVisible].Width = w - s;
+            if (PhantomColumnIndex >= 0)
+                Table.Columns[PhantomColumnIndex].Width = phantomWidth;
 
             _invalidateCachedColumnsWidths();
             _performLayoutPrivate(false, false, false, false);
@@ -99,9 +122,9 @@ namespace VSRAD.Package.DebugVisualizer
             Table.HorizontalScrollingOffset = Math.Max(0, s);
         }
 
-        public int CountVisibleColumns(int index, bool include_current)
+        public int CountVisibleDataColumns(int index, bool include_current)
         {
-            var n = DataColumns.Count(c => c.Visible && c.Index < index);
+            var n = DataColumns.Count(c => c.Visible && (c.Index < index || index == PhantomColumnIndex));
             return include_current ? n + 1 : n;
         }
 
@@ -149,7 +172,7 @@ namespace VSRAD.Package.DebugVisualizer
             var preferredWidth = Table.Columns[widestColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
             preferredWidth = Math.Max(preferredWidth, minAllowedWidth);
 
-            var n = CountVisibleColumns(clickedColumnIndex, false);
+            var n = CountVisibleDataColumns(clickedColumnIndex, false);
             var newScrollOffset = Math.Max(0, (n - 1) * (preferredWidth - ColumnWidth) + GetCurrentScroll());
 
             SetWidthAndScroll(preferredWidth, newScrollOffset);

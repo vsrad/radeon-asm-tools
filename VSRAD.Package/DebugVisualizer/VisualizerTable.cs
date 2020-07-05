@@ -18,7 +18,8 @@ namespace VSRAD.Package.DebugVisualizer
         public event ChangeWatchState WatchStateChanged;
 
         public const int NameColumnIndex = 0;
-        public const int DataColumnOffset = 1; // name
+        public const int PhantomColumnIndex = 1;
+        public const int DataColumnOffset = 2; // watch name column + phantom column
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
@@ -76,6 +77,7 @@ namespace VSRAD.Package.DebugVisualizer
             _state = new TableState(this, columnWidth: 60);
             SetupColumns();
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
+            Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
