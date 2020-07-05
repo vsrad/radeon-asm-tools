@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
@@ -16,6 +17,16 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 profile.Debugger
             };
             Actions.AddRange(profile.General.Actions);
+        }
+    }
+
+    public sealed class ProfileOptionsMacrosPage
+    {
+        public ObservableCollection<MacroItem> Macros { get; }
+
+        public ProfileOptionsMacrosPage(ObservableCollection<MacroItem> macros)
+        {
+            Macros = macros;
         }
     }
 
@@ -91,6 +102,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var currentPages = _dirtyOptions[Options.ActiveProfile];
             Pages.Clear();
             Pages.Add(currentPages.General);
+            Pages.Add(new ProfileOptionsMacrosPage(currentPages.General.Macros));
             Pages.Add(new ProfileOptionsActionsPage(currentPages));
             RaisePropertyChanged(nameof(Pages));
             currentPages.General.Actions.CollectionChanged += (s, e) => ActionsChanged();

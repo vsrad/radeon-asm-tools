@@ -68,6 +68,7 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
 
     <Style TargetType="{x:Type Expander}">
         <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
     </Style>
 
     <Style TargetType="{x:Type TextBlock}">
@@ -111,6 +112,19 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
         </Setter>
     </Style>
 
+    <Style TargetType="{x:Type DataGrid}">
+        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+    </Style>
+    
+    <Style TargetType="{x:Type DataGridColumnHeader}">
+        <Setter Property="Padding" Value="6,4"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+    </Style>
+
     <Style TargetType="{x:Type DataGridRow}">
         <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
         <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
@@ -118,6 +132,7 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
     </Style>
 
     <Style TargetType="{x:Type DataGridCell}">
+        <Setter Property="Padding" Value="0"/>
         <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
         <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>

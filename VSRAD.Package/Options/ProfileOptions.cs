@@ -93,6 +93,9 @@ namespace VSRAD.Package.Options
 
         public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
 
+        [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
+        public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
+
         [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
         [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
         [DefaultValue(DefaultOptionValues.DeployDirectory)]

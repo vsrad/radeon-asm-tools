@@ -1,0 +1,110 @@
+﻿<UserControl x:Class="VSRAD.Package.ProjectSystem.Macros.MacroListEditor"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:dat="clr-namespace:System.Windows.Data;assembly=PresentationFramework"
+             xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Macros"
+             xmlns:profiles="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
+             xmlns:utils="clr-namespace:VSRAD.Package.Utils"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <d:DesignerProperties.DesignStyle>
+        <Style TargetType="UserControl">
+            <Setter Property="Background" Value="White"/>
+        </Style>
+    </d:DesignerProperties.DesignStyle>
+    <d:UserControl.DataContext>
+        <local:MacroListDesignTimeCollection />
+    </d:UserControl.DataContext>
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../../ToolWindows/ControlStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <CollectionViewSource Source="{Binding}" x:Key="Macros">
+                <CollectionViewSource.GroupDescriptions>
+                    <dat:PropertyGroupDescription PropertyName="IsPredefined"/>
+                </CollectionViewSource.GroupDescriptions>
+            </CollectionViewSource>
+            <utils:WpfBoolToStringConverter x:Key="MacroPredefinedLabelConverter" TrueValue="Predefined" FalseValue="Custom" />
+            <utils:WpfBoolToVisibilityConverter x:Key="MacroIsPredefinedVisibilityConverter" TrueValue="Collapsed" FalseValue="Visible" />
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <DataGrid ItemsSource="{Binding Source={StaticResource Macros}}" AutoGenerateColumns="False" HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled"
+                  RowHeight="28">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Macro" Binding="{Binding Name}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTemplateColumn Header="" Width="30">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="❌" Width="22" Height="22" Margin="0">
+                                <Button.Style>
+                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsPredefined}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+            <DataGrid.GroupStyle>
+                <GroupStyle>
+                    <!--<GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            --><!--<StackPanel>
+                                <TextBlock Text="{Binding Path=Name}" />
+                            </StackPanel>--><!--
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>-->
+                    <GroupStyle.ContainerStyle>
+                        <Style TargetType="{x:Type GroupItem}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type GroupItem}">
+                                        <profiles:ExtendedExpander IsExpanded="True">
+                                            <profiles:ExtendedExpander.HeaderMainContent>
+                                                <Label Content="{Binding Name, Converter={StaticResource MacroPredefinedLabelConverter}}" />
+                                            </profiles:ExtendedExpander.HeaderMainContent>
+                                            <profiles:ExtendedExpander.HeaderSideContent>
+                                                <Button Content="➕" Width="22" Height="22"
+                                                        Visibility="{Binding Name, Converter={StaticResource MacroIsPredefinedVisibilityConverter}}" />
+                                            </profiles:ExtendedExpander.HeaderSideContent>
+                                            <ItemsPresenter />
+                                        </profiles:ExtendedExpander>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </GroupStyle.ContainerStyle>
+                </GroupStyle>
+            </DataGrid.GroupStyle>
+        </DataGrid>
+    </Grid>
+</UserControl>

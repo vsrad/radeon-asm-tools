@@ -6,9 +6,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
         xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
+        xmlns:macros="clr-namespace:VSRAD.Package.ProjectSystem.Macros"
         xmlns:opts="clr-namespace:VSRAD.Package.Options"
         xmlns:utils="clr-namespace:VSRAD.Package.Utils"
-        xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
         mc:Ignorable="d"
         Title="Profiles" Height="450" Width="820" MinHeight="450" MinWidth="820"
         WindowStartupLocation="CenterScreen"
@@ -54,6 +54,9 @@
                 <DataTemplate DataType="{x:Type opts:GeneralProfileOptions}">
                     <Label Content="General" />
                 </DataTemplate>
+                <DataTemplate DataType="{x:Type local:ProfileOptionsMacrosPage}">
+                    <Label Content="Macros" />
+                </DataTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type local:ProfileOptionsActionsPage}" ItemsSource="{Binding Actions}">
                     <DockPanel LastChildFill="False">
                         <Label Content="Actions" Margin="0,0,4,0"/>
@@ -88,6 +91,9 @@
                             <Label Content="Profile name:"/>
                             <TextBox Text="{Binding ProfileName}"/>
                         </StackPanel>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type local:ProfileOptionsMacrosPage}">
+                        <macros:MacroListEditor DataContext="{Binding Macros}" />
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
                         <Grid>
