@@ -18,7 +18,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private readonly TableState _state;
 
-        public SliceVisualizerTable(IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance) : base()
+        public SliceVisualizerTable(IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions) : base()
         {
             _fontAndColor = fontAndColor;
             _appearance = appearance;
@@ -37,7 +37,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _appearance);
+            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _appearance, stylingOptions);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
         }
 
