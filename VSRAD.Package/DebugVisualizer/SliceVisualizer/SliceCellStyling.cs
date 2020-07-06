@@ -65,6 +65,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 width = _appearance.SliceHiddenColumnSeparatorWidth;
                 color = _fontAndColor.FontAndColorState.SliceHiddenColumnSeparatorBrush;
             }
+            else if ((_columnStyling[dataColumnIndex] & ColumnStates.HasSubgroupSeparator) != 0)
+            {
+                width = _appearance.SliceSubgroupSeparatorWidth;
+                color = _fontAndColor.FontAndColorState.SliceSubgroupSeparatorBrush;
+            }
             else return;
 
             // We doing force paint of _visible_ part of cell.

@@ -40,6 +40,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     ColumnState[i] |= ColumnStates.Visible;
 
             ComputeHiddenColumnSeparators(subgroupSize);
+            ColumnState[subgroupSize - 1] |= ColumnStates.HasSubgroupSeparator;
             if (_table.SelectedWatch == null) return;
             Apply(subgroupSize);
         }
@@ -52,6 +53,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     (ColumnState[i % subgroupSize] & ColumnStates.Visible) != 0;
                 if ((ColumnState[i % subgroupSize] & ColumnStates.HasHiddenColumnSeparator) != 0)
                     _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = _appearance.SliceHiddenColumnSeparatorWidth;
+                if ((ColumnState[i % subgroupSize] & ColumnStates.HasSubgroupSeparator) != 0)
+                    _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = _appearance.SliceSubgroupSeparatorWidth;
                 else
                     _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = 0;
             }
@@ -62,6 +65,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             for (int i = 0; i < subgroupSize - 1; i++)
                 if ((ColumnState[i] & ColumnStates.Visible) != 0 && (ColumnState[i + 1] & ColumnStates.Visible) == 0)
                     ColumnState[i] |= ColumnStates.HasHiddenColumnSeparator;
+            if ((ColumnState[subgroupSize - 1] & ColumnStates.Visible) != 0 && (ColumnState[0] & ColumnStates.Visible) == 0)
+                ColumnState[subgroupSize - 1] |= ColumnStates.HasHiddenColumnSeparator;
         }
     }
 }
