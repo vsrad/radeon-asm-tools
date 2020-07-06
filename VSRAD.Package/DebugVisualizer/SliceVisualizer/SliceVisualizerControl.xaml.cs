@@ -15,11 +15,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _context.HeatMapStateChanged += HeatMapStateChanged;
             _context.Options.SliceVisualizerOptions.PropertyChanged += SliceVisualizerOptionChanged;
             _context.DivierWidthChanged += () => _table.ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+            _context.ColorRangeChanged += () => _table.Invalidate();
             DataContext = _context;
             InitializeComponent();
 
             var tableFontAndColor = new FontAndColorProvider();
-            _table = new SliceVisualizerTable(tableFontAndColor, _context.Options.VisualizerAppearance);
+            _table = new SliceVisualizerTable(tableFontAndColor, _context.Options.VisualizerAppearance, _context.Options.VisualizerColumnStyling);
             _table.ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
             TableHost.Setup(_table);
         }

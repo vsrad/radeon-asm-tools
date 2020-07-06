@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
@@ -11,8 +12,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly SolidBrush _tableBackgroundBrush;
         private readonly SliceColumnStyling _columnStyling;
         private readonly Options.VisualizerAppearance _appearance;
+        private readonly ColumnStylingOptions _stylingOptions;
 
-        public SliceCellStyling(SliceVisualizerTable table, TableState state, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance)
+        public SliceCellStyling(SliceVisualizerTable table, TableState state, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions)
         {
             _table = table;
             _state = state;
@@ -20,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _tableBackgroundBrush = new SolidBrush(table.BackgroundColor);
             _columnStyling = styling;
             _appearance = appearance;
+            _stylingOptions = stylingOptions;
 
             _table.CellPainting += HandleCellPaint;
         }
@@ -44,8 +47,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             else
             {
+                var colorIndex = e.ColumnIndex % VisualizerTable.DataColumnCount == 0
+                    ? VisualizerTable.DataColumnCount - SliceVisualizerTable.DataColumnOffset
+                    : e.ColumnIndex % VisualizerTable.DataColumnCount - SliceVisualizerTable.DataColumnOffset;
+                var bgColor = DataHighlightColors.GetFromColorString(_stylingOptions.BackgroundColors, colorIndex);
+                e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)bgColor];
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
-                e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.None];
             }
             PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
         }
