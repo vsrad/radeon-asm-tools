@@ -1,23 +1,36 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.ComponentModel;
 
 namespace VSRAD.Package.Options
 {
-    public sealed class MacroItem
+    public sealed class MacroItem : IDataErrorInfo
     {
         public string Name { get; set; }
 
         public string Value { get; set; }
 
-        public bool IsPredefined { get; }
+        public bool IsUserDefined { get; }
 
-        public MacroItem() : this("", "", false) { }
+        public MacroItem() : this("", "", true) { }
 
-        public MacroItem(string name, string value, bool predefined)
+        public MacroItem(string name, string value, bool userDefined)
         {
             Name = name;
             Value = value;
-            IsPredefined = predefined;
+            IsUserDefined = userDefined;
+        }
+
+        string IDataErrorInfo.Error => ((IDataErrorInfo)this)[nameof(Name)];
+
+        string IDataErrorInfo.this[string columnName]
+        {
+            get
+            {
+                if (columnName == nameof(Name) && string.IsNullOrEmpty(Name))
+                    return "Macro name cannot be empty";
+                return "";
+            }
         }
     }
 
@@ -33,7 +46,7 @@ namespace VSRAD.Package.Options
                 if (reader.Read() && reader.TokenType == JsonToken.String)
                     value = (string)reader.Value;
                 if (reader.Read() && reader.TokenType == JsonToken.EndArray)
-                    return new MacroItem(name, value, predefined: false);
+                    return new MacroItem(name, value, userDefined: true);
             }
             throw new JsonReaderException($"Encountered unexpected token {reader.TokenType} when reading MacroItem");
         }

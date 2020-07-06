@@ -25,27 +25,46 @@
             </ResourceDictionary.MergedDictionaries>
             <CollectionViewSource Source="{Binding}" x:Key="Macros">
                 <CollectionViewSource.GroupDescriptions>
-                    <dat:PropertyGroupDescription PropertyName="IsPredefined"/>
+                    <dat:PropertyGroupDescription PropertyName="IsUserDefined"/>
                 </CollectionViewSource.GroupDescriptions>
             </CollectionViewSource>
-            <utils:WpfBoolToStringConverter x:Key="MacroPredefinedLabelConverter" TrueValue="Predefined" FalseValue="Custom" />
-            <utils:WpfBoolToVisibilityConverter x:Key="MacroIsPredefinedVisibilityConverter" TrueValue="Collapsed" FalseValue="Visible" />
+            <utils:WpfBoolToStringConverter x:Key="MacroUserDefinedLabelConverter" TrueValue="Custom" FalseValue="Predefined" />
+            <utils:WpfBoolToVisibilityConverter x:Key="MacroUserDefinedVisibilityConverter" TrueValue="Visible" FalseValue="Collapsed" />
         </ResourceDictionary>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <DataGrid ItemsSource="{Binding Source={StaticResource Macros}}" AutoGenerateColumns="False" HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled"
-                  RowHeight="28">
+        <DataGrid x:Name="MacroGrid" ItemsSource="{Binding Source={StaticResource Macros}}"
+                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserResizeRows="False"
+                  HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="28">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Macro" Binding="{Binding Name}" Width="*">
+                <DataGridTextColumn Header="Macro" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="*">
                     <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
+                        <Style TargetType="{x:Type TextBlock}">
                             <Setter Property="VerticalAlignment" Value="Center" />
                             <Setter Property="Padding" Value="6,0" />
+                            <Setter Property="Height" Value="22" />
+                            <Style.Triggers>
+                                <Trigger Property="Validation.HasError" Value="true">
+                                    <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
+                                </Trigger>
+                            </Style.Triggers>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="{x:Type TextBox}">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                            <Setter Property="Height" Value="22" />
+                            <Style.Triggers>
+                                <Trigger Property="Validation.HasError" Value="true">
+                                    <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*">
                     <DataGridTextColumn.ElementStyle>
@@ -54,16 +73,23 @@
                             <Setter Property="Padding" Value="6,0" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="{x:Type TextBox}">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                            <Setter Property="Height" Value="22" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
                 <DataGridTemplateColumn Header="" Width="30">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="❌" Width="22" Height="22" Margin="0">
+                            <Button Content="❌" Command="{Binding DeleteMacroCommand, ElementName=Root}" CommandParameter="{Binding}" Width="22" Height="22" Margin="0">
                                 <Button.Style>
                                     <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsPredefined}" Value="False">
+                                            <DataTrigger Binding="{Binding IsUserDefined}" Value="True">
                                                 <Setter Property="Visibility" Value="Visible"/>
                                             </DataTrigger>
                                         </Style.Triggers>
@@ -74,15 +100,13 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="IsEnabled" Value="{Binding IsUserDefined, Mode=OneWay}" />
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.GroupStyle>
                 <GroupStyle>
-                    <!--<GroupStyle.HeaderTemplate>
-                        <DataTemplate>
-                            --><!--<StackPanel>
-                                <TextBlock Text="{Binding Path=Name}" />
-                            </StackPanel>--><!--
-                        </DataTemplate>
-                    </GroupStyle.HeaderTemplate>-->
                     <GroupStyle.ContainerStyle>
                         <Style TargetType="{x:Type GroupItem}">
                             <Setter Property="Template">
@@ -90,11 +114,12 @@
                                     <ControlTemplate TargetType="{x:Type GroupItem}">
                                         <profiles:ExtendedExpander IsExpanded="True">
                                             <profiles:ExtendedExpander.HeaderMainContent>
-                                                <Label Content="{Binding Name, Converter={StaticResource MacroPredefinedLabelConverter}}" />
+                                                <Label Content="{Binding Name, Converter={StaticResource MacroUserDefinedLabelConverter}}" />
                                             </profiles:ExtendedExpander.HeaderMainContent>
                                             <profiles:ExtendedExpander.HeaderSideContent>
                                                 <Button Content="➕" Width="22" Height="22"
-                                                        Visibility="{Binding Name, Converter={StaticResource MacroIsPredefinedVisibilityConverter}}" />
+                                                        Command="{Binding AddMacroCommand, ElementName=Root}"
+                                                        Visibility="{Binding Name, Converter={StaticResource MacroUserDefinedVisibilityConverter}}" />
                                             </profiles:ExtendedExpander.HeaderSideContent>
                                             <ItemsPresenter />
                                         </profiles:ExtendedExpander>
