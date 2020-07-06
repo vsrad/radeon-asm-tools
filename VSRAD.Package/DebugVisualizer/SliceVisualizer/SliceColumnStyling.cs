@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Documents;
-using System.Windows.Forms;
+﻿using System.Collections.Generic;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
@@ -41,8 +34,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             SubgroupSize = (uint)subgroupSize;
             ColumnState.Clear();
             ColumnState.AddRange(new ColumnStates[subgroupSize]);
+
             foreach (var i in ColumnSelector.ToIndexes(columnSelector, 512)) // TODO: remove 512
-                ColumnState[i] |= ColumnStates.Visible;
+                if (i < subgroupSize)
+                    ColumnState[i] |= ColumnStates.Visible;
+
             ComputeHiddenColumnSeparators(subgroupSize);
             if (_table.SelectedWatch == null) return;
             Apply(subgroupSize);
