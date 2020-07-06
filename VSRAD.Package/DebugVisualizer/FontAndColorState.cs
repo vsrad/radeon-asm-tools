@@ -22,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer
         public SolidBrush ColumnSeparatorBrush { get; }
         public SolidBrush HiddenColumnSeparatorBrush { get; }
         public SolidBrush SliceHiddenColumnSeparatorBrush { get; }
+        public SolidBrush SliceSubgroupSeparatorBrush { get; }
 
         public Font RegularFont { get; }
         public Font BoldFont { get; }
@@ -56,6 +57,7 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnSeparatorBrush = new SolidBrush(provider.GetInfo(FontAndColorItem.ColumnSeparator).bg);
             HiddenColumnSeparatorBrush = new SolidBrush(provider.GetInfo(FontAndColorItem.HiddenColumnSeparator).bg);
             SliceHiddenColumnSeparatorBrush = new SolidBrush(provider.GetInfo(FontAndColorItem.SliceHiddenColumnSeparator).bg);
+            SliceSubgroupSeparatorBrush = new SolidBrush(provider.GetInfo(FontAndColorItem.SliceSubgroupSeparator).bg);
 
             var (fontName, fontSize) = provider.GetFontInfo();
             RegularFont = new Font(fontName, fontSize, FontStyle.Regular);

@@ -14,7 +14,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _context.WatchSelected += WatchSelected;
             _context.HeatMapStateChanged += HeatMapStateChanged;
             _context.Options.SliceVisualizerOptions.PropertyChanged += SliceVisualizerOptionChanged;
-            _context.DivierWidthChanged += () => _table.Invalidate();
+            _context.DivierWidthChanged += () => _table.ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
             DataContext = _context;
             InitializeComponent();
 

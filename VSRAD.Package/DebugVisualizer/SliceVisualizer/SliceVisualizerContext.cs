@@ -53,6 +53,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             switch (e.PropertyName)
             {
                 case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
+                case nameof(Options.VisualizerAppearance.SliceSubgroupSeparatorWidth):
                     DivierWidthChanged();
                     break;
             }

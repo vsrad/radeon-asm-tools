@@ -11,7 +11,8 @@ namespace VSRAD.Package.DebugVisualizer
         Visible = 2,
         Inactive = 4,
         HasLaneSeparator = 8,
-        HasHiddenColumnSeparator = 16
+        HasHiddenColumnSeparator = 16,
+        HasSubgroupSeparator = 32
     }
 
     public sealed class ComputedColumnStyling
