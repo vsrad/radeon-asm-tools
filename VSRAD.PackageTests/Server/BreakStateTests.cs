@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Server;
@@ -238,6 +239,25 @@ namespace VSRAD.PackageTests.Server
             for (int row = 0; row < 2; ++row)
                 for (int col = 0; col < 10; ++col)
                     Assert.Equal(expected[row, col], sliceWatch[row, col]);
+        }
+
+        [Fact]
+        public void SliceWatchViewGetGroupNumTest()
+        {
+            // two watches, system == 777, first watch == x, second watch == 100 + x
+            // group size = 3, we have 4 groups here, groups in row = 2, we have 2 rows
+            var data = new uint[] { 777, 1, 101, 777, 2, 102, 777, 3, 103, 777, 4, 104, 777, 5, 105, 777, 6, 106,
+                                    777, 7, 107, 777, 8, 108, 777, 9, 109, 777, 10, 110, 777, 11, 111, 777, 12, 112 };
+
+            // first watch
+            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 3, groupCount: 4, laneDataOffset: 1, laneDataSize: 2);
+
+            // correct group mapping
+            var expected = new uint[,] { { 0, 0, 0, 1, 1, 1 },
+                                         { 2, 2, 2, 3, 3, 3 } };
+            for (int row = 0; row < 2; ++row)
+                for (int col = 0; col < 6; ++col)
+                    Assert.Equal(expected[row, col], (uint)sliceWatch.GroupNum(row, col));
         }
     }
 }
