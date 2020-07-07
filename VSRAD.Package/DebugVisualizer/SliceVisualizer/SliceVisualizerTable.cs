@@ -9,10 +9,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         public const int DataColumnOffset = 1; // including phantom column
 
-        public TypedSliceWatchView SelectedWatch { get; private set; }
+        public TypedSliceWatchView SelectedWatch => _context.SelectedWatchView;
         public bool HeatMapMode { get; private set; }
         public SliceColumnStyling ColumnStyling { get; private set; }
 
+        private readonly SliceVisualizerContext _context;
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
         private readonly IFontAndColorProvider _fontAndColor;
@@ -22,8 +23,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public Action<int, string, int> NavigateToCellEvent;
 
-        public SliceVisualizerTable(IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions) : base()
+        public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions) : base()
         {
+            _context = context;
             _fontAndColor = fontAndColor;
             _appearance = appearance;
 
@@ -44,6 +46,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _ = new SliceRowStyling(this);
             _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _appearance, stylingOptions);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
+
+            _context.WatchSelected += () => DisplayWatch(_context.SelectedWatchView, _context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
+            _context.HeatMapStateChanged += (e, mode) => SetHeatMapMode(mode);
+            _context.DivierWidthChanged += () => ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+            _context.ColorRangeChanged += () => Invalidate();
         }
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
@@ -53,8 +60,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             var col = hit.ColumnIndex - DataColumnOffset;
             new ContextMenu(new MenuItem[] {
-                new MenuItem("Go to watch list", (s, o) =>
-                    NavigateToCellEvent(SelectedWatch.GroupNum(hit.RowIndex, col), SelectedWatch.Name, SelectedWatch.LaneNum(col)))
+                new MenuItem("Go to watch list", (s, o) => _context.NavigateToCell(hit.RowIndex, col))
             }).Show(this, new Point(e.X, e.Y));
         }
 
@@ -68,8 +74,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void DisplayWatch(TypedSliceWatchView watchView, int subgroupSize, string columnSelector)
         {
-            SelectedWatch = watchView;
-
             var columnsMissing = watchView.ColumnCount - (Columns.Count - 1);
             if (columnsMissing > 0)
             {

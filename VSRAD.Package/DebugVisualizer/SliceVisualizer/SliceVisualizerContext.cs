@@ -10,7 +10,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     public sealed class SliceVisualizerContext : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<TypedSliceWatchView> WatchSelected;
+        public event Action WatchSelected;
         public event EventHandler<bool> HeatMapStateChanged;
         public Action DivierWidthChanged;
         public Action ColorRangeChanged;
@@ -30,6 +30,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private bool _windowVisible;
 
+        public TypedSliceWatchView SelectedWatchView { get; private set; }
+
         public SliceVisualizerContext(Options.ProjectOptions options, VisualizerContext visualizerContext, EnvDTE80.WindowVisibilityEvents visibilityEvents)
         {
             Options = options;
@@ -44,15 +46,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _windowVisibilityEvents.WindowHiding += OnToolWindowVisibilityChanged;
         }
 
-        public void Dispose()
+        public void NavigateToCell(int sliceRowIndex, int sliceColumnIndex)
         {
-            _windowVisibilityEvents.WindowShowing -= OnToolWindowVisibilityChanged;
-            _windowVisibilityEvents.WindowHiding -= OnToolWindowVisibilityChanged;
+            var groupIndex = SelectedWatchView.GroupNum(sliceRowIndex, sliceColumnIndex);
+            var laneIndex = SelectedWatchView.LaneNum(sliceColumnIndex);
+
+            _visualizerContext.GroupIndex.SetGroupIndex(groupIndex);
+            _visualizerContext.SelectCell(SelectedWatch, laneIndex);
         }
-
-        public void SetGroupIndex(int index) => _visualizerContext.GroupIndex.SetGroupIndex(index);
-
-        public void SelectCell(string watchName, int laneIndex) => _visualizerContext.SelectCell(watchName, laneIndex);
 
         private void ColumnStylingChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -109,7 +110,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, Options.SliceVisualizerOptions.GroupsInRow,
                     (int)_visualizerContext.Options.DebuggerOptions.NGroups);
                 var typedView = new TypedSliceWatchView(watchView, SelectedType);
-                WatchSelected(this, typedView);
+                SelectedWatchView = typedView;
+                WatchSelected();
             }
         }
 
