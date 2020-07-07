@@ -20,7 +20,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private readonly TableState _state;
 
-        public Action<int> NavigateToCellEvent;
+        public Action<int, string, int> NavigateToCellEvent;
 
         public SliceVisualizerTable(IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions) : base()
         {
@@ -51,8 +51,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (e.Button != MouseButtons.Right) return;
             var hit = HitTest(e.X, e.Y);
 
+            var col = hit.ColumnIndex - DataColumnOffset;
             new ContextMenu(new MenuItem[] {
-                new MenuItem("Go to watch list", (s, o) => NavigateToCellEvent(SelectedWatch.GroupNum(hit.RowIndex, hit.ColumnIndex)))
+                new MenuItem("Go to watch list", (s, o) =>
+                    NavigateToCellEvent(SelectedWatch.GroupNum(hit.RowIndex, col), SelectedWatch.Name, SelectedWatch.LaneNum(col)))
             }).Show(this, new Point(e.X, e.Y));
         }
 

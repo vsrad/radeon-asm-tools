@@ -52,6 +52,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void SetGroupIndex(int index) => _visualizerContext.GroupIndex.SetGroupIndex(index);
 
+        public void SelectCell(string watchName, int laneIndex) => _visualizerContext.SelectCell(watchName, laneIndex);
 
         private void ColumnStylingChanged(object sender, PropertyChangedEventArgs e)
         {

@@ -53,6 +53,7 @@ namespace VSRAD.Package.Server
     {
         public int ColumnCount { get; }
         public int RowCount { get; }
+        public string Name { get; }
 
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
@@ -62,7 +63,7 @@ namespace VSRAD.Package.Server
 
         private readonly uint[] _data;
 
-        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize, string watchName)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
@@ -71,12 +72,14 @@ namespace VSRAD.Package.Server
             _groupsInRow = groupsInRow;
             _groupSize = groupSize;
 
+            Name = watchName;
             ColumnCount = groupsInRow * groupSize;
             RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
         }
 
         public int RowHeader(int row) => row * _groupsInRow;
         public int GroupNum(int row, int column) => _groupsInRow * row + column / _groupSize;
+        public int LaneNum(int column) => column % _groupSize;
 
         public bool IsInactiveCell(int row, int column)
         {
@@ -178,7 +181,8 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize);
+
+            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize, watch);
         }
 
         public WavemapView GetWavemapView()

@@ -9,8 +9,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         public int RowCount => _view.RowCount;
         public int ColumnCount => _view.ColumnCount;
+        public string Name => _view.Name;
         public int RowHeader(int row) => _view.RowHeader(row);
         public int GroupNum(int row, int column) => _view.GroupNum(row, column);
+        public int LaneNum(int column) => _view.LaneNum(column);
 
         public bool IsSingleWordValue => _type == VariableType.Half;
 
