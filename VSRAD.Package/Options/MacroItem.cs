@@ -1,14 +1,17 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
-    public sealed class MacroItem : IDataErrorInfo
+    public sealed class MacroItem : DefaultNotifyPropertyChanged, IDataErrorInfo
     {
-        public string Name { get; set; }
+        private string _name;
+        public string Name { get => _name; set => SetField(ref _name, value); }
 
-        public string Value { get; set; }
+        private string _value;
+        public string Value { get => _value; set => SetField(ref _value, value); }
 
         public bool IsUserDefined { get; }
 

@@ -133,6 +133,7 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
 
     <Style TargetType="{x:Type DataGridCell}">
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
         <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>

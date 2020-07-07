@@ -34,11 +34,11 @@
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <DataGrid x:Name="MacroGrid" ItemsSource="{Binding Source={StaticResource Macros}}"
+        <DataGrid x:Name="MacroGrid" ItemsSource="{Binding Source={StaticResource Macros}}" GridLinesVisibility="None"
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserResizeRows="False"
-                  HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="28">
+                  HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="24">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Macro" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="*">
                     <DataGridTextColumn.ElementStyle>
@@ -81,12 +81,12 @@
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
-                <DataGridTemplateColumn Header="" Width="30">
+                <DataGridTemplateColumn Header="" Width="52">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Button Content="❌" Command="{Binding DeleteMacroCommand, ElementName=Root}" CommandParameter="{Binding}" Width="22" Height="22" Margin="0">
-                                <Button.Style>
-                                    <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
+                            <StackPanel Orientation="Horizontal" Margin="4,0,0,2">
+                                <StackPanel.Resources>
+                                    <Style x:Key="RowButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                         <Setter Property="Visibility" Value="Collapsed"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding IsUserDefined}" Value="True">
@@ -94,8 +94,12 @@
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
-                                </Button.Style>
-                            </Button>
+                                </StackPanel.Resources>
+                                <Button Content="✍" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding}" Width="22" Height="22" Margin="0,0,2,0"
+                                        ToolTip="Edit value" Style="{StaticResource RowButtonStyle}" />
+                                <Button Content="❌" Command="{Binding DeleteMacroCommand, ElementName=Root}" CommandParameter="{Binding}" Width="22" Height="22" Margin="0"
+                                        ToolTip="Delete" Style="{StaticResource RowButtonStyle}" />
+                            </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -117,7 +121,7 @@
                                                 <Label Content="{Binding Name, Converter={StaticResource MacroUserDefinedLabelConverter}}" />
                                             </profiles:ExtendedExpander.HeaderMainContent>
                                             <profiles:ExtendedExpander.HeaderSideContent>
-                                                <Button Content="➕" Width="22" Height="22"
+                                                <Button Content="➕" Width="22" Height="22" ToolTip="Add macro"
                                                         Command="{Binding AddMacroCommand, ElementName=Root}"
                                                         Visibility="{Binding Name, Converter={StaticResource MacroUserDefinedVisibilityConverter}}" />
                                             </profiles:ExtendedExpander.HeaderSideContent>

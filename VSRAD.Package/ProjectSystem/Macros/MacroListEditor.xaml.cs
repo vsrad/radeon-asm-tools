@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -44,16 +45,26 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false)
         };
 
+        public DirtyProfileMacroEditor MacroEditor
+        {
+            get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
+        }
+
+        public static readonly DependencyProperty MacroEditorProperty =
+            DependencyProperty.Register(nameof(MacroEditor), typeof(DirtyProfileMacroEditor), typeof(MacroListEditor), new PropertyMetadata(null));
+
         private ObservableCollection<MacroItem> _sourceCollection;
 
         public ICommand AddMacroCommand { get; }
         public ICommand DeleteMacroCommand { get; }
+        public ICommand RichEditCommand { get; }
 
         public MacroListEditor()
         {
             InitializeComponent();
             AddMacroCommand = new WpfDelegateCommand(_ => ((MacroListDisplayCollection)DataContext).Add(new MacroItem()));
             DeleteMacroCommand = new WpfDelegateCommand(item => ((MacroListDisplayCollection)DataContext).Remove((MacroItem)item));
+            RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
 
             if (DataContext != null)
                 // DataContext is immediately initialized in WPF designer
@@ -101,6 +112,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
 #pragma warning restore VSTHRD001
                 }
             }
+        }
+
+        private void OpenMacroEditor(object param)
+        {
+            var item = (MacroItem)param;
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+                item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
         }
     }
 }
