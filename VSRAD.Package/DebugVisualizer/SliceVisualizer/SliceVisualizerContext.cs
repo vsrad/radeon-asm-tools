@@ -50,6 +50,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _windowVisibilityEvents.WindowHiding -= OnToolWindowVisibilityChanged;
         }
 
+        public void SetGroupIndex(int index) => _visualizerContext.GroupIndex.SetGroupIndex(index);
+
+
         private void ColumnStylingChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
