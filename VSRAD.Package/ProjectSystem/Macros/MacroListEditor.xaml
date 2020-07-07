@@ -88,10 +88,10 @@
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
-                <DataGridTemplateColumn Header="" Width="52">
+                <DataGridTemplateColumn Header="" Width="54">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="4,0,0,2">
+                            <StackPanel Orientation="Horizontal" Margin="4,0,4,0">
                                 <StackPanel.Resources>
                                     <Style x:Key="RowButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Type Button}}">
                                         <Setter Property="Visibility" Value="Collapsed"/>

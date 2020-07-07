@@ -76,7 +76,7 @@
         </ControlTemplate>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
-        <DockPanel Height="26" Margin="6,4">
+        <DockPanel Height="26" Margin="0,4,4,4">
             <Label Content="Steps"/>
             <Button x:Name="NewStepButton" Content="➕" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewStepPopup"/>
         </DockPanel>

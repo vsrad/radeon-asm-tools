@@ -96,8 +96,27 @@
                 <DataTemplate DataType="{x:Type local:ProfileOptionsMacrosPage}">
                     <macros:MacroListEditor DataContext="{Binding Macros}" MacroEditor="{Binding DataContext.MacroEditor, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
                 </DataTemplate>
+                <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="176"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
+                                     Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2"
+                                                CustomActions="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
+                        </Grid>
+                    </ScrollViewer>
+                </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
-                    <ScrollViewer>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="176"/>

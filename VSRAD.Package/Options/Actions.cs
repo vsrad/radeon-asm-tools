@@ -148,7 +148,9 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public List<IActionStep> EvaluatedSteps { get; }
 
-        public RunActionStep(List<IActionStep> evaluatedSteps = null)
+        public RunActionStep() : this(null) { }
+
+        public RunActionStep(List<IActionStep> evaluatedSteps)
         {
             EvaluatedSteps = evaluatedSteps;
         }
