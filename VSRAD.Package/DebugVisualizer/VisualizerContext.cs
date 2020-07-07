@@ -25,13 +25,28 @@ namespace VSRAD.Package.DebugVisualizer
         }
     }
 
+    public class CellSelectionEventArgs : EventArgs
+    {
+        public string WatchName;
+        public int LaneIndex;
+
+        public CellSelectionEventArgs(string watchName, int laneIndex)
+        {
+            WatchName = watchName;
+            LaneIndex = laneIndex;
+        }
+    }
+
     public sealed class VisualizerContext : DefaultNotifyPropertyChanged, IDisposable
     {
         public event EventHandler<GroupFetchingEventArgs> GroupFetching;
         public event EventHandler<GroupFetchedEventArgs> GroupFetched;
+        public event EventHandler<CellSelectionEventArgs> CellSelectionEvent;
 
         public Options.ProjectOptions Options { get; }
         public GroupIndexSelector GroupIndex { get; }
+        public Action<string, int> SelectCell =>
+            (watchName, laneIndex) => CellSelectionEvent(this, new CellSelectionEventArgs(watchName, laneIndex));
 
         private string _status = "No data available";
         public string Status { get => _status; set => SetField(ref _status, value); }

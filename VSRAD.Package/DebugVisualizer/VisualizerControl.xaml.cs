@@ -22,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer
             _context.PropertyChanged += ContextPropertyChanged;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
+            _context.CellSelectionEvent += CellSelected;
             DataContext = _context;
             InitializeComponent();
 
@@ -75,6 +76,8 @@ namespace VSRAD.Package.DebugVisualizer
         {
             e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemap;
         }
+
+        private void CellSelected(object sender, CellSelectionEventArgs e) => _table.SelectCell(e.WatchName, e.LaneIndex);
 
         public void WindowFocusChanged(bool hasFocus) =>
             _table.HostWindowFocusChanged(hasFocus);
