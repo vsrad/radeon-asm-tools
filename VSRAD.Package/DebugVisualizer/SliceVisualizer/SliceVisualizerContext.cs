@@ -11,9 +11,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public event Action WatchSelected;
-        public event EventHandler<bool> HeatMapStateChanged;
-        public Action DivierWidthChanged;
-        public Action ColorRangeChanged;
 
         public Options.ProjectOptions Options { get; }
 
@@ -36,8 +33,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             Options = options;
             Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
-            Options.VisualizerAppearance.PropertyChanged += AppearanceOptionChanged;
-            Options.VisualizerColumnStyling.PropertyChanged += ColumnStylingChanged;
+            
             _visualizerContext = visualizerContext;
             _visualizerContext.GroupFetching += SetupDataFetch;
             _visualizerContext.GroupFetched += DisplayFetchedData;
@@ -55,27 +51,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _visualizerContext.SelectCell(SelectedWatch, laneIndex);
         }
 
-        private void ColumnStylingChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(Options.VisualizerColumnStyling.BackgroundColors):
-                    ColorRangeChanged();
-                    break;
-            }
-        }
-
-        private void AppearanceOptionChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
-                case nameof(Options.VisualizerAppearance.SliceSubgroupSeparatorWidth):
-                    DivierWidthChanged();
-                    break;
-            }
-        }
-
         private void SliceOptionChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
@@ -84,9 +59,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 case nameof(Options.SliceVisualizerOptions.SubgroupSize):
                 case nameof(Options.SliceVisualizerOptions.VisibleColumns):
                     WatchSelectionChanged();
-                    break;
-                case nameof(Options.SliceVisualizerOptions.UseHeatMap):
-                    HeatMapStateChanged(this, Options.SliceVisualizerOptions.UseHeatMap);
                     break;
             }
         }
