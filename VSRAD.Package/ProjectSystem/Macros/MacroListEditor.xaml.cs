@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using VSRAD.Package.Options;
@@ -23,11 +24,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
     public sealed class MacroListDisplayCollection : ObservableCollection<MacroItem>
     {
+        public void RefreshCollection() =>
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+
         // Reset the collection when removing an item to clear DataGrid validation errors, see https://stackoverflow.com/q/9381847
         protected override void RemoveItem(int index)
         {
             base.RemoveItem(index);
-            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+            RefreshCollection();
         }
     }
 
@@ -45,6 +49,21 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false)
         };
 
+        public ICommand AddMacroCommand { get; }
+        public ICommand DeleteMacroCommand { get; }
+        public ICommand RichEditCommand { get; }
+
+        private string _macroFilter = "";
+        public string MacroFilter
+        {
+            get => _macroFilter;
+            set
+            {
+                _macroFilter = value;
+                ((MacroListDisplayCollection)DataContext).RefreshCollection();
+            }
+        }
+
         public DirtyProfileMacroEditor MacroEditor
         {
             get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
@@ -54,10 +73,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
             DependencyProperty.Register(nameof(MacroEditor), typeof(DirtyProfileMacroEditor), typeof(MacroListEditor), new PropertyMetadata(null));
 
         private ObservableCollection<MacroItem> _sourceCollection;
-
-        public ICommand AddMacroCommand { get; }
-        public ICommand DeleteMacroCommand { get; }
-        public ICommand RichEditCommand { get; }
 
         public MacroListEditor()
         {
@@ -119,6 +134,15 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var item = (MacroItem)param;
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
+        }
+
+        private void FilterMacros(object sender, FilterEventArgs e)
+        {
+            var macroItem = (MacroItem)e.Item;
+            e.Accepted = string.IsNullOrEmpty(MacroFilter)
+                || string.IsNullOrEmpty(macroItem.Name) // always show newly added macros (without name)
+                || macroItem.Name.IndexOf(MacroFilter, StringComparison.OrdinalIgnoreCase) != -1
+                || macroItem.Value.IndexOf(MacroFilter, StringComparison.OrdinalIgnoreCase) != -1;
         }
     }
 }

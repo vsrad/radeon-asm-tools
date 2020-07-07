@@ -23,7 +23,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../ToolWindows/ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
-            <CollectionViewSource Source="{Binding}" x:Key="Macros">
+            <CollectionViewSource Source="{Binding}" Filter="FilterMacros" x:Name="MacroCollectionView" x:Key="Macros">
                 <CollectionViewSource.GroupDescriptions>
                     <dat:PropertyGroupDescription PropertyName="IsUserDefined"/>
                 </CollectionViewSource.GroupDescriptions>
@@ -34,11 +34,18 @@
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="28"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+        <DockPanel>
+            <Label Content="Search macros:"/>
+            <TextBox Height="22" VerticalContentAlignment="Center" HorizontalAlignment="Stretch"
+                     ToolTip="Filter available macros by their name or value (case-insensitive)"
+                     Text="{Binding MacroFilter, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"/>
+        </DockPanel>
         <DataGrid x:Name="MacroGrid" ItemsSource="{Binding Source={StaticResource Macros}}" GridLinesVisibility="None"
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserResizeRows="False"
-                  HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="24">
+                  HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" Grid.Row="1" RowHeight="24">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Macro" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="*">
                     <DataGridTextColumn.ElementStyle>
@@ -116,7 +123,7 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="{x:Type GroupItem}">
-                                        <profiles:ExtendedExpander IsExpanded="True">
+                                        <profiles:ExtendedExpander IsExpanded="{Binding Name, Mode=OneTime}">
                                             <profiles:ExtendedExpander.HeaderMainContent>
                                                 <Label Content="{Binding Name, Converter={StaticResource MacroUserDefinedLabelConverter}}" />
                                             </profiles:ExtendedExpander.HeaderMainContent>
