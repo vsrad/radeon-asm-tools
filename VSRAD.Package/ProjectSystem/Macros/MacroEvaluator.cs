@@ -99,7 +99,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             _remoteEnvironment = remoteEnvironment;
             _profileOptions = profileOptions;
 
-            // Properties that are macros but do not contain macros themselves
+            // Predefined macros
             _macroCache = new Dictionary<string, string>
             {
                 { RadMacros.ActiveSourceFile, values.ActiveSourceFile.filename },
@@ -128,36 +128,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
             if (recursionStartName == null)
                 recursionStartName = name;
 
-            // TODO: Replace with something less manual (reflection?)
             string unevaluated = null;
-            switch (name)
+            foreach (var macro in _profileOptions.General.Macros)
             {
-                case RadMacros.DeployDirectory: unevaluated = _profileOptions.General.DeployDirectory; break;
-
-                case RadMacros.DisassemblerExecutable: unevaluated = _profileOptions.Disassembler.Executable; break;
-                case RadMacros.DisassemblerArguments: unevaluated = _profileOptions.Disassembler.Arguments; break;
-                case RadMacros.DisassemblerWorkingDirectory: unevaluated = _profileOptions.Disassembler.WorkingDirectory; break;
-                case RadMacros.DisassemblerOutputPath: unevaluated = _profileOptions.Disassembler.OutputPath; break;
-                case RadMacros.DisassemblerLocalPath: unevaluated = _profileOptions.Disassembler.LocalOutputCopyPath; break;
-
-                case RadMacros.ProfilerExecutable: unevaluated = _profileOptions.Profiler.Executable; break;
-                case RadMacros.ProfilerArguments: unevaluated = _profileOptions.Profiler.Arguments; break;
-                case RadMacros.ProfilerWorkingDirectory: unevaluated = _profileOptions.Profiler.WorkingDirectory; break;
-                case RadMacros.ProfilerOutputPath: unevaluated = _profileOptions.Profiler.OutputPath; break;
-                case RadMacros.ProfilerViewerExecutable: unevaluated = _profileOptions.Profiler.ViewerExecutable; break;
-                case RadMacros.ProfilerViewerArguments: unevaluated = _profileOptions.Profiler.ViewerArguments; break;
-                case RadMacros.ProfilerLocalPath: unevaluated = _profileOptions.Profiler.LocalOutputCopyPath; break;
-
-                case RadMacros.BuildExecutable: unevaluated = _profileOptions.Build.Executable; break;
-                case RadMacros.BuildArguments: unevaluated = _profileOptions.Build.Arguments; break;
-                case RadMacros.BuildWorkingDirectory: unevaluated = _profileOptions.Build.WorkingDirectory; break;
-
-                case RadMacros.PreprocessorExecutable: unevaluated = _profileOptions.Preprocessor.Executable; break;
-                case RadMacros.PreprocessorArguments: unevaluated = _profileOptions.Preprocessor.Arguments; break;
-                case RadMacros.PreprocessorWorkingDirectory: unevaluated = _profileOptions.Preprocessor.WorkingDirectory; break;
-                case RadMacros.PreprocessorOutputPath: unevaluated = _profileOptions.Preprocessor.OutputPath; break;
-                case RadMacros.PreprocessorLocalPath: unevaluated = _profileOptions.Preprocessor.LocalOutputCopyPath; break;
-                case RadMacros.PreprocessorLineMarker: unevaluated = _profileOptions.Preprocessor.LineMarker; break;
+                if (macro.Name == name)
+                {
+                    unevaluated = macro.Value;
+                    break;
+                }
             }
 
             if (unevaluated != null)

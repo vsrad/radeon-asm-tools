@@ -32,6 +32,18 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
     public partial class MacroListEditor : UserControl
     {
+        private static MacroListDisplayCollection GetPredefinedMacroCollection() => new MacroListDisplayCollection
+        {
+            new MacroItem(RadMacros.ActiveSourceFile, "<current source file>", userDefined: false),
+            new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
+            new MacroItem(RadMacros.Watches, "<visualizer watches, colon-separated>", userDefined: false),
+            new MacroItem(RadMacros.BreakLine, "<next breakpoint line(s), colon-separated>", userDefined: false),
+            new MacroItem(RadMacros.DebugAppArgs, "<app args, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.DebugBreakArgs, "<break args, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.Counter, "<counter, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false)
+        };
+
         private ObservableCollection<MacroItem> _sourceCollection;
 
         public ICommand AddMacroCommand { get; }
@@ -58,12 +70,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             {
                 _sourceCollection = sourceCollection;
 
-                var displayItems = new MacroListDisplayCollection
-                {
-                    new MacroItem("RadBreakLine", "<next breakpoint line>", userDefined: false),
-                    new MacroItem("RadWatches", "<visualizer watches, comma-separated>", userDefined: false)
-                };
-
+                var displayItems = GetPredefinedMacroCollection();
                 foreach (var item in _sourceCollection)
                     displayItems.Add(item);
 

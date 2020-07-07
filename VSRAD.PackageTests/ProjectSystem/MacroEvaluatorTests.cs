@@ -27,15 +27,17 @@ namespace VSRAD.PackageTests.ProjectSystem
         [Fact]
         public async Task ProjectPropertiesTestAsync()
         {
-            //var profileOptions = new ProfileOptions(debugger: new DebuggerProfileOptions(
-            //    arguments: "/home/sayaka/projects/debug_bin.py --solution $(SolutionDir)"));
+            var options = new ProfileOptions();
+            options.General.Macros.Add(new MacroItem("RadDeployDir", "/home/sayaka/projects", userDefined: true));
+            options.General.Macros.Add(new MacroItem("RadDebugScript", "$(RadDeployDir)/debug_bin.py", userDefined: true));
+            options.General.Macros.Add(new MacroItem("RadDebugArgs", "$(RadDebugScript) --solution $(SolutionDir)", userDefined: true));
 
-            //var props = new Mock<IProjectProperties>();
-            //props.Setup((p) => p.GetEvaluatedPropertyValueAsync("SolutionDir")).ReturnsAsync("/opt/rocm/examples/h");
+            var props = new Mock<IProjectProperties>();
+            props.Setup((p) => p.GetEvaluatedPropertyValueAsync("SolutionDir")).ReturnsAsync("/opt/rocm/examples/h");
 
-            //var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), profileOptions);
-            //var result = await evaluator.GetMacroValueAsync(RadMacros.DebuggerArguments);
-            //Assert.Equal("/home/sayaka/projects/debug_bin.py --solution /opt/rocm/examples/h", result);
+            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
+            var result = await evaluator.EvaluateAsync("$(RadDebugArgs)");
+            Assert.Equal("/home/sayaka/projects/debug_bin.py --solution /opt/rocm/examples/h", result);
         }
 
         [Fact]
@@ -92,16 +94,14 @@ namespace VSRAD.PackageTests.ProjectSystem
         [Fact]
         public async Task RecursiveMacroHandlingTestAsync()
         {
-            //var props = new Mock<IProjectProperties>();
+            var props = new Mock<IProjectProperties>();
+            var options = new ProfileOptions();
+            options.General.Macros.Add(new MacroItem("RadDebugExe", "/opt/rocm/debug_exe $(RadDebugArgs)", userDefined: true));
+            options.General.Macros.Add(new MacroItem("RadDebugArgs", "--exec $(RadDebugExe)", userDefined: true));
 
-            //var profileOptions = new ProfileOptions(debugger: new DebuggerProfileOptions(
-            //    executable: $"/opt/rocm/debug_exe $({RadMacros.DebuggerArguments})",
-            //    arguments: $"--exec $({RadMacros.DebuggerExecutable})"));
-
-            //var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), profileOptions);
-            //var exception = await Assert.ThrowsAsync<MacroEvaluationException>(
-            //    () => _ = evaluator.GetMacroValueAsync(RadMacros.DebuggerExecutable));
-            //Assert.Equal($"Unable to evaluate $({RadMacros.DebuggerExecutable}): the macro refers to itself.", exception.Message);
+            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
+            var exception = await Assert.ThrowsAsync<MacroEvaluationException>(() => _ = evaluator.EvaluateAsync("$(RadDebugExe)"));
+            Assert.Equal($"Unable to evaluate $(RadDebugExe): the macro refers to itself.", exception.Message);
         }
 
         [Fact]
