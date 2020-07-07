@@ -6,7 +6,7 @@
         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
         mc:Ignorable="d"
         Title="{Binding Status}"
-        Height="300" Width="800"
+        Height="280" Width="780" MinHeight="240" MinWidth="700"
         Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
         Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
     <Window.Resources>
@@ -18,28 +18,40 @@
     </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="40*" />
-            <ColumnDefinition Width="60*" />
+            <ColumnDefinition Width="4*" /> <!-- input -->
+            <ColumnDefinition Width="5*" /> <!-- macro list -->
         </Grid.ColumnDefinitions>
-        <TextBox Grid.Column="0" Margin="10,10,10,10" Name="textCommand" Height="68" TextWrapping="Wrap"
+        <Grid.RowDefinitions>
+            <RowDefinition Height="4*" /> <!-- input -->
+            <RowDefinition Height="5*" /> <!-- preview -->
+            <RowDefinition Height="34" /> <!-- ok, cancel -->
+        </Grid.RowDefinitions>
+        <TextBox Name="MacroInput" Grid.Row="0" TextWrapping="Wrap" Margin="4"
                  Text="{Binding MacroValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                 VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
-        <TextBlock Grid.Column="0" Margin="10,88,10,10" TextWrapping="Wrap"
-                 Text="{Binding EvaluatedValue}"
                  VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
-        <TextBox Grid.Column="1" Margin="10,10,10,10" Height="27"
-                 VerticalAlignment="Top" HorizontalAlignment="Stretch"
-                 Text="{Binding MacroPreviewFilter, UpdateSourceTrigger=PropertyChanged}"/>
-        <ListView Grid.Column="1"
-                  ItemsSource="{Binding MacroListView}"
-                  MouseDoubleClick="InsertMacro"
-                  ScrollViewer.CanContentScroll="True" Margin="10,44,10,10">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="Macro" DisplayMemberBinding="{Binding Key}"/>
-                    <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}"/>
-                </GridView>
-            </ListView.View>
-        </ListView>
+        <GroupBox Grid.Row="1" Margin="4" Padding="4" Header="Preview">
+            <TextBlock TextWrapping="Wrap" Text="{Binding EvaluatedValue}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+        </GroupBox>
+        <DockPanel Grid.RowSpan="2" Grid.Column="1">
+            <DockPanel DockPanel.Dock="Top" Height="26" Margin="4">
+                <Label Content="Search macros:" />
+                <TextBox Height="26" VerticalContentAlignment="Center" HorizontalAlignment="Stretch"
+                         ToolTip="Filter available macros by their name or value (case-insensitive)"
+                         Text="{Binding MacroPreviewFilter, UpdateSourceTrigger=PropertyChanged}"/>
+            </DockPanel>
+            <ListView ItemsSource="{Binding MacroListView}" MouseDoubleClick="InsertMacro" ScrollViewer.CanContentScroll="True" Margin="4"
+                      ToolTip="Double-click a macro to insert it at the cursor">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Macro" DisplayMemberBinding="{Binding Key}"/>
+                        <GridViewColumn Header="Value" DisplayMemberBinding="{Binding Value}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </DockPanel>
+        <StackPanel Grid.Row="2" Grid.Column="1" Margin="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Click="HandleOK" Width="61" Height="22" />
+            <Button Content="Cancel" IsCancel="True" Click="HandleCancel" Width="61" Height="22" Margin="4,0,0,0" />
+        </StackPanel>
     </Grid>
 </Window>

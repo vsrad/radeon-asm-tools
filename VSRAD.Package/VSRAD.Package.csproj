@@ -172,7 +172,7 @@
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
-    <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditContext.cs" />
     <Compile Include="ProjectSystem\Macros\MacroListEditor.xaml.cs">
       <DependentUpon>MacroListEditor.xaml</DependentUpon>
     </Compile>

@@ -10,10 +10,12 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
-    public sealed class MacroEditor : DefaultNotifyPropertyChanged
+    public sealed class MacroEditContext : DefaultNotifyPropertyChanged
     {
         private string _status = "Loading...";
         public string Status { get => _status; set => SetField(ref _status, value); }
+
+        public string MacroName { get; }
 
         private string _macroValue;
         public string MacroValue
@@ -25,6 +27,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 RaisePropertyChanged(nameof(EvaluatedValue));
             }
         }
+
+        public bool MacroValueChanged => MacroValue != _initMacroValue;
 
         public string EvaluatedValue => VSPackage.TaskFactory.Run(() => _evaluator.EvaluateAsync(_macroValue));
 
@@ -41,20 +45,23 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
         }
 
-        private readonly string _macroName;
+        private readonly string _initMacroValue;
         private readonly IMacroEvaluator _evaluator;
 
-        public MacroEditor(string macroName, string macroValue, IMacroEvaluator evaluator)
+        public MacroEditContext(string macroName, string macroValue, IMacroEvaluator evaluator)
         {
-            _macroName = macroName;
+            MacroName = macroName;
             MacroValue = macroValue;
+            _initMacroValue = macroValue;
             _evaluator = evaluator;
         }
+
+        public void ResetChanges() => MacroValue = _initMacroValue;
 
         public void LoadPreviewListInBackground(IProjectProperties projectProperties, AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnviornment) =>
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
             {
-                var radMacroNames = typeof(RadMacros).GetConstantValues<string>().Where((name) => name != _macroName);
+                var radMacroNames = typeof(RadMacros).GetConstantValues<string>().Where((name) => name != MacroName);
                 var vsMacroNames = await projectProperties.GetPropertyNamesAsync().ConfigureAwait(false);
                 var macroList = new List<KeyValuePair<string, string>>();
                 foreach (var macroName in radMacroNames.Union(vsMacroNames))
@@ -69,7 +76,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 MacroListView = new ListCollectionView(macroList) { Filter = FilterMacro };
                 RaisePropertyChanged(nameof(MacroListView));
                 RaisePropertyChanged(nameof(EvaluatedValue));
-                Status = $"Editing {_macroName} (requesting remote environment variables...)";
+                Status = $"Editing {MacroName} (requesting remote environment variables...)";
 
                 var remoteEnv = await remoteEnviornment.GetValueAsync().ConfigureAwait(false);
                 foreach (var env in remoteEnv)
@@ -79,9 +86,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 MacroListView.Refresh();
                 RaisePropertyChanged(nameof(EvaluatedValue));
                 if (remoteEnv.Count > 0)
-                    Status = $"Editing {_macroName} (showing local and remote environment variables)";
+                    Status = $"Editing {MacroName} (showing local and remote environment variables)";
                 else
-                    Status = $"Editing {_macroName} (showing local environment variables only)";
+                    Status = $"Editing {MacroName} (showing local environment variables only)";
             });
 
         private bool FilterMacro(object macro)
