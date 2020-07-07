@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -10,15 +11,27 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 {
     public sealed class ProfileOptionsActionsPage
     {
-        public List<object> Actions { get; }
+        public ObservableCollection<object> Actions { get; }
 
         public ProfileOptionsActionsPage(ProfileOptions profile)
         {
-            Actions = new List<object>
+            Actions = new ObservableCollection<object> { profile.Debugger };
+            foreach (var action in profile.General.Actions)
+                Actions.Add(action);
+
+            profile.General.Actions.CollectionChanged += (s, e) =>
             {
-                profile.Debugger
+                if (e.Action == NotifyCollectionChangedAction.Remove)
+                {
+                    foreach (var item in e.OldItems)
+                        Actions.Remove(item);
+                }
+                else if (e.Action == NotifyCollectionChangedAction.Add)
+                {
+                    foreach (var item in e.NewItems)
+                        Actions.Add(item);
+                }
             };
-            Actions.AddRange(profile.General.Actions);
         }
     }
 
@@ -38,7 +51,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public ProjectOptions Options { get; }
 
-        public List<ActionProfileOptions> Actions { get; } = new List<ActionProfileOptions>();
+        public IEnumerable<ActionProfileOptions> Actions => _dirtyOptions[Options.ActiveProfile].General.Actions;
 
         public List<object> Pages { get; } = new List<object>();
 
@@ -47,6 +60,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public IReadOnlyList<string> ProfileNames => Options.Profiles.Keys.ToList();
 
+        public WpfDelegateCommand AddActionCommand { get; }
+        public WpfDelegateCommand RemoveActionCommand { get; }
         public WpfDelegateCommand RemoveProfileCommand { get; }
 
         public DirtyProfileMacroEditor MacroEditor { get; private set; }
@@ -74,6 +89,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _askProfileName = askProfileName;
             _project = project;
             _channel = channel;
+            AddActionCommand = new WpfDelegateCommand(AddAction);
+            RemoveActionCommand = new WpfDelegateCommand(RemoveAction);
             RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: ProfileNames.Count > 1);
             OpenActiveProfilePages();
         }
@@ -107,22 +124,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             if (!_dirtyOptions.ContainsKey(Options.ActiveProfile))
                 _dirtyOptions.Add(Options.ActiveProfile, (ProfileOptions)Options.Profiles[Options.ActiveProfile].Clone());
-            var currentPages = _dirtyOptions[Options.ActiveProfile];
+            var currentProfile = _dirtyOptions[Options.ActiveProfile];
+            MacroEditor = new DirtyProfileMacroEditor(_project, _channel, currentProfile);
             Pages.Clear();
-            Pages.Add(currentPages.General);
-            Pages.Add(new ProfileOptionsMacrosPage(currentPages.General.Macros));
-            Pages.Add(new ProfileOptionsActionsPage(currentPages));
+            Pages.Add(currentProfile.General);
+            Pages.Add(new ProfileOptionsMacrosPage(currentProfile.General.Macros));
+            Pages.Add(new ProfileOptionsActionsPage(currentProfile));
             RaisePropertyChanged(nameof(Pages));
-            currentPages.General.Actions.CollectionChanged += (s, e) => ActionsChanged();
-            ActionsChanged();
-            MacroEditor = new DirtyProfileMacroEditor(_project, _channel, currentPages);
-        }
-
-        private void ActionsChanged()
-        {
-            Actions.Clear();
-            Actions.AddRange(_dirtyOptions[Options.ActiveProfile].General.Actions);
-            RaisePropertyChanged(nameof(Actions));
         }
 
         private void AddProfile(string title, string message, ProfileOptions profile)
@@ -136,7 +144,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        private void RemoveProfile(object sender)
+        private void AddAction(object param) =>
+            _dirtyOptions[Options.ActiveProfile].General.Actions.Add(new ActionProfileOptions { Name = "New Action" });
+
+        private void RemoveAction(object param) =>
+            _dirtyOptions[Options.ActiveProfile].General.Actions.Remove((ActionProfileOptions)param);
+
+        private void RemoveProfile(object param)
         {
             _dirtyOptions.Remove(Options.ActiveProfile);
             Options.RemoveProfile(Options.ActiveProfile);

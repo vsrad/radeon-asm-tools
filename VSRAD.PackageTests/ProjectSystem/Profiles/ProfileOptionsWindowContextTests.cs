@@ -50,5 +50,24 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.SaveChanges();
             Assert.Equal("--stuffed", ((ExecuteStep)project.Options.Profile.Debugger.Steps[0]).Arguments);
         }
+
+        [Fact]
+        public void AddRemoveActionsTest()
+        {
+            var project = CreateTestProject();
+            var context = new ProfileOptionsWindowContext(project, null, null);
+
+            var actionsPage = GetPage<ProfileOptionsActionsPage>(context);
+            Assert.Single(actionsPage.Actions, GetPage<DebuggerProfileOptions>(context));
+
+            context.AddActionCommand.Execute(null);
+            Assert.Collection(actionsPage.Actions,
+                (page1) => Assert.True(page1 == GetPage<DebuggerProfileOptions>(context)),
+                (page2) => Assert.True(page2 is ActionProfileOptions opts && opts.Name == "New Action"));
+
+            var action = GetPage<ProfileOptionsActionsPage>(context).Actions[1];
+            context.RemoveActionCommand.Execute(action);
+            Assert.Single(actionsPage.Actions, GetPage<DebuggerProfileOptions>(context));
+        }
     }
 }

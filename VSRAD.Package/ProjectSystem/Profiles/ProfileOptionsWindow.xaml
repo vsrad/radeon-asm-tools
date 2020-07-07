@@ -57,16 +57,18 @@
                 <DataTemplate DataType="{x:Type local:ProfileOptionsMacrosPage}">
                     <Label Content="Macros" />
                 </DataTemplate>
-                <HierarchicalDataTemplate DataType="{x:Type local:ProfileOptionsActionsPage}" ItemsSource="{Binding Actions}">
+                <HierarchicalDataTemplate DataType="{x:Type local:ProfileOptionsActionsPage}" ItemsSource="{Binding Actions, Mode=OneWay}">
                     <DockPanel LastChildFill="False">
                         <Label Content="Actions" Margin="0,0,4,0"/>
-                        <Button DockPanel.Dock="Right" Content="+" Height="22" Width="22"/>
+                        <Button DockPanel.Dock="Right" Content="➕" Command="{Binding DataContext.AddActionCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                                Height="22" Width="22"/>
                     </DockPanel>
                 </HierarchicalDataTemplate>
                 <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
                     <DockPanel LastChildFill="False">
                         <Label Content="{Binding Name}" Margin="0,0,4,0"/>
-                        <Button DockPanel.Dock="Right" Content="-" Height="22" Width="22"/>
+                        <Button DockPanel.Dock="Right" Content="❌" Command="{Binding DataContext.RemoveActionCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                                CommandParameter="{Binding}" Height="22" Width="22"/>
                     </DockPanel>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
@@ -95,39 +97,41 @@
                     <macros:MacroListEditor DataContext="{Binding Macros}" MacroEditor="{Binding DataContext.MacroEditor, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" />
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="176"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-                        <Label Content="Output Mode:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
-                                    ToolTip="{Binding Path=SelectedItem.ToolTip, RelativeSource={RelativeSource Self}}"
-                                    SelectedIndex="{Binding BinaryOutput, Converter={StaticResource BoolToIndexConverter}, Mode=TwoWay}">
-                            <ComboBoxItem Content="Binary" ToolTip="32-bit values are packed into consecutive DWORDs"/>
-                            <ComboBoxItem Content="Text" ToolTip="Each 32-bit value is written on a separate line as a hexadecimal string (0x...)"/>
-                        </ComboBox>
-                        <Label Content="Output Offset:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                        <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
-                                    Text="{Binding OutputOffset, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"/>
-                        <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                        Header="Output File" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0" />
-                        <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                        Header="Valid Watches File" Grid.Row="3" Grid.ColumnSpan="2"/>
-                        <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                        Header="Status String File" Grid.Row="4" Grid.ColumnSpan="2"/>
-                        <local:ActionEditor Steps="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"
-                                            CustomActions="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
-                    </Grid>
+                    <ScrollViewer>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="176"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Output Mode:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
+                                      ToolTip="{Binding Path=SelectedItem.ToolTip, RelativeSource={RelativeSource Self}}"
+                                      SelectedIndex="{Binding BinaryOutput, Converter={StaticResource BoolToIndexConverter}, Mode=TwoWay}">
+                                <ComboBoxItem Content="Binary" ToolTip="32-bit values are packed into consecutive DWORDs"/>
+                                <ComboBoxItem Content="Text" ToolTip="Each 32-bit value is written on a separate line as a hexadecimal string (0x...)"/>
+                            </ComboBox>
+                            <Label Content="Output Offset:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding OutputOffset, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"/>
+                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Output File" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0" />
+                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Valid Watches File" Grid.Row="3" Grid.ColumnSpan="2"/>
+                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Status String File" Grid.Row="4" Grid.ColumnSpan="2"/>
+                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"
+                                                CustomActions="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
+                        </Grid>
+                    </ScrollViewer>
                 </DataTemplate>
             </ContentControl.Resources>
         </ContentControl>
