@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,7 @@ namespace VSRAD.Package.ProjectSystem
 
         ProjectOptions Options { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
+        IProjectProperties GetProjectProperties();
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
         void SaveOptions();
     }
@@ -66,6 +68,12 @@ namespace VSRAD.Package.ProjectSystem
 
         public void SaveOptions() => Options.Write(_optionsFilePath);
 
+        public IProjectProperties GetProjectProperties()
+        {
+            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            return configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
+        }
+
         #region MacroEvaluator
         private IActiveCodeEditor _codeEditor;
         private IProjectSourceManager _projectSourceManager;
@@ -82,8 +90,7 @@ namespace VSRAD.Package.ProjectSystem
             if (_communicationChannel == null)
                 _communicationChannel = _unconfiguredProject.Services.ExportProvider.GetExportedValue<ICommunicationChannel>();
 
-            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
-            var projectProperties = configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
+            var projectProperties = GetProjectProperties();
 
             var file = await GetRelativeSourcePathAsync();
             var line = _codeEditor.GetCurrentLine();

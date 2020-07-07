@@ -7,7 +7,6 @@ using System.Windows.Data;
 using System.Windows.Input;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
@@ -49,13 +48,13 @@ namespace VSRAD.Package.ToolWindows
             }
         }
 
+        private readonly IToolWindowIntegration _integration;
         private readonly ProjectOptions _projectOptions;
-        private readonly MacroEditManager _macroEditor;
 
         public OptionsControl(IToolWindowIntegration integration)
         {
+            _integration = integration;
             _projectOptions = integration.ProjectOptions;
-            _macroEditor = integration.MacroEditor;
             DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel);
             InitializeComponent();
         }
@@ -63,7 +62,7 @@ namespace VSRAD.Package.ToolWindows
         // TODO: can freeze here
         private void EditProfiles(object sender, RoutedEventArgs e)
         {
-            new ProjectSystem.Profiles.ProfileOptionsWindow(_macroEditor, _projectOptions).ShowDialog();
+            new ProjectSystem.Profiles.ProfileOptionsWindow(_integration).ShowDialog();
         }
 
         private void AlignmentButtonClick(object sender, RoutedEventArgs e)

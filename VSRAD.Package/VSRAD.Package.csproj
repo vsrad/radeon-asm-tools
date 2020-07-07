@@ -220,7 +220,7 @@
     <Compile Include="Options\ProfileOptions.cs" />
     <Compile Include="Options\ProjectOptions.cs" />
     <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
-    <Compile Include="ProjectSystem\Macros\MacroEditManager.cs" />
+    <Compile Include="ProjectSystem\Macros\DirtyProfileMacroEditor.cs" />
     <Compile Include="ProjectSystem\OutputWindow.cs" />
     <Compile Include="ProjectSystem\Profiles\PropertyPageEditorWrapper.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">

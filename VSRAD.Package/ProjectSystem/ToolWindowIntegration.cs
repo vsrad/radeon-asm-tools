@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using System.ComponentModel.Composition;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
@@ -11,8 +10,8 @@ namespace VSRAD.Package.ProjectSystem
     public interface IToolWindowIntegration
     {
         ProjectOptions ProjectOptions { get; }
+        IProject Project { get; }
         ICommunicationChannel CommunicationChannel { get; }
-        MacroEditManager MacroEditor { get; }
 
         event AddWatch AddWatch;
 
@@ -25,10 +24,10 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ToolWindowIntegration : IToolWindowIntegration
     {
+        public IProject Project { get; }
         public ICommunicationChannel CommunicationChannel { get; }
-        public MacroEditManager MacroEditor { get; }
 
-        public ProjectOptions ProjectOptions => _project.Options;
+        public ProjectOptions ProjectOptions => Project.Options;
 
         public event AddWatch AddWatch;
 
@@ -38,16 +37,14 @@ namespace VSRAD.Package.ProjectSystem
             remove => _debugger.BreakEntered -= value;
         }
 
-        private readonly IProject _project;
         private readonly DebuggerIntegration _debugger;
 
         [ImportingConstructor]
-        public ToolWindowIntegration(IProject project, DebuggerIntegration debugger, ICommunicationChannel channel, MacroEditManager macroEditor)
+        public ToolWindowIntegration(IProject project, ICommunicationChannel channel, DebuggerIntegration debugger)
         {
-            _project = project;
-            _debugger = debugger;
+            Project = project;
             CommunicationChannel = channel;
-            MacroEditor = macroEditor;
+            _debugger = debugger;
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);

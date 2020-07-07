@@ -2,6 +2,8 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
@@ -47,12 +49,16 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public WpfDelegateCommand RemoveProfileCommand { get; }
 
+        public DirtyProfileMacroEditor MacroEditor { get; private set; }
+
         private readonly Dictionary<string, ProfileOptions> _dirtyOptions = new Dictionary<string, ProfileOptions>();
         private readonly AskProfileNameDelegate _askProfileName;
+        private readonly IProject _project;
+        private readonly ICommunicationChannel _channel;
 
-        public ProfileOptionsWindowContext(ProjectOptions projectOptions, AskProfileNameDelegate askProfileName)
+        public ProfileOptionsWindowContext(IProject project, ICommunicationChannel channel, AskProfileNameDelegate askProfileName)
         {
-            Options = projectOptions;
+            Options = project.Options;
             Options.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(Options.ActiveProfile))
@@ -65,9 +71,11 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 RaisePropertyChanged(nameof(ProfileNames));
                 RemoveProfileCommand.IsEnabled = ProfileNames.Count > 1;
             };
-            OpenActiveProfilePages();
             _askProfileName = askProfileName;
+            _project = project;
+            _channel = channel;
             RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: ProfileNames.Count > 1);
+            OpenActiveProfilePages();
         }
 
         public void CreateNewProfile() =>
@@ -107,6 +115,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             RaisePropertyChanged(nameof(Pages));
             currentPages.General.Actions.CollectionChanged += (s, e) => ActionsChanged();
             ActionsChanged();
+            MacroEditor = new DirtyProfileMacroEditor(_project, _channel, currentPages);
         }
 
         private void ActionsChanged()

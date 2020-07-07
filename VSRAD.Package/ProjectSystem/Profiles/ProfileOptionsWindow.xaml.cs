@@ -10,12 +10,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
     {
         private readonly ProfileOptionsWindowContext _context;
 
-        public ProfileOptionsWindow(Macros.MacroEditManager macroEditor, ProjectOptions projectOptions)
+        public ProfileOptionsWindow(IToolWindowIntegration integration)
         {
-            if (!projectOptions.HasProfiles)
-                projectOptions.AddProfile("Default", new ProfileOptions());
+            if (!integration.ProjectOptions.HasProfiles)
+                integration.ProjectOptions.AddProfile("Default", new ProfileOptions());
 
-            _context = new ProfileOptionsWindowContext(projectOptions, askProfileName: AskProfileName);
+            _context = new ProfileOptionsWindowContext(integration.Project, integration.CommunicationChannel, askProfileName: AskProfileName);
             DataContext = _context;
             InitializeComponent();
         }

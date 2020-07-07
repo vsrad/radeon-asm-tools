@@ -9,6 +9,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
+    // Items displayed in WPF designer (replaced with user data at run time)
     public sealed class MacroListDesignTimeCollection : ObservableCollection<MacroItem>
     {
         public MacroListDesignTimeCollection()
@@ -43,13 +44,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
             DeleteMacroCommand = new WpfDelegateCommand(item => ((MacroListDisplayCollection)DataContext).Remove((MacroItem)item));
 
             if (DataContext != null)
+                // DataContext is immediately initialized in WPF designer
                 SetupDisplayCollection(DataContext);
             else
+                // DataContext is bound after initialization at run time
                 DataContextChanged += (s, e) => SetupDisplayCollection(e.NewValue);
         }
 
         private void SetupDisplayCollection(object dataContext)
         {
+            // Merge user-defined macros (DataContext) with predefined ones into a new "display" collection
             if (_sourceCollection == null && dataContext is ObservableCollection<MacroItem> sourceCollection)
             {
                 _sourceCollection = sourceCollection;
@@ -63,6 +67,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 foreach (var item in _sourceCollection)
                     displayItems.Add(item);
 
+                // Sync added/removed macros with the source collection
                 displayItems.CollectionChanged += DisplayItemsChanged;
                 DataContext = displayItems;
             }
