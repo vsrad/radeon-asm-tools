@@ -130,12 +130,12 @@
                             <Label Content="Local Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding LocalPath}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
-                                     Tag="LocalPath" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                     Tag="LocalPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Remote Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
                             <TextBox Text="{Binding RemotePath}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
-                                    Tag="RemotePath" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    Tag="RemotePath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
                         </Grid>
                     </Expander>
                 </DataTemplate>
@@ -163,17 +163,17 @@
                             <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding Executable}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
-                                    Tag="Executable" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    Tag="Executable" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Arguments:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
                             <TextBox Text="{Binding Arguments}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
-                                    Tag="Arguments" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    Tag="Arguments" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <TextBox Text="{Binding WorkingDirectory}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
-                                    Tag="WorkingDirectory" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    Tag="WorkingDirectory" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Run as Administrator:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
@@ -204,7 +204,7 @@
                             <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
                             <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
-                                     Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                     Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Line Marker:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding LineMarker}" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="22" Width="160" Grid.Row="1" Grid.Column="1" />

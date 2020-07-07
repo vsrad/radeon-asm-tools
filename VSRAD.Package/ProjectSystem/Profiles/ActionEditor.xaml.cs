@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
@@ -55,10 +56,17 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         }
 #pragma warning restore CA2227
 
+        public DirtyProfileMacroEditor MacroEditor
+        {
+            get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
+        }
+
         public static readonly DependencyProperty StepsProperty =
             DependencyProperty.Register(nameof(Steps), typeof(ObservableCollection<IActionStep>), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty CustomActionsProperty =
             DependencyProperty.Register(nameof(CustomActions), typeof(IReadOnlyList<ActionProfileOptions>), typeof(ActionEditor), new PropertyMetadata(null));
+        public static readonly DependencyProperty MacroEditorProperty =
+            DependencyProperty.Register(nameof(MacroEditor), typeof(DirtyProfileMacroEditor), typeof(ActionEditor), new PropertyMetadata(null));
 
         public ICommand AddCommand { get; }
         public ICommand MoveUpCommand { get; }
@@ -105,11 +113,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var editButton = (Button)sender;
             var action = editButton.DataContext;
             var propertyName = (string)editButton.Tag;
-            var property = action.GetType().GetProperty(propertyName);
 
-            // TODO: invoke macro editor
-            var newValue = "(Edited " + (string)property.GetValue(action) + ")";
-            property.SetValue(action, newValue);
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+                MacroEditor.EditObjectPropertyAsync(action, propertyName));
         }
 
         private void OpenNewStepPopup(object sender, RoutedEventArgs e) =>

@@ -120,10 +120,14 @@
                             <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
                                      Text="{Binding OutputOffset, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"/>
-                            <local:BuiltinActionFileEditor Margin="0,6,0,0" DataContext="{Binding OutputFile}" Header="Output File" Grid.Row="2" Grid.ColumnSpan="2"/>
-                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" Header="Valid Watches File" Grid.Row="3" Grid.ColumnSpan="2"/>
-                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" Header="Status String File" Grid.Row="4" Grid.ColumnSpan="2"/>
-                            <local:ActionEditor Steps="{Binding Steps}" CustomActions="{Binding DataContext.Actions, ElementName=Root}" Grid.Row="5" Grid.ColumnSpan="2"/>
+                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Output File" Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0" />
+                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Valid Watches File" Grid.Row="3" Grid.ColumnSpan="2"/>
+                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Status String File" Grid.Row="4" Grid.ColumnSpan="2"/>
+                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"
+                                                CustomActions="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
                         </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>

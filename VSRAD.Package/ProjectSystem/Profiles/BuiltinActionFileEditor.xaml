@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:opts="clr-namespace:VSRAD.Package.Options"
-             xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
@@ -89,7 +88,7 @@
                 <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                 <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
                 <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
-                    Tag="LocalPath" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                    Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                 <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
                 <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
