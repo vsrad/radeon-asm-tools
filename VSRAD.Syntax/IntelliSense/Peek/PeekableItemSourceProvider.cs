@@ -14,12 +14,12 @@ namespace VSRAD.Syntax.IntelliSense.Peek
     internal sealed class PeekableItemSourceProvider : IPeekableItemSourceProvider
     {
         private readonly RadeonServiceProvider _serviceProvider;
-        private readonly NavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationTokenService;
 
         [ImportingConstructor]
         public PeekableItemSourceProvider(
             RadeonServiceProvider serviceProvider,
-            NavigationTokenService definitionService)
+            INavigationTokenService definitionService)
         {
             _serviceProvider = serviceProvider;
             _navigationTokenService = definitionService;

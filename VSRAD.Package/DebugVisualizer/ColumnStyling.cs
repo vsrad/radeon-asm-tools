@@ -27,27 +27,36 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void Apply(IReadOnlyList<DataGridViewColumn> columns)
         {
-            if (columns.Count != VisualizerTable.DataColumnCount)
-                throw new ArgumentException("ColumnAppearance applies to exactly 512 columns");
-
-            for (int i = 0; i < _computedStyling.GroupSize; i++)
+            for (int i = 0; i < columns.Count; i++)
             {
-                columns[i].Visible = (_computedStyling.ColumnState[i] & ColumnStates.Visible) != 0;
-                if (columns[i].Visible)
+                var column = columns[i];
+                if (i >= _computedStyling.ColumnState.Length)
+                {
+                    column.Visible = false;
+                    continue;
+                }
+                column.Visible = (_computedStyling.ColumnState[i] & ColumnStates.Visible) != 0;
+                if (column.Visible)
                 {
                     if ((_computedStyling.ColumnState[i] & ColumnStates.HasHiddenColumnSeparator) != 0)
-                        columns[i].DividerWidth = _hiddenColumnSeparatorWidth;
+                        column.DividerWidth = _hiddenColumnSeparatorWidth;
                     else if ((_computedStyling.ColumnState[i] & ColumnStates.HasLaneSeparator) != 0)
-                        columns[i].DividerWidth = _laneDividerWidth;
+                        column.DividerWidth = _laneDividerWidth;
                     else
-                        columns[i].DividerWidth = 0;
+                        column.DividerWidth = 0;
 
                     var bgColor = DataHighlightColors.GetFromColorString(_columnBackgroundColors, i);
                     var fgColor = DataHighlightColors.GetFromColorString(_columnForegroundColors, i);
-                    columns[i].DefaultCellStyle.BackColor = _fontAndColor.HighlightBackground[(int)bgColor];
-                    columns[i].DefaultCellStyle.ForeColor = _fontAndColor.HighlightForeground[(int)fgColor];
+                    column.DefaultCellStyle.BackColor = _fontAndColor.HighlightBackground[(int)bgColor];
+                    column.DefaultCellStyle.ForeColor = _fontAndColor.HighlightForeground[(int)fgColor];
                 }
             }
+        }
+
+        public static void GrayOutColumns(IReadOnlyList<DataGridViewColumn> columns, FontAndColorState fontAndColor, uint groupSize)
+        {
+            for (int i = 0; i < groupSize; i++)
+                columns[i].DefaultCellStyle.BackColor = fontAndColor.HighlightBackground[(int)DataHighlightColor.Inactive];
         }
     }
 }

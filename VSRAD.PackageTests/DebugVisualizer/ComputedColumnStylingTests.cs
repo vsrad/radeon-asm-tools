@@ -47,6 +47,32 @@ namespace VSRAD.PackageTests.DebugVisualizer
         }
 
         [Fact]
+        public void LaneMaskingTinyGroupTest()
+        {
+            var system = new uint[32];
+            system[8] = 0b0111_0111;
+
+            var styling = new ComputedColumnStyling();
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 7, system: new WatchView(system));
+
+            Assert.False((styling.ColumnState[0] & ColumnStates.Inactive) != 0); // 1 = active
+            Assert.False((styling.ColumnState[1] & ColumnStates.Inactive) != 0); // 1 = active
+            Assert.False((styling.ColumnState[2] & ColumnStates.Inactive) != 0); // 1 = active
+            Assert.True((styling.ColumnState[3] & ColumnStates.Inactive) != 0); // 0 = inactive
+            Assert.False((styling.ColumnState[4] & ColumnStates.Inactive) != 0); // 1 = active
+            Assert.False((styling.ColumnState[5] & ColumnStates.Inactive) != 0); // 1 = active
+            Assert.False((styling.ColumnState[6] & ColumnStates.Inactive) != 0); // 1 = active
+        }
+
+        [Fact]
+        public void LaneGroupingTinyGroupTest()
+        {
+            // No assertions, this test simply hangs if we don't handle groupSize < laneGrouping in the code
+            var styling = new ComputedColumnStyling();
+            styling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, new ColumnStylingOptions(), groupSize: 3, system: null);
+        }
+
+        [Fact]
         public void MagicNumberCheckTest()
         {
             var system = new uint[256];

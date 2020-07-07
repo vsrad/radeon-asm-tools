@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -21,6 +22,7 @@ namespace VSRAD.Syntax.Options
         public OptionsProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;
+            Autoscroll = false;
             IsEnabledIndentGuides = false;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
@@ -32,9 +34,10 @@ namespace VSRAD.Syntax.Options
     }
 
         public GeneralOptionPage.SortState SortOptions;
+        public bool Autoscroll;
         public bool IsEnabledIndentGuides;
-        public List<string> Asm1FileExtensions;
-        public List<string> Asm2FileExtensions;
+        public IReadOnlyList<string> Asm1FileExtensions;
+        public IReadOnlyList<string> Asm2FileExtensions;
         public string InstructionsPaths;
         public bool AutocompleteInstructions;
         public bool AutocompleteFunctions;
@@ -54,7 +57,7 @@ namespace VSRAD.Syntax.Options
         }
     }
 
-    public class GeneralOptionPage : BaseOptionPage
+    public class GeneralOptionPage : DialogPage
     {
         private const string InstructionCollectionPath = "VSRADInstructionCollectionPath";
         private static readonly Regex fileExtensionRegular = new Regex(@"^\.\w+$");
@@ -63,11 +66,6 @@ namespace VSRAD.Syntax.Options
         public GeneralOptionPage(): base()
         {
             _optionsEventProvider = Package.Instance.GetMEFComponent<OptionsProvider>();
-            _collectionSettings = new Dictionary<string, KeyValuePair<string, (List<string>, IReadOnlyList<string>)>>()
-            {
-                { "Asm1CollectionFileExtensions", new KeyValuePair<string, (List<string>, IReadOnlyList<string>)>(nameof(Asm1FileExtensions), (Asm1FileExtensions, Constants.DefaultFileExtensionAsm1)) },
-                { "Asm2CollectionFileExtensions", new KeyValuePair<string, (List<string>, IReadOnlyList<string>)>(nameof(Asm2FileExtensions), (Asm2FileExtensions, Constants.DefaultFileExtensionAsm2)) },
-            };
         }
 
         [Category("Function list")]
@@ -77,6 +75,15 @@ namespace VSRAD.Syntax.Options
         {
             get { return _optionsEventProvider.SortOptions; }
             set { _optionsEventProvider.SortOptions = value; }
+        }
+
+        [Category("Function list")]
+        [DisplayName("Autoscroll function list")]
+        [Description("Scroll to current function in the function list automatically")]
+        public bool Autoscroll
+        {
+            get { return _optionsEventProvider.Autoscroll; }
+            set { _optionsEventProvider.Autoscroll = value; }
         }
 
         [Category("Syntax highlight")]
@@ -91,21 +98,19 @@ namespace VSRAD.Syntax.Options
         [Category("Syntax file extensions")]
         [DisplayName("Asm1 file extensions")]
         [Description("List of file extensions for the asm1 syntax")]
-        [Editor(@"System.Windows.Forms.Design.StringCollectionEditor, System.Design, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", typeof(System.Drawing.Design.UITypeEditor))]
-        public List<string> Asm1FileExtensions
+        public string Asm1FileExtensions
         {
-            get { return _optionsEventProvider.Asm1FileExtensions; }
-            set { if (ValidateExtensions(value)) _optionsEventProvider.Asm1FileExtensions = value; }
+            get { return ConvertExtensionsTo(_optionsEventProvider.Asm1FileExtensions); }
+            set { var extensions = ConvertExtensionsFrom(value); if (ValidateExtensions(extensions)) _optionsEventProvider.Asm1FileExtensions = extensions; }
         }
 
         [Category("Syntax file extensions")]
         [DisplayName("Asm2 file extensions")]
         [Description("List of file extensions for the asm2 syntax")]
-        [Editor(@"System.Windows.Forms.Design.StringCollectionEditor, System.Design, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", typeof(System.Drawing.Design.UITypeEditor))]
-        public List<string> Asm2FileExtensions
+        public string Asm2FileExtensions
         {
-            get { return _optionsEventProvider.Asm2FileExtensions; }
-            set { if (ValidateExtensions(value)) _optionsEventProvider.Asm2FileExtensions = value; }
+            get { return ConvertExtensionsTo(_optionsEventProvider.Asm2FileExtensions); }
+            set { var extensions = ConvertExtensionsFrom(value); if (ValidateExtensions(extensions)) _optionsEventProvider.Asm2FileExtensions = extensions; }
         }
 
         [Category("Syntax instruction folder paths")]
@@ -166,7 +171,7 @@ namespace VSRAD.Syntax.Options
             ByNameDescending = 4,
         }
 
-        public override Task InitializeAsync()
+        public Task InitializeAsync()
         {
             // make sure this managers initialized before initial option event
             _ = Package.Instance.GetMEFComponent<ContentTypeManager>();
@@ -215,6 +220,12 @@ namespace VSRAD.Syntax.Options
                 Error.ShowWarning(ex);
             }
         }
+
+        private static List<string> ConvertExtensionsFrom(string str) =>
+            str.Split(';').Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+
+        private static string ConvertExtensionsTo(IReadOnlyList<string> extensions) =>
+            string.Join(";", extensions.ToArray());
         
         private static bool ValidateExtensions(List<string> extensions)
         {

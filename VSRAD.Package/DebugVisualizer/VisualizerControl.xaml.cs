@@ -14,20 +14,17 @@ namespace VSRAD.Package.DebugVisualizer
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
-            _context = new VisualizerContext(integration.ProjectOptions, integration.CommunicationChannel);
+            _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
             _context.GroupFetched += GroupFetched;
             DataContext = _context;
             InitializeComponent();
 
-            integration.BreakEntered += _context.EnterBreak;
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
-
-            Application.Current.Deactivated += (sender, e) => WindowFocusLost();
 
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
@@ -44,13 +41,13 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var row in invalidatedRows)
                         SetRowContentsFromBreakState(row);
             };
-            _table.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
+            _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
         }
 
-        public void WindowFocusLost() =>
-            _table.HostWindowDeactivated();
+        public void WindowFocusChanged(bool hasFocus) =>
+            _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
             _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());
@@ -63,6 +60,7 @@ namespace VSRAD.Package.DebugVisualizer
             switch (e.PropertyName)
             {
                 case nameof(VisualizerContext.GroupSize):
+                    _table.CreateMissingDataColumns((int)_context.GroupSize);
                     RefreshDataStyling();
                     break;
                 case nameof(VisualizerContext.WatchesValid):
@@ -113,7 +111,7 @@ namespace VSRAD.Package.DebugVisualizer
                     _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
                     break;
                 case nameof(Options.VisualizerAppearance.ScalingMode):
-                    _table.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
+                    _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.LaneGrouping):
@@ -164,13 +162,13 @@ namespace VSRAD.Package.DebugVisualizer
                 if (watchData != null)
                     RenderRowData(row, _context.GroupSize, watchData);
                 else
-                    EraseRowData(row);
+                    EraseRowData(row, _table.DataColumnCount);
             }
         }
 
-        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row)
+        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row, int columnCount)
         {
-            for (int i = 0; i < VisualizerTable.DataColumnCount; ++i)
+            for (int i = 0; i < columnCount; ++i)
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
         }
 

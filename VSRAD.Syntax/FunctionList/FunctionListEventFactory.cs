@@ -33,6 +33,8 @@ namespace VSRAD.Syntax.FunctionList
 
                 documentAnalysis.ParserUpdated += FunctionList.TryUpdateFunctionList;
                 view.Caret.PositionChanged += (obj, args) => FunctionList.TryHighlightCurrentFunction(args.TextView);
+
+                FunctionList.TryUpdateFunctionList(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
             }
         }
     }

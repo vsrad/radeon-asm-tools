@@ -2,11 +2,17 @@
 using System.ComponentModel;
 using System.Text;
 using System.Threading.Tasks;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
+    public class GroupFetchingEventArgs : EventArgs
+    {
+        public bool FetchWholeFile { get; set; }
+    }
+
     public class GroupFetchedEventArgs : EventArgs
     {
         public string Warning { get; }
@@ -19,7 +25,9 @@ namespace VSRAD.Package.DebugVisualizer
 
     public sealed class VisualizerContext : DefaultNotifyPropertyChanged
     {
+        public event EventHandler<GroupFetchingEventArgs> GroupFetching;
         public event EventHandler<GroupFetchedEventArgs> GroupFetched;
+
         public Options.ProjectOptions Options { get; }
         public GroupIndexSelector GroupIndex { get; }
 
@@ -38,10 +46,12 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly ICommunicationChannel _channel;
         private BreakState _breakState;
 
-        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel)
+        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, DebuggerIntegration debugger)
         {
             Options = options;
             _channel = channel;
+
+            debugger.BreakEntered += EnterBreak;
 
             GroupIndex = new GroupIndexSelector(options.VisualizerOptions);
             GroupIndex.IndexChanged += GroupIndexChanged;
@@ -49,7 +59,7 @@ namespace VSRAD.Package.DebugVisualizer
             Options.DebuggerOptions.PropertyChanged += OptionsChanged;
         }
 
-        public void EnterBreak(BreakState breakState)
+        private void EnterBreak(BreakState breakState)
         {
             _breakState = breakState;
             WatchesValid = breakState != null;
@@ -86,10 +96,15 @@ namespace VSRAD.Package.DebugVisualizer
         private async Task ChangeGroupAsync(GroupIndexChangedEventArgs e)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            Status = $"Fetching group {e.Coordinates}";
+            var fetchArgs = new GroupFetchingEventArgs();
+            GroupFetching(this, fetchArgs);
+
+            Status = fetchArgs.FetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
             GroupIndexEditable = false;
 
-            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize, (int)Options.DebuggerOptions.NGroups);
+            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
+                (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
+
             GroupFetched(this, new GroupFetchedEventArgs(warning));
 
             var status = new StringBuilder();

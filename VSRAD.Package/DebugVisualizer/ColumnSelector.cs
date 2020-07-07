@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -6,7 +7,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public static class ColumnSelector
     {
-        public static IEnumerable<int> ToIndexes(string selector)
+        public static IEnumerable<int> ToIndexes(string selector, int columnCount)
         {
             while (selector.Length > 0)
             {
@@ -32,12 +33,13 @@ namespace VSRAD.Package.DebugVisualizer
                     }
                     if (int.TryParse(lhs, out var rangeStart) && int.TryParse(rhs, out var rangeEnd))
                     {
-                        for (int i = rangeStart; i <= rangeEnd && i < VisualizerTable.DataColumnCount; ++i)
+                        rangeEnd = Math.Min(rangeEnd, columnCount - 1);
+                        for (int i = rangeStart; i <= rangeEnd; ++i)
                             yield return i;
                     }
                     selector = selector.Substring(rhs.Length);
                 }
-                else if (int.TryParse(lhs, out var i) && i < VisualizerTable.DataColumnCount)
+                else if (int.TryParse(lhs, out var i) && i < columnCount)
                 {
                     yield return i;
                 }
@@ -97,10 +99,10 @@ namespace VSRAD.Package.DebugVisualizer
             return sb.ToString();
         }
 
-        public static string GetSelectorMultiplication(string currentSelector, string newSelector)
+        public static string GetSelectorMultiplication(string currentSelector, string newSelector, int columnCount)
         {
-            var currentIndexes = ToIndexes(currentSelector);
-            var newIndexes = ToIndexes(newSelector);
+            var currentIndexes = ToIndexes(currentSelector, columnCount);
+            var newIndexes = ToIndexes(newSelector, columnCount);
 
             if (currentIndexes.All(i => newIndexes.Contains(i)))
                 return FromIndexes(newIndexes);

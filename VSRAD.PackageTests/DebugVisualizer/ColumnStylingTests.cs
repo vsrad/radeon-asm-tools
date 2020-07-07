@@ -43,7 +43,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 Assert.False(columns[i].Visible);
             for (int i = 14; i <= 20; i++)
                 Assert.True(columns[i].Visible);
-            for (int i = 21; i < 32; i++)
+            for (int i = 21; i < columns.Count; i++)
                 Assert.False(columns[i].Visible);
         }
 
@@ -79,11 +79,11 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 Assert.Equal(Color.Black, columns[i].DefaultCellStyle.ForeColor);
 
             string bgString = null;
-            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 0, 1, 2, 3, 4, 5 }, DataHighlightColor.Red); // rrrrrr
-            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 1, 2, 3 }, DataHighlightColor.Green);        // rgggrr
-            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 3, 4, 666, -1 }, DataHighlightColor.Blue);   // rggbbr, 666 (> 512) and -1 to trigger IndexOutOfBounds
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 0, 1, 2, 3, 4, 5 }, DataHighlightColor.Red, columns.Count); // rrrrrr
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 1, 2, 3 }, DataHighlightColor.Green, columns.Count);        // rgggrr
+            bgString = DataHighlightColors.UpdateColorStringRange(bgString, new[] { 3, 4, 666, -1 }, DataHighlightColor.Blue, columns.Count);   // rggbbr, 666 (> 512) and -1 to trigger IndexOutOfBounds
 
-            var fgString = DataHighlightColors.UpdateColorStringRange(bgString, Enumerable.Range(0, 512), DataHighlightColor.None);
+            var fgString = DataHighlightColors.UpdateColorStringRange(bgString, Enumerable.Range(0, 512), DataHighlightColor.None, columns.Count);
             Assert.Equal("", fgString);
 
             options = new ColumnStylingOptions { BackgroundColors = bgString, ForegroundColors = fgString };

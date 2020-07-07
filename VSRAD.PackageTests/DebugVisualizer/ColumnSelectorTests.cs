@@ -31,41 +31,41 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var currentSelector = "0-511";
 
             // keep first
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-255");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-255", columnCount: 512);
             Assert.Equal("0-255", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-127:256-384");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-127:256-384", columnCount: 512);
             Assert.Equal("0-127", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-63:128-191:256-319:384-447");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-63:128-191:256-319:384-447", columnCount: 512);
             Assert.Equal("0-63", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-127");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-127", columnCount: 512);
             Assert.Equal("0-127", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-255");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-255", columnCount: 512);
             Assert.Equal("0-255", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-511", columnCount: 512);
             Assert.Equal("0-511", currentSelector);
 
             //keep last
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "256-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "256-511", columnCount: 512);
             Assert.Equal("256-511", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "128-255:384-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "128-255:384-511", columnCount: 512);
             Assert.Equal("384-511", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "64-127:192-255:320-383:448-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "64-127:192-255:320-383:448-511", columnCount: 512);
             Assert.Equal("448-511", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "384-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "384-511", columnCount: 512);
             Assert.Equal("384-511", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "256-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "256-511", columnCount: 512);
             Assert.Equal("256-511", currentSelector);
 
-            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-511");
+            currentSelector = ColumnSelector.GetSelectorMultiplication(currentSelector, "0-511", columnCount: 512);
             Assert.Equal("0-511", currentSelector);
         }
     }

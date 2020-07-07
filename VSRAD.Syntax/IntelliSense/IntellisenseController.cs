@@ -10,11 +10,11 @@ namespace VSRAD.Syntax.IntelliSense
     {
         private readonly ITextView _textView;
         private readonly RadeonServiceProvider _editorService;
-        private readonly NavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationTokenService;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(RadeonServiceProvider editorService, NavigationTokenService navigationTokenService, ITextView textView)
+        public IntellisenseController(RadeonServiceProvider editorService, INavigationTokenService navigationTokenService, ITextView textView)
         {
             _textView = textView;
             _editorService = editorService;

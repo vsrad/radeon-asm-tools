@@ -11,25 +11,21 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private const int _thresholdX = 15;
 
         private readonly Cursor handCursor = new Cursor(new MemoryStream(Resources.HandCursor));
-        private readonly VisualizerTable _table;
+        private readonly TableState _state;
 
         private bool _thresholdReached;
         private int _lastX;
-        private int _firstVisibleColumn;
-        private int _lastVisibleColumn;
 
-        public PanOperation(VisualizerTable table)
+        public PanOperation(TableState state)
         {
-            _table = table;
+            _state = state;
         }
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (e.Button != MouseButtons.Left) return false;
-            if (hit.ColumnIndex < VisualizerTable.DataColumnOffset || hit.RowIndex == -1) return false;
+            if (e.Button != MouseButtons.Left || hit.RowIndex == -1) return false;
+            if (hit.ColumnIndex < VisualizerTable.DataColumnOffset && hit.ColumnIndex != VisualizerTable.PhantomColumnIndex ) return false;
 
-            _firstVisibleColumn = _table.DataColumns.First(x => x.Visible == true).Index;
-            _lastVisibleColumn = _table.DataColumns.Last(c => c.Visible == true).Index;
             _lastX = Cursor.Position.X;
             _thresholdReached = false;
             return true;
@@ -49,20 +45,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 var diff = _lastX - x;
                 _lastX = x;
 
-                if (_table.Columns[_firstVisibleColumn].Width != _table.ColumnWidth 
-                    && _table.Columns[_firstVisibleColumn].Displayed && diff > 0)
-                {
-                    var fistColumnWidth = _table.Columns[_firstVisibleColumn].Width - diff;
-                    _table.Columns[_firstVisibleColumn].Width = Math.Max(fistColumnWidth, _table.ColumnWidth);
-                }
-                else if (_table.Columns[VisualizerTable.PhantomColumnIndex].Width != 2
-                    && _table.Columns[VisualizerTable.PhantomColumnIndex].Displayed && diff < 0)
-                {
-                    var phantomWidth = _table.Columns[VisualizerTable.PhantomColumnIndex].Width + diff;
-                    _table.Columns[VisualizerTable.PhantomColumnIndex].Width = Math.Max(phantomWidth, 2);
-                }
-                else
-                    _table.HorizontalScrollingOffset = Math.Max(0, _table.HorizontalScrollingOffset + diff);
+                _state.Scroll(diff, true);
             }
             else if (Math.Abs(x - _lastX) > _thresholdX)
             {

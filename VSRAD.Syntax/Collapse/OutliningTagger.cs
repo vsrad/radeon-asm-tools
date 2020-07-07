@@ -74,7 +74,7 @@ namespace VSRAD.Syntax.Collapse
             {
                 changeStart = 0;
                 if (currentSnapshot != null)
-                    changeEnd = currentSnapshot.Length;
+                    changeEnd = textSnapshot.Length;
             }
 
             if (newSpanElements.Count > 0)
@@ -89,6 +89,7 @@ namespace VSRAD.Syntax.Collapse
 
                 currentSpans = newSpanElements;
                 currentSnapshot = textSnapshot;
+                changeEnd = changeEnd > currentSnapshot.Length ? currentSnapshot.Length : changeEnd;
 
                 TagsChanged?.Invoke(this,
                     new SnapshotSpanEventArgs(

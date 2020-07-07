@@ -41,6 +41,7 @@ namespace VSRAD.Package.BuildTools
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IBuildErrorProcessor _errorProcessor;
         private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
+        private readonly string _projectName;
 
         private BuildSteps? _buildStepsOverride;
 
@@ -50,7 +51,8 @@ namespace VSRAD.Package.BuildTools
             ICommunicationChannel channel,
             IOutputWindowManager outputWindow,
             IBuildErrorProcessor errorProcessor,
-            IFileSynchronizationManager deployManager)
+            IFileSynchronizationManager deployManager,
+            UnconfiguredProject unconfiguredProject)
         {
             _project = project;
             _channel = channel;
@@ -58,8 +60,14 @@ namespace VSRAD.Package.BuildTools
             _errorProcessor = errorProcessor;
             _deployManager = deployManager;
 
-            _project.Loaded += (_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
-            _project.Unloaded += _serverLoopCts.Cancel;
+            // Build integration is not implemented for VisualC projects
+            if (unconfiguredProject?.Capabilities?.Contains("VisualC") != true)
+            {
+                _project.Loaded += (_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
+                _project.Unloaded += _serverLoopCts.Cancel;
+            }
+
+            _projectName = unconfiguredProject != null ? Path.GetFileName(unconfiguredProject.FullPath) : "";
         }
 
         public void OverrideStepsForNextBuild(BuildSteps steps)
@@ -93,9 +101,18 @@ namespace VSRAD.Package.BuildTools
                         await server.WriteAsync(message, 0, message.Length);
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                    /* Cancellation requested (_serverLoopCts) */
+                }
                 catch (Exception e)
                 {
-                    Package.Errors.ShowException(e);
+                    if (e is IOException && e.Message == "All pipe instances are busy.\r\n")
+                        Package.Errors.ShowWarning($"Unable to start RAD Build tools. Is the project {_projectName} currently open in another Visual Studio instance? Such configuration is not supported and may lead to incorrect build results.");
+                    else
+                        Package.Errors.ShowWarning("RAD Build integration has encountered an irrecoverable error. To restore build functionality, restart Visual Studio.\r\n" + e.Message);
+
+                    break;
                 }
         }
 

@@ -94,6 +94,9 @@ namespace VSRAD.Syntax.Guide
         {
             try
             {
+                if (_textView.InLayout)
+                    return;
+
                 var firstVisibleLine = _textView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
                 var lastVisibleLine = _textView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
 
@@ -105,6 +108,10 @@ namespace VSRAD.Syntax.Guide
                 var updatedIndentGuides = GetUpdatedIndentGuides(newSpanElements, firstVisibleLine.TextLeft, firstVisibleLine.VirtualSpaceWidth);
 
                 ClearAndUpdateCurrentGuides(updatedIndentGuides);
+            }
+            catch (ObjectDisposedException) 
+            {
+                // If the buffer was changed during the calculation of the first and last line
             }
             catch (Exception e)
             {

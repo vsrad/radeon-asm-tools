@@ -7,6 +7,7 @@ using Task = System.Threading.Tasks.Task;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 
 namespace VSRAD.Syntax
 {
@@ -14,6 +15,7 @@ namespace VSRAD.Syntax
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(FunctionList.FunctionList))]
+    [ProvideToolWindow(typeof(NavigationList), Style = VsDockStyle.Linked, Transient = true)]
     [ProvideOptionPage(typeof(GeneralOptionPage), Constants.RadeonAsmOptionsCategoryName, Constants.RadeonAsmOptionsBasePageName, 0, 0, true)]
     [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
@@ -34,6 +36,7 @@ namespace VSRAD.Syntax
             await FunctionListCommand.InitializeAsync(this);
             await ClearSearchFieldCommand.InitializeAsync(this);
             await SelectItemCommand.InitializeAsync(this);
+            await NavigationListCommand.InitializeAsync(this);
         }
     }
 }

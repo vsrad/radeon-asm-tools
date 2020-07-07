@@ -14,11 +14,11 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
         private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
-        private readonly NavigationTokenService _navigationService;
+        private readonly INavigationTokenService _navigationService;
 
         [ImportingConstructor]
         public QuickInfoSourceProvider(DocumentAnalysisProvoder documentAnalysisProvoder,
-            NavigationTokenService navigationService)
+            INavigationTokenService navigationService)
         {
             _documentAnalysisProvoder = documentAnalysisProvoder;
             _navigationService = navigationService;

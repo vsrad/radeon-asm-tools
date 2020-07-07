@@ -124,7 +124,6 @@
     <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
-    <Compile Include="Commands\BaseBuildWithPreviewCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
@@ -137,7 +136,6 @@
     <Compile Include="DebugVisualizer\CellStyling.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
-    <Compile Include="DebugVisualizer\ColumnResizeController.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />
     <Compile Include="DebugVisualizer\ContentAlignment.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
@@ -146,6 +144,21 @@
     <Compile Include="DebugVisualizer\ScalingMode.cs" />
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
     <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceCellStyling.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceRowStyling.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml.cs">
+      <DependentUpon>SliceVisualizerControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerHeaderControl.xaml.cs">
+      <DependentUpon>SliceVisualizerHeaderControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTable.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerTableHost.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerContext.cs" />
+    <Compile Include="DebugVisualizer\SliceVisualizer\TypedSliceWatchView.cs" />
+    <Compile Include="DebugVisualizer\TableState.cs" />
     <Compile Include="DebugVisualizer\VisualizerControl.xaml.cs">
       <DependentUpon>VisualizerControl.xaml</DependentUpon>
     </Compile>
@@ -168,6 +181,7 @@
     <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
     <Compile Include="Options\MacroItem.cs" />
+    <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
@@ -210,6 +224,7 @@
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
+    <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\VsEditor.cs" />
@@ -375,6 +390,14 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerHeaderControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DebugVisualizer\VisualizerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

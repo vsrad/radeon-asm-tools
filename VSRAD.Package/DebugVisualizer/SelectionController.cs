@@ -6,9 +6,9 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class SelectionController
     {
-        private readonly VisualizerTable _table;
+        private readonly DataGridView _table;
 
-        public SelectionController(VisualizerTable table)
+        public SelectionController(DataGridView table)
         {
             _table = table;
         }
@@ -16,7 +16,7 @@ namespace VSRAD.Package.DebugVisualizer
         public IEnumerable<DataGridViewRow> GetSelectedRows()
         {
             foreach (DataGridViewRow row in _table.Rows)
-                if (row.Index >= 0 && row.Index != _table.NewWatchRowIndex && row.Cells[VisualizerTable.NameColumnIndex].Selected)
+                if (row.Index >= 0 && row.Index != _table.RowCount - 1 && row.Cells[VisualizerTable.NameColumnIndex].Selected)
                     yield return row;
         }
 

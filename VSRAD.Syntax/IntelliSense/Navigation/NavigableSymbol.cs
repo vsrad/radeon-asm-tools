@@ -8,8 +8,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
 {
     internal class NavigableSymbol : INavigableSymbol
     {
-        private readonly NavigationTokenService _navigationTokenService;
-        private readonly SnapshotPoint _navigationPoint;
+        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IReadOnlyList<NavigationToken> _navigationTokens;
 
         public SnapshotSpan SymbolSpan { get; }
         public IEnumerable<INavigableRelationship> Relationships =>
@@ -17,11 +17,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
 
         public NavigableSymbol(
             SnapshotSpan span,
-            SnapshotPoint navigationPoint,
-            NavigationTokenService navigationService)
+            IReadOnlyList<NavigationToken> navigationTokens,
+            INavigationTokenService navigationService)
         {
             SymbolSpan = span;
-            _navigationPoint = navigationPoint;
+            _navigationTokens = navigationTokens;
             _navigationTokenService = navigationService;
         }
 
@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         {
             try
             {
-                _navigationTokenService.GoToPoint(_navigationPoint);
+                _navigationTokenService.GoToPointOrOpenNavigationList(_navigationTokens);
             }
             catch (Exception e)
             {
