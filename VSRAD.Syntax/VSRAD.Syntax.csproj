@@ -128,6 +128,8 @@
     <Compile Include="Package.cs" />
     <Compile Include="Parser\Blocks\Block.cs" />
     <Compile Include="Parser\Blocks\FunctionBlock.cs" />
+    <Compile Include="Parser\DocumentAnalysisProvider.cs" />
+    <Compile Include="Parser\DocumentInfo.cs" />
     <Compile Include="Parser\Helper\BitHelper.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs" />
@@ -144,6 +146,7 @@
     <Compile Include="Parser\RadAsm\AsmLexer.cs" />
     <Compile Include="Parser\RadAsm\AsmParser.cs" />
     <Compile Include="Parser\Tokens\AnalysisToken.cs" />
+    <Compile Include="Parser\Tokens\ReferenceToken.cs" />
     <Compile Include="Parser\Tokens\TokenSpan.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />

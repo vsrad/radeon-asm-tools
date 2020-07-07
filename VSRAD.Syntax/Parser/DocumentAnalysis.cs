@@ -9,37 +9,10 @@ using VSRAD.Syntax.Parser.Blocks;
 using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Options;
-using System.ComponentModel.Composition;
 using System.Threading;
-using VSRAD.Syntax.Parser.RadAsm2;
-using VSRAD.Syntax.Parser.RadAsm;
-using VSRAD.Syntax.Parser.RadAsmDoc;
 
 namespace VSRAD.Syntax.Parser
 {
-    [Export]
-    internal class DocumentAnalysisProvoder
-    {
-        private readonly InstructionListManager _instructionListManager;
-
-        [ImportingConstructor]
-        public DocumentAnalysisProvoder(InstructionListManager instructionListManager)
-        {
-            _instructionListManager = instructionListManager;
-        }
-
-        public DocumentAnalysis CreateDocumentAnalysis(ITextBuffer buffer)
-        {
-            var asmType = buffer.CurrentSnapshot.GetAsmType();
-            if (asmType == AsmType.RadAsm2)
-                return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(), buffer, _instructionListManager));
-            else if (asmType == AsmType.RadAsmDoc)
-                return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(), buffer, _instructionListManager));
-            else
-                return buffer.Properties.GetOrCreateSingletonProperty(() => new DocumentAnalysis(new AsmLexer(), new AsmParser(), buffer, _instructionListManager));
-        }
-    }
-
     internal class DocumentAnalysis
     {
         private readonly TrackingToken.NonOverlappingComparer _comparer;
@@ -74,7 +47,13 @@ namespace VSRAD.Syntax.Parser
             buffer.Changed += BufferChanged;
             instructionListManager.InstructionUpdated += InstructionListUpdated;
             _parser.UpdateInstructionSet(instructionListManager.InstructionList.Keys.ToList());
-            Initialize();
+        }
+
+        public void Initialize()
+        {
+            LastLexerResult = new Helper.SortedSet<TrackingToken>(_lexer.Run(new string[] { CurrentSnapshot.GetText() }, 0).Select(t => new TrackingToken(CurrentSnapshot, t)), _comparer);
+            RunParser(new object[] { LastLexerResult.Version, LastLexerResult, CurrentSnapshot, parserCts });
+            RaiseTokensChanged(LastLexerResult.ToList());
         }
 
         public TrackingToken GetToken(int point) =>
@@ -141,13 +120,6 @@ namespace VSRAD.Syntax.Parser
         {
             RunParser();
             TokensChanged?.Invoke(updated);
-        }
-
-        private void Initialize()
-        {
-            LastLexerResult = new Helper.SortedSet<TrackingToken>(_lexer.Run(new string[] { CurrentSnapshot.GetText() }, 0).Select(t => new TrackingToken(CurrentSnapshot, t)), _comparer);
-            RunParser(new object[] { LastLexerResult.Version, LastLexerResult, CurrentSnapshot, parserCts });
-            RaiseTokensChanged(LastLexerResult.ToList());
         }
 
         private void RunParser()

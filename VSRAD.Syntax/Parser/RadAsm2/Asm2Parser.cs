@@ -10,6 +10,9 @@ namespace VSRAD.Syntax.Parser.RadAsm2
 {
     internal class Asm2Parser : Parser
     {
+        public Asm2Parser(DocumentAnalysisProvoder documentAnalysisProvoder) 
+            : base(null, documentAnalysisProvoder) { }
+
         public override List<IBlock> Parse(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();

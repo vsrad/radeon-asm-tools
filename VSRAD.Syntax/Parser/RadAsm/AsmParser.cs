@@ -1,7 +1,9 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.SyntaxParser;
@@ -10,13 +12,16 @@ namespace VSRAD.Syntax.Parser.RadAsm
 {
     internal class AsmParser : Parser
     {
+        public AsmParser(DocumentInfo documentInfo, DocumentAnalysisProvoder documentAnalysisProvoder) 
+            : base(documentInfo, documentAnalysisProvoder) { }
+
         public override List<IBlock> Parse(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
 
             var blocks = new List<IBlock>();
             var referenceCandidate = new Dictionary<string, List<KeyValuePair<IBlock, TrackingToken>>>();
-            var definitionTokens = new List<AnalysisToken>();
+            var definitionTokens = new List<KeyValuePair<AnalysisToken, ITextSnapshot>>();
 
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsmLexer.WHITESPACE && t.Type != RadAsmLexer.LINE_COMMENT)
@@ -48,7 +53,7 @@ namespace VSRAD.Syntax.Parser.RadAsm
                             currentBlock = new FunctionBlock(currentBlock, BlockType.Function, token, analysisToken);
                             parserState = ParserState.SearchArguments;
 
-                            definitionTokens.Add(analysisToken);
+                            definitionTokens.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(analysisToken, version));
                             i += 1;
                         }
                     }
@@ -70,7 +75,7 @@ namespace VSRAD.Syntax.Parser.RadAsm
                         {
                             var analysisToken = new AnalysisToken(RadAsmTokenType.Label, tokens[i + 1]);
                             currentBlock.Tokens.Add(analysisToken);
-                            definitionTokens.Add(analysisToken);
+                            definitionTokens.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(analysisToken, version));
                             i += 2;
                         }
                     }
@@ -165,7 +170,16 @@ namespace VSRAD.Syntax.Parser.RadAsm
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
                         {
-                            currentBlock.AddToken(RadAsmTokenType.Include, tokens[i + 1]);
+                            var filePath = Path.Combine(_documentInfo.DirectoryPath, tokens[i + 1].GetText(version).Trim('"'));
+                            var documentAnalysis = _documentAnalysisProvoder.GetOrCreateDocumentAnalysis(filePath);
+                            if (documentAnalysis != null)
+                            {
+                                foreach (var funcToken in documentAnalysis.LastParserResult.GetGlobalTokens())
+                                {
+                                    definitionTokens.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
+                                }
+                            }
+                            i += 1;
                         }
                     }
                 }
@@ -195,11 +209,12 @@ namespace VSRAD.Syntax.Parser.RadAsm
                 }
             }
 
-            foreach (var definitionToken in definitionTokens)
+            foreach (var definitionTokenPair in definitionTokens)
             {
                 cancellation.ThrowIfCancellationRequested();
 
-                var tokenText = definitionToken.TrackingToken.GetText(version);
+                var definitionToken = definitionTokenPair.Key;
+                var tokenText = definitionToken.TrackingToken.GetText(definitionTokenPair.Value);
                 if (referenceCandidate.TryGetValue(tokenText, out var referenceTokens))
                 {
                     foreach (var referenceToken in referenceTokens)
@@ -209,7 +224,7 @@ namespace VSRAD.Syntax.Parser.RadAsm
                             : definitionToken.Type == RadAsmTokenType.Label
                                 ? RadAsmTokenType.LabelReference : RadAsmTokenType.Unknown;
 
-                        referenceToken.Key.AddToken(type, referenceToken.Value);
+                        referenceToken.Key.Tokens.Add(new ReferenceToken(type, referenceToken.Value, definitionToken));
                     }
                 }
             }

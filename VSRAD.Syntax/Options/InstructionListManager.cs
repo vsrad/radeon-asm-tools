@@ -33,7 +33,7 @@ namespace VSRAD.Syntax.Options
             _optionsProvider = optionsEventProvider;
             _contentType = _serviceProvider.ContentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
 
-            _documentAnalysisProvoder = new DocumentAnalysisProvoder(this);
+            _documentAnalysisProvoder = new DocumentAnalysisProvoder(_serviceProvider, this);
             InstructionList = new Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>>();
             _optionsProvider.OptionsUpdated += InstructionPathsUpdated;
         }
