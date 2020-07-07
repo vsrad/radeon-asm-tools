@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
@@ -18,6 +20,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private readonly TableState _state;
 
+        public Action<int> NavigateToCellEvent;
+        private ContextMenu _navigateToCellMenu;
+
         public SliceVisualizerTable(IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions) : base()
         {
             _fontAndColor = fontAndColor;
@@ -31,6 +36,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             HeatMapMode = false;
             ColumnStyling = new SliceColumnStyling(this, _appearance);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            NavigateToCellMenuSetup();
+            MouseClick += ShowContextMenu;
 
             _state = new TableState(this, 60);
 
@@ -39,6 +46,18 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _ = new SliceRowStyling(this);
             _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _appearance, stylingOptions);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
+        }
+
+        private void ShowContextMenu(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Right) return;
+            //var hit = HitTest(e.X, e.Y);
+            _navigateToCellMenu.Show(this, new Point(e.X, e.Y));
+        }
+
+        private void NavigateToCellMenuSetup()
+        {
+            _navigateToCellMenu = new ContextMenu(new MenuItem[] { new MenuItem("Go to watch list", (s, e) => NavigateToCellEvent(2)) });
         }
 
         private void FontAndColorChanged() => Invalidate();
