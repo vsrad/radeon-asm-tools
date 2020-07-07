@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
@@ -17,17 +18,13 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
         private readonly IFontAndColorProvider _fontAndColor;
-        private readonly Options.VisualizerAppearance _appearance;
 
         private readonly TableState _state;
 
-        public Action<int, string, int> NavigateToCellEvent;
-
-        public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions) : base()
+        public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor) : base()
         {
             _context = context;
             _fontAndColor = fontAndColor;
-            _appearance = appearance;
 
             DoubleBuffered = true;
             AllowUserToAddRows = false;
@@ -35,7 +32,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
             HeatMapMode = false;
-            ColumnStyling = new SliceColumnStyling(this, _appearance);
+            ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             MouseClick += ShowContextMenu;
 
@@ -44,13 +41,15 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _appearance, stylingOptions);
+            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _context.Options.VisualizerAppearance, _context.Options.VisualizerColumnStyling);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
 
             _context.WatchSelected += () => DisplayWatch(_context.SelectedWatchView, _context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
-            _context.HeatMapStateChanged += (e, mode) => SetHeatMapMode(mode);
-            _context.DivierWidthChanged += () => ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
-            _context.ColorRangeChanged += () => Invalidate();
+            _context.Options.VisualizerColumnStyling.PropertyChanged += ColumnStylingChanged;
+            _context.Options.VisualizerAppearance.PropertyChanged += AppearanceOptionChanged;
+            _context.Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
+
+            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
         }
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
@@ -113,7 +112,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     row.Visible = false;
                 }
             }
-            ColumnStyling.Recompute(subgroupSize, columnSelector, _appearance);
+            ColumnStyling.Recompute(subgroupSize, columnSelector, _context.Options.VisualizerAppearance);
         }
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
@@ -121,7 +120,38 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (!_state.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
+        #region property changed handlers
+        private void SliceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.SliceVisualizerOptions.UseHeatMap):
+                    SetHeatMapMode(_context.Options.SliceVisualizerOptions.UseHeatMap);
+                    break;
+            }
+        }
 
+        private void AppearanceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
+                case nameof(Options.VisualizerAppearance.SliceSubgroupSeparatorWidth):
+                    ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+                    break;
+            }
+        }
+
+        private void ColumnStylingChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_context.Options.VisualizerColumnStyling.BackgroundColors):
+                    Invalidate();
+                    break;
+            }
+        }
+        #endregion
         #region Standard functions overriding
         protected override void OnMouseUp(MouseEventArgs e)
         {
