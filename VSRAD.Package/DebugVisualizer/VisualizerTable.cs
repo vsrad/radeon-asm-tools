@@ -105,9 +105,12 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
-        public void SelectCell(string watchName, int laneIndex)
+
+        public void SelectCell(string watchName, int laneIndex, ColumnStylingOptions stylingOptions)
         {
             ClearSelection();
+            var colIndex = laneIndex + DataColumnOffset;
+            ColumnSelector.ShowColumn(laneIndex, stylingOptions);
             var row = Rows.Cast<DataGridViewRow>().First(r => r.Cells[NameColumnIndex].Value.ToString() == watchName);
             row.Cells[laneIndex + DataColumnOffset].Selected = true;
         }

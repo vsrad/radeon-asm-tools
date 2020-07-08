@@ -84,7 +84,8 @@ namespace VSRAD.Package.DebugVisualizer
         private void CellSelected(object sender, CellSelectionEventArgs e)
         {
             ActivateWindowMethod();
-            _table.SelectCell(e.WatchName, e.LaneIndex);
+            _table.SelectCell(e.WatchName, e.LaneIndex, _context.Options.VisualizerColumnStyling);
+            RefreshDataStyling();
         }
 
         public void WindowFocusChanged(bool hasFocus) =>
