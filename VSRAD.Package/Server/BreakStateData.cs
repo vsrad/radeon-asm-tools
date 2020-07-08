@@ -69,7 +69,7 @@ namespace VSRAD.Package.Server
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
-            _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
+            _lastValidIndex = groupSize * groupCount * laneDataSize - (laneDataSize - _laneDataOffset);
             _groupsInRow = groupsInRow;
             _groupSize = groupSize;
 
