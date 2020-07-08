@@ -11,8 +11,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         private IProject CreateTestProject()
         {
             var options = new ProjectOptions();
-            options.AddProfile("kana", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "money")));
-            options.AddProfile("midori", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "setting")));
+            options.AddProfile("kana", new ProfileOptions());
+            options.Profiles["kana"].General.RemoteMachine = "money";
+            options.AddProfile("midori", new ProfileOptions());
+            options.Profiles["midori"].General.RemoteMachine = "setting";
 
             var mock = new Mock<IProject>(MockBehavior.Strict);
             mock.Setup((p) => p.Options).Returns(options);

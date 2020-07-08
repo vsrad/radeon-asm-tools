@@ -23,7 +23,7 @@ namespace VSRAD.Package.Commands
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
-        private IReadOnlyList<ActionProfileOptions> Actions => _project.Options.Profile.General.Actions;
+        private IReadOnlyList<ActionProfileOptions> Actions => _project.Options.Profile.Actions;
 
         [ImportingConstructor]
         public ActionsMenuCommand(IProject project, IActionLogger actionLogger, ICommunicationChannel channel, SVsServiceProvider serviceProvider)

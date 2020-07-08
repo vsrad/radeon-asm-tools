@@ -17,10 +17,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public ProfileOptionsActionsPage(ProfileOptions profile)
         {
             Actions = new ObservableCollection<object> { profile.Debugger };
-            foreach (var action in profile.General.Actions)
+            foreach (var action in profile.Actions)
                 Actions.Add(action);
 
-            profile.General.Actions.CollectionChanged += (s, e) =>
+            profile.Actions.CollectionChanged += (s, e) =>
             {
                 if (e.Action == NotifyCollectionChangedAction.Remove)
                 {
@@ -52,7 +52,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public ProjectOptions Options { get; }
 
-        public IEnumerable<ActionProfileOptions> Actions => _dirtyOptions[Options.ActiveProfile].General.Actions;
+        public IEnumerable<ActionProfileOptions> Actions => _dirtyOptions[Options.ActiveProfile].Actions;
 
         public List<object> Pages { get; } = new List<object>();
 
@@ -131,7 +131,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             MacroEditor = new DirtyProfileMacroEditor(_project, _channel, currentProfile);
             Pages.Clear();
             Pages.Add(currentProfile.General);
-            Pages.Add(new ProfileOptionsMacrosPage(currentProfile.General.Macros));
+            Pages.Add(new ProfileOptionsMacrosPage(currentProfile.Macros));
             Pages.Add(new ProfileOptionsActionsPage(currentProfile));
             RaisePropertyChanged(nameof(Pages));
         }
@@ -148,10 +148,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         }
 
         private void AddAction(object param) =>
-            _dirtyOptions[Options.ActiveProfile].General.Actions.Add(new ActionProfileOptions { Name = "New Action" });
+            _dirtyOptions[Options.ActiveProfile].Actions.Add(new ActionProfileOptions { Name = "New Action" });
 
         private void RemoveAction(object param) =>
-            _dirtyOptions[Options.ActiveProfile].General.Actions.Remove((ActionProfileOptions)param);
+            _dirtyOptions[Options.ActiveProfile].Actions.Remove((ActionProfileOptions)param);
 
         private void RemoveProfile(object param)
         {

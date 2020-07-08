@@ -129,7 +129,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 recursionStartName = name;
 
             string unevaluated = null;
-            foreach (var macro in _profileOptions.General.Macros)
+            foreach (var macro in _profileOptions.Macros)
             {
                 if (macro.Name == name)
                 {

@@ -169,7 +169,7 @@ namespace VSRAD.Package.Options
             if (callers.Contains(Name))
                 throw new Exception("Encountered a circular action: " + string.Join(" -> ", callers.Reverse()) + " -> " + Name);
 
-            var action = profile.General.Actions.FirstOrDefault(a => a.Name == Name);
+            var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
                 throw new Exception("Action " + Name + " not found" + (callers.Count == 0 ? "" : ", required by " + string.Join(" -> ", callers.Reverse()) + " -> " + Name));
 

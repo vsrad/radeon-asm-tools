@@ -15,8 +15,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         private ProjectOptions CreateTestOptions()
         {
             var options = new ProjectOptions();
-            options.AddProfile("haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "vespa")));
-            options.AddProfile("mamimi", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "bridge")));
+            options.AddProfile("haruko", new ProfileOptions());
+            options.Profiles["haruko"].General.RemoteMachine = "vespa";
+            options.AddProfile("mamimi", new ProfileOptions());
+            options.Profiles["mamimi"].General.RemoteMachine = "bridge";
             return options;
         }
 
@@ -35,8 +37,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             manager.Import(tmpFile);
             File.Delete(tmpFile);
 
-            options.UpdateProfiles(new Dictionary<string, ProfileOptions>
-                { { "haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "space")) } }, nameResolver.Object);
+            var update = new ProfileOptions();
+            update.General.RemoteMachine = "space";
+            options.UpdateProfiles(new Dictionary<string, ProfileOptions> { { "haruko", update } }, nameResolver.Object);
 
             nameResolver.Verify();
             Assert.Equal(3, options.Profiles.Count);
@@ -60,8 +63,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             manager.Import(tmpFile);
             File.Delete(tmpFile);
 
-            options.UpdateProfiles(new Dictionary<string, ProfileOptions>
-                { { "haruko", new ProfileOptions(general: new GeneralProfileOptions(remoteMachine: "space")) } }, nameResolver.Object);
+            var update = new ProfileOptions();
+            update.General.RemoteMachine = "space";
+            options.UpdateProfiles(new Dictionary<string, ProfileOptions> { { "haruko", update } }, nameResolver.Object);
 
             nameResolver.Verify();
             Assert.Equal(2, options.Profiles.Count);

@@ -23,9 +23,9 @@ namespace VSRAD.PackageTests.Server
             b.Steps.Add(new RunActionStep { Name = "A" });
             b.Steps.Add(new OpenInEditorStep());
 
-            profile.General.Actions.Add(a);
-            profile.General.Actions.Add(aNested);
-            profile.General.Actions.Add(b);
+            profile.Actions.Add(a);
+            profile.Actions.Add(aNested);
+            profile.Actions.Add(b);
 
             var ex = await Assert.ThrowsAsync<Exception>(async () => await a.EvaluateAsync(new Mock<IMacroEvaluator>().Object, profile));
             Assert.Equal("Encountered a circular action: A_nested -> B -> A -> A_nested", ex.Message);
@@ -42,9 +42,9 @@ namespace VSRAD.PackageTests.Server
             var c = new ActionProfileOptions { Name = "C" };
             c.Steps.Add(new RunActionStep { Name = "D" });
 
-            profile.General.Actions.Add(a);
-            profile.General.Actions.Add(b);
-            profile.General.Actions.Add(c);
+            profile.Actions.Add(a);
+            profile.Actions.Add(b);
+            profile.Actions.Add(c);
 
             var ex = await Assert.ThrowsAsync<Exception>(async () => await a.EvaluateAsync(new Mock<IMacroEvaluator>().Object, profile));
             Assert.Equal("Action D not found, required by B -> C -> D", ex.Message);

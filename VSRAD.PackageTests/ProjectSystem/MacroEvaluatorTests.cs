@@ -28,9 +28,9 @@ namespace VSRAD.PackageTests.ProjectSystem
         public async Task ProjectPropertiesTestAsync()
         {
             var options = new ProfileOptions();
-            options.General.Macros.Add(new MacroItem("RadDeployDir", "/home/sayaka/projects", userDefined: true));
-            options.General.Macros.Add(new MacroItem("RadDebugScript", "$(RadDeployDir)/debug_bin.py", userDefined: true));
-            options.General.Macros.Add(new MacroItem("RadDebugArgs", "$(RadDebugScript) --solution $(SolutionDir)", userDefined: true));
+            options.Macros.Add(new MacroItem("RadDeployDir", "/home/sayaka/projects", userDefined: true));
+            options.Macros.Add(new MacroItem("RadDebugScript", "$(RadDeployDir)/debug_bin.py", userDefined: true));
+            options.Macros.Add(new MacroItem("RadDebugArgs", "$(RadDebugScript) --solution $(SolutionDir)", userDefined: true));
 
             var props = new Mock<IProjectProperties>();
             props.Setup((p) => p.GetEvaluatedPropertyValueAsync("SolutionDir")).ReturnsAsync("/opt/rocm/examples/h");
@@ -96,8 +96,8 @@ namespace VSRAD.PackageTests.ProjectSystem
         {
             var props = new Mock<IProjectProperties>();
             var options = new ProfileOptions();
-            options.General.Macros.Add(new MacroItem("RadDebugExe", "/opt/rocm/debug_exe $(RadDebugArgs)", userDefined: true));
-            options.General.Macros.Add(new MacroItem("RadDebugArgs", "--exec $(RadDebugExe)", userDefined: true));
+            options.Macros.Add(new MacroItem("RadDebugExe", "/opt/rocm/debug_exe $(RadDebugArgs)", userDefined: true));
+            options.Macros.Add(new MacroItem("RadDebugArgs", "--exec $(RadDebugExe)", userDefined: true));
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
             var exception = await Assert.ThrowsAsync<MacroEvaluationException>(() => _ = evaluator.EvaluateAsync("$(RadDebugExe)"));

@@ -1,10 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
 
@@ -35,22 +33,17 @@ namespace VSRAD.Package.Options
 
     public sealed class ProfileOptions : ICloneable
     {
-        public GeneralProfileOptions General { get; }
-        public DebuggerProfileOptions Debugger { get; }
-        public PreprocessorProfileOptions Preprocessor { get; }
-        public DisassemblerProfileOptions Disassembler { get; }
-        public ProfilerProfileOptions Profiler { get; }
-        public BuildProfileOptions Build { get; }
+        public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
+        public DebuggerProfileOptions Debugger { get; } = new DebuggerProfileOptions();
+        public PreprocessorProfileOptions Preprocessor { get; } = null;
+        public DisassemblerProfileOptions Disassembler { get; } = null;
+        public ProfilerProfileOptions Profiler { get; } = null;
+        public BuildProfileOptions Build { get; } = null;
 
-        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, PreprocessorProfileOptions preprocessor = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null)
-        {
-            General = general ?? new GeneralProfileOptions();
-            Debugger = debugger ?? new DebuggerProfileOptions();
-            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
-            Disassembler = disassembler ?? new DisassemblerProfileOptions();
-            Profiler = profiler ?? new ProfilerProfileOptions();
-            Build = build ?? new BuildProfileOptions();
-        }
+        [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
+        public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
+
+        public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
 
         public object Clone()
         {
@@ -89,11 +82,6 @@ namespace VSRAD.Package.Options
 
     public sealed class GeneralProfileOptions : DefaultNotifyPropertyChanged
     {
-        public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
-
-        [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
-        public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
-
         private string _profileName;
         [JsonIgnore]
         public string ProfileName { get => _profileName; set => SetField(ref _profileName, value); }
