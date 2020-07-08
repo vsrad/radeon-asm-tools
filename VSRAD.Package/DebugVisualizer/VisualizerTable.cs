@@ -110,9 +110,11 @@ namespace VSRAD.Package.DebugVisualizer
         {
             ClearSelection();
             var colIndex = laneIndex + DataColumnOffset;
-            ColumnSelector.ShowColumn(laneIndex, stylingOptions);
-            var row = Rows.Cast<DataGridViewRow>().First(r => r.Cells[NameColumnIndex].Value.ToString() == watchName);
-            row.Cells[laneIndex + DataColumnOffset].Selected = true;
+            ColumnSelector.ShowColumn(laneIndex, stylingOptions); // unhide desired column if hidden
+            var row = Rows.Cast<DataGridViewRow>().First(r => r.Cells[NameColumnIndex].Value.ToString() == watchName); // find row that represent desired watch
+            row.Cells[laneIndex + DataColumnOffset].Selected = true; // select desired cell
+            
+            FirstDisplayedScrollingColumnIndex = Math.Max(colIndex - 1, DataColumnOffset); // scroll to the desired column
         }
 
         public void ScaleControls(float scaleFactor)
