@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -20,7 +21,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private VariableType _selectedType;
         public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
 
-        public List<string> Watches { get; } = new List<string>();
+        public List<string> Watches { get; private set; } = new List<string>();
 
         private readonly VisualizerContext _visualizerContext;
         private readonly EnvDTE80.WindowVisibilityEvents _windowVisibilityEvents;
@@ -72,8 +73,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             if (!Watches.SequenceEqual(_visualizerContext.BreakData.Watches))
             {
-                Watches.Clear();
-                Watches.Add("System");
+                Watches = new List<string>() { "System" };
                 Watches.AddRange(_visualizerContext.BreakData.Watches);
                 RaisePropertyChanged(nameof(Watches));
             }
