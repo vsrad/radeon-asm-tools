@@ -16,7 +16,11 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly FontAndColorProvider _fontAndColorProvider;
         private readonly IToolWindowIntegration _integration;
 
-        public VisualizerControl(IToolWindowIntegration integration)
+        public delegate void ActivateWindow();
+
+        private ActivateWindow ActivateWindowMethod;
+
+        public VisualizerControl(IToolWindowIntegration integration, ActivateWindow activateWindow)
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
@@ -29,6 +33,7 @@ namespace VSRAD.Package.DebugVisualizer
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
+            ActivateWindowMethod = activateWindow;
 
             _integration = integration;
             _integration.AddWatch += AddWatch;
@@ -76,8 +81,11 @@ namespace VSRAD.Package.DebugVisualizer
         {
             e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemap;
         }
-
-        private void CellSelected(object sender, CellSelectionEventArgs e) => _table.SelectCell(e.WatchName, e.LaneIndex);
+        private void CellSelected(object sender, CellSelectionEventArgs e)
+        {
+            ActivateWindowMethod();
+            _table.SelectCell(e.WatchName, e.LaneIndex);
+        }
 
         public void WindowFocusChanged(bool hasFocus) =>
             _table.HostWindowFocusChanged(hasFocus);
