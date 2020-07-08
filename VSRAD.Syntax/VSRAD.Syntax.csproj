@@ -129,6 +129,7 @@
     <Compile Include="Parser\Blocks\Block.cs" />
     <Compile Include="Parser\Blocks\FunctionBlock.cs" />
     <Compile Include="Parser\DocumentAnalysisProvider.cs" />
+    <Compile Include="Parser\DocumentFactory.cs" />
     <Compile Include="Parser\DocumentInfo.cs" />
     <Compile Include="Parser\Helper\BitHelper.cs" />
     <Compile Include="Constants.cs" />

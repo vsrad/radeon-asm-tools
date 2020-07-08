@@ -1,11 +1,5 @@
-﻿using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.TextManager.Interop;
-using System;
-using System.Collections.Generic;
+﻿using Microsoft.VisualStudio.Text;
 using System.ComponentModel.Composition;
-using System.Runtime.InteropServices;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Parser.RadAsm;
@@ -17,14 +11,14 @@ namespace VSRAD.Syntax.Parser
     [Export]
     internal class DocumentAnalysisProvoder
     {
-        private readonly RadeonServiceProvider _serviceProvider;
         private readonly InstructionListManager _instructionListManager;
+        private readonly IDocumentFactory _documentFactory;
 
         [ImportingConstructor]
-        public DocumentAnalysisProvoder(RadeonServiceProvider serviceProvider, InstructionListManager instructionListManager)
+        public DocumentAnalysisProvoder(IDocumentFactory documentFactory, InstructionListManager instructionListManager)
         {
-            _serviceProvider = serviceProvider;
             _instructionListManager = instructionListManager;
+            _documentFactory = documentFactory;
         }
 
         public DocumentAnalysis CreateDocumentAnalysis(ITextBuffer buffer)
@@ -32,27 +26,22 @@ namespace VSRAD.Syntax.Parser
             if (buffer.Properties.TryGetProperty<DocumentAnalysis>(typeof(DocumentAnalysis), out var documentAnalysis))
                 return documentAnalysis;
 
-            if (buffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out var textDocument))
-                return CreateDocumentAnalysis(textDocument);
-
-            throw new ArgumentException("Cannot create docuement analysis");
+            var textDocument = _documentFactory.GetDocument(buffer);
+            return CreateDocumentAnalysis(textDocument);
         }
 
         public DocumentAnalysis GetOrCreateDocumentAnalysis(string filepath)
         {
-            // return DocumentAnalysis only if file is open in the visual studio
-            if (Utils.IsDocumentOpen(_serviceProvider.ServiceProvider, filepath, out var vsTextBuffer))
-            {
-                var docBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
-                return CreateDocumentAnalysis(docBuffer);
-            }
+            var textDocument = _documentFactory.GetDocument(filepath);
+            if (textDocument.TextBuffer.Properties.TryGetProperty<DocumentAnalysis>(typeof(DocumentAnalysis), out var documentAnalysis))
+                return documentAnalysis;
 
-            return null;
+            return CreateDocumentAnalysis(textDocument);
         }
 
-        private DocumentAnalysis CreateDocumentAnalysis(ITextDocument textDocument)
+        private DocumentAnalysis CreateDocumentAnalysis(DocumentInfo document)
         {
-            var buffer = textDocument.TextBuffer;
+            var buffer = document.TextBuffer;
             var asmType = buffer.CurrentSnapshot.GetAsmType();
 
             DocumentAnalysis documentAnalysis;
@@ -61,7 +50,7 @@ namespace VSRAD.Syntax.Parser
             else if (asmType == AsmType.RadAsmDoc)
                 documentAnalysis = new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(this), buffer, _instructionListManager);
             else
-                documentAnalysis = new DocumentAnalysis(new AsmLexer(), new AsmParser(new DocumentInfo(textDocument), this), buffer, _instructionListManager);
+                documentAnalysis = new DocumentAnalysis(new AsmLexer(), new AsmParser(document, this), buffer, _instructionListManager);
 
             buffer.Properties.AddProperty(typeof(DocumentAnalysis), documentAnalysis);
             documentAnalysis.Initialize();

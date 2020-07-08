@@ -8,7 +8,7 @@ namespace VSRAD.Syntax.Parser
 
         public string Path => _textDocument.FilePath;
         public string DirectoryPath => System.IO.Path.GetDirectoryName(Path);
-        public ITextSnapshot CurrentSnapshot => _textDocument.TextBuffer.CurrentSnapshot;
+        public ITextBuffer TextBuffer => _textDocument.TextBuffer;
 
         public DocumentInfo(ITextDocument textDocument)
         {
