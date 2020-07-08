@@ -82,11 +82,20 @@ namespace VSRAD.Syntax.IntelliSense
                 if (_serviceProvider.TextDocumentFactoryService.TryGetTextDocument(point.Snapshot.TextBuffer, out var textDocument))
                 {
                     if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, textDocument.FilePath, out buffer))
-                        throw new InvalidOperationException($"Cannot open IVsTextBuffer associated with {textDocument.FilePath}");
+                        throw new InvalidOperationException($"Cannot open file associated with {textDocument.FilePath}");
                 }
                 else
                 {
-                    throw new InvalidOperationException("Cannot find IVsTextBuffer associated with point");
+                    // if external definition parsed but the document was closed we should reopen document
+                    if (point.Snapshot.TextBuffer.Properties.TryGetProperty<DocumentInfo>(typeof(DocumentInfo), out var documentInfo))
+                    {
+                        if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, documentInfo.Path, out buffer))
+                            throw new InvalidOperationException($"Cannot open file associated with {textDocument.FilePath}");
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("Cannot determine the file that contains the navigation definition");
+                    }
                 }
             }
 
