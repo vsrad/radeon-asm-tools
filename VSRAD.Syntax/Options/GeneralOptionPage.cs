@@ -22,7 +22,7 @@ namespace VSRAD.Syntax.Options
         public OptionsProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;
-            Autoscroll = false;
+            Autoscroll = true;
             IsEnabledIndentGuides = false;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
