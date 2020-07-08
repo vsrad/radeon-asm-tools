@@ -142,8 +142,8 @@ namespace VSRAD.Syntax.IntelliSense
             if (FindNavigationTokenInFunctionList(version, documentAnalysis.LastParserResult, text, out var functionToken))
                 return new List<NavigationToken>() { functionToken };
 
-            if (searchWithInclude && FindNavigationTokenInFileTree(documentAnalysis, text, out var fileToken))
-                return new List<NavigationToken>() { fileToken };
+            //if (searchWithInclude && FindNavigationTokenInFileTree(documentAnalysis, text, out var fileToken))
+            //    return new List<NavigationToken>() { fileToken };
 
             return EmptyNavigations;
         }
