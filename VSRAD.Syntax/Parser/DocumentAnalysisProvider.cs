@@ -46,7 +46,7 @@ namespace VSRAD.Syntax.Parser
 
             DocumentAnalysis documentAnalysis;
             if (asmType == AsmType.RadAsm2)
-                documentAnalysis = new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(this), buffer, _instructionListManager);
+                documentAnalysis = new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(document, this), buffer, _instructionListManager);
             else if (asmType == AsmType.RadAsmDoc)
                 documentAnalysis = new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(this), buffer, _instructionListManager);
             else

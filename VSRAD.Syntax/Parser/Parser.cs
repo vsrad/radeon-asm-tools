@@ -1,8 +1,10 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
 
@@ -68,5 +70,24 @@ namespace VSRAD.Syntax.Parser
         }
 
         public abstract List<IBlock> Parse(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation);
+
+        protected void AddExternalDefinitions(List<KeyValuePair<AnalysisToken, ITextSnapshot>> definitions, TrackingToken includeStr, ITextSnapshot version)
+        {
+            try
+            {
+                var filePath = Path.Combine(_documentInfo.DirectoryPath, includeStr.GetText(version).Trim('"'));
+                var documentAnalysis = _documentAnalysisProvoder.GetOrCreateDocumentAnalysis(filePath);
+                if (documentAnalysis != null)
+                {
+                    foreach (var funcToken in documentAnalysis.LastParserResult.GetGlobalTokens())
+                    {
+                        definitions.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
+                    }
+                }
+            }
+            catch (ArgumentException)
+            {
+            }
+        }
     }
 }

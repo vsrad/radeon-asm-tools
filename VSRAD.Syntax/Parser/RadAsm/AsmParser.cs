@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace VSRAD.Syntax.Parser.RadAsm
 {
     internal class AsmParser : Parser
     {
-        public AsmParser(DocumentInfo documentInfo, DocumentAnalysisProvoder documentAnalysisProvoder) 
+        public AsmParser(DocumentInfo documentInfo, DocumentAnalysisProvoder documentAnalysisProvoder)
             : base(documentInfo, documentAnalysisProvoder) { }
 
         public override List<IBlock> Parse(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation)
@@ -170,15 +171,7 @@ namespace VSRAD.Syntax.Parser.RadAsm
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
                         {
-                            var filePath = Path.Combine(_documentInfo.DirectoryPath, tokens[i + 1].GetText(version).Trim('"'));
-                            var documentAnalysis = _documentAnalysisProvoder.GetOrCreateDocumentAnalysis(filePath);
-                            if (documentAnalysis != null)
-                            {
-                                foreach (var funcToken in documentAnalysis.LastParserResult.GetGlobalTokens())
-                                {
-                                    definitionTokens.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
-                                }
-                            }
+                            AddExternalDefinitions(definitionTokens, tokens[i + 1], version);
                             i += 1;
                         }
                     }
