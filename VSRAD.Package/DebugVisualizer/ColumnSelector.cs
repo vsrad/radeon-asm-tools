@@ -109,5 +109,14 @@ namespace VSRAD.Package.DebugVisualizer
             else
                 return FromIndexes(newIndexes.Intersect(currentIndexes));
         }
+
+        public static void ShowColumn(int index, ColumnStylingOptions styling)
+        {
+            var visibleIndexes = ToIndexes(styling.VisibleColumns, 512); // TODO: remove hardcoded 512
+            if (visibleIndexes.Contains(index)) return;
+
+            visibleIndexes = visibleIndexes.Append(index);
+            styling.VisibleColumns = FromIndexes(visibleIndexes);
+        }
     }
 }
