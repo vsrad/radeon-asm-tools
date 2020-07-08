@@ -66,5 +66,6 @@ namespace VSRAD.Package
 
         public const string ToolbarIconStripResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/DebugVisualizerWindowCommand.png";
         public const string CurrentStatementIconResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/CurrentStatement.png";
+        public const string VisualizerWindowTitle = "RAD Debug Visualizer";
     };
 }

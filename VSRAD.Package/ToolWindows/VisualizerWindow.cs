@@ -1,4 +1,6 @@
-﻿using System;
+﻿using EnvDTE;
+using Microsoft.VisualStudio.Shell;
+using System;
 using System.Runtime.InteropServices;
 using System.Windows;
 using VSRAD.Package.DebugVisualizer;
@@ -11,15 +13,21 @@ namespace VSRAD.Package.ToolWindows
     {
         private VisualizerControl _visualizerControl;
 
-        public VisualizerWindow() : base("RAD Debug Visualizer") { }
+        public VisualizerWindow() : base(Constants.VisualizerWindowTitle) { }
 
         protected override UIElement CreateToolControl(IToolWindowIntegration integration)
-        {
-            _visualizerControl = new VisualizerControl(integration);
+        { 
+            _visualizerControl = new VisualizerControl(integration, ActivateWindow);
             return _visualizerControl;
         }
 
         protected override void OnWindowFocusChanged(bool hasFocus) =>
             _visualizerControl.WindowFocusChanged(hasFocus);
+
+        private void ActivateWindow()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            _dte.Windows.Item(Constants.VisualizerWindowTitle).Activate();
+        }
     }
 }
