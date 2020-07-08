@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Windows.Controls;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
@@ -63,6 +64,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public WpfDelegateCommand AddActionCommand { get; }
         public WpfDelegateCommand RemoveActionCommand { get; }
         public WpfDelegateCommand RemoveProfileCommand { get; }
+        public WpfDelegateCommand RichEditCommand { get; }
 
         public DirtyProfileMacroEditor MacroEditor { get; private set; }
 
@@ -92,6 +94,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             AddActionCommand = new WpfDelegateCommand(AddAction);
             RemoveActionCommand = new WpfDelegateCommand(RemoveAction);
             RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: ProfileNames.Count > 1);
+            RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
             OpenActiveProfilePages();
         }
 
@@ -154,6 +157,15 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             _dirtyOptions.Remove(Options.ActiveProfile);
             Options.RemoveProfile(Options.ActiveProfile);
+        }
+
+        private void OpenMacroEditor(object sender)
+        {
+            var editButton = (Button)sender;
+            var options = editButton.DataContext;
+            var propertyName = (string)editButton.Tag;
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+                MacroEditor.EditObjectPropertyAsync(options, propertyName));
         }
     }
 }

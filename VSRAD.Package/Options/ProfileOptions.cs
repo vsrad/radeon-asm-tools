@@ -4,7 +4,9 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
@@ -85,51 +87,44 @@ namespace VSRAD.Package.Options
         }
     }
 
-    public sealed class GeneralProfileOptions
+    public sealed class GeneralProfileOptions : DefaultNotifyPropertyChanged
     {
-        [JsonIgnore]
-        [Description("The name of current profile."), DisplayName("Profile Name")]
-        public string ProfileName { get; set; }
-
         public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
 
         [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
         public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
 
-        [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
-        [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
-        [DefaultValue(DefaultOptionValues.DeployDirectory)]
-        public string DeployDirectory { get; }
-        [DisplayName("Remote Machine Address")]
-        [Description("IP address of the remote machine. To debug kernels locally, start the debug server on your local machine and enter `127.0.0.1` in this field.")]
-        [DefaultValue(DefaultOptionValues.RemoteMachineAdredd)]
-        public string RemoteMachine { get; }
-        [Description("Port on the remote machine the debug server is listening on. (When started without arguments, the server listens on port `9339`)")]
-        [DefaultValue(DefaultOptionValues.Port)]
-        public int Port { get; }
-        [Description("Toggles remote deployment."), DisplayName("Copy Sources to Remote")]
-        [DefaultValue(DefaultOptionValues.CopySources)]
-        public bool CopySources { get; }
-        [Description("Semicolon-separated list of of out-of-project paths to deploy on remote machine"), DisplayName("Additional Sources")]
-        [DefaultValue(DefaultOptionValues.AdditionalSources)]
-        public string AdditionalSources { get; }
+        private string _profileName;
+        [JsonIgnore]
+        public string ProfileName { get => _profileName; set => SetField(ref _profileName, value); }
+
+        private string _remoteMachine = "192.168.0.1";
+        public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
+
+        private int _port = 9339;
+        public int Port { get => _port; set => SetField(ref _port, value); }
+
+        private bool _copySources = true;
+        public bool CopySources { get => _copySources; set => SetField(ref _copySources, value); }
+
+        private string _deployDirectory = "";
+        public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
+
+        private string _additionalSources = "";
+        public string AdditionalSources { get => _additionalSources; set => SetField(ref _additionalSources, value); }
 
         [JsonIgnore]
         public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
 
-        public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
-            new GeneralProfileOptions(profileName: ProfileName, deployDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DeployDirectory),
-                remoteMachine: RemoteMachine, port: Port, copySources: CopySources, additionalSources: AdditionalSources);
-
-        public GeneralProfileOptions(string profileName = "", string deployDirectory = null, string remoteMachine = DefaultOptionValues.RemoteMachineAdredd, int port = DefaultOptionValues.Port, string additionalSources = DefaultOptionValues.AdditionalSources, bool copySources = DefaultOptionValues.CopySources)
+        public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator evaluator) => new GeneralProfileOptions
         {
-            ProfileName = profileName;
-            DeployDirectory = deployDirectory ?? DefaultOptionValues.DeployDirectory;
-            RemoteMachine = remoteMachine;
-            Port = port;
-            AdditionalSources = additionalSources;
-            CopySources = copySources;
-        }
+            ProfileName = ProfileName,
+            RemoteMachine = RemoteMachine,
+            Port = Port,
+            CopySources = CopySources,
+            DeployDirectory = await evaluator.EvaluateAsync(DeployDirectory),
+            AdditionalSources = AdditionalSources
+        };
     }
 
     public sealed class DebuggerProfileOptions
