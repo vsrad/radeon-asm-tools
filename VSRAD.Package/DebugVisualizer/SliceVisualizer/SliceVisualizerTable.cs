@@ -56,6 +56,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             if (e.Button != MouseButtons.Right) return;
             var hit = HitTest(e.X, e.Y);
+            if (hit.Type != DataGridViewHitTestType.Cell) return;
 
             var col = hit.ColumnIndex - DataColumnOffset;
             new ContextMenu(new MenuItem[] {
