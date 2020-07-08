@@ -1,6 +1,5 @@
 ﻿using Microsoft.Build.Framework;
 using Moq;
-using System;
 using System.IO.Pipes;
 using System.Threading;
 using VSRAD.BuildTools;
@@ -13,7 +12,7 @@ namespace VSRAD.BuildToolsTests
         [Fact]
         public void SuccessfulBuildTest()
         {
-            var pipeName = $"vsrad-{Guid.NewGuid()}";
+            var pipeName = IPCBuildResult.GetIPCPipeName(@"C:\One\One");
             new Thread(() =>
             {
                 var server = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1);
@@ -26,7 +25,7 @@ namespace VSRAD.BuildToolsTests
             var engine = new Mock<IBuildEngine>();
             var task = new RemoteBuildTask
             {
-                PipeName = pipeName,
+                ProjectDir = @"C:\One\One",
                 BuildEngine = engine.Object
             };
             Assert.True(task.Execute());
@@ -37,7 +36,7 @@ namespace VSRAD.BuildToolsTests
         [Fact]
         public void ServerErrorTest()
         {
-            var pipeName = $"vsrad-{Guid.NewGuid()}";
+            var pipeName = IPCBuildResult.GetIPCPipeName(@"C:\One\One");
             new Thread(() =>
             {
                 var server = new NamedPipeServerStream(pipeName, PipeDirection.Out, 1);
@@ -50,7 +49,7 @@ namespace VSRAD.BuildToolsTests
             var engine = new Mock<IBuildEngine>();
             var task = new RemoteBuildTask
             {
-                PipeName = pipeName,
+                ProjectDir = @"C:\One\One",
                 BuildEngine = engine.Object
             };
             Assert.False(task.Execute());
@@ -65,7 +64,7 @@ namespace VSRAD.BuildToolsTests
             var engine = new Mock<IBuildEngine>();
             var task = new RemoteBuildTask
             {
-                PipeName = $"vsrad-{Guid.NewGuid()}",
+                ProjectDir = @"C:\Users\Tulip\Source\Repos\GoodGuysPoppinBadGuys",
                 BuildEngine = engine.Object
             };
             Assert.False(task.Execute());

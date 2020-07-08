@@ -19,23 +19,18 @@ namespace VSRAD.Package.DebugVisualizer
 
         public const int NameColumnIndex = 0;
         public const int PhantomColumnIndex = 1;
-        public const int DataColumnCount = 512;
-        public const int DataColumnOffset = 2; // name + phantom column
+        public const int DataColumnOffset = 2; // watch name column + phantom column
 
         public const int SystemRowIndex = 0;
         public int NewWatchRowIndex => RowCount - 1; /* new watches are always entered in the last row */
         public int ReservedColumnsOffset => RowHeadersWidth + Columns[NameColumnIndex].Width;
-
-        public ScalingMode ScalingMode = ScalingMode.ResizeColumn;
+        public int DataColumnCount { get; private set; } = 512;
 
         public bool ShowSystemRow
         {
             get => Rows.Count > 0 && Rows[0].Visible;
             set { if (Rows.Count > 0) Rows[0].Visible = value; }
         }
-
-        //public ContentAlignment NameColumnAlignment = ContentAlignment.Left;
-        //public ContentAlignment DataColumnAlignment = ContentAlignment.Left;
 
         public IEnumerable<DataGridViewRow> DataRows => Rows
             .Cast<DataGridViewRow>()
@@ -96,6 +91,8 @@ namespace VSRAD.Package.DebugVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
         }
+
+        public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
 
         public void ScaleControls(float scaleFactor)
         {
@@ -206,6 +203,31 @@ namespace VSRAD.Package.DebugVisualizer
             ClearSelection();
         }
 
+        // Make sure ApplyDataStyling is called after creating columns to set column visibility
+        public void CreateMissingDataColumns(int groupSize)
+        {
+            var columnsMissing = groupSize - (Columns.Count - DataColumnOffset);
+            if (columnsMissing > 0)
+            {
+                var missingColumnStartAt = _state.DataColumns.Count;
+                var columns = new DataGridViewColumn[columnsMissing];
+                for (int i = 0; i < columnsMissing; ++i)
+                {
+                    columns[i] = new DataGridViewTextBoxColumn
+                    {
+                        FillWeight = 1,
+                        ReadOnly = true,
+                        SortMode = DataGridViewColumnSortMode.NotSortable,
+                        Width = _state.ColumnWidth,
+                        HeaderText = (missingColumnStartAt + i).ToString()
+                    };
+                }
+                _state.AddDataColumns(columns);
+                Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
+                DataColumnCount = _state.DataColumns.Count;
+            }
+        }
+
         private void SetupColumns()
         {
             Columns.Add(new DataGridViewTextBoxColumn
@@ -216,17 +238,7 @@ namespace VSRAD.Package.DebugVisualizer
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
-
-            var dataColumns = new DataGridViewColumn[DataColumnCount];
-            for (int i = 0; i < DataColumnCount; i++)
-                dataColumns[i] = new DataGridViewTextBoxColumn
-                {
-                    HeaderText = i.ToString(),
-                    ReadOnly = true,
-                    SortMode = DataGridViewColumnSortMode.NotSortable,
-                    Width = 60
-                };
-            _state.AddDataColumns(dataColumns);
+            CreateMissingDataColumns(DataColumnCount);
         }
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -356,6 +368,8 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersDefaultCellStyle.SelectionBackColor = ColumnHeadersDefaultCellStyle.BackColor;
             RowHeadersDefaultCellStyle.SelectionForeColor = state.WatchNameForeground;
             RowHeadersDefaultCellStyle.SelectionBackColor = RowHeadersDefaultCellStyle.BackColor;
+
+            DefaultCellStyle.Font = state.RegularFont;
         }
 
         public void AlignmentChanged(
@@ -424,6 +438,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
+            if (_state.ScalingMode == ScalingMode.ResizeColumn) // TODO: move to appropriate place
+                _state.RemoveScrollPadding();
+
             if (_mouseMoveController.OperationDidNotFinishOnMouseUp())
                 base.OnMouseDown(e);
 
@@ -454,7 +471,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
-            if (!_state.ResizeController.TableShouldSuppressOnColumnWidthChangedEvent)
+            if (!_state.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
 

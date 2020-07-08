@@ -65,7 +65,7 @@
             <StackPanel Orientation="Horizontal">
                 <Label Content="Group size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                 <local:NumberInput Value="{Binding GroupIndex.GroupSize, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="64" Maximum="512" Step="64" Width="38" Height="24"/>
+                                   Minimum="1" Step="64" Width="38" Height="24"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="NGroups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>

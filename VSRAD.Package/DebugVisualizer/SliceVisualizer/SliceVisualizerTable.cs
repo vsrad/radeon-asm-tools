@@ -89,7 +89,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
-            if (!_state.ResizeController.TableShouldSuppressOnColumnWidthChangedEvent)
+            if (!_state.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
 

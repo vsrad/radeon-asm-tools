@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace VSRAD.BuildTools
 {
@@ -30,7 +32,6 @@ namespace VSRAD.BuildTools
 
         public bool Skipped { get; set; }
         public string ServerError { get; set; } = "";
-        public string ServerMessage { get; set; } = "";
         public int ExitCode { get; set; }
         public Message[] ErrorMessages { get; set; } = Array.Empty<Message>();
 
@@ -41,7 +42,6 @@ namespace VSRAD.BuildTools
             {
                 writer.Write(Skipped);
                 writer.Write(ServerError);
-                writer.Write(ServerMessage);
                 writer.Write(ExitCode);
                 writer.Write(ErrorMessages.Length);
                 foreach (var message in ErrorMessages)
@@ -64,7 +64,6 @@ namespace VSRAD.BuildTools
                 {
                     Skipped = reader.ReadBoolean(),
                     ServerError = reader.ReadString(),
-                    ServerMessage = reader.ReadString(),
                     ExitCode = reader.ReadInt32()
                 };
                 var messages = new Message[reader.ReadInt32()];
@@ -79,6 +78,15 @@ namespace VSRAD.BuildTools
                     };
                 buildResult.ErrorMessages = messages;
                 return buildResult;
+            }
+        }
+
+        public static string GetIPCPipeName(string project)
+        {
+            using (var sha512 = new System.Security.Cryptography.SHA512Managed())
+            {
+                var hash = sha512.ComputeHash(Encoding.UTF8.GetBytes(project));
+                return "vsrad-" + string.Join("", hash.Select((b) => b.ToString("x2")));
             }
         }
     }

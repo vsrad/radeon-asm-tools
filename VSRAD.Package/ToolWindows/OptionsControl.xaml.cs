@@ -123,10 +123,12 @@ namespace VSRAD.Package.ToolWindows
         {
             switch (value)
             {
+                case DebugVisualizer.ScalingMode.ResizeColumnAllowWide:
+                    return "Resize Column, allow wide 1st column";
                 case DebugVisualizer.ScalingMode.ResizeColumn:
                     return "Resize Column";
                 case DebugVisualizer.ScalingMode.ResizeTable:
-                    return "Resize Table, Lock Leftmost Point";
+                    return "Resize Table";
                 default:
                     return DependencyProperty.UnsetValue;
             }

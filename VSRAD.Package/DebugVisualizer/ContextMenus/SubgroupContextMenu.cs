@@ -15,8 +15,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private readonly ContextMenu _menu;
 
         private int _clickedColumnIndex;
-        private int _targetColumnIndex;
-        private int _columnRelStart;
 
         public SubgroupContextMenu(VisualizerTable table, TableState state, ColumnStylingOptions stylingOptions, VisualizerTable.GetGroupSize getGroupSize)
         {
@@ -29,13 +27,9 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         public bool Show(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (hit.RowIndex != -1 || hit.ColumnIndex < 0 || hit.ColumnIndex == VisualizerTable.PhantomColumnIndex)
+            if (hit.RowIndex != -1 || hit.ColumnIndex < 0)
                 return false;
-            var screenStartOffset = _table.RowHeadersWidth + _table.Columns[VisualizerTable.NameColumnIndex].Width;
-            _columnRelStart = hit.ColumnX - screenStartOffset;
-            var invisibleColumns = _state.DataColumns.Count(x => x.Index < hit.ColumnIndex && x.Visible == false);
             _clickedColumnIndex = hit.ColumnIndex;
-            _targetColumnIndex = hit.ColumnIndex - invisibleColumns - 1;
             _menu.MenuItems[12].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
             _menu.MenuItems[16].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
             _menu.Show(_table, new Point(e.X, e.Y));
@@ -65,7 +59,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             });
 
             var fitWidth = new MenuItem("Fit Width", (s, e) =>
-                _state.ResizeController.FitWidth(_targetColumnIndex, _columnRelStart));
+                _state.FitWidth(_clickedColumnIndex));
 
             var hideThis = new MenuItem("Hide This", HideColumns);
 
@@ -88,7 +82,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private void HideColumns(object sender, EventArgs e)
         {
             var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
-            var newColumnIndexes = ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns).Except(selectedColumns);
+            var newColumnIndexes = ColumnSelector.ToIndexes(_stylingOptions.VisibleColumns, _table.DataColumnCount).Except(selectedColumns);
             var newSelector = ColumnSelector.FromIndexes(newColumnIndexes);
             SetColumnSelector(newSelector);
         }
@@ -96,21 +90,21 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
         {
             string subgroupsSelector = ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast);
-            string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector);
+            string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector, _table.DataColumnCount);
             SetColumnSelector(newSelector);
         }
 
         private void SetBackgroundColor(DataHighlightColor color)
         {
             var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
-            _stylingOptions.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.BackgroundColors, selectedColumns, color);
+            _stylingOptions.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.BackgroundColors, selectedColumns, color, _table.DataColumnCount);
             _table.ClearSelection();
         }
 
         private void SetForegroundColor(DataHighlightColor color)
         {
             var selectedColumns = _table.GetSelectedDataColumnIndexes(_clickedColumnIndex);
-            _stylingOptions.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.ForegroundColors, selectedColumns, color);
+            _stylingOptions.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_stylingOptions.ForegroundColors, selectedColumns, color, _table.DataColumnCount);
             _table.ClearSelection();
         }
 

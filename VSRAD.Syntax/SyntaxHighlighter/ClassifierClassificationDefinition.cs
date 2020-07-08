@@ -120,7 +120,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         {
             public FunctionsFormat()
             {
-                ForegroundColor = Color.FromArgb(255, 78, 201, 178);
+                ForegroundColor = Colors.Teal;
             }
         }
 
