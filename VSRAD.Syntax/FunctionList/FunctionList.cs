@@ -165,7 +165,9 @@ namespace VSRAD.Syntax.FunctionList
         {
             foreach (var func in blocks)
             {
-                if (func.Scope.GetSpan(line.Snapshot).Contains(line.Start))
+                var pointStart = func.TokenStart.GetStart(line.Snapshot);
+                var pointEnd = func.TokenEnd.GetEnd(line.Snapshot);
+                if (pointStart < line.End && pointEnd > line.Start)
                     return func;
             }
 
