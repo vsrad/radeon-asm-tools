@@ -85,8 +85,9 @@ namespace VSRAD.Syntax.Parser
                     }
                 }
             }
-            catch (ArgumentException)
+            catch (Exception e) when (e is ArgumentException || e is FileNotFoundException)
             {
+                Error.LogError(e, "External definitions loader");
             }
         }
     }
