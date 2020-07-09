@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
@@ -14,15 +15,6 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public sealed class ActionEditorDesignTimeCollection : ObservableCollection<IActionStep>
-    {
-        public ActionEditorDesignTimeCollection()
-        {
-            Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, LocalPath = @"C:\Local\Path", RemotePath = "/remote/path", CheckTimestamp = true });
-            Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "exe", Arguments = "--args", WorkingDirectory = "/workdir" });
-        }
-    }
-
     [ValueConversion(typeof(IEnumerable<ActionProfileOptions>), typeof(IEnumerable<string>))]
     public sealed class CustomActionNameConverter : IValueConverter
     {
@@ -43,7 +35,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             throw new NotImplementedException();
     }
 
-    public partial class ActionEditor : UserControl
+    public partial class ActionEditor : UserControl, INotifyPropertyChanged
     {
 #pragma warning disable CA2227 // WPF collection bindings need a setter
         public ObservableCollection<IActionStep> Steps
@@ -68,6 +60,19 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public static readonly DependencyProperty MacroEditorProperty =
             DependencyProperty.Register(nameof(MacroEditor), typeof(DirtyProfileMacroEditor), typeof(ActionEditor), new PropertyMetadata(null));
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private IActionStep _selectedStep;
+        public IActionStep SelectedStep
+        {
+            get => _selectedStep;
+            set
+            {
+                _selectedStep = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedStep)));
+            }
+        }
+
         public ICommand AddCommand { get; }
         public ICommand MoveUpCommand { get; }
         public ICommand MoveDownCommand { get; }
@@ -81,6 +86,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             MoveDownCommand = new WpfDelegateCommand((i) => MoveStep(i, moveUp: false));
             DeleteCommand = new WpfDelegateCommand(DeleteStep);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
+
             InitializeComponent();
             Root.DataContext = this;
         }

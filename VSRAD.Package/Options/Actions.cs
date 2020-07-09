@@ -13,6 +13,11 @@ namespace VSRAD.Package.Options
 {
     // Note: when adding a new step, don't forget to add the new type to ActionStepJsonConverter.
 
+    // Note: steps override GetHashCode and set it to a constant value.
+    // While this leads to poor performance when used as a key in hash-based collections,
+    // it satisfies the contract (the same hash code is returned for objects that are equal)
+    // and prevents errors when an object is mutated (e.g. in profile editor's WPF controls, https://stackoverflow.com/q/15365905)
+
     public interface IActionStep : INotifyPropertyChanged
     {
         Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile);
@@ -52,8 +57,7 @@ namespace VSRAD.Package.Options
             RemotePath == step.RemotePath &&
             CheckTimestamp == step.CheckTimestamp;
 
-        public override int GetHashCode() =>
-            (LocalPath, RemotePath, CheckTimestamp).GetHashCode();
+        public override int GetHashCode() => 1;
 
         public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             new CopyFileStep
@@ -100,8 +104,7 @@ namespace VSRAD.Package.Options
             WaitForCompletion == step.WaitForCompletion &&
             TimeoutSecs == step.TimeoutSecs;
 
-        public override int GetHashCode() =>
-            (Environment, Executable, Arguments, WorkingDirectory, RunAsAdmin, WaitForCompletion, TimeoutSecs).GetHashCode();
+        public override int GetHashCode() => 3;
 
         public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             new ExecuteStep
@@ -129,8 +132,7 @@ namespace VSRAD.Package.Options
         public override bool Equals(object obj) =>
             obj is OpenInEditorStep step && Path == step.Path && LineMarker == step.LineMarker;
 
-        public override int GetHashCode() =>
-            (Path, LineMarker).GetHashCode();
+        public override int GetHashCode() => 5;
 
         public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             new OpenInEditorStep
@@ -159,7 +161,7 @@ namespace VSRAD.Package.Options
 
         public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
 
-        public override int GetHashCode() => Name.GetHashCode();
+        public override int GetHashCode() => 7;
 
         public Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
             EvaluateAsync(evaluator, profile, new Stack<string>());
