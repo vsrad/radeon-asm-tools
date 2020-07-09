@@ -47,15 +47,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             else
             {
-                /*
-                 * TODO: implement any data column count
-                var colorIndex = e.ColumnIndex % VisualizerTable.DataColumnCount == 0
-                    ? VisualizerTable.DataColumnCount - SliceVisualizerTable.DataColumnOffset
-                    : e.ColumnIndex % VisualizerTable.DataColumnCount - SliceVisualizerTable.DataColumnOffset;
-                var bgColor = DataHighlightColors.GetFromColorString(_stylingOptions.BackgroundColors, colorIndex);
+                var colorIndex = e.ColumnIndex % _table.GroupSize == 0
+                    ? _table.GroupSize - SliceVisualizerTable.DataColumnOffset
+                    : e.ColumnIndex % _table.GroupSize - SliceVisualizerTable.DataColumnOffset;
+                var bgColor = DataHighlightColors.GetFromColorString(_stylingOptions.BackgroundColors, (int)colorIndex);
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)bgColor];
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
-                */
             }
             PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
         }

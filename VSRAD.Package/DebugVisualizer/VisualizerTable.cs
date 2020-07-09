@@ -110,7 +110,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             ClearSelection();
             var colIndex = laneIndex + DataColumnOffset;
-            ColumnSelector.ShowColumn(laneIndex, stylingOptions); // unhide desired column if hidden
+            ColumnSelector.ShowColumn(laneIndex, stylingOptions, DataColumnCount); // unhide desired column if hidden
             var row = Rows.Cast<DataGridViewRow>().First(r => r.Cells[NameColumnIndex].Value.ToString() == watchName); // find row that represent desired watch
             row.Cells[laneIndex + DataColumnOffset].Selected = true; // select desired cell
             
