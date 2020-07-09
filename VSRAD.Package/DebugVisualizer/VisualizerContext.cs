@@ -45,8 +45,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         public Options.ProjectOptions Options { get; }
         public GroupIndexSelector GroupIndex { get; }
-        public Action<string, int> SelectCell =>
-            (watchName, laneIndex) => CellSelectionEvent(this, new CellSelectionEventArgs(watchName, laneIndex));
 
         private string _status = "No data available";
         public string Status { get => _status; set => SetField(ref _status, value); }
@@ -83,6 +81,7 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex = new GroupIndexSelector(options);
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
+        public void SelectCell(string watchName, int laneIndex) => CellSelectionEvent(this, new CellSelectionEventArgs(watchName, laneIndex));
 
         public void Dispose()
         {

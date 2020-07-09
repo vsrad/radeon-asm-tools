@@ -48,7 +48,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _context.Options.VisualizerAppearance, _context.Options.VisualizerColumnStyling);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
 
-            _context.WatchSelected += () => DisplayWatch(_context.SelectedWatchView, _context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
+            _context.WatchSelected += DisplayWatch;
             _context.Options.VisualizerColumnStyling.PropertyChanged += ColumnStylingChanged;
             _context.Options.VisualizerAppearance.PropertyChanged += AppearanceOptionChanged;
             _context.Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
@@ -58,23 +58,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex == -1 || e.ColumnIndex < DataColumnOffset)
-            {
-                _context.StatusString = "";
-                return;
-            }
-            var colIndex = e.ColumnIndex - DataColumnOffset;
-            if (SelectedWatch.IsInactiveCell(e.RowIndex, colIndex))
-            {
-                _context.StatusString = "Out of bounds";
-                return;
-            }
-
-            var gNum = SelectedWatch.GroupNum(e.RowIndex, colIndex);
-            var lNum = SelectedWatch.LaneNum(colIndex);
-            var value = Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
-            _context.StatusString = $"Group# {gNum}, Column# {lNum}, Value: {value}";
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            _context.SetStatusString(e.RowIndex, e.ColumnIndex - DataColumnOffset, Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString());
         }
+
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
         {
@@ -98,9 +85,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             Invalidate();   // redraw
         }
 
-        public void DisplayWatch(TypedSliceWatchView watchView, int subgroupSize, string columnSelector)
+        public void DisplayWatch()
         {
-            var columnsMissing = watchView.ColumnCount - (Columns.Count - 1);
+            var columnsMissing = SelectedWatch.ColumnCount - (Columns.Count - 1);
             if (columnsMissing > 0)
             {
                 var missingColumnsStartAt = _state.DataColumns.Count;
@@ -120,18 +107,18 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             }
             for (int i = 0; i < _state.DataColumns.Count; ++i)
-                _state.DataColumns[i].Visible = i < watchView.ColumnCount;
+                _state.DataColumns[i].Visible = i < SelectedWatch.ColumnCount;
 
-            if (Rows.Count < watchView.RowCount)
-                Rows.Add(watchView.RowCount - Rows.Count);
+            if (Rows.Count < SelectedWatch.RowCount)
+                Rows.Add(SelectedWatch.RowCount - Rows.Count);
             for (int i = 0; i < Rows.Count; ++i)
             {
                 var row = Rows[i];
-                if (i < watchView.RowCount)
+                if (i < SelectedWatch.RowCount)
                 {
-                    for (int j = 0; j < watchView.ColumnCount; ++j)
-                        row.Cells[DataColumnOffset + j].Value = watchView[i, j];
-                    row.HeaderCell.Value = watchView.RowHeader(i);
+                    for (int j = 0; j < SelectedWatch.ColumnCount; ++j)
+                        row.Cells[DataColumnOffset + j].Value = SelectedWatch[i, j];
+                    row.HeaderCell.Value = SelectedWatch.GetGroupIndex(row: i, column: 0);
                     row.Visible = true;
                 }
                 else
@@ -139,7 +126,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     row.Visible = false;
                 }
             }
-            ColumnStyling.Recompute(subgroupSize, columnSelector, _context.Options.VisualizerAppearance);
+            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
         }
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)

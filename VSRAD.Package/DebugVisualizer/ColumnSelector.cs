@@ -110,13 +110,13 @@ namespace VSRAD.Package.DebugVisualizer
                 return FromIndexes(newIndexes.Intersect(currentIndexes));
         }
 
-        public static void ShowColumn(int index, ColumnStylingOptions styling, int columnCount)
+        public static string ShowColumn(int index, string visibleColumns, int columnCount)
         {
-            var visibleIndexes = ToIndexes(styling.VisibleColumns, columnCount);
-            if (visibleIndexes.Contains(index)) return;
+            var visibleIndexes = ToIndexes(visibleColumns, columnCount);
+            if (visibleIndexes.Contains(index)) return visibleColumns;
 
             visibleIndexes = visibleIndexes.Append(index);
-            styling.VisibleColumns = FromIndexes(visibleIndexes);
+            return FromIndexes(visibleIndexes);
         }
     }
 }

@@ -257,7 +257,7 @@ namespace VSRAD.PackageTests.Server
                                          { 2, 2, 2, 3, 3, 3 } };
             for (int row = 0; row < 2; ++row)
                 for (int col = 0; col < 6; ++col)
-                    Assert.Equal(expected[row, col], (uint)sliceWatch.GroupNum(row, col));
+                    Assert.Equal(expected[row, col], (uint)sliceWatch.GetGroupIndex(row, col));
         }
 
         [Fact]
@@ -270,7 +270,7 @@ namespace VSRAD.PackageTests.Server
             var expected = new uint[] { 0, 1, 2, 0, 1, 2 };
 
             for (int col = 0; col < 6; ++col)
-                Assert.Equal(expected[col], (uint)sliceWatch.LaneNum(col));
+                Assert.Equal(expected[col], (uint)sliceWatch.GetLaneIndex(col));
         }
 
         [Fact]

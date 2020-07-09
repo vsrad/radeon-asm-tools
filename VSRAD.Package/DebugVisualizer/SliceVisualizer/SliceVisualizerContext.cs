@@ -48,10 +48,29 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _windowVisibilityEvents.WindowHiding += OnToolWindowVisibilityChanged;
         }
 
+        public void SetStatusString(int row, int column, string val)
+        {
+            if (row < 0 || column < 0 || string.IsNullOrEmpty(val))
+            {
+                StatusString = "";
+                return;
+            }
+
+            if (SelectedWatchView.IsInactiveCell(row, column))
+            {
+                StatusString = "Out of bounds";
+                return;
+            }
+
+            var gNum = SelectedWatchView.GetGroupIndex(row, column);
+            var lNum = SelectedWatchView.GetLaneIndex(column);
+            StatusString = $"Group# {gNum}, Column# {lNum}, Value: {val}";
+        }
+
         public void NavigateToCell(int sliceRowIndex, int sliceColumnIndex)
         {
-            var groupIndex = SelectedWatchView.GroupNum(sliceRowIndex, sliceColumnIndex);
-            var laneIndex = SelectedWatchView.LaneNum(sliceColumnIndex);
+            var groupIndex = SelectedWatchView.GetGroupIndex(sliceRowIndex, sliceColumnIndex);
+            var laneIndex = SelectedWatchView.GetLaneIndex(sliceColumnIndex);
 
             _visualizerContext.GroupIndex.SetGroupIndex(groupIndex);
             _visualizerContext.SelectCell(SelectedWatch, laneIndex);

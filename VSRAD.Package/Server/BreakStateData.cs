@@ -79,9 +79,8 @@ namespace VSRAD.Package.Server
             RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
         }
 
-        public int RowHeader(int row) => row * _groupsInRow;
-        public int GroupNum(int row, int column) => _groupsInRow * row + column / _groupSize;
-        public int LaneNum(int column) => column % _groupSize;
+        public int GetGroupIndex(int row, int column) => _groupsInRow * row + column / _groupSize;
+        public int GetLaneIndex(int column) => column % _groupSize;
 
         public bool IsInactiveCell(int row, int column)
         {

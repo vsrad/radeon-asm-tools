@@ -18,7 +18,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public delegate void ActivateWindow();
 
-        private ActivateWindow ActivateWindowMethod;
+        private ActivateWindow _activateWindow;
 
         public VisualizerControl(IToolWindowIntegration integration, ActivateWindow activateWindow)
         {
@@ -33,7 +33,7 @@ namespace VSRAD.Package.DebugVisualizer
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
-            ActivateWindowMethod = activateWindow;
+            _activateWindow = activateWindow;
 
             _integration = integration;
             _integration.AddWatch += AddWatch;
@@ -83,7 +83,7 @@ namespace VSRAD.Package.DebugVisualizer
         }
         private void CellSelected(object sender, CellSelectionEventArgs e)
         {
-            ActivateWindowMethod();
+            _activateWindow();
             _table.SelectCell(e.WatchName, e.LaneIndex, _context.Options.VisualizerColumnStyling);
             RefreshDataStyling();
         }
