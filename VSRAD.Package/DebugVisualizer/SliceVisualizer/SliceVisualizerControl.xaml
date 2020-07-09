@@ -8,6 +8,9 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel>
         <local:SliceVisualizerHeaderControl DataContext="{Binding}" DockPanel.Dock="Top"/>
-        <local:SliceVisualizerTableHost DockPanel.Dock="Bottom" x:Name="TableHost"/>
+        <StatusBar DockPanel.Dock="Bottom" Height="20" x:Name="SliceStatusBar">
+            <TextBlock Text="{Binding StatusString}"/>
+        </StatusBar>
+        <local:SliceVisualizerTableHost x:Name="TableHost"/>
     </DockPanel>
 </UserControl>

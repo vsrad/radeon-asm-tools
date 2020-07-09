@@ -21,6 +21,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private VariableType _selectedType;
         public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
 
+        private string _statusString;
+        public string StatusString { get => _statusString; set => SetField(ref _statusString, value); }
+
         public List<string> Watches { get; private set; } = new List<string>();
 
         private readonly VisualizerContext _visualizerContext;
