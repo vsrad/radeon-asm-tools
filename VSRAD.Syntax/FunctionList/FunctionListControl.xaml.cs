@@ -41,6 +41,7 @@ namespace VSRAD.Syntax.FunctionList
             Autoscroll = optionsProvider.Autoscroll;
             FunctionListSortState = optionsProvider.SortOptions;
             optionsProvider.OptionsUpdated += OptionsUpdated;
+            tokens.LayoutUpdated += (s, e) => ResizeOtherColumns();
         }
 
         private void OptionsUpdated(OptionsProvider sender)
@@ -110,7 +111,8 @@ namespace VSRAD.Syntax.FunctionList
             foreach (var token in functionListTokens)
                 tokens.Items.Add(token);
 
-            ResizeFunctionListColumns();
+            /* Needs to update line number column width after adding new items */
+            ResizeLineNumberColumn();
         }
 
         private void ByNumber_Click(object sender, RoutedEventArgs e)
@@ -145,14 +147,25 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
+        private void ResizeLineNumberColumn()
+        {
+            /* This is a well know behaviour of GridView https://stackoverflow.com/questions/560581/how-to-autosize-and-right-align-gridviewcolumn-data-in-wpf/1931423#1931423 */
+            functionsGridView.Columns[0].Width = 0;
+            if (!isHideLineNumber)
+                functionsGridView.Columns[0].Width = double.NaN;
+        }
+
+        private void ResizeOtherColumns()
+        {
+            // Line Number ActualWidth will apply only after UpdateLayout. After that, other columns width can be changed
+            functionsGridView.Columns[1].Width = tokens.ActualWidth - functionsGridView.Columns[0].ActualWidth;
+            LineNumberButtonColumn.Width = new GridLength(functionsGridView.Columns[0].ActualWidth);
+        }
+
         private void ShowHideLineNumber(object sender, EventArgs e)
         {
-            if (isHideLineNumber)
-                isHideLineNumber = false;
-            else
-                isHideLineNumber = true;
-
-            ResizeFunctionListColumns();
+            isHideLineNumber = !isHideLineNumber;
+            ResizeLineNumberColumn();
         }
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
@@ -160,18 +173,6 @@ namespace VSRAD.Syntax.FunctionList
             SearchText = Search.Text;
             var filteredTokens = Helper.Filter(Tokens, SearchText);
             ReloadFunctionList(filteredTokens);
-        }
-
-        private void ResizeFunctionListColumns()
-        {
-            functionsGridView.Columns[0].Width = 0;
-            if (!isHideLineNumber)
-                functionsGridView.Columns[0].Width = double.NaN;
-
-            functionsGridView.Columns[1].Width = tokens.ActualWidth - functionsGridView.Columns[0].ActualWidth;
-
-            tokens.UpdateLayout();
-            LineNumberButtonColumn.Width = new GridLength(functionsGridView.Columns[0].ActualWidth);
         }
 
         public void OnClearSearchField() => Search.Text = "";
