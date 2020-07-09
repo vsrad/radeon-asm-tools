@@ -26,7 +26,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             var level1Steps = new List<IActionStep>
             {
                 new RunActionStep(level2Steps) { Name = "Sign Contract" },
-                new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, CheckTimestamp = true, RemotePath = "incubator", LocalPath = "soul" }
+                new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, CheckTimestamp = true, TargetPath = "incubator", SourcePath = "soul" }
             };
 
             var level3Result = new ActionRunResult("Exchange Soul", level3Steps);
@@ -71,15 +71,15 @@ namespace VSRAD.PackageTests.ProjectSystem
 @"=> Fetched initial timestamps in 10ms
 => [0] Run Sign Contract SUCCEEDED in 40ms
 ===> Fetched initial timestamps in 0ms
-===> [0] Execute SUCCEEDED in 20ms
+===> [0] R Execute obtain-contract SUCCEEDED in 20ms
 Captured stdout (exit code 1):
 contract obtained
 ===> [1] Run Exchange Soul SUCCEEDED in 20ms
 =====> Fetched initial timestamps in 0ms
-=====> [0] Execute SUCCEEDED in 20ms
+=====> [0] R Execute cleanup SUCCEEDED in 20ms
 Captured stdout (exit code 2):
 ..
-=> [1] Copy File SUCCEEDED in 20ms
+=> [1] LR Copy soul -> incubator SUCCEEDED in 20ms
 ";
             Assert.Equal(expectedMessage, logMessage);
             var expectedWarnings =

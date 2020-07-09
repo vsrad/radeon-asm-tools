@@ -58,7 +58,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (prevStepsSucceeded)
                 {
                     var result = run.StepResults[i];
-                    log.AppendFormat("{0}=> [{1}] {2} {3} in {4}ms\r\n", logIndent, i, step, result.Successful ? "SUCCEEDED" : "FAILED", run.StepRunMillis[i]);
+                    log.AppendFormat("{0}=> [{1}] {2} {3} in {4}ms\r\n", logIndent, i, step.Description, result.Successful ? "SUCCEEDED" : "FAILED", run.StepRunMillis[i]);
                     if (!string.IsNullOrEmpty(result.Log))
                         log.Append(result.Log);
                     if (!string.IsNullOrEmpty(result.Warning))
@@ -70,7 +70,7 @@ namespace VSRAD.Package.ProjectSystem
                 }
                 else
                 {
-                    log.AppendFormat("{0}=> [{1}] {2} SKIPPED\r\n", logIndent, i, step);
+                    log.AppendFormat("{0}=> [{1}] {2} SKIPPED\r\n", logIndent, i, step.Description);
                 }
             }
 

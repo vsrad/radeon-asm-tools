@@ -20,7 +20,7 @@ namespace VSRAD.PackageTests.Server
             var channel = new MockCommunicationChannel();
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, RemotePath = "/home/mizu/machete/key3_49", LocalPath = "" },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/mizu/machete/key3_49", SourcePath = "" },
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" } // should not be run
             };
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } }); // init timestamp fetch
@@ -46,7 +46,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, RemotePath = "/home/parker/audio/unchecked", LocalPath = "" }, // should not be run
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
             };
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stdout = "", Stderr = "" });
             var runner = new ActionRunner(channel.Object, null);
@@ -80,7 +80,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, RemotePath = "/home/mizu/machete/tweened.tvpp", LocalPath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/mizu/machete/tweened.tvpp", SourcePath = Path.GetTempFileName() }
             };
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } }); // init timestamp fetch
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
@@ -94,8 +94,8 @@ namespace VSRAD.PackageTests.Server
             Assert.True(result.StepResults[1].Successful);
             Assert.Equal("", result.StepResults[1].Warning);
             Assert.Equal("", result.StepResults[1].Log);
-            Assert.Equal("file-contents", File.ReadAllText(((CopyFileStep)steps[1]).LocalPath));
-            File.Delete(((CopyFileStep)steps[1]).LocalPath);
+            Assert.Equal("file-contents", File.ReadAllText(((CopyFileStep)steps[1]).SourcePath));
+            File.Delete(((CopyFileStep)steps[1]).SourcePath);
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace VSRAD.PackageTests.Server
             var level1Steps = new List<IActionStep>
             {
                 new RunActionStep(level2Steps) { Name = "level2" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, RemotePath = "/home/mizu/machete/tweened.tvpp", LocalPath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/mizu/machete/tweened.tvpp", SourcePath = Path.GetTempFileName() }
             };
             // 1. Initial timestamp fetch
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } });
@@ -169,14 +169,14 @@ namespace VSRAD.PackageTests.Server
 
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, RemotePath = "/home/parker/audio/checked", LocalPath = Path.GetTempFileName() },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, RemotePath = "/home/parker/audio/unchecked", LocalPath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/parker/audio/checked", SourcePath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = Path.GetTempFileName() },
             };
             var auxFiles = new List<BuiltinActionFile>
             {
                 new BuiltinActionFile { Location = StepEnvironment.Remote, CheckTimestamp = true, Path = "/home/parker/audio/master" },
                 new BuiltinActionFile { Location = StepEnvironment.Remote, CheckTimestamp = false, Path = "/home/parker/audio/copy" },
-                new BuiltinActionFile { Location = StepEnvironment.Local, CheckTimestamp = true, Path = ((CopyFileStep)steps[0]).LocalPath },
+                new BuiltinActionFile { Location = StepEnvironment.Local, CheckTimestamp = true, Path = ((CopyFileStep)steps[0]).SourcePath },
                 new BuiltinActionFile { Location = StepEnvironment.Local, CheckTimestamp = false, Path = "non-existent-local-path" }
             };
             channel.ThenRespond(new IResponse[]
@@ -201,12 +201,12 @@ namespace VSRAD.PackageTests.Server
 
             Assert.Equal(DateTime.FromFileTime(100), runner.GetInitialFileTimestamp("/home/parker/audio/checked"));
             Assert.Equal(default, runner.GetInitialFileTimestamp("/home/parker/audio/master"));
-            Assert.Equal(File.GetCreationTime(((CopyFileStep)steps[0]).LocalPath), runner.GetInitialFileTimestamp(((CopyFileStep)steps[0]).LocalPath));
+            Assert.Equal(File.GetCreationTime(((CopyFileStep)steps[0]).SourcePath), runner.GetInitialFileTimestamp(((CopyFileStep)steps[0]).SourcePath));
 
-            Assert.Equal("TestCopyStepChecked", File.ReadAllText(((CopyFileStep)steps[0]).LocalPath));
-            File.Delete(((CopyFileStep)steps[0]).LocalPath);
-            Assert.Equal("TestCopyStepUnchecked", File.ReadAllText(((CopyFileStep)steps[1]).LocalPath));
-            File.Delete(((CopyFileStep)steps[1]).LocalPath);
+            Assert.Equal("TestCopyStepChecked", File.ReadAllText(((CopyFileStep)steps[0]).SourcePath));
+            File.Delete(((CopyFileStep)steps[0]).SourcePath);
+            Assert.Equal("TestCopyStepUnchecked", File.ReadAllText(((CopyFileStep)steps[1]).SourcePath));
+            File.Delete(((CopyFileStep)steps[1]).SourcePath);
         }
     }
 }

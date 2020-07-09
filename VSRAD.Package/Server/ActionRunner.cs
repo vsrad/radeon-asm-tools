@@ -70,13 +70,13 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.LocalToRemote)
                 throw new NotImplementedException();
 
-            var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { step.RemotePath } });
+            var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { step.TargetPath } });
             if (response.Status == FetchStatus.FileNotFound)
-                return new StepResult(false, $"File is not found on the remote machine at {step.RemotePath}", "");
-            if (step.CheckTimestamp && GetInitialFileTimestamp(step.RemotePath) == response.Timestamp)
-                return new StepResult(false, $"File is not changed on the remote machine at {step.RemotePath}", "");
+                return new StepResult(false, $"File is not found on the remote machine at {step.TargetPath}", "");
+            if (step.CheckTimestamp && GetInitialFileTimestamp(step.TargetPath) == response.Timestamp)
+                return new StepResult(false, $"File is not changed on the remote machine at {step.TargetPath}", "");
 
-            File.WriteAllBytes(step.LocalPath, response.Data);
+            File.WriteAllBytes(step.SourcePath, response.Data);
             return new StepResult(true, "", "");
         }
 
@@ -144,7 +144,7 @@ namespace VSRAD.Package.Server
             foreach (var step in steps)
             {
                 if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
-                    remoteCommands.Add(new FetchMetadata { FilePath = new[] { copyFile.RemotePath } });
+                    remoteCommands.Add(new FetchMetadata { FilePath = new[] { copyFile.TargetPath } });
             }
 
             foreach (var auxFile in auxFiles)

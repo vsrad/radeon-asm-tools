@@ -20,6 +20,8 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
+        string Description { get; }
+
         Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile);
     }
 
@@ -35,26 +37,69 @@ namespace VSRAD.Package.Options
         RemoteToLocal, LocalToRemote
     }
 
+    public static class StepEnumLabelExtensions
+    {
+        public static string GetLabel(this StepEnvironment env)
+        {
+            switch (env)
+            {
+                case StepEnvironment.Local: return "L";
+                case StepEnvironment.Remote: return "R";
+            }
+            throw new NotImplementedException();
+        }
+
+        public static string GetLabel(this FileCopyDirection dir)
+        {
+            switch (dir)
+            {
+                case FileCopyDirection.LocalToRemote: return "LR";
+                case FileCopyDirection.RemoteToLocal: return "RL";
+            }
+            throw new NotImplementedException();
+        }
+    }
+
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private FileCopyDirection _direction;
-        public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
+        public FileCopyDirection Direction
+        {
+            get => _direction;
+            set { SetField(ref _direction, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
-        private string _localPath = "";
-        public string LocalPath { get => _localPath; set => SetField(ref _localPath, value); }
+        private string _sourcePath = "";
+        public string SourcePath
+        {
+            get => _sourcePath;
+            set { SetField(ref _sourcePath, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
-        private string _remotePath = "";
-        public string RemotePath { get => _remotePath; set => SetField(ref _remotePath, value); }
+        private string _targetPath = "";
+        public string TargetPath
+        {
+            get => _targetPath;
+            set { SetField(ref _targetPath, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
         private bool _checkTimestamp;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 
-        public override string ToString() => "Copy File";
+        public string Description
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath))
+                    return "Copy File (not configured)";
+                return $"{Direction.GetLabel()} Copy {SourcePath} -> {TargetPath}";
+            }
+        }
 
         public override bool Equals(object obj) =>
             obj is CopyFileStep step &&
-            LocalPath == step.LocalPath &&
-            RemotePath == step.RemotePath &&
+            SourcePath == step.SourcePath &&
+            TargetPath == step.TargetPath &&
             CheckTimestamp == step.CheckTimestamp;
 
         public override int GetHashCode() => 1;
@@ -63,8 +108,8 @@ namespace VSRAD.Package.Options
             new CopyFileStep
             {
                 Direction = Direction,
-                LocalPath = await evaluator.EvaluateAsync(LocalPath),
-                RemotePath = await evaluator.EvaluateAsync(RemotePath),
+                SourcePath = await evaluator.EvaluateAsync(SourcePath),
+                TargetPath = await evaluator.EvaluateAsync(TargetPath),
                 CheckTimestamp = CheckTimestamp
             };
     }
@@ -72,13 +117,21 @@ namespace VSRAD.Package.Options
     public sealed class ExecuteStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private StepEnvironment _environment;
-        public StepEnvironment Environment { get => _environment; set => SetField(ref _environment, value); }
+        public StepEnvironment Environment
+        {
+            get => _environment;
+            set { SetField(ref _environment, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
         private string _executable = "";
-        public string Executable { get => _executable; set => SetField(ref _executable, value); }
+        public string Executable
+        {
+            get => _executable;
+            set { SetField(ref _executable, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
         private string _arguments = "";
-        public string Arguments { get => _arguments; set => SetField(ref _arguments, value); }
+        public string Arguments { get => _arguments; set { SetField(ref _arguments, value); } }
 
         private string _workingDirectory = "";
         public string WorkingDirectory { get => _workingDirectory; set => SetField(ref _workingDirectory, value); }
@@ -92,7 +145,15 @@ namespace VSRAD.Package.Options
         private int _timeoutSecs = 0;
         public int TimeoutSecs { get => _timeoutSecs; set => SetField(ref _timeoutSecs, value); }
 
-        public override string ToString() => "Execute";
+        public string Description
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Executable))
+                    return "Execute (not configured)";
+                return $"{Environment.GetLabel()} Execute {Executable}";
+            }
+        }
 
         public override bool Equals(object obj) =>
             obj is ExecuteStep step &&
@@ -122,12 +183,28 @@ namespace VSRAD.Package.Options
     public sealed class OpenInEditorStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private string _path = "";
-        public string Path { get => _path; set => SetField(ref _path, value); }
+        public string Path
+        {
+            get => _path;
+            set
+            {
+                SetField(ref _path, value);
+                RaisePropertyChanged(nameof(Description));
+            }
+        }
 
         private string _lineMarker = "";
         public string LineMarker { get => _lineMarker; set => SetField(ref _lineMarker, value); }
 
-        public override string ToString() => "Open in Editor";
+        public string Description
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Path))
+                    return "Open in Editor (not configured)";
+                return $"Open {Path}";
+            }
+        }
 
         public override bool Equals(object obj) =>
             obj is OpenInEditorStep step && Path == step.Path && LineMarker == step.LineMarker;
@@ -145,7 +222,15 @@ namespace VSRAD.Package.Options
     public sealed class RunActionStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private string _name = "";
-        public string Name { get => _name; set { if (value != null) SetField(ref _name, value); } }
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                SetField(ref _name, value);
+                RaisePropertyChanged(nameof(Description));
+            }
+        }
 
         [JsonIgnore]
         public List<IActionStep> EvaluatedSteps { get; }
@@ -157,7 +242,15 @@ namespace VSRAD.Package.Options
             EvaluatedSteps = evaluatedSteps;
         }
 
-        public override string ToString() => string.IsNullOrEmpty(Name) ? "Run Action" : "Run " + Name;
+        public string Description
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Name))
+                    return "Run Action (not configured)";
+                return $"Run {Name}";
+            }
+        }
 
         public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
 
