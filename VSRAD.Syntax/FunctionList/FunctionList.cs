@@ -27,6 +27,7 @@ namespace VSRAD.Syntax.FunctionList
         private IVsTextManager _textManager;
         private IVsEditorAdaptersFactoryService _editorAdaptorFactory;
         private DocumentAnalysisProvoder _documentAnalysisProvider;
+        private FunctionBlock lastSelectedFunction;
 
         public static FunctionList Instance { get; private set; }
         public FunctionListControl FunctionListControl => (FunctionListControl)Content;
@@ -118,23 +119,21 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private Task HighlightCurrentFunctionAsync(ITextView textView)
+        private Task HighlightCurrentFunctionAsync(SnapshotPoint position)
         {
             try
             {
-                var line = textView.Caret.Position.BufferPosition.GetContainingLine();
-
-                if (line == null)
+                if (lastSelectedFunction != null && PointInFunction(lastSelectedFunction, position))
                     return Task.CompletedTask;
 
-                var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(textView.TextBuffer);
+                var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(position.Snapshot.TextBuffer);
                 var functions = documentAnalysis.LastParserResult.GetFunctions();
-                var currentFunction = GetFunctionBy(functions, line);
+                lastSelectedFunction = GetFunctionBy(functions, position);
 
-                if (currentFunction == null)
+                if (lastSelectedFunction == null)
                     return FunctionListControl.ClearHighlightCurrentFunctionAsync();
 
-                var functionToken = currentFunction.Name;
+                var functionToken = lastSelectedFunction.Name;
                 var lineNumber = functionToken
                     .TrackingToken.Start
                     .GetPoint(documentAnalysis.CurrentSnapshot)
@@ -149,10 +148,10 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public static void TryHighlightCurrentFunction(ITextView textView)
+        public static void TryHighlightCurrentFunction(SnapshotPoint point)
         {
             if (Instance != null)
-                ThreadHelper.JoinableTaskFactory.RunAsync(() => Instance.HighlightCurrentFunctionAsync(textView));
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => Instance.HighlightCurrentFunctionAsync(point));
         }
 
         public static void TryUpdateFunctionList(ITextSnapshot version, IReadOnlyList<IBlock> blocks)
@@ -161,15 +160,14 @@ namespace VSRAD.Syntax.FunctionList
                 ThreadHelper.JoinableTaskFactory.RunAsync(() => Instance.UpdateFunctionListAsync(version, blocks));
         }
 
-        private static FunctionBlock GetFunctionBy(IEnumerable<FunctionBlock> blocks, ITextSnapshotLine line)
-        {
-            foreach (var func in blocks)
-            {
-                if (func.Scope.GetSpan(line.Snapshot).Contains(line.Start))
-                    return func;
-            }
+        private static FunctionBlock GetFunctionBy(IEnumerable<FunctionBlock> blocks, SnapshotPoint position) =>
+            blocks.FirstOrDefault(func => PointInFunction(func, position));
 
-            return null;
+        private static bool PointInFunction(FunctionBlock func, SnapshotPoint position)
+        {
+            var pointStart = func.TokenStart.GetStart(position.Snapshot);
+            var pointEnd = func.TokenEnd.GetEnd(position.Snapshot);
+            return pointStart < position && pointEnd > position;
         }
     }
 }
