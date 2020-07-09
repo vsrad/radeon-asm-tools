@@ -101,6 +101,11 @@ namespace VSRAD.Package.DebugVisualizer
         {
             switch (e.PropertyName)
             {
+                // TODO: ???
+                //case nameof(VisualizerContext.GroupSize):
+                //    _table.CreateMissingDataColumns((int)_context.GroupSize);
+                //    RefreshDataStyling();
+                //    break;
                 case nameof(VisualizerContext.WatchesValid):
                     if (!_context.WatchesValid)
                         GrayOutWatches();
