@@ -58,7 +58,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex == -1 || e.ColumnIndex == -1)
+            if (e.RowIndex == -1 || e.ColumnIndex < DataColumnOffset)
             {
                 _context.StatusString = "";
                 return;

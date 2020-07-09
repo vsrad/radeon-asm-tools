@@ -22,6 +22,6 @@ namespace VSRAD.Package.Options
         public bool TransposedView { get => _transposedView; set => SetField(ref _transposedView, value); }
 
         private int _groupsInRow = 1;
-        public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
+        public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, Math.Max(value, 1)); }
     }
 }

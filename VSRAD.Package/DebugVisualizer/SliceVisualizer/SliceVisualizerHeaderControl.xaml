@@ -37,7 +37,7 @@
         <DockPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="Show" Width="48"/>
-                <viz:NumberInput Value="{Binding Options.SliceVisualizerOptions.GroupsInRow, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24"/>
+                <viz:NumberInput Value="{Binding Options.SliceVisualizerOptions.GroupsInRow, UpdateSourceTrigger=PropertyChanged}" Minimum="1" Width="38" Height="24"/>
                 <Label Content=" groups in one row"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
