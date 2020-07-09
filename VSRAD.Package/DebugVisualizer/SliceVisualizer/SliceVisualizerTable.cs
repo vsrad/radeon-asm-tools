@@ -35,6 +35,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             MouseClick += ShowContextMenu;
+            CellMouseEnter += DisplayCellStatus;
+            MouseLeave += (s, e) => _context.StatusString = ""; // clear status bar on leaving control
 
             _state = new TableState(this, 60);
 
@@ -50,6 +52,26 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _context.Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
 
             ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+        }
+
+        private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex == -1 || e.ColumnIndex == -1)
+            {
+                _context.StatusString = "";
+                return;
+            }
+            var colIndex = e.ColumnIndex - DataColumnOffset;
+            if (SelectedWatch.IsInactiveCell(e.RowIndex, colIndex))
+            {
+                _context.StatusString = "Out of bounds";
+                return;
+            }
+
+            var gNum = SelectedWatch.GroupNum(e.RowIndex, colIndex);
+            var lNum = SelectedWatch.LaneNum(colIndex);
+            var value = Rows[e.RowIndex].Cells[e.ColumnIndex].Value.ToString();
+            _context.StatusString = $"Group# {gNum}, Column# {lNum}, Value: {value}";
         }
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
