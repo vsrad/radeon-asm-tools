@@ -34,6 +34,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.ColumnCount)
                 return;
 
+            if (e.RowIndex >= 0) PaintBackgroud(e);
+
+            // called last because manipulates with e.Handled
+            PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
+        }
+
+        private void PaintBackgroud(DataGridViewCellPaintingEventArgs e)
+        {
             if (_table.SelectedWatch.IsInactiveCell(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset))
             {
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
@@ -54,7 +62,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)bgColor];
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
             }
-            PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
         }
         private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
         {
