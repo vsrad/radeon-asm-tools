@@ -87,15 +87,10 @@ namespace VSRAD.Syntax.IntelliSense
                 else
                 {
                     // if external definition parsed but the document was closed we should reopen document
-                    if (point.Snapshot.TextBuffer.Properties.TryGetProperty<DocumentInfo>(typeof(DocumentInfo), out var documentInfo))
-                    {
-                        if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, documentInfo.Path, out buffer))
-                            throw new InvalidOperationException($"Cannot open file associated with {textDocument.FilePath}");
-                    }
-                    else
-                    {
+                    if (!point.Snapshot.TextBuffer.Properties.TryGetProperty<DocumentInfo>(typeof(DocumentInfo), out var documentInfo))
                         throw new InvalidOperationException("Cannot determine the file that contains the navigation definition");
-                    }
+                    if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, documentInfo.Path, out buffer))
+                        throw new InvalidOperationException($"Cannot open file associated with {textDocument.FilePath}");
                 }
             }
 
@@ -142,7 +137,7 @@ namespace VSRAD.Syntax.IntelliSense
                 return EmptyNavigations;
 
             var currentToken = GetCurrentToken(currentBlock, extent.Span);
-            if (currentToken != null && currentToken is ReferenceToken referenceToken)
+            if (currentToken is ReferenceToken referenceToken)
                 return new List<NavigationToken>() { new NavigationToken(referenceToken.Definition, referenceToken.Definition.TrackingToken.Start.TextBuffer.CurrentSnapshot) };
 
             var asmType = version.GetAsmType();

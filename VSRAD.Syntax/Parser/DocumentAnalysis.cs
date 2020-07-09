@@ -51,7 +51,10 @@ namespace VSRAD.Syntax.Parser
 
         public void Initialize()
         {
-            LastLexerResult = new Helper.SortedSet<TrackingToken>(_lexer.Run(new string[] { CurrentSnapshot.GetText() }, 0).Select(t => new TrackingToken(CurrentSnapshot, t)), _comparer);
+            var initialTextSegment = new[] { CurrentSnapshot.GetText() };
+            var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));
+
+            LastLexerResult = new Helper.SortedSet<TrackingToken>(lexerTokens, _comparer);
             RunParser(new object[] { LastLexerResult.Version, LastLexerResult, CurrentSnapshot, parserCts });
             RaiseTokensChanged(LastLexerResult.ToList());
         }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
@@ -45,12 +46,20 @@ namespace VSRAD.Syntax.Parser
             var asmType = buffer.CurrentSnapshot.GetAsmType();
 
             DocumentAnalysis documentAnalysis;
-            if (asmType == AsmType.RadAsm2)
-                documentAnalysis = new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(document, this), buffer, _instructionListManager);
-            else if (asmType == AsmType.RadAsmDoc)
-                documentAnalysis = new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(this), buffer, _instructionListManager);
-            else
-                documentAnalysis = new DocumentAnalysis(new AsmLexer(), new AsmParser(document, this), buffer, _instructionListManager);
+            switch (asmType)
+            {
+                case AsmType.RadAsm:
+                    documentAnalysis = new DocumentAnalysis(new AsmLexer(), new AsmParser(document, this), buffer, _instructionListManager);
+                    break;
+                case AsmType.RadAsm2:
+                    documentAnalysis = new DocumentAnalysis(new Asm2Lexer(), new Asm2Parser(document, this), buffer, _instructionListManager);
+                    break;
+                case AsmType.RadAsmDoc:
+                    documentAnalysis = new DocumentAnalysis(new AsmDocLexer(), new AsmDocParser(this), buffer, _instructionListManager);
+                    break;
+                default:
+                    throw new ArgumentException($"Cannot create DocumentAnalysis for {document}, it does not belong to RadeonAsm file type");
+            }
 
             buffer.Properties.AddProperty(typeof(DocumentAnalysis), documentAnalysis);
             documentAnalysis.Initialize();

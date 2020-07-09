@@ -64,7 +64,7 @@ namespace VSRAD.Syntax.Options
             if (_asmDocExtensions.Contains(fileExtension))
                 return _asmDocContentType;
 
-            throw new ArgumentException($"File extension {fileExtension} do not belog to asm1 or asm2 or asmdoc");
+            return null;
         }
 
         private void UpdateWindowContentType(Window window)
@@ -124,15 +124,11 @@ namespace VSRAD.Syntax.Options
             if (textBuffer == null || textBuffer.ContentType == _asm1ContentType || textBuffer.ContentType == _asm2ContentType || textBuffer.ContentType == _asmDocContentType)
                 return;
 
-            try
-            {
-                var contentType = DetermineContentType(path);
-                UpdateTextBufferContentType(textBuffer, contentType);
-            }
-            catch (ArgumentException)
-            {
-                // file do not belong to asm1 or asm2
-            }
+            var contentType = DetermineContentType(path);
+            if (contentType == null) 
+                return;
+
+            UpdateTextBufferContentType(textBuffer, contentType);
         }
 
         private void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)

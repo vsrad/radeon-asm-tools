@@ -33,7 +33,9 @@ namespace VSRAD.Syntax.Parser
                 return GetDocument(textBuffer);
             }
 
-            var contentType = _contentTypeManager.DetermineContentType(path);
+            var contentType = _contentTypeManager.DetermineContentType(path)
+                ?? throw new ArgumentException($"File {path} do not belog to asm1 or asm2 or asmdoc");
+
             var textDocument = _serviceProvider.TextDocumentFactoryService.CreateAndLoadTextDocument(path, contentType);
 
             return GetOrCreateDocumentInfo(textDocument);
