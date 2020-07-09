@@ -23,7 +23,7 @@
     <StackPanel Orientation="Vertical">
         <StackPanel Orientation="Horizontal">
             <Label Content="Watch: " Height="26" Width="48"/>
-            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedWatch}" Height="24" Width="160" VerticalContentAlignment="Center"/>
+            <ComboBox x:Name="WatchSelector" ItemsSource="{Binding Watches, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" SelectedItem="{Binding SelectedWatch}" Height="24" Width="160" VerticalContentAlignment="Center"/>
             <Label Content="Type: " Height="26"/>
             <ComboBox ItemsSource="{Binding Source={StaticResource VarableType}}" SelectedItem="{Binding SelectedType}" Height="24" Width="60" VerticalContentAlignment="Center"/>
         </StackPanel>
