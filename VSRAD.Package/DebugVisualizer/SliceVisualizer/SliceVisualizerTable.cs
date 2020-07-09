@@ -81,6 +81,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (hit.Type != DataGridViewHitTestType.Cell) return;
 
             var col = hit.ColumnIndex - DataColumnOffset;
+            if (SelectedWatch.IsInactiveCell(hit.RowIndex, col)) return;
+
             new ContextMenu(new MenuItem[] {
                 new MenuItem("Go to watch list", (s, o) => _context.NavigateToCell(hit.RowIndex, col))
             }).Show(this, new Point(e.X, e.Y));
