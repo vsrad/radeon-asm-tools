@@ -52,7 +52,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     (ColumnState[i % subgroupSize] & ColumnStates.Visible) != 0;
                 if ((ColumnState[i % subgroupSize] & ColumnStates.HasHiddenColumnSeparator) != 0)
                     _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = _appearance.SliceHiddenColumnSeparatorWidth;
-                if ((ColumnState[i % subgroupSize] & ColumnStates.HasSubgroupSeparator) != 0)
+                else if ((ColumnState[i % subgroupSize] & ColumnStates.HasSubgroupSeparator) != 0)
                     _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = _appearance.SliceSubgroupSeparatorWidth;
                 else
                     _table.Columns[i + SliceVisualizerTable.DataColumnOffset].DividerWidth = 0;
