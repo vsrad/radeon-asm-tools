@@ -29,6 +29,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly VisualizerContext _visualizerContext;
         private readonly EnvDTE80.WindowVisibilityEvents _windowVisibilityEvents;
 
+        public uint GroupSize => 512; //_visualizerContext.GroupSize; TODO: remove hardcoded 512
+
         private bool _windowVisible;
 
         public TypedSliceWatchView SelectedWatchView { get; private set; }

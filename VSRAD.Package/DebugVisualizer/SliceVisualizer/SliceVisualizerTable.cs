@@ -21,6 +21,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private readonly TableState _state;
 
+        public uint GroupSize => _context.GroupSize;
+
         public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor) : base()
         {
             _context = context;

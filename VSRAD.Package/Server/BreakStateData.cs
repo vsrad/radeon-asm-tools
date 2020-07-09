@@ -55,6 +55,7 @@ namespace VSRAD.Package.Server
         public int ColumnCount { get; }
         public int RowCount { get; }
         public string Name { get; }
+        public int GroupSize { get; }
 
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;

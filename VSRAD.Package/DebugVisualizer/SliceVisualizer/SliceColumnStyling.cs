@@ -34,8 +34,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             SubgroupSize = (uint)subgroupSize;
             ColumnState.Clear();
             ColumnState.AddRange(new ColumnStates[subgroupSize]);
-
-            foreach (var i in ColumnSelector.ToIndexes(columnSelector, 512)) // TODO: remove 512
+            foreach (var i in ColumnSelector.ToIndexes(columnSelector, (int)_table.GroupSize))
                 if (i < subgroupSize)
                     ColumnState[i] |= ColumnStates.Visible;
 
