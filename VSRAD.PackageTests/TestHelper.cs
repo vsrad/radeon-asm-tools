@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 
@@ -36,8 +37,8 @@ namespace VSRAD.PackageTests
         public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros = null, string projectRoot = "", Package.Options.ProfileOptions profile = null)
         {
             var mock = new Mock<IProject>(MockBehavior.Strict);
-            var options = new Package.Options.ProjectOptions();
-            options.AddProfile("Default", profile ?? new Package.Options.ProfileOptions());
+            var options = new ProjectOptions();
+            options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", profile ?? new ProfileOptions() } }, activeProfile: "Default");
             mock.Setup((p) => p.Options).Returns(options);
             mock.Setup((m) => m.RootPath).Returns(projectRoot);
 

@@ -12,9 +12,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public ProfileOptionsWindow(IToolWindowIntegration integration)
         {
-            if (!integration.ProjectOptions.HasProfiles)
-                integration.ProjectOptions.AddProfile("Default", new ProfileOptions());
-
             _context = new ProfileOptionsWindowContext(integration.Project, integration.CommunicationChannel, askProfileName: AskProfileName);
             DataContext = _context;
             InitializeComponent();

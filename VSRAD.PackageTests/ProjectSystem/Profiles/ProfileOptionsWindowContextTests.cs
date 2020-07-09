@@ -1,4 +1,7 @@
 ﻿using Moq;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Profiles;
@@ -10,16 +13,21 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
     {
         private IProject CreateTestProject()
         {
+            var profiles = new Dictionary<string, ProfileOptions>
+            {
+                { "kana", new ProfileOptions() },
+                { "asa", new ProfileOptions() }
+            };
+            profiles["kana"].General.RemoteMachine = "money";
+            profiles["asa"].General.RemoteMachine = "setting";
+
             var options = new ProjectOptions();
-            options.AddProfile("kana", new ProfileOptions());
-            options.Profiles["kana"].General.RemoteMachine = "money";
-            options.AddProfile("midori", new ProfileOptions());
-            options.Profiles["midori"].General.RemoteMachine = "setting";
+            options.SetProfiles(profiles, activeProfile: "kana");
 
-            var mock = new Mock<IProject>(MockBehavior.Strict);
-            mock.Setup((p) => p.Options).Returns(options);
+            var projectMock = new Mock<IProject>(MockBehavior.Strict);
+            projectMock.Setup((p) => p.Options).Returns(options);
 
-            return mock.Object;
+            return projectMock.Object;
         }
 
         private static T GetPage<T>(ProfileOptionsWindowContext context)
@@ -36,11 +44,14 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             return default;
         }
 
+        private static ProfileOptions GetDirtyProfile(ProfileOptionsWindowContext context, string profileName) =>
+            context.DirtyProfiles.First(p => p.General.ProfileName == profileName);
+
         [Fact]
         public void DirtyTrackingTest()
         {
             var project = CreateTestProject();
-            project.Options.ActiveProfile = "midori";
+            project.Options.ActiveProfile = "kana";
             var context = new ProfileOptionsWindowContext(project, null, null);
             GetPage<DebuggerProfileOptions>(context).Steps.Add(new ExecuteStep { Executable = "bun" });
             Assert.Empty(project.Options.Profile.Debugger.Steps);
@@ -71,5 +82,98 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.RemoveActionCommand.Execute(action);
             Assert.Single(actionsPage.Actions, GetPage<DebuggerProfileOptions>(context));
         }
+
+        [Fact]
+        public void AddProfileNameConflictTest()
+        {
+            var project = CreateTestProject();
+            var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
+            var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
+
+            nameResolver.Setup(n => n("Creating a new profile", "Enter the name for the new profile:", It.IsAny<IEnumerable<string>>(), ""))
+                .Returns("kana").Verifiable();
+
+            Assert.Equal(2, context.DirtyProfiles.Count);
+            var oldProfileMachine = GetDirtyProfile(context, "kana").General.RemoteMachine;
+
+            context.CreateNewProfile();
+            nameResolver.Verify();
+
+            Assert.Equal(2, context.DirtyProfiles.Count);
+            var newProfileMachine = GetDirtyProfile(context, "kana").General.RemoteMachine;
+            Assert.NotEqual(oldProfileMachine, newProfileMachine);
+        }
+
+        [Fact]
+        public void SaveChangesNameConflictTest()
+        {
+            var project = CreateTestProject();
+            var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
+            var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
+
+            var kana = GetDirtyProfile(context, "kana");
+            kana.General.RemoteMachine = "kana-edited";
+            var asa = GetDirtyProfile(context, "asa");
+            asa.General.ProfileName = "kana";
+            asa.General.RemoteMachine = "asa-edited";
+
+            nameResolver.Setup(n => n("Rename", "Profile kana already exists. Enter a new name or leave it as is to overwrite the profile:", It.IsAny<IEnumerable<string>>(), "kana"))
+                .Returns("asa-renamed").Verifiable();
+
+            context.SaveChanges();
+            nameResolver.Verify();
+
+            Assert.Equal(2, project.Options.Profiles.Count);
+            Assert.True(project.Options.Profiles.TryGetValue("kana", out var kanaSaved));
+            Assert.Equal("kana-edited", kanaSaved.General.RemoteMachine);
+            Assert.True(project.Options.Profiles.TryGetValue("asa-renamed", out var asaSaved));
+            Assert.Equal("asa-edited", asaSaved.General.RemoteMachine);
+        }
+
+        #region Profile Transfer
+        [Fact]
+        public void ImportExportTest()
+        {
+            var project = CreateTestProject();
+            var context = new ProfileOptionsWindowContext(project, null, null);
+
+            var tmpFile = Path.GetTempFileName();
+            context.ExportProfiles(tmpFile);
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.RemoveProfileCommand.Execute(null);
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            context.RemoveProfileCommand.Execute(null);
+            Assert.Empty(context.ProfileNames);
+
+            context.ImportProfiles(tmpFile);
+            File.Delete(tmpFile);
+
+            Assert.Collection(context.ProfileNames, fst => Assert.Equal("kana", fst), snd => Assert.Equal("asa", snd));
+        }
+
+        [Fact]
+        public void ImportNameConflictTest()
+        {
+            var project = CreateTestProject();
+            var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
+            var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
+
+            var tmpFile = Path.GetTempFileName();
+            context.ExportProfiles(tmpFile);
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.RemoveProfileCommand.Execute(null);
+            Assert.Single(context.ProfileNames, "asa");
+
+            nameResolver.Setup(n => n("Import", "Profile asa already exists. Enter a new name or leave it as is to overwrite the profile:", It.IsAny<IEnumerable<string>>(), "asa"))
+                .Returns("mizu").Verifiable();
+            context.ImportProfiles(tmpFile);
+            File.Delete(tmpFile);
+
+            nameResolver.Verify();
+            Assert.Collection(context.ProfileNames, fst => Assert.Equal("asa", fst), snd => Assert.Equal("kana", snd), trd => Assert.Equal("mizu", trd));
+        }
+        #endregion
     }
 }

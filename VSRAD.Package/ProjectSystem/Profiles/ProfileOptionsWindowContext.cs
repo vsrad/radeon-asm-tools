@@ -50,16 +50,28 @@ namespace VSRAD.Package.ProjectSystem.Profiles
     {
         public delegate string AskProfileNameDelegate(string title, string message, IEnumerable<string> existingNames, string initialName);
 
-        public ProjectOptions Options { get; }
+        public ObservableCollection<ProfileOptions> DirtyProfiles { get; } = new ObservableCollection<ProfileOptions>();
 
-        public IEnumerable<ActionProfileOptions> Actions => _dirtyOptions[Options.ActiveProfile].Actions;
+        private ProfileOptions _selectedProfile;
+        public ProfileOptions SelectedProfile
+        {
+            get => _selectedProfile;
+            set
+            {
+                SetField(ref _selectedProfile, value);
+                OpenSelectedProfilePages();
+            }
+        }
 
-        public List<object> Pages { get; } = new List<object>();
+        public ObservableCollection<object> Pages { get; } = new ObservableCollection<object>();
 
         private object _selectedPage;
         public object SelectedPage { get => _selectedPage; set => SetField(ref _selectedPage, value); }
 
-        public IReadOnlyList<string> ProfileNames => Options.Profiles.Keys.ToList();
+        public IEnumerable<ActionProfileOptions> Actions => SelectedProfile.Actions;
+
+        // TODO: remove
+        public IReadOnlyList<string> ProfileNames => DirtyProfiles.Select(p => p.General.ProfileName).ToList();
 
         public WpfDelegateCommand AddActionCommand { get; }
         public WpfDelegateCommand RemoveActionCommand { get; }
@@ -68,72 +80,80 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public DirtyProfileMacroEditor MacroEditor { get; private set; }
 
-        private readonly Dictionary<string, ProfileOptions> _dirtyOptions = new Dictionary<string, ProfileOptions>();
         private readonly AskProfileNameDelegate _askProfileName;
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
 
         public ProfileOptionsWindowContext(IProject project, ICommunicationChannel channel, AskProfileNameDelegate askProfileName)
         {
-            Options = project.Options;
-            Options.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName == nameof(Options.ActiveProfile))
-                    OpenActiveProfilePages();
-            };
-            Options.Profiles.PropertyChanged += (s, e) =>
-            {
-                if (e.PropertyName != nameof(Options.Profiles.Keys))
-                    return;
-                RaisePropertyChanged(nameof(ProfileNames));
-                RemoveProfileCommand.IsEnabled = ProfileNames.Count > 1;
-            };
             _askProfileName = askProfileName;
             _project = project;
             _channel = channel;
+
+            PopulateDirtyProfiles();
             AddActionCommand = new WpfDelegateCommand(AddAction);
             RemoveActionCommand = new WpfDelegateCommand(RemoveAction);
-            RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: ProfileNames.Count > 1);
+            RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: DirtyProfiles.Count > 1);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
-            OpenActiveProfilePages();
+
+            DirtyProfiles.CollectionChanged += (s, e) =>
+            {
+                RemoveProfileCommand.IsEnabled = DirtyProfiles.Count > 1;
+                RaisePropertyChanged(nameof(ProfileNames));
+            };
+        }
+
+        private void PopulateDirtyProfiles()
+        {
+            DirtyProfiles.Clear();
+            foreach (var profile in _project.Options.Profiles)
+            {
+                var dirtyProfile = (ProfileOptions)profile.Value.Clone();
+                dirtyProfile.General.ProfileName = profile.Key;
+                DirtyProfiles.Add(dirtyProfile);
+                if (profile.Key == _project.Options.ActiveProfile)
+                    SelectedProfile = dirtyProfile;
+            }
+        }
+
+        private void OpenSelectedProfilePages()
+        {
+            SelectedPage = null;
+            if (SelectedProfile != null)
+            {
+                MacroEditor = new DirtyProfileMacroEditor(_project, _channel, SelectedProfile);
+                Pages.Clear();
+                Pages.Add(SelectedProfile.General);
+                Pages.Add(new ProfileOptionsMacrosPage(SelectedProfile.Macros));
+                Pages.Add(new ProfileOptionsActionsPage(SelectedProfile));
+            }
         }
 
         public void CreateNewProfile() =>
             AddProfile("Creating a new profile", "Enter the name for the new profile:", new ProfileOptions());
 
         public void CopyActiveProfile() =>
-            AddProfile("Copy profile", "Enter the name for the new profile:", (ProfileOptions)Options.Profile.Clone());
+            AddProfile("Copy profile", "Enter the name for the new profile:", (ProfileOptions)_project.Options.Profile.Clone());
 
         public void ImportProfiles(string file)
         {
-            string ResolveNameConflict(string name) =>
-                _askProfileName(title: "Import", message: ProfileNameWindow.NameConflictMessage(name), existingNames: ProfileNames, initialName: name);
-            new ProfileTransferManager(Options, ResolveNameConflict).Import(file);
+            foreach (var importedProfile in ProfileTransferManager.Import(file))
+            {
+                var name = importedProfile.Key;
+                if (ProfileNames.Contains(name))
+                {
+                    name = _askProfileName(title: "Import", message: ProfileNameWindow.NameConflictMessage(name), existingNames: ProfileNames, initialName: name);
+                    DirtyProfiles.RemoveAll(p => p.General.ProfileName == name);
+                }
+                importedProfile.Value.General.ProfileName = name;
+                DirtyProfiles.Add(importedProfile.Value);
+            }
         }
 
-        public void ExportProfiles(string file) =>
-            new ProfileTransferManager(Options, null).Export(file);
-
-        public void SaveChanges()
+        public void ExportProfiles(string file)
         {
-            string ResolveNameConflict(string name) =>
-                _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name), existingNames: ProfileNames, initialName: name);
-            Options.UpdateProfiles(_dirtyOptions, ResolveNameConflict);
-            _dirtyOptions.Clear();
-            OpenActiveProfilePages();
-        }
-
-        private void OpenActiveProfilePages()
-        {
-            if (!_dirtyOptions.ContainsKey(Options.ActiveProfile))
-                _dirtyOptions.Add(Options.ActiveProfile, (ProfileOptions)Options.Profiles[Options.ActiveProfile].Clone());
-            var currentProfile = _dirtyOptions[Options.ActiveProfile];
-            MacroEditor = new DirtyProfileMacroEditor(_project, _channel, currentProfile);
-            Pages.Clear();
-            Pages.Add(currentProfile.General);
-            Pages.Add(new ProfileOptionsMacrosPage(currentProfile.Macros));
-            Pages.Add(new ProfileOptionsActionsPage(currentProfile));
-            RaisePropertyChanged(nameof(Pages));
+            SaveChanges();
+            ProfileTransferManager.Export((IDictionary<string, ProfileOptions>)_project.Options.Profiles, file);
         }
 
         private void AddProfile(string title, string message, ProfileOptions profile)
@@ -141,22 +161,37 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var name = _askProfileName(title, message, ProfileNames, "");
             if (!string.IsNullOrWhiteSpace(name))
             {
-                _dirtyOptions[name] = profile;
-                SaveChanges();
-                Options.ActiveProfile = name;
+                DirtyProfiles.RemoveAll(p => p.General.ProfileName == name);
+
+                profile.General.ProfileName = name;
+                DirtyProfiles.Add(profile);
+                SelectedProfile = profile;
             }
         }
 
         private void AddAction(object param) =>
-            _dirtyOptions[Options.ActiveProfile].Actions.Add(new ActionProfileOptions { Name = "New Action" });
+            SelectedProfile.Actions.Add(new ActionProfileOptions { Name = "New Action" });
 
         private void RemoveAction(object param) =>
-            _dirtyOptions[Options.ActiveProfile].Actions.Remove((ActionProfileOptions)param);
+            SelectedProfile.Actions.Remove((ActionProfileOptions)param);
 
-        private void RemoveProfile(object param)
+        private void RemoveProfile(object param) =>
+            DirtyProfiles.Remove(SelectedProfile);
+
+        public void SaveChanges()
         {
-            _dirtyOptions.Remove(Options.ActiveProfile);
-            Options.RemoveProfile(Options.ActiveProfile);
+            var profiles = new Dictionary<string, ProfileOptions>();
+            foreach (var p in DirtyProfiles)
+            {
+                var name = p.General.ProfileName;
+                if (profiles.ContainsKey(name))
+                    name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name), existingNames: ProfileNames, initialName: name);
+
+                profiles[name] = p;
+            }
+
+            _project.Options.SetProfiles(profiles, activeProfile: SelectedProfile.General.ProfileName);
+            PopulateDirtyProfiles();
         }
 
         private void OpenMacroEditor(object sender)

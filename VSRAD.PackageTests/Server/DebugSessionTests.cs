@@ -1,5 +1,6 @@
 ﻿using Moq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
@@ -19,7 +20,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var project = TestHelper.MakeProjectWithProfile().Object;
-            project.Options.AddProfile("Default", new ProfileOptions());
+            project.Options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             project.Options.Profile.Debugger.Steps.Add(new ExecuteStep { Executable = "va11" });
             project.Options.Profile.Debugger.OutputFile.CheckTimestamp = true;
             project.Options.Profile.Debugger.OutputFile.Path = "/glitch/city";
@@ -50,7 +51,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var project = TestHelper.MakeProjectWithProfile().Object;
-            project.Options.AddProfile("Default", new ProfileOptions());
+            project.Options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             project.Options.Profile.Debugger.Steps.Add(new ExecuteStep { Executable = "va11" });
             project.Options.Profile.Debugger.OutputFile.CheckTimestamp = true;
             project.Options.Profile.Debugger.OutputFile.Path = "/glitch/city";

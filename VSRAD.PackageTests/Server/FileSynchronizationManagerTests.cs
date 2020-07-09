@@ -136,7 +136,7 @@ namespace VSRAD.PackageTests.Server
 
             var project = new Mock<IProject>(MockBehavior.Strict);
             var options = new ProjectOptions();
-            options.AddProfile("Default", new ProfileOptions());
+            options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             setupProfile(options.Profiles["Default"]);
             project.Setup((p) => p.Options).Returns(options);
             project.Setup((p) => p.RootPath).Returns(_projectRoot);

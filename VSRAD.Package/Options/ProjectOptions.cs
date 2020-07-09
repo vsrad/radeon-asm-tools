@@ -33,47 +33,20 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
 
-        /// <summary>
-        /// Provides read-only access to all existing profiles.
-        /// To get the active profile, use the <see cref="Profile"/> property.
-        /// To update profiles, use the <see cref="AddProfile"/> and <see cref="UpdateProfiles"/> methods. 
-        /// </summary>
         public IObservableReadOnlyDictionary<string, ProfileOptions> Profiles { get; } =
             new ObservableDictionary<string, ProfileOptions>();
 
-        public void AddProfile(string name, ProfileOptions profile)
+        public void SetProfiles(Dictionary<string, ProfileOptions> newProfiles, string activeProfile)
         {
-            var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
-            writeableProfiles[name] = profile;
-            ActiveProfile = name;
-            RaisePropertyChanged(nameof(HasProfiles));
-        }
+            if (newProfiles.Count == 0)
+                throw new InvalidOperationException("At least one profile is required.");
 
-        public delegate string ResolveImportNameConflict(string profileName);
-        public void UpdateProfiles(IEnumerable<KeyValuePair<string, ProfileOptions>> updates, ResolveImportNameConflict nameConflictResolver)
-        {
             var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
-            foreach (var updateKv in updates.ToList())
-            {
-                var oldName = updateKv.Key;
-                var newName = updateKv.Value.General.ProfileName ?? oldName;
-                if (oldName != newName && Profiles.Keys.Contains(newName))
-                    newName = nameConflictResolver(newName);
-                if (string.IsNullOrWhiteSpace(newName))
-                    newName = oldName;
-                writeableProfiles[newName] = updateKv.Value;
-                if (oldName != newName)
-                    writeableProfiles.Remove(oldName);
-                if (oldName == ActiveProfile)
-                    ActiveProfile = newName;
-            }
-        }
+            writeableProfiles.Clear();
+            foreach (var kv in newProfiles)
+                writeableProfiles.Add(kv);
 
-        public void RemoveProfile(string name)
-        {
-            if (Profiles.Count == 1) throw new InvalidOperationException("Cannot remove the last profile without creating another.");
-            ((IDictionary<string, ProfileOptions>)Profiles).Remove(name);
-            ActiveProfile = Profiles.Keys.First();
+            ActiveProfile = activeProfile;
         }
         #endregion
 
