@@ -160,16 +160,8 @@ namespace VSRAD.Syntax.FunctionList
                 ThreadHelper.JoinableTaskFactory.RunAsync(() => Instance.UpdateFunctionListAsync(version, blocks));
         }
 
-        private static FunctionBlock GetFunctionBy(IEnumerable<FunctionBlock> blocks, SnapshotPoint position)
-        {
-            foreach (var func in blocks)
-            {
-                if (PointInFunction(func, position))
-                    return func;
-            }
-
-            return null;
-        }
+        private static FunctionBlock GetFunctionBy(IEnumerable<FunctionBlock> blocks, SnapshotPoint position) =>
+            blocks.FirstOrDefault(func => PointInFunction(func, position));
 
         private static bool PointInFunction(FunctionBlock func, SnapshotPoint position)
         {
