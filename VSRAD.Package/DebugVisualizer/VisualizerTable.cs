@@ -333,6 +333,8 @@ namespace VSRAD.Package.DebugVisualizer
             ((Control)this).SuspendDrawing();
             _disableColumnWidthChangeHandler = true;
 
+            CreateMissingDataColumns((int)groupSize);
+
             _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling, groupSize, system);
 
             ApplyFontAndColorInfo();

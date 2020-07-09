@@ -60,7 +60,6 @@ namespace VSRAD.Package.DebugVisualizer
             switch (e.PropertyName)
             {
                 case nameof(VisualizerContext.GroupSize):
-                    _table.CreateMissingDataColumns((int)_context.GroupSize);
                     RefreshDataStyling();
                     break;
                 case nameof(VisualizerContext.WatchesValid):
@@ -77,11 +76,11 @@ namespace VSRAD.Package.DebugVisualizer
             if (e.Warning != null)
                 Errors.ShowWarning(e.Warning);
 
-            foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
-                SetRowContentsFromBreakState(row);
-
             _table.ApplyWatchStyling(_context.BreakData.Watches);
             RefreshDataStyling();
+
+            foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
+                SetRowContentsFromBreakState(row);
         }
 
         private void RestoreSavedState()
