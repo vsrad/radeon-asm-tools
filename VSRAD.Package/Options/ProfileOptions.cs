@@ -35,7 +35,6 @@ namespace VSRAD.Package.Options
     {
         public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
         public DebuggerProfileOptions Debugger { get; } = new DebuggerProfileOptions();
-        public PreprocessorProfileOptions Preprocessor { get; } = null;
         public DisassemblerProfileOptions Disassembler { get; } = null;
         public ProfilerProfileOptions Profiler { get; } = null;
         public BuildProfileOptions Build { get; } = null;

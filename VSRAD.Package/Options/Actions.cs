@@ -20,6 +20,7 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
+        [JsonIgnore]
         string Description { get; }
 
         Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile);
