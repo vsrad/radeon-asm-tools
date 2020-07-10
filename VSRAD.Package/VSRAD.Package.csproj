@@ -127,12 +127,10 @@
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
+    <Compile Include="Commands\QuickActionCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
-    <Compile Include="Commands\DisassemblyCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
-    <Compile Include="Commands\PreprocessCommand.cs" />
-    <Compile Include="Commands\ProfileCommand.cs" />
     <Compile Include="DebugVisualizer\CellStyling.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />

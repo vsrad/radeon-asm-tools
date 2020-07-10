@@ -25,9 +25,9 @@ namespace VSRAD.Package
         public const int ToolWindowVisualizerCommandId = 0x0100;
         public const int ToolWindowOptionsCommandId = 0x0101;
         public const int ToolWindowSliceVisualizerCommandId = 0x0102;
-        public const int ProfileCommandId = 0x0100;
+        public const int ProfileCommandId = 0x0102;
         public const int DisassembleCommandId = 0x0100;
-        public const int PreprocessCommandId = 0x0100;
+        public const int PreprocessCommandId = 0x0101;
         public const int EvaluateSelectedCommandId = 0x0100;
         public const int ActionsMenuCommandId = 0x0100;
         public const int AddArrayToWatchesIndexCount = 16;
@@ -40,9 +40,7 @@ namespace VSRAD.Package
         public static readonly Guid AddToWatchesCommandSet = new Guid("8560BD12-1D31-40BA-B300-1A31FC901E93");
         public static readonly Guid AddArrayToWatchesCommandSet = new Guid("A03BE90E-E3E1-47F8-815B-387605FDCB73");
         public static readonly Guid EvaluateSelectedCommandSet = new Guid("6624A31D-4C20-4675-84D7-67D140842579");
-        public static readonly Guid ProfileCommandSet = new Guid("A74163CE-732B-4570-8374-21D51EF7C3AD");
-        public static readonly Guid DisassemblyCommandSet = new Guid("03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE");
-        public static readonly Guid PreprocessCommandSet = new Guid("7D6BA5AC-29C2-4E44-BD92-376A7A62FCA1");
+        public static readonly Guid QuickActionsMenuCommandSet = new Guid("03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE");
         public static readonly Guid ToolbarCommandSet = new Guid("E1436EB5-1D47-4714-85CB-6177E62AB2AD");
         public static readonly Guid ActionsMenuCommandSet = new Guid("7CF54FFE-BCAC-4751-BEEC-D103FD953C8B");
 
