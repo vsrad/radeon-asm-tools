@@ -41,8 +41,10 @@
                 <Label Content=" groups in one row"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <CheckBox Content="Heat Map" VerticalAlignment="Center" IsChecked="{Binding Options.SliceVisualizerOptions.UseHeatMap, UpdateSourceTrigger=PropertyChanged}"/>
+                <CheckBox Content="Heat Map" VerticalAlignment="Center" IsChecked="{Binding Options.SliceVisualizerOptions.UseHeatMap, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,4,0"/>
+                <!--
                 <CheckBox Content="Transpose" VerticalAlignment="Center" IsChecked="{Binding Options.SliceVisualizerOptions.TransposedView, UpdateSourceTrigger=PropertyChanged}" Margin="8,0,4,0"/>
+                -->
             </StackPanel>
         </DockPanel>
     </StackPanel>
