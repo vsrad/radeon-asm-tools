@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
@@ -74,11 +76,25 @@ namespace VSRAD.Package.Options
             {
                 options = new ProjectOptions();
                 if (!(e is FileNotFoundException)) // File not found => creating a new project, don't show the error
-                    Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message} Proceeding with defaults.");
+                    Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
             }
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
+        }
+
+        public static ProjectOptions ReadLegacy(string path)
+        {
+            try
+            {
+                var legacyJson = JObject.Parse(File.ReadAllText(path));
+                return LegacyProfileImporter.ReadProjectOptions(legacyJson);
+            }
+            catch (Exception e)
+            {
+                Errors.ShowWarning($"A legacy project options file was found but could not be converted: {e.Message}\r\nYou can transfer your configuration manually from {path}");
+                return new ProjectOptions();
+            }
         }
 
         public void Write(string path)

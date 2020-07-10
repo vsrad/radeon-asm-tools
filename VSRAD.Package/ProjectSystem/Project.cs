@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,19 +42,26 @@ namespace VSRAD.Package.ProjectSystem
         public string RootPath { get; }
 
         private readonly string _optionsFilePath;
+        private readonly string _legacyOptionsFilePath;
+
         private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
         public Project(UnconfiguredProject unconfiguredProject)
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
-            _optionsFilePath = unconfiguredProject.FullPath + ".user.json";
+            _optionsFilePath = unconfiguredProject.FullPath + ".user2.json";
+            _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             _unconfiguredProject = unconfiguredProject;
         }
 
         public void Load()
         {
-            Options = ProjectOptions.Read(_optionsFilePath);
+            if (!File.Exists(_optionsFilePath) && File.Exists(_legacyOptionsFilePath))
+                Options = ProjectOptions.ReadLegacy(_legacyOptionsFilePath);
+            else
+                Options = ProjectOptions.Read(_optionsFilePath);
+
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
