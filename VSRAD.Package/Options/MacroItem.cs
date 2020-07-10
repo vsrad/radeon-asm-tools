@@ -35,6 +35,12 @@ namespace VSRAD.Package.Options
                 return "";
             }
         }
+
+        public override bool Equals(object obj) =>
+            obj is MacroItem item && item.Name == Name && item.Value == Value && item.IsUserDefined == IsUserDefined;
+
+        public override int GetHashCode() =>
+            (Name, Value, IsUserDefined).GetHashCode();
     }
 
     public sealed class MacroItemConverter : JsonConverter

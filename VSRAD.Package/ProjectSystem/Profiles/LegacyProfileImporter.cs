@@ -1,7 +1,10 @@
 ﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem.Macros;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
@@ -10,23 +13,24 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public static Dictionary<string, ProfileOptions> ReadProfiles(JObject projectOptions) =>
             ((JObject)projectOptions["Profiles"]).Properties().ToDictionary(p => p.Name, p => ReadProfile((JObject)p.Value));
 
-        private static ProfileOptions ReadProfile(JObject profile)
+        private static ProfileOptions ReadProfile(JObject conf)
         {
-            var opts = new ProfileOptions();
+            var profile = new ProfileOptions();
 
-            ReadGeneralOptions(opts.General, (JObject)profile["General"]);
-            ReadDebuggerOptions(opts.Debugger, (JObject)profile["Debugger"]);
+            ReadGeneralOptions(profile.General, (JObject)conf["General"]);
+            ReadDebuggerOptions(profile.Debugger, (JObject)conf["Debugger"]);
 
-            if (ReadPreprocessDisassembleAction("Preprocess", (JObject)profile["Preprocessor"]) is ActionProfileOptions pp)
-                opts.Actions.Add(pp);
-            if (ReadPreprocessDisassembleAction("Disassemble", (JObject)profile["Disassembler"]) is ActionProfileOptions disasm)
-                opts.Actions.Add(disasm);
-            if (ReadProfileAction((JObject)profile["Profiler"]) is ActionProfileOptions prof)
-                opts.Actions.Add(prof);
-            if (ReadBuildAction((JObject)profile["Build"]) is ActionProfileOptions build)
-                opts.Actions.Add(build);
+            if (ReadPreprocessDisassembleAction("Preprocess", (JObject)conf["Preprocessor"]) is ActionProfileOptions pp)
+                profile.Actions.Add(pp);
+            if (ReadPreprocessDisassembleAction("Disassemble", (JObject)conf["Disassembler"]) is ActionProfileOptions disasm)
+                profile.Actions.Add(disasm);
+            if (ReadProfileAction((JObject)conf["Profiler"]) is ActionProfileOptions prof)
+                profile.Actions.Add(prof);
+            if (ReadBuildAction((JObject)conf["Build"]) is ActionProfileOptions build)
+                profile.Actions.Add(build);
 
-            return opts;
+            TransferHardcodedMacros(profile, conf);
+            return profile;
         }
 
         private static void ReadGeneralOptions(GeneralProfileOptions opts, JObject conf)
@@ -147,6 +151,128 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 });
 
             return (action.Steps.Count > 0) ? action : null;
+        }
+
+        private static void TransferHardcodedMacros(ProfileOptions profile, JObject conf)
+        {
+            var macroRegex = new Regex(@"\$\(([^()]+)\)", RegexOptions.Compiled);
+            var macros = new Dictionary<string, string>();
+
+            foreach (var objProp in conf.Properties())
+            {
+                foreach (var prop in ((JObject)objProp.Value).Properties())
+                {
+                    foreach (Match match in macroRegex.Matches((string)prop.Value))
+                    {
+                        var macroName = match.Groups[1].Value;
+                        if (macros.ContainsKey(macroName))
+                            continue;
+                        if (ExtractMacro(profile, macroName) is string macroValue)
+                            macros.Add(macroName, macroValue);
+                    }
+                }
+            }
+
+            foreach (var macroPair in macros)
+                profile.Macros.Add(new MacroItem(macroPair.Key, macroPair.Value, userDefined: true));
+        }
+
+        private static string ExchangeValueWithMacro(object obj, string propertyName, string macro)
+        {
+            var macroValue = (string)obj.GetType().GetProperty(propertyName).GetValue(obj);
+            obj.GetType().GetProperty(propertyName).SetValue(obj, "$(" + macro + ")");
+            return macroValue;
+        }
+
+        private static string ExtractMacro(ProfileOptions profile, string macroName)
+        {
+            string WithAction(string name, Func<ActionProfileOptions, string> edit)
+            {
+                var action = profile.Actions.FirstOrDefault(a => a.Name == name);
+                if (action != null)
+                    return edit(action);
+                return null;
+            }
+
+            switch (macroName)
+            {
+                case RadMacros.DebuggerExecutable:
+                    return ExchangeValueWithMacro(profile.Debugger.Steps[0], nameof(ExecuteStep.Executable), RadMacros.DebuggerExecutable);
+                case RadMacros.DebuggerArguments:
+                    return ExchangeValueWithMacro(profile.Debugger.Steps[0], nameof(ExecuteStep.Arguments), RadMacros.DebuggerArguments);
+                case RadMacros.DebuggerWorkingDirectory:
+                    return ExchangeValueWithMacro(profile.Debugger.Steps[0], nameof(ExecuteStep.WorkingDirectory), RadMacros.DebuggerWorkingDirectory);
+                case RadMacros.DebuggerOutputPath:
+                    return ExchangeValueWithMacro(profile.Debugger.OutputFile, nameof(BuiltinActionFile.Path), RadMacros.DebuggerOutputPath);
+
+                case RadMacros.PreprocessorExecutable:
+                    return WithAction("Preprocess", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Executable), RadMacros.PreprocessorExecutable));
+                case RadMacros.PreprocessorArguments:
+                    return WithAction("Preprocess", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Arguments), RadMacros.PreprocessorArguments));
+                case RadMacros.PreprocessorWorkingDirectory:
+                    return WithAction("Preprocess", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.WorkingDirectory), RadMacros.PreprocessorWorkingDirectory));
+                case RadMacros.PreprocessorOutputPath:
+                    return WithAction("Preprocess", a => ExchangeValueWithMacro(a.Steps[1], nameof(CopyFileStep.SourcePath), RadMacros.PreprocessorOutputPath));
+                case RadMacros.PreprocessorLocalPath:
+                    return WithAction("Preprocess", a =>
+                    {
+                        ExchangeValueWithMacro(a.Steps[1], nameof(CopyFileStep.TargetPath), RadMacros.PreprocessorLocalPath);
+                        return ExchangeValueWithMacro(a.Steps[2], nameof(OpenInEditorStep.Path), RadMacros.PreprocessorLocalPath);
+                    });
+
+                case RadMacros.DisassemblerExecutable:
+                    return WithAction("Disassemble", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Executable), RadMacros.DisassemblerExecutable));
+                case RadMacros.DisassemblerArguments:
+                    return WithAction("Disassemble", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Arguments), RadMacros.DisassemblerArguments));
+                case RadMacros.DisassemblerWorkingDirectory:
+                    return WithAction("Disassemble", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.WorkingDirectory), RadMacros.DisassemblerWorkingDirectory));
+                case RadMacros.DisassemblerOutputPath:
+                    return WithAction("Disassemble", a => ExchangeValueWithMacro(a.Steps[1], nameof(CopyFileStep.SourcePath), RadMacros.DisassemblerOutputPath));
+                case RadMacros.DisassemblerLocalPath:
+                    return WithAction("Disassemble", a =>
+                    {
+                        ExchangeValueWithMacro(a.Steps[1], nameof(CopyFileStep.TargetPath), RadMacros.DisassemblerLocalPath);
+                        return ExchangeValueWithMacro(a.Steps[2], nameof(OpenInEditorStep.Path), RadMacros.DisassemblerLocalPath);
+                    });
+
+                case RadMacros.ProfilerExecutable:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Executable), RadMacros.ProfilerExecutable));
+                case RadMacros.ProfilerArguments:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Arguments), RadMacros.ProfilerArguments));
+                case RadMacros.ProfilerWorkingDirectory:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.WorkingDirectory), RadMacros.ProfilerWorkingDirectory));
+                case RadMacros.ProfilerOutputPath:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[1], nameof(CopyFileStep.SourcePath), RadMacros.ProfilerOutputPath));
+                case RadMacros.ProfilerViewerExecutable:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[2], nameof(ExecuteStep.Executable), RadMacros.ProfilerViewerExecutable));
+                case RadMacros.ProfilerViewerArguments:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[2], nameof(ExecuteStep.Arguments), RadMacros.ProfilerViewerArguments));
+                case RadMacros.ProfilerLocalPath:
+                    return WithAction("Profile", a => ExchangeValueWithMacro(a.Steps[1], nameof(CopyFileStep.TargetPath), RadMacros.ProfilerLocalPath));
+
+                case RadMacros.BuildExecutable:
+                    return WithAction("Build", a =>
+                    {
+                        if (a.Steps.FirstOrDefault(s => s is ExecuteStep) is ExecuteStep exec)
+                            return ExchangeValueWithMacro(exec, nameof(ExecuteStep.Executable), RadMacros.BuildExecutable);
+                        return null;
+                    });
+                case RadMacros.BuildArguments:
+                    return WithAction("Build", a =>
+                    {
+                        if (a.Steps.FirstOrDefault(s => s is ExecuteStep) is ExecuteStep exec)
+                            return ExchangeValueWithMacro(exec, nameof(ExecuteStep.Arguments), RadMacros.BuildArguments);
+                        return null;
+                    });
+                case RadMacros.BuildWorkingDirectory:
+                    return WithAction("Build", a =>
+                    {
+                        if (a.Steps.FirstOrDefault(s => s is ExecuteStep) is ExecuteStep exec)
+                            return ExchangeValueWithMacro(exec, nameof(ExecuteStep.WorkingDirectory), RadMacros.BuildWorkingDirectory);
+                        return null;
+                    });
+            }
+            return null;
         }
     }
 }

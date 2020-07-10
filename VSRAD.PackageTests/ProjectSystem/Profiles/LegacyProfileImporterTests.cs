@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.IO;
+using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
@@ -23,6 +24,16 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("C:\\Users\\h\\Deploy", profile.General.DeployDirectory);
             Assert.True(profile.General.CopySources);
             Assert.Equal("C:\\Users\\h\\additional", profile.General.AdditionalSources);
+
+            Assert.Collection(profile.Macros,
+                m1 => Assert.Equal(new MacroItem("RadDebugDataOutputPath", "script_py_output.bin", userDefined: true), m1),
+                m2 => Assert.Equal(new MacroItem("RadPpOutputPath", "$(RadPpDir)/pp_output", userDefined: true), m2),
+                m3 => Assert.Equal(new MacroItem("RadDebugWorkDir", "$(RadDeployDir)", userDefined: true), m3),
+                m4 => Assert.Equal(new MacroItem("RadPpDir", "$(RadDebugWorkDir)", userDefined: true), m4),
+                m5 => Assert.Equal(new MacroItem("RadDisasmWorkDir", "$(RadDeployDir)", userDefined: true), m5),
+                m6 => Assert.Equal(new MacroItem("RadProfileOutputPath", "$(RadProfileWorkDir)/prof_output", userDefined: true), m6),
+                m7 => Assert.Equal(new MacroItem("RadProfileWorkDir", "$(RadDeployDir)", userDefined: true), m7),
+                m8 => Assert.Equal(new MacroItem("RadProfileLocalCopyPath", "C:\\Users\\h\\local_prof", userDefined: true), m8));
         }
 
         [Fact]
@@ -35,7 +46,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.True(profile.Debugger.BinaryOutput);
             Assert.Equal(4, profile.Debugger.OutputOffset);
             Assert.Equal(StepEnvironment.Remote, profile.Debugger.OutputFile.Location);
-            Assert.Equal("script_py_output.bin", profile.Debugger.OutputFile.Path);
+            Assert.Equal("$(RadDebugDataOutputPath)", profile.Debugger.OutputFile.Path);
             Assert.True(profile.Debugger.OutputFile.CheckTimestamp);
 
             Assert.Equal(StepEnvironment.Remote, profile.Debugger.WatchesFile.Location);
@@ -52,7 +63,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Environment = StepEnvironment.Remote,
                 Executable = "python.exe",
                 Arguments = "script.py -w $(RadWatches) -l $(RadBreakLine) -v \"$(RadDebugAppArgs)\" -t $(RadCounter) -p \"$(RadDebugBreakArgs)\" -f \"$(RadActiveSourceFile)\" -o \"$(RadDebugDataOutputPath)\" $(RadAppArgs)",
-                WorkingDirectory = "$(RadDeployDir)",
+                WorkingDirectory = "$(RadDebugWorkDir)",
                 RunAsAdmin = false,
                 WaitForCompletion = true,
                 TimeoutSecs = 10
@@ -73,13 +84,13 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Environment = StepEnvironment.Remote,
                 Executable = "cpp",
                 Arguments = "-DLINE=$(RadActiveSourceFileLine) \"$(RadActiveSourceFile)\" \"$(RadPpOutputPath)\"",
-                WorkingDirectory = "$(RadDebugWorkDir)",
+                WorkingDirectory = "$(RadPpDir)",
                 WaitForCompletion = true
             }, action.Steps[0]);
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                SourcePath = "$(RadPpDir)/pp_output",
+                SourcePath = "$(RadPpOutputPath)",
                 TargetPath = "C:\\Users\\h\\local_pp",
                 CheckTimestamp = true
             }, action.Steps[1]);
@@ -104,7 +115,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Environment = StepEnvironment.Remote,
                 Executable = "objdump",
                 Arguments = "-s --section=.text",
-                WorkingDirectory = "$(RadDeployDir)",
+                WorkingDirectory = "$(RadDisasmWorkDir)",
                 WaitForCompletion = true
             }, action.Steps[0]);
             Assert.Equal(new CopyFileStep
@@ -135,15 +146,15 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Environment = StepEnvironment.Remote,
                 Executable = "prof",
                 Arguments = "-o $(RadProfileOutputPath)",
-                WorkingDirectory = "$(RadDeployDir)",
+                WorkingDirectory = "$(RadProfileWorkDir)",
                 RunAsAdmin = true,
                 WaitForCompletion = true
             }, action.Steps[0]);
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                SourcePath = "$(RadProfileWorkDir)/prof_output",
-                TargetPath = "C:\\Users\\h\\local_prof",
+                SourcePath = "$(RadProfileOutputPath)",
+                TargetPath = "$(RadProfileLocalCopyPath)",
                 CheckTimestamp = true
             }, action.Steps[1]);
             Assert.Equal(new ExecuteStep
