@@ -46,20 +46,19 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
 
-        public IObservableReadOnlyDictionary<string, ProfileOptions> Profiles { get; } =
-            new ObservableDictionary<string, ProfileOptions>();
+        public IReadOnlyDictionary<string, ProfileOptions> Profiles { get; private set; } =
+            new Dictionary<string, ProfileOptions>();
 
         public void SetProfiles(Dictionary<string, ProfileOptions> newProfiles, string activeProfile)
         {
+            // TODO: do we need to have this restriction?
             if (newProfiles.Count == 0)
                 throw new InvalidOperationException("At least one profile is required.");
 
-            var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
-            writeableProfiles.Clear();
-            foreach (var kv in newProfiles)
-                writeableProfiles.Add(kv);
-
+            Profiles = newProfiles;
             ActiveProfile = activeProfile;
+            RaisePropertyChanged(nameof(Profiles));
+            RaisePropertyChanged(nameof(HasProfiles));
         }
         #endregion
 

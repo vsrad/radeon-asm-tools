@@ -34,7 +34,7 @@ namespace VSRAD.Package.ToolWindows
             public Context(ProjectOptions options, ICommunicationChannel channel)
             {
                 Options = options;
-                Options.Profiles.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(Options.Profiles.Keys)) RaisePropertyChanged(nameof(ProfileNames)); };
+                Options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(Options.Profiles)) RaisePropertyChanged(nameof(ProfileNames)); };
                 _channel = channel;
                 _channel.ConnectionStateChanged += ConnectionStateChanged;
                 DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
