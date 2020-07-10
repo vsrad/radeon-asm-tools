@@ -307,5 +307,28 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal(0, (int)sliceWatch[3, 3]);
             }
         }
+
+        [Fact]
+        public void SliceWatchViewRowCountAndInactiveCellsComputationTest()
+        {
+            var data = new uint[6912]; // 1 watch + system, group size = 128, 27 groups
+
+            for (int groupsInRow = 1; groupsInRow < 10; ++groupsInRow)
+            {
+                var sliceWatch = new SliceWatchView(data, groupsInRow: groupsInRow, groupSize: 128, groupCount: 27, laneDataOffset: 1, laneDataSize: 2, "watch");
+                var expectedRowCount = 27 / groupsInRow + (27 % groupsInRow == 0 ? 0 : 1);
+                Assert.Equal(expectedRowCount, sliceWatch.RowCount);
+
+                var expectedInactiveCellsCount = 27 % groupsInRow != 0
+                    ? (groupsInRow - (27 % groupsInRow)) * 128 : 0;
+
+                var actualInactiveCellsCount = 0;
+                for (int row = 0; row < sliceWatch.RowCount; ++row)
+                    for (int col = 0; col < sliceWatch.ColumnCount; ++col)
+                        if (sliceWatch.IsInactiveCell(row, col))
+                            actualInactiveCellsCount++;
+                Assert.Equal(expectedInactiveCellsCount, actualInactiveCellsCount);
+            }
+        }
     }
 }
