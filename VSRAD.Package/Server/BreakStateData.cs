@@ -75,7 +75,7 @@ namespace VSRAD.Package.Server
 
             Name = watchName;
             ColumnCount = groupsInRow * groupSize;
-            RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
+            RowCount = (_data.Length / _laneDataSize / ColumnCount) + (groupCount % groupsInRow == 0 ? 0 : 1); // one extra row for partial groups
         }
 
         public int GetGroupIndex(int row, int column) => _groupsInRow * row + column / _groupSize;
