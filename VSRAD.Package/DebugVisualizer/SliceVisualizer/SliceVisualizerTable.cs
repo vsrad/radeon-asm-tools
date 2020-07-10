@@ -45,13 +45,15 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
             _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, _state, ColumnStyling, fontAndColor, _context.Options.VisualizerAppearance, _context.Options.VisualizerColumnStyling);
+            _ = new SliceCellStyling(this, ColumnStyling, fontAndColor, _context);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
 
             _context.WatchSelected += DisplayWatch;
             _context.Options.VisualizerColumnStyling.PropertyChanged += ColumnStylingChanged;
             _context.Options.VisualizerAppearance.PropertyChanged += AppearanceOptionChanged;
             _context.Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
+
+            _state.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
 
             ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
         }
@@ -152,6 +154,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.SliceSubgroupSeparatorWidth):
                     ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+                    break;
+                case nameof(Options.VisualizerAppearance.ScalingMode):
+                    _state.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
                     break;
             }
         }

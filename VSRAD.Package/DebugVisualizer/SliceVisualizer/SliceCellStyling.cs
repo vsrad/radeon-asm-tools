@@ -7,22 +7,18 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     sealed class SliceCellStyling
     {
         private readonly SliceVisualizerTable _table;
-        private readonly TableState _state;
         private readonly IFontAndColorProvider _fontAndColor;
-        private readonly SolidBrush _tableBackgroundBrush;
         private readonly SliceColumnStyling _columnStyling;
         private readonly Options.VisualizerAppearance _appearance;
         private readonly ColumnStylingOptions _stylingOptions;
 
-        public SliceCellStyling(SliceVisualizerTable table, TableState state, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, Options.VisualizerAppearance appearance, ColumnStylingOptions stylingOptions)
+        public SliceCellStyling(SliceVisualizerTable table, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, SliceVisualizerContext context)
         {
             _table = table;
-            _state = state;
             _fontAndColor = fontAndColor;
-            _tableBackgroundBrush = new SolidBrush(table.BackgroundColor);
             _columnStyling = styling;
-            _appearance = appearance;
-            _stylingOptions = stylingOptions;
+            _appearance = context.Options.VisualizerAppearance;
+            _stylingOptions = context.Options.VisualizerColumnStyling;
 
             _table.CellPainting += HandleCellPaint;
         }
