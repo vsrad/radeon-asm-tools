@@ -1,0 +1,115 @@
+﻿{
+  "DebuggerOptions": {
+    "Watches": [
+      {
+        "Name": "v0",
+        "Type": "Hex",
+        "IsAVGPR": false,
+        "IsEmpty": false
+      },
+      {
+        "Name": " ",
+        "Type": "Hex",
+        "IsAVGPR": false,
+        "IsEmpty": true
+      },
+      {
+        "Name": "v2",
+        "Type": "Float",
+        "IsAVGPR": false,
+        "IsEmpty": false
+      }
+    ],
+    "NGroups": 32,
+    "Counter": 15,
+    "AppArgs": "visualizer app args",
+    "BreakArgs": "visualizer break args",
+    "Autosave": true,
+    "SingleActiveBreakpoint": false,
+    "BreakMode": 0
+  },
+  "VisualizerOptions": {
+    "ShowSystemVariable": true,
+    "MaskLanes": true,
+    "NDRange3D": false,
+    "VerticalSplit": true,
+    "LaneGrouping": 2,
+    "CheckMagicNumber": false,
+    "MagicNumber": "0x6",
+    "ShowColumnsField": true,
+    "ShowAppArgsField": true,
+    "ShowBreakArgsField": false
+  },
+  "VisualizerAppearance": {
+    "NameColumnAlignment": 0,
+    "HeadersAlignment": 2,
+    "DataColumnAlignment": 2,
+    "LaneSeparatorWidth": 4,
+    "HiddenColumnSeparatorWidth": 7,
+    "ScalingMode": 1,
+    "DarkenAlternatingRowsBy": 4
+  },
+  "VisualizerColumnStyling": {
+    "VisibleColumns": "0-1023",
+    "BackgroundColors": "                                              gg b                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    bbb                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ",
+    "ForegroundColors": "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              rrrrrrr                                                           "
+  },
+  "ActiveProfile": "Default",
+  "Profiles": {
+    "Default": {
+      "General": {
+        "DeployDirectory": "C:\\Users\\h\\Deploy",
+        "RemoteMachine": "192.168.1.8",
+        "Port": 1337,
+        "CopySources": true,
+        "AdditionalSources": "C:\\Users\\h\\additional"
+      },
+      "Debugger": {
+        "Executable": "python.exe",
+        "Arguments": "script.py -w $(RadWatches) -l $(RadBreakLine) -v \"$(RadDebugAppArgs)\" -t $(RadCounter) -p \"$(RadDebugBreakArgs)\" -f \"$(RadActiveSourceFile)\" -o \"$(RadDebugDataOutputPath)\" $(RadAppArgs)",
+        "WorkingDirectory": "$(RadDeployDir)",
+        "OutputPath": "script_py_output.bin",
+        "BinaryOutput": true,
+        "OutputOffset": 4,
+        "ParseValidWatches": true,
+        "ValidWatchesFilePath": "valid_watches",
+        "StatusStringFilePath": "status",
+        "RunAsAdmin": false,
+        "TimeoutSecs": 10
+      },
+      "Preprocessor": {
+        "Executable": "cpp",
+        "Arguments": "-DLINE=$(RadActiveSourceFileLine) \"$(RadActiveSourceFile)\" \"$(RadPpOutputPath)\"",
+        "WorkingDirectory": "$(RadDebugWorkDir)",
+        "OutputPath": "$(RadPpDir)/pp_output",
+        "LocalOutputCopyPath": "C:\\Users\\h\\local_pp",
+        "LineMarker": "LINE"
+      },
+      "Disassembler": {
+        "Executable": "objdump",
+        "Arguments": "-s --section=.text",
+        "WorkingDirectory": "$(RadDeployDir)",
+        "OutputPath": "$(RadDisasmWorkDir)/src.s",
+        "LocalOutputCopyPath": "C:\\Users\\h\\local_src.s",
+        "LineMarker": "_start"
+      },
+      "Profiler": {
+        "Executable": "prof",
+        "Arguments": "-o $(RadProfileOutputPath)",
+        "WorkingDirectory": "$(RadDeployDir)",
+        "OutputPath": "$(RadProfileWorkDir)/prof_output",
+        "ViewerExecutable": "profview",
+        "ViewerArguments": "$(RadProfileLocalCopyPath)",
+        "LocalOutputCopyPath": "C:\\Users\\h\\local_prof",
+        "RunAsAdmin": true
+      },
+      "Build": {
+        "RunPreprocessor": true,
+        "RunDisassembler": false,
+        "Executable": "make",
+        "Arguments": "all",
+        "WorkingDirectory": "$(ProjectDir)"
+      }
+    }
+  }
+}
