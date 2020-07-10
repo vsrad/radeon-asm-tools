@@ -9,7 +9,7 @@
       },
       {
         "Name": " ",
-        "Type": "Hex",
+        "Type": "Uint",
         "IsAVGPR": false,
         "IsEmpty": true
       },
@@ -20,13 +20,10 @@
         "IsEmpty": false
       }
     ],
-    "NGroups": 32,
     "Counter": 15,
     "AppArgs": "visualizer app args",
     "BreakArgs": "visualizer break args",
-    "Autosave": true,
-    "SingleActiveBreakpoint": false,
-    "BreakMode": 0
+    "Autosave": true
   },
   "VisualizerOptions": {
     "ShowSystemVariable": true,
@@ -54,9 +51,9 @@
     "BackgroundColors": "                                              gg b                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    bbb                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ",
     "ForegroundColors": "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              rrrrrrr                                                           "
   },
-  "ActiveProfile": "Default",
+  "ActiveProfile": "h",
   "Profiles": {
-    "Default": {
+    "h": {
       "General": {
         "DeployDirectory": "C:\\Users\\h\\Deploy",
         "RemoteMachine": "192.168.1.8",

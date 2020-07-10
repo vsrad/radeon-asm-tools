@@ -10,8 +10,24 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 {
     public sealed class LegacyProfileImporter
     {
-        public static Dictionary<string, ProfileOptions> ReadProfiles(JObject projectOptions) =>
-            ((JObject)projectOptions["Profiles"]).Properties().ToDictionary(p => p.Name, p => ReadProfile((JObject)p.Value));
+        public static ProjectOptions ReadProjectOptions(JObject conf)
+        {
+            var debugger = conf["DebuggerOptions"]?.ToObject<DebuggerOptions>() ?? new DebuggerOptions();
+            var visualizer = conf["VisualizerOptions"]?.ToObject<VisualizerOptions>() ?? new VisualizerOptions();
+            var slice = conf["SliceVisualizerOptions"]?.ToObject<SliceVisualizerOptions>() ?? new SliceVisualizerOptions();
+            var appearance = conf["VisualizerAppearance"]?.ToObject<VisualizerAppearance>() ?? new VisualizerAppearance();
+            var styling = conf["VisualizerColumnStyling"]?.ToObject<DebugVisualizer.ColumnStylingOptions>() ?? new DebugVisualizer.ColumnStylingOptions();
+
+            var profiles = ReadProfiles((JObject)conf["Profiles"]);
+            var activeProfile = (string)conf["ActiveProfile"];
+
+            var opts = new ProjectOptions(debugger, visualizer, slice, appearance, styling);
+            opts.SetProfiles(profiles, activeProfile);
+            return opts;
+        }
+
+        public static Dictionary<string, ProfileOptions> ReadProfiles(JObject profiles) =>
+            profiles.Properties().ToDictionary(p => p.Name, p => ReadProfile((JObject)p.Value));
 
         private static ProfileOptions ReadProfile(JObject conf)
         {

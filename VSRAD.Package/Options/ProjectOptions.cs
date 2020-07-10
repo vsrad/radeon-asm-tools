@@ -24,6 +24,17 @@ namespace VSRAD.Package.Options
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
+        public ProjectOptions() { }
+
+        public ProjectOptions(DebuggerOptions debugger, VisualizerOptions visualizer, SliceVisualizerOptions slice, VisualizerAppearance appearance, DebugVisualizer.ColumnStylingOptions styling)
+        {
+            DebuggerOptions = debugger;
+            VisualizerOptions = visualizer;
+            SliceVisualizerOptions = slice;
+            VisualizerAppearance = appearance;
+            VisualizerColumnStyling = styling;
+        }
+
         #region Profiles
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }

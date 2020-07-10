@@ -12,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public bool IsAVGPR { get; }
 
+        [JsonIgnore]
         public bool IsEmpty => string.IsNullOrWhiteSpace(Name);
 
         [JsonConstructor]

@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Linq;
+using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
@@ -13,11 +14,28 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         private static readonly string _legacyJson = File.ReadAllText(Path.Combine(_fixturesDir, "LegacyProject.user.json"));
 
         [Fact]
+        public void ProjectImportTest()
+        {
+            var projectOptions = JObject.Parse(_legacyJson);
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+
+            Assert.Collection(imported.DebuggerOptions.Watches,
+                w1 => Assert.Equal(new Watch("v0", VariableType.Hex, false), w1),
+                w2 => Assert.Equal(new Watch(" ", VariableType.Uint, false), w2),
+                w3 => Assert.Equal(new Watch("v2", VariableType.Float, false), w3));
+
+            Assert.Equal(15u, imported.DebuggerOptions.Counter);
+            Assert.Equal(6, imported.VisualizerOptions.MagicNumber);
+            Assert.Equal("0-1023", imported.VisualizerColumnStyling.VisibleColumns);
+            Assert.Equal("h", imported.ActiveProfile);
+        }
+
+        [Fact]
         public void GeneralImportTest()
         {
             var projectOptions = JObject.Parse(_legacyJson);
-            var imported = LegacyProfileImporter.ReadProfiles(projectOptions);
-            Assert.True(imported.TryGetValue("Default", out var profile));
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+            Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
             Assert.Equal("192.168.1.8", profile.General.RemoteMachine);
             Assert.Equal(1337, profile.General.Port);
@@ -40,8 +58,8 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void DebugImportTest()
         {
             var projectOptions = JObject.Parse(_legacyJson);
-            var imported = LegacyProfileImporter.ReadProfiles(projectOptions);
-            Assert.True(imported.TryGetValue("Default", out var profile));
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+            Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
             Assert.True(profile.Debugger.BinaryOutput);
             Assert.Equal(4, profile.Debugger.OutputOffset);
@@ -74,8 +92,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void PreprocessorImportTest()
         {
             var projectOptions = JObject.Parse(_legacyJson);
-            var imported = LegacyProfileImporter.ReadProfiles(projectOptions);
-            Assert.True(imported.TryGetValue("Default", out var profile));
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+            Assert.True(imported.Profiles.TryGetValue("h", out var profile));
+
             var action = profile.Actions[0];
 
             Assert.Equal("Preprocess", action.Name);
@@ -105,8 +124,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void DisassemblerImportTest()
         {
             var projectOptions = JObject.Parse(_legacyJson);
-            var imported = LegacyProfileImporter.ReadProfiles(projectOptions);
-            Assert.True(imported.TryGetValue("Default", out var profile));
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+            Assert.True(imported.Profiles.TryGetValue("h", out var profile));
+
             var action = profile.Actions[1];
 
             Assert.Equal("Disassemble", action.Name);
@@ -136,8 +156,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void ProfilerImportTest()
         {
             var projectOptions = JObject.Parse(_legacyJson);
-            var imported = LegacyProfileImporter.ReadProfiles(projectOptions);
-            Assert.True(imported.TryGetValue("Default", out var profile));
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+            Assert.True(imported.Profiles.TryGetValue("h", out var profile));
+
             var action = profile.Actions[2];
 
             Assert.Equal("Profile", action.Name);
@@ -170,8 +191,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void BuildImportTest()
         {
             var projectOptions = JObject.Parse(_legacyJson);
-            var imported = LegacyProfileImporter.ReadProfiles(projectOptions);
-            Assert.True(imported.TryGetValue("Default", out var profile));
+            var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
+            Assert.True(imported.Profiles.TryGetValue("h", out var profile));
+
             var action = profile.Actions[3];
 
             Assert.Equal("Build", action.Name);
