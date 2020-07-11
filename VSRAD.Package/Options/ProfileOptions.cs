@@ -97,10 +97,10 @@ namespace VSRAD.Package.Options
         private string _deployDirectory = "";
         public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
 
-        private string _localWorkDir = DefaultOptionValues.LocalWorkDir;
+        private string _localWorkDir = "$(ProjectDir)";
         public string LocalWorkDir { get => _localWorkDir; set => SetField(ref _localWorkDir, value); }
 
-        private string _remoteWorkDir = DefaultOptionValues.RemoteWorkDir;
+        private string _remoteWorkDir = "$(" + RadMacros.DeployDirectory + ")";
         public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
 
         private string _additionalSources = "";

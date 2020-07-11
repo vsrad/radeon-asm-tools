@@ -55,8 +55,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             opts.Port = (int)conf["Port"];
             opts.CopySources = (bool)conf["CopySources"];
             opts.DeployDirectory = (string)conf["DeployDirectory"];
-            opts.RemoteWorkDir = (string)conf["RemoteWorkDir"];
-            opts.LocalWorkDir = (string)conf["LocalWorkDir"];
             opts.AdditionalSources = (string)conf["AdditionalSources"];
         }
 
