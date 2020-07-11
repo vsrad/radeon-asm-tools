@@ -8,10 +8,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
-    /// <summary>
-    /// Defines the property macro name as displayed in <see cref="ProjectSystem.Profiles.ProfileOptionsWindow"/>.
-    /// IMPORTANT: as of now, when defining a new macro you need to add it to <see cref="MacroEvaluator.GetMacroValueAsync"/> manually.
-    /// </summary>
+    // TODO: remove (obsolete)
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class MacroAttribute : Attribute
     {
@@ -20,6 +17,7 @@ namespace VSRAD.Package.Options
         public MacroAttribute(string macroName) => MacroName = macroName;
     }
 
+    // TODO: remove (obsolete)
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryChoiceAttribute : Attribute
     {
@@ -34,10 +32,8 @@ namespace VSRAD.Package.Options
     public sealed class ProfileOptions : ICloneable
     {
         public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
+
         public DebuggerProfileOptions Debugger { get; } = new DebuggerProfileOptions();
-        public DisassemblerProfileOptions Disassembler { get; } = null;
-        public ProfilerProfileOptions Profiler { get; } = null;
-        public BuildProfileOptions Build { get; } = null;
 
         [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
         public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();

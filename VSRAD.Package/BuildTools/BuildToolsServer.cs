@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.BuildTools;
 using VSRAD.DebugServer.IPC.Commands;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -83,21 +84,7 @@ namespace VSRAD.Package.BuildTools
                     using (var server = new NamedPipeServerStream(PipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous))
                     {
                         await server.WaitForConnectionAsync(_serverLoopCts.Token).ConfigureAwait(false);
-
-                        byte[] message;
-                        try
-                        {
-                            var buildResult = await BuildAsync().ConfigureAwait(false);
-                            if (buildResult.TryGetResult(out var result, out var error))
-                                message = result.ToArray();
-                            else
-                                message = new IPCBuildResult { ServerError = error.Message }.ToArray();
-                        }
-                        catch (Exception e)
-                        {
-                            message = new IPCBuildResult { ServerError = e.Message }.ToArray();
-                        }
-
+                        var message = new IPCBuildResult { Skipped = true }.ToArray();
                         await server.WriteAsync(message, 0, message.Length);
                     }
                 }
@@ -137,9 +124,9 @@ namespace VSRAD.Package.BuildTools
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
-            var buildOptions = await _project.Options.Profile.Build.EvaluateAsync(evaluator);
-            var preprocessorOptions = await Options.PreprocessorProfileOptions.EvaluateAsync(evaluator);
-            var disassemblerOptions = await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
+            BuildProfileOptions buildOptions = null;// await _project.Options.Profile.Build.EvaluateAsync(evaluator);
+            PreprocessorProfileOptions preprocessorOptions = null;// await Options.PreprocessorProfileOptions.EvaluateAsync(evaluator);
+            DisassemblerProfileOptions disassemblerOptions = null;// await _project.Options.Profile.Disassembler.EvaluateAsync(evaluator);
             var buildSteps = GetBuildSteps(buildOptions);
 
             if (buildSteps == BuildSteps.Skip)
