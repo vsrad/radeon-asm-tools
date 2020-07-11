@@ -69,7 +69,11 @@ namespace VSRAD.Package.Commands
             {
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
-                var runner = new ActionRunner(_channel, _serviceProvider);
+                var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
+                var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
+                action = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+
+                var runner = new ActionRunner(_channel, _serviceProvider, env);
                 var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(action.Name, result).ConfigureAwait(false);
                 if (actionError is Error e1)

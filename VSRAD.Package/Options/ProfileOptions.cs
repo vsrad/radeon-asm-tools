@@ -116,6 +116,9 @@ namespace VSRAD.Package.Options
             RemoteWorkDir = await evaluator.EvaluateAsync(RemoteWorkDir),
             AdditionalSources = AdditionalSources
         };
+
+        public async Task<ActionEnvironment> EvaluateActionEnvironmentAsync(IMacroEvaluator evaluator) =>
+            new ActionEnvironment(await evaluator.EvaluateAsync(LocalWorkDir), await evaluator.EvaluateAsync(RemoteWorkDir));
     }
 
     public sealed class DebuggerProfileOptions
@@ -371,6 +374,24 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
         public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
         public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
+    }
+
+    public readonly struct ActionEnvironment : IEquatable<ActionEnvironment>
+    {
+        public string LocalWorkDir { get; }
+        public string RemoteWorkDir { get; }
+
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir)
+        {
+            LocalWorkDir = localWorkDir;
+            RemoteWorkDir = remoteWorkDir;
+        }
+
+        public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;
+        public override bool Equals(object o) => o is ActionEnvironment env && Equals(env);
+        public override int GetHashCode() => (LocalWorkDir, RemoteWorkDir).GetHashCode();
+        public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
+        public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
     }
 
     public readonly struct OutputFile : IEquatable<OutputFile>
