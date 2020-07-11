@@ -48,6 +48,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ProfilerViewerArguments = "RadProfileViewerArgs";
         public const string ProfilerLocalPath = "RadProfileLocalCopyPath";
 
+        public const string LocalWorkDir = "RadLocalWorkDir";
+        public const string RemoteWorkDir = "RadRemoteWorkDir";
         public const string ActiveSourceFile = "RadActiveSourceFile";
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
         public const string Watches = "RadWatches";
@@ -129,13 +131,24 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 recursionStartName = name;
 
             string unevaluated = null;
-            foreach (var macro in _profileOptions.Macros)
+            switch (name)
             {
-                if (macro.Name == name)
-                {
-                    unevaluated = macro.Value;
+                case RadMacros.RemoteWorkDir:
+                    unevaluated = _profileOptions.General.RemoteWorkDir;
                     break;
-                }
+                case RadMacros.LocalWorkDir:
+                    unevaluated = _profileOptions.General.LocalWorkDir;
+                    break;
+                default:
+                    foreach (var macro in _profileOptions.Macros)
+                    {
+                        if (macro.Name == name)
+                        {
+                            unevaluated = macro.Value;
+                            break;
+                        }
+                    }
+                    break;
             }
 
             if (unevaluated != null)

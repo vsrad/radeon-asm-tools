@@ -101,6 +101,8 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Profile Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
@@ -128,8 +130,21 @@
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="Additional Sources:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
-                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="5" Grid.Column="1"
+                            <Label Content="Local Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <TextBox Text="{Binding LocalWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"/>
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="LocalWorkDir"
+                                    Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Remote Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
+                            <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"/>
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="2" Tag="RemoteWorkDir"
+                                    Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+
+                            <Label Content="Additional Sources:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="7" Grid.Column="0"/>
+                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="7" Grid.Column="1"
                                      Text="{Binding AdditionalSources, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="Semicolon-separated list of of out-of-project paths to deploy on remote machine" />
                         </Grid>

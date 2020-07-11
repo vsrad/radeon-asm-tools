@@ -97,6 +97,12 @@ namespace VSRAD.Package.Options
         private string _deployDirectory = "";
         public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
 
+        private string _localWorkDir = DefaultOptionValues.LocalWorkDir;
+        public string LocalWorkDir { get => _localWorkDir; set => SetField(ref _localWorkDir, value); }
+
+        private string _remoteWorkDir = DefaultOptionValues.RemoteWorkDir;
+        public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
+
         private string _additionalSources = "";
         public string AdditionalSources { get => _additionalSources; set => SetField(ref _additionalSources, value); }
 
@@ -110,6 +116,8 @@ namespace VSRAD.Package.Options
             Port = Port,
             CopySources = CopySources,
             DeployDirectory = await evaluator.EvaluateAsync(DeployDirectory),
+            LocalWorkDir = await evaluator.EvaluateAsync(LocalWorkDir),
+            RemoteWorkDir = await evaluator.EvaluateAsync(RemoteWorkDir),
             AdditionalSources = AdditionalSources
         };
     }

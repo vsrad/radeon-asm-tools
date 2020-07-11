@@ -11,6 +11,8 @@ namespace VSRAD.Package.Options
         public const int Port = 9339;
         public const string AdditionalSources = "";
         public const bool CopySources = true;
+        public const string LocalWorkDir = "$(ProjectDir)";
+        public const string RemoteWorkDir = "$(" + RadMacros.DeployDirectory + ")";
         #endregion
         #region Debugger
         public const string DebuggerExecutable = "python.exe";
