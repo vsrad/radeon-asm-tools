@@ -67,16 +67,50 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
+            var workDir = ""; // TODO: set to $(RadRemoteWorkDir)
+
             if (step.Direction == FileCopyDirection.LocalToRemote)
-                throw new NotImplementedException();
+            {
+                byte[] data;
+                try
+                {
+                    data = File.ReadAllBytes(step.SourcePath);
+                }
+                catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
+                {
+                    return new StepResult(false, $"File {step.SourcePath} is not found on the local machine", "");
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return new StepResult(false, $"Access to path {step.SourcePath} on the local machine is denied", "");
+                }
+                var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = workDir };
+                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
+                if (response.Status == PutFileStatus.PermissionDenied)
+                    return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
+                if (response.Status == PutFileStatus.OtherIOError)
+                    return new StepResult(false, $"File {step.TargetPath} could not be created on the remote machine", "");
+            }
+            else
+            {
+                var command = new FetchResultRange { FilePath = new[] { workDir, step.SourcePath } };
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
+                if (step.CheckTimestamp && GetInitialFileTimestamp(step.SourcePath) == response.Timestamp)
+                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}", "");
 
-            var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(new FetchResultRange { FilePath = new[] { step.TargetPath } });
-            if (response.Status == FetchStatus.FileNotFound)
-                return new StepResult(false, $"File is not found on the remote machine at {step.TargetPath}", "");
-            if (step.CheckTimestamp && GetInitialFileTimestamp(step.TargetPath) == response.Timestamp)
-                return new StepResult(false, $"File is not changed on the remote machine at {step.TargetPath}", "");
+                try
+                {
+                    Directory.CreateDirectory(Path.GetDirectoryName(step.TargetPath));
+                    File.WriteAllBytes(step.TargetPath, response.Data);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
+                }
+            }
 
-            File.WriteAllBytes(step.SourcePath, response.Data);
             return new StepResult(true, "", "");
         }
 
@@ -144,7 +178,12 @@ namespace VSRAD.Package.Server
             foreach (var step in steps)
             {
                 if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
-                    remoteCommands.Add(new FetchMetadata { FilePath = new[] { copyFile.TargetPath } });
+                {
+                    if (copyFile.Direction == FileCopyDirection.LocalToRemote)
+                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
+                    else
+                        remoteCommands.Add(new FetchMetadata { FilePath = new[] { copyFile.SourcePath } });
+                }
             }
 
             foreach (var auxFile in auxFiles)

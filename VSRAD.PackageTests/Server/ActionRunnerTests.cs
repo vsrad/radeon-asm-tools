@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
@@ -15,17 +17,44 @@ namespace VSRAD.PackageTests.Server
     public class ActionRunnerTests
     {
         [Fact]
-        public async Task CopyFileStepErrorTestAsync()
+        public async Task SucessfulRunTestAsync()
         {
             var channel = new MockCommunicationChannel();
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/mizu/machete/key3_49", SourcePath = "" },
+                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
+            };
+            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } }); // init timestamp fetch
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
+            var runner = new ActionRunner(channel.Object, null);
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(result.Successful);
+            Assert.True(result.StepResults[0].Successful);
+            Assert.Equal("", result.StepResults[0].Warning);
+            Assert.Equal("No stdout/stderr captured (exit code 0)\r\n", result.StepResults[0].Log);
+            Assert.True(result.StepResults[1].Successful);
+            Assert.Equal("", result.StepResults[1].Warning);
+            Assert.Equal("", result.StepResults[1].Log);
+            Assert.Equal("file-contents", File.ReadAllText(((CopyFileStep)steps[1]).TargetPath));
+            File.Delete(((CopyFileStep)steps[1]).TargetPath);
+        }
+
+        #region CopyFileStep
+        [Fact]
+        public async Task CopyRLRemoteErrorTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null);
+            var steps = new List<IActionStep>
+            {
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/mizu/machete/key3_49" },
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" } // should not be run
             };
+
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } }); // init timestamp fetch
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound });
-            var runner = new ActionRunner(channel.Object, null);
             var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
@@ -38,6 +67,86 @@ namespace VSRAD.PackageTests.Server
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("File is not changed on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
         }
+
+        [Fact]
+        public async Task CopyRLMissingParentDirectoryTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null);
+
+            var parentDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Assert.False(Directory.Exists(parentDir));
+
+            var file = Path.Combine(parentDir, "local-copy");
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/raw3", TargetPath = file } };
+
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(result.Successful);
+            Assert.Equal("file-contents", File.ReadAllText(file));
+            File.Delete(file);
+        }
+
+        [Fact]
+        public async Task CopyRLLocalErrorTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null);
+
+            var file = Path.GetTempFileName();
+            File.SetAttributes(file, FileAttributes.ReadOnly);
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/machete/raw3", TargetPath = file } };
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
+
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal($"Access to path {file} on the local machine is denied", result.StepResults[0].Warning);
+        }
+
+        [Fact]
+        public async Task CopyLRRemoteErrorTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null);
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = Path.GetTempFileName(), TargetPath = "/home/mizu/machete/raw3" } };
+
+            channel.ThenRespond(new PutFileResponse { Status = PutFileStatus.PermissionDenied });
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal("Access to path /home/mizu/machete/raw3 on the remote machine is denied", result.StepResults[0].Warning);
+
+            channel.ThenRespond(new PutFileResponse { Status = PutFileStatus.OtherIOError });
+            result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal("File /home/mizu/machete/raw3 could not be created on the remote machine", result.StepResults[0].Warning);
+        }
+
+        [Fact]
+        public async Task CopyLRLocalErrorTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null);
+
+            var localPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
+            Assert.False(File.Exists(localPath));
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "" } };
+
+            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal(@"File C:\Non\Existent\Path\To\Users\mizu\raw3 is not found on the local machine", result.StepResults[0].Warning);
+
+            var lockedPath = Path.GetTempFileName();
+            var acl = File.GetAccessControl(lockedPath);
+            acl.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User, FileSystemRights.Read, AccessControlType.Deny));
+            File.SetAccessControl(lockedPath, acl);
+
+            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = lockedPath, TargetPath = "" } };
+            result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal($"Access to path {lockedPath} on the local machine is denied", result.StepResults[0].Warning);
+            File.Delete(lockedPath);
+        }
+        #endregion
 
         [Fact]
         public async Task ExecuteStepErrorTestAsync()
@@ -71,31 +180,6 @@ namespace VSRAD.PackageTests.Server
             Assert.True(result.StepResults[0].Successful);
             Assert.Equal("dvd-prepare process exited with a non-zero code (1). Check your application or debug script output in Output -> RAD Debug.", result.StepResults[0].Warning);
             Assert.Equal("Captured stderr (exit code 1):\r\nLooks like you fell asleep ¯\\_(ツ)_/¯\r\n", result.StepResults[0].Log);
-        }
-
-        [Fact]
-        public async Task SucessfulRunTestAsync()
-        {
-            var channel = new MockCommunicationChannel();
-            var steps = new List<IActionStep>
-            {
-                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/mizu/machete/tweened.tvpp", SourcePath = Path.GetTempFileName() }
-            };
-            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } }); // init timestamp fetch
-            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0, Stdout = "", Stderr = "" });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
-            var runner = new ActionRunner(channel.Object, null);
-            var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
-            Assert.True(result.Successful);
-            Assert.True(result.StepResults[0].Successful);
-            Assert.Equal("", result.StepResults[0].Warning);
-            Assert.Equal("No stdout/stderr captured (exit code 0)\r\n", result.StepResults[0].Log);
-            Assert.True(result.StepResults[1].Successful);
-            Assert.Equal("", result.StepResults[1].Warning);
-            Assert.Equal("", result.StepResults[1].Log);
-            Assert.Equal("file-contents", File.ReadAllText(((CopyFileStep)steps[1]).SourcePath));
-            File.Delete(((CopyFileStep)steps[1]).SourcePath);
         }
 
         [Fact]
@@ -134,7 +218,7 @@ namespace VSRAD.PackageTests.Server
             var level1Steps = new List<IActionStep>
             {
                 new RunActionStep(level2Steps) { Name = "level2" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/mizu/machete/tweened.tvpp", SourcePath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             // 1. Initial timestamp fetch
             channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) } });
@@ -169,8 +253,8 @@ namespace VSRAD.PackageTests.Server
 
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, TargetPath = "/home/parker/audio/checked", SourcePath = Path.GetTempFileName() },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
             };
             var auxFiles = new List<BuiltinActionFile>
             {

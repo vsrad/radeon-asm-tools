@@ -32,14 +32,17 @@ namespace VSRAD.PackageTests
         {
             _mock = new Mock<ICommunicationChannel>();
             _mock
-                .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<ICommand>()))
+                .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>()))
                 .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c, withReply: true)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<MetadataFetched>(It.IsAny<ICommand>()))
+                .Setup((c) => c.SendWithReplyAsync<MetadataFetched>(It.IsAny<FetchMetadata>()))
                 .Returns<ICommand>((c) => Task.FromResult((MetadataFetched)HandleCommand(c, withReply: true)));
             _mock
-                .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<ICommand>()))
+                .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<FetchResultRange>()))
                 .Returns<ICommand>((c) => Task.FromResult((ResultRangeFetched)HandleCommand(c, withReply: true)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>()))
+                .Returns<ICommand>((c) => Task.FromResult((PutFileResponse)HandleCommand(c, withReply: true)));
             _mock
                 .Setup((c) => c.SendAsync(It.IsAny<ICommand>()))
                 .Returns<ICommand>((c) =>
