@@ -34,7 +34,7 @@ namespace VSRAD.PackageTests
             sta.Join();
         }
 
-        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros = null, string projectRoot = "", Package.Options.ProfileOptions profile = null)
+        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros = null, string projectRoot = "", Package.Options.ProfileOptions profile = null, string remoteWorkDir = "")
         {
             var mock = new Mock<IProject>(MockBehavior.Strict);
             var options = new ProjectOptions();
@@ -47,6 +47,7 @@ namespace VSRAD.PackageTests
                 foreach (var macro in macros)
                     evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
             evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult(val));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult(remoteWorkDir));
 
             mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
             return mock;

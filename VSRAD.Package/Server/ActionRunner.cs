@@ -192,7 +192,7 @@ namespace VSRAD.Package.Server
             {
                 if (!auxFile.CheckTimestamp || string.IsNullOrEmpty(auxFile.Path))
                     continue;
-                if (auxFile.Location == StepEnvironment.Remote)
+                if (auxFile.IsRemote())
                     remoteCommands.Add(new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, auxFile.Path } });
                 else
                     _initialTimestamps[auxFile.Path] = GetLocalFileTimestamp(auxFile.Path);

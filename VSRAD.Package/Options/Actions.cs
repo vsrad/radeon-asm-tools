@@ -38,7 +38,7 @@ namespace VSRAD.Package.Options
         RemoteToLocal, LocalToRemote
     }
 
-    public static class StepEnumLabelExtensions
+    public static class ActionExtensions
     {
         public static string GetLabel(this StepEnvironment env)
         {
@@ -59,6 +59,9 @@ namespace VSRAD.Package.Options
             }
             throw new NotImplementedException();
         }
+
+        public static bool IsRemote(this BuiltinActionFile file) =>
+            file.Location == StepEnvironment.Remote;
     }
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep

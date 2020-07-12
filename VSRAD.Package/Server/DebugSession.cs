@@ -32,12 +32,12 @@ namespace VSRAD.Package.Server
         {
             var execTimer = Stopwatch.StartNew();
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
-            var actionEnvironment = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
+            var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile).ConfigureAwait(false);
 
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
-            var runner = new ActionRunner(_channel, _serviceProvider, actionEnvironment);
+            var runner = new ActionRunner(_channel, _serviceProvider, env);
             var auxFiles = new[] { options.OutputFile, options.WatchesFile, options.StatusFile };
             var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles).ConfigureAwait(false);
 
@@ -45,68 +45,86 @@ namespace VSRAD.Package.Server
                 return new DebugRunResult(result, null, null);
 
             var fetchCommands = new List<ICommand>();
-            if (!string.IsNullOrEmpty(options.WatchesFile.Path))
-                fetchCommands.Add(new FetchResultRange { FilePath = new[] { options.WatchesFile.Path } });
-            if (!string.IsNullOrEmpty(options.StatusFile.Path))
-                fetchCommands.Add(new FetchResultRange { FilePath = new[] { options.StatusFile.Path } });
-            fetchCommands.Add(new FetchMetadata { FilePath = new[] { options.OutputFile.Path } });
+            if (options.WatchesFile.IsRemote() && !string.IsNullOrEmpty(options.WatchesFile.Path))
+                fetchCommands.Add(new FetchResultRange { FilePath = new[] { env.RemoteWorkDir, options.WatchesFile.Path } });
+            if (options.StatusFile.IsRemote() && !string.IsNullOrEmpty(options.StatusFile.Path))
+                fetchCommands.Add(new FetchResultRange { FilePath = new[] { env.RemoteWorkDir, options.StatusFile.Path } });
+            if (options.OutputFile.IsRemote())
+                fetchCommands.Add(new FetchMetadata { FilePath = new[] { env.RemoteWorkDir, options.OutputFile.Path } });
 
-            var fetchReplies = await _channel.SendBundleAsync(fetchCommands);
+            IResponse[] fetchReplies = null;
+            if (fetchCommands.Count > 0)
+                fetchReplies = await _channel.SendBundleAsync(fetchCommands);
+
             var fetchIndex = 0;
             if (!string.IsNullOrEmpty(options.WatchesFile.Path))
             {
-                var watchesResponse = (ResultRangeFetched)fetchReplies[fetchIndex++];
-                var parseResult = ReadValidWatches(watchesResponse, options.WatchesFile, runner.GetInitialFileTimestamp(options.WatchesFile.Path));
-                if (!parseResult.TryGetResult(out watches, out var parseError))
-                    return new DebugRunResult(result, parseError, null);
+                var initTimestamp = runner.GetInitialFileTimestamp(options.WatchesFile.Path);
+                var response = (ResultRangeFetched)fetchReplies[fetchIndex++];
+                var text = ReadTextFile("Valid watches", options.WatchesFile, response, initTimestamp);
+                if (!text.TryGetResult(out var watchesString, out var error))
+                    return new DebugRunResult(result, error, null);
+
+                var watchArray = watchesString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                watches = Array.AsReadOnly(watchArray);
             }
             var statusString = "";
             if (!string.IsNullOrEmpty(options.StatusFile.Path))
             {
-                var statusResponse = (ResultRangeFetched)fetchReplies[fetchIndex++];
-                var parseResult = ReadStatus(statusResponse, options.StatusFile, runner.GetInitialFileTimestamp(options.StatusFile.Path));
-                if (!parseResult.TryGetResult(out statusString, out var parseError))
-                    return new DebugRunResult(result, parseError, null);
+                var initTimestamp = runner.GetInitialFileTimestamp(options.StatusFile.Path);
+                var response = (ResultRangeFetched)fetchReplies[fetchIndex++];
+                var text = ReadTextFile("Status string", options.StatusFile, response, initTimestamp);
+                if (!text.TryGetResult(out statusString, out var error))
+                    return new DebugRunResult(result, error, null);
+
+                statusString = statusString.Replace("\n", "\r\n");
             }
-            var outputResponse = (MetadataFetched)fetchReplies[fetchIndex];
-            var dataResult = ReadOutput(outputResponse, options.OutputFile, runner.GetInitialFileTimestamp(options.OutputFile.Path), watches, options.BinaryOutput, options.OutputOffset);
-            if (!dataResult.TryGetResult(out var data, out var error))
-                return new DebugRunResult(result, error, null);
+            {
+                var initTimestamp = runner.GetInitialFileTimestamp(options.OutputFile.Path);
+                var response = (MetadataFetched)fetchReplies[fetchIndex++];
+                var metadata = ReadOutputMetadata(options.OutputFile, response, initTimestamp);
+                if (!metadata.TryGetResult(out var outputMeta, out var error))
+                    return new DebugRunResult(result, error, null);
 
-            return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
+                // TODO: refactor OutputFile away
+                var output = new OutputFile(directory: "", file: options.OutputFile.Path, options.BinaryOutput);
+                var data = new BreakStateData(watches, output, outputMeta.timestamp, outputMeta.byteCount, options.OutputOffset);
+                return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
+            }
         }
 
-        private static Result<ReadOnlyCollection<string>> ReadValidWatches(ResultRangeFetched response, BuiltinActionFile file, DateTime initTimestamp)
+        private static Result<string> ReadTextFile(string title, BuiltinActionFile file, ResultRangeFetched response, DateTime initTimestamp)
         {
-            if (response.Status == FetchStatus.FileNotFound)
-                return new Error($"Valid watches file ({file.Path}) could not be found.", title: "Valid watches file is missing");
-            if (file.CheckTimestamp && response.Timestamp == initTimestamp)
-                return new Error($"Valid watches file ({file.Path}) was not modified.", title: "Data may be stale");
+            if (file.IsRemote())
+            {
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"{title} file ({file.Path}) could not be found.", title: $"{title} file is missing");
+                if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"{title} file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            var watches = Encoding.UTF8.GetString(response.Data).Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            return Array.AsReadOnly(watches);
+                return Encoding.UTF8.GetString(response.Data);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
-        private static Result<string> ReadStatus(ResultRangeFetched response, BuiltinActionFile file, DateTime initTimestamp)
+        private static Result<(DateTime timestamp, int byteCount)> ReadOutputMetadata(BuiltinActionFile file, MetadataFetched response, DateTime initTimestamp)
         {
-            if (response.Status == FetchStatus.FileNotFound)
-                return new Error($"Status string file ({file.Path}) could not be found.", title: "Status string file is missing");
-            if (file.CheckTimestamp && response.Timestamp == initTimestamp)
-                return new Error($"Status string file ({file.Path}) was not modified.", title: "Data may be stale");
+            if (file.IsRemote())
+            {
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"Output file ({file.Path}) could not be found.", title: "Output file is missing");
+                if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"Output file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            return Encoding.UTF8.GetString(response.Data).Replace("\n", "\r\n");
-        }
-
-        private static Result<BreakStateData> ReadOutput(MetadataFetched response, BuiltinActionFile file, DateTime initTimestamp, ReadOnlyCollection<string> watches, bool binaryOutput, int outputOffset)
-        {
-            if (response.Status == FetchStatus.FileNotFound)
-                return new Error($"Output file ({file.Path}) could not be found.", title: "Output file is missing");
-            if (file.CheckTimestamp && response.Timestamp == initTimestamp)
-                return new Error($"Output file ({file.Path}) was not modified.", title: "Data may be stale");
-
-            // TODO: refactor OutputFile away
-            var output = new OutputFile(directory: "", file: file.Path, binaryOutput);
-            return new BreakStateData(watches, output, response.Timestamp, response.ByteCount, outputOffset);
+                return (response.Timestamp, response.ByteCount);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

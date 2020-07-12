@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
 using VSRAD.Package.Server;
@@ -19,7 +20,7 @@ namespace VSRAD.PackageTests.Server
         public async Task SuccessfulRunTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var project = TestHelper.MakeProjectWithProfile().Object;
+            var project = TestHelper.MakeProjectWithProfile(remoteWorkDir: "/remote/workdir").Object;
             project.Options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             project.Options.Profile.Debugger.Steps.Add(new ExecuteStep { Executable = "va11" });
             project.Options.Profile.Debugger.OutputFile.CheckTimestamp = true;
@@ -27,8 +28,11 @@ namespace VSRAD.PackageTests.Server
             project.Options.Profile.Debugger.WatchesFile.CheckTimestamp = false;
             project.Options.Profile.Debugger.WatchesFile.Path = "/glitch/city/bar";
 
-            // Init timestamp fetch (output file)
-            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } });
+            channel.ThenRespond(new[] { new MetadataFetched { Status = FetchStatus.FileNotFound } }, (commands) =>
+            {
+                var initTimestampFetch = (FetchMetadata)commands[0];
+                Assert.Equal(new[] { "/remote/workdir", "/glitch/city" }, initTimestampFetch.FilePath);
+            });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
             channel.ThenRespond(new IResponse[]
             {
