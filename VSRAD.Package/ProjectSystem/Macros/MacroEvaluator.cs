@@ -24,6 +24,21 @@ namespace VSRAD.Package.ProjectSystem.Macros
         }
     }
 
+    public static class CleanProfileMacros
+    {
+        public static readonly (string, string)[] Macros = new[]
+        {
+            (LocalWorkDir, LocalWorkDirValue),
+            (RemoteWorkDir, RemoteWorkDirValue)
+        };
+
+        public const string LocalWorkDir = "RadLocalWorkDir";
+        public const string LocalWorkDirValue = "$(ProjectDir)";
+
+        public const string RemoteWorkDir = "RadRemoteWorkDir";
+        public const string RemoteWorkDirValue = "";
+    }
+
     public static class RadMacros
     {
         public const string DeployDirectory = "RadDeployDir";
@@ -48,8 +63,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ProfilerViewerArguments = "RadProfileViewerArgs";
         public const string ProfilerLocalPath = "RadProfileLocalCopyPath";
 
-        public const string LocalWorkDir = "RadLocalWorkDir";
-        public const string RemoteWorkDir = "RadRemoteWorkDir";
         public const string ActiveSourceFile = "RadActiveSourceFile";
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
         public const string Watches = "RadWatches";
@@ -131,24 +144,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 recursionStartName = name;
 
             string unevaluated = null;
-            switch (name)
+            foreach (var macro in _profileOptions.Macros)
             {
-                case RadMacros.RemoteWorkDir:
-                    unevaluated = _profileOptions.General.RemoteWorkDir;
+                if (macro.Name == name)
+                {
+                    unevaluated = macro.Value;
                     break;
-                case RadMacros.LocalWorkDir:
-                    unevaluated = _profileOptions.General.LocalWorkDir;
-                    break;
-                default:
-                    foreach (var macro in _profileOptions.Macros)
-                    {
-                        if (macro.Name == name)
-                        {
-                            unevaluated = macro.Value;
-                            break;
-                        }
-                    }
-                    break;
+                }
             }
 
             if (unevaluated != null)

@@ -90,13 +90,13 @@ namespace VSRAD.Package.Options
         private bool _copySources = true;
         public bool CopySources { get => _copySources; set => SetField(ref _copySources, value); }
 
-        private string _deployDirectory = "";
+        private string _deployDirectory = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
 
-        private string _localWorkDir = "$(ProjectDir)";
+        private string _localWorkDir = "$(" + CleanProfileMacros.LocalWorkDir + ")";
         public string LocalWorkDir { get => _localWorkDir; set => SetField(ref _localWorkDir, value); }
 
-        private string _remoteWorkDir = "$(" + RadMacros.DeployDirectory + ")";
+        private string _remoteWorkDir = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
 
         private string _additionalSources = "";

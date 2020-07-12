@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
 
@@ -81,6 +82,21 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var action = GetPage<ProfileOptionsActionsPage>(context).Actions[1];
             context.RemoveActionCommand.Execute(action);
             Assert.Single(actionsPage.Actions, GetPage<DebuggerProfileOptions>(context));
+        }
+
+        [Fact]
+        public void AddProfileInsertsMacrosTest()
+        {
+            var project = CreateTestProject();
+            var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
+            var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
+
+            nameResolver.Setup(n => n("Creating a new profile", It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), "")).Returns("dou");
+
+            context.CreateNewProfile();
+            var newProfile = GetDirtyProfile(context, "dou");
+            var expectedMacros = CleanProfileMacros.Macros.Select(m => new MacroItem(m.Item1, m.Item2, userDefined: true));
+            Assert.Equal(expectedMacros.ToArray(), newProfile.Macros.ToArray());
         }
 
         [Fact]

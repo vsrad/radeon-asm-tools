@@ -129,11 +129,19 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        public void CreateNewProfile() =>
-            AddProfile("Creating a new profile", "Enter the name for the new profile:", new ProfileOptions());
+        public void CreateNewProfile()
+        {
+            var profile = new ProfileOptions();
+            foreach (var (macro, value) in CleanProfileMacros.Macros)
+                profile.Macros.Add(new MacroItem(macro, value, userDefined: true));
+            AddProfile("Creating a new profile", "Enter the name for the new profile:", profile);
+        }
 
-        public void CopyActiveProfile() =>
-            AddProfile("Copy profile", "Enter the name for the new profile:", (ProfileOptions)_project.Options.Profile.Clone());
+        public void CopyActiveProfile()
+        {
+            var profile = (ProfileOptions)_project.Options.Profile.Clone();
+            AddProfile("Copy profile", "Enter the name for the new profile:", profile);
+        }
 
         public void ImportProfiles(string file)
         {

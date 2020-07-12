@@ -171,6 +171,11 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private static void TransferHardcodedMacros(ProfileOptions profile, JObject conf)
         {
+            profile.Macros.Add(new MacroItem(RadMacros.DeployDirectory, profile.General.DeployDirectory, userDefined: true));
+            profile.General.DeployDirectory = "$(" + RadMacros.DeployDirectory + ")";
+            profile.General.RemoteWorkDir = "$(" + RadMacros.DeployDirectory + ")";
+            profile.General.LocalWorkDir = CleanProfileMacros.LocalWorkDirValue;
+
             var macroRegex = new Regex(@"\$\(([^()]+)\)", RegexOptions.Compiled);
             var macros = new Dictionary<string, string>();
 

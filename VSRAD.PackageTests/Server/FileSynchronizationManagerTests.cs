@@ -143,8 +143,8 @@ namespace VSRAD.PackageTests.Server
 
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
             evaluator.Setup((e) => e.EvaluateAsync(_deployDirectory)).Returns(Task.FromResult(_deployDirectory));
-            evaluator.Setup((e) => e.EvaluateAsync("$(ProjectDir)")).Returns(Task.FromResult(""));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + RadMacros.DeployDirectory + ")")).Returns(Task.FromResult(""));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.LocalWorkDir + ")")).Returns(Task.FromResult(""));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult(""));
             project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
 
             sourceManager = sourceManager ?? new Mock<IProjectSourceManager>().Object;

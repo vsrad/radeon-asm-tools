@@ -39,11 +39,12 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             Assert.Equal("192.168.1.8", profile.General.RemoteMachine);
             Assert.Equal(1337, profile.General.Port);
-            Assert.Equal("C:\\Users\\h\\Deploy", profile.General.DeployDirectory);
+            Assert.Equal("$(RadDeployDir)", profile.General.DeployDirectory);
             Assert.True(profile.General.CopySources);
             Assert.Equal("C:\\Users\\h\\additional", profile.General.AdditionalSources);
 
             Assert.Collection(profile.Macros,
+                m0 => Assert.Equal(new MacroItem("RadDeployDir", "C:\\Users\\h\\Deploy", userDefined: true), m0),
                 m1 => Assert.Equal(new MacroItem("RadDebugDataOutputPath", "script_py_output.bin", userDefined: true), m1),
                 m2 => Assert.Equal(new MacroItem("RadPpOutputPath", "$(RadPpDir)/pp_output", userDefined: true), m2),
                 m3 => Assert.Equal(new MacroItem("RadDebugWorkDir", "$(RadDeployDir)", userDefined: true), m3),
