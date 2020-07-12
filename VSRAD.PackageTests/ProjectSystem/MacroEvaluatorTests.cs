@@ -92,6 +92,15 @@ namespace VSRAD.PackageTests.ProjectSystem
         }
 
         [Fact]
+        public async Task EvaluateNullStringTestAsync()
+        {
+            var evaluator = new MacroEvaluator(new Mock<IProjectProperties>().Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
+            // Null strings may come from external sources (e.g. the .user.json file) and should be treated as empty
+            var value = await evaluator.EvaluateAsync(null);
+            Assert.Equal("", value);
+        }
+
+        [Fact]
         public async Task RecursiveMacroHandlingTestAsync()
         {
             var props = new Mock<IProjectProperties>();

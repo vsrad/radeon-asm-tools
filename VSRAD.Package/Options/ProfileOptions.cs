@@ -81,7 +81,7 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public string ProfileName { get => _profileName; set => SetField(ref _profileName, value); }
 
-        private string _remoteMachine = "192.168.0.1";
+        private string _remoteMachine = "127.0.0.1";
         public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
 
         private int _port = 9339;

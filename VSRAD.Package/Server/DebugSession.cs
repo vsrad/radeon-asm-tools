@@ -35,6 +35,9 @@ namespace VSRAD.Package.Server
             var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile).ConfigureAwait(false);
 
+            if (ValidateConfiguration(options) is Error configError)
+                return new DebugRunResult(null, configError, null);
+
             await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
             var runner = new ActionRunner(_channel, _serviceProvider, env);
@@ -91,6 +94,15 @@ namespace VSRAD.Package.Server
                 var data = new BreakStateData(watches, output, outputMeta.timestamp, outputMeta.byteCount, options.OutputOffset);
                 return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
             }
+        }
+
+        private static Error? ValidateConfiguration(DebuggerProfileOptions options)
+        {
+            if (string.IsNullOrEmpty(options.OutputFile.Path))
+                return new Error("Debugger output path is not specified. To set it, go to Tools -> RAD Debug -> Options and edit your current profile.");
+            if (!options.OutputFile.IsRemote() || !options.WatchesFile.IsRemote() || !options.StatusFile.IsRemote())
+                return new Error("Local debugger output paths are not supported in this version of RAD Debugger.");
+            return null;
         }
 
         private static Result<string> ReadTextFile(string title, BuiltinActionFile file, ResultRangeFetched response, DateTime initTimestamp)

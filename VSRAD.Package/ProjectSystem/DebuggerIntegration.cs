@@ -110,9 +110,13 @@ namespace VSRAD.Package.ProjectSystem
                 var result = await _debugSession.ExecuteAsync(breakLines, watches);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-                var actionError = await _actionLogger.LogActionWithWarningsAsync("Debugger", result.ActionResult);
-                if (actionError is Error e1)
-                    Errors.Show(e1);
+                if (result.ActionResult != null)
+                {
+                    var actionError = await _actionLogger.LogActionWithWarningsAsync("Debugger", result.ActionResult);
+                    if (actionError is Error e1)
+                        Errors.Show(e1);
+                }
+
                 if (result.Error is Error e2)
                     Errors.Show(e2);
 

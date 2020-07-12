@@ -71,5 +71,22 @@ namespace VSRAD.PackageTests.Server
             Assert.Null(result.Error);
             Assert.Equal("va11 process exited with a non-zero code (33). Check your application or debug script output in Output -> RAD Debug.", result.ActionResult.StepResults[0].Warning);
         }
+
+        [Fact]
+        public async Task ConfigValidationTestAsync()
+        {
+            var project = TestHelper.MakeProjectWithProfile().Object;
+            project.Options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
+            project.Options.Profile.Debugger.OutputFile.Path = "";
+            var session = new DebugSession(project, null, null, null);
+            var result = await session.ExecuteAsync(new[] { 13u }, null);
+            Assert.Equal("Debugger output path is not specified. To set it, go to Tools -> RAD Debug -> Options and edit your current profile.", result.Error.Value.Message);
+
+            project.Options.Profile.Debugger.OutputFile.Path = "C:\\Users\\J\\output";
+            project.Options.Profile.Debugger.OutputFile.Location = StepEnvironment.Local;
+
+            result = await session.ExecuteAsync(new[] { 13u }, null);
+            Assert.Equal("Local debugger output paths are not supported in this version of RAD Debugger.", result.Error.Value.Message);
+        }
     }
 }

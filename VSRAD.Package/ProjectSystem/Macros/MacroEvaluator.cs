@@ -166,8 +166,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, null);
 
-        private Task<string> EvaluateAsync(string src, string recursionStartName) =>
-            _macroRegex.ReplaceAsync(src, (m) => ReplaceMacroMatchAsync(m, recursionStartName));
+        private Task<string> EvaluateAsync(string src, string recursionStartName)
+        {
+            if (string.IsNullOrEmpty(src))
+                return Task.FromResult("");
+
+            return _macroRegex.ReplaceAsync(src, m => ReplaceMacroMatchAsync(m, recursionStartName));
+        }
 
         private async Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
         {
