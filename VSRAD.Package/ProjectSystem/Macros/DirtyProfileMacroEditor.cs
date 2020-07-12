@@ -49,7 +49,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
             var editor = new MacroEditContext(macroName, currentValue, evaluator);
-            editor.LoadPreviewListInBackground(projectProperties, remoteEnvironment);
+            editor.LoadPreviewListInBackground(_dirtyProfile.Macros, projectProperties, remoteEnvironment);
 
             var editorWindow = new MacroEditorWindow(editor);
             editorWindow.ShowDialog();

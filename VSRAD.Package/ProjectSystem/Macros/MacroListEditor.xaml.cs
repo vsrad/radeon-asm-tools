@@ -37,7 +37,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
     public partial class MacroListEditor : UserControl
     {
-        private static MacroListDisplayCollection GetPredefinedMacroCollection() => new MacroListDisplayCollection
+        public static MacroListDisplayCollection GetPredefinedMacroCollection() => new MacroListDisplayCollection
         {
             new MacroItem(RadMacros.ActiveSourceFile, "<current source file>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
