@@ -4,7 +4,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:opts="clr-namespace:VSRAD.Package.Options"
-             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="800">
@@ -22,44 +21,6 @@
                 <x:Type TypeName="opts:StepEnvironment"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
-        <ControlTemplate x:Key="FileExpander" TargetType="Expander">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Name="ContentRow" Height="0"/>
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-                <ToggleButton IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Grid.Row="0">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <DockPanel>
-                                <Path Name="Arrow" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 6 6 L 12 0 Z"/>
-                                <Label Height="22" Content="{Binding Header, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Expander}}}" Padding="4,2" />
-                            </DockPanel>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="ToggleButton.IsMouseOver" Value="false">
-                                    <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}" />
-                                </Trigger>
-                                <Trigger Property="ToggleButton.IsMouseOver" Value="true">
-                                    <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverGlyphKey}}" />
-                                </Trigger>
-                                <Trigger Property="IsChecked" Value="true">
-                                    <Setter TargetName="Arrow" Property="Data" Value="M 0 6 L 6 0 L 12 6 Z" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                </ToggleButton>
-                <ContentPresenter Margin="0,4" Grid.Row="1"/>
-            </Grid>
-            <ControlTemplate.Triggers>
-                <Trigger Property="IsExpanded" Value="True">
-                    <Setter TargetName="ContentRow" Property="Height" Value="{Binding ElementName=Content, Path=DesiredHeight}" />
-                </Trigger>
-            </ControlTemplate.Triggers>
-        </ControlTemplate>
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -72,19 +33,20 @@
             <RowDefinition Height="26"/>
             <RowDefinition Height="26"/>
         </Grid.RowDefinitions>
-        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location"
+               VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
         <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
-                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
 
-        <Label VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"
-               Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path">
-        </Label>
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path"
+               VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
         <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
         <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
-                    Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="Check {0} Timestamp" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="Check {0} Timestamp"
+               VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
         <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
-                      IsChecked="{Binding CheckTimestamp, UpdateSourceTrigger=PropertyChanged}"/>
+                  IsChecked="{Binding CheckTimestamp, UpdateSourceTrigger=PropertyChanged}"/>
     </Grid>
 </UserControl>
