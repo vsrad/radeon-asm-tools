@@ -91,7 +91,7 @@
                 <DataTemplate DataType="{x:Type opts:CopyFileStep}">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
+                            <ColumnDefinition Width="178"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="22"/>
                         </Grid.ColumnDefinitions>

@@ -61,39 +61,30 @@
             </ControlTemplate.Triggers>
         </ControlTemplate>
     </UserControl.Resources>
-    <ListViewItem>
-        <ListViewItem.Style>
-            <Style TargetType="ListViewItem">
-                <Setter Property="MinHeight" Value="24" />
-                <Setter Property="HorizontalAlignment" Value="Stretch" />
-                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-            </Style>
-        </ListViewItem.Style>
-        <Expander Template="{Binding Source={StaticResource FileExpander}}" Header="{Binding Header, ElementName=Root}" IsExpanded="True">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="170"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="22"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="26"/>
-                    <RowDefinition Height="26"/>
-                    <RowDefinition Height="26"/>
-                </Grid.RowDefinitions>
-                <Label Content="Location:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="178"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="22"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="26"/>
+            <RowDefinition Height="26"/>
+            <RowDefinition Height="26"/>
+        </Grid.RowDefinitions>
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+        <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
                                       Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
 
-                <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
-                <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+        <Label VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"
+               Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path">
+        </Label>
+        <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                     Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
-                <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
+        <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="Check {0} Timestamp" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+        <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
                       IsChecked="{Binding CheckTimestamp, UpdateSourceTrigger=PropertyChanged}"/>
-            </Grid>
-        </Expander>
-    </ListViewItem>
+    </Grid>
 </UserControl>
