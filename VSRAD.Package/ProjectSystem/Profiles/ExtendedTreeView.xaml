@@ -72,6 +72,7 @@
             </Style.Triggers>
             <Setter Property="Padding" Value="0,0,0,0" />
             <Setter Property="FocusVisualStyle" Value="{StaticResource TreeViewItemFocusVisual}" />
+            <Setter Property="IsExpanded" Value="True" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TreeViewItem}">

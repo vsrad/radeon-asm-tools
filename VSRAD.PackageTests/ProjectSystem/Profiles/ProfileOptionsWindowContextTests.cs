@@ -146,6 +146,69 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("asa-edited", asaSaved.General.RemoteMachine);
         }
 
+        [Fact]
+        public void SwitchingProfilePreservesSelectedPageTypeTests()
+        {
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Macros.Add(new MacroItem("kana-profile-macro", "h", userDefined: true));
+            project.Options.Profiles["kana"].Debugger.OutputFile.Path = "kana-output-path";
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
+            project.Options.Profiles["asa"].Macros.Add(new MacroItem("asa-profile-macro", "h", userDefined: true));
+            project.Options.Profiles["asa"].Debugger.OutputFile.Path = "asa-output-path";
+            project.Options.Profiles["asa"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
+
+            var context = new ProfileOptionsWindowContext(project, null, null) { SelectedPage = null };
+            // crude emulation of WPF control behavior when clearing the collection
+            context.Pages.CollectionChanged += (s, e) => context.SelectedPage = null;
+
+            // No page selected
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            Assert.Null(context.SelectedPage); // does not throw a null pointer exception
+
+            // General, Macros
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.SelectedPage = GetPage<ProfileOptionsMacrosPage>(context);
+            var lastMacro = ((ProfileOptionsMacrosPage)context.SelectedPage).Macros.Last();
+            Assert.Equal("kana-profile-macro", lastMacro.Name);
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            Assert.IsType<ProfileOptionsMacrosPage>(context.SelectedPage);
+            lastMacro = ((ProfileOptionsMacrosPage)context.SelectedPage).Macros.Last();
+            Assert.Equal("asa-profile-macro", lastMacro.Name);
+
+            // Debug
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.SelectedPage = GetPage<DebuggerProfileOptions>(context);
+            Assert.Equal("kana-output-path", ((DebuggerProfileOptions)context.SelectedPage).OutputFile.Path);
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            Assert.IsType<DebuggerProfileOptions>(context.SelectedPage);
+            Assert.Equal("asa-output-path", ((DebuggerProfileOptions)context.SelectedPage).OutputFile.Path);
+
+            // Shared action
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Actions.First(a => a is ActionProfileOptions ao && ao.Name == "shared-action");
+            Assert.Equal("shared-action", ((ActionProfileOptions)context.SelectedPage).Name);
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            Assert.IsType<ActionProfileOptions>(context.SelectedPage);
+            Assert.Equal("shared-action", ((ActionProfileOptions)context.SelectedPage).Name);
+
+            // Non-shared action
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Actions.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
+            Assert.Equal("kana-action", ((ActionProfileOptions)context.SelectedPage).Name);
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            Assert.Null(context.SelectedPage);
+        }
+
         #region Profile Transfer
         [Fact]
         public void ImportExportTest()

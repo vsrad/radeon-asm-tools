@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
@@ -118,14 +119,38 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void OpenSelectedProfilePages()
         {
-            SelectedPage = null;
             if (SelectedProfile != null)
             {
                 MacroEditor = new DirtyProfileMacroEditor(_project, _channel, SelectedProfile);
+                var oldSelectedPage = SelectedPage;
                 Pages.Clear();
                 Pages.Add(SelectedProfile.General);
                 Pages.Add(new ProfileOptionsMacrosPage(SelectedProfile.Macros));
                 Pages.Add(new ProfileOptionsActionsPage(SelectedProfile));
+                SelectedPage = FindOldSelectedPageInNewPages(oldSelectedPage, Pages);
+            }
+            else
+            {
+                SelectedPage = null;
+            }
+        }
+
+        private static object FindOldSelectedPageInNewPages(object oldSelectedPage, IEnumerable<object> newPages)
+        {
+            switch (oldSelectedPage)
+            {
+                case GeneralProfileOptions _:
+                    return newPages.First(p => p is GeneralProfileOptions);
+                case ProfileOptionsMacrosPage _:
+                    return newPages.First(p => p is ProfileOptionsMacrosPage);
+                case DebuggerProfileOptions _:
+                    var actionsPage = (ProfileOptionsActionsPage)newPages.First(p => p is ProfileOptionsActionsPage);
+                    return actionsPage.Actions.First(p => p is DebuggerProfileOptions);
+                case ActionProfileOptions action:
+                    actionsPage = (ProfileOptionsActionsPage)newPages.First(p => p is ProfileOptionsActionsPage);
+                    return actionsPage.Actions.FirstOrDefault(p => p is ActionProfileOptions a && a.Name == action.Name);
+                default:
+                    return null;
             }
         }
 
