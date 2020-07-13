@@ -52,5 +52,16 @@ namespace VSRAD.PackageTests.Server
             ex = await Assert.ThrowsAsync<Exception>(async () => await c.EvaluateAsync(new Mock<IMacroEvaluator>().Object, profile));
             Assert.Equal("Action D not found", ex.Message);
         }
+
+        [Fact]
+        public async Task RunActionStepRefersToSelfTestAsync()
+        {
+            var profile = new ProfileOptions();
+            var a = new ActionProfileOptions { Name = "A" };
+            a.Steps.Add(new RunActionStep { Name = "A" });
+            profile.Actions.Add(a);
+            var ex = await Assert.ThrowsAsync<Exception>(async () => await a.EvaluateAsync(new Mock<IMacroEvaluator>().Object, profile));
+            Assert.Equal("Encountered a circular action: A -> A", ex.Message);
+        }
     }
 }
