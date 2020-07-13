@@ -34,9 +34,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             SubgroupSize = (uint)subgroupSize;
             ColumnState.Clear();
             ColumnState.AddRange(new ColumnStates[subgroupSize]);
-            foreach (var i in ColumnSelector.ToIndexes(columnSelector, (int)_table.GroupSize))
-                if (i < subgroupSize)
-                    ColumnState[i] |= ColumnStates.Visible;
+
+            foreach (var i in ColumnSelector.ToIndexes(columnSelector, subgroupSize))
+                ColumnState[i] |= ColumnStates.Visible;
 
             ComputeHiddenColumnSeparators(subgroupSize);
             ColumnState[subgroupSize - 1] |= ColumnStates.HasSubgroupSeparator;
