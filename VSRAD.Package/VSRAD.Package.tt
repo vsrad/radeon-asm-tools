@@ -60,7 +60,7 @@
 
     <Buttons>
       <!-- Tools menu -->
-	  <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="0" type="Button">
+	  <Button guid="guidCmdSetQuickActions" id="ActionCommandId" priority="0" type="Button">
         <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <CommandFlag>DynamicItemStart</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -197,7 +197,7 @@
       <Group guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0600">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
       </Group>
-	  <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="0x0600">
+      <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="0x0600">
         <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuId" />
       </Group>
       <Group guid="guidCmdSetQuickActions" id="StandardToolbarGroup" priority="0xF000">
@@ -255,7 +255,6 @@
 
     <GuidSymbol name="guidCmdSetActionsMenu" value="{7CF54FFE-BCAC-4751-BEEC-D103FD953C8B}">
       <IDSymbol name="ActionsMenuId" value="0x900" />
-	  <IDSymbol name="ActionCommandId" value="0x0100" />
       <IDSymbol name="ActionsMenuGroup" value="0x0700" />
     </GuidSymbol>
 
@@ -269,6 +268,7 @@
       <IDSymbol name="DisassemblyCommandId" value="0x0100" />
       <IDSymbol name="PreprocessCommandId" value="0x0101" />
       <IDSymbol name="ProfileCommandId" value="0x0102" />
+      <IDSymbol name="ActionCommandId" value="0x0103" />
       <IDSymbol value="4128" name="StandardToolbarGroup" />
     </GuidSymbol>
 

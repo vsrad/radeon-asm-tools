@@ -127,7 +127,6 @@
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
-    <Compile Include="Commands\QuickActionCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />

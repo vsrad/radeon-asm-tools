@@ -26,10 +26,10 @@ namespace VSRAD.Package
         public const int ToolWindowOptionsCommandId = 0x0101;
         public const int ToolWindowSliceVisualizerCommandId = 0x0102;
         public const int ProfileCommandId = 0x0102;
+        public const int ActionsMenuCommandId = 0x0103;
         public const int DisassembleCommandId = 0x0100;
         public const int PreprocessCommandId = 0x0101;
         public const int EvaluateSelectedCommandId = 0x0100;
-        public const int ActionsMenuCommandId = 0x0100;
         public const int AddArrayToWatchesIndexCount = 16;
         public const int AddArrayToWatchesFromHeaderId = 0x1031;
         public const int AddArrayToWatchesToIdOffset = 0x1400;
