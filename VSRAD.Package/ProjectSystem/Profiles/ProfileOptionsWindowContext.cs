@@ -54,15 +54,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public ObservableCollection<ProfileOptions> DirtyProfiles { get; } = new ObservableCollection<ProfileOptions>();
 
         private ProfileOptions _selectedProfile;
-        public ProfileOptions SelectedProfile
-        {
-            get => _selectedProfile;
-            set
-            {
-                SetField(ref _selectedProfile, value);
-                OpenSelectedProfilePages();
-            }
-        }
+        public ProfileOptions SelectedProfile { get => _selectedProfile; set => SelectProfile(value); }
 
         public ObservableCollection<object> Pages { get; } = new ObservableCollection<object>();
 
@@ -71,7 +63,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public IEnumerable<ActionProfileOptions> Actions => SelectedProfile.Actions;
 
-        // TODO: remove
         public IReadOnlyList<string> ProfileNames => DirtyProfiles.Select(p => p.General.ProfileName).ToList();
 
         public WpfDelegateCommand AddActionCommand { get; }
@@ -106,6 +97,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void PopulateDirtyProfiles()
         {
+            var oldSelectedPage = SelectedPage;
             DirtyProfiles.Clear();
             foreach (var profile in _project.Options.Profiles)
             {
@@ -113,26 +105,27 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 dirtyProfile.General.ProfileName = profile.Key;
                 DirtyProfiles.Add(dirtyProfile);
                 if (profile.Key == _project.Options.ActiveProfile)
-                    SelectedProfile = dirtyProfile;
+                    SelectProfile(dirtyProfile, oldSelectedPage);
             }
         }
 
-        private void OpenSelectedProfilePages()
+        private void SelectProfile(ProfileOptions newProfile, object oldSelectedPage = null)
         {
-            if (SelectedProfile != null)
+            oldSelectedPage = oldSelectedPage ?? SelectedPage;
+            if (newProfile != null)
             {
-                MacroEditor = new DirtyProfileMacroEditor(_project, _channel, SelectedProfile);
-                var oldSelectedPage = SelectedPage;
+                MacroEditor = new DirtyProfileMacroEditor(_project, _channel, newProfile);
                 Pages.Clear();
-                Pages.Add(SelectedProfile.General);
-                Pages.Add(new ProfileOptionsMacrosPage(SelectedProfile.Macros));
-                Pages.Add(new ProfileOptionsActionsPage(SelectedProfile));
+                Pages.Add(newProfile.General);
+                Pages.Add(new ProfileOptionsMacrosPage(newProfile.Macros));
+                Pages.Add(new ProfileOptionsActionsPage(newProfile));
                 SelectedPage = FindOldSelectedPageInNewPages(oldSelectedPage, Pages);
             }
             else
             {
                 SelectedPage = null;
             }
+            SetField(ref _selectedProfile, newProfile, propertyName: nameof(SelectedProfile));
         }
 
         private static object FindOldSelectedPageInNewPages(object oldSelectedPage, IEnumerable<object> newPages)

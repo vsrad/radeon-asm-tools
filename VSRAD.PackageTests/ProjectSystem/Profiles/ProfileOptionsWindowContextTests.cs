@@ -1,5 +1,6 @@
 ﻿using Moq;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using VSRAD.Package.Options;
@@ -147,7 +148,23 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         }
 
         [Fact]
-        public void SwitchingProfilePreservesSelectedPageTypeTests()
+        public void SaveChangesPreservesSelectedPageTest()
+        {
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
+            var context = new ProfileOptionsWindowContext(project, null, null);
+            // a crude emulation of WPF control behavior when resetting dirty profiles on save
+            context.DirtyProfiles.CollectionChanged += (s, e) => { if (e.Action == NotifyCollectionChangedAction.Reset) context.SelectedPage = null; };
+
+            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Actions.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
+            context.SaveChanges();
+
+            Assert.IsType<ActionProfileOptions>(context.SelectedPage);
+            Assert.Equal("kana-action", ((ActionProfileOptions)context.SelectedPage).Name);
+        }
+
+        [Fact]
+        public void SwitchingProfilePreservesSelectedPageTypeTest()
         {
             var project = CreateTestProject();
             project.Options.Profiles["kana"].Macros.Add(new MacroItem("kana-profile-macro", "h", userDefined: true));
@@ -159,8 +176,8 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             project.Options.Profiles["asa"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
 
             var context = new ProfileOptionsWindowContext(project, null, null) { SelectedPage = null };
-            // crude emulation of WPF control behavior when clearing the collection
-            context.Pages.CollectionChanged += (s, e) => context.SelectedPage = null;
+            // a crude emulation of WPF control behavior when clearing the collection
+            context.Pages.CollectionChanged += (s, e) => { if (e.Action == NotifyCollectionChangedAction.Reset) context.SelectedPage = null; };
 
             // No page selected
 
