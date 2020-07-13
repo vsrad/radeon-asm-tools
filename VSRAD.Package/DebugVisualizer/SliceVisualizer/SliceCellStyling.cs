@@ -45,7 +45,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 return;
             }
 
-            if (_table.HeatMapMode && e.RowIndex >= 0)
+            if (_table.HeatMapMode)
             {
                 HandleHeatMap(e);
             }
@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         }
         private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
         {
-            e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+            //e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds); TODO: what brush?
             e.Handled = true;
         }
 
@@ -82,19 +82,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             else return;
 
-            // We doing force paint of _visible_ part of cell.
-            // Since we have frozen columns visible part of cell
-            // is not necessarily whole cell.
-            var r = e.CellBounds.Left > _table.RowHeadersWidth
-                ? e.CellBounds
-                : new Rectangle(_table.RowHeadersWidth + 1, e.CellBounds.Top, e.CellBounds.Right - _table.RowHeadersWidth - 1, e.CellBounds.Height);
-            r.Width -= width;
-            e.Graphics.SetClip(r);
-            e.Paint(r, DataGridViewPaintParts.All);
-            e.Graphics.SetClip(e.CellBounds);
-            r = new Rectangle(r.Right - 1, r.Top, width + 1, r.Height);
-            e.Graphics.FillRectangle(color, r);
-            e.Graphics.ResetClip();
+            CellStyling.PaintContentWithSeparator(width, color, e.CellBounds, e);
             e.Handled = true;
         }
 
