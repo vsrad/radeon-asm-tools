@@ -36,7 +36,7 @@ namespace VSRAD.Package.Commands
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
-        public Guid CommandSet => Constants.QuickActionsMenuCommandSet;
+        public Guid CommandSet => Constants.ActionsMenuCommandSet;
 
         public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
@@ -56,43 +56,37 @@ namespace VSRAD.Package.Commands
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            ActionProfileOptions actionProfileOptions;
+            var action = GetActionByCommandId(commandId);
+            if (action != null)
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ExecuteActionAsync(action));
+        }
 
+        private ActionProfileOptions GetActionByCommandId(uint commandId)
+        {
             switch (commandId)
             {
-                case Constants.PreprocessCommandId:
-                    actionProfileOptions = GetQuickActionCommandByName("Preprocess");
-                    break;
                 case Constants.ProfileCommandId:
-                    actionProfileOptions = GetQuickActionCommandByName("Profile");
-                    break;
+                    return GetActionByName("Profile");
                 case Constants.DisassembleCommandId:
-                    actionProfileOptions = GetQuickActionCommandByName("Disassemble");
-                    break;
+                    return GetActionByName("Disassemble");
+                case Constants.PreprocessCommandId:
+                    return GetActionByName("Preprocess");
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;
                     if (index == 0 && Actions.Count == 0)
                     {
                         Errors.ShowWarning("No actions available. To add an action, go to Tools -> RAD Debug -> Options and edit your current profile.");
-                        return;
+                        return null;
                     }
-                    actionProfileOptions = Actions[index];
-                    break;
+                    return Actions[index];
             }
-
-            if (actionProfileOptions == null) return;
-
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ExecuteActionAsync(actionProfileOptions));
         }
 
-        private void ShowActionNotDefinedWarning(string actionName) =>
-            Errors.ShowWarning($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.");
-
-        private ActionProfileOptions GetQuickActionCommandByName(string actionName)
+        private ActionProfileOptions GetActionByName(string actionName)
         {
             var res = Actions.FirstOrDefault(a => a.Name == actionName);
             if (res == null)
-                ShowActionNotDefinedWarning(actionName);
+                Errors.ShowWarning($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.");
             return res;
         }
 
@@ -109,8 +103,8 @@ namespace VSRAD.Package.Commands
                 var runner = new ActionRunner(_channel, _serviceProvider, env);
                 var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(action.Name, result).ConfigureAwait(false);
-                if (actionError is Error e1)
-                    Errors.Show(e1);
+                if (actionError is Error e)
+                    Errors.Show(e);
             }
             finally
             {
