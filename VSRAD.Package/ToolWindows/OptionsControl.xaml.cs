@@ -59,10 +59,13 @@ namespace VSRAD.Package.ToolWindows
             InitializeComponent();
         }
 
-        // TODO: can freeze here
         private void EditProfiles(object sender, RoutedEventArgs e)
         {
-            new ProjectSystem.Profiles.ProfileOptionsWindow(_integration).ShowDialog();
+            new ProjectSystem.Profiles.ProfileOptionsWindow(_integration)
+            {
+                Owner = Window.GetWindow(Parent),
+                ShowInTaskbar = false
+            }.ShowDialog();
         }
 
         private void AlignmentButtonClick(object sender, RoutedEventArgs e)
