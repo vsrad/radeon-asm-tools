@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
-using Microsoft.VisualStudio.PlatformUI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,32 +14,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
     public class DefinitionHighlightWordTag : TextMarkerTag
     {
-        private static string GetColorFormat()
-        {
-            var color = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
-
-            if (color.R <= 100 && color.G <= 100 && color.B <= 100)
-                return PredefinedMarkerFormatNames.DefinitionIdentifierDark;
-
-            return PredefinedMarkerFormatNames.DefinitionIdentifierLight;
-        }
-
-        public DefinitionHighlightWordTag() : base(GetColorFormat()) { }
+        public DefinitionHighlightWordTag() : base(PredefinedMarkerFormatNames.DefinitionIdentifier) { }
     }
 
     public class ReferenceHighlightWordTag : TextMarkerTag
     {
-        private static string GetColorFormat()
-        {
-            var color = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
-
-            if (color.R <= 100 && color.G <= 100 && color.B <= 100)
-                return PredefinedMarkerFormatNames.ReferenceIdentifierDark;
-
-            return PredefinedMarkerFormatNames.ReferenceIdentifierLight;
-        }
-
-        public ReferenceHighlightWordTag() : base(GetColorFormat()) { }
+        public ReferenceHighlightWordTag() : base(PredefinedMarkerFormatNames.ReferenceIdentifier) { }
     }
 
     internal class HighlightWordTagger : ITagger<TextMarkerTag>

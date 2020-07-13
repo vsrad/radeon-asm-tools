@@ -42,11 +42,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         [ImportingConstructor]
         public AnalysisClassifierProvider(IStandardClassificationService classificationService,
             IClassificationTypeRegistryService classificationTypeRegistryService,
-            DocumentAnalysisProvoder documentAnalysisProvoder)
+            DocumentAnalysisProvoder documentAnalysisProvoder,
+            ThemeColorManager classificationColorManager)
         {
             _classificationService = classificationService;
             _classificationTypeRegistryService = classificationTypeRegistryService;
             _documentAnalysisProvider = documentAnalysisProvoder;
+            Microsoft.VisualStudio.PlatformUI.VSColorTheme.ThemeChanged += (e) => classificationColorManager.UpdateColors();
         }
 
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag

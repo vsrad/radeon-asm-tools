@@ -6,13 +6,16 @@ namespace VSRAD.Syntax.Helpers
 {
     public sealed class Error
     {
-        public static void LogError(Exception e, string module = "")
+        public static void LogError(Exception e, string module = null) =>
+            LogError(e.Message, module);
+
+        public static void LogError(string message, string module = null)
         {
-            var source = string.IsNullOrEmpty(module) ? Constants.RadeonAsmSyntaxContentType : $"{module} - {Constants.RadeonAsmSyntaxContentType}";
+            var source = string.IsNullOrWhiteSpace(module) ? Constants.RadeonAsmSyntaxContentType : $"{module} - {Constants.RadeonAsmSyntaxContentType}";
 #if DEBUG
-            //ShowErrorMessage(e.ToString(), source);
+            //ShowErrorMessage(message, source);
 #else
-            ActivityLog.LogError(source, e.Message);
+            ActivityLog.LogError(source, message);
 #endif
         }
 

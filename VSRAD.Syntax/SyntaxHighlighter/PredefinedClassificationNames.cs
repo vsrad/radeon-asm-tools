@@ -17,11 +17,8 @@
     }
     static class PredefinedMarkerFormatNames
     {
-        public const string DefinitionIdentifierLight = "RAD definition identifier light theme";
-        public const string DefinitionIdentifierDark = "RAD definition identifier dark theme";
-        public const string ReferenceIdentifierLight = "RAD reference identifier light theme";
-        public const string ReferenceIdentifierDark = "RAD reference identifier dark theme";
-        public const string BraceMatchingLight = "RAD brace matching light theme";
-        public const string BraceMatchingDark = "RAD brace matching dark theme";
+        public const string DefinitionIdentifier = "RAD definition identifier";
+        public const string ReferenceIdentifier = "RAD reference identifier";
+        public const string BraceMatching = "RAD brace matching";
     }
 }
