@@ -47,6 +47,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             {
                 if (generator.ContainerFromItem(child) is TreeViewItem parent && parent.Items.Contains(item))
                 {
+                    parent.IsExpanded = true;
                     generator = parent.ItemContainerGenerator;
                     break;
                 }

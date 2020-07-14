@@ -212,8 +212,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        private void AddAction(object param) =>
-            SelectedProfile.Actions.Add(new ActionProfileOptions { Name = "New Action" });
+        private void AddAction(object param)
+        {
+            var newAction = new ActionProfileOptions { Name = "New Action" };
+            SelectedProfile.Actions.Add(newAction);
+            SelectedPage = newAction;
+        }
 
         private void RemoveAction(object param) =>
             SelectedProfile.Actions.Remove((ActionProfileOptions)param);
