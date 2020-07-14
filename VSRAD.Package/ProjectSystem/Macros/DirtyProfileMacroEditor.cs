@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Windows;
 using VSRAD.Package.Server;
 using Task = System.Threading.Tasks.Task;
 
@@ -52,6 +53,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
             editor.LoadPreviewListInBackground(_dirtyProfile.Macros, projectProperties, remoteEnvironment);
 
             var editorWindow = new MacroEditorWindow(editor);
+            editorWindow.Owner = Application.Current.MainWindow;
+            editorWindow.ShowInTaskbar = false;
             editorWindow.ShowDialog();
 
             return editor.MacroValue;
