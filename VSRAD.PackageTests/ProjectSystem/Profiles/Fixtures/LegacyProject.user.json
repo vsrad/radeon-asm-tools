@@ -107,6 +107,46 @@
         "Arguments": "all",
         "WorkingDirectory": "$(ProjectDir)"
       }
+    },
+    "Old Profile Without Preprocessor and Build Tasks": {
+      "General": {
+        "DeployDirectory": "$(RadDebugWorkDir)/gfx9",
+        "RemoteMachine": "192.168.0.108",
+        "Port": 9339,
+        "AutosaveSource": 1,
+        "CopySources": true,
+        "AdditionalSources": ""
+      },
+      "Debugger": {
+        "Executable": "bash",
+        "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDeployDir)/$(RadActiveSourceFile) -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
+        "WorkingDirectory": "/home/stud/radeon-asm-debugger-example",
+        "OutputPath": "$(RadDebugWorkDir)/tmp_dir/debug_result",
+        "BinaryOutput": true,
+        "ParseValidWatches": false,
+        "ValidWatchesFilePath": "",
+        "RunAsAdmin": false,
+        "TimeoutSecs": 0,
+        "OutputOffset": 0
+      },
+      "Disassembler": {
+        "Executable": "",
+        "Arguments": "",
+        "WorkingDirectory": "",
+        "OutputPath": "",
+        "LocalOutputCopyPath": "",
+        "LineMarker": ""
+      },
+      "Profiler": {
+        "Executable": "",
+        "Arguments": "",
+        "WorkingDirectory": "",
+        "OutputPath": "",
+        "ViewerExecutable": "",
+        "ViewerArguments": "",
+        "LocalOutputCopyPath": "",
+        "RunAsAdmin": false
+      }
     }
   }
 }

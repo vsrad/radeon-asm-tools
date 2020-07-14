@@ -89,7 +89,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private static ActionProfileOptions ReadPreprocessDisassembleAction(string name, JObject conf)
         {
-            if (string.IsNullOrEmpty((string)conf["Executable"]))
+            if (conf == null || string.IsNullOrEmpty((string)conf["Executable"]))
                 return null;
 
             var action = new ActionProfileOptions { Name = name };
@@ -118,7 +118,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private static ActionProfileOptions ReadProfileAction(JObject conf)
         {
-            if (string.IsNullOrEmpty((string)conf["Executable"]))
+            if (conf == null || string.IsNullOrEmpty((string)conf["Executable"]))
                 return null;
 
             var action = new ActionProfileOptions { Name = "Profile" };
@@ -150,6 +150,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private static ActionProfileOptions ReadBuildAction(JObject conf)
         {
+            if (conf == null)
+                return null;
+
             var action = new ActionProfileOptions { Name = "Build" };
 
             if ((bool)conf["RunPreprocessor"])
