@@ -1,4 +1,5 @@
 ﻿using Moq;
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
@@ -224,6 +225,50 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             context.SelectedProfile = GetDirtyProfile(context, "asa");
             Assert.Null(context.SelectedPage);
+        }
+
+        [Fact]
+        public void RenamingActionsSynchronizesRunActionSteps()
+        {
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
+            project.Options.Profiles["kana"].Actions[1].Steps.Add(new RunActionStep { Name = "shared-action" });
+            project.Options.Profiles["kana"].Debugger.Steps.Add(new RunActionStep { Name = "shared-action" });
+
+            var context = new ProfileOptionsWindowContext(project, null, null);
+            GetDirtyProfile(context, "kana").Actions[0].Name = "renamed-shared-action";
+
+            Assert.Equal("renamed-shared-action", ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name);
+            Assert.Equal("renamed-shared-action", ((RunActionStep)GetDirtyProfile(context, "kana").Actions[1].Steps[0]).Name);
+        }
+
+        [Fact]
+        public void ContextDoesNotLeak()
+        {
+            // Note: this test will fail if you set regular event handlers
+            // for PropertyChanged/CollectionChanged events in dirty profiles (use WeakEventManager instead)
+
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
+
+            var refs = new List<WeakReference>();
+            new Action(() =>
+            {
+                var context = new ProfileOptionsWindowContext(project, null, null);
+
+                refs.Add(new WeakReference(context, true));
+                refs.Add(new WeakReference(context.Pages.First(p => p is ProfileOptionsActionsPage), true));
+
+                GetDirtyProfile(context, "kana").Actions[0].Name = "renamed-kana-action";
+                context.SaveChanges();
+            })();
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            foreach (var r in refs)
+                Assert.Null(r.Target);
         }
 
         #region Profile Transfer

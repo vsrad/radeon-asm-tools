@@ -26,7 +26,6 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:StepDescriptionConverter x:Key="StepDescriptionConverter"/>
-        <local:CustomActionNameConverter x:Key="ActionNameConverter"/>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
@@ -200,7 +199,7 @@
                             <RowDefinition Height="26"/>
                         </Grid.RowDefinitions>
                         <Label Content="Action:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding DataContext.CustomActions, ElementName=Root, Converter={StaticResource ActionNameConverter}}"
+                        <ComboBox ItemsSource="{Binding DataContext.RunActionNames, ElementName=Root, Mode=OneWay}"
                                   SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
                     </Grid>
                 </DataTemplate>

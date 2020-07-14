@@ -57,9 +57,26 @@ namespace VSRAD.Package.Options
         }
     }
 
-    public sealed class ActionProfileOptions
+    public sealed class ActionNameChangedEventArgs : EventArgs
     {
-        public string Name { get; set; }
+        public string OldName { get; set; }
+        public string NewName { get; set; }
+    }
+
+    public sealed class ActionProfileOptions : DefaultNotifyPropertyChanged
+    {
+        public event EventHandler<ActionNameChangedEventArgs> NameChanged;
+
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                NameChanged?.Invoke(this, new ActionNameChangedEventArgs { OldName = _name, NewName = value });
+                SetField(ref _name, value);
+            }
+        }
 
         public const string BuiltinActionDebug = "Debug";
 

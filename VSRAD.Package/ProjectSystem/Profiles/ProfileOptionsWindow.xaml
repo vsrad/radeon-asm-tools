@@ -167,8 +167,8 @@
                             <Label Content="Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
                                      Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2"
-                                                CustomActions="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
+                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2" ActionName="{Binding Name}"
+                                                RunActionCandidates="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
                         </Grid>
                     </ScrollViewer>
                 </DataTemplate>
@@ -205,7 +205,7 @@
                             <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
                                                            Header="Status String" Grid.Row="4" Grid.ColumnSpan="2"/>
                             <local:ActionEditor Steps="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"
-                                                CustomActions="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
+                                                RunActionCandidates="{Binding DataContext.Actions, ElementName=Root}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
                         </Grid>
                     </ScrollViewer>
                 </DataTemplate>

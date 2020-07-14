@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -19,21 +20,37 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             Actions = new ObservableCollection<object> { profile.Debugger };
             foreach (var action in profile.Actions)
-                Actions.Add(action);
-
-            profile.Actions.CollectionChanged += (s, e) =>
             {
-                if (e.Action == NotifyCollectionChangedAction.Remove)
-                {
-                    foreach (var item in e.OldItems)
-                        Actions.Remove(item);
-                }
-                else if (e.Action == NotifyCollectionChangedAction.Add)
-                {
-                    foreach (var item in e.NewItems)
-                        Actions.Add(item);
-                }
-            };
+                Actions.Add(action);
+                WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.AddHandler(
+                    action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
+            }
+            CollectionChangedEventManager.AddHandler(profile.Actions, SyncPagesWithActionCollection);
+        }
+
+        private void SyncPagesWithActionCollection(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action == NotifyCollectionChangedAction.Remove)
+            {
+                foreach (var item in e.OldItems)
+                    Actions.Remove(item);
+            }
+            else if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                foreach (var item in e.NewItems)
+                    Actions.Add(item);
+            }
+        }
+
+        private void OnActionNameChanged(object sender, ActionNameChangedEventArgs e)
+        {
+            foreach (var action in Actions)
+            {
+                var steps = (action is DebuggerProfileOptions d) ? d.Steps : ((ActionProfileOptions)action).Steps;
+                foreach (var step in steps)
+                    if (step is RunActionStep runAction && runAction.Name == e.OldName)
+                        runAction.Name = e.NewName;
+            }
         }
     }
 

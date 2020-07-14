@@ -15,16 +15,6 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    [ValueConversion(typeof(IEnumerable<ActionProfileOptions>), typeof(IEnumerable<string>))]
-    public sealed class CustomActionNameConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            ((IEnumerable<ActionProfileOptions>)value)?.Select(a => a.Name);
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
-            throw new NotImplementedException();
-    }
-
     [ValueConversion(typeof(IActionStep), typeof(string))]
     public sealed class StepDescriptionConverter : IValueConverter
     {
@@ -42,21 +32,30 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             get => (ObservableCollection<IActionStep>)GetValue(StepsProperty); set => SetValue(StepsProperty, value);
         }
-        public IReadOnlyList<ActionProfileOptions> CustomActions
+        public IEnumerable<ActionProfileOptions> RunActionCandidates
         {
-            get => (IReadOnlyList<ActionProfileOptions>)GetValue(CustomActionsProperty); set => SetValue(CustomActionsProperty, value);
+            get => ((IEnumerable<ActionProfileOptions>)GetValue(RunActionCandidatesProperty)); set => SetValue(RunActionCandidatesProperty, value);
         }
 #pragma warning restore CA2227
-
+        public string ActionName
+        {
+            get => (string)GetValue(ActionNameProperty);
+            set { SetValue(ActionNameProperty, value); PropertyChanged(this, new PropertyChangedEventArgs(nameof(RunActionNames))); }
+        }
         public DirtyProfileMacroEditor MacroEditor
         {
             get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
         }
 
+        public IEnumerable<string> RunActionNames =>
+            RunActionCandidates.Select(a => a.Name).Where(n => n != ActionName);
+
         public static readonly DependencyProperty StepsProperty =
             DependencyProperty.Register(nameof(Steps), typeof(ObservableCollection<IActionStep>), typeof(ActionEditor), new PropertyMetadata(null));
-        public static readonly DependencyProperty CustomActionsProperty =
-            DependencyProperty.Register(nameof(CustomActions), typeof(IReadOnlyList<ActionProfileOptions>), typeof(ActionEditor), new PropertyMetadata(null));
+        public static readonly DependencyProperty RunActionCandidatesProperty =
+            DependencyProperty.Register(nameof(RunActionCandidates), typeof(IEnumerable<ActionProfileOptions>), typeof(ActionEditor), new PropertyMetadata(null));
+        public static readonly DependencyProperty ActionNameProperty =
+            DependencyProperty.Register(nameof(ActionName), typeof(string), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty MacroEditorProperty =
             DependencyProperty.Register(nameof(MacroEditor), typeof(DirtyProfileMacroEditor), typeof(ActionEditor), new PropertyMetadata(null));
 
