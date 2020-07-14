@@ -1,7 +1,10 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser.Blocks;
 using VSRAD.Syntax.Parser.Tokens;
 
@@ -15,13 +18,18 @@ namespace VSRAD.Syntax.Parser
 
     internal abstract class Parser : IParser
     {
+        protected readonly DocumentInfo _documentInfo;
+        protected readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         protected int _currentVersion;
-        protected ITextSnapshot _snapshot;
         protected HashSet<string> _instructions;
+        private bool _engagedParsing;
 
-        public Parser()
+        public Parser(DocumentInfo documentInfo, DocumentAnalysisProvoder documentAnalysisProvoder)
         {
+            _documentInfo = documentInfo;
+            _documentAnalysisProvoder = documentAnalysisProvoder;
             _currentVersion = -1;
+            _engagedParsing = false;
             _instructions = new HashSet<string>();
         }
 
@@ -30,9 +38,21 @@ namespace VSRAD.Syntax.Parser
             if (lexerVersion == _currentVersion)
                 return null;
 
+            // Cycles may occur using the include keywords
+            // With this event, parsing is not performed
+            if (_engagedParsing)
+                return null;
+
             _currentVersion = lexerVersion;
-            _snapshot = snapshot;
-            return Parse(tokens, _snapshot, cancellation);
+            try
+            {
+                _engagedParsing = true;
+                return Parse(tokens, snapshot, cancellation);
+            }
+            finally
+            {
+                _engagedParsing = false;
+            }
         }
 
         public void UpdateInstructionSet(IReadOnlyList<string> instructions) =>
@@ -50,5 +70,25 @@ namespace VSRAD.Syntax.Parser
         }
 
         public abstract List<IBlock> Parse(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation);
+
+        protected void AddExternalDefinitions(List<KeyValuePair<AnalysisToken, ITextSnapshot>> definitions, TrackingToken includeStr, ITextSnapshot version)
+        {
+            try
+            {
+                var filePath = Path.Combine(_documentInfo.DirectoryPath, includeStr.GetText(version).Trim('"'));
+                var documentAnalysis = _documentAnalysisProvoder.GetOrCreateDocumentAnalysis(filePath);
+                if (documentAnalysis != null)
+                {
+                    foreach (var funcToken in documentAnalysis.LastParserResult.GetGlobalTokens())
+                    {
+                        definitions.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
+                    }
+                }
+            }
+            catch (Exception e) when (e is ArgumentException || e is FileNotFoundException)
+            {
+                Error.LogError(e, "External definitions loader");
+            }
+        }
     }
 }

@@ -32,7 +32,7 @@ namespace VSRAD.Syntax.FunctionList
                 var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(view.TextBuffer);
 
                 documentAnalysis.ParserUpdated += FunctionList.TryUpdateFunctionList;
-                view.Caret.PositionChanged += (obj, args) => FunctionList.TryHighlightCurrentFunction(args.TextView);
+                view.Caret.PositionChanged += (obj, args) => FunctionList.TryHighlightCurrentFunction(args.NewPosition.BufferPosition);
 
                 FunctionList.TryUpdateFunctionList(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
             }

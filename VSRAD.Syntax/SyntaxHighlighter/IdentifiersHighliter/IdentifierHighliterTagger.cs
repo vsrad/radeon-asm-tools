@@ -146,7 +146,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return;
             }
             var navigationItem = navigationItems[0].AnalysisToken;
-            var navigationTokenSpan =  new SnapshotSpan(version, navigationItem.TrackingToken.GetSpan(version));
+            var navigationTokenSpan = navigationItem.TrackingToken.Start.TextBuffer == version.TextBuffer
+                ? (SnapshotSpan?)new SnapshotSpan(version, navigationItem.TrackingToken.GetSpan(version))
+                : null;
 
             cancellation.ThrowIfCancellationRequested();
             var block = _documentAnalysis.LastParserResult.GetBlockBy(navigationItem);

@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -9,7 +8,6 @@ using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Parser;
 using Task = System.Threading.Tasks.Task;
-using Microsoft.VisualStudio.Utilities;
 
 namespace VSRAD.Syntax.Options
 {
@@ -19,21 +17,19 @@ namespace VSRAD.Syntax.Options
         public delegate void InstructionsUpdateDelegate(IReadOnlyList<string> instructions);
         public event InstructionsUpdateDelegate InstructionUpdated;
 
-        private readonly RadeonServiceProvider _serviceProvider;
         private readonly OptionsProvider _optionsProvider;
-        private readonly IContentType _contentType;
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+        private Lazy<DocumentAnalysisProvoder> _documentAnalysisProvoder { get; set; }
 
         public Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>> InstructionList { get; }
 
         [ImportingConstructor]
-        public InstructionListManager(OptionsProvider optionsEventProvider, RadeonServiceProvider serviceProvider)
+        public InstructionListManager([Import(AllowDefault = true, AllowRecomposition = true)]Lazy<DocumentAnalysisProvoder> documentAnalysisProvoder /* circular dependency approach */, 
+            OptionsProvider optionsEventProvider, 
+            RadeonServiceProvider serviceProvider)
         {
-            _serviceProvider = serviceProvider;
             _optionsProvider = optionsEventProvider;
-            _contentType = _serviceProvider.ContentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
 
-            _documentAnalysisProvoder = new DocumentAnalysisProvoder(this);
+            _documentAnalysisProvoder = documentAnalysisProvoder;
             InstructionList = new Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>>();
             _optionsProvider.OptionsUpdated += InstructionPathsUpdated;
         }
@@ -104,11 +100,7 @@ namespace VSRAD.Syntax.Options
         {
             try
             {
-                var buffer = CreateTextDocument(path);
-                if (buffer == null)
-                    throw new InvalidDataException($"Cannot create ITextBuffer for the {path}");
-
-                var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(buffer);
+                var documentAnalysis = _documentAnalysisProvoder.Value.GetOrCreateDocumentAnalysis(path);
                 if (documentAnalysis.LastParserResult.Count > 0)
                 {
                     var instructions = documentAnalysis
@@ -136,12 +128,6 @@ namespace VSRAD.Syntax.Options
             {
                 Error.ShowError(e, "instrunction file paths");
             }
-        }
-
-        private ITextBuffer CreateTextDocument(string name)
-        {
-            var document = _serviceProvider.TextDocumentFactoryService.CreateAndLoadTextDocument(name, _contentType);
-            return document.TextBuffer;
         }
     }
 }

@@ -117,7 +117,7 @@ STRING_LITERAL
     ;
 
 IDENTIFIER
-    : [.\\_]? [a-zA-Z] [a-zA-Z0-9_]*
+    : '.'? [a-zA-Z_] [a-zA-Z0-9_]*
     ;
 
 WHITESPACE
