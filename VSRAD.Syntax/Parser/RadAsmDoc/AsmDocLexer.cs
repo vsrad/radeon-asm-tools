@@ -31,6 +31,7 @@ namespace VSRAD.Syntax.Parser.RadAsmDoc
             { RadAsmDocLexer.IDENTIFIER, RadAsmTokenType.Identifier },
             { RadAsmDocLexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
             { RadAsmDocLexer.WHITESPACE, RadAsmTokenType.Whitespace },
+            { RadAsmDocLexer.EOL, RadAsmTokenType.Whitespace },
             { RadAsmDocLexer.UNKNOWN, RadAsmTokenType.Unknown },
         };
     }

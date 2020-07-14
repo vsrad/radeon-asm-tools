@@ -14,7 +14,11 @@ IDENTIFIER
     ;
 
 WHITESPACE
-    : [ \t\r\n]+
+    : [ \t]+
+    ;
+
+EOL
+    : '\r'? '\n'
     ;
 
 BLOCK_COMMENT

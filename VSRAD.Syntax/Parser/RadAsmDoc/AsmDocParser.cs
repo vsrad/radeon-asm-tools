@@ -19,7 +19,6 @@ namespace VSRAD.Syntax.Parser.RadAsmDoc
 
             var rootBlock = Block.Empty();
             var blocks = new List<IBlock>() { rootBlock };
-            var definitions = new HashSet<string>();
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsmDocLexer.WHITESPACE)
                 .ToArray();
@@ -34,14 +33,12 @@ namespace VSRAD.Syntax.Parser.RadAsmDoc
                     if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                     {
                         rootBlock.Tokens.Add(new VariableToken(RadAsmTokenType.GlobalVariable, tokens[i + 1]));
-                        definitions.Add(tokens[i + 1].GetText(version));
                         i += 1;
                     }
                 }
-                else if (token.Type == RadAsmDocLexer.IDENTIFIER)
+                else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                 {
-                    if (!definitions.Contains(token.GetText(version)))
-                        rootBlock.AddToken(RadAsmTokenType.Instruction, token);
+                    rootBlock.AddToken(RadAsmTokenType.Instruction, tokens[i + 1]);
                 }
             }
 
