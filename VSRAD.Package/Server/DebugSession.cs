@@ -90,7 +90,7 @@ namespace VSRAD.Package.Server
                     return new DebugRunResult(result, error, null);
 
                 // TODO: refactor OutputFile away
-                var output = new OutputFile(directory: "", file: options.OutputFile.Path, options.BinaryOutput);
+                var output = new OutputFile(directory: env.RemoteWorkDir, file: options.OutputFile.Path, options.BinaryOutput);
                 var data = new BreakStateData(watches, output, outputMeta.timestamp, outputMeta.byteCount, options.OutputOffset);
                 return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
             }
