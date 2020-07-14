@@ -15,28 +15,22 @@ namespace VSRAD.DebugServer.Handlers
             _command = command;
         }
 
-        public Task<IResponse> RunAsync()
+        public async Task<IResponse> RunAsync()
         {
             var fullPath = Path.Combine(_command.WorkDir, _command.Path);
-            var status = DoPutFile(fullPath, _command.Data);
-            return Task.FromResult<IResponse>(new PutFileResponse { Status = status });
-        }
-
-        private static PutFileStatus DoPutFile(string fullPath, byte[] data)
-        {
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-                File.WriteAllBytes(fullPath, data);
-                return PutFileStatus.Successful;
+                await File.WriteAllBytesAsync(fullPath, _command.Data);
+                return new PutFileResponse { Status = PutFileStatus.Successful };
             }
             catch (UnauthorizedAccessException)
             {
-                return PutFileStatus.PermissionDenied;
+                return new PutFileResponse { Status = PutFileStatus.PermissionDenied };
             }
             catch (IOException)
             {
-                return PutFileStatus.OtherIOError;
+                return new PutFileResponse { Status = PutFileStatus.OtherIOError };
             }
         }
     }
