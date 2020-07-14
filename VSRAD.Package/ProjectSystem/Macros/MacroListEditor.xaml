@@ -39,6 +39,8 @@
         </Grid.RowDefinitions>
         <DockPanel>
             <Label Content="Search macros:"/>
+            <Button Content="➕" Width="22" Height="22" Margin="4,0,0,0" DockPanel.Dock="Right"
+                    Command="{Binding AddMacroCommand, ElementName=Root}" ToolTip="Add macro"/>
             <TextBox Height="22" VerticalContentAlignment="Center" HorizontalAlignment="Stretch"
                      ToolTip="Filter available macros by their name or value (case-insensitive)"
                      Text="{Binding MacroFilter, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"/>

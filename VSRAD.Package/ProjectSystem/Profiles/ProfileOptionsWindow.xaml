@@ -39,8 +39,8 @@
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Horizontal">
             <ComboBox ItemsSource="{Binding DirtyProfiles}" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" DisplayMemberPath="General.ProfileName" Width="178" Height="22"/>
-            <Button Content="+" ToolTip="Create a new profile" Click="CreateNewProfile" Width="22" Height="22" Margin="4,0,0,0"/>
-            <Button Content="-" ToolTip="Delete selected profile" Command="{Binding RemoveProfileCommand}" Width="22" Height="22" Margin="4,0,0,0"/>
+            <Button Content="➕" ToolTip="Create a new profile" Click="CreateNewProfile" Width="22" Height="22" Margin="4,0,0,0"/>
+            <Button Content="❌" ToolTip="Delete selected profile" Command="{Binding RemoveProfileCommand}" Width="22" Height="22" Margin="4,0,0,0"/>
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Horizontal">
             <Button Content="Export" Click="ExportProfiles" Height="22" Width="74" HorizontalAlignment="Stretch"/>
@@ -79,13 +79,32 @@
             <ContentControl.Content>
                 <Binding Path="SelectedPage">
                     <Binding.TargetNullValue>
-                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                            <TextBlock>No page selected</TextBlock>
+                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock>
+                                Choose the profile to edit in the dropdown list on the left.<LineBreak/><LineBreak/>
+                                
+                                To create a new profile, click the <Bold>➕</Bold> button next to the profile list.<LineBreak/>
+                                Alternatively, press <Bold>Copy</Bold> to make a copy of the selected profile.<LineBreak/><LineBreak/>
+                                
+                                To delete the selected profile, click <Bold>❌</Bold>.<LineBreak/><LineBreak/>
+                                
+                                To save existing profiles to disk or add profiles from a file,<LineBreak/>
+                                use the <Bold>Export</Bold> and <Bold>Import</Bold> commands respectively.
+                            </TextBlock>
                         </Grid>
                     </Binding.TargetNullValue>
                 </Binding>
             </ContentControl.Content>
             <ContentControl.Resources>
+                <DataTemplate DataType="{x:Type local:ProfileOptionsActionsPage}">
+                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock>
+                            Click the <Bold>➕</Bold> button next to <Bold>Actions</Bold> to create a new action.<LineBreak/><LineBreak/>
+                            
+                            To run an action, open <Italic>Tools</Italic> -> <Italic>RAD Debug</Italic> -> <Italic>Actions</Italic> and select it from the list.
+                        </TextBlock>
+                    </Grid>
+                </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:GeneralProfileOptions}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
