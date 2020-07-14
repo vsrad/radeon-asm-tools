@@ -40,26 +40,6 @@ namespace VSRAD.Package.Options
 
     public static class ActionExtensions
     {
-        public static string GetLabel(this StepEnvironment env)
-        {
-            switch (env)
-            {
-                case StepEnvironment.Local: return "L";
-                case StepEnvironment.Remote: return "R";
-            }
-            throw new NotImplementedException();
-        }
-
-        public static string GetLabel(this FileCopyDirection dir)
-        {
-            switch (dir)
-            {
-                case FileCopyDirection.LocalToRemote: return "LR";
-                case FileCopyDirection.RemoteToLocal: return "RL";
-            }
-            throw new NotImplementedException();
-        }
-
         public static bool IsRemote(this BuiltinActionFile file) =>
             file.Location == StepEnvironment.Remote;
     }
@@ -96,7 +76,9 @@ namespace VSRAD.Package.Options
             {
                 if (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath))
                     return "Copy File (not configured)";
-                return $"{Direction.GetLabel()} Copy {SourcePath} -> {TargetPath}";
+
+                var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote" : "from Remote";
+                return $"Copy {dir} {SourcePath} -> {TargetPath}";
             }
         }
 
@@ -155,7 +137,9 @@ namespace VSRAD.Package.Options
             {
                 if (string.IsNullOrEmpty(Executable))
                     return "Execute (not configured)";
-                return $"{Environment.GetLabel()} Execute {Executable}";
+
+                var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
+                return $"{env} Execute {Executable} {Arguments}";
             }
         }
 

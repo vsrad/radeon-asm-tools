@@ -20,7 +20,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             };
             var level2Steps = new List<IActionStep>
             {
-                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "obtain-contract" },
+                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "obtain-contract", Arguments = "-i -mm" },
                 new RunActionStep(level3Steps) { Name = "Exchange Soul" }
             };
             var level1Steps = new List<IActionStep>
@@ -71,15 +71,15 @@ namespace VSRAD.PackageTests.ProjectSystem
 @"=> Fetched initial timestamps in 10ms
 => [0] Run Sign Contract SUCCEEDED in 40ms
 ===> Fetched initial timestamps in 0ms
-===> [0] R Execute obtain-contract SUCCEEDED in 20ms
+===> [0] Remote Execute obtain-contract -i -mm SUCCEEDED in 20ms
 Captured stdout (exit code 1):
 contract obtained
 ===> [1] Run Exchange Soul SUCCEEDED in 20ms
 =====> Fetched initial timestamps in 0ms
-=====> [0] R Execute cleanup SUCCEEDED in 20ms
+=====> [0] Remote Execute cleanup --skip SUCCEEDED in 20ms
 Captured stdout (exit code 2):
 ..
-=> [1] LR Copy soul -> incubator SUCCEEDED in 20ms
+=> [1] Copy to Remote soul -> incubator SUCCEEDED in 20ms
 ";
             Assert.Equal(expectedMessage, logMessage);
             var expectedWarnings =
