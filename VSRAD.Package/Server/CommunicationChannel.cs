@@ -53,7 +53,8 @@ namespace VSRAD.Package.Server
     public sealed class CommunicationChannel : ICommunicationChannel
     {
         public event Action ConnectionStateChanged;
-        public ServerConnectionOptions ConnectionOptions => _project.Options.Profile.General.Connection;
+        public ServerConnectionOptions ConnectionOptions =>
+            _project.Options.Profile?.General?.Connection ?? new ServerConnectionOptions("Remote address is not specified", 0);
 
         private ClientState _state = ClientState.Disconnected;
         public ClientState ConnectionState
