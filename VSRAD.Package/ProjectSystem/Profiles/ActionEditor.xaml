@@ -25,7 +25,6 @@
                 <x:Type TypeName="opts:FileCopyDirection"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
-        <local:StepDescriptionConverter x:Key="StepDescriptionConverter"/>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
