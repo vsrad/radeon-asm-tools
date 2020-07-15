@@ -19,11 +19,15 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _columnStyling = styling;
             _appearance = context.Options.VisualizerAppearance;
             _stylingOptions = context.Options.VisualizerColumnStyling;
-
-            _table.CellPainting += HandleCellPaint;
         }
 
-        private void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
+        public static void ApplyCellStylingOnCellPainting(SliceVisualizerTable table, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, SliceVisualizerContext context)
+        {
+            var cellStyling = new SliceCellStyling(table, styling, fontAndColor, context);
+            table.CellPainting += cellStyling.HandleCellPaint;
+        }
+
+        public void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (_table.SelectedWatch == null ||
                 e.ColumnIndex < SliceVisualizerTable.DataColumnOffset ||
