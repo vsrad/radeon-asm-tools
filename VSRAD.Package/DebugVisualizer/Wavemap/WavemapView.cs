@@ -29,5 +29,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             var execMaskIndex = groupIndex * _groupSize * _laneDataSize + (8 * _laneDataSize); // execmask is in 8-9 lane of system watch
             return _data[execMaskIndex] != 0 || _data[execMaskIndex + _laneDataSize] != 0;
         }
+
+        public int GetBreakpointLine(int groupIndex)
+        {
+            var breakIndex = groupIndex * _groupSize * _laneDataSize + _laneDataSize; // break line is in the first lane of system watch
+            return (int)_data[breakIndex];
+        }
     }
 }

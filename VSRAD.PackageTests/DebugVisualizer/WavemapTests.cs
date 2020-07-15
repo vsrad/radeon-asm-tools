@@ -1,4 +1,5 @@
-﻿using VSRAD.Package.DebugVisualizer.Wavemap;
+﻿using System.Xml.Serialization;
+using VSRAD.Package.DebugVisualizer.Wavemap;
 using Xunit;
 
 namespace VSRAD.PackageTests.DebugVisualizer
@@ -11,7 +12,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             777, 0, 15, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 100, 0, 100, 0, 0, 0,  // 1-st group, break on line 15, not-empty exec-mask
             777, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1,       // 2-nd group, empty exec-mask
             777, 0, 105, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 100, 0, 0, 0, // 3-rd group, break on line 105, not-empty exec-mask
-            777, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1,       // 4-th group, empty exec-mask TODO: fix
+            777, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1,       // 4-th group, empty exec-mask
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       // extra data
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       // extra data
         };
@@ -32,6 +33,16 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var executionMap = new bool[] { true, false, true, false };
             for (int i = 0; i < 4; ++i)
                 Assert.Equal(executionMap[i], wavemapView.GroupExecuted(i));
+        }
+
+        [Fact]
+        public void BreapointLineTest()
+        {
+            var wavemapView = new WavemapView(_data, groupSize: 11, laneDataSize: 2, groupCount: 4);
+
+            var breakpointMap = new int[] { 15, 1, 105, 0 };
+            for (int i = 0; i < 4; ++i)
+                Assert.Equal(breakpointMap[i], wavemapView.GetBreakpointLine(i));
         }
     }
 }
