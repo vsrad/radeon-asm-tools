@@ -112,7 +112,7 @@ namespace VSRAD.Package.ProjectSystem
 
                 if (result.ActionResult != null)
                 {
-                    var actionError = await _actionLogger.LogActionWithWarningsAsync("Debugger", result.ActionResult);
+                    var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
                     if (actionError is Error e1)
                         Errors.Show(e1);
                 }

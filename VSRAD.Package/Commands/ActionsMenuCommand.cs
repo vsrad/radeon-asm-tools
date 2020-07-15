@@ -102,7 +102,7 @@ namespace VSRAD.Package.Commands
 
                 var runner = new ActionRunner(_channel, _serviceProvider, env);
                 var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
-                var actionError = await _actionLogger.LogActionWithWarningsAsync(action.Name, result).ConfigureAwait(false);
+                var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
                 if (actionError is Error e)
                     Errors.Show(e);
             }

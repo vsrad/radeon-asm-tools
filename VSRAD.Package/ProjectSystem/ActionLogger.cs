@@ -8,7 +8,7 @@ namespace VSRAD.Package.ProjectSystem
 {
     public interface IActionLogger
     {
-        Task<Error?> LogActionWithWarningsAsync(string tag, ActionRunResult runResult);
+        Task<Error?> LogActionWithWarningsAsync(ActionRunResult runResult);
     }
 
     [Export(typeof(IActionLogger))]
@@ -25,9 +25,9 @@ namespace VSRAD.Package.ProjectSystem
             _errorList = errorList;
         }
 
-        public async Task<Error?> LogActionWithWarningsAsync(string tag, ActionRunResult runResult)
+        public async Task<Error?> LogActionWithWarningsAsync(ActionRunResult runResult)
         {
-            var title = tag + " action " + (runResult.Successful ? "SUCCEEDED" : "FAILED") + $" in {runResult.TotalMillis}ms";
+            var title = runResult.ActionName + " action " + (runResult.Successful ? "SUCCEEDED" : "FAILED") + $" in {runResult.TotalMillis}ms";
 
             var log = new StringBuilder();
             var warnings = new StringBuilder();

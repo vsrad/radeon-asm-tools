@@ -271,7 +271,7 @@ namespace VSRAD.Package.Options
 
             callers.Pop();
 
-            return new RunActionStep(evaluatedSteps);
+            return new RunActionStep(evaluatedSteps) { Name = Name };
         }
     }
 
