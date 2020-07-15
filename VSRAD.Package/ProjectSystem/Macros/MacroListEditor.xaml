@@ -39,8 +39,7 @@
         </Grid.RowDefinitions>
         <DockPanel>
             <Label Content="Search macros:"/>
-            <Button Content="➕" Width="22" Height="22" Margin="4,0,0,0" DockPanel.Dock="Right"
-                    Command="{Binding AddMacroCommand, ElementName=Root}" ToolTip="Add macro"/>
+            <Button Content="➕" Width="22" Height="22" Margin="4,0,0,0" DockPanel.Dock="Right" Click="AddMacro" ToolTip="Add macro"/>
             <TextBox Height="22" VerticalContentAlignment="Center" HorizontalAlignment="Stretch"
                      ToolTip="Filter available macros by their name or value (case-insensitive)"
                      Text="{Binding MacroFilter, ElementName=Root, UpdateSourceTrigger=PropertyChanged}"/>
@@ -54,7 +53,6 @@
                         <Style TargetType="{x:Type TextBlock}">
                             <Setter Property="VerticalAlignment" Value="Center" />
                             <Setter Property="Padding" Value="6,0" />
-                            <Setter Property="Height" Value="22" />
                             <Style.Triggers>
                                 <Trigger Property="Validation.HasError" Value="true">
                                     <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
@@ -64,8 +62,8 @@
                     </DataGridTextColumn.ElementStyle>
                     <DataGridTextColumn.EditingElementStyle>
                         <Style TargetType="{x:Type TextBox}">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                            <Setter Property="Padding" Value="6,0" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="3,0" />
                             <Setter Property="Height" Value="22" />
                             <Style.Triggers>
                                 <Trigger Property="Validation.HasError" Value="true">
@@ -84,8 +82,8 @@
                     </DataGridTextColumn.ElementStyle>
                     <DataGridTextColumn.EditingElementStyle>
                         <Style TargetType="{x:Type TextBox}">
-                            <Setter Property="VerticalAlignment" Value="Center" />
-                            <Setter Property="Padding" Value="6,0" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="3,0" />
                             <Setter Property="Height" Value="22" />
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
@@ -130,8 +128,7 @@
                                                 <Label Content="{Binding Name, Converter={StaticResource MacroUserDefinedLabelConverter}}" />
                                             </profiles:ExtendedExpander.HeaderMainContent>
                                             <profiles:ExtendedExpander.HeaderSideContent>
-                                                <Button Content="➕" Width="22" Height="22" ToolTip="Add macro"
-                                                        Command="{Binding AddMacroCommand, ElementName=Root}"
+                                                <Button Content="➕" Width="22" Height="22" ToolTip="Add macro" Click="AddMacro"
                                                         Visibility="{Binding Name, Converter={StaticResource MacroUserDefinedVisibilityConverter}}" />
                                             </profiles:ExtendedExpander.HeaderSideContent>
                                             <ItemsPresenter />

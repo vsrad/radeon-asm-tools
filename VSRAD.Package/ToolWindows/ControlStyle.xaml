@@ -139,7 +139,10 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
         <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.StartPageButtonPinDownKey}}"/>
+                <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarSelectedKey}}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"/>
             </Trigger>
         </Style.Triggers>
     </Style>

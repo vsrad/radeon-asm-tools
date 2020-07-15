@@ -30,7 +30,7 @@
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
             <Label Content="Steps"/>
-            <Button x:Name="NewStepButton" Content="➕" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewStepPopup"/>
+            <Button x:Name="NewStepButton" Content="➕" ToolTip="Add step" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewStepPopup"/>
         </DockPanel>
         <Popup x:Name="NewStepPopup" PlacementTarget="{Binding ElementName=NewStepButton}" Placement="Left" StaysOpen="False">
             <Menu Background="{DynamicResource {x:Static vsshell:VsBrushes.MenuKey}}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.MenuTextKey}}">
@@ -45,165 +45,182 @@
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
             </Menu>
         </Popup>
-        <ListView ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}">
-            <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem">
-                    <Setter Property="MinHeight" Value="26" />
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="ListViewItem">
-                                <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="0,0,0,1">
-                                    <Grid x:Name="ItemGrid">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock TextTrimming="CharacterEllipsis" Text="{Binding Description}" VerticalAlignment="Center" Grid.Column="0" />
-                                        <StackPanel Orientation="Horizontal" Grid.Column="1">
-                                            <Button Content="⮝" Command="{Binding DataContext.MoveUpCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}" Width="22" Height="22" Margin="0,0,4,0" />
-                                            <Button Content="⮟" Command="{Binding DataContext.MoveDownCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}" Width="22" Height="22" Margin="0,0,4,0" />
-                                            <Button Content="❌" Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}" Width="22" Height="22" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="ItemGrid" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverBackgroundEndKey}}" />
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="ItemGrid" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseDownBackgroundKey}}" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ListView.ItemContainerStyle>
-            <ListBox.Template>
-                <ControlTemplate>
-                    <ItemsPresenter />
-                </ControlTemplate>
-            </ListBox.Template>
-        </ListView>
-        <ContentControl Content="{Binding SelectedStep}" Margin="0,8,0,0">
-            <ContentControl.Resources>
-                <DataTemplate DataType="{x:Type opts:CopyFileStep}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="178"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="22"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                        </Grid.RowDefinitions>
-                        <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
-                                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+        <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1,1,1,0">
+            <ListView ItemsSource="{Binding Steps}" SelectedItem="{Binding SelectedStep}">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="MinHeight" Value="26" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListViewItem">
+                                    <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="0,0,0,1">
+                                        <Grid x:Name="ItemGrid">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Margin="4,0" TextTrimming="CharacterEllipsis" Text="{Binding Description}" VerticalAlignment="Center" Grid.Column="0" />
+                                            <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="4,0">
+                                                <Button Content="⮝" Command="{Binding DataContext.MoveUpCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
+                                                        ToolTip="Move up" Width="22" Height="22" Margin="0,0,4,0" />
+                                                <Button Content="⮟" Command="{Binding DataContext.MoveDownCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
+                                                        ToolTip="Move down" Width="22" Height="22" Margin="0,0,4,0" />
+                                                <Button Content="❌" Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
+                                                        ToolTip="Delete step" Width="22" Height="22" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="ItemGrid" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundEndKey}}" />
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="ItemGrid" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarSelectedKey}}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListBox.Template>
+                    <ControlTemplate>
+                        <ItemsPresenter />
+                    </ControlTemplate>
+                </ListBox.Template>
+            </ListView>
+        </Border>
+        <Border Margin="0,8,0,0" Height="190" Padding="4" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1">
+            <ContentControl>
+                <Binding Path="SelectedStep">
+                    <Binding.TargetNullValue>
+                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">
+                            Add a new step by clicking <Bold>➕</Bold>.<LineBreak/>
+                            Specify when it is run by changing its position with <Bold>⮝</Bold> and <Bold>⮟</Bold> arrows.<LineBreak/><LineBreak/>
 
-                        <Label Content="Source Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                        <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
-                        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
-                                Tag="SourcePath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                            Click on a step to select it and open configuration options.
+                        </TextBlock>
+                    </Binding.TargetNullValue>
+                </Binding>
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type opts:CopyFileStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="22"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
+                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
 
-                        <Label Content="Target Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
-                        <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
-                        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
-                                Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                            <Label Content="Source Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                                    Tag="SourcePath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                        <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                        <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
-                                  IsChecked="{Binding CheckTimestamp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </Grid>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type opts:ExecuteStep}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="22"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                        </Grid.RowDefinitions>
-                        <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Environment, Mode=TwoWay}"
-                                    Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                            <Label Content="Target Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
+                                    Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                        <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                        <TextBox Text="{Binding Executable, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
-                        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
-                                Tag="Executable" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                            <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
+                                      IsChecked="{Binding CheckTimestamp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:ExecuteStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="22"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Environment, Mode=TwoWay}"
+                                        Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
 
-                        <Label Content="Arguments:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
-                        <TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
-                        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
-                                Tag="Arguments" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                            <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding Executable, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                                    Tag="Executable" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                        <Label Content="Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                        <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
-                        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
-                                Tag="WorkingDirectory" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                            <Label Content="Arguments:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
+                                    Tag="Arguments" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                        <Label Content="Run as Administrator:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
-                        <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
-                                  IsChecked="{Binding RunAsAdmin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Label Content="Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
+                                    Tag="WorkingDirectory" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                        <Label Content="Wait for Completion:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
-                        <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
-                                  IsChecked="{Binding WaitForCompletion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Label Content="Run as Administrator:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
+                                      IsChecked="{Binding RunAsAdmin, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <Label Content="Timeout in Seconds:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
-                        <TextBox Text="{Binding TimeoutSecs, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
-                                 IsEnabled="{Binding WaitForCompletion}" ToolTip="0 - timeout disabled" Height="22" Width="160" Grid.Row="6" Grid.Column="1"/>
-                    </Grid>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type opts:OpenInEditorStep}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="22"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="26"/>
-                            <RowDefinition Height="26"/>
-                        </Grid.RowDefinitions>
-                        <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <TextBox Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
-                        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
-                                Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                            <Label Content="Wait for Completion:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
+                                      IsChecked="{Binding WaitForCompletion, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <Label Content="Line Marker:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                        <TextBox Text="{Binding LineMarker, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
-                                 Height="22" Width="160" Grid.Row="1" Grid.Column="1" />
-                    </Grid>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type opts:RunActionStep}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="170"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="22"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="26"/>
-                        </Grid.RowDefinitions>
-                        <Label Content="Action:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding DataContext.RunActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
-                    </Grid>
-                </DataTemplate>
-            </ContentControl.Resources>
-        </ContentControl>
+                            <Label Content="Timeout in Seconds:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
+                            <TextBox Text="{Binding TimeoutSecs, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
+                                     IsEnabled="{Binding WaitForCompletion}" ToolTip="0 - timeout disabled" Height="22" Width="160" Grid.Row="6" Grid.Column="1"/>
+                        </Grid>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:OpenInEditorStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="22"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <TextBox Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
+                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
+                                    Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Line Marker:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding LineMarker, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
+                                     Height="22" Width="160" Grid.Row="1" Grid.Column="1" />
+                        </Grid>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:RunActionStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="22"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Action:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox ItemsSource="{Binding DataContext.RunActionNames, ElementName=Root, Mode=OneWay}"
+                                      SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                        </Grid>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+        </Border>
     </StackPanel>
 </UserControl>

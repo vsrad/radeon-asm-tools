@@ -49,7 +49,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false)
         };
 
-        public ICommand AddMacroCommand { get; }
         public ICommand DeleteMacroCommand { get; }
         public ICommand RichEditCommand { get; }
 
@@ -77,7 +76,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public MacroListEditor()
         {
             InitializeComponent();
-            AddMacroCommand = new WpfDelegateCommand(_ => ((MacroListDisplayCollection)DataContext).Add(new MacroItem()));
             DeleteMacroCommand = new WpfDelegateCommand(item => ((MacroListDisplayCollection)DataContext).Remove((MacroItem)item));
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
 
@@ -88,6 +86,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 // DataContext is bound after initialization at run time
                 DataContextChanged += (s, e) => SetupDisplayCollection(e.NewValue);
         }
+
+        private void AddMacro(object sender, RoutedEventArgs e) =>
+            ((MacroListDisplayCollection)DataContext).Add(new MacroItem());
 
         private void SetupDisplayCollection(object dataContext)
         {
