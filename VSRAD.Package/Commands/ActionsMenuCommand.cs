@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using VSRAD.Package.Options;
@@ -23,8 +22,7 @@ namespace VSRAD.Package.Commands
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
-        private IReadOnlyList<ActionProfileOptions> Actions =>
-            (IReadOnlyList<ActionProfileOptions>)_project.Options.Profile?.Actions ?? new List<ActionProfileOptions>();
+        private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
         public ActionsMenuCommand(IProject project, IActionLogger actionLogger, ICommunicationChannel channel, SVsServiceProvider serviceProvider)
@@ -44,18 +42,24 @@ namespace VSRAD.Package.Commands
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
 
             int index = (int)commandId - Constants.ActionsMenuCommandId;
-            if (index < 0 || index >= Actions.Count)
+            if (SelectedProfile == null || index < 0 || index >= SelectedProfile.Actions.Count)
                 return 0;
 
             var flags = OleCommandText.GetFlags(commandText);
             if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
-                OleCommandText.SetText(commandText, Actions[index].Name);
+                OleCommandText.SetText(commandText, SelectedProfile.Actions[index].Name);
 
             return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
         }
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
+            if (SelectedProfile == null)
+            {
+                Errors.ShowWarning("A profile is required to run actions. To create it, go to Tools -> RAD Debug -> Options.");
+                return;
+            }
+
             var action = GetActionByCommandId(commandId);
             if (action != null)
                 VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ExecuteActionAsync(action));
@@ -66,28 +70,36 @@ namespace VSRAD.Package.Commands
             switch (commandId)
             {
                 case Constants.ProfileCommandId:
-                    return GetActionByName("Profile");
+                    return GetActionByName(SelectedProfile.MenuCommands.ProfileAction);
                 case Constants.DisassembleCommandId:
-                    return GetActionByName("Disassemble");
+                    return GetActionByName(SelectedProfile.MenuCommands.DisassembleAction);
                 case Constants.PreprocessCommandId:
-                    return GetActionByName("Preprocess");
+                    return GetActionByName(SelectedProfile.MenuCommands.PreprocessAction);
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;
-                    if (index == 0 && Actions.Count == 0)
+                    if (index == 0 && SelectedProfile.Actions.Count == 0)
                     {
                         Errors.ShowWarning("No actions available. To add an action, go to Tools -> RAD Debug -> Options and edit your current profile.");
                         return null;
                     }
-                    return Actions[index];
+                    return SelectedProfile.Actions[index];
             }
         }
 
         private ActionProfileOptions GetActionByName(string actionName)
         {
-            var res = Actions.FirstOrDefault(a => a.Name == actionName);
-            if (res == null)
-                Errors.ShowWarning($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.");
-            return res;
+            if (string.IsNullOrEmpty(actionName))
+            {
+                Errors.ShowWarning($"No action is set for this command. To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
+                                    "You can find command mappings in the Toolbar section.");
+                return null;
+            }
+
+            var action = SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName);
+            if (action == null)
+                Errors.ShowWarning($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
+                                    "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
+            return action;
         }
 
         private async Task ExecuteActionAsync(ActionProfileOptions action)

@@ -40,7 +40,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 if (page is T requestedPage)
                     return requestedPage;
                 if (page is ProfileOptionsActionsPage actions)
-                    foreach (var action in actions.Actions)
+                    foreach (var action in actions.Pages)
                         if (action is T requestedAction)
                             return requestedAction;
             }
@@ -74,16 +74,16 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var context = new ProfileOptionsWindowContext(project, null, null);
 
             var actionsPage = GetPage<ProfileOptionsActionsPage>(context);
-            Assert.Single(actionsPage.Actions, GetPage<DebuggerProfileOptions>(context));
+            Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
 
             context.AddActionCommand.Execute(null);
-            Assert.Collection(actionsPage.Actions,
+            Assert.Collection(actionsPage.Pages,
                 (page1) => Assert.True(page1 == GetPage<DebuggerProfileOptions>(context)),
                 (page2) => Assert.True(page2 is ActionProfileOptions opts && opts.Name == "New Action"));
 
-            var action = GetPage<ProfileOptionsActionsPage>(context).Actions[1];
+            var action = GetPage<ProfileOptionsActionsPage>(context).Pages[1];
             context.RemoveActionCommand.Execute(action);
-            Assert.Single(actionsPage.Actions, GetPage<DebuggerProfileOptions>(context));
+            Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
         }
 
         [Fact]
@@ -157,7 +157,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             // a crude emulation of WPF control behavior when resetting dirty profiles on save
             context.DirtyProfiles.CollectionChanged += (s, e) => { if (e.Action == NotifyCollectionChangedAction.Reset) context.SelectedPage = null; };
 
-            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Actions.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
+            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Pages.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
             context.SaveChanges();
 
             Assert.IsType<ActionProfileOptions>(context.SelectedPage);
@@ -210,7 +210,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             // Shared action
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Actions.First(a => a is ActionProfileOptions ao && ao.Name == "shared-action");
+            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Pages.First(a => a is ActionProfileOptions ao && ao.Name == "shared-action");
             Assert.Equal("shared-action", ((ActionProfileOptions)context.SelectedPage).Name);
 
             context.SelectedProfile = GetDirtyProfile(context, "asa");
@@ -220,7 +220,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             // Non-shared action
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Actions.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
+            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Pages.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
             Assert.Equal("kana-action", ((ActionProfileOptions)context.SelectedPage).Name);
 
             context.SelectedProfile = GetDirtyProfile(context, "asa");
@@ -228,19 +228,25 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         }
 
         [Fact]
-        public void RenamingActionsSynchronizesRunActionSteps()
+        public void RenamingActionsSynchronizesNameUsagesSteps()
         {
             var project = CreateTestProject();
             project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
             project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
             project.Options.Profiles["kana"].Actions[1].Steps.Add(new RunActionStep { Name = "shared-action" });
             project.Options.Profiles["kana"].Debugger.Steps.Add(new RunActionStep { Name = "shared-action" });
+            project.Options.Profiles["kana"].MenuCommands.ProfileAction = "shared-action";
+            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = "shared-action";
+            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = "shared-action";
 
             var context = new ProfileOptionsWindowContext(project, null, null);
             GetDirtyProfile(context, "kana").Actions[0].Name = "renamed-shared-action";
 
             Assert.Equal("renamed-shared-action", ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name);
             Assert.Equal("renamed-shared-action", ((RunActionStep)GetDirtyProfile(context, "kana").Actions[1].Steps[0]).Name);
+            Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
+            Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+            Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
         }
 
         [Fact]

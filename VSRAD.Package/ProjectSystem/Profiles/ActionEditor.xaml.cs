@@ -20,9 +20,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             get => (ObservableCollection<IActionStep>)GetValue(StepsProperty); set => SetValue(StepsProperty, value);
         }
-        public IEnumerable<ActionProfileOptions> RunActionCandidates
+        public IEnumerable<string> AllActionNames
         {
-            get => ((IEnumerable<ActionProfileOptions>)GetValue(RunActionCandidatesProperty)); set => SetValue(RunActionCandidatesProperty, value);
+            get => ((IEnumerable<string>)GetValue(AllActionNamesProperty)); set => SetValue(AllActionNamesProperty, value);
         }
 #pragma warning restore CA2227
         public string ActionName
@@ -35,13 +35,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
         }
 
-        public IEnumerable<string> RunActionNames =>
-            RunActionCandidates.Select(a => a.Name).Where(n => n != ActionName);
+        public IEnumerable<string> RunActionNames => AllActionNames.Where(n => n != ActionName);
 
         public static readonly DependencyProperty StepsProperty =
             DependencyProperty.Register(nameof(Steps), typeof(ObservableCollection<IActionStep>), typeof(ActionEditor), new PropertyMetadata(null));
-        public static readonly DependencyProperty RunActionCandidatesProperty =
-            DependencyProperty.Register(nameof(RunActionCandidates), typeof(IEnumerable<ActionProfileOptions>), typeof(ActionEditor), new PropertyMetadata(null));
+        public static readonly DependencyProperty AllActionNamesProperty =
+            DependencyProperty.Register(nameof(AllActionNames), typeof(IEnumerable<ActionProfileOptions>), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty ActionNameProperty =
             DependencyProperty.Register(nameof(ActionName), typeof(string), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty MacroEditorProperty =

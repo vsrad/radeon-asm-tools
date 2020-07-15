@@ -40,6 +40,8 @@ namespace VSRAD.Package.Options
 
         public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
 
+        public MenuCommandProfileOptions MenuCommands { get; } = new MenuCommandProfileOptions();
+
         public object Clone()
         {
             ProfileOptions clonedProfile;
@@ -55,6 +57,13 @@ namespace VSRAD.Package.Options
             }
             return clonedProfile;
         }
+    }
+
+    public sealed class MenuCommandProfileOptions
+    {
+        public string ProfileAction { get; set; } = "Profile";
+        public string DisassembleAction { get; set; } = "Disassemble";
+        public string PreprocessAction { get; set; } = "Preprocess";
     }
 
     public sealed class ActionNameChangedEventArgs : EventArgs
