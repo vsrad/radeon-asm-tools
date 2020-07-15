@@ -10,10 +10,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public SliceRowStyling(SliceVisualizerTable table)
         {
             _table = table;
-            _table.RowPostPaint += ReplaceDefaultRowHeaderBitmap;
+            
         }
 
-        private void ReplaceDefaultRowHeaderBitmap(object sender, DataGridViewRowPostPaintEventArgs e)
+        public static void ApplyRowStylingOnRowPostPaint(SliceVisualizerTable table)
+        {
+            var rowSyling = new SliceRowStyling(table);
+            table.RowPostPaint += rowSyling.ReplaceDefaultRowHeaderBitmap;
+        }
+
+        public void ReplaceDefaultRowHeaderBitmap(object sender, DataGridViewRowPostPaintEventArgs e)
         {
             if (_table.Rows[e.RowIndex].HeaderCell.Value == null) return;
             e.PaintHeader(
