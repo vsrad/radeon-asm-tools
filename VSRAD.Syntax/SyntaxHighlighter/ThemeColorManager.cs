@@ -179,9 +179,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             { PredefinedClassificationTypeNames.Arguments,  new ThemeColor(radeonAsmArgumentsTextColorKey) },
             { PredefinedClassificationTypeNames.Functions,  new ThemeColor(radeonAsmFunctionsTextColorKey) },
             { PredefinedClassificationTypeNames.Labels,  new ThemeColor(radeonAsmLabelsTextColorKey) },
-            { PredefinedMarkerFormatNames.ReferenceIdentifier,  new ThemeColor(RADreferenceidentifierTextColorKey, RADreferenceidentifierColorKey) },
-            { PredefinedMarkerFormatNames.DefinitionIdentifier,  new ThemeColor(RADdefinitionidentifierTextColorKey, RADdefinitionidentifierColorKey) },
-            { PredefinedMarkerFormatNames.BraceMatching,  new ThemeColor(RADbracematchingTextColorKey, RADbracematchingColorKey) },
         };
 
         public static readonly Dictionary<string, ThemeColor> EditorColors = new Dictionary<string, ThemeColor>
