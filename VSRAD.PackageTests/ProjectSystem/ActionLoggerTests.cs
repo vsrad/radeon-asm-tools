@@ -76,12 +76,12 @@ namespace VSRAD.PackageTests.ProjectSystem
 @"=> Fetched initial timestamps in 10ms
 => [0] Run Sign Contract SUCCEEDED in 40ms
 ===> Fetched initial timestamps in 0ms
-===> [0] Remote Execute obtain-contract -i -mm SUCCEEDED in 20ms
+===> [0] Execute Remote obtain-contract -i -mm SUCCEEDED in 20ms
 Captured stdout (exit code 1):
 contract obtained
 ===> [1] Run Exchange Soul SUCCEEDED in 20ms
 =====> Fetched initial timestamps in 0ms
-=====> [0] Remote Execute cleanup --skip SUCCEEDED in 20ms
+=====> [0] Execute Remote cleanup --skip SUCCEEDED in 20ms
 Captured stdout (exit code 2):
 ..
 => [1] Copy to Remote soul -> incubator SUCCEEDED in 20ms

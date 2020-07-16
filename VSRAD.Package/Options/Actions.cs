@@ -143,7 +143,7 @@ namespace VSRAD.Package.Options
                     return "Execute (not configured)";
 
                 var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
-                return $"{env} Execute {Executable} {Arguments}";
+                return $"Execute {env} {Executable} {Arguments}";
             }
         }
 
