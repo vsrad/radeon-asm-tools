@@ -117,7 +117,11 @@ namespace VSRAD.Package.Options
         }
 
         private string _arguments = "";
-        public string Arguments { get => _arguments; set { SetField(ref _arguments, value); } }
+        public string Arguments
+        {
+            get => _arguments;
+            set { SetField(ref _arguments, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
         private string _workingDirectory = "";
         public string WorkingDirectory { get => _workingDirectory; set => SetField(ref _workingDirectory, value); }
