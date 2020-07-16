@@ -52,17 +52,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public ICommand DeleteMacroCommand { get; }
         public ICommand RichEditCommand { get; }
 
-        private string _macroFilter = "";
-        public string MacroFilter
-        {
-            get => _macroFilter;
-            set
-            {
-                _macroFilter = value;
-                ((MacroListDisplayCollection)DataContext).RefreshCollection();
-            }
-        }
-
         public DirtyProfileMacroEditor MacroEditor
         {
             get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
@@ -135,15 +124,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var item = (MacroItem)param;
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
-        }
-
-        private void FilterMacros(object sender, FilterEventArgs e)
-        {
-            var macroItem = (MacroItem)e.Item;
-            e.Accepted = string.IsNullOrEmpty(MacroFilter)
-                || string.IsNullOrEmpty(macroItem.Name) // always show newly added macros (without name)
-                || macroItem.Name.IndexOf(MacroFilter, StringComparison.OrdinalIgnoreCase) != -1
-                || macroItem.Value.IndexOf(MacroFilter, StringComparison.OrdinalIgnoreCase) != -1;
         }
     }
 }
