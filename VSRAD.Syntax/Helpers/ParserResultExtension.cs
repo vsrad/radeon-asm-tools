@@ -8,6 +8,14 @@ namespace VSRAD.Syntax.Helpers
 {
     internal static class ParserResultExtension
     {
+        public static SnapshotSpan GetActualScope(this IBlock block, ITextSnapshot snapshot)
+        {
+            var start = block.TokenStart.GetStart(snapshot);
+            var end = block.TokenEnd.GetEnd(snapshot);
+
+            return new SnapshotSpan(snapshot, start, end - start);
+        }
+
         public static IBlock GetBlockBy(this IReadOnlyList<IBlock> blocks, SnapshotPoint point)
         {
             foreach (var block in blocks)
@@ -15,7 +23,7 @@ namespace VSRAD.Syntax.Helpers
                 if (block.Type == BlockType.Comment || block.Type == BlockType.Root)
                     continue;
 
-                if (block.Scope.GetSpan(point.Snapshot).Contains(point))
+                if (block.GetActualScope(point.Snapshot).Contains(point))
                     return block;
             }
 

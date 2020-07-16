@@ -90,5 +90,37 @@ namespace VSRAD.Syntax.Parser
                 Error.LogError(e, "External definitions loader");
             }
         }
+
+        protected void ParseReferenceCandidate(List<KeyValuePair<AnalysisToken, ITextSnapshot>> definitionTokens, Dictionary<string, List<KeyValuePair<IBlock, TrackingToken>>> referenceCandidate, CancellationToken cancellation)
+        {
+            foreach (var definitionTokenPair in definitionTokens)
+            {
+                cancellation.ThrowIfCancellationRequested();
+
+                var definitionToken = definitionTokenPair.Key;
+                RadAsmTokenType referenceType;
+                switch (definitionToken.Type)
+                {
+                    case RadAsmTokenType.FunctionName:
+                        referenceType = RadAsmTokenType.FunctionReference;
+                        break;
+                    case RadAsmTokenType.Label:
+                        referenceType = RadAsmTokenType.LabelReference;
+                        break;
+                    case RadAsmTokenType.GlobalVariable:
+                        referenceType = RadAsmTokenType.GlobalVariableReference;
+                        break;
+                    default:
+                        continue; // skip unknown token
+                }
+
+                var tokenText = definitionToken.TrackingToken.GetText(definitionTokenPair.Value);
+                if (referenceCandidate.TryGetValue(tokenText, out var referenceTokenPairs))
+                {
+                    foreach (var referenceTokenPair in referenceTokenPairs)
+                        referenceTokenPair.Key.Tokens.Add(new ReferenceToken(referenceType, referenceTokenPair.Value, definitionToken));
+                }
+            }
+        }
     }
 }

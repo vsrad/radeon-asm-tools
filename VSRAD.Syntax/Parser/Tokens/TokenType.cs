@@ -27,6 +27,7 @@
         LabelReference,
         Instruction,
         GlobalVariable,
+        GlobalVariableReference,
         LocalVariable,
         Include,
         Preprocessor,

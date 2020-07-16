@@ -177,14 +177,8 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 while (currentBlock != null)
                 {
-                    foreach (var token in currentBlock.Tokens)
+                    foreach (var token in currentBlock.Tokens.Where(t => t.Type != RadAsmTokenType.Instruction))
                     {
-                        if (token.Type == RadAsmTokenType.FunctionParameterReference
-                            || token.Type == RadAsmTokenType.FunctionReference
-                            || token.Type == RadAsmTokenType.LabelReference
-                            || token.Type == RadAsmTokenType.Instruction)
-                            continue;
-
                         if (token.TrackingToken.GetText(version) == text)
                         {
                             outToken = new NavigationToken(token, version);
@@ -199,19 +193,6 @@ namespace VSRAD.Syntax.IntelliSense
                 var codeBlockStack = new Stack<IBlock>();
                 while (currentBlock != null)
                 {
-                    if (currentBlock.Type == BlockType.Function)
-                    {
-                        var argToken = currentBlock
-                            .Tokens
-                            .FirstOrDefault(t => (t.Type == RadAsmTokenType.FunctionParameter) && ("\\" + t.TrackingToken.GetText(version)) == text);
-
-                        if (argToken != null)
-                        {
-                            outToken = new NavigationToken(argToken, version);
-                            return true;
-                        }
-                    }
-
                     codeBlockStack.Push(currentBlock);
                     currentBlock = currentBlock.Parrent;
                 }
@@ -220,7 +201,7 @@ namespace VSRAD.Syntax.IntelliSense
                 {
                     var codeBlock = codeBlockStack.Pop();
 
-                    foreach (var token in codeBlock.Tokens.Where(t => t.Type != RadAsmTokenType.Instruction && t.Type != RadAsmTokenType.FunctionReference && t.Type != RadAsmTokenType.LabelReference))
+                    foreach (var token in codeBlock.Tokens.Where(t => t.Type != RadAsmTokenType.Instruction))
                     {
                         if (token.TrackingToken.GetText(version) == text)
                         {
