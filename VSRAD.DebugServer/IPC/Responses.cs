@@ -14,7 +14,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case 0: return ExecutionCompleted.Deserialize(reader);
                 case 1: return MetadataFetched.Deserialize(reader);
                 case 2: return ResultRangeFetched.Deserialize(reader);
-                case 3: return EnvironmentVariablesListed.Deserialize(reader);
+                case 3: return PutFileResponse.Deserialize(reader);
+                case 4: return EnvironmentVariablesListed.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {responseType}");
         }
@@ -27,7 +28,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ExecutionCompleted _: responseType = 0; break;
                 case MetadataFetched _: responseType = 1; break;
                 case ResultRangeFetched _: responseType = 2; break;
-                case EnvironmentVariablesListed _: responseType = 3; break;
+                case PutFileResponse _: responseType = 3; break;
+                case EnvironmentVariablesListed _: responseType = 4; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write(responseType);
@@ -143,6 +145,27 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
+    public sealed class PutFileResponse : IResponse
+    {
+        public PutFileStatus Status { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "PutFileResponse",
+            $"Status = {Status}",
+        });
+
+        public static PutFileResponse Deserialize(IPCReader reader) => new PutFileResponse
+        {
+            Status = (PutFileStatus)reader.ReadByte()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+        }
+    }
+
     public sealed class EnvironmentVariablesListed : IResponse
     {
         public IReadOnlyDictionary<string, string> Variables { get; set; }
@@ -174,6 +197,13 @@ namespace VSRAD.DebugServer.IPC.Responses
     {
         Successful = 0,
         FileNotFound = 1
+    }
+
+    public enum PutFileStatus : byte
+    {
+        Successful = 0,
+        PermissionDenied = 1,
+        OtherIOError = 2
     }
 #pragma warning restore CA1028
 }

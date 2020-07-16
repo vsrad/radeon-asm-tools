@@ -29,8 +29,12 @@ namespace VSRAD.PackageTests.Server
             sourceManager
                 .Setup((m) => m.SaveDocumentsAsync(DocumentSaveType.OpenDocuments))
                 .Returns(Task.CompletedTask).Verifiable();
-            var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
-                copySources: false), channel.Object, sourceManager.Object);
+            var (project, syncer) = MakeProjectWithSyncer((opts) =>
+                {
+                    opts.General.DeployDirectory = _deployDirectory;
+                    opts.General.CopySources = false;
+                },
+                channel.Object, sourceManager.Object);
             project.Setup((p) => p.SaveOptions()).Verifiable();
 
             await syncer.SynchronizeRemoteAsync();
@@ -47,8 +51,13 @@ namespace VSRAD.PackageTests.Server
             sourceManager
                 .Setup(m => m.ListProjectFilesAsync())
                 .ReturnsAsync(MakeSources("source.txt", "Include/include.txt"));
-            var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
-                deployDirectory: _deployDirectory, copySources: true), channel.Object, sourceManager.Object);
+
+            var (project, syncer) = MakeProjectWithSyncer((opts) =>
+                {
+                    opts.General.DeployDirectory = _deployDirectory;
+                    opts.General.CopySources = true;
+                },
+                channel.Object, sourceManager.Object);
             project.Setup((p) => p.SaveOptions());
 
             byte[] archive = null;
@@ -86,9 +95,14 @@ namespace VSRAD.PackageTests.Server
             sourceManager
                 .Setup(m => m.ListProjectFilesAsync())
                 .ReturnsAsync(MakeSources("source.txt", "Include/include.txt"));
-            var (project, syncer) = MakeProjectWithSyncer(new GeneralProfileOptions(
-                deployDirectory: _deployDirectory, copySources: true,
-                additionalSources: $@"{_fixturesDir}\AdditionalSources;{_fixturesDir}\separate.txt"), channel.Object, sourceManager.Object);
+
+            var (project, syncer) = MakeProjectWithSyncer((opts) =>
+                {
+                    opts.General.DeployDirectory = _deployDirectory;
+                    opts.General.CopySources = true;
+                    opts.General.AdditionalSources = $@"{_fixturesDir}\AdditionalSources;{_fixturesDir}\separate.txt";
+                },
+                channel.Object, sourceManager.Object);
             project.Setup((p) => p.SaveOptions());
 
             byte[] archive = null;
@@ -116,19 +130,22 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal(expectedItems, deployedItems);
         }
 
-        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(GeneralProfileOptions generalOptions, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
+        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(Action<ProfileOptions> setupProfile, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
         {
             TestHelper.InitializePackageTaskFactory();
-            var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
-            evaluator.Setup((e) => e.GetMacroValueAsync(RadMacros.DeployDirectory)).Returns(Task.FromResult(_deployDirectory));
 
             var project = new Mock<IProject>(MockBehavior.Strict);
-            project.Setup((p) => p.RootPath).Returns(_projectRoot);
-            project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
-
             var options = new ProjectOptions();
-            options.AddProfile("Default", new ProfileOptions(general: generalOptions));
+            options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
+            setupProfile(options.Profiles["Default"]);
             project.Setup((p) => p.Options).Returns(options);
+            project.Setup((p) => p.RootPath).Returns(_projectRoot);
+
+            var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
+            evaluator.Setup((e) => e.EvaluateAsync(_deployDirectory)).Returns(Task.FromResult(_deployDirectory));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.LocalWorkDir + ")")).Returns(Task.FromResult(""));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult(""));
+            project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
 
             sourceManager = sourceManager ?? new Mock<IProjectSourceManager>().Object;
             var syncer = new FileSynchronizationManager(channel, project.Object, sourceManager);

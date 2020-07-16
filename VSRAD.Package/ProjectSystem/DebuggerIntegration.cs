@@ -23,9 +23,8 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IFileSynchronizationManager _deployManager;
-        private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
-        private readonly IErrorListManager _errorListManager;
+        private readonly IActionLogger _actionLogger;
 
         public bool DebugInProgress { get; private set; } = false;
 
@@ -38,17 +37,15 @@ namespace VSRAD.Package.ProjectSystem
             SVsServiceProvider serviceProvider,
             IActiveCodeEditor codeEditor,
             IFileSynchronizationManager deployManager,
-            IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
-            IErrorListManager errorListManager)
+            IActionLogger actionLogger)
         {
             _project = project;
             _serviceProvider = serviceProvider;
             _codeEditor = codeEditor;
             _deployManager = deployManager;
-            _outputWindow = outputWindow;
             _channel = channel;
-            _errorListManager = errorListManager;
+            _actionLogger = actionLogger;
 
             DebugEngine.InitializationCallback = RegisterEngine;
             DebugEngine.TerminationCallback = DeregisterEngine;
@@ -79,7 +76,7 @@ namespace VSRAD.Package.ProjectSystem
                 return false;
             }
 
-            _debugSession = new DebugSession(_project, _channel, _deployManager, _outputWindow, _errorListManager);
+            _debugSession = new DebugSession(_project, _channel, _deployManager, _serviceProvider);
             return true;
         }
 
@@ -113,12 +110,17 @@ namespace VSRAD.Package.ProjectSystem
                 var result = await _debugSession.ExecuteAsync(breakLines, watches);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-                if (!result.TryGetResult(out var breakState, out var error))
-                    Errors.Show(error);
-                else if (breakState.ExitCode != 0)
-                    Errors.ShowWarning(RemoteCommandExecutor.ErrorNonZeroExitCode("RAD Debugger", breakState.ExitCode));
+                if (result.ActionResult != null)
+                {
+                    var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
+                    if (actionError is Error e1)
+                        Errors.Show(e1);
+                }
 
-                RaiseExecutionCompleted(breakState);
+                if (result.Error is Error e2)
+                    Errors.Show(e2);
+
+                RaiseExecutionCompleted(result.BreakState);
             },
             exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(null));
         }

@@ -19,10 +19,12 @@ namespace VSRAD.Package.Commands
         private readonly IProject _project;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly QuickInfoEvaluateSelectedState _quickInfoState;
+#pragma warning disable IDE0052 // Remove unread private members
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
         private readonly IErrorListManager _errorListManager;
+#pragma warning restore IDE0052 // Remove unread private members
 
         [ImportingConstructor]
         public EvaluateSelectedCommand(
@@ -55,7 +57,7 @@ namespace VSRAD.Package.Commands
             var watchName = activeWord.Trim();
 
             var evaluator = await _project.GetMacroEvaluatorAsync(new[] { breakLine }, watchesOverride: new[] { watchName });
-            var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator);
+            var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile);
             await SetStatusBarTextAsync($"RAD Debug: Evaluating {watchName}...");
             try
             {
@@ -80,39 +82,9 @@ namespace VSRAD.Package.Commands
             }
         }
 
-        private async Task<uint[]> RunAsync(DebuggerProfileOptions options)
+        private Task<uint[]> RunAsync(DebuggerProfileOptions options)
         {
-            var command = new DebugServer.IPC.Commands.Execute
-            {
-                Executable = options.Executable,
-                Arguments = options.Arguments,
-                RunAsAdministrator = options.RunAsAdmin,
-                ExecutionTimeoutSecs = options.TimeoutSecs,
-                WorkingDirectory = options.RemoteOutputFile.Directory
-            };
-
-            var executor = new RemoteCommandExecutor("Evaluate Selected", _channel, _outputWindow, _errorListManager);
-
-            await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
-
-            var byteCount = 2 /* system + watch */ * 512 * 4 /* dwords -> bytes */;
-            var result = await executor.ExecuteWithResultAsync(command, options.RemoteOutputFile, byteCount).ConfigureAwait(false);
-
-            if (!result.TryGetResult(out var execResult, out var error))
-                throw new Exception(error.Message);
-            var (_, data) = execResult;
-
-            var bytesFetched = new uint[1024];
-            Buffer.BlockCopy(data, 0, bytesFetched, 0, data.Length);
-
-            var values = new uint[512];
-            for (uint valueIdx = 0, dwordIdx = 1 /* skip system */;
-                 dwordIdx < bytesFetched.Length && valueIdx < 512;
-                 valueIdx++, dwordIdx += 2 /* system + watch */)
-            {
-                values[valueIdx] = bytesFetched[dwordIdx];
-            }
-            return values;
+            throw new NotImplementedException();
         }
     }
 }

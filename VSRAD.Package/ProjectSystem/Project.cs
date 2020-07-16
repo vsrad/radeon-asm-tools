@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,6 +25,7 @@ namespace VSRAD.Package.ProjectSystem
 
         ProjectOptions Options { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
+        IProjectProperties GetProjectProperties();
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
         void SaveOptions();
     }
@@ -39,19 +42,26 @@ namespace VSRAD.Package.ProjectSystem
         public string RootPath { get; }
 
         private readonly string _optionsFilePath;
+        private readonly string _legacyOptionsFilePath;
+
         private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
         public Project(UnconfiguredProject unconfiguredProject)
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
-            _optionsFilePath = unconfiguredProject.FullPath + ".user.json";
+            _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
+            _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             _unconfiguredProject = unconfiguredProject;
         }
 
         public void Load()
         {
-            Options = ProjectOptions.Read(_optionsFilePath);
+            if (!File.Exists(_optionsFilePath) && File.Exists(_legacyOptionsFilePath))
+                Options = ProjectOptions.ReadLegacy(_legacyOptionsFilePath);
+            else
+                Options = ProjectOptions.Read(_optionsFilePath);
+
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
@@ -65,6 +75,12 @@ namespace VSRAD.Package.ProjectSystem
         public void Unload() => Unloaded?.Invoke();
 
         public void SaveOptions() => Options.Write(_optionsFilePath);
+
+        public IProjectProperties GetProjectProperties()
+        {
+            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            return configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
+        }
 
         #region MacroEvaluator
         private IActiveCodeEditor _codeEditor;
@@ -82,8 +98,7 @@ namespace VSRAD.Package.ProjectSystem
             if (_communicationChannel == null)
                 _communicationChannel = _unconfiguredProject.Services.ExportProvider.GetExportedValue<ICommunicationChannel>();
 
-            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
-            var projectProperties = configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
+            var projectProperties = GetProjectProperties();
 
             var file = await GetRelativeSourcePathAsync();
             var line = _codeEditor.GetCurrentLine();

@@ -1,14 +1,16 @@
 ﻿using System.Linq;
+using VSRAD.Package.DebugVisualizer;
+using VSRAD.Package.Options;
 using Xunit;
 
-namespace VSRAD.Package.DebugVisualizer.Tests
+namespace VSRAD.PackageTests.DebugVisualizer
 {
     public class GroupIndexSelectorTests
     {
         [Fact]
         public void DimensionClippingTest()
         {
-            var options = new Options.VisualizerOptions() { NDRange3D = true };
+            var options = new VisualizerOptions() { NDRange3D = true };
             var selector = new GroupIndexSelector(options);
 
             var changedPropertyName = "";
@@ -25,7 +27,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
         [Fact]
         public void ValidationErrorTest()
         {
-            var options = new Options.VisualizerOptions() { NDRange3D = true };
+            var options = new VisualizerOptions() { NDRange3D = true };
             var selector = new GroupIndexSelector(options) { DimX = 20, X = 19 };
 
             Assert.False(selector.HasErrors);
@@ -57,7 +59,7 @@ namespace VSRAD.Package.DebugVisualizer.Tests
         {
             GroupIndexChangedEventArgs eventArgs = null;
 
-            var options = new Options.VisualizerOptions() { NDRange3D = true };
+            var options = new VisualizerOptions() { NDRange3D = true };
             var selector = new GroupIndexSelector(options);
 
             selector.IndexChanged += (s, e) => { eventArgs = e; e.IsValid = true; };

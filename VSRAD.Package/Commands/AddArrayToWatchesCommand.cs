@@ -24,7 +24,7 @@ namespace VSRAD.Package.Commands
 
         public Guid CommandSet => Constants.AddArrayToWatchesCommandSet;
 
-        public OLECMDF GetCommandStatus(uint commandId)
+        public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
             var fromHeader = commandId == Constants.AddArrayToWatchesFromHeaderId;
             var toHeader = commandId >= Constants.AddArrayToWatchesToHeaderOffset

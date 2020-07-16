@@ -1,0 +1,58 @@
+﻿<Expander x:Class="VSRAD.Package.ProjectSystem.Profiles.ExtendedExpander"
+          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+          xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles">
+    <Expander.Style>
+        <Style TargetType="{x:Type Expander}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Expander}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Name="ContentRow" Height="0"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ToggleButton IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Grid.Row="0" Grid.Column="0">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <DockPanel Margin="4,0">
+                                            <Path Name="Arrow" HorizontalAlignment="Center" VerticalAlignment="Center" Data="M 0 0 L 6 6 L 12 0 Z"/>
+                                            <ContentPresenter Name="PART_HeaderMainContentPresenter" Margin="4,0"
+                                                Content="{Binding HeaderMainContent, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ExtendedExpander}}}" 
+                                                DataContext="{Binding DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ExtendedExpander}}}" />
+                                        </DockPanel>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="ToggleButton.IsMouseOver" Value="false">
+                                                <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}" />
+                                            </Trigger>
+                                            <Trigger Property="ToggleButton.IsMouseOver" Value="true">
+                                                <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverGlyphKey}}" />
+                                            </Trigger>
+                                            <Trigger Property="IsChecked" Value="true">
+                                                <Setter TargetName="Arrow" Property="Data" Value="M 0 6 L 6 0 L 12 6 Z" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter Name="PART_HeaderSideContentPresenter" Grid.Row="0" Grid.Column="1" Margin="4,0"
+                                Content="{Binding HeaderSideContent, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ExtendedExpander}}}" 
+                                DataContext="{Binding DataContext, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ExtendedExpander}}}" />
+                            <ContentPresenter Margin="0,4" Grid.Row="1" Grid.ColumnSpan="2"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ContentRow" Property="Height" Value="{Binding ElementName=Content, Path=DesiredHeight}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Expander.Style>
+</Expander>

@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 
@@ -33,17 +34,20 @@ namespace VSRAD.PackageTests
             sta.Join();
         }
 
-        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros, string projectRoot = "", Package.Options.ProfileOptions profile = null)
+        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros = null, string projectRoot = "", Package.Options.ProfileOptions profile = null, string remoteWorkDir = "")
         {
             var mock = new Mock<IProject>(MockBehavior.Strict);
-            var options = new Package.Options.ProjectOptions();
-            options.AddProfile("Default", profile ?? new Package.Options.ProfileOptions());
+            var options = new ProjectOptions();
+            options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", profile ?? new ProfileOptions() } }, activeProfile: "Default");
             mock.Setup((p) => p.Options).Returns(options);
             mock.Setup((m) => m.RootPath).Returns(projectRoot);
 
             var evaluator = new Mock<IMacroEvaluator>();
-            foreach (var macro in macros)
-                evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
+            if (macros != null)
+                foreach (var macro in macros)
+                    evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
+            evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult(val));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult(remoteWorkDir));
 
             mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
             return mock;
@@ -51,10 +55,13 @@ namespace VSRAD.PackageTests
 
         public static T MakeWithReadOnlyProps<T>(params (string prop, object value)[] properties) where T : new()
         {
-            var state = new T();
+            var obj = new T();
             foreach (var (prop, value) in properties)
-                typeof(T).GetField($"<{prop}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(state, value);
-            return state;
+                SetReadOnlyProp(obj, prop, value);
+            return obj;
         }
+
+        public static void SetReadOnlyProp<T>(T obj, string prop, object value) =>
+            typeof(T).GetField($"<{prop}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(obj, value);
     }
 }

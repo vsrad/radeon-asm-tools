@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
@@ -13,129 +17,126 @@ namespace VSRAD.Package.Server
     {
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
-        private readonly IFileSynchronizationManager _fileSynchronizationManager;
-        private readonly RemoteCommandExecutor _remoteExecutor;
+        private readonly IFileSynchronizationManager _deployManager;
+        private readonly SVsServiceProvider _serviceProvider;
 
-        public DebugSession(
-            IProject project,
-            ICommunicationChannel channel,
-            IFileSynchronizationManager fileSynchronizationManager,
-            IOutputWindowManager outputWindowManager,
-            IErrorListManager errorListManager)
+        public DebugSession(IProject project, ICommunicationChannel channel, IFileSynchronizationManager deployManager, SVsServiceProvider serviceProvider)
         {
             _project = project;
             _channel = channel;
-            _fileSynchronizationManager = fileSynchronizationManager;
-            _remoteExecutor = new RemoteCommandExecutor("Debugger", channel, outputWindowManager, errorListManager);
+            _deployManager = deployManager;
+            _serviceProvider = serviceProvider;
         }
 
-        public async Task<Result<BreakState>> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
+        public async Task<DebugRunResult> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
         {
             var execTimer = Stopwatch.StartNew();
-
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
-            var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator).ConfigureAwait(false);
-            var outputFile = options.RemoteOutputFile;
+            var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
+            var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile).ConfigureAwait(false);
 
-            var initOutputTimestamp = (await GetMetadataAsync(outputFile).ConfigureAwait(false)).Timestamp;
-            var initValidWatchesTimestamp = options.ParseValidWatches
-                ? (await GetMetadataAsync(options.ValidWatchesFile).ConfigureAwait(false)).Timestamp
-                : default;
+            if (ValidateConfiguration(options) is Error configError)
+                return new DebugRunResult(null, configError, null);
 
-            var initStatusStringTimestamp = !string.IsNullOrEmpty(options.StatusStringFilePath)
-                ? (await GetMetadataAsync(options.ValidWatchesFile).ConfigureAwait(false)).Timestamp
-                : default;
+            await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
-            await _fileSynchronizationManager.SynchronizeRemoteAsync().ConfigureAwait(false);
+            var runner = new ActionRunner(_channel, _serviceProvider, env);
+            var auxFiles = new[] { options.OutputFile, options.WatchesFile, options.StatusFile };
+            var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles).ConfigureAwait(false);
 
-            var executionResult = await _remoteExecutor.ExecuteAsync(
-                new Execute
-                {
-                    Executable = options.Executable,
-                    Arguments = options.Arguments,
-                    RunAsAdministrator = options.RunAsAdmin,
-                    ExecutionTimeoutSecs = options.TimeoutSecs,
-                    WorkingDirectory = options.RemoteOutputFile.Directory
-                }, checkExitCode: false).ConfigureAwait(false);
+            if (!result.Successful)
+                return new DebugRunResult(result, null, null);
 
-            if (!executionResult.TryGetResult(out var execution, out var error))
-                return error;
+            var fetchCommands = new List<ICommand>();
+            if (options.WatchesFile.IsRemote() && !string.IsNullOrEmpty(options.WatchesFile.Path))
+                fetchCommands.Add(new FetchResultRange { FilePath = new[] { env.RemoteWorkDir, options.WatchesFile.Path } });
+            if (options.StatusFile.IsRemote() && !string.IsNullOrEmpty(options.StatusFile.Path))
+                fetchCommands.Add(new FetchResultRange { FilePath = new[] { env.RemoteWorkDir, options.StatusFile.Path } });
+            if (options.OutputFile.IsRemote())
+                fetchCommands.Add(new FetchMetadata { FilePath = new[] { env.RemoteWorkDir, options.OutputFile.Path } });
 
-            if (options.ParseValidWatches)
+            IResponse[] fetchReplies = null;
+            if (fetchCommands.Count > 0)
+                fetchReplies = await _channel.SendBundleAsync(fetchCommands);
+
+            var fetchIndex = 0;
+            if (!string.IsNullOrEmpty(options.WatchesFile.Path))
             {
-                var validWatchesResult = await GetValidWatchesAsync(initValidWatchesTimestamp, options.ValidWatchesFile).ConfigureAwait(false);
-                if (!validWatchesResult.TryGetResult(out watches, out error))
-                    return error;
-            }
+                var initTimestamp = runner.GetInitialFileTimestamp(options.WatchesFile.Path);
+                var response = (ResultRangeFetched)fetchReplies[fetchIndex++];
+                var text = ReadTextFile("Valid watches", options.WatchesFile, response, initTimestamp);
+                if (!text.TryGetResult(out var watchesString, out var error))
+                    return new DebugRunResult(result, error, null);
 
+                var watchArray = watchesString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                watches = Array.AsReadOnly(watchArray);
+            }
             var statusString = "";
-
-            if (!string.IsNullOrEmpty(options.StatusStringFilePath))
+            if (!string.IsNullOrEmpty(options.StatusFile.Path))
             {
-                var statusStringResult = await GetStatusStringAsync(initStatusStringTimestamp, options.StatusStringFile);
-                if (!statusStringResult.TryGetResult(out statusString, out error))
-                    return error;
+                var initTimestamp = runner.GetInitialFileTimestamp(options.StatusFile.Path);
+                var response = (ResultRangeFetched)fetchReplies[fetchIndex++];
+                var text = ReadTextFile("Status string", options.StatusFile, response, initTimestamp);
+                if (!text.TryGetResult(out statusString, out var error))
+                    return new DebugRunResult(result, error, null);
+
+                statusString = statusString.Replace("\n", "\r\n");
             }
+            {
+                var initTimestamp = runner.GetInitialFileTimestamp(options.OutputFile.Path);
+                var response = (MetadataFetched)fetchReplies[fetchIndex++];
+                var metadata = ReadOutputMetadata(options.OutputFile, response, initTimestamp);
+                if (!metadata.TryGetResult(out var outputMeta, out var error))
+                    return new DebugRunResult(result, error, null);
 
-            var dataResult = await CreateBreakStateDataAsync(options.RemoteOutputFile, initOutputTimestamp, watches).ConfigureAwait(false);
-            if (!dataResult.TryGetResult(out var data, out error))
-                return error;
-
-            execTimer.Stop();
-            return new BreakState(data, execTimer.ElapsedMilliseconds, execution.ExecutionTime, statusString, execution.ExitCode);
+                // TODO: refactor OutputFile away
+                var output = new OutputFile(directory: env.RemoteWorkDir, file: options.OutputFile.Path, options.BinaryOutput);
+                var data = new BreakStateData(watches, output, outputMeta.timestamp, outputMeta.byteCount, options.OutputOffset);
+                return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
+            }
         }
 
-        private async Task<Result<ReadOnlyCollection<string>>> GetValidWatchesAsync(DateTime initValidWatchesTimestamp, Options.OutputFile validWatchesFile)
+        private static Error? ValidateConfiguration(DebuggerProfileOptions options)
         {
-            var validWatchesMetadata = await GetMetadataAsync(validWatchesFile).ConfigureAwait(false);
-            if (validWatchesMetadata.Status != FetchStatus.Successful)
-                return new Error($"Valid watches file ({validWatchesFile.File}) could not be found.", title: "Valid watches file is missing");
-            if (validWatchesMetadata.Timestamp == initValidWatchesTimestamp)
-                return new Error($"Valid watches file ({validWatchesFile.File}) was not modified.", title: "Data may be stale");
-
-            var validWatchesData = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                new FetchResultRange { FilePath = validWatchesFile.Path, BinaryOutput = validWatchesFile.BinaryOutput }).ConfigureAwait(false);
-            if (validWatchesData.Status != FetchStatus.Successful)
-                return new Error($"Valid watches file ({validWatchesFile.File}) could not be opened.");
-
-            var validWatches = System.Text.Encoding.Default.GetString(validWatchesData.Data)
-                .Replace("\r\n", "\n")
-                .Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            return Array.AsReadOnly(validWatches);
+            if (string.IsNullOrEmpty(options.OutputFile.Path))
+                return new Error("Debugger output path is not specified. To set it, go to Tools -> RAD Debug -> Options and edit your current profile.");
+            if (!options.OutputFile.IsRemote() || !options.WatchesFile.IsRemote() || !options.StatusFile.IsRemote())
+                return new Error("Local debugger output paths are not supported in this version of RAD Debugger.");
+            return null;
         }
 
-        private async Task<Result<string>> GetStatusStringAsync(DateTime initStatusStringFileTimeStamp, Options.OutputFile statusStringFile)
+        private static Result<string> ReadTextFile(string title, BuiltinActionFile file, ResultRangeFetched response, DateTime initTimestamp)
         {
-            var statusStringFileMetadata = await GetMetadataAsync(statusStringFile).ConfigureAwait(false);
-            if (statusStringFileMetadata.Status != FetchStatus.Successful)
-                return new Error($"Status string file ({statusStringFile.File}) could not be found.", title: "Status string file is missing");
-            if (statusStringFileMetadata.Timestamp == initStatusStringFileTimeStamp)
-                return new Error($"Status string file ({statusStringFile.File}) was not modified.", title: "Data may be stale");
+            if (file.IsRemote())
+            {
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"{title} file ({file.Path}) could not be found.", title: $"{title} file is missing");
+                if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"{title} file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            var statusStringData = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                new FetchResultRange { FilePath = statusStringFile.Path, BinaryOutput = statusStringFile.BinaryOutput }).ConfigureAwait(false);
-            if (statusStringData.Status != FetchStatus.Successful)
-                return new Error($"Status string file ({statusStringFile.File}) could not be opened.");
-
-            var statusString = System.Text.Encoding.Default.GetString(statusStringData.Data)
-                .Replace("\r\n", "\n");
-
-            return statusString;
+                return Encoding.UTF8.GetString(response.Data);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
-        private async Task<Result<BreakStateData>> CreateBreakStateDataAsync(Options.OutputFile output, DateTime initOutputTimestamp, ReadOnlyCollection<string> watches)
+        private static Result<(DateTime timestamp, int byteCount)> ReadOutputMetadata(BuiltinActionFile file, MetadataFetched response, DateTime initTimestamp)
         {
-            var metadataResponse = await GetMetadataAsync(output).ConfigureAwait(false);
-            if (metadataResponse.Status != FetchStatus.Successful)
-                return new Error($"Output file ({output.File}) could not be found.", title: "Output file is missing");
-            if (metadataResponse.Timestamp == initOutputTimestamp)
-                return new Error($"Output file ({output.File}) was not modified.", title: "Data may be stale");
+            if (file.IsRemote())
+            {
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"Output file ({file.Path}) could not be found.", title: "Output file is missing");
+                if (file.CheckTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"Output file ({file.Path}) was not modified.", title: "Data may be stale");
 
-            return new BreakStateData(watches, output, metadataResponse.Timestamp, metadataResponse.ByteCount, _project.Options.Profile.Debugger.OutputOffset);
+                return (response.Timestamp, response.ByteCount);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
-
-        private Task<MetadataFetched> GetMetadataAsync(Options.OutputFile file) =>
-            _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = file.Path, BinaryOutput = file.BinaryOutput });
     }
 }

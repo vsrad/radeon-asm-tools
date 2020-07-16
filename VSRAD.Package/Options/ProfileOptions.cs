@@ -1,16 +1,14 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
-    /// <summary>
-    /// Defines the property macro name as displayed in <see cref="ProjectSystem.Profiles.ProfileOptionsWindow"/>.
-    /// IMPORTANT: as of now, when defining a new macro you need to add it to <see cref="MacroEvaluator.GetMacroValueAsync"/> manually.
-    /// </summary>
+    // TODO: remove (obsolete)
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class MacroAttribute : Attribute
     {
@@ -19,6 +17,7 @@ namespace VSRAD.Package.Options
         public MacroAttribute(string macroName) => MacroName = macroName;
     }
 
+    // TODO: remove (obsolete)
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class BinaryChoiceAttribute : Attribute
     {
@@ -32,22 +31,16 @@ namespace VSRAD.Package.Options
 
     public sealed class ProfileOptions : ICloneable
     {
-        public GeneralProfileOptions General { get; }
-        public DebuggerProfileOptions Debugger { get; }
-        public PreprocessorProfileOptions Preprocessor { get; }
-        public DisassemblerProfileOptions Disassembler { get; }
-        public ProfilerProfileOptions Profiler { get; }
-        public BuildProfileOptions Build { get; }
+        public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
 
-        public ProfileOptions(GeneralProfileOptions general = null, DebuggerProfileOptions debugger = null, PreprocessorProfileOptions preprocessor = null, DisassemblerProfileOptions disassembler = null, ProfilerProfileOptions profiler = null, BuildProfileOptions build = null)
-        {
-            General = general ?? new GeneralProfileOptions();
-            Debugger = debugger ?? new DebuggerProfileOptions();
-            Preprocessor = preprocessor ?? new PreprocessorProfileOptions();
-            Disassembler = disassembler ?? new DisassemblerProfileOptions();
-            Profiler = profiler ?? new ProfilerProfileOptions();
-            Build = build ?? new BuildProfileOptions();
-        }
+        public DebuggerProfileOptions Debugger { get; } = new DebuggerProfileOptions();
+
+        [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
+        public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
+
+        public ObservableCollection<ActionProfileOptions> Actions { get; } = new ObservableCollection<ActionProfileOptions>();
+
+        public MenuCommandProfileOptions MenuCommands { get; } = new MenuCommandProfileOptions();
 
         public object Clone()
         {
@@ -66,127 +59,126 @@ namespace VSRAD.Package.Options
         }
     }
 
-    public sealed class GeneralProfileOptions
+    public sealed class MenuCommandProfileOptions
     {
-        [JsonIgnore]
-        [Description("The name of current profile."), DisplayName("Profile Name")]
-        public string ProfileName { get; }
+        public string ProfileAction { get; set; } = "Profile";
+        public string DisassembleAction { get; set; } = "Disassemble";
+        public string PreprocessAction { get; set; } = "Preprocess";
+    }
 
-        [Macro(RadMacros.DeployDirectory), DisplayName("Deploy Directory")]
-        [Description("Directory on the remote machine where the project is deployed before starting the debugger.")]
-        [DefaultValue(DefaultOptionValues.DeployDirectory)]
-        public string DeployDirectory { get; }
-        [DisplayName("Remote Machine Address")]
-        [Description("IP address of the remote machine. To debug kernels locally, start the debug server on your local machine and enter `127.0.0.1` in this field.")]
-        [DefaultValue(DefaultOptionValues.RemoteMachineAdredd)]
-        public string RemoteMachine { get; }
-        [Description("Port on the remote machine the debug server is listening on. (When started without arguments, the server listens on port `9339`)")]
-        [DefaultValue(DefaultOptionValues.Port)]
-        public int Port { get; }
-        [Description("Toggles remote deployment."), DisplayName("Copy Sources to Remote")]
-        [DefaultValue(DefaultOptionValues.CopySources)]
-        public bool CopySources { get; }
-        [Description("Semicolon-separated list of of out-of-project paths to deploy on remote machine"), DisplayName("Additional Sources")]
-        [DefaultValue(DefaultOptionValues.AdditionalSources)]
-        public string AdditionalSources { get; }
+    public sealed class ActionNameChangedEventArgs : EventArgs
+    {
+        public string OldName { get; set; }
+        public string NewName { get; set; }
+    }
+
+    public sealed class ActionProfileOptions : DefaultNotifyPropertyChanged
+    {
+        public event EventHandler<ActionNameChangedEventArgs> NameChanged;
+
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                NameChanged?.Invoke(this, new ActionNameChangedEventArgs { OldName = _name, NewName = value });
+                SetField(ref _name, value);
+            }
+        }
+
+        public const string BuiltinActionDebug = "Debug";
+
+        [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
+        public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
+
+        public async Task<ActionProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        {
+            var evaluated = new ActionProfileOptions { Name = Name };
+            foreach (var step in Steps)
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
+            return evaluated;
+        }
+    }
+
+    public sealed class GeneralProfileOptions : DefaultNotifyPropertyChanged
+    {
+        private string _profileName;
+        [JsonIgnore]
+        public string ProfileName { get => _profileName; set => SetField(ref _profileName, value); }
+
+        private string _remoteMachine = "127.0.0.1";
+        public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
+
+        private int _port = 9339;
+        public int Port { get => _port; set => SetField(ref _port, value); }
+
+        private bool _copySources = true;
+        public bool CopySources { get => _copySources; set => SetField(ref _copySources, value); }
+
+        private string _deployDirectory = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
+        public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
+
+        private string _localWorkDir = "$(" + CleanProfileMacros.LocalWorkDir + ")";
+        public string LocalWorkDir { get => _localWorkDir; set => SetField(ref _localWorkDir, value); }
+
+        private string _remoteWorkDir = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
+        public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
+
+        private string _additionalSources = "";
+        public string AdditionalSources { get => _additionalSources; set => SetField(ref _additionalSources, value); }
 
         [JsonIgnore]
         public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
 
-        public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
-            new GeneralProfileOptions(profileName: ProfileName, deployDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DeployDirectory),
-                remoteMachine: RemoteMachine, port: Port, copySources: CopySources, additionalSources: AdditionalSources);
-
-        public GeneralProfileOptions(string profileName = "", string deployDirectory = null, string remoteMachine = DefaultOptionValues.RemoteMachineAdredd, int port = DefaultOptionValues.Port, string additionalSources = DefaultOptionValues.AdditionalSources, bool copySources = DefaultOptionValues.CopySources)
+        public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator evaluator) => new GeneralProfileOptions
         {
-            ProfileName = profileName;
-            DeployDirectory = deployDirectory ?? DefaultOptionValues.DeployDirectory;
-            RemoteMachine = remoteMachine;
-            Port = port;
-            AdditionalSources = additionalSources;
-            CopySources = copySources;
-        }
+            ProfileName = ProfileName,
+            RemoteMachine = RemoteMachine,
+            Port = Port,
+            CopySources = CopySources,
+            DeployDirectory = await evaluator.EvaluateAsync(DeployDirectory),
+            LocalWorkDir = await evaluator.EvaluateAsync(LocalWorkDir),
+            RemoteWorkDir = await evaluator.EvaluateAsync(RemoteWorkDir),
+            AdditionalSources = AdditionalSources
+        };
+
+        public async Task<ActionEnvironment> EvaluateActionEnvironmentAsync(IMacroEvaluator evaluator) =>
+            new ActionEnvironment(await evaluator.EvaluateAsync(LocalWorkDir), await evaluator.EvaluateAsync(RemoteWorkDir));
     }
 
     public sealed class DebuggerProfileOptions
     {
-        [Macro(RadMacros.DebuggerExecutable)]
-        [Description("Path to the debugger executable on the remote machine.")]
-        [DefaultValue(DefaultOptionValues.DebuggerExecutable)]
-        public string Executable { get; }
-        [Macro(RadMacros.DebuggerArguments)]
-        [Description("Arguments for Executable.")]
-        [DefaultValue(DefaultOptionValues.DebuggerArguments)]
-        public string Arguments { get; }
-        [Macro(RadMacros.DebuggerWorkingDirectory), DisplayName("Working Directory")]
-        [Description("Debugger working directory.")]
-        [DefaultValue(DefaultOptionValues.DebuggerWorkingDirectory)]
-        public string WorkingDirectory { get; }
-        [Macro(RadMacros.DebuggerOutputPath), DisplayName("Output Path")]
-        [Description("Path to the debug script output file (can be relative to Working Directory).")]
-        [DefaultValue(DefaultOptionValues.DebuggerOutputPath)]
-        public string OutputPath { get; }
-        [DisplayName("Output Mode"), BinaryChoice("Binary", "Text")]
-        [Description("Specifies how the debug script output file is parsed: 'Text': each line is read as a hexadecimal string (0x...), 'Binary': 4-byte blocks are read as a single dword value.")]
-        [DefaultValue(DefaultOptionValues.DebuggerBinaryOutput)]
-        public bool BinaryOutput { get; }
-        [Description("Output file offset: bytes if output mode is binary, lines if output mode is text"), DisplayName("Output Offset")]
-        [DefaultValue(DefaultOptionValues.OutputOffset)]
-        public int OutputOffset { get; }
-        [DisplayName("Parse Valid Watches File")]
-        [Description("Specifies whether the file specified in Valid Watches File Path should be used to filter valid watches.")]
-        [DefaultValue(DefaultOptionValues.DebuggerParseValidWatches)]
-        public bool ParseValidWatches { get; }
-        [DisplayName("Valid Watches File Path")]
-        [Description("Path to the file with valid watch names on the remote machine.")]
-        [DefaultValue(DefaultOptionValues.DebuggerValidWatchesFilePath)]
-        public string ValidWatchesFilePath { get; }
-        [DisplayName("Status String File Path")]
-        [Description("Path to the file with status string on the remote machine.")]
-        [DefaultValue(DefaultOptionValues.DebuggerStatusStringFilePath)]
-        public string StatusStringFilePath { get; }
-        [DisplayName("Run As Administrator")]
-        [Description("Specifies whether the `Executable` is run with administrator rights.")]
-        [DefaultValue(DefaultOptionValues.DebuggerRunAsAdmin)]
-        public bool RunAsAdmin { get; }
-        [Description("Debugger Timeout (seconds), 0 - timeout disabled"), DisplayName("Timeout")]
-        [DefaultValue(DefaultOptionValues.DebuggerTimeoutSecs)]
-        public int TimeoutSecs { get; }
+        [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
+        public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
 
-        [JsonIgnore]
-        public OutputFile RemoteOutputFile => new OutputFile(WorkingDirectory, OutputPath, BinaryOutput);
-        [JsonIgnore]
-        public OutputFile ValidWatchesFile => new OutputFile(WorkingDirectory, ValidWatchesFilePath);
-        [JsonIgnore]
-        public OutputFile StatusStringFile => new OutputFile(WorkingDirectory, StatusStringFilePath);
+        public BuiltinActionFile OutputFile { get; }
+        public BuiltinActionFile WatchesFile { get; }
+        public BuiltinActionFile StatusFile { get; }
 
-        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator macroEvaluator) =>
-            new DebuggerProfileOptions(
-                executable: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerExecutable),
-                arguments: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerArguments),
-                workingDirectory: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerWorkingDirectory),
-                outputPath: await macroEvaluator.GetMacroValueAsync(RadMacros.DebuggerOutputPath),
+        public bool BinaryOutput { get; set; }
+        public int OutputOffset { get; set; }
+
+        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        {
+            var evaluated = new DebuggerProfileOptions(
                 outputOffset: OutputOffset,
                 binaryOutput: BinaryOutput,
-                runAsAdmin: RunAsAdmin,
-                timeoutSecs: TimeoutSecs,
-                parseValidWatches: ParseValidWatches,
-                validWatchesFilePath: ValidWatchesFilePath,
-                statusStringFilePath: StatusStringFilePath);
+                outputFile: await OutputFile.EvaluateAsync(evaluator),
+                watchesFile: await WatchesFile.EvaluateAsync(evaluator),
+                statusFile: await StatusFile.EvaluateAsync(evaluator));
+            foreach (var step in Steps)
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
+            return evaluated;
+        }
 
-        public DebuggerProfileOptions(string executable = null, string arguments = null, string workingDirectory = DefaultOptionValues.DebuggerWorkingDirectory, string outputPath = DefaultOptionValues.DebuggerOutputPath, bool binaryOutput = DefaultOptionValues.DebuggerBinaryOutput, int outputOffset = 0, bool runAsAdmin = DefaultOptionValues.DebuggerRunAsAdmin, int timeoutSecs = DefaultOptionValues.DebuggerTimeoutSecs, bool parseValidWatches = DefaultOptionValues.DebuggerParseValidWatches, string validWatchesFilePath = DefaultOptionValues.DebuggerValidWatchesFilePath, string statusStringFilePath = DefaultOptionValues.DebuggerStatusStringFilePath)
+        public DebuggerProfileOptions(bool binaryOutput = true, int outputOffset = 0, BuiltinActionFile outputFile = null, BuiltinActionFile watchesFile = null, BuiltinActionFile statusFile = null)
         {
-            Executable = executable ?? DefaultOptionValues.DebuggerExecutable;
-            Arguments = arguments ?? DefaultOptionValues.DebuggerArguments;
-            WorkingDirectory = workingDirectory;
-            OutputPath = outputPath;
             BinaryOutput = binaryOutput;
             OutputOffset = outputOffset;
-            RunAsAdmin = runAsAdmin;
-            TimeoutSecs = timeoutSecs;
-            ParseValidWatches = parseValidWatches;
-            ValidWatchesFilePath = validWatchesFilePath;
-            StatusStringFilePath = statusStringFilePath;
+            OutputFile = outputFile ?? new BuiltinActionFile();
+            WatchesFile = watchesFile ?? new BuiltinActionFile();
+            StatusFile = statusFile ?? new BuiltinActionFile();
         }
     }
 
@@ -408,6 +400,24 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
         public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
         public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
+    }
+
+    public readonly struct ActionEnvironment : IEquatable<ActionEnvironment>
+    {
+        public string LocalWorkDir { get; }
+        public string RemoteWorkDir { get; }
+
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir)
+        {
+            LocalWorkDir = localWorkDir;
+            RemoteWorkDir = remoteWorkDir;
+        }
+
+        public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;
+        public override bool Equals(object o) => o is ActionEnvironment env && Equals(env);
+        public override int GetHashCode() => (LocalWorkDir, RemoteWorkDir).GetHashCode();
+        public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
+        public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
     }
 
     public readonly struct OutputFile : IEquatable<OutputFile>

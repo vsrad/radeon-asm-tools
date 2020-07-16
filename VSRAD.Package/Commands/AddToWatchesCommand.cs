@@ -23,7 +23,7 @@ namespace VSRAD.Package.Commands
 
         public Guid CommandSet => Constants.AddToWatchesCommandSet;
 
-        public OLECMDF GetCommandStatus(uint commandId)
+        public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
             if (commandId == Constants.MenuCommandId)
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;

@@ -11,13 +11,13 @@ namespace VSRAD.Package.Server
         public int ExitCode { get; }
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
-        public BreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, long execElapsedMilliseconds, string statusString, int exitCode)
+        public BreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, string statusString)
         {
             Data = breakStateData;
             TotalElapsedMilliseconds = totalElapsedMilliseconds;
-            ExecElapsedMilliseconds = execElapsedMilliseconds;
+            ExecElapsedMilliseconds = 0;
             StatusString = statusString;
-            ExitCode = exitCode;
+            ExitCode = 0;
         }
     }
 }

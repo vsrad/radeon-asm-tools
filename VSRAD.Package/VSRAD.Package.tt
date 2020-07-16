@@ -23,6 +23,14 @@
           <CommandName>RAD Debug</CommandName>
         </Strings>
       </Menu>
+      <!-- Tools -> RAD Debug -> Actions -->
+      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="0x700" type="Menu">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
+        <Strings>
+          <ButtonText>Actions</ButtonText>
+          <CommandName>Actions</CommandName>
+        </Strings>
+      </Menu>
       <!-- View -> Toolbars -> RAD Debug -->
       <Menu guid="guidCmdSetToolbar" id="ToolbarId" type="Toolbar">
         <Strings>
@@ -52,7 +60,16 @@
 
     <Buttons>
       <!-- Tools menu -->
-      <Button guid="guidCmdSetProfile" id="ProfileCommandId" priority="0" type="Button">
+	  <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="0" type="Button">
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
+        <CommandFlag>DynamicItemStart</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+	    <Strings>
+          <ButtonText>(No actions available)</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="ProfileCommandId" priority="1" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="profilerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -61,7 +78,7 @@
           <ButtonText>Launch Remote Profiling</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetDisassembly" id="DisassemblyCommandId" priority="0x0100" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="disassemblyIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -70,7 +87,7 @@
           <ButtonText>Disassemble file</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetPreprocess" id="PreprocessCommandId" priority="0x0200" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="3" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="preprocessIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -180,14 +197,8 @@
       <Group guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0600">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
       </Group>
-      <Group guid="guidCmdSetProfile" id="StandardToolbarGroup" priority="0xF000">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
-      </Group>
-      <Group guid="guidCmdSetDisassembly" id="StandardToolbarGroup" priority="0xF000">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
-      </Group>
-      <Group guid="guidCmdSetPreprocess" id="StandardToolbarGroup" priority="0xF000">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_TOOL_STANDARD"/>
+      <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="0x0600">
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuId" />
       </Group>
       <!-- Editor context menu -->
       <Group guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" priority="0x0600">
@@ -239,20 +250,20 @@
       <IDSymbol name="ToolsMenuGroup" value="0x0600" />
     </GuidSymbol>
 
+    <GuidSymbol name="guidCmdSetActionsMenu" value="{7CF54FFE-BCAC-4751-BEEC-D103FD953C8B}">
+      <IDSymbol name="ActionsMenuId" value="0x900" />
+      <IDSymbol name="ActionsMenuGroup" value="0x0700" />
+
+      <IDSymbol name="ActionCommandId" value="0x100" />
+      <IDSymbol name="ProfileCommandId" value="0x10" />
+      <IDSymbol name="DisassembleCommandId" value="0x11" />
+      <IDSymbol name="PreprocessCommandId" value="0x12" />
+    </GuidSymbol>
+
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
       <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
       <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
       <IDSymbol name="ToolWindowSliceVisualizerCommandId" value="0x0102" />
-    </GuidSymbol>
-
-    <GuidSymbol name="guidCmdSetDisassembly" value="{03E6AC6D-6562-46AC-B6D0-AD9D64CBF0AE}">
-      <IDSymbol name="DisassemblyCommandId" value="0x0100" />
-      <IDSymbol value="4128" name="StandardToolbarGroup" />
-    </GuidSymbol>
-
-    <GuidSymbol name="guidCmdSetPreprocess" value="{7D6BA5AC-29C2-4E44-BD92-376A7A62FCA1}">
-      <IDSymbol name="PreprocessCommandId" value="0x0100" />
-      <IDSymbol value="4128" name="StandardToolbarGroup" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetFRTC" value="{cefc8250-7cd1-46c1-b4f6-46a0a22a1c81}">
@@ -284,11 +295,6 @@
       <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
       <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
     </GuidSymbol>-->
-
-    <GuidSymbol name="guidCmdSetProfile" value="{A74163CE-732B-4570-8374-21D51EF7C3AD}">
-      <IDSymbol value="0x0100" name="ProfileCommandId" />
-      <IDSymbol value="4128" name="StandardToolbarGroup" />
-    </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">
       <IDSymbol name="profilerIcon" value="1" />

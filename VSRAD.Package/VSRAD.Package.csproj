@@ -115,20 +115,21 @@
     <Compile Include="..\VSRAD.DebugServer\IPC\StreamExtensions.cs">
       <Link>Server\IPC\StreamExtensions.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\ObservableProcess.cs">
+      <Link>Server\IPC\ObservableProcess.cs</Link>
+    </Compile>
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
     <Compile Include="BuildTools\Errors\Parser.cs" />
+    <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
-    <Compile Include="Commands\DisassemblyCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
-    <Compile Include="Commands\PreprocessCommand.cs" />
-    <Compile Include="Commands\ProfileCommand.cs" />
     <Compile Include="DebugVisualizer\CellStyling.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
@@ -173,12 +174,33 @@
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
+    <Compile Include="Options\Actions.cs" />
+    <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
+    <Compile Include="Options\MacroItem.cs" />
     <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
+    <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
-    <Compile Include="ProjectSystem\Macros\MacroEditor.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditContext.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroListEditor.xaml.cs">
+      <DependentUpon>MacroListEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\ActionEditor.xaml.cs">
+      <DependentUpon>ActionEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\BuiltinActionFileEditor.xaml.cs">
+      <DependentUpon>BuiltinActionFileEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\ExtendedExpander.xaml.cs">
+      <DependentUpon>ExtendedExpander.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\ExtendedTreeView.xaml.cs">
+      <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectSystem\Profiles\LegacyProfileImporter.cs" />
+    <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -192,19 +214,26 @@
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
+    <Compile Include="Server\ActionRunner.cs" />
+    <Compile Include="Server\ActionRunResult.cs" />
     <Compile Include="Server\BreakStateData.cs" />
+    <Compile Include="Server\DebugRunResult.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\CollectionExtensions.cs" />
+    <Compile Include="Utils\OleCommandText.cs" />
+    <Compile Include="Utils\VsEditor.cs" />
+    <Compile Include="Utils\VsStatusBarWriter.cs" />
+    <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
-    <Compile Include="Utils\ObservableDictionary.cs" />
     <Compile Include="Options\ProfileOptions.cs" />
     <Compile Include="Options\ProjectOptions.cs" />
     <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
-    <Compile Include="ProjectSystem\Macros\MacroEditManager.cs" />
+    <Compile Include="ProjectSystem\Macros\DirtyProfileMacroEditor.cs" />
     <Compile Include="ProjectSystem\OutputWindow.cs" />
     <Compile Include="ProjectSystem\Profiles\PropertyPageEditorWrapper.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">
@@ -380,6 +409,26 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ProjectSystem\Macros\MacroEditorWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Macros\MacroListEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\ActionEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\BuiltinActionFileEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\ExtendedExpander.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ProjectSystem\Profiles\ExtendedTreeView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -27,6 +27,8 @@ namespace VSRAD.Package.Server
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
+        Task<IResponse[]> SendBundleAsync(List<ICommand> commands);
+
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
 
         void ForceDisconnect();
@@ -51,7 +53,8 @@ namespace VSRAD.Package.Server
     public sealed class CommunicationChannel : ICommunicationChannel
     {
         public event Action ConnectionStateChanged;
-        public ServerConnectionOptions ConnectionOptions => _project.Options.Profile.General.Connection;
+        public ServerConnectionOptions ConnectionOptions =>
+            _project.Options.Profile?.General?.Connection ?? new ServerConnectionOptions("Remote address is not specified", 0);
 
         private ClientState _state = ClientState.Disconnected;
         public ClientState ConnectionState
@@ -119,6 +122,15 @@ namespace VSRAD.Package.Server
                 ForceDisconnect();
                 throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
             }
+        }
+
+        public async Task<IResponse[]> SendBundleAsync(List<ICommand> commands)
+        {
+            // TODO: send in a single packet (opt)
+            var responses = new IResponse[commands.Count];
+            for (int i = 0; i < commands.Count; ++i)
+                responses[i] = await SendWithReplyAsync<IResponse>(commands[i]);
+            return responses;
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()

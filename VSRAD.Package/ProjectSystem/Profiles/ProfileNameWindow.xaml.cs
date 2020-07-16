@@ -5,8 +5,6 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public delegate IEnumerable<string> GetExistingProfileNamesDelegate();
-
     public partial class ProfileNameWindow : Window
     {
         private sealed class Context : DefaultNotifyPropertyChanged
@@ -21,13 +19,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             private string _message;
             public string Message { get => _message; set => SetField(ref _message, value); }
 
-            public GetExistingProfileNamesDelegate GetExistingNames { get; set; }
+            public IEnumerable<string> NamesTaken { get; set; }
 
             public bool ValidateName()
             {
                 if (_previouslyValidatedName == EnteredName)
                     return true; // the same name entered twice => overwrite
-                if (!GetExistingNames().Contains(EnteredName))
+                if (!NamesTaken.Contains(EnteredName))
                     return true;
 
                 _previouslyValidatedName = EnteredName;
@@ -40,9 +38,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public static string NameConflictMessage(string name) => $"Profile {name} already exists. Enter a new name or leave it as is to overwrite the profile:";
 
-        public ProfileNameWindow(string message, string okButton, string cancelButton, string initialValue, GetExistingProfileNamesDelegate getExistingNames)
+        public ProfileNameWindow(string message, string okButton, string cancelButton, string initialValue, IEnumerable<string> namesTaken)
         {
-            DataContext = new Context { Message = message, OkButton = okButton, CancelButton = cancelButton, EnteredName = initialValue, GetExistingNames = getExistingNames };
+            DataContext = new Context { Message = message, OkButton = okButton, CancelButton = cancelButton, EnteredName = initialValue, NamesTaken = namesTaken };
             InitializeComponent();
         }
 

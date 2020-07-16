@@ -1,9 +1,10 @@
 ﻿using System.Collections;
+using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.Server;
 using Xunit;
 
-namespace VSRAD.Package.DebugVisualizer.Tests
+namespace VSRAD.PackageTests.DebugVisualizer
 {
     public class ComputedColumnStylingTests
     {

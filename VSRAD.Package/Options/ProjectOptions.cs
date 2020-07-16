@@ -1,8 +1,10 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
@@ -24,6 +26,17 @@ namespace VSRAD.Package.Options
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
+        public ProjectOptions() { }
+
+        public ProjectOptions(DebuggerOptions debugger, VisualizerOptions visualizer, SliceVisualizerOptions slice, VisualizerAppearance appearance, DebugVisualizer.ColumnStylingOptions styling)
+        {
+            DebuggerOptions = debugger;
+            VisualizerOptions = visualizer;
+            SliceVisualizerOptions = slice;
+            VisualizerAppearance = appearance;
+            VisualizerColumnStyling = styling;
+        }
+
         #region Profiles
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
@@ -33,47 +46,19 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
 
-        /// <summary>
-        /// Provides read-only access to all existing profiles.
-        /// To get the active profile, use the <see cref="Profile"/> property.
-        /// To update profiles, use the <see cref="AddProfile"/> and <see cref="UpdateProfiles"/> methods. 
-        /// </summary>
-        public IObservableReadOnlyDictionary<string, ProfileOptions> Profiles { get; } =
-            new ObservableDictionary<string, ProfileOptions>();
+        public IReadOnlyDictionary<string, ProfileOptions> Profiles { get; private set; } =
+            new Dictionary<string, ProfileOptions>();
 
-        public void AddProfile(string name, ProfileOptions profile)
+        public void SetProfiles(Dictionary<string, ProfileOptions> newProfiles, string activeProfile)
         {
-            var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
-            writeableProfiles[name] = profile;
-            ActiveProfile = name;
+            // TODO: do we need to have this restriction?
+            if (newProfiles.Count == 0)
+                throw new InvalidOperationException("At least one profile is required.");
+
+            Profiles = newProfiles;
+            ActiveProfile = activeProfile;
+            RaisePropertyChanged(nameof(Profiles));
             RaisePropertyChanged(nameof(HasProfiles));
-        }
-
-        public delegate string ResolveImportNameConflict(string profileName);
-        public void UpdateProfiles(IEnumerable<KeyValuePair<string, ProfileOptions>> updates, ResolveImportNameConflict nameConflictResolver)
-        {
-            var writeableProfiles = (IDictionary<string, ProfileOptions>)Profiles;
-            foreach (var updateKv in updates.ToList())
-            {
-                var oldName = updateKv.Key;
-                var newName = updateKv.Value.General.ProfileName ?? oldName;
-                if (oldName != newName && Profiles.Keys.Contains(newName))
-                    newName = nameConflictResolver(newName);
-                if (string.IsNullOrWhiteSpace(newName))
-                    newName = oldName;
-                writeableProfiles[newName] = updateKv.Value;
-                if (oldName != newName)
-                    writeableProfiles.Remove(oldName);
-                if (oldName == ActiveProfile)
-                    ActiveProfile = newName;
-            }
-        }
-
-        public void RemoveProfile(string name)
-        {
-            if (Profiles.Count == 1) throw new InvalidOperationException("Cannot remove the last profile without creating another.");
-            ((IDictionary<string, ProfileOptions>)Profiles).Remove(name);
-            ActiveProfile = Profiles.Keys.First();
         }
         #endregion
 
@@ -90,11 +75,25 @@ namespace VSRAD.Package.Options
             {
                 options = new ProjectOptions();
                 if (!(e is FileNotFoundException)) // File not found => creating a new project, don't show the error
-                    Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message} Proceeding with defaults.");
+                    Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
             }
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
+        }
+
+        public static ProjectOptions ReadLegacy(string path)
+        {
+            try
+            {
+                var legacyJson = JObject.Parse(File.ReadAllText(path));
+                return LegacyProfileImporter.ReadProjectOptions(legacyJson);
+            }
+            catch (Exception e)
+            {
+                Errors.ShowWarning($"A legacy project options file was found but could not be converted: {e.Message}\r\nYou can transfer your configuration manually from {path}");
+                return new ProjectOptions();
+            }
         }
 
         public void Write(string path)

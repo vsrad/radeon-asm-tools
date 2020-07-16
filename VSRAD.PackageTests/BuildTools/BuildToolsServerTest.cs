@@ -20,7 +20,7 @@ namespace VSRAD.Package.BuildTools
     [Collection("Sequential")]
     public class BuildToolsServerTest
     {
-        [Fact]
+        [Fact(Skip = "MSBuild integration is deprecated and does not work anymore")]
         public async Task SuccessfulBuildTestAsync()
         {
             TestHelper.InitializePackageTaskFactory();
@@ -61,7 +61,7 @@ namespace VSRAD.Package.BuildTools
             Assert.Empty(message.ErrorMessages);
         }
 
-        [Fact]
+        [Fact(Skip = "MSBuild integration is deprecated and does not work anymore")]
         public async Task PreprocessorTestAsync()
         {
             var preprocessorLocalFile = Path.GetTempFileName();
@@ -76,7 +76,7 @@ namespace VSRAD.Package.BuildTools
                     { RadMacros.PreprocessorLocalPath, preprocessorLocalFile }
                 },
                 projectRoot: @"C:\Users\CFF\Preprocess",
-                profile: new Options.ProfileOptions(build: new Options.BuildProfileOptions(runPreprocessor: true)));
+                profile: new Options.ProfileOptions());// build: new Options.BuildProfileOptions(runPreprocessor: true)));
             var channel = new MockCommunicationChannel();
             var server = StartBuildServer(projectMock, channel.Object);
 
@@ -108,7 +108,7 @@ namespace VSRAD.Package.BuildTools
             File.Delete(preprocessorLocalFile);
         }
 
-        [Fact]
+        [Fact(Skip = "MSBuild integration is deprecated and does not work anymore")]
         public async Task BuildErrorTestAsync()
         {
             TestHelper.InitializePackageTaskFactory();
