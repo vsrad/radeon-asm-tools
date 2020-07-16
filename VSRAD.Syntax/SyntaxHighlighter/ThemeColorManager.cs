@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.PlatformUI;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Formatting;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Windows.Media;
@@ -13,40 +15,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter
     {
         private const string Module = "Theme color manager";
 
-        #region colors
-        static readonly Dictionary<string, FontColor> LightAndBlueColors = new Dictionary<string, FontColor>
-        {
-            { PredefinedClassificationTypeNames.Instructions, new FontColor(Colors.Purple) },
-            { PredefinedClassificationTypeNames.Arguments, new FontColor(Color.FromRgb(110, 110, 110)) },
-            { PredefinedClassificationTypeNames.Functions, new FontColor(Colors.Teal) },
-            { PredefinedClassificationTypeNames.Labels, new FontColor(Colors.Olive) },
-        };
-        static readonly Dictionary<string, FontColor> LightAndBlueEditorColors = new Dictionary<string, FontColor>
-        {
-            { PredefinedMarkerFormatNames.ReferenceIdentifier, new FontColor(null, Color.FromRgb(219, 224, 204)) },
-            { PredefinedMarkerFormatNames.DefinitionIdentifier, new FontColor(null, Color.FromRgb(219, 224, 204)) },
-            { PredefinedMarkerFormatNames.BraceMatching, new FontColor(null, Color.FromRgb(219, 224, 204)) },
-        };
-
-        static readonly Dictionary<string, FontColor> DarkColors = new Dictionary<string, FontColor>
-        {
-            { PredefinedClassificationTypeNames.Instructions, new FontColor(Colors.DarkOrange) },
-            { PredefinedClassificationTypeNames.Arguments, new FontColor(Color.FromRgb(200, 200, 200)) },
-            { PredefinedClassificationTypeNames.Functions, new FontColor(Color.FromRgb(78, 201, 178)) },
-            { PredefinedClassificationTypeNames.Labels, new FontColor(Colors.Olive) },
-        };
-        static readonly Dictionary<string, FontColor> DarkEditorColors = new Dictionary<string, FontColor>
-        {
-            { PredefinedMarkerFormatNames.ReferenceIdentifier, new FontColor(Color.FromRgb(173, 192, 211), Color.FromRgb(14, 69, 131)) },
-            { PredefinedMarkerFormatNames.DefinitionIdentifier, new FontColor(Color.FromRgb(192, 211, 173), Color.FromRgb(72, 131, 14)) },
-            { PredefinedMarkerFormatNames.BraceMatching, new FontColor(Color.FromRgb(173, 192, 211), Color.FromRgb(14, 69, 131)) },
-        };
-        #endregion
-
         private readonly IEditorFormatMapService _editorFormatMapService;
         private readonly IClassificationFormatMapService _classificationFormatMapService;
         private readonly IClassificationTypeRegistryService _classificationTypeRegistry;
-        private VisualStudioTheme currentTheme;
 
         [ImportingConstructor]
         public ThemeColorManager(
@@ -57,49 +28,30 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             _editorFormatMapService = editorFormatMapService;
             _classificationFormatMapService = classificationFormatMapService;
             _classificationTypeRegistry = classificationTypeRegistry;
-            currentTheme = GetTheme();
         }
 
-        public FontColor GetDefaultColors(string category)
-        {
-            var color = FontColor.Default;
-            switch (currentTheme)
-            {
-                case VisualStudioTheme.Light:
-                case VisualStudioTheme.Blue:
-                    if (!LightAndBlueColors.TryGetValue(category, out color))
-                        LightAndBlueEditorColors.TryGetValue(category, out color);
-                    return color;
-                case VisualStudioTheme.Dark:
-                    if (!DarkColors.TryGetValue(category, out color))
-                        DarkEditorColors.TryGetValue(category, out color);
-                    return color;
-                default:
-                    Error.LogError($"Unknown theme color", Module);
-                    return color;
-            }
-        }
+        public ThemeColor GetDefaultColors(string category) =>
+            ThemeColors.Colors.TryGetValue(category, out var color)
+                ? color
+                : ThemeColors.EditorColors.TryGetValue(category, out color)
+                    ? color
+                    : ThemeColor.Default;
 
         public void UpdateColors()
         {
-            currentTheme = GetTheme();
-
-            var classificationColors = currentTheme == VisualStudioTheme.Light ? LightAndBlueColors : DarkColors;
-            var editorColors = currentTheme == VisualStudioTheme.Light ? LightAndBlueEditorColors : DarkEditorColors;
-
             var classificationFormatMap = _classificationFormatMapService.GetClassificationFormatMap(category: "text");
             var editorFormatMap = _editorFormatMapService.GetEditorFormatMap(category: "text");
 
-            UpdateClassificationColors(classificationFormatMap, classificationColors);
-            UpdateEditorColors(editorFormatMap, editorColors);
+            UpdateClassificationColors(classificationFormatMap);
+            UpdateEditorColors(editorFormatMap);
         }
 
-        private void UpdateClassificationColors(IClassificationFormatMap formatMap, Dictionary<string, FontColor> colors)
+        private void UpdateClassificationColors(IClassificationFormatMap formatMap)
         {
             try
             {
                 formatMap.BeginBatchUpdate();
-                foreach (var pair in colors)
+                foreach (var pair in ThemeColors.Colors)
                 {
                     var type = pair.Key;
                     var color = pair.Value;
@@ -134,12 +86,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             }
         }
 
-        private void UpdateEditorColors(IEditorFormatMap formatMap, Dictionary<string, FontColor> colors)
+        private void UpdateEditorColors(IEditorFormatMap formatMap)
         {
             try
             {
                 formatMap.BeginBatchUpdate();
-                foreach (var pair in colors)
+                foreach (var pair in ThemeColors.EditorColors)
                 {
                     var type = pair.Key;
                     var color = pair.Value;
@@ -164,31 +116,105 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 formatMap.EndBatchUpdate();
             }
         }
+    }
 
-        private static VisualStudioTheme GetTheme()
+    public static class ThemeColors
+    {
+        #region Autogenerated resource keys
+        // These resource keys are generated by Visual Studio Extension Color Editor, and should be replaced when new colors are added to this category.
+        public static readonly Guid Category = new Guid("128f43cc-214c-49f8-a08c-f379112caa51");
+
+        private static ThemeResourceKey _RADbracematchingColorKey;
+        private static ThemeResourceKey _RADbracematchingBrushKey;
+        private static ThemeResourceKey _RADbracematchingTextColorKey;
+        private static ThemeResourceKey _RADbracematchingTextBrushKey;
+        public static ThemeResourceKey RADbracematchingColorKey { get { return _RADbracematchingColorKey ?? (_RADbracematchingColorKey = new ThemeResourceKey(Category, "RAD brace matching", ThemeResourceKeyType.BackgroundColor)); } }
+        public static ThemeResourceKey RADbracematchingBrushKey { get { return _RADbracematchingBrushKey ?? (_RADbracematchingBrushKey = new ThemeResourceKey(Category, "RAD brace matching", ThemeResourceKeyType.BackgroundBrush)); } }
+        public static ThemeResourceKey RADbracematchingTextColorKey { get { return _RADbracematchingTextColorKey ?? (_RADbracematchingTextColorKey = new ThemeResourceKey(Category, "RAD brace matching", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey RADbracematchingTextBrushKey { get { return _RADbracematchingTextBrushKey ?? (_RADbracematchingTextBrushKey = new ThemeResourceKey(Category, "RAD brace matching", ThemeResourceKeyType.ForegroundBrush)); } }
+
+        private static ThemeResourceKey _RADdefinitionidentifierColorKey;
+        private static ThemeResourceKey _RADdefinitionidentifierBrushKey;
+        private static ThemeResourceKey _RADdefinitionidentifierTextColorKey;
+        private static ThemeResourceKey _RADdefinitionidentifierTextBrushKey;
+        public static ThemeResourceKey RADdefinitionidentifierColorKey { get { return _RADdefinitionidentifierColorKey ?? (_RADdefinitionidentifierColorKey = new ThemeResourceKey(Category, "RAD definition identifier", ThemeResourceKeyType.BackgroundColor)); } }
+        public static ThemeResourceKey RADdefinitionidentifierBrushKey { get { return _RADdefinitionidentifierBrushKey ?? (_RADdefinitionidentifierBrushKey = new ThemeResourceKey(Category, "RAD definition identifier", ThemeResourceKeyType.BackgroundBrush)); } }
+        public static ThemeResourceKey RADdefinitionidentifierTextColorKey { get { return _RADdefinitionidentifierTextColorKey ?? (_RADdefinitionidentifierTextColorKey = new ThemeResourceKey(Category, "RAD definition identifier", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey RADdefinitionidentifierTextBrushKey { get { return _RADdefinitionidentifierTextBrushKey ?? (_RADdefinitionidentifierTextBrushKey = new ThemeResourceKey(Category, "RAD definition identifier", ThemeResourceKeyType.ForegroundBrush)); } }
+
+        private static ThemeResourceKey _RADreferenceidentifierColorKey;
+        private static ThemeResourceKey _RADreferenceidentifierBrushKey;
+        private static ThemeResourceKey _RADreferenceidentifierTextColorKey;
+        private static ThemeResourceKey _RADreferenceidentifierTextBrushKey;
+        public static ThemeResourceKey RADreferenceidentifierColorKey { get { return _RADreferenceidentifierColorKey ?? (_RADreferenceidentifierColorKey = new ThemeResourceKey(Category, "RAD reference identifier", ThemeResourceKeyType.BackgroundColor)); } }
+        public static ThemeResourceKey RADreferenceidentifierBrushKey { get { return _RADreferenceidentifierBrushKey ?? (_RADreferenceidentifierBrushKey = new ThemeResourceKey(Category, "RAD reference identifier", ThemeResourceKeyType.BackgroundBrush)); } }
+        public static ThemeResourceKey RADreferenceidentifierTextColorKey { get { return _RADreferenceidentifierTextColorKey ?? (_RADreferenceidentifierTextColorKey = new ThemeResourceKey(Category, "RAD reference identifier", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey RADreferenceidentifierTextBrushKey { get { return _RADreferenceidentifierTextBrushKey ?? (_RADreferenceidentifierTextBrushKey = new ThemeResourceKey(Category, "RAD reference identifier", ThemeResourceKeyType.ForegroundBrush)); } }
+
+        private static ThemeResourceKey _radeonAsmArgumentsTextColorKey;
+        private static ThemeResourceKey _radeonAsmArgumentsTextBrushKey;
+        public static ThemeResourceKey radeonAsmArgumentsTextColorKey { get { return _radeonAsmArgumentsTextColorKey ?? (_radeonAsmArgumentsTextColorKey = new ThemeResourceKey(Category, "radeonAsmArguments", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey radeonAsmArgumentsTextBrushKey { get { return _radeonAsmArgumentsTextBrushKey ?? (_radeonAsmArgumentsTextBrushKey = new ThemeResourceKey(Category, "radeonAsmArguments", ThemeResourceKeyType.ForegroundBrush)); } }
+
+        private static ThemeResourceKey _radeonAsmFunctionsTextColorKey;
+        private static ThemeResourceKey _radeonAsmFunctionsTextBrushKey;
+        public static ThemeResourceKey radeonAsmFunctionsTextColorKey { get { return _radeonAsmFunctionsTextColorKey ?? (_radeonAsmFunctionsTextColorKey = new ThemeResourceKey(Category, "radeonAsmFunctions", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey radeonAsmFunctionsTextBrushKey { get { return _radeonAsmFunctionsTextBrushKey ?? (_radeonAsmFunctionsTextBrushKey = new ThemeResourceKey(Category, "radeonAsmFunctions", ThemeResourceKeyType.ForegroundBrush)); } }
+
+        private static ThemeResourceKey _radeonAsmInstructionsTextColorKey;
+        private static ThemeResourceKey _radeonAsmInstructionsTextBrushKey;
+        public static ThemeResourceKey radeonAsmInstructionsTextColorKey { get { return _radeonAsmInstructionsTextColorKey ?? (_radeonAsmInstructionsTextColorKey = new ThemeResourceKey(Category, "radeonAsmInstructions", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey radeonAsmInstructionsTextBrushKey { get { return _radeonAsmInstructionsTextBrushKey ?? (_radeonAsmInstructionsTextBrushKey = new ThemeResourceKey(Category, "radeonAsmInstructions", ThemeResourceKeyType.ForegroundBrush)); } }
+
+        private static ThemeResourceKey _radeonAsmLabelsTextColorKey;
+        private static ThemeResourceKey _radeonAsmLabelsTextBrushKey;
+        public static ThemeResourceKey radeonAsmLabelsTextColorKey { get { return _radeonAsmLabelsTextColorKey ?? (_radeonAsmLabelsTextColorKey = new ThemeResourceKey(Category, "radeonAsmLabels", ThemeResourceKeyType.ForegroundColor)); } }
+        public static ThemeResourceKey radeonAsmLabelsTextBrushKey { get { return _radeonAsmLabelsTextBrushKey ?? (_radeonAsmLabelsTextBrushKey = new ThemeResourceKey(Category, "radeonAsmLabels", ThemeResourceKeyType.ForegroundBrush)); } }
+        #endregion
+
+        #region colors
+        public static readonly Dictionary<string, ThemeColor> Colors = new Dictionary<string, ThemeColor>
         {
-            var themeColor = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowTextColorKey);
-            return themeColor.GetBrightness() > 0.5 ? VisualStudioTheme.Dark : VisualStudioTheme.Light;
+            { PredefinedClassificationTypeNames.Instructions, new ThemeColor(radeonAsmInstructionsTextColorKey) },
+            { PredefinedClassificationTypeNames.Arguments,  new ThemeColor(radeonAsmArgumentsTextColorKey) },
+            { PredefinedClassificationTypeNames.Functions,  new ThemeColor(radeonAsmFunctionsTextColorKey) },
+            { PredefinedClassificationTypeNames.Labels,  new ThemeColor(radeonAsmLabelsTextColorKey) },
+            { PredefinedMarkerFormatNames.ReferenceIdentifier,  new ThemeColor(RADreferenceidentifierTextColorKey, RADreferenceidentifierColorKey) },
+            { PredefinedMarkerFormatNames.DefinitionIdentifier,  new ThemeColor(RADdefinitionidentifierTextColorKey, RADdefinitionidentifierColorKey) },
+            { PredefinedMarkerFormatNames.BraceMatching,  new ThemeColor(RADbracematchingTextColorKey, RADbracematchingColorKey) },
+        };
+
+        public static readonly Dictionary<string, ThemeColor> EditorColors = new Dictionary<string, ThemeColor>
+        {
+            { PredefinedMarkerFormatNames.ReferenceIdentifier,  new ThemeColor(RADreferenceidentifierTextColorKey, RADreferenceidentifierColorKey) },
+            { PredefinedMarkerFormatNames.DefinitionIdentifier,  new ThemeColor(RADdefinitionidentifierTextColorKey, RADdefinitionidentifierColorKey) },
+            { PredefinedMarkerFormatNames.BraceMatching,  new ThemeColor(RADbracematchingTextColorKey, RADbracematchingColorKey) },
+        };
+        #endregion
+    }
+
+    public class ThemeColor
+    {
+        private readonly ThemeResourceKey _foregroundResourceKey;
+        private readonly ThemeResourceKey _backgroundResourceKey;
+        public Color? Foreground { get { return GetColorFromResourceKey(_foregroundResourceKey); } }
+        public Color? Background { get { return GetColorFromResourceKey(_backgroundResourceKey); } }
+
+        public static ThemeColor Default { get { return new ThemeColor(null, null); } }
+
+        public ThemeColor(ThemeResourceKey foreground = null, ThemeResourceKey background = null)
+        {
+            _foregroundResourceKey = foreground;
+            _backgroundResourceKey = background;
         }
 
-        private enum VisualStudioTheme
+        private static Color? GetColorFromResourceKey(ThemeResourceKey resourceKey)
         {
-            Light,
-            Blue,
-            Dark,
-        }
+            if (resourceKey == null)
+                return null;
 
-        public class FontColor
-        {
-            public static FontColor Default => new FontColor(Color.FromRgb(220, 220, 220), Color.FromRgb(30, 30, 30));
-            public readonly Color? Foreground;
-            public readonly Color? Background;
-
-            public FontColor(Color? foreground = null, Color? background = null)
-            {
-                Foreground = foreground;
-                Background = background;
-            }
+            var color = VSColorTheme.GetThemedColor(resourceKey);
+            return Color.FromArgb(color.A, color.R, color.G, color.B);
         }
     }
 }

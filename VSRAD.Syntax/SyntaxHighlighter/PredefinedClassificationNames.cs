@@ -2,10 +2,10 @@
 {
     static class PredefinedClassificationTypeNames
     {
-        public const string Instructions = "radeonAsm.instructions";
-        public const string Arguments = "radeonAsm.arguments";
-        public const string Functions = "radeonAsm.functions";
-        public const string Labels = "radeonAsm.labels";
+        public const string Instructions = "radeonAsmInstructions";
+        public const string Arguments = "radeonAsmArguments";
+        public const string Functions = "radeonAsmFunctions";
+        public const string Labels = "radeonAsmLabels";
     }
 
     static class PredefinedClassificationFormatNames
