@@ -32,7 +32,17 @@
             <Button x:Name="NewStepButton" Content="➕" ToolTip="Add step" Width="22" Height="22" HorizontalAlignment="Right" Click="OpenNewStepPopup"/>
         </DockPanel>
         <Popup x:Name="NewStepPopup" PlacementTarget="{Binding ElementName=NewStepButton}" Placement="Left" StaysOpen="False">
-            <Menu Background="{DynamicResource {x:Static vsshell:VsBrushes.MenuKey}}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.MenuTextKey}}">
+            <Menu>
+                <Menu.Resources>
+                    <Style TargetType="{x:Type MenuItem}">
+                        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.MenuTextKey}}"/>
+                        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.MenuKey}}"/>
+                    </Style>
+                    <Style TargetType="{x:Type Menu}">
+                        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.MenuTextKey}}"/>
+                        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.MenuKey}}"/>
+                    </Style>
+                </Menu.Resources>
                 <Menu.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel Orientation="Vertical"/>
