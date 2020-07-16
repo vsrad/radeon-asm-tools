@@ -108,9 +108,9 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="176"/>
+                                <ColumnDefinition Width="178"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
@@ -144,19 +144,19 @@
                             <Label Content="Deploy Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <TextBox Text="{Binding DeployDirectory}" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
                                      ToolTip="Directory on the remote machine where the project is deployed before starting the debugger"/>
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="DeployDirectory"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="DeployDirectory"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Local Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
                             <TextBox Text="{Binding LocalWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"/>
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="LocalWorkDir"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="LocalWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Remote Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
                             <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"/>
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="2" Tag="RemoteWorkDir"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="2" Tag="RemoteWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 

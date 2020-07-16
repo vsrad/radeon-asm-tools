@@ -60,9 +60,9 @@
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Margin="4,0" TextTrimming="CharacterEllipsis" Text="{Binding Description}" VerticalAlignment="Center" Grid.Column="0" />
                                             <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="4,0">
-                                                <Button Content="⮝" Command="{Binding DataContext.MoveUpCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
+                                                <Button Content="▲" Command="{Binding DataContext.MoveUpCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
                                                         ToolTip="Move up" Width="22" Height="22" Margin="0,0,4,0" />
-                                                <Button Content="⮟" Command="{Binding DataContext.MoveDownCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
+                                                <Button Content="▼" Command="{Binding DataContext.MoveDownCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
                                                         ToolTip="Move down" Width="22" Height="22" Margin="0,0,4,0" />
                                                 <Button Content="❌" Command="{Binding DataContext.DeleteCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
                                                         ToolTip="Delete step" Width="22" Height="22" />
@@ -107,7 +107,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="173"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
@@ -121,12 +121,12 @@
 
                             <Label Content="Source Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                                     Tag="SourcePath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Target Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
                             <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
                                     Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Check Source Timestamp:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
@@ -139,7 +139,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="173"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
@@ -156,17 +156,17 @@
 
                             <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding Executable, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                                     Tag="Executable" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Arguments:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
                             <TextBox Text="{Binding Arguments, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
                                     Tag="Arguments" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
                                     Tag="WorkingDirectory" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Run as Administrator:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
@@ -187,7 +187,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="173"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
@@ -195,7 +195,7 @@
                             </Grid.RowDefinitions>
                             <Label Content="Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Text="{Binding Path, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
                                     Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Line Marker:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
@@ -208,7 +208,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="173"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="28"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
