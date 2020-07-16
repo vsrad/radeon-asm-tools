@@ -40,7 +40,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public static readonly DependencyProperty StepsProperty =
             DependencyProperty.Register(nameof(Steps), typeof(ObservableCollection<IActionStep>), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty AllActionNamesProperty =
-            DependencyProperty.Register(nameof(AllActionNames), typeof(IEnumerable<ActionProfileOptions>), typeof(ActionEditor), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(AllActionNames), typeof(IEnumerable<string>), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty ActionNameProperty =
             DependencyProperty.Register(nameof(ActionName), typeof(string), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty MacroEditorProperty =
