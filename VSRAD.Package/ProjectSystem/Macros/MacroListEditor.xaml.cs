@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using VSRAD.Package.Options;
@@ -76,9 +76,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 DataContextChanged += (s, e) => SetupDisplayCollection(e.NewValue);
         }
 
-        private void AddMacro(object sender, RoutedEventArgs e) =>
-            ((MacroListDisplayCollection)DataContext).Add(new MacroItem());
-
         private void SetupDisplayCollection(object dataContext)
         {
             // Merge user-defined macros (DataContext) with predefined ones into a new "display" collection
@@ -107,16 +104,28 @@ namespace VSRAD.Package.ProjectSystem.Macros
             {
                 foreach (MacroItem item in e.NewItems)
                     _sourceCollection.Add(item);
-
-                if (e.NewItems.Count == 1 && e.NewItems[0] is MacroItem addedItem)
-                {
-                    MacroGrid.SelectedItem = addedItem;
-                    MacroGrid.CurrentCell = new DataGridCellInfo(addedItem, MacroGrid.Columns[0]);
-#pragma warning disable VSTHRD001 // Use BeginInvoke to focus on the added macro item _after_ it's been added to the DataGrid
-                    Dispatcher.BeginInvoke((Action)(() => MacroGrid.BeginEdit()), DispatcherPriority.Background);
-#pragma warning restore VSTHRD001
-                }
             }
+        }
+
+        private void AddMacro(object sender, RoutedEventArgs e)
+        {
+            var macros = (MacroListDisplayCollection)DataContext;
+            var existingNewItem = macros.FirstOrDefault(m => string.IsNullOrEmpty(m.Name));
+            if (existingNewItem == null)
+            {
+                existingNewItem = new MacroItem();
+                macros.Add(existingNewItem);
+            }
+            BeginMacroNameEdit(existingNewItem);
+        }
+
+        private void BeginMacroNameEdit(MacroItem macro)
+        {
+            MacroGrid.SelectedItem = macro;
+            MacroGrid.CurrentCell = new DataGridCellInfo(macro, MacroGrid.Columns[0]);
+#pragma warning disable VSTHRD001 // Using BeginInvoke to focus on the added macro item _after_ it's been added to the DataGrid
+            Dispatcher.BeginInvoke((Action)(() => MacroGrid.BeginEdit()), DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
         }
 
         private void OpenMacroEditor(object param)
@@ -124,6 +133,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var item = (MacroItem)param;
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
+        }
+
+        private void RemoveRowAfterEditIfNameEmpty(object sender, DataGridRowEditEndingEventArgs e)
+        {
+            var item = (MacroItem)e.Row.DataContext;
+
+#pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire
+            if (string.IsNullOrEmpty(item.Name))
+                Dispatcher.BeginInvoke((Action)(() => ((MacroListDisplayCollection)DataContext).Remove(item)), DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
         }
     }
 }
