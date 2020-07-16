@@ -39,8 +39,9 @@ namespace VSRAD.Package.Options
         public override bool Equals(object obj) =>
             obj is MacroItem item && item.Name == Name && item.Value == Value && item.IsUserDefined == IsUserDefined;
 
-        public override int GetHashCode() =>
-            (Name, Value, IsUserDefined).GetHashCode();
+        // Note: This implementation makes it a bad idea to use MacroItem as a key in a hash-based collection,
+        // but it prevents DataGrid (MacroListEditor) from misidentifying MacroItems when the name (and a name-based hashcode) changes
+        public override int GetHashCode() => IsUserDefined ? 1 : 0;
     }
 
     public sealed class MacroItemConverter : JsonConverter

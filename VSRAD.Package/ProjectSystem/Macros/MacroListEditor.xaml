@@ -32,9 +32,9 @@
             <utils:WpfBoolToVisibilityConverter x:Key="MacroUserDefinedVisibilityConverter" TrueValue="Visible" FalseValue="Collapsed" />
         </ResourceDictionary>
     </UserControl.Resources>
-    <DataGrid x:Name="MacroGrid" ItemsSource="{Binding Source={StaticResource Macros}}" GridLinesVisibility="None"
-              RowEditEnding="RemoveRowAfterEditIfNameEmpty"
-              AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserResizeRows="False"
+    <DataGrid x:Name="MacroGrid" ItemsSource="{Binding Source={StaticResource Macros}}" GridLinesVisibility="None" Focusable="True"
+              RowEditEnding="RemoveRowAfterEditIfNameEmpty" PreviewKeyDown="HandleDeleteKey"
+              AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False"
               HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" Grid.Row="1" RowHeight="24">
         <DataGrid.Columns>
             <DataGridTextColumn Header="Macro" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="*">

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -65,7 +67,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public MacroListEditor()
         {
             InitializeComponent();
-            DeleteMacroCommand = new WpfDelegateCommand(item => ((MacroListDisplayCollection)DataContext).Remove((MacroItem)item));
+            DeleteMacroCommand = new WpfDelegateCommand(DeleteMacro);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
 
             if (DataContext != null)
@@ -119,6 +121,21 @@ namespace VSRAD.Package.ProjectSystem.Macros
             BeginMacroNameEdit(existingNewItem);
         }
 
+        private void DeleteMacro(object param)
+        {
+            List<MacroItem> selectedMacros;
+            if (param is MacroItem macro)
+                selectedMacros = new List<MacroItem> { macro };
+            else
+                // create a copy (ToList) to avoid changing the collection while iterating over it
+                selectedMacros = MacroGrid.SelectedItems.Cast<MacroItem>().Where(m => m.IsUserDefined).ToList();
+
+            var selectedNames = string.Join(", ", selectedMacros.Select(i => "$(" + i.Name + ")"));
+            var prompt = MessageBox.Show($"Are you sure you want to delete {selectedNames}?", "Confirm macro deletion", MessageBoxButton.YesNo);
+            if (prompt == MessageBoxResult.Yes)
+                selectedMacros.ForEach(m => ((MacroListDisplayCollection)DataContext).Remove(m));
+        }
+
         private void BeginMacroNameEdit(MacroItem macro)
         {
             MacroGrid.SelectedItem = macro;
@@ -143,6 +160,19 @@ namespace VSRAD.Package.ProjectSystem.Macros
             if (string.IsNullOrEmpty(item.Name))
                 Dispatcher.BeginInvoke((Action)(() => ((MacroListDisplayCollection)DataContext).Remove(item)), DispatcherPriority.Background);
 #pragma warning restore VSTHRD001
+        }
+
+        private void HandleDeleteKey(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Delete)
+                return;
+
+            IEditableCollectionView itemsView = MacroGrid.Items;
+            if (itemsView.IsAddingNew || itemsView.IsEditingItem)
+                return;
+
+            DeleteMacro(null);
+            e.Handled = true;
         }
     }
 }
