@@ -138,6 +138,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         private void BeginMacroNameEdit(MacroItem macro)
         {
+            // finish editing the current macro before moving the focus away from it
+            MacroGrid.CommitEdit();
+
             MacroGrid.SelectedItem = macro;
             MacroGrid.CurrentCell = new DataGridCellInfo(macro, MacroGrid.Columns[0]);
 #pragma warning disable VSTHRD001 // Using BeginInvoke to focus on the added macro item _after_ it's been added to the DataGrid
