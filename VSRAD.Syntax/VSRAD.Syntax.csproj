@@ -172,6 +172,7 @@
     <Compile Include="RadeonServiceProvider.cs" />
     <Compile Include="SyntaxHighlighter\BraceMatchingHighlighter\BraceHighlighter.cs" />
     <Compile Include="SyntaxHighlighter\BraceMatchingHighlighter\BraceHighlighterProvider.cs" />
+    <Compile Include="SyntaxHighlighter\ThemeColorManager.cs" />
     <Compile Include="SyntaxHighlighter\Classifier.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierClassificationDefinition.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierProvider.cs" />
@@ -290,5 +291,10 @@
       <Name>VSRAD.SyntaxParser</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="RadeonAsmSyntaxColors.pkgdef">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

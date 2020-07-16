@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Microsoft.VisualStudio.PlatformUI;
 using VSRAD.Syntax.Parser;
 using VSRAD.Syntax.Parser.Tokens;
 
@@ -13,17 +12,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
     public class BraceHighlightWordTag : TextMarkerTag
     {
-        private static string GetColorFormat()
-        {
-            var color = VSColorTheme.GetThemedColor(EnvironmentColors.ToolWindowBackgroundColorKey);
-
-            if (color.R <= 100 && color.G <= 100 && color.B <= 100)
-                return PredefinedMarkerFormatNames.BraceMatchingDark;
-
-            return PredefinedMarkerFormatNames.BraceMatchingLight;
-        }
-
-        public BraceHighlightWordTag() : base(GetColorFormat()) { }
+        public BraceHighlightWordTag() : base(PredefinedMarkerFormatNames.BraceMatching) { }
     }
 
     internal class BraceHighlighter : ITagger<TextMarkerTag>

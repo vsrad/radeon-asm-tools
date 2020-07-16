@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using System.Windows.Media;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
@@ -85,124 +84,100 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
         #region Classification Format Productions
 
-        [Export(typeof(EditorFormatDefinition))]
-        [ClassificationType(ClassificationTypeNames = Constants.RadeonAsmSyntaxContentType)]
-        [Name(PredefinedClassificationFormatNames.Instructions)]
-        [UserVisible(true)]
-        internal sealed class InstructionFormat : ClassificationFormatDefinition
+        internal class BaseClassificationFormatDefinition : ClassificationFormatDefinition
         {
-            [Import]
-            internal IClassificationTypeRegistryService ClassificationRegistry = null;
-
-            public InstructionFormat()
+            public BaseClassificationFormatDefinition(ThemeColorManager colorManager, string type, string name)
             {
-                this.ForegroundColor = Colors.Purple;
+                DisplayName = name;
+                var colors = colorManager.GetDefaultColors(type);
+                ForegroundColor = colors.Foreground;
+                BackgroundColor = colors.Background;
             }
+        }
+
+        internal class BaseMarkerFormatDefinition : MarkerFormatDefinition
+        {
+            public BaseMarkerFormatDefinition(ThemeColorManager colorManager, string name)
+            {
+                DisplayName = name;
+                var colors = colorManager.GetDefaultColors(name);
+                ForegroundColor = colors.Foreground;
+                BackgroundColor = colors.Background;
+            }
+        }
+
+        [Export(typeof(EditorFormatDefinition))]
+        [ClassificationType(ClassificationTypeNames = PredefinedClassificationTypeNames.Instructions)]
+        [Name(PredefinedClassificationTypeNames.Instructions)]
+        [UserVisible(true)]
+        internal sealed class InstructionFormat : BaseClassificationFormatDefinition
+        {
+            [ImportingConstructor]
+            public InstructionFormat(ThemeColorManager colorManager) 
+                : base(colorManager, PredefinedClassificationTypeNames.Instructions, PredefinedClassificationFormatNames.Instructions) { }
         }
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = PredefinedClassificationTypeNames.Arguments)]
-        [Name(PredefinedClassificationFormatNames.Arguments)]
+        [Name(PredefinedClassificationTypeNames.Arguments)]
         [UserVisible(true)]
-        internal sealed class ArgumentFormat : ClassificationFormatDefinition
+        internal sealed class ArgumentFormat : BaseClassificationFormatDefinition
         {
-            public ArgumentFormat()
-            {
-                ForegroundColor = Color.FromArgb(255, 110, 110, 110);
-            }
+            [ImportingConstructor]
+            public ArgumentFormat(ThemeColorManager colorManager)
+                : base(colorManager, PredefinedClassificationTypeNames.Arguments, PredefinedClassificationFormatNames.Arguments) { }
         }
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = PredefinedClassificationTypeNames.Functions)]
-        [Name(PredefinedClassificationFormatNames.Functions)]
+        [Name(PredefinedClassificationTypeNames.Functions)]
         [UserVisible(true)]
-        internal sealed class FunctionsFormat : ClassificationFormatDefinition
+        internal sealed class FunctionsFormat : BaseClassificationFormatDefinition
         {
-            public FunctionsFormat()
-            {
-                ForegroundColor = Colors.Teal;
-            }
+            [ImportingConstructor]
+            public FunctionsFormat(ThemeColorManager colorManager)
+                : base(colorManager, PredefinedClassificationTypeNames.Functions, PredefinedClassificationFormatNames.Functions) { }
         }
 
         [Export(typeof(EditorFormatDefinition))]
         [ClassificationType(ClassificationTypeNames = PredefinedClassificationTypeNames.Labels)]
-        [Name(PredefinedClassificationFormatNames.Labels)]
+        [Name(PredefinedClassificationTypeNames.Labels)]
         [UserVisible(true)]
-        internal sealed class LabelFormat : ClassificationFormatDefinition
+        internal sealed class LabelFormat : BaseClassificationFormatDefinition
         {
-            public LabelFormat()
-            {
-                ForegroundColor = Colors.Olive;
-            }
+            [ImportingConstructor]
+            public LabelFormat(ThemeColorManager colorManager)
+                : base(colorManager, PredefinedClassificationTypeNames.Labels, PredefinedClassificationFormatNames.Labels) { }
         }
 
         [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.ReferenceIdentifierLight)]
+        [Name(PredefinedMarkerFormatNames.ReferenceIdentifier)]
         [UserVisible(true)]
-        internal sealed class ReferenceIdentifierHighlightFormatLight : MarkerFormatDefinition
+        internal sealed class ReferenceIdentifierHighlightFormat : BaseMarkerFormatDefinition
         {
-            public ReferenceIdentifierHighlightFormatLight()
-            {
-                BackgroundColor = Color.FromArgb(255, 219, 224, 204);
-            }
+            [ImportingConstructor]
+            public ReferenceIdentifierHighlightFormat(ThemeColorManager colorManager)
+                : base(colorManager, PredefinedMarkerFormatNames.ReferenceIdentifier) { }
         }
 
         [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.ReferenceIdentifierDark)]
+        [Name(PredefinedMarkerFormatNames.DefinitionIdentifier)]
         [UserVisible(true)]
-        internal sealed class ReferenceIdentifierHighlightFormatDark : MarkerFormatDefinition
+        internal sealed class DefinitionIdentifierHighlightFormat : BaseMarkerFormatDefinition
         {
-            public ReferenceIdentifierHighlightFormatDark()
-            {
-                BackgroundColor = Color.FromArgb(225, 14, 69, 131);
-                ForegroundColor = Color.FromArgb(255, 173, 192, 211);
-            }
+            [ImportingConstructor]
+            public DefinitionIdentifierHighlightFormat(ThemeColorManager colorManager)
+                : base(colorManager, PredefinedMarkerFormatNames.DefinitionIdentifier) { }
         }
 
         [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.DefinitionIdentifierLight)]
+        [Name(PredefinedMarkerFormatNames.BraceMatching)]
         [UserVisible(true)]
-        internal sealed class DefinitionIdentifierHighlightFormatLight : MarkerFormatDefinition
+        internal sealed class BraceMatchingHighlightFormat : BaseMarkerFormatDefinition
         {
-            public DefinitionIdentifierHighlightFormatLight()
-            {
-                BackgroundColor = Color.FromArgb(255, 219, 224, 204);
-            }
-        }
-
-        [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.DefinitionIdentifierDark)]
-        [UserVisible(true)]
-        internal sealed class DefinitionIdentifierHighlightFormatDark : MarkerFormatDefinition
-        {
-            public DefinitionIdentifierHighlightFormatDark()
-            {
-                BackgroundColor = Color.FromArgb(255, 72, 131, 14);
-                ForegroundColor = Color.FromArgb(255, 192, 211, 173);
-            }
-        }
-
-        [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.BraceMatchingLight)]
-        [UserVisible(true)]
-        internal sealed class BraceMatchingHighlightFormatLight : MarkerFormatDefinition
-        {
-            public BraceMatchingHighlightFormatLight()
-            {
-                BackgroundColor = Color.FromArgb(255, 219, 224, 204);
-            }
-        }
-
-        [Export(typeof(EditorFormatDefinition))]
-        [Name(PredefinedMarkerFormatNames.BraceMatchingDark)]
-        [UserVisible(true)]
-        internal sealed class BraceMatchingHighlightFormatDark : MarkerFormatDefinition
-        {
-            public BraceMatchingHighlightFormatDark()
-            {
-                BackgroundColor = Color.FromArgb(225, 14, 69, 131);
-                ForegroundColor = Color.FromArgb(255, 173, 192, 211);
-            }
+            [ImportingConstructor]
+            public BraceMatchingHighlightFormat(ThemeColorManager colorManager)
+                : base(colorManager, PredefinedMarkerFormatNames.BraceMatching) { }
         }
         #endregion
 
