@@ -123,6 +123,50 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         }
 
         [Fact]
+        public void RemoveProfileTest()
+        {
+            var project = CreateTestProject();
+            var context = new ProfileOptionsWindowContext(project, null, null);
+
+            // a crude emulation of WPF control behavior when removing selected profile
+            context.DirtyProfiles.CollectionChanged += (s, e) =>
+            {
+                if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems[0] == context.SelectedProfile)
+                    context.SelectedProfile = null;
+            };
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.RemoveProfileCommand.Execute(null);
+
+            Assert.Single(context.DirtyProfiles);
+            Assert.Null(context.SelectedProfile);
+            Assert.Null(context.SelectedPage);
+            Assert.Empty(context.Pages);
+
+            context.SaveChanges();
+
+            Assert.Equal(1, project.Options.Profiles.Count);
+            // Switches to the first existing profile
+            Assert.Equal("asa", project.Options.ActiveProfile);
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            context.RemoveProfileCommand.Execute(null);
+
+            Assert.Empty(context.DirtyProfiles);
+            Assert.Null(context.SelectedProfile);
+            Assert.Null(context.SelectedPage);
+            Assert.Empty(context.Pages);
+
+            context.SaveChanges();
+
+            Assert.Null(project.Options.Profile);
+            Assert.False(project.Options.HasProfiles);
+
+            // Does not fail when there are no profiles
+            context.RemoveProfileCommand.Execute(null);
+        }
+
+        [Fact]
         public void SaveChangesNameConflictResolvedTest()
         {
             var project = CreateTestProject();
@@ -146,6 +190,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("kana-edited", kanaSaved.General.RemoteMachine);
             Assert.True(project.Options.Profiles.TryGetValue("asa-renamed", out var asaSaved));
             Assert.Equal("asa-edited", asaSaved.General.RemoteMachine);
+
+            // Don't forget to synchronize dirty profiles!
+            Assert.Equal("kana-edited", GetDirtyProfile(context, "kana").General.RemoteMachine);
+            Assert.Equal("asa-edited", GetDirtyProfile(context, "asa-renamed").General.RemoteMachine);
         }
 
         [Fact]

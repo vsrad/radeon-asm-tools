@@ -115,7 +115,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             SetupDirtyProfiles();
             AddActionCommand = new WpfDelegateCommand(AddAction);
             RemoveActionCommand = new WpfDelegateCommand(RemoveAction);
-            RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: DirtyProfiles.Count > 1);
+            RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
         }
 
@@ -130,20 +130,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     SelectedProfile = dirtyProfile;
             }
             DirtyProfiles.CollectionChanged += (s, e) =>
-            {
-                RemoveProfileCommand.IsEnabled = DirtyProfiles.Count > 1;
                 RaisePropertyChanged(nameof(ProfileNames));
-            };
         }
 
         private void SelectProfile(ProfileOptions newProfile)
         {
             var oldSelectedPage = SelectedPage;
+            Pages.Clear();
+
             if (newProfile != null)
             {
                 MacroEditor = new DirtyProfileMacroEditor(_project, _channel, newProfile);
                 ActionsPage = new ProfileOptionsActionsPage(newProfile);
-                Pages.Clear();
                 Pages.Add(newProfile.General);
                 Pages.Add(new ProfileOptionsMacrosPage(newProfile.Macros));
                 Pages.Add(newProfile.MenuCommands);
@@ -154,6 +152,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             {
                 SelectedPage = null;
             }
+
             SetField(ref _selectedProfile, newProfile, propertyName: nameof(SelectedProfile));
         }
 
@@ -250,6 +249,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 {
                     name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name),
                         existingNames: ProfileNames, initialName: name);
+                    currProfile.General.ProfileName = name;
                 }
                 if (profiles.TryGetValue(name, out var replacedProfile))
                 {
@@ -259,7 +259,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 }
                 profiles[name] = (ProfileOptions)currProfile.Clone();
             }
-            _project.Options.SetProfiles(profiles, activeProfile: SelectedProfile.General.ProfileName);
+            if (SelectedProfile == null && DirtyProfiles.Count > 0)
+                SelectedProfile = DirtyProfiles[0];
+            var activeProfile = SelectedProfile?.General?.ProfileName ?? "";
+            _project.Options.SetProfiles(profiles, activeProfile);
         }
 
         private void OpenMacroEditor(object sender)

@@ -51,10 +51,6 @@ namespace VSRAD.Package.Options
 
         public void SetProfiles(Dictionary<string, ProfileOptions> newProfiles, string activeProfile)
         {
-            // TODO: do we need to have this restriction?
-            if (newProfiles.Count == 0)
-                throw new InvalidOperationException("At least one profile is required.");
-
             Profiles = newProfiles;
             ActiveProfile = activeProfile;
             RaisePropertyChanged(nameof(Profiles));
