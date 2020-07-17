@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Windows;
-using VSRAD.Package.Options;
+using System.Windows.Media.Imaging;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
@@ -10,18 +10,27 @@ namespace VSRAD.Package.ProjectSystem.Profiles
     {
         private readonly ProfileOptionsWindowContext _context;
 
+        public BitmapSource ProfileToolbarIcon { get; }
+        public BitmapSource DisassembleToolbarIcon { get; }
+        public BitmapSource PreprocessToolbarIcon { get; }
+
         public ProfileOptionsWindow(IToolWindowIntegration integration)
         {
             _context = new ProfileOptionsWindowContext(integration.Project, integration.CommunicationChannel, askProfileName: AskProfileName);
             DataContext = _context;
             InitializeComponent();
+
+            var toolbarIconStrip = new BitmapImage(new Uri(Constants.ToolbarIconStripResourcePackUri));
+            ProfileToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(0, 0, 16, 16));
+            DisassembleToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(16 * 3, 0, 16, 16));
+            PreprocessToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(16 * 4, 0, 16, 16));
         }
 
-        private void CreateNewProfile(object sender, RoutedEventArgs e)
-            => _context.CreateNewProfile();
+        private void CreateNewProfile(object sender, RoutedEventArgs e) =>
+            _context.CreateNewProfile();
 
-        private void CopyProfile(object sender, RoutedEventArgs e)
-            => _context.CopyActiveProfile();
+        private void CopyProfile(object sender, RoutedEventArgs e) =>
+            _context.CopyActiveProfile();
 
         private void ApplyChanges(object sender, RoutedEventArgs e) =>
             _context.SaveChanges();

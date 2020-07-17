@@ -55,5 +55,7 @@ namespace VSRAD.Package
         public const string FontAndColorsCategoryId = "B91ADC62-1D16-46C8-8E59-30C2AC82B89F";
         public static readonly Guid FontAndColorsCategoryGuid = new Guid(FontAndColorsCategoryId);
         public const string FontAndColorDefaultsServiceId = "D1BE46F4-0DA5-4A69-9DA7-2460DA3025E2";
+
+        public const string ToolbarIconStripResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/DebugVisualizerWindowCommand.png";
     };
 }

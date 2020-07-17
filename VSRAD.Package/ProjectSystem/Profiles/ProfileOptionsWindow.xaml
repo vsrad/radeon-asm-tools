@@ -173,6 +173,7 @@
                 <DataTemplate DataType="{x:Type opts:MenuCommandProfileOptions}">
                     <Grid>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="176"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
@@ -181,17 +182,26 @@
                             <RowDefinition Height="26"/>
                             <RowDefinition Height="26"/>
                         </Grid.RowDefinitions>
-                        <Label Content="Profile Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                        <Border Background="White" Width="20" Height="20" Grid.Row="0">
+                            <Image Source="{Binding ProfileToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Profile&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
                         <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding ProfileAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                                  SelectedItem="{Binding ProfileAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="2"/>
 
-                        <Label Content="Disassemble Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                        <Border Background="White" Width="20" Height="20" Grid.Row="1">
+                            <Image Source="{Binding DisassembleToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Disassemble&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="1"/>
                         <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding DisassembleAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="1" Grid.Column="1"/>
+                                  SelectedItem="{Binding DisassembleAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="1" Grid.Column="2"/>
 
-                        <Label Content="Preprocess Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                        <Border Background="White" Width="20" Height="20" Grid.Row="2">
+                            <Image Source="{Binding PreprocessToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Preprocess&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="1"/>
                         <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding PreprocessAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="1"/>
+                                  SelectedItem="{Binding PreprocessAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="2"/>
                     </Grid>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
