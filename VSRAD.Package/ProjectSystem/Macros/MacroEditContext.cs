@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Data;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
@@ -31,7 +32,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public bool MacroValueChanged => MacroValue != _initMacroValue;
 
-        public string EvaluatedValue => VSPackage.TaskFactory.Run(() => _evaluator.EvaluateAsync(_macroValue));
+        public string EvaluatedValue => VSPackage.TaskFactory.Run(EvaluatePreviewAsync);
 
         public ICollectionView MacroListView { get; private set; } = new ListCollectionView(new List<KeyValuePair<string, string>>());
 
@@ -59,42 +60,60 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public void ResetChanges() => MacroValue = _initMacroValue;
 
-        public void LoadPreviewListInBackground(IEnumerable<MacroItem> userMacros, IProjectProperties projectProperties, AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnviornment) =>
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+        public async Task LoadPreviewListAsync(IEnumerable<MacroItem> userMacros, IProjectProperties projectProperties, AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnviornment)
+        {
+            var macroList = new List<KeyValuePair<string, string>>();
+
+            var projectMacros = userMacros.Union(MacroListEditor.GetPredefinedMacroCollection());
+            var projectMacroNames = projectMacros.Select(m => m.Name).Where(n => n != MacroName);
+            var vsMacroNames = await projectProperties.GetPropertyNamesAsync().ConfigureAwait(false);
+
+            foreach (var macro in projectMacroNames.Union(vsMacroNames))
             {
-                var macroList = new List<KeyValuePair<string, string>>();
-
-                var projectMacros = userMacros.Union(MacroListEditor.GetPredefinedMacroCollection());
-                var projectMacroNames = projectMacros.Select(m => m.Name).Where(n => n != MacroName);
-                var vsMacroNames = await projectProperties.GetPropertyNamesAsync().ConfigureAwait(false);
-
-                foreach (var macro in projectMacroNames.Union(vsMacroNames))
+                try
                 {
                     var macroValue = await _evaluator.GetMacroValueAsync(macro).ConfigureAwait(false);
                     macroList.Add(new KeyValuePair<string, string>("$(" + macro + ")", macroValue));
                 }
+                catch (MacroEvaluationException e)
+                {
+                    macroList.Add(new KeyValuePair<string, string>("$(" + macro + ")", "<" + e.Message + ">"));
+                }
+            }
 
-                foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
-                    macroList.Add(new KeyValuePair<string, string>("$ENV(" + (string)e.Key + ")", (string)e.Value));
+            foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
+                macroList.Add(new KeyValuePair<string, string>("$ENV(" + (string)e.Key + ")", (string)e.Value));
 
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                MacroListView = new ListCollectionView(macroList) { Filter = FilterMacro };
-                RaisePropertyChanged(nameof(MacroListView));
-                RaisePropertyChanged(nameof(EvaluatedValue));
-                Status = $"Editing {MacroName} (requesting remote environment variables...)";
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            MacroListView = new ListCollectionView(macroList) { Filter = FilterMacro };
+            RaisePropertyChanged(nameof(MacroListView));
+            RaisePropertyChanged(nameof(EvaluatedValue));
+            Status = $"Editing {MacroName} (requesting remote environment variables...)";
 
-                var remoteEnvVariables = await remoteEnviornment.GetValueAsync().ConfigureAwait(false);
-                foreach (var e in remoteEnvVariables)
-                    macroList.Add(new KeyValuePair<string, string>("$ENVR(" + e.Key + ")", e.Value));
+            var remoteEnvVariables = await remoteEnviornment.GetValueAsync().ConfigureAwait(false);
+            foreach (var e in remoteEnvVariables)
+                macroList.Add(new KeyValuePair<string, string>("$ENVR(" + e.Key + ")", e.Value));
 
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                MacroListView.Refresh();
-                RaisePropertyChanged(nameof(EvaluatedValue));
-                if (remoteEnvVariables.Count > 0)
-                    Status = $"Editing {MacroName} (showing local and remote environment variables)";
-                else
-                    Status = $"Editing {MacroName} (showing local environment variables only)";
-            });
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            MacroListView.Refresh();
+            RaisePropertyChanged(nameof(EvaluatedValue));
+            if (remoteEnvVariables.Count > 0)
+                Status = $"Editing {MacroName} (showing local and remote environment variables)";
+            else
+                Status = $"Editing {MacroName} (showing local environment variables only)";
+        }
+
+        private async Task<string> EvaluatePreviewAsync()
+        {
+            try
+            {
+                return await _evaluator.EvaluateAsync(_macroValue);
+            }
+            catch (MacroEvaluationException e)
+            {
+                return e.Message;
+            }
+        }
 
         private bool FilterMacro(object macro)
         {

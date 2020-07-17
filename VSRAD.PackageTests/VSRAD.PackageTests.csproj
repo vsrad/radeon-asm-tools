@@ -71,7 +71,8 @@
     <Compile Include="DebugVisualizer\ComputedColumnStylingTests.cs" />
     <Compile Include="MockCommunicationChannel.cs" />
     <Compile Include="ProjectSystem\ActionLoggerTests.cs" />
-    <Compile Include="ProjectSystem\MacroEvaluatorTests.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEvaluatorTests.cs" />
+    <Compile Include="ProjectSystem\Macros\MacroEditContextTests.cs" />
     <Compile Include="ProjectSystem\Profiles\LegacyProfileImporterTests.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContextTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

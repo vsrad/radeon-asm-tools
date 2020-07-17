@@ -141,7 +141,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 return value;
 
             if (recursionStartName == name)
-                throw new MacroEvaluationException($"Unable to evaluate $({name}): the macro refers to itself.");
+                throw new MacroEvaluationException($"Unable to evaluate $({name}): the macro refers to itself");
             if (recursionStartName == null)
                 recursionStartName = name;
 

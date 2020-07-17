@@ -50,11 +50,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
             var editor = new MacroEditContext(macroName, currentValue, evaluator);
-            editor.LoadPreviewListInBackground(_dirtyProfile.Macros, projectProperties, remoteEnvironment);
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+                editor.LoadPreviewListAsync(_dirtyProfile.Macros, projectProperties, remoteEnvironment));
 
-            var editorWindow = new MacroEditorWindow(editor);
-            editorWindow.Owner = Application.Current.MainWindow;
-            editorWindow.ShowInTaskbar = false;
+            var editorWindow = new MacroEditorWindow(editor)
+            {
+                Owner = Application.Current.MainWindow,
+                ShowInTaskbar = false
+            };
             editorWindow.ShowDialog();
 
             return editor.MacroValue;
