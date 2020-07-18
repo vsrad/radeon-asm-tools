@@ -59,11 +59,16 @@ namespace VSRAD.Package.Options
         }
     }
 
-    public sealed class MenuCommandProfileOptions
+    public sealed class MenuCommandProfileOptions : DefaultNotifyPropertyChanged
     {
-        public string ProfileAction { get; set; } = "Profile";
-        public string DisassembleAction { get; set; } = "Disassemble";
-        public string PreprocessAction { get; set; } = "Preprocess";
+        private string _profileAction = "Profile";
+        public string ProfileAction { get => _profileAction; set => SetField(ref _profileAction, value ?? ""); }
+
+        private string _disassembleAction = "Disassemble";
+        public string DisassembleAction { get => _disassembleAction; set => SetField(ref _disassembleAction, value ?? ""); }
+
+        private string _preprocessAction = "Preprocess";
+        public string PreprocessAction { get => _preprocessAction; set => SetField(ref _preprocessAction, value ?? ""); }
     }
 
     public sealed class ActionNameChangedEventArgs : EventArgs

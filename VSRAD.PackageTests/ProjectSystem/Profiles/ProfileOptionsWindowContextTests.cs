@@ -320,6 +320,30 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
             Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
             Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+
+            /* Syncs actions added to dirty profile */
+            GetDirtyProfile(context, "kana").Actions.Add(new ActionProfileOptions { Name = "h" });
+            ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name = "h";
+            GetDirtyProfile(context, "kana").Actions.Last().Name = "hh";
+            Assert.Equal("hh", ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name);
+        }
+
+        [Fact]
+        public void NormalizesToolbarActionNames()
+        {
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "valid-action" });
+            project.Options.Profiles["kana"].MenuCommands.ProfileAction = "unknown action";
+            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = null;
+            project.Options.Profiles["kana"].MenuCommands.PreprocessAction = "valid-action";
+
+            var context = new ProfileOptionsWindowContext(project, null, null);
+            Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
+            Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+            Assert.Equal("valid-action", GetDirtyProfile(context, "kana").MenuCommands.PreprocessAction);
+
+            GetDirtyProfile(context, "kana").Actions.RemoveAt(0);
+            Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.PreprocessAction);
         }
 
         [Fact]

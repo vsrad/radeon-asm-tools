@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
@@ -12,6 +14,24 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
+    public sealed class ActionNameWithNoneCollectionConverter : IValueConverter
+    {
+        public object Convert(object value, Type _, object _1, CultureInfo _2) =>
+            ((IEnumerable<string>)value).Prepend("(None)");
+
+        public object ConvertBack(object value, Type _, object _1, CultureInfo _2) =>
+            throw new NotImplementedException();
+    }
+
+    public sealed class ActionNameWithNoneDisplayConverter : IValueConverter
+    {
+        public object Convert(object value, Type _, object _1, CultureInfo _2) =>
+            string.IsNullOrEmpty((string)value) ? "(None)" : value;
+
+        public object ConvertBack(object value, Type _, object _1, CultureInfo _2) =>
+            (string)value == "(None)" ? "" : value;
+    }
+
     public sealed class ProfileOptionsActionsPage : DefaultNotifyPropertyChanged
     {
         public ObservableCollection<object> Pages { get; }
@@ -24,28 +44,37 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             _profile = profile;
             Pages = new ObservableCollection<object> { profile.Debugger };
-            foreach (var action in profile.Actions)
-            {
-                Pages.Add(action);
-                WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.AddHandler(
-                    action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
-            }
+            SyncPagesWithActionCollection(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, profile.Actions));
             CollectionChangedEventManager.AddHandler(profile.Actions, SyncPagesWithActionCollection);
         }
 
         private void SyncPagesWithActionCollection(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Remove)
+            if (e.Action == NotifyCollectionChangedAction.Add)
             {
-                foreach (var item in e.OldItems)
-                    Pages.Remove(item);
+                foreach (ActionProfileOptions action in e.NewItems)
+                {
+                    Pages.Add(action);
+                    WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.AddHandler(
+                        action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
+                }
             }
-            else if (e.Action == NotifyCollectionChangedAction.Add)
+            else if (e.Action == NotifyCollectionChangedAction.Remove)
             {
-                foreach (var item in e.NewItems)
-                    Pages.Add(item);
+                foreach (ActionProfileOptions action in e.OldItems)
+                {
+                    Pages.Remove(action);
+                    WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.RemoveHandler(
+                        action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
+                }
             }
             RaisePropertyChanged(nameof(ActionNames));
+            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.ProfileAction))
+                _profile.MenuCommands.ProfileAction = null;
+            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.DisassembleAction))
+                _profile.MenuCommands.DisassembleAction = null;
+            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.PreprocessAction))
+                _profile.MenuCommands.PreprocessAction = null;
         }
 
         private void OnActionNameChanged(object sender, ActionNameChangedEventArgs e)
@@ -57,13 +86,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     if (step is RunActionStep runAction && runAction.Name == e.OldName)
                         runAction.Name = e.NewName;
             }
+            RaisePropertyChanged(nameof(ActionNames));
             if (_profile.MenuCommands.ProfileAction == e.OldName)
                 _profile.MenuCommands.ProfileAction = e.NewName;
             if (_profile.MenuCommands.DisassembleAction == e.OldName)
                 _profile.MenuCommands.DisassembleAction = e.NewName;
             if (_profile.MenuCommands.PreprocessAction == e.OldName)
                 _profile.MenuCommands.PreprocessAction = e.NewName;
-            RaisePropertyChanged(nameof(ActionNames));
         }
     }
 
