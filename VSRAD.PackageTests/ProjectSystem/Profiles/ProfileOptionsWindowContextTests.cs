@@ -76,13 +76,13 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var actionsPage = GetPage<ProfileOptionsActionsPage>(context);
             Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
 
-            context.AddActionCommand.Execute(null);
+            context.AddAction();
             Assert.Collection(actionsPage.Pages,
                 (page1) => Assert.True(page1 == GetPage<DebuggerProfileOptions>(context)),
                 (page2) => Assert.True(page2 is ActionProfileOptions opts && opts.Name == "New Action"));
 
             var action = GetPage<ProfileOptionsActionsPage>(context).Pages[1];
-            context.RemoveActionCommand.Execute(action);
+            context.RemoveAction((ActionProfileOptions)action);
             Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
         }
 
@@ -136,7 +136,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             };
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
 
             Assert.Single(context.DirtyProfiles);
             Assert.Null(context.SelectedProfile);
@@ -150,7 +150,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("asa", project.Options.ActiveProfile);
 
             context.SelectedProfile = GetDirtyProfile(context, "asa");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
 
             Assert.Empty(context.DirtyProfiles);
             Assert.Null(context.SelectedProfile);
@@ -163,7 +163,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.False(project.Options.HasProfiles);
 
             // Does not fail when there are no profiles
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
         }
 
         [Fact]
@@ -385,9 +385,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.ExportProfiles(tmpFile);
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
             context.SelectedProfile = GetDirtyProfile(context, "asa");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
             Assert.Empty(context.ProfileNames);
 
             context.ImportProfiles(tmpFile);
@@ -407,7 +407,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.ExportProfiles(tmpFile);
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
             Assert.Single(context.ProfileNames, "asa");
 
             nameResolver.Setup(n => n("Import", "Profile asa already exists. Enter a new name or leave it as is to overwrite the profile:", It.IsAny<IEnumerable<string>>(), "asa"))

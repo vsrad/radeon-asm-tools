@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media.Imaging;
+using VSRAD.Package.Options;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
@@ -30,7 +31,29 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _context.CreateNewProfile();
 
         private void CopyProfile(object sender, RoutedEventArgs e) =>
-            _context.CopyActiveProfile();
+            _context.CopySelectedProfile();
+
+        private void AddAction(object sender, RoutedEventArgs e) =>
+            _context.AddAction();
+
+        private void DeleteAction(object sender, RoutedEventArgs e)
+        {
+            var action = (ActionProfileOptions)((FrameworkElement)sender).DataContext;
+            var confirmation = MessageBox.Show($"Are you sure you want to delete {action.Name}?", "Confirm action deletion", MessageBoxButton.YesNo);
+            if (confirmation == MessageBoxResult.Yes)
+                _context.RemoveAction(action);
+        }
+
+        private void DeleteProfile(object sender, RoutedEventArgs e)
+        {
+            if (_context.SelectedProfile == null)
+                return;
+
+            var name = _context.SelectedProfile.General.ProfileName;
+            var confirmation = MessageBox.Show($"Are you sure you want to delete {name}?", "Confirm profile deletion", MessageBoxButton.YesNo);
+            if (confirmation == MessageBoxResult.Yes)
+                _context.RemoveSelectedProfile();
+        }
 
         private void ApplyChanges(object sender, RoutedEventArgs e) =>
             _context.SaveChanges();

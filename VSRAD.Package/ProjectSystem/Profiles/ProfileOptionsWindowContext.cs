@@ -124,9 +124,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public IReadOnlyList<string> ProfileNames => DirtyProfiles.Select(p => p.General.ProfileName).ToList();
 
-        public WpfDelegateCommand AddActionCommand { get; }
-        public WpfDelegateCommand RemoveActionCommand { get; }
-        public WpfDelegateCommand RemoveProfileCommand { get; }
         public WpfDelegateCommand RichEditCommand { get; }
 
         public DirtyProfileMacroEditor MacroEditor { get; private set; }
@@ -142,9 +139,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _channel = channel;
 
             SetupDirtyProfiles();
-            AddActionCommand = new WpfDelegateCommand(AddAction);
-            RemoveActionCommand = new WpfDelegateCommand(RemoveAction);
-            RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
         }
 
@@ -214,11 +208,24 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             AddProfile("Creating a new profile", "Enter the name for the new profile:", profile);
         }
 
-        public void CopyActiveProfile()
+        public void CopySelectedProfile()
         {
             var profile = (ProfileOptions)_project.Options.Profile.Clone();
             AddProfile("Copy profile", "Enter the name for the new profile:", profile);
         }
+
+        public void RemoveSelectedProfile() =>
+            DirtyProfiles.Remove(SelectedProfile);
+
+        public void AddAction()
+        {
+            var newAction = new ActionProfileOptions { Name = "New Action" };
+            SelectedProfile.Actions.Add(newAction);
+            SelectedPage = newAction;
+        }
+
+        public void RemoveAction(ActionProfileOptions action) =>
+            SelectedProfile.Actions.Remove(action);
 
         public void ImportProfiles(string file)
         {
@@ -253,19 +260,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 SelectedProfile = profile;
             }
         }
-
-        private void AddAction(object param)
-        {
-            var newAction = new ActionProfileOptions { Name = "New Action" };
-            SelectedProfile.Actions.Add(newAction);
-            SelectedPage = newAction;
-        }
-
-        private void RemoveAction(object param) =>
-            SelectedProfile.Actions.Remove((ActionProfileOptions)param);
-
-        private void RemoveProfile(object param) =>
-            DirtyProfiles.Remove(SelectedProfile);
 
         public void SaveChanges()
         {
