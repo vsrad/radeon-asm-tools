@@ -101,7 +101,7 @@ namespace VSRAD.Package.Options
         {
             var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile, Name));
             return evaluated;
         }
     }
@@ -173,7 +173,7 @@ namespace VSRAD.Package.Options
                 watchesFile: await WatchesFile.EvaluateAsync(evaluator),
                 statusFile: await StatusFile.EvaluateAsync(evaluator));
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
+                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile, ActionProfileOptions.BuiltinActionDebug));
             return evaluated;
         }
 
