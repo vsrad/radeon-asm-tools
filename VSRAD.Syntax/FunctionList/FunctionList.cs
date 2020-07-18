@@ -61,7 +61,7 @@ namespace VSRAD.Syntax.FunctionList
             Instance = this;
             var activeView = GetActiveTextView();
             if (activeView != null)
-                UpdateFunctionList(activeView.TextBuffer);
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(activeView.TextBuffer));
 
             var dte = GetService(typeof(DTE)) as DTE;
             dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
@@ -78,17 +78,20 @@ namespace VSRAD.Syntax.FunctionList
                     var asmType = textBuffer.CurrentSnapshot.GetAsmType();
 
                     if (asmType == AsmType.RadAsm || asmType == AsmType.RadAsm2)
-                        UpdateFunctionList(textBuffer);
+                        ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(textBuffer));
                 }
             }
         }
 
-        private void UpdateFunctionList(ITextBuffer buffer)
+        private async Task UpdateFunctionListAsync(ITextBuffer buffer)
         {
             try
             {
+                lastSelectedFunction = null;
+                await FunctionListControl.ClearHighlightCurrentFunctionAsync();
+
                 var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(buffer);
-                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult));
+                await UpdateFunctionListAsync(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
             }
             catch (Exception e)
             {

@@ -32,7 +32,6 @@ namespace VSRAD.Syntax.FunctionList
             var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
             service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
             Tokens = new List<FunctionListItem>();
-            LastHighlightedToken = new FunctionListItem(RadAsmTokenType.Unknown, null, 0);
             SearchText = string.Empty;
 
             InitializeComponent();
@@ -68,13 +67,18 @@ namespace VSRAD.Syntax.FunctionList
             Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
             
             await AddTokensToViewAsync(Tokens);
-            await HighlightCurrentFunctionAsync(LastHighlightedToken.Type, LastHighlightedToken.LineNumber);
+            if (LastHighlightedToken != null)
+                await HighlightCurrentFunctionAsync(LastHighlightedToken.Type, LastHighlightedToken.LineNumber);
         }
 
         public async Task ClearHighlightCurrentFunctionAsync()
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            LastHighlightedToken.IsCurrentWorkingItem = false;
+            if (LastHighlightedToken != null)
+            {
+                LastHighlightedToken.IsCurrentWorkingItem = false;
+                LastHighlightedToken = null;
+            }
         }
 
         public async Task HighlightCurrentFunctionAsync(RadAsmTokenType tokenType, int lineNumber)
@@ -83,8 +87,9 @@ namespace VSRAD.Syntax.FunctionList
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            LastHighlightedToken.IsCurrentWorkingItem = false;
-            if (value == null)
+            if (LastHighlightedToken != null) 
+                LastHighlightedToken.IsCurrentWorkingItem = false;
+            if (value == null) 
                 return;
 
             value.IsCurrentWorkingItem = true;
