@@ -32,6 +32,22 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             (string)value == "(None)" ? "" : value;
     }
 
+    public sealed class NonEmptyNameValidationRule : ValidationRule
+    {
+        public string TargetName { get; set; }
+
+        public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+        {
+            var targetName = (string)value;
+            if (string.IsNullOrWhiteSpace(targetName))
+                return new ValidationResult(false, $"{TargetName} name cannot be empty or whitespace only");
+            if (targetName == "(None)")
+                return new ValidationResult(false, $"{TargetName} cannot be named \"(None)\"");
+
+            return ValidationResult.ValidResult;
+        }
+    }
+
     public sealed class ProfileOptionsActionsPage : DefaultNotifyPropertyChanged
     {
         public ObservableCollection<object> Pages { get; }

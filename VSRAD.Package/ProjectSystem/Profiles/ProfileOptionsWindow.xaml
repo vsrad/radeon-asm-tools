@@ -124,8 +124,24 @@
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Profile Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
-                                     Text="{Binding ProfileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
+                                <TextBox.Text>
+                                    <Binding Path="ProfileName" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:NonEmptyNameValidationRule TargetName="Profile" ValidatesOnTargetUpdated="True"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Validation.HasError" Value="true">
+                                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                             
                             <Label Content="Remote Machine Address:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
@@ -220,8 +236,24 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Label Content="Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
-                                     Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
+                                <TextBox.Text>
+                                    <Binding Path="Name" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:NonEmptyNameValidationRule TargetName="Action" ValidatesOnTargetUpdated="True"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Validation.HasError" Value="true">
+                                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                             <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2" ActionName="{Binding Name}"
                                                 AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
                                                 MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
