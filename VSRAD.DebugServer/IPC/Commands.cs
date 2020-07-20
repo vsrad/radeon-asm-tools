@@ -68,6 +68,9 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public bool RunAsAdministrator { get; set; }
 
+        // Note that WaitForCompletion cannot be set to false for remote execution --
+        // it is simply not sent so we don't have to change the serialization format,
+        // which will break backward compatibility
         public bool WaitForCompletion { get; set; } = true;
 
         public int ExecutionTimeoutSecs { get; set; }
@@ -89,7 +92,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             Executable = reader.ReadString(),
             Arguments = reader.ReadString(),
             RunAsAdministrator = reader.ReadBoolean(),
-            WaitForCompletion = reader.ReadBoolean(),
             ExecutionTimeoutSecs = reader.ReadInt32()
         };
 
@@ -99,7 +101,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(Executable);
             writer.Write(Arguments);
             writer.Write(RunAsAdministrator);
-            writer.Write(WaitForCompletion);
             writer.Write(ExecutionTimeoutSecs);
         }
     }

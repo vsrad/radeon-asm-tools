@@ -157,7 +157,19 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
+                                <RowDefinition>
+                                    <!-- Wait for Completion is not configurable for remote execution (see VSRAD.DebugServer.IPC.Commands) -->
+                                    <RowDefinition.Style>
+                                        <Style TargetType="{x:Type RowDefinition}">
+                                            <Setter Property="Height" Value="26" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Environment}" Value="Remote">
+                                                    <Setter Property="Height" Value="0" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </RowDefinition.Style>
+                                </RowDefinition>
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
