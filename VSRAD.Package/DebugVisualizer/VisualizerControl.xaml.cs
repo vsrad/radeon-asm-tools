@@ -32,7 +32,8 @@ namespace VSRAD.Package.DebugVisualizer
                 _context.Options.VisualizerColumnStyling,
                 _context.Options.VisualizerAppearance,
                 tableFontAndColor,
-                getGroupSize: () => _context.GroupSize);
+                getGroupSize: () => _context.GroupSize,
+                getValidWatches: () => _context.BreakData.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _context.Options.DebuggerOptions.Watches.Clear();
@@ -76,7 +77,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (e.Warning != null)
                 Errors.ShowWarning(e.Warning);
 
-            _table.ApplyWatchStyling(_context.BreakData.Watches);
+            _table.ApplyWatchStyling();
             RefreshDataStyling();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)

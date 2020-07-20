@@ -14,6 +14,9 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public delegate void ChangeWatchState(List<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
         public delegate uint GetGroupSize();
+        public delegate ReadOnlyCollection<string> GetValidWatches();
+
+        private GetValidWatches _getValidWatches;
 
         public event ChangeWatchState WatchStateChanged;
 
@@ -46,10 +49,11 @@ namespace VSRAD.Package.DebugVisualizer
 
         private readonly TableState _state;
 
-        public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize) : base()
+        public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize, GetValidWatches getValidWatches) : base()
         {
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();
+            _getValidWatches = getValidWatches;
 
             RowHeadersWidth = 30;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
@@ -308,13 +312,15 @@ namespace VSRAD.Package.DebugVisualizer
             Invalidate();
         }
 
-        public void ApplyWatchStyling(ReadOnlyCollection<string> watches) =>
-            RowStyling.GrayOutUnevaluatedWatches(Rows.Cast<DataGridViewRow>(), _fontAndColor.FontAndColorState, watches);
+        public void ApplyWatchStyling()
+        {
+            foreach (DataGridViewRow row in Rows) RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
+        }
 
         public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
             foreach (var row in _selectionController.GetClickTargetRows(rowIndex))
-                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, changeFg, changeBg);
+                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches(), changeFg, changeBg);
         }
 
         private bool _disableColumnWidthChangeHandler = false;
@@ -346,8 +352,9 @@ namespace VSRAD.Package.DebugVisualizer
                 _fontAndColor.FontAndColorState);
             columnStyling.Apply(_state.DataColumns);
 
+            
             foreach (DataGridViewRow row in Rows)
-                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
+                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
 
             _disableColumnWidthChangeHandler = false;
             ((Control)this).ResumeDrawing();
