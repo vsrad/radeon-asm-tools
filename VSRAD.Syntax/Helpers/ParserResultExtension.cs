@@ -76,5 +76,8 @@ namespace VSRAD.Syntax.Helpers
 
             return scopedTokens;
         }
+
+        public static IEnumerable<AnalysisToken> GetDefinitionToken(this IEnumerable<AnalysisToken> tokens) =>
+            tokens.Where(t => t.Type == RadAsmTokenType.LocalVariable || t.Type == RadAsmTokenType.GlobalVariable || t.Type == RadAsmTokenType.Label);
     }
 }

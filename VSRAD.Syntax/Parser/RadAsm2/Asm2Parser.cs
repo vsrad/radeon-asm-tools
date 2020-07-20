@@ -68,6 +68,7 @@ namespace VSRAD.Syntax.Parser.RadAsm2
                     {
                         if (tokens.Length - i > 2 && tokens[i + 1].Type == RadAsm2Lexer.IDENTIFIER)
                         {
+                            parameters.Clear();
                             if (tokens[i + 2].Type == RadAsm2Lexer.EOL)
                             {
                                 var analysisToken = new AnalysisToken(RadAsmTokenType.FunctionName, tokens[i + 1]);
@@ -116,7 +117,6 @@ namespace VSRAD.Syntax.Parser.RadAsm2
                         if (currentBlock.Type == BlockType.Function)
                         {
                             searchInFunction = false;
-                            parameters.Clear();
 
                             currentBlock.SetEnd(version, token.GetEnd(version), token);
                             currentBlock = SetBlockReady(currentBlock, blocks);
@@ -204,7 +204,7 @@ namespace VSRAD.Syntax.Parser.RadAsm2
                     {
                         var analysisToken = new AnalysisToken(RadAsmTokenType.FunctionParameter, token);
                         currentBlock.Tokens.Add(analysisToken);
-                        parameters.Add(token.GetText(version), analysisToken);
+                        parameters[token.GetText(version)] = analysisToken;
                     }
                 }
             }
