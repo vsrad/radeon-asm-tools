@@ -3,6 +3,23 @@ using System.IO;
 
 namespace VSRAD.DebugServer.IPC.Commands
 {
+#pragma warning disable CA1028 // Using byte for enum storage because it's used for binary serialization
+    public enum CommandType : byte
+    {
+        Execute = 0,
+        FetchMetadata = 1,
+        FetchResultRange = 2,
+        Deploy = 3,
+        ListEnvironmentVariables = 4,
+        PutFile = 5
+    }
+#pragma warning restore CA1028
+
+    public interface ICommand
+    {
+        void Serialize(IPCWriter writer);
+    }
+
     public static class BinaryCommandExtensions
     {
         // TODO: Rename commands and responses to follow a predictable pattern of XCommand -> XResponse
@@ -10,40 +27,35 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public static ICommand ReadCommand(this IPCReader reader)
         {
-            var commandType = reader.ReadByte();
-            switch (commandType)
+            var type = reader.ReadByte();
+            switch ((CommandType)type)
             {
-                case 0: return Execute.Deserialize(reader);
-                case 1: return FetchMetadata.Deserialize(reader);
-                case 2: return FetchResultRange.Deserialize(reader);
-                case 3: return PutFileCommand.Deserialize(reader);
-                case 4: return Deploy.Deserialize(reader);
-                case 5: return ListEnvironmentVariables.Deserialize(reader);
+                case CommandType.Execute: return Execute.Deserialize(reader);
+                case CommandType.FetchMetadata: return FetchMetadata.Deserialize(reader);
+                case CommandType.FetchResultRange: return FetchResultRange.Deserialize(reader);
+                case CommandType.Deploy: return Deploy.Deserialize(reader);
+                case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
+                case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
             }
-            throw new InvalidDataException($"Unexpected command type byte: {commandType}");
+            throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
 
         public static void WriteCommand(this IPCWriter writer, ICommand command)
         {
-            byte commandType;
+            CommandType type;
             switch (command)
             {
-                case Execute _: commandType = 0; break;
-                case FetchMetadata _: commandType = 1; break;
-                case FetchResultRange _: commandType = 2; break;
-                case PutFileCommand _: commandType = 3; break;
-                case Deploy _: commandType = 4; break;
-                case ListEnvironmentVariables _: commandType = 5; break;
+                case Execute _: type = CommandType.Execute; break;
+                case FetchMetadata _: type = CommandType.FetchMetadata; break;
+                case FetchResultRange _: type = CommandType.FetchResultRange; break;
+                case Deploy _: type = CommandType.Deploy; break;
+                case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
+                case PutFileCommand _: type = CommandType.PutFile; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
-            writer.Write(commandType);
+            writer.Write((byte)type);
             command.Serialize(writer);
         }
-    }
-
-    public interface ICommand
-    {
-        void Serialize(IPCWriter writer);
     }
 
     public sealed class Execute : ICommand
