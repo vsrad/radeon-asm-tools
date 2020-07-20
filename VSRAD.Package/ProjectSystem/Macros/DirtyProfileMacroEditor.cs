@@ -32,7 +32,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public async Task<string> EditAsync(string macroName, string currentValue)
         {
             var projectProperties = _project.GetProjectProperties();
-            var transients = new MacroEvaluatorTransientValues(activeSourceFile: ("<current source file>", 0));
+            var transients = new MacroEvaluatorTransientValues(sourceLine: 0,
+                sourcePath: "<current source full path>",
+                sourceDir: "<current source dir name>",
+                sourceFile: "<current source file name>");
+
             var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(async () =>
             {
                 try

@@ -100,27 +100,14 @@ namespace VSRAD.Package.ProjectSystem
 
             var projectProperties = GetProjectProperties();
 
-            var file = await GetRelativeSourcePathAsync();
-            var line = _codeEditor.GetCurrentLine();
-            var transients = new MacroEvaluatorTransientValues(activeSourceFile: (file, line), breakLines, watchesOverride);
+            var sourceLine = _codeEditor.GetCurrentLine();
+            var sourcePath = _codeEditor.GetAbsoluteSourcePath();
+            var transients = new MacroEvaluatorTransientValues(sourceLine, sourcePath, breakLines: breakLines, watchesOverride: watchesOverride);
 
             var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(
                 _communicationChannel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
 
             return new MacroEvaluator(projectProperties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
-        }
-
-        private async Task<string> GetRelativeSourcePathAsync()
-        {
-            var sourcePath = _codeEditor.GetAbsoluteSourcePath();
-            if (sourcePath.StartsWith(RootPath, StringComparison.OrdinalIgnoreCase))
-                return sourcePath.Substring(RootPath.Length + 1);
-
-            foreach (var (absolutePath, relativePath) in await _projectSourceManager.ListProjectFilesAsync())
-                if (absolutePath == sourcePath)
-                    return relativePath;
-
-            throw new ArgumentException($"\"{sourcePath}\" does not belong to the current project located at \"{RootPath}\"");
         }
         #endregion
     }

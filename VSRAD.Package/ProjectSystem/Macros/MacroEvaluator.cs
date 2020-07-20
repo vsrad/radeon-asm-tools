@@ -1,10 +1,10 @@
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.Package.Utils;
@@ -15,13 +15,19 @@ namespace VSRAD.Package.ProjectSystem.Macros
     public readonly struct MacroEvaluatorTransientValues
 #pragma warning restore CA1815
     {
-        public (string filename, uint line) ActiveSourceFile { get; }
+        public string ActiveSourceFullPath { get; }
+        public string ActiveSourceFile { get; }
+        public string ActiveSourceDir { get; }
+        public uint ActiveSourceLine { get; }
         public uint[] BreakLines { get; }
         public string[] WatchesOverride { get; }
 
-        public MacroEvaluatorTransientValues((string, uint) activeSourceFile, uint[] breakLines = null, string[] watchesOverride = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string sourceDir = null, string sourceFile = null, uint[] breakLines = null, string[] watchesOverride = null)
         {
-            ActiveSourceFile = activeSourceFile;
+            ActiveSourceFullPath = sourcePath;
+            ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
+            ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
+            ActiveSourceLine = sourceLine;
             BreakLines = breakLines;
             WatchesOverride = watchesOverride;
         }
@@ -66,6 +72,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ProfilerViewerArguments = "RadProfileViewerArgs";
         public const string ProfilerLocalPath = "RadProfileLocalCopyPath";
 
+        public const string ActiveSourceFullPath = "RadActiveSourceFullPath";
+        public const string ActiveSourceDir = "RadActiveSourceDir";
         public const string ActiveSourceFile = "RadActiveSourceFile";
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
         public const string Watches = "RadWatches";
@@ -120,8 +128,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
             // Predefined macros
             _macroCache = new Dictionary<string, string>
             {
-                { RadMacros.ActiveSourceFile, values.ActiveSourceFile.filename },
-                { RadMacros.ActiveSourceFileLine, values.ActiveSourceFile.line.ToString() },
+                { RadMacros.ActiveSourceFullPath, values.ActiveSourceFullPath },
+                { RadMacros.ActiveSourceDir, values.ActiveSourceDir },
+                { RadMacros.ActiveSourceFile, values.ActiveSourceFile },
+                { RadMacros.ActiveSourceFileLine, values.ActiveSourceLine.ToString() },
                 { RadMacros.Watches, values.WatchesOverride != null
                     ? string.Join(":", values.WatchesOverride)
                     : string.Join(":", debuggerOptions.GetWatchSnapshot()) },

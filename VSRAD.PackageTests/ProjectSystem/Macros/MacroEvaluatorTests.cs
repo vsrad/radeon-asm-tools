@@ -52,16 +52,16 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             var result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
             Assert.Equal("a:c:tide", result);
 
-            var transients = new MacroEvaluatorTransientValues(
-                activeSourceFile: ("welcome home", 666), breakLines: new[] { 13u }, watchesOverride: new[] { "m", "c", "ride" });
+            var transients = new MacroEvaluatorTransientValues(sourceLine: 666, sourcePath: @"B:\welcome\home",
+                breakLines: new[] { 13u }, watchesOverride: new[] { "m", "c", "ride" });
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
 
             result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
             Assert.Equal("m:c:ride", result);
-            result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLine})");
-            Assert.Equal("welcome home:666, stop at 13", result);
+            result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceDir})\\$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLine})");
+            Assert.Equal(@"B:\welcome\home:666, stop at 13", result);
 
-            transients = new MacroEvaluatorTransientValues(activeSourceFile: ("", 0), breakLines: new[] { 20u, 1u, 9u });
+            transients = new MacroEvaluatorTransientValues(0, "nofile", breakLines: new[] { 20u, 1u, 9u });
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
             result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLine})");
             Assert.Equal("-l 20:1:9", result);

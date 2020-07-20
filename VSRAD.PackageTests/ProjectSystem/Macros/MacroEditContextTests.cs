@@ -23,7 +23,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var props = new Mock<IProjectProperties>();
             var evaluator = new MacroEvaluator(props.Object,
-                new MacroEvaluatorTransientValues(("nofile", 0)),
+                new MacroEvaluatorTransientValues(0, @"I:\C\ftg"),
                 MacroEvaluatorTests.EmptyRemoteEnv,
                 new DebuggerOptions(), profile);
             var context = new MacroEditContext("A", "$(B)", evaluator);
@@ -47,7 +47,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var props = new Mock<IProjectProperties>();
             var evaluator = new MacroEvaluator(props.Object,
-                new MacroEvaluatorTransientValues(("nofile", 0)),
+                new MacroEvaluatorTransientValues(0, @"I:\C\ftg"),
                 MacroEvaluatorTests.EmptyRemoteEnv,
                 new DebuggerOptions(), profile);
             var context = new MacroEditContext("A", "$(B)", evaluator);
