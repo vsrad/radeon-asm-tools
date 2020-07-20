@@ -118,11 +118,15 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
         {
+            var workDir = step.WorkingDirectory;
+            if (string.IsNullOrEmpty(workDir))
+                workDir = step.Environment == StepEnvironment.Local ? _environment.LocalWorkDir : _environment.RemoteWorkDir;
+
             var command = new Execute
             {
                 Executable = step.Executable,
                 Arguments = step.Arguments,
-                WorkingDirectory = step.WorkingDirectory,
+                WorkingDirectory = workDir,
                 RunAsAdministrator = step.RunAsAdmin,
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
