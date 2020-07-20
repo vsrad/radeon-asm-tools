@@ -285,7 +285,6 @@
     <Compile Include="Utils\Ensure.cs" />
     <Compile Include="Utils\Half.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
-    <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\NativeMethods.cs" />

@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.Package.Utils;
@@ -168,27 +169,42 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, new List<string>());
 
-        private Task<string> EvaluateAsync(string src, List<string> evaluationChain)
+        private async Task<string> EvaluateAsync(string src, List<string> evaluationChain)
         {
             if (string.IsNullOrEmpty(src))
-                return Task.FromResult("");
+                return "";
 
-            return _macroRegex.ReplaceAsync(src, m => ReplaceMacroMatchAsync(m, evaluationChain));
-        }
+            var evaluated = new StringBuilder();
+            var posAfterLastMatch = 0;
 
-        private async Task<string> ReplaceMacroMatchAsync(Match macroMatch, List<string> evaluationChain)
-        {
-            var macro = macroMatch.Groups[2].Value;
-            switch (macroMatch.Groups[1].Value)
+            foreach (Match match in _macroRegex.Matches(src))
             {
-                case "ENV":
-                    return Environment.GetEnvironmentVariable(macro);
-                case "ENVR":
-                    var env = await _remoteEnvironment.GetValueAsync();
-                    return env.TryGetValue(macro, out var value) ? value : "";
-                default:
-                    return await GetMacroValueAsync(macro, evaluationChain);
+                string macroValue;
+
+                var macroName = match.Groups[2].Value;
+                switch (match.Groups[1].Value)
+                {
+                    case "ENV":
+                        macroValue = Environment.GetEnvironmentVariable(macroName);
+                        break;
+                    case "ENVR":
+                        var remoteEnv = await _remoteEnvironment.GetValueAsync();
+                        if (!remoteEnv.TryGetValue(macroName, out macroValue))
+                            macroValue = "";
+                        break;
+                    default:
+                        macroValue = await GetMacroValueAsync(macroName, evaluationChain);
+                        break;
+                }
+
+                evaluated.Append(src, posAfterLastMatch, match.Index - posAfterLastMatch);
+                evaluated.Append(macroValue);
+
+                posAfterLastMatch = match.Index + match.Length;
             }
+
+            evaluated.Append(src, posAfterLastMatch, src.Length - posAfterLastMatch);
+            return evaluated.ToString();
         }
     }
 }
