@@ -39,27 +39,34 @@ namespace VSRAD.Syntax.IntelliSense
             try
             {
                 var elements = new List<object>();
-                foreach (var navigationToken in tokens)
+                foreach (var group in tokens.Select(t => new DefinitionToken(t)).GroupBy(d => d.FilePath))
                 {
-                    var token = new DefinitionToken(navigationToken);
-                    var analysisToken = navigationToken.AnalysisToken;
-                    var typeName = analysisToken.Type.GetName();
-                    var nameElement = GetNameElement(analysisToken.Type, navigationToken.GetText());
-                    var filePath = analysisToken.Type == RadAsmTokenType.Instruction
-                        ? Path.GetFileNameWithoutExtension(token.FilePath)
-                        : token.FilePath;
+                    // for instructions show only the name of the file with documentation without .radasm1 and .radasm2 extensions
+                    var filePath = group.All(t => t.NavigationToken.AnalysisToken.Type == RadAsmTokenType.Instruction)
+                            ? Path.GetFileNameWithoutExtension(group.Key)
+                            : group.Key;
 
                     elements.Add(new ClassifiedTextElement(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, filePath)));
-                    elements.Add(new ContainerElement(
-                        ContainerElementStyle.Wrapped,
-                        new ClassifiedTextElement(
-                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, $"({typeName}) ")
-                        ),
-                        nameElement,
-                        new ClassifiedTextElement(
-                            new ClassifiedTextRun(PredefinedClassificationTypeNames.FormalLanguage, $": {token.LineText}")
-                        )
-                    ));
+
+                    foreach (var token in group)
+                    {
+                        var navigationToken = token.NavigationToken;
+                        var analysisToken = navigationToken.AnalysisToken;
+                        var typeName = analysisToken.Type.GetName();
+                        var nameElement = GetNameElement(analysisToken.Type, navigationToken.GetText());
+
+                        elements.Add(new ContainerElement(
+                            ContainerElementStyle.Wrapped,
+                            new ClassifiedTextElement(
+                                new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, $"({typeName}) ")
+                            ),
+                            nameElement,
+                            new ClassifiedTextElement(
+                                new ClassifiedTextRun(PredefinedClassificationTypeNames.FormalLanguage, $": {token.LineText}")
+                            )
+                        ));
+                    }
+
                     elements.Add(new ClassifiedTextElement(
                         new ClassifiedTextRun(PredefinedClassificationTypeNames.FormalLanguage, "")
                     ));
