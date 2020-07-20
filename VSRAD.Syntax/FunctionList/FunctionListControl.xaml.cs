@@ -64,9 +64,9 @@ namespace VSRAD.Syntax.FunctionList
 
             CurrentVersion = textSnapshot;
             Tokens = newTokens.ToList();
-            Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
+            var filteredTokens = Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
             
-            await AddTokensToViewAsync(Tokens);
+            await AddTokensToViewAsync(filteredTokens);
             if (LastHighlightedToken != null)
                 await HighlightCurrentFunctionAsync(LastHighlightedToken.Type, LastHighlightedToken.LineNumber);
         }
