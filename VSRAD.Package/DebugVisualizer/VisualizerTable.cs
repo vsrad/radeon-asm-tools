@@ -314,7 +314,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void ApplyWatchStyling()
         {
-            foreach (DataGridViewRow row in Rows) RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
+            foreach (DataGridViewRow row in Rows)
+                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
         }
 
         public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
