@@ -101,7 +101,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         }
 
         [Fact]
-        public async Task RecursiveMacroHandlingTestAsync()
+        public async Task RecursiveMacroEvaluationTestAsync()
         {
             var props = new Mock<IProjectProperties>();
             var options = new ProfileOptions();
@@ -110,7 +110,20 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
             var exception = await Assert.ThrowsAsync<MacroEvaluationException>(() => _ = evaluator.EvaluateAsync("$(RadDebugExe)"));
-            Assert.Equal($"Unable to evaluate $(RadDebugExe): the macro refers to itself", exception.Message);
+            Assert.Equal("$(RadDebugExe) contains a cycle: $(RadDebugExe) -> $(RadDebugArgs) -> $(RadDebugExe)", exception.Message);
+        }
+
+        [Fact]
+        public async Task RecursiveMacroInEvaluationChainTestAsync()
+        {
+            var props = new Mock<IProjectProperties>();
+            var options = new ProfileOptions();
+            options.Macros.Add(new MacroItem("A", "$(A)", userDefined: true));
+            options.Macros.Add(new MacroItem("B", "$(A)", userDefined: true));
+
+            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
+            var exception = await Assert.ThrowsAsync<MacroEvaluationException>(() => _ = evaluator.EvaluateAsync("$(B)"));
+            Assert.Equal("$(B) contains a cycle: $(B) -> $(A) -> $(A)", exception.Message);
         }
 
         [Fact]

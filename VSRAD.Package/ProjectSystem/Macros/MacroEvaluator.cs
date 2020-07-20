@@ -133,17 +133,19 @@ namespace VSRAD.Package.ProjectSystem.Macros
             };
         }
 
-        public Task<string> GetMacroValueAsync(string name) => GetMacroValueAsync(name, null);
+        public Task<string> GetMacroValueAsync(string name) => GetMacroValueAsync(name, new List<string>());
 
-        private async Task<string> GetMacroValueAsync(string name, string recursionStartName)
+        private async Task<string> GetMacroValueAsync(string name, List<string> evaluationChain)
         {
             if (_macroCache.TryGetValue(name, out var value))
                 return value;
 
-            if (recursionStartName == name)
-                throw new MacroEvaluationException($"Unable to evaluate $({name}): the macro refers to itself");
-            if (recursionStartName == null)
-                recursionStartName = name;
+            if (evaluationChain.Contains(name))
+            {
+                var chain = string.Join(" -> ", evaluationChain.Append(name).Select(n => "$(" + n + ")"));
+                throw new MacroEvaluationException($"$({evaluationChain[0]}) contains a cycle: {chain}");
+            }
+            evaluationChain.Add(name);
 
             string unevaluated = null;
             foreach (var macro in _profileOptions.Macros)
@@ -156,7 +158,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
 
             if (unevaluated != null)
-                value = await EvaluateAsync(unevaluated, recursionStartName);
+                value = await EvaluateAsync(unevaluated, evaluationChain);
             else
                 value = await _projectProperties.GetEvaluatedPropertyValueAsync(name);
 
@@ -164,17 +166,17 @@ namespace VSRAD.Package.ProjectSystem.Macros
             return value;
         }
 
-        public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, null);
+        public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, new List<string>());
 
-        private Task<string> EvaluateAsync(string src, string recursionStartName)
+        private Task<string> EvaluateAsync(string src, List<string> evaluationChain)
         {
             if (string.IsNullOrEmpty(src))
                 return Task.FromResult("");
 
-            return _macroRegex.ReplaceAsync(src, m => ReplaceMacroMatchAsync(m, recursionStartName));
+            return _macroRegex.ReplaceAsync(src, m => ReplaceMacroMatchAsync(m, evaluationChain));
         }
 
-        private async Task<string> ReplaceMacroMatchAsync(Match macroMatch, string recursionStartName)
+        private async Task<string> ReplaceMacroMatchAsync(Match macroMatch, List<string> evaluationChain)
         {
             var macro = macroMatch.Groups[2].Value;
             switch (macroMatch.Groups[1].Value)
@@ -185,7 +187,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     var env = await _remoteEnvironment.GetValueAsync();
                     return env.TryGetValue(macro, out var value) ? value : "";
                 default:
-                    return await GetMacroValueAsync(macro, recursionStartName);
+                    return await GetMacroValueAsync(macro, evaluationChain);
             }
         }
     }

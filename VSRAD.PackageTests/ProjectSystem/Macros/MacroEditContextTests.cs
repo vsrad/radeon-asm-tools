@@ -31,7 +31,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             await context.LoadPreviewListAsync(profile.Macros, props.Object, MacroEvaluatorTests.EmptyRemoteEnv);
             var displayedMacros = context.MacroListView.SourceCollection.Cast<KeyValuePair<string, string>>();
 
-            Assert.Contains(new KeyValuePair<string, string>("$(B)", "<Unable to evaluate $(B): the macro refers to itself>"), displayedMacros);
+            Assert.Contains(new KeyValuePair<string, string>("$(B)", "<$(B) contains a cycle: $(B) -> $(A) -> $(B)>"), displayedMacros);
             Assert.Contains(new KeyValuePair<string, string>("$(C)", "some independent value"), displayedMacros);
         }
 
@@ -53,7 +53,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             var context = new MacroEditContext("A", "$(B)", evaluator);
 
             var preview = context.EvaluatedValue;
-            Assert.Equal("Unable to evaluate $(B): the macro refers to itself", preview);
+            Assert.Equal("$(B) contains a cycle: $(B) -> $(A) -> $(B)", preview);
         }
     }
 }
