@@ -19,6 +19,7 @@ namespace VSRAD.Syntax.Collapse
         public OutliningTagger(DocumentAnalysis documentAnalysis)
         {
             currentSpans = new List<Span>();
+            ParserUpdated(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
             documentAnalysis.ParserUpdated += ParserUpdated;
         }
 
