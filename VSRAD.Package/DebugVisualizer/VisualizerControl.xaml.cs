@@ -33,7 +33,7 @@ namespace VSRAD.Package.DebugVisualizer
                 _context.Options.VisualizerAppearance,
                 tableFontAndColor,
                 getGroupSize: () => _context.GroupSize,
-                getValidWatches: () => _context.BreakData.Watches);
+                getValidWatches: () => _context?.BreakData?.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _context.Options.DebuggerOptions.Watches.Clear();

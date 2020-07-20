@@ -190,6 +190,7 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
             Rows[index].HeaderCell.Value = watch.Type.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
+            Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
             LockWatchRowForEditing(Rows[index], canBeRemoved);
         }
 
@@ -259,6 +260,7 @@ namespace VSRAD.Package.DebugVisualizer
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
                     Rows[e.RowIndex].HeaderCell.Value = VariableType.Hex.ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
+                    RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
                     LockWatchRowForEditing(row);
                     PrepareNewWatchRow();
                     RaiseWatchStateChanged(new[] { row });
