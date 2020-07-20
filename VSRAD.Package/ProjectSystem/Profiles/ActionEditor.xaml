@@ -105,7 +105,7 @@
                     <Binding.TargetNullValue>
                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">
                             Add a new step by clicking <Bold>➕</Bold>.<LineBreak/>
-                            Specify when it is run by changing its position with <Bold>⮝</Bold> and <Bold>⮟</Bold> arrows.<LineBreak/><LineBreak/>
+                            Specify when it is run by changing its position with <Bold>▲</Bold> and <Bold>▼</Bold> arrows.<LineBreak/><LineBreak/>
 
                             Click on a step to select it and open configuration options.
                         </TextBlock>
