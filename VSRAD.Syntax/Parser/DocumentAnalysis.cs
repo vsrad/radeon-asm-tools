@@ -6,8 +6,6 @@ using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Parser.Helper;
 using VSRAD.Syntax.Parser.Blocks;
-using Microsoft.VisualStudio.Shell;
-using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Options;
 using System.Threading;
 
@@ -78,7 +76,7 @@ namespace VSRAD.Syntax.Parser
             _lexer.LexerTokenToRadAsmToken(type);
 
         private void BufferChanged(object src, TextContentChangedEventArgs arg) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => ApplyTextChangesAsync(arg));
+            ApplyTextChanges(arg);
 
         private void InstructionListUpdated(IReadOnlyList<string> instructions)
         {
@@ -87,19 +85,21 @@ namespace VSRAD.Syntax.Parser
             RunParser();
         }
 
-        private Task ApplyTextChangesAsync(TextContentChangedEventArgs args)
+        private void ApplyTextChanges(TextContentChangedEventArgs args)
         {
             try
             {
+                // in some cases the text buffer may cause ContentChanged with 0 changes
+                if (args.Changes.Count == 0) return;
+
                 parserCts.Cancel();
                 ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes));
             }
             catch (Exception ex)
             {
-                Error.ShowError(ex);
+                Error.LogError(ex, "Document analysis apply changes");
                 Initialize();
             }
-            return Task.CompletedTask;
         }
 
         private void ApplyTextChange(ITextSnapshot before, ITextSnapshot after, ITextChange change)

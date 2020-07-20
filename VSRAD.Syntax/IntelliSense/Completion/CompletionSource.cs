@@ -11,6 +11,7 @@ using VSRAD.Syntax.Parser;
 using RadCompletionItem = VSRAD.Syntax.IntelliSense.Completion.Providers.CompletionItem;
 using RadCompletionContext = VSRAD.Syntax.IntelliSense.Completion.Providers.CompletionContext;
 using VSRAD.Syntax.Parser.Tokens;
+using System;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -75,25 +76,33 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (triggerLocation == triggerLocation.Snapshot.Length)
                 return false;
 
-            var currentTokenType = _documentAnalysis.LexerTokenToRadAsmToken(_documentAnalysis.GetToken(triggerLocation).Type);
-            if (currentTokenType == RadAsmTokenType.Comment)
+            try
             {
-                return false;
-            }
-
-            if (triggerLocation > 0)
-            {
-                var previousTokenType = _documentAnalysis.LexerTokenToRadAsmToken(_documentAnalysis.GetToken(triggerLocation - 1).Type);
-                if (previousTokenType == RadAsmTokenType.Keyword
-                    || previousTokenType == RadAsmTokenType.Preprocessor
-                    || previousTokenType == RadAsmTokenType.Number)
+                var currentTokenType = _documentAnalysis.LexerTokenToRadAsmToken(_documentAnalysis.GetToken(triggerLocation).Type);
+                if (currentTokenType == RadAsmTokenType.Comment)
                 {
                     return false;
                 }
+
+                if (triggerLocation > 0)
+                {
+                    var previousTokenType = _documentAnalysis.LexerTokenToRadAsmToken(_documentAnalysis.GetToken(triggerLocation - 1).Type);
+                    if (previousTokenType == RadAsmTokenType.Keyword
+                        || previousTokenType == RadAsmTokenType.Preprocessor
+                        || previousTokenType == RadAsmTokenType.Number)
+                    {
+                        return false;
+                    }
+                }
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // outdated parser results so you cannot get valid tokens for the trigger location
+                return false;
             }
 
             if (trigger.Reason == CompletionTriggerReason.Invoke
-                || trigger.Reason == CompletionTriggerReason.InvokeAndCommitIfUnique)
+                    || trigger.Reason == CompletionTriggerReason.InvokeAndCommitIfUnique)
             {
                 return true;
             }
