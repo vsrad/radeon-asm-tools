@@ -19,18 +19,25 @@ namespace VSRAD.Package.Commands
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
         private readonly ICommunicationChannel _channel;
+        private readonly IFileSynchronizationManager _deployManager;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLogger actionLogger, ICommunicationChannel channel, SVsServiceProvider serviceProvider)
+        public ActionsMenuCommand(
+            IProject project,
+            IActionLogger actionLogger,
+            ICommunicationChannel channel,
+            IFileSynchronizationManager deployManager,
+            SVsServiceProvider serviceProvider)
         {
             _project = project;
             _actionLogger = actionLogger;
             _channel = channel;
             _serviceProvider = serviceProvider;
+            _deployManager = deployManager;
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
@@ -118,6 +125,8 @@ namespace VSRAD.Package.Commands
                     Errors.Show(evalError);
                     return;
                 }
+
+                await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
                 var runner = new ActionRunner(_channel, _serviceProvider, env);
                 var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
