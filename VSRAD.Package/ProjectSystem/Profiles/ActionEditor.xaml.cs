@@ -30,28 +30,41 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private string _description;
         public string Description { get => _description; set => SetField(ref _description, value); }
 
+        private readonly ActionEditor _editor;
+        private readonly IActionStep _step;
+
         public ActionEditorStepDescription(TextBlock descriptionBlock)
         {
-            var editor = (ActionEditor)descriptionBlock.Tag;
-            var step = (IActionStep)descriptionBlock.DataContext;
+            _editor = (ActionEditor)descriptionBlock.Tag;
+            _step = (IActionStep)descriptionBlock.DataContext;
 
             Description = descriptionBlock.Text;
-            UpdateDescriptionInBackground(editor, step);
+            UpdateDescriptionInBackground();
 
-            step.PropertyChanged += (s, e) => UpdateDescriptionInBackground(editor, step);
+             _step.PropertyChanged += StepPropertyChanged;
+            _editor.Unloaded += EditorUnloaded;
         }
 
-        private void UpdateDescriptionInBackground(ActionEditor editor, IActionStep step) =>
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => EvaluateDescriptionAsync(editor, step));
+        private void EditorUnloaded(object sender, RoutedEventArgs e)
+        {
+            _step.PropertyChanged -= StepPropertyChanged;
+            _editor.Unloaded -= EditorUnloaded;
+        }
 
-        private async Task EvaluateDescriptionAsync(ActionEditor editor, IActionStep step)
+        private void StepPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+            UpdateDescriptionInBackground();
+
+        private void UpdateDescriptionInBackground() =>
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => EvaluateDescriptionAsync());
+
+        private async Task EvaluateDescriptionAsync()
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            var evalResult = await editor.MacroEditor.EvaluateStepAsync(step, editor.ActionName);
+            var evalResult = await _editor.MacroEditor.EvaluateStepAsync(_step, _editor.ActionName);
             if (evalResult.TryGetResult(out var evaluated, out var error))
                 Description = evaluated.ToString();
             else
-                Description = $"{step} ({error.Message})";
+                Description = $"{_step} ({error.Message})";
         }
     }
 
