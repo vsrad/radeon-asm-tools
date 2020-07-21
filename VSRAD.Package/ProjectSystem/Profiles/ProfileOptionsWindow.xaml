@@ -20,6 +20,8 @@
                 <ResourceDictionary Source="../../ToolWindows/ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
+            <local:ActionNameWithNoneDisplayConverter x:Key="ActionNameWithNoneConverter"/>
+            <local:ActionNameWithNoneCollectionConverter x:Key="ActionNameWithNoneCollectionConverter"/>
         </ResourceDictionary>
     </Window.Resources>
     <Grid Margin="4">
@@ -40,7 +42,7 @@
         <StackPanel Grid.Row="0" Grid.Column="0" Margin="4" Orientation="Horizontal">
             <ComboBox ItemsSource="{Binding DirtyProfiles}" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" DisplayMemberPath="General.ProfileName" Width="178" Height="22"/>
             <Button Content="➕" ToolTip="Create new profile" Click="CreateNewProfile" Width="22" Height="22" Margin="4,0,0,0"/>
-            <Button Content="❌" ToolTip="Delete selected profile" Command="{Binding RemoveProfileCommand}" Width="22" Height="22" Margin="4,0,0,0"/>
+            <Button Content="❌" ToolTip="Delete selected profile" Click="DeleteProfile" Width="22" Height="22" Margin="4,0,0,0"/>
         </StackPanel>
         <StackPanel Grid.Row="1" Grid.Column="0" Margin="4" Orientation="Horizontal">
             <Button Content="Export" Click="ExportProfiles" Height="22" Width="74" HorizontalAlignment="Stretch"/>
@@ -62,15 +64,14 @@
                 <HierarchicalDataTemplate DataType="{x:Type local:ProfileOptionsActionsPage}" ItemsSource="{Binding Pages, Mode=OneWay}">
                     <DockPanel LastChildFill="False">
                         <Label Content="Actions" Margin="0,0,4,0"/>
-                        <Button Command="{Binding DataContext.AddActionCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
-                                Content="➕" ToolTip="Add action" DockPanel.Dock="Right" Height="22" Width="22"/>
+                        <Button Content="➕" ToolTip="Add action" Click="AddAction" DockPanel.Dock="Right" Height="22" Width="22"/>
                     </DockPanel>
                 </HierarchicalDataTemplate>
                 <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
                     <DockPanel LastChildFill="False">
                         <Label Content="{Binding Name}" Margin="0,0,4,0"/>
                         <Button Command="{Binding DataContext.RemoveActionCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}" CommandParameter="{Binding}"
-                                Content="❌" ToolTip="Delete action" DockPanel.Dock="Right" Height="22" Width="22"/>
+                                Content="❌" ToolTip="Delete action" Click="DeleteAction" DockPanel.Dock="Right" Height="22" Width="22"/>
                     </DockPanel>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
@@ -108,9 +109,9 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="176"/>
+                                <ColumnDefinition Width="178"/>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="22"/>
+                                <ColumnDefinition Width="34"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
@@ -123,8 +124,24 @@
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Profile Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
-                                     Text="{Binding ProfileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
+                                <TextBox.Text>
+                                    <Binding Path="ProfileName" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:NonEmptyNameValidationRule TargetName="Profile" ValidatesOnTargetUpdated="True"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Validation.HasError" Value="true">
+                                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                             
                             <Label Content="Remote Machine Address:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
@@ -144,19 +161,19 @@
                             <Label Content="Deploy Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <TextBox Text="{Binding DeployDirectory}" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
                                      ToolTip="Directory on the remote machine where the project is deployed before starting the debugger"/>
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="DeployDirectory"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="DeployDirectory"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Local Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
                             <TextBox Text="{Binding LocalWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"/>
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="LocalWorkDir"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="LocalWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Remote Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
                             <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"/>
-                            <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="2" Tag="RemoteWorkDir"
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="2" Tag="RemoteWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
@@ -173,6 +190,7 @@
                 <DataTemplate DataType="{x:Type opts:MenuCommandProfileOptions}">
                     <Grid>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="24"/>
                             <ColumnDefinition Width="176"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
@@ -181,17 +199,29 @@
                             <RowDefinition Height="26"/>
                             <RowDefinition Height="26"/>
                         </Grid.RowDefinitions>
-                        <Label Content="Profile Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding ProfileAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                        <Border Background="White" Width="20" Height="20" Grid.Row="0">
+                            <Image Source="{Binding ProfileToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Profile&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
+                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
+                                  SelectedItem="{Binding ProfileAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
+                                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="2"/>
 
-                        <Label Content="Disassemble Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding DisassembleAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="1" Grid.Column="1"/>
+                        <Border Background="White" Width="20" Height="20" Grid.Row="1">
+                            <Image Source="{Binding DisassembleToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Disassemble&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="1"/>
+                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
+                                  SelectedItem="{Binding DisassembleAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
+                                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="1" Grid.Column="2"/>
 
-                        <Label Content="Preprocess Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
-                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay}"
-                                  SelectedItem="{Binding PreprocessAction, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="1"/>
+                        <Border Background="White" Width="20" Height="20" Grid.Row="2">
+                            <Image Source="{Binding PreprocessToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Preprocess&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="1"/>
+                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
+                                  SelectedItem="{Binding PreprocessAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
+                                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="2"/>
                     </Grid>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
@@ -206,8 +236,24 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Label Content="Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1"
-                                     Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
+                                <TextBox.Text>
+                                    <Binding Path="Name" Mode="TwoWay" UpdateSourceTrigger="PropertyChanged">
+                                        <Binding.ValidationRules>
+                                            <local:NonEmptyNameValidationRule TargetName="Action" ValidatesOnTargetUpdated="True"/>
+                                        </Binding.ValidationRules>
+                                    </Binding>
+                                </TextBox.Text>
+                                <TextBox.Style>
+                                    <Style TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
+                                        <Style.Triggers>
+                                            <Trigger Property="Validation.HasError" Value="true">
+                                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=(Validation.Errors)[0].ErrorContent}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
                             <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2" ActionName="{Binding Name}"
                                                 AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
                                                 MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>

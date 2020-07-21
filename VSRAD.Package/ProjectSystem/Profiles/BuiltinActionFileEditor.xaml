@@ -26,7 +26,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="178"/>
             <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="22"/>
+            <ColumnDefinition Width="34"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="26"/>
@@ -41,7 +41,7 @@
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
         <TextBox Text="{Binding Path}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
-        <Button Content="✍" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+        <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                 Tag="Path" Command="{Binding RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="Check {0} Timestamp"

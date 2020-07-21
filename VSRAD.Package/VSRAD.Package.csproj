@@ -193,9 +193,6 @@
     <Compile Include="ProjectSystem\Profiles\BuiltinActionFileEditor.xaml.cs">
       <DependentUpon>BuiltinActionFileEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ProjectSystem\Profiles\ExtendedExpander.xaml.cs">
-      <DependentUpon>ExtendedExpander.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ProjectSystem\Profiles\ExtendedTreeView.xaml.cs">
       <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
     </Compile>
@@ -288,7 +285,6 @@
     <Compile Include="Utils\Ensure.cs" />
     <Compile Include="Utils\Half.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
-    <Compile Include="Utils\RegexUtils.cs" />
     <Compile Include="Utils\Result.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
@@ -421,10 +417,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ProjectSystem\Profiles\BuiltinActionFileEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ProjectSystem\Profiles\ExtendedExpander.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

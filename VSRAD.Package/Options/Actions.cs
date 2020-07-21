@@ -117,7 +117,11 @@ namespace VSRAD.Package.Options
         }
 
         private string _arguments = "";
-        public string Arguments { get => _arguments; set { SetField(ref _arguments, value); } }
+        public string Arguments
+        {
+            get => _arguments;
+            set { SetField(ref _arguments, value); RaisePropertyChanged(nameof(Description)); }
+        }
 
         private string _workingDirectory = "";
         public string WorkingDirectory { get => _workingDirectory; set => SetField(ref _workingDirectory, value); }
@@ -139,7 +143,7 @@ namespace VSRAD.Package.Options
                     return "Execute (not configured)";
 
                 var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
-                return $"{env} Execute {Executable} {Arguments}";
+                return $"Execute {env} {Executable} {Arguments}";
             }
         }
 

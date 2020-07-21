@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Threading;
 using VSRAD.Package.Options;
@@ -52,17 +54,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public ICommand DeleteMacroCommand { get; }
         public ICommand RichEditCommand { get; }
 
-        private string _macroFilter = "";
-        public string MacroFilter
-        {
-            get => _macroFilter;
-            set
-            {
-                _macroFilter = value;
-                ((MacroListDisplayCollection)DataContext).RefreshCollection();
-            }
-        }
-
         public DirtyProfileMacroEditor MacroEditor
         {
             get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
@@ -76,7 +67,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public MacroListEditor()
         {
             InitializeComponent();
-            DeleteMacroCommand = new WpfDelegateCommand(item => ((MacroListDisplayCollection)DataContext).Remove((MacroItem)item));
+            DeleteMacroCommand = new WpfDelegateCommand(DeleteMacro);
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
 
             if (DataContext != null)
@@ -86,9 +77,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 // DataContext is bound after initialization at run time
                 DataContextChanged += (s, e) => SetupDisplayCollection(e.NewValue);
         }
-
-        private void AddMacro(object sender, RoutedEventArgs e) =>
-            ((MacroListDisplayCollection)DataContext).Add(new MacroItem());
 
         private void SetupDisplayCollection(object dataContext)
         {
@@ -118,16 +106,46 @@ namespace VSRAD.Package.ProjectSystem.Macros
             {
                 foreach (MacroItem item in e.NewItems)
                     _sourceCollection.Add(item);
-
-                if (e.NewItems.Count == 1 && e.NewItems[0] is MacroItem addedItem)
-                {
-                    MacroGrid.SelectedItem = addedItem;
-                    MacroGrid.CurrentCell = new DataGridCellInfo(addedItem, MacroGrid.Columns[0]);
-#pragma warning disable VSTHRD001 // Use BeginInvoke to focus on the added macro item _after_ it's been added to the DataGrid
-                    Dispatcher.BeginInvoke((Action)(() => MacroGrid.BeginEdit()), DispatcherPriority.Background);
-#pragma warning restore VSTHRD001
-                }
             }
+        }
+
+        private void AddMacro(object sender, RoutedEventArgs e)
+        {
+            var macros = (MacroListDisplayCollection)DataContext;
+            var existingNewItem = macros.FirstOrDefault(m => string.IsNullOrEmpty(m.Name));
+            if (existingNewItem == null)
+            {
+                existingNewItem = new MacroItem();
+                macros.Add(existingNewItem);
+            }
+            BeginMacroNameEdit(existingNewItem);
+        }
+
+        private void DeleteMacro(object param)
+        {
+            List<MacroItem> selectedMacros;
+            if (param is MacroItem macro)
+                selectedMacros = new List<MacroItem> { macro };
+            else
+                // create a copy (ToList) to avoid changing the collection while iterating over it
+                selectedMacros = MacroGrid.SelectedItems.Cast<MacroItem>().Where(m => m.IsUserDefined).ToList();
+
+            var selectedNames = string.Join(", ", selectedMacros.Select(i => "$(" + i.Name + ")"));
+            var prompt = MessageBox.Show($"Are you sure you want to delete {selectedNames}?", "Confirm macro deletion", MessageBoxButton.YesNo);
+            if (prompt == MessageBoxResult.Yes)
+                selectedMacros.ForEach(m => ((MacroListDisplayCollection)DataContext).Remove(m));
+        }
+
+        private void BeginMacroNameEdit(MacroItem macro)
+        {
+            // finish editing the current macro before moving the focus away from it
+            MacroGrid.CommitEdit();
+
+            MacroGrid.SelectedItem = macro;
+            MacroGrid.CurrentCell = new DataGridCellInfo(macro, MacroGrid.Columns[0]);
+#pragma warning disable VSTHRD001 // Using BeginInvoke to focus on the added macro item _after_ it's been added to the DataGrid
+            Dispatcher.BeginInvoke((Action)(() => MacroGrid.BeginEdit()), DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
         }
 
         private void OpenMacroEditor(object param)
@@ -137,13 +155,27 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
         }
 
-        private void FilterMacros(object sender, FilterEventArgs e)
+        private void RemoveRowAfterEditIfNameEmpty(object sender, DataGridRowEditEndingEventArgs e)
         {
-            var macroItem = (MacroItem)e.Item;
-            e.Accepted = string.IsNullOrEmpty(MacroFilter)
-                || string.IsNullOrEmpty(macroItem.Name) // always show newly added macros (without name)
-                || macroItem.Name.IndexOf(MacroFilter, StringComparison.OrdinalIgnoreCase) != -1
-                || macroItem.Value.IndexOf(MacroFilter, StringComparison.OrdinalIgnoreCase) != -1;
+            var item = (MacroItem)e.Row.DataContext;
+
+#pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire
+            if (string.IsNullOrEmpty(item.Name))
+                Dispatcher.BeginInvoke((Action)(() => ((MacroListDisplayCollection)DataContext).Remove(item)), DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
+        }
+
+        private void HandleDeleteKey(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Delete)
+                return;
+
+            IEditableCollectionView itemsView = MacroGrid.Items;
+            if (itemsView.IsAddingNew || itemsView.IsEditingItem)
+                return;
+
+            DeleteMacro(null);
+            e.Handled = true;
         }
     }
 }

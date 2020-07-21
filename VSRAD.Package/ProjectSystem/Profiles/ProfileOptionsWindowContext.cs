@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
@@ -12,6 +14,40 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
+    public sealed class ActionNameWithNoneCollectionConverter : IValueConverter
+    {
+        public object Convert(object value, Type _, object _1, CultureInfo _2) =>
+            ((IEnumerable<string>)value).Prepend("(None)");
+
+        public object ConvertBack(object value, Type _, object _1, CultureInfo _2) =>
+            throw new NotImplementedException();
+    }
+
+    public sealed class ActionNameWithNoneDisplayConverter : IValueConverter
+    {
+        public object Convert(object value, Type _, object _1, CultureInfo _2) =>
+            string.IsNullOrEmpty((string)value) ? "(None)" : value;
+
+        public object ConvertBack(object value, Type _, object _1, CultureInfo _2) =>
+            (string)value == "(None)" ? "" : value;
+    }
+
+    public sealed class NonEmptyNameValidationRule : ValidationRule
+    {
+        public string TargetName { get; set; }
+
+        public override ValidationResult Validate(object value, CultureInfo cultureInfo)
+        {
+            var targetName = (string)value;
+            if (string.IsNullOrWhiteSpace(targetName))
+                return new ValidationResult(false, $"{TargetName} name cannot be empty or whitespace only");
+            if (targetName == "(None)")
+                return new ValidationResult(false, $"{TargetName} cannot be named \"(None)\"");
+
+            return ValidationResult.ValidResult;
+        }
+    }
+
     public sealed class ProfileOptionsActionsPage : DefaultNotifyPropertyChanged
     {
         public ObservableCollection<object> Pages { get; }
@@ -24,28 +60,37 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             _profile = profile;
             Pages = new ObservableCollection<object> { profile.Debugger };
-            foreach (var action in profile.Actions)
-            {
-                Pages.Add(action);
-                WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.AddHandler(
-                    action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
-            }
+            SyncPagesWithActionCollection(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, profile.Actions));
             CollectionChangedEventManager.AddHandler(profile.Actions, SyncPagesWithActionCollection);
         }
 
         private void SyncPagesWithActionCollection(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (e.Action == NotifyCollectionChangedAction.Remove)
+            if (e.Action == NotifyCollectionChangedAction.Add)
             {
-                foreach (var item in e.OldItems)
-                    Pages.Remove(item);
+                foreach (ActionProfileOptions action in e.NewItems)
+                {
+                    Pages.Add(action);
+                    WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.AddHandler(
+                        action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
+                }
             }
-            else if (e.Action == NotifyCollectionChangedAction.Add)
+            else if (e.Action == NotifyCollectionChangedAction.Remove)
             {
-                foreach (var item in e.NewItems)
-                    Pages.Add(item);
+                foreach (ActionProfileOptions action in e.OldItems)
+                {
+                    Pages.Remove(action);
+                    WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.RemoveHandler(
+                        action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
+                }
             }
             RaisePropertyChanged(nameof(ActionNames));
+            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.ProfileAction))
+                _profile.MenuCommands.ProfileAction = null;
+            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.DisassembleAction))
+                _profile.MenuCommands.DisassembleAction = null;
+            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.PreprocessAction))
+                _profile.MenuCommands.PreprocessAction = null;
         }
 
         private void OnActionNameChanged(object sender, ActionNameChangedEventArgs e)
@@ -57,13 +102,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     if (step is RunActionStep runAction && runAction.Name == e.OldName)
                         runAction.Name = e.NewName;
             }
+            RaisePropertyChanged(nameof(ActionNames));
             if (_profile.MenuCommands.ProfileAction == e.OldName)
                 _profile.MenuCommands.ProfileAction = e.NewName;
             if (_profile.MenuCommands.DisassembleAction == e.OldName)
                 _profile.MenuCommands.DisassembleAction = e.NewName;
             if (_profile.MenuCommands.PreprocessAction == e.OldName)
                 _profile.MenuCommands.PreprocessAction = e.NewName;
-            RaisePropertyChanged(nameof(ActionNames));
         }
     }
 
@@ -95,9 +140,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public IReadOnlyList<string> ProfileNames => DirtyProfiles.Select(p => p.General.ProfileName).ToList();
 
-        public WpfDelegateCommand AddActionCommand { get; }
-        public WpfDelegateCommand RemoveActionCommand { get; }
-        public WpfDelegateCommand RemoveProfileCommand { get; }
         public WpfDelegateCommand RichEditCommand { get; }
 
         public DirtyProfileMacroEditor MacroEditor { get; private set; }
@@ -112,41 +154,33 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _project = project;
             _channel = channel;
 
-            PopulateDirtyProfiles();
-            AddActionCommand = new WpfDelegateCommand(AddAction);
-            RemoveActionCommand = new WpfDelegateCommand(RemoveAction);
-            RemoveProfileCommand = new WpfDelegateCommand(RemoveProfile, isEnabled: DirtyProfiles.Count > 1);
+            SetupDirtyProfiles();
             RichEditCommand = new WpfDelegateCommand(OpenMacroEditor);
-
-            DirtyProfiles.CollectionChanged += (s, e) =>
-            {
-                RemoveProfileCommand.IsEnabled = DirtyProfiles.Count > 1;
-                RaisePropertyChanged(nameof(ProfileNames));
-            };
         }
 
-        private void PopulateDirtyProfiles()
+        private void SetupDirtyProfiles()
         {
-            var oldSelectedPage = SelectedPage;
-            DirtyProfiles.Clear();
             foreach (var profile in _project.Options.Profiles)
             {
                 var dirtyProfile = (ProfileOptions)profile.Value.Clone();
                 dirtyProfile.General.ProfileName = profile.Key;
                 DirtyProfiles.Add(dirtyProfile);
                 if (profile.Key == _project.Options.ActiveProfile)
-                    SelectProfile(dirtyProfile, oldSelectedPage);
+                    SelectedProfile = dirtyProfile;
             }
+            DirtyProfiles.CollectionChanged += (s, e) =>
+                RaisePropertyChanged(nameof(ProfileNames));
         }
 
-        private void SelectProfile(ProfileOptions newProfile, object oldSelectedPage = null)
+        private void SelectProfile(ProfileOptions newProfile)
         {
-            oldSelectedPage = oldSelectedPage ?? SelectedPage;
+            var oldSelectedPage = SelectedPage;
+            Pages.Clear();
+
             if (newProfile != null)
             {
                 MacroEditor = new DirtyProfileMacroEditor(_project, _channel, newProfile);
                 ActionsPage = new ProfileOptionsActionsPage(newProfile);
-                Pages.Clear();
                 Pages.Add(newProfile.General);
                 Pages.Add(new ProfileOptionsMacrosPage(newProfile.Macros));
                 Pages.Add(newProfile.MenuCommands);
@@ -157,6 +191,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             {
                 SelectedPage = null;
             }
+
             SetField(ref _selectedProfile, newProfile, propertyName: nameof(SelectedProfile));
         }
 
@@ -189,11 +224,24 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             AddProfile("Creating a new profile", "Enter the name for the new profile:", profile);
         }
 
-        public void CopyActiveProfile()
+        public void CopySelectedProfile()
         {
             var profile = (ProfileOptions)_project.Options.Profile.Clone();
             AddProfile("Copy profile", "Enter the name for the new profile:", profile);
         }
+
+        public void RemoveSelectedProfile() =>
+            DirtyProfiles.Remove(SelectedProfile);
+
+        public void AddAction()
+        {
+            var newAction = new ActionProfileOptions { Name = "New Action" };
+            SelectedProfile.Actions.Add(newAction);
+            SelectedPage = newAction;
+        }
+
+        public void RemoveAction(ActionProfileOptions action) =>
+            SelectedProfile.Actions.Remove(action);
 
         public void ImportProfiles(string file)
         {
@@ -229,33 +277,31 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        private void AddAction(object param)
-        {
-            var newAction = new ActionProfileOptions { Name = "New Action" };
-            SelectedProfile.Actions.Add(newAction);
-            SelectedPage = newAction;
-        }
-
-        private void RemoveAction(object param) =>
-            SelectedProfile.Actions.Remove((ActionProfileOptions)param);
-
-        private void RemoveProfile(object param) =>
-            DirtyProfiles.Remove(SelectedProfile);
-
         public void SaveChanges()
         {
             var profiles = new Dictionary<string, ProfileOptions>();
-            foreach (var p in DirtyProfiles)
+            for (int i = 0; i < DirtyProfiles.Count; ++i) // not using an enumerator because we may remove elements
             {
-                var name = p.General.ProfileName;
+                var currProfile = DirtyProfiles[i];
+                var name = currProfile.General.ProfileName;
                 if (profiles.ContainsKey(name))
-                    name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name), existingNames: ProfileNames, initialName: name);
-
-                profiles[name] = p;
+                {
+                    name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name),
+                        existingNames: ProfileNames, initialName: name);
+                    currProfile.General.ProfileName = name;
+                }
+                if (profiles.TryGetValue(name, out var replacedProfile))
+                {
+                    if (SelectedProfile.General.ProfileName == name)
+                        SelectedProfile = currProfile;
+                    DirtyProfiles.Remove(replacedProfile);
+                }
+                profiles[name] = (ProfileOptions)currProfile.Clone();
             }
-
-            _project.Options.SetProfiles(profiles, activeProfile: SelectedProfile.General.ProfileName);
-            PopulateDirtyProfiles();
+            if (SelectedProfile == null && DirtyProfiles.Count > 0)
+                SelectedProfile = DirtyProfiles[0];
+            var activeProfile = SelectedProfile?.General?.ProfileName ?? "";
+            _project.Options.SetProfiles(profiles, activeProfile);
         }
 
         private void OpenMacroEditor(object sender)

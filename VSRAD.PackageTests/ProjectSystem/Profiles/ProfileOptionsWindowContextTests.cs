@@ -76,13 +76,13 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var actionsPage = GetPage<ProfileOptionsActionsPage>(context);
             Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
 
-            context.AddActionCommand.Execute(null);
+            context.AddAction();
             Assert.Collection(actionsPage.Pages,
                 (page1) => Assert.True(page1 == GetPage<DebuggerProfileOptions>(context)),
                 (page2) => Assert.True(page2 is ActionProfileOptions opts && opts.Name == "New Action"));
 
             var action = GetPage<ProfileOptionsActionsPage>(context).Pages[1];
-            context.RemoveActionCommand.Execute(action);
+            context.RemoveAction((ActionProfileOptions)action);
             Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
         }
 
@@ -123,7 +123,51 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         }
 
         [Fact]
-        public void SaveChangesNameConflictTest()
+        public void RemoveProfileTest()
+        {
+            var project = CreateTestProject();
+            var context = new ProfileOptionsWindowContext(project, null, null);
+
+            // a crude emulation of WPF control behavior when removing selected profile
+            context.DirtyProfiles.CollectionChanged += (s, e) =>
+            {
+                if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems[0] == context.SelectedProfile)
+                    context.SelectedProfile = null;
+            };
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            context.RemoveSelectedProfile();
+
+            Assert.Single(context.DirtyProfiles);
+            Assert.Null(context.SelectedProfile);
+            Assert.Null(context.SelectedPage);
+            Assert.Empty(context.Pages);
+
+            context.SaveChanges();
+
+            Assert.Equal(1, project.Options.Profiles.Count);
+            // Switches to the first existing profile
+            Assert.Equal("asa", project.Options.ActiveProfile);
+
+            context.SelectedProfile = GetDirtyProfile(context, "asa");
+            context.RemoveSelectedProfile();
+
+            Assert.Empty(context.DirtyProfiles);
+            Assert.Null(context.SelectedProfile);
+            Assert.Null(context.SelectedPage);
+            Assert.Empty(context.Pages);
+
+            context.SaveChanges();
+
+            Assert.Null(project.Options.Profile);
+            Assert.False(project.Options.HasProfiles);
+
+            // Does not fail when there are no profiles
+            context.RemoveSelectedProfile();
+        }
+
+        [Fact]
+        public void SaveChangesNameConflictResolvedTest()
         {
             var project = CreateTestProject();
             var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
@@ -146,6 +190,35 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("kana-edited", kanaSaved.General.RemoteMachine);
             Assert.True(project.Options.Profiles.TryGetValue("asa-renamed", out var asaSaved));
             Assert.Equal("asa-edited", asaSaved.General.RemoteMachine);
+
+            // Don't forget to synchronize dirty profiles!
+            Assert.Equal("kana-edited", GetDirtyProfile(context, "kana").General.RemoteMachine);
+            Assert.Equal("asa-edited", GetDirtyProfile(context, "asa-renamed").General.RemoteMachine);
+        }
+
+        [Fact]
+        public void SaveChangesNameConflictIgnoredTest()
+        {
+            var project = CreateTestProject();
+            var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
+            var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            var asa = GetDirtyProfile(context, "asa");
+            asa.General.ProfileName = "kana";
+            asa.General.RemoteMachine = "asa-edited";
+
+            nameResolver.Setup(n => n("Rename", It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), "kana")).Returns("kana");
+
+            context.SaveChanges();
+
+            // Selected profile is transparently switched to the replacement
+            Assert.Equal(asa, context.SelectedProfile);
+            Assert.Single(context.DirtyProfiles, asa);
+
+            Assert.Equal(1, project.Options.Profiles.Count);
+            Assert.True(project.Options.Profiles.TryGetValue("kana", out var renamed));
+            Assert.Equal("asa-edited", renamed.General.RemoteMachine);
         }
 
         [Fact]
@@ -247,6 +320,30 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
             Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
             Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+
+            /* Syncs actions added to dirty profile */
+            GetDirtyProfile(context, "kana").Actions.Add(new ActionProfileOptions { Name = "h" });
+            ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name = "h";
+            GetDirtyProfile(context, "kana").Actions.Last().Name = "hh";
+            Assert.Equal("hh", ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name);
+        }
+
+        [Fact]
+        public void NormalizesToolbarActionNames()
+        {
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "valid-action" });
+            project.Options.Profiles["kana"].MenuCommands.ProfileAction = "unknown action";
+            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = null;
+            project.Options.Profiles["kana"].MenuCommands.PreprocessAction = "valid-action";
+
+            var context = new ProfileOptionsWindowContext(project, null, null);
+            Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
+            Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+            Assert.Equal("valid-action", GetDirtyProfile(context, "kana").MenuCommands.PreprocessAction);
+
+            GetDirtyProfile(context, "kana").Actions.RemoveAt(0);
+            Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.PreprocessAction);
         }
 
         [Fact]
@@ -288,9 +385,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.ExportProfiles(tmpFile);
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
             context.SelectedProfile = GetDirtyProfile(context, "asa");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
             Assert.Empty(context.ProfileNames);
 
             context.ImportProfiles(tmpFile);
@@ -310,7 +407,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.ExportProfiles(tmpFile);
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.RemoveProfileCommand.Execute(null);
+            context.RemoveSelectedProfile();
             Assert.Single(context.ProfileNames, "asa");
 
             nameResolver.Setup(n => n("Import", "Profile asa already exists. Enter a new name or leave it as is to overwrite the profile:", It.IsAny<IEnumerable<string>>(), "asa"))

@@ -120,6 +120,7 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
     
     <Style TargetType="{x:Type DataGridColumnHeader}">
         <Setter Property="Padding" Value="6,4"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
         <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
         <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
