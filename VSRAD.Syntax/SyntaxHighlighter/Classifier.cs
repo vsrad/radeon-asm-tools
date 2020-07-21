@@ -34,7 +34,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
         public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            if (_documentAnalysis.CurrentSnapshot.Version.VersionNumber != _buffer.CurrentSnapshot.Version.VersionNumber)
+            var snapshot = _documentAnalysis.CurrentSnapshot;
+            if (snapshot != _buffer.CurrentSnapshot)
                 yield break;
 
             foreach (var block in _documentAnalysis.LastParserResult)
@@ -45,18 +46,29 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 if (block.Type == BlockType.Function)
                 {
                     var name = ((FunctionBlock)block).Name;
-                    yield return GetTag(name);
+                    yield return GetTag(snapshot, name);
                 }
 
                 foreach (var scopeToken in block.Tokens)
                 {
-                    yield return GetTag(scopeToken);
+                    yield return GetTag(snapshot, scopeToken);
                 }
             }
         }
 
-        private TagSpan<ClassificationTag> GetTag(AnalysisToken token) =>
-            new TagSpan<ClassificationTag>(new SnapshotSpan(_documentAnalysis.CurrentSnapshot, token.TrackingToken.GetSpan(_documentAnalysis.CurrentSnapshot)), new ClassificationTag(_tokenClassification[token.Type]));
+        private TagSpan<ClassificationTag> GetTag(ITextSnapshot snapshot, AnalysisToken token)
+        {
+            // iteration of the tagger can be invoked by VSStd2KCmdID.BACKSPACE of default IOleCommandTarget,
+            // while the parser may not have been executed yet and may occur ArgumentOutOfRangeException
+            var span = token.TrackingToken.GetSpan(snapshot);
+            if (span.End > snapshot.Length)
+                return null;
+
+            var snapshotSpan = new SnapshotSpan(snapshot, span);
+            var tag = new ClassificationTag(_tokenClassification[token.Type]);
+
+            return new TagSpan<ClassificationTag>(snapshotSpan, tag);
+        }
 
         private void InitializeClassifierDictonary(IStandardClassificationService typeService, IClassificationTypeRegistryService registryService)
         {
