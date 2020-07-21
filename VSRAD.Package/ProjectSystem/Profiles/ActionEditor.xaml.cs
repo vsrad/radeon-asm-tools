@@ -47,15 +47,11 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private async Task EvaluateDescriptionAsync(ActionEditor editor, IActionStep step)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            try
-            {
-                var evaluated = await editor.MacroEditor.EvaluateStepAsync(step, editor.ActionName);
+            var evalResult = await editor.MacroEditor.EvaluateStepAsync(step, editor.ActionName);
+            if (evalResult.TryGetResult(out var evaluated, out var error))
                 Description = evaluated.ToString();
-            }
-            catch (ActionEvaluationException e)
-            {
-                Description = $"{step} ({e.Description})";
-            }
+            else
+                Description = $"{step} ({error.Message})";
         }
     }
 

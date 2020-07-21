@@ -1,8 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using Moq;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -30,7 +27,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             var evaluator = new Mock<IMacroEvaluator>();
             evaluator.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult(s));
 
-            var level1action = await profile.Actions[2].EvaluateAsync(evaluator.Object, profile);
+            Assert.True((await profile.Actions[2].EvaluateAsync(evaluator.Object, profile)).TryGetResult(out var level1action, out _));
             var level2action = (RunActionStep)level1action.Steps[0];
             var level3action = (RunActionStep)level2action.EvaluatedSteps[1];
 

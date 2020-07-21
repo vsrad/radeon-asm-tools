@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using VSRAD.Package.Options;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem.Macros
@@ -14,16 +15,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
-        private readonly Options.ProfileOptions _dirtyProfile;
+        private readonly ProfileOptions _dirtyProfile;
 
-        public DirtyProfileMacroEditor(IProject project, ICommunicationChannel channel, Options.ProfileOptions dirtyProfile)
+        public DirtyProfileMacroEditor(IProject project, ICommunicationChannel channel, ProfileOptions dirtyProfile)
         {
             _project = project;
             _channel = channel;
             _dirtyProfile = dirtyProfile;
         }
 
-        public Task<IActionStep> EvaluateStepAsync(IActionStep step, string sourceAction)
+        public Task<Result<IActionStep>> EvaluateStepAsync(IActionStep step, string sourceAction)
         {
             var transients = new MacroEvaluatorTransientValues(sourceLine: 0, sourcePath: "<...>", sourceDir: "<...>", sourceFile: "<...>");
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);

@@ -29,19 +29,21 @@ namespace VSRAD.PackageTests.Server
             var a = new ActionProfileOptions { Name = "A" };
 
             a.Steps.Add(new CopyFileStep { SourcePath = "", TargetPath = "target" });
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("No source path specified for Copy File step", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal("No source path specified", error.Message);
+
             ((CopyFileStep)a.Steps[0]).SourcePath = "$(MissingMacro)";
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile));
-            Assert.Equal("The source path specified for Copy File step (\"$(MissingMacro)\") evaluates to an empty string", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.Equal("The specified source path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
 
             ((CopyFileStep)a.Steps[0]).SourcePath = "source";
             ((CopyFileStep)a.Steps[0]).TargetPath = "";
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("No target path specified for Copy File step", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.Equal("No target path specified", error.Message);
+
             ((CopyFileStep)a.Steps[0]).TargetPath = "$(MissingMacro)";
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile));
-            Assert.Equal("The target path specified for Copy File step (\"$(MissingMacro)\") evaluates to an empty string", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.Equal("The specified target path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
@@ -51,11 +53,12 @@ namespace VSRAD.PackageTests.Server
             var a = new ActionProfileOptions { Name = "A" };
 
             a.Steps.Add(new ExecuteStep { Executable = "" });
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("No executable specified for Execute step", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal("No executable specified", error.Message);
+
             ((ExecuteStep)a.Steps[0]).Executable = "$(MissingMacro)";
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile));
-            Assert.Equal("The executable specified for Execute step (\"$(MissingMacro)\") evaluates to an empty string", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.Equal("The specified executable (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
@@ -65,11 +68,12 @@ namespace VSRAD.PackageTests.Server
             var a = new ActionProfileOptions { Name = "A" };
 
             a.Steps.Add(new OpenInEditorStep { Path = "" });
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("No path specified for Open in Editor step", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal("No file path specified", error.Message);
+
             ((OpenInEditorStep)a.Steps[0]).Path = "$(MissingMacro)";
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile));
-            Assert.Equal("The path specified for Open in Editor step (\"$(MissingMacro)\") evaluates to an empty string", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
+            Assert.Equal("The specified file path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
@@ -90,9 +94,8 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(aNested);
             profile.Actions.Add(b);
 
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("A", ex.SourceAction);
-            Assert.Equal(@"Encountered a circular dependency between Run Action steps: ""A"" -> ""A_nested"" -> ""B"" -> ""A""", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Encountered a circular dependency: ""A"" -> ""A_nested"" -> ""B"" -> ""A""", error.Message);
         }
 
         [Fact]
@@ -102,9 +105,9 @@ namespace VSRAD.PackageTests.Server
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "A" });
             profile.Actions.Add(a);
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("A", ex.SourceAction);
-            Assert.Equal(@"Encountered a circular dependency between Run Action steps: ""A"" -> ""A""", ex.Description);
+
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Encountered a circular dependency: ""A"" -> ""A""", error.Message);
         }
 
         [Fact]
@@ -122,13 +125,13 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(b);
             profile.Actions.Add(c);
 
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("A", ex.SourceAction);
-            Assert.Equal(@"Action ""D"" is specified in a Run Action step but was not found, required by ""A"" -> ""B"" -> ""C""", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Run Action step", error.Title);
+            Assert.Equal(@"Action ""D"" is not found, required by ""A"" -> ""B"" -> ""C""", error.Message);
 
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => c.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("C", ex.SourceAction);
-            Assert.Equal(@"Action ""D"" is specified in a Run Action step but was not found, required by ""C""", ex.Description);
+            Assert.False((await c.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.Equal(@"Action ""C"" could not be run due to a misconfigured Run Action step", error.Title);
+            Assert.Equal(@"Action ""D"" is not found", error.Message);
         }
 
         [Fact]
@@ -142,13 +145,13 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(a);
             profile.Actions.Add(b);
 
-            var ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => a.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("A", ex.SourceAction);
-            Assert.Equal(@"No action specified for Run Action step, required by ""A"" -> ""B""", ex.Description);
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Run Action step", error.Title);
+            Assert.Equal(@"No action specified, required by ""A"" -> ""B""", error.Message);
 
-            ex = await Assert.ThrowsAsync<ActionEvaluationException>(() => b.EvaluateAsync(MakeIdentityEvaluator(), profile));
-            Assert.Equal("B", ex.SourceAction);
-            Assert.Equal(@"No action specified for Run Action step, required by ""B""", ex.Description);
+            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.Equal(@"Action ""B"" could not be run due to a misconfigured Run Action step", error.Title);
+            Assert.Equal(@"No action specified", error.Message);
         }
     }
 }

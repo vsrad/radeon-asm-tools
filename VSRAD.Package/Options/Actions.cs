@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
+using static VSRAD.Package.Options.ActionExtensions;
 
 namespace VSRAD.Package.Options
 {
@@ -20,7 +21,7 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
-        Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction);
+        Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction);
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -39,19 +40,9 @@ namespace VSRAD.Package.Options
     {
         public static bool IsRemote(this BuiltinActionFile file) =>
             file.Location == StepEnvironment.Remote;
-    }
 
-    public sealed class ActionEvaluationException : Exception
-    {
-        public string SourceAction { get; }
-        public string Description { get; }
-
-        public ActionEvaluationException(string sourceAction, string description) :
-            base($"Action \"{sourceAction}\" could not be run because it is misconfigured:\r\n\r\n" + description)
-        {
-            SourceAction = sourceAction;
-            Description = description;
-        }
+        public static Error EvaluationError(string action, string step, string description) =>
+            new Error(description, title: $"Action \"{action}\" could not be run due to a misconfigured {step} step");
     }
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
@@ -85,7 +76,7 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 1;
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
             var evaluated = new CopyFileStep
             {
@@ -97,16 +88,16 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrEmpty(evaluated.SourcePath))
             {
                 if (string.IsNullOrEmpty(SourcePath))
-                    throw new ActionEvaluationException(sourceAction, "No source path specified for Copy File step");
+                    return EvaluationError(sourceAction, "Copy File", "No source path specified");
                 else
-                    throw new ActionEvaluationException(sourceAction, $"The source path specified for Copy File step (\"{SourcePath}\") evaluates to an empty string");
+                    return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
             }
             if (string.IsNullOrEmpty(evaluated.TargetPath))
             {
                 if (string.IsNullOrEmpty(TargetPath))
-                    throw new ActionEvaluationException(sourceAction, "No target path specified for Copy File step");
+                    return EvaluationError(sourceAction, "Copy File", "No target path specified");
                 else
-                    throw new ActionEvaluationException(sourceAction, $"The target path specified for Copy File step (\"{TargetPath}\") evaluates to an empty string");
+                    return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
             }
             return evaluated;
         }
@@ -156,7 +147,7 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 3;
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
             var evaluated = new ExecuteStep
             {
@@ -171,9 +162,9 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrEmpty(evaluated.Executable))
             {
                 if (string.IsNullOrEmpty(Executable))
-                    throw new ActionEvaluationException(sourceAction, "No executable specified for Execute step");
+                    return EvaluationError(sourceAction, "Execute", "No executable specified");
                 else
-                    throw new ActionEvaluationException(sourceAction, $"The executable specified for Execute step (\"{Executable}\") evaluates to an empty string");
+                    return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
             }
             return evaluated;
         }
@@ -195,7 +186,7 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 5;
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
             var evaluated = new OpenInEditorStep
             {
@@ -205,9 +196,9 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrEmpty(evaluated.Path))
             {
                 if (string.IsNullOrEmpty(Path))
-                    throw new ActionEvaluationException(sourceAction, "No path specified for Open in Editor step");
+                    return EvaluationError(sourceAction, "Open in Editor", "No file path specified");
                 else
-                    throw new ActionEvaluationException(sourceAction, $"The path specified for Open in Editor step (\"{Path}\") evaluates to an empty string");
+                    return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
             }
             return evaluated;
         }
@@ -235,47 +226,60 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 7;
 
-        public Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
-            var traversed = new LinkedList<string>();
-            traversed.AddLast(sourceAction);
+            var traversed = new List<string>() { sourceAction };
             return EvaluateAsync(evaluator, profile, traversed);
         }
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, LinkedList<string> actionsTraversed)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, List<string> actionsTraversed)
         {
             if (string.IsNullOrEmpty(Name))
             {
-                var t = string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                throw new ActionEvaluationException(actionsTraversed.First.Value, "No action specified for Run Action step, required by " + t);
+                if (actionsTraversed.Count == 1)
+                    return EvaluationError(actionsTraversed[0], "Run Action", "No action specified");
+                else
+                    return EvaluationError(actionsTraversed[0], "Run Action", "No action specified, required by " +
+                        string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")));
             }
             if (actionsTraversed.Contains(Name))
             {
                 var t = string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")) + " -> \"" + Name + "\"";
-                throw new ActionEvaluationException(actionsTraversed.First.Value, "Encountered a circular dependency between Run Action steps: " + t);
+                return EvaluationError(actionsTraversed[0], "Run Action", "Encountered a circular dependency: " + t);
             }
 
             var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
             {
-                var t = string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                throw new ActionEvaluationException(actionsTraversed.First.Value, "Action \"" + Name + "\" is specified in a Run Action step but was not found, required by " + t);
+                if (actionsTraversed.Count == 1)
+                    return EvaluationError(actionsTraversed[0], "Run Action", "Action \"" + Name + "\" is not found");
+                else
+                    return EvaluationError(actionsTraversed[0], "Run Action", "Action \"" + Name + "\" is not found, required by " +
+                        string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")));
             }
 
-            actionsTraversed.AddLast(Name);
+            actionsTraversed.Add(Name);
 
             var evaluatedSteps = new List<IActionStep>();
             foreach (var step in action.Steps)
             {
                 IActionStep evaluated;
                 if (step is RunActionStep runAction)
-                    evaluated = await runAction.EvaluateAsync(evaluator, profile, actionsTraversed);
+                {
+                    var evalResult = await runAction.EvaluateAsync(evaluator, profile, actionsTraversed);
+                    if (!evalResult.TryGetResult(out evaluated, out var error))
+                        return error;
+                }
                 else
-                    evaluated = await step.EvaluateAsync(evaluator, profile, actionsTraversed.First.Value);
+                {
+                    var evalResult = await step.EvaluateAsync(evaluator, profile, actionsTraversed[0]);
+                    if (!evalResult.TryGetResult(out evaluated, out _))
+                        return EvaluationError(actionsTraversed[0], "Run Action", "Action \"" + Name + "\" is misconfigured");
+                }
                 evaluatedSteps.Add(evaluated);
             }
 
-            actionsTraversed.RemoveLast();
+            actionsTraversed.RemoveAt(actionsTraversed.Count - 1);
 
             return new RunActionStep(evaluatedSteps) { Name = Name };
         }

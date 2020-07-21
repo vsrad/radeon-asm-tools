@@ -107,13 +107,19 @@ namespace VSRAD.Package.Commands
 
                 var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
                 var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
-                action = await action.EvaluateAsync(evaluator, _project.Options.Profile);
-
-                var runner = new ActionRunner(_channel, _serviceProvider, env);
-                var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
-                var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
-                if (actionError is Error e)
-                    Errors.Show(e);
+                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+                if (evalResult.TryGetResult(out action, out var evalError))
+                {
+                    var runner = new ActionRunner(_channel, _serviceProvider, env);
+                    var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
+                    var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
+                    if (actionError is Error runError)
+                        Errors.Show(runError);
+                }
+                else
+                {
+                    Errors.Show(evalError);
+                }
             }
             finally
             {

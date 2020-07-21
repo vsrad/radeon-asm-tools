@@ -97,11 +97,16 @@ namespace VSRAD.Package.Options
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
         public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
 
-        public async Task<ActionProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
         {
             var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile, Name));
+            {
+                if ((await step.EvaluateAsync(evaluator, profile, Name)).TryGetResult(out var evaluatedStep, out var error))
+                    evaluated.Steps.Add(evaluatedStep);
+                else
+                    return error;
+            }
             return evaluated;
         }
     }
@@ -164,7 +169,7 @@ namespace VSRAD.Package.Options
         public bool BinaryOutput { get; set; }
         public int OutputOffset { get; set; }
 
-        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        public async Task<Result<DebuggerProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
         {
             var evaluated = new DebuggerProfileOptions(
                 outputOffset: OutputOffset,
@@ -173,7 +178,13 @@ namespace VSRAD.Package.Options
                 watchesFile: await WatchesFile.EvaluateAsync(evaluator),
                 statusFile: await StatusFile.EvaluateAsync(evaluator));
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile, ActionProfileOptions.BuiltinActionDebug));
+            {
+                var evalResult = await step.EvaluateAsync(evaluator, profile, ActionProfileOptions.BuiltinActionDebug);
+                if (evalResult.TryGetResult(out var evaluatedStep, out var error))
+                    evaluated.Steps.Add(evaluatedStep);
+                else
+                    return error;
+            }
             return evaluated;
         }
 
