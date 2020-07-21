@@ -20,9 +20,6 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
-        [JsonIgnore]
-        string Description { get; }
-
         Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction);
     }
 
@@ -60,39 +57,24 @@ namespace VSRAD.Package.Options
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private FileCopyDirection _direction;
-        public FileCopyDirection Direction
-        {
-            get => _direction;
-            set { SetField(ref _direction, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
 
         private string _sourcePath = "";
-        public string SourcePath
-        {
-            get => _sourcePath;
-            set { SetField(ref _sourcePath, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string SourcePath { get => _sourcePath; set => SetField(ref _sourcePath, value); }
 
         private string _targetPath = "";
-        public string TargetPath
-        {
-            get => _targetPath;
-            set { SetField(ref _targetPath, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
         private bool _checkTimestamp;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 
-        public string Description
+        public override string ToString()
         {
-            get
-            {
-                if (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath))
-                    return "Copy File (not configured)";
+            if (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath))
+                return "Copy File";
 
-                var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote" : "from Remote";
-                return $"Copy {dir} {SourcePath} -> {TargetPath}";
-            }
+            var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote" : "from Remote";
+            return $"Copy {dir} {SourcePath} -> {TargetPath}";
         }
 
         public override bool Equals(object obj) =>
@@ -133,25 +115,13 @@ namespace VSRAD.Package.Options
     public sealed class ExecuteStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private StepEnvironment _environment;
-        public StepEnvironment Environment
-        {
-            get => _environment;
-            set { SetField(ref _environment, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public StepEnvironment Environment { get => _environment; set => SetField(ref _environment, value); }
 
         private string _executable = "";
-        public string Executable
-        {
-            get => _executable;
-            set { SetField(ref _executable, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string Executable { get => _executable; set => SetField(ref _executable, value); }
 
         private string _arguments = "";
-        public string Arguments
-        {
-            get => _arguments;
-            set { SetField(ref _arguments, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string Arguments { get => _arguments; set => SetField(ref _arguments, value); }
 
         private string _workingDirectory = "";
         public string WorkingDirectory { get => _workingDirectory; set => SetField(ref _workingDirectory, value); }
@@ -165,16 +135,13 @@ namespace VSRAD.Package.Options
         private int _timeoutSecs = 0;
         public int TimeoutSecs { get => _timeoutSecs; set => SetField(ref _timeoutSecs, value); }
 
-        public string Description
+        public override string ToString()
         {
-            get
-            {
-                if (string.IsNullOrEmpty(Executable))
-                    return "Execute (not configured)";
+            if (string.IsNullOrEmpty(Executable))
+                return "Execute";
 
-                var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
-                return $"Execute {env} {Executable} {Arguments}";
-            }
+            var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
+            return $"Execute {env} {Executable} {Arguments}";
         }
 
         public override bool Equals(object obj) =>
@@ -215,28 +182,13 @@ namespace VSRAD.Package.Options
     public sealed class OpenInEditorStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private string _path = "";
-        public string Path
-        {
-            get => _path;
-            set
-            {
-                SetField(ref _path, value);
-                RaisePropertyChanged(nameof(Description));
-            }
-        }
+        public string Path { get => _path; set => SetField(ref _path, value); }
 
         private string _lineMarker = "";
         public string LineMarker { get => _lineMarker; set => SetField(ref _lineMarker, value); }
 
-        public string Description
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Path))
-                    return "Open in Editor (not configured)";
-                return $"Open {Path}";
-            }
-        }
+        public override string ToString() =>
+            string.IsNullOrEmpty(Path) ? "Open in Editor" : $"Open {Path}";
 
         public override bool Equals(object obj) =>
             obj is OpenInEditorStep step && Path == step.Path && LineMarker == step.LineMarker;
@@ -264,15 +216,7 @@ namespace VSRAD.Package.Options
     public sealed class RunActionStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private string _name = "";
-        public string Name
-        {
-            get => _name;
-            set
-            {
-                SetField(ref _name, value);
-                RaisePropertyChanged(nameof(Description));
-            }
-        }
+        public string Name { get => _name; set => SetField(ref _name, value); }
 
         [JsonIgnore]
         public List<IActionStep> EvaluatedSteps { get; }
@@ -284,15 +228,8 @@ namespace VSRAD.Package.Options
             EvaluatedSteps = evaluatedSteps;
         }
 
-        public string Description
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Name))
-                    return "Run Action (not configured)";
-                return $"Run {Name}";
-            }
-        }
+        public override string ToString() =>
+            string.IsNullOrEmpty(Name) ? "Run Action" : $"Run {Name}";
 
         public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
 

@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -13,6 +16,49 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
+    public sealed class ActionEditorStepDescriptionConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            new ActionEditorStepDescription((TextBlock)value);
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            throw new NotImplementedException();
+    }
+
+    public sealed class ActionEditorStepDescription : DefaultNotifyPropertyChanged
+    {
+        private string _description;
+        public string Description { get => _description; set => SetField(ref _description, value); }
+
+        public ActionEditorStepDescription(TextBlock descriptionBlock)
+        {
+            var editor = (ActionEditor)descriptionBlock.Tag;
+            var step = (IActionStep)descriptionBlock.DataContext;
+
+            Description = descriptionBlock.Text;
+            UpdateDescriptionInBackground(editor, step);
+
+            step.PropertyChanged += (s, e) => UpdateDescriptionInBackground(editor, step);
+        }
+
+        private void UpdateDescriptionInBackground(ActionEditor editor, IActionStep step) =>
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => EvaluateDescriptionAsync(editor, step));
+
+        private async Task EvaluateDescriptionAsync(ActionEditor editor, IActionStep step)
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            try
+            {
+                var evaluated = await editor.MacroEditor.EvaluateStepAsync(step, editor.ActionName);
+                Description = evaluated.ToString();
+            }
+            catch (ActionEvaluationException e)
+            {
+                Description = $"{step} ({e.Description})";
+            }
+        }
+    }
+
     public partial class ActionEditor : UserControl, INotifyPropertyChanged
     {
 #pragma warning disable CA2227 // WPF collection bindings need a setter
