@@ -98,8 +98,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
     public interface IMacroEvaluator
     {
-        Task<string> GetMacroValueAsync(string name);
-        Task<string> EvaluateAsync(string src);
+        Task<Result<string>> GetMacroValueAsync(string name);
+        Task<Result<string>> EvaluateAsync(string src);
     }
 
     public sealed class MacroEvaluationException : Exception { public MacroEvaluationException(string message) : base(message) { } }
@@ -144,9 +144,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
             };
         }
 
-        public Task<string> GetMacroValueAsync(string name) => GetMacroValueAsync(name, new List<string>());
+        public Task<Result<string>> GetMacroValueAsync(string name) => GetMacroValueAsync(name, new List<string>());
 
-        private async Task<string> GetMacroValueAsync(string name, List<string> evaluationChain)
+        private async Task<Result<string>> GetMacroValueAsync(string name, List<string> evaluationChain)
         {
             if (_macroCache.TryGetValue(name, out var value))
                 return value;
@@ -154,7 +154,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             if (evaluationChain.Contains(name))
             {
                 var chain = string.Join(" -> ", evaluationChain.Append(name).Select(n => "$(" + n + ")"));
-                throw new MacroEvaluationException($"$({evaluationChain[0]}) contains a cycle: {chain}");
+                return new Error($"$({evaluationChain[0]}) contains a cycle: {chain}");
             }
             evaluationChain.Add(name);
 
@@ -169,17 +169,23 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
 
             if (unevaluated != null)
-                value = await EvaluateAsync(unevaluated, evaluationChain);
+            {
+                var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
+                if (!evalResult.TryGetResult(out value, out var error))
+                    return error;
+            }
             else
+            {
                 value = await _projectProperties.GetEvaluatedPropertyValueAsync(name);
+            }
 
             _macroCache.Add(name, value);
             return value;
         }
 
-        public Task<string> EvaluateAsync(string src) => EvaluateAsync(src, new List<string>());
+        public Task<Result<string>> EvaluateAsync(string src) => EvaluateAsync(src, new List<string>());
 
-        private async Task<string> EvaluateAsync(string src, List<string> evaluationChain)
+        private async Task<Result<string>> EvaluateAsync(string src, List<string> evaluationChain)
         {
             if (string.IsNullOrEmpty(src))
                 return "";
@@ -203,7 +209,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
                             macroValue = "";
                         break;
                     default:
-                        macroValue = await GetMacroValueAsync(macroName, evaluationChain);
+                        var evalResult = await GetMacroValueAsync(macroName, evaluationChain);
+                        if (!evalResult.TryGetResult(out macroValue, out var error))
+                            return error;
                         break;
                 }
 

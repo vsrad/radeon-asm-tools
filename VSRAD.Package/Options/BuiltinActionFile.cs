@@ -15,12 +15,13 @@ namespace VSRAD.Package.Options
         private bool _checkTimestamp = true;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 
-        public async Task<BuiltinActionFile> EvaluateAsync(IMacroEvaluator evaluator) =>
-            new BuiltinActionFile
-            {
-                Location = Location,
-                Path = await evaluator.EvaluateAsync(Path),
-                CheckTimestamp = CheckTimestamp
-            };
+        public async Task<Result<BuiltinActionFile>> EvaluateAsync(IMacroEvaluator evaluator)
+        {
+            var pathResult = await evaluator.EvaluateAsync(Path);
+            if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
+                return error;
+
+            return new BuiltinActionFile { Location = Location, Path = evaluatedPath, CheckTimestamp = CheckTimestamp };
+        }
     }
 }

@@ -10,6 +10,7 @@ using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Xunit;
 
 namespace VSRAD.PackageTests.Server
@@ -142,9 +143,9 @@ namespace VSRAD.PackageTests.Server
             project.Setup((p) => p.RootPath).Returns(_projectRoot);
 
             var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
-            evaluator.Setup((e) => e.EvaluateAsync(_deployDirectory)).Returns(Task.FromResult(_deployDirectory));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.LocalWorkDir + ")")).Returns(Task.FromResult(""));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult(""));
+            evaluator.Setup((e) => e.EvaluateAsync(_deployDirectory)).Returns(Task.FromResult<Result<string>>(_deployDirectory));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.LocalWorkDir + ")")).Returns(Task.FromResult<Result<string>>(""));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult<Result<string>>(""));
             project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
 
             sourceManager = sourceManager ?? new Mock<IProjectSourceManager>().Object;

@@ -70,15 +70,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
             foreach (var macro in projectMacroNames.Union(vsMacroNames))
             {
-                try
-                {
-                    var macroValue = await _evaluator.GetMacroValueAsync(macro).ConfigureAwait(false);
+                var macroResult = await _evaluator.GetMacroValueAsync(macro).ConfigureAwait(false);
+                if (macroResult.TryGetResult(out var macroValue, out var error))
                     macroList.Add(new KeyValuePair<string, string>("$(" + macro + ")", macroValue));
-                }
-                catch (MacroEvaluationException e)
-                {
-                    macroList.Add(new KeyValuePair<string, string>("$(" + macro + ")", "<" + e.Message + ">"));
-                }
+                else
+                    macroList.Add(new KeyValuePair<string, string>("$(" + macro + ")", "<" + error.Message + ">"));
             }
 
             foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
@@ -105,14 +101,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         private async Task<string> EvaluatePreviewAsync()
         {
-            try
-            {
-                return await _evaluator.EvaluateAsync(_macroValue);
-            }
-            catch (MacroEvaluationException e)
-            {
-                return e.Message;
-            }
+            var evalResult = await _evaluator.EvaluateAsync(_macroValue);
+            if (evalResult.TryGetResult(out var macroValue, out var error))
+                return macroValue;
+            else
+                return error.Message;
         }
 
         private bool FilterMacro(object macro)

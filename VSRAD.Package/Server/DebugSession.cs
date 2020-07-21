@@ -32,9 +32,12 @@ namespace VSRAD.Package.Server
         {
             var execTimer = Stopwatch.StartNew();
             var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
-            var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
+
+            var envResult = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
+            if (!envResult.TryGetResult(out var env, out var evalError))
+                return new DebugRunResult(null, evalError, null);
             var optionsResult = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile).ConfigureAwait(false);
-            if (!optionsResult.TryGetResult(out var options, out var evalError))
+            if (!optionsResult.TryGetResult(out var options, out evalError))
                 return new DebugRunResult(null, evalError, null);
             if (ValidateConfiguration(options) is Error configError)
                 return new DebugRunResult(null, configError, null);

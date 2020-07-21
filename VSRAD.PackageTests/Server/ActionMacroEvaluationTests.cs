@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Utils;
 using Xunit;
 
 namespace VSRAD.PackageTests.Server
@@ -11,14 +12,14 @@ namespace VSRAD.PackageTests.Server
         private static IMacroEvaluator MakeIdentityEvaluator()
         {
             var mock = new Mock<IMacroEvaluator>();
-            mock.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult(s));
+            mock.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s));
             return mock.Object;
         }
 
         private static IMacroEvaluator MakeEvaluator(string unevaluated, string result)
         {
             var mock = new Mock<IMacroEvaluator>();
-            mock.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult(s == unevaluated ? result : unevaluated));
+            mock.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s == unevaluated ? result : unevaluated));
             return mock.Object;
         }
 

@@ -102,7 +102,7 @@ namespace VSRAD.Package.BuildTools
                     break;
                 }
         }
-
+#if false
         private BuildSteps GetBuildSteps(Options.BuildProfileOptions buildOptions)
         {
             if (_buildStepsOverride is BuildSteps overriddenSteps)
@@ -200,5 +200,6 @@ namespace VSRAD.Package.BuildTools
             var messages = await _errorProcessor.ExtractMessagesAsync(result.Stderr, preprocessed);
             return (result.ExitCode, messages);
         }
+#endif
     }
 }

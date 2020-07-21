@@ -106,20 +106,24 @@ namespace VSRAD.Package.Commands
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
-                var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
-                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
-                if (evalResult.TryGetResult(out action, out var evalError))
-                {
-                    var runner = new ActionRunner(_channel, _serviceProvider, env);
-                    var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
-                    var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
-                    if (actionError is Error runError)
-                        Errors.Show(runError);
-                }
-                else
+                var envResult = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
+                if (!envResult.TryGetResult(out var env, out var evalError))
                 {
                     Errors.Show(evalError);
+                    return;
                 }
+                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+                if (!evalResult.TryGetResult(out action, out evalError))
+                {
+                    Errors.Show(evalError);
+                    return;
+                }
+
+                var runner = new ActionRunner(_channel, _serviceProvider, env);
+                var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
+                var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
+                if (actionError is Error runError)
+                    Errors.Show(runError);
             }
             finally
             {

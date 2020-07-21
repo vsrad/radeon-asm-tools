@@ -8,6 +8,7 @@ using VSRAD.Package;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
+using VSRAD.Package.Utils;
 
 #pragma warning disable VSSDK005 // Avoid instantiating JoinableTaskContext
 
@@ -45,9 +46,9 @@ namespace VSRAD.PackageTests
             var evaluator = new Mock<IMacroEvaluator>();
             if (macros != null)
                 foreach (var macro in macros)
-                    evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult(macro.Value));
-            evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult(val));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult(remoteWorkDir));
+                    evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult<Result<string>>(macro.Value));
+            evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult<Result<string>>(val));
+            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult<Result<string>>(remoteWorkDir));
 
             mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
             return mock;

@@ -78,28 +78,30 @@ namespace VSRAD.Package.Options
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
-            var evaluated = new CopyFileStep
+            if (string.IsNullOrEmpty(SourcePath))
+                return EvaluationError(sourceAction, "Copy File", "No source path specified");
+            if (string.IsNullOrEmpty(TargetPath))
+                return EvaluationError(sourceAction, "Copy File", "No target path specified");
+
+            var sourcePathResult = await evaluator.EvaluateAsync(SourcePath);
+            if (!sourcePathResult.TryGetResult(out var evaluatedSourcePath, out var error))
+                return error;
+            var targetPathResult = await evaluator.EvaluateAsync(TargetPath);
+            if (!targetPathResult.TryGetResult(out var evaluatedTargetPath, out error))
+                return error;
+
+            if (string.IsNullOrEmpty(evaluatedSourcePath))
+                return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
+            if (string.IsNullOrEmpty(evaluatedTargetPath))
+                return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
+
+            return new CopyFileStep
             {
                 Direction = Direction,
-                SourcePath = await evaluator.EvaluateAsync(SourcePath),
-                TargetPath = await evaluator.EvaluateAsync(TargetPath),
-                CheckTimestamp = CheckTimestamp
+                CheckTimestamp = CheckTimestamp,
+                SourcePath = evaluatedSourcePath,
+                TargetPath = evaluatedTargetPath
             };
-            if (string.IsNullOrEmpty(evaluated.SourcePath))
-            {
-                if (string.IsNullOrEmpty(SourcePath))
-                    return EvaluationError(sourceAction, "Copy File", "No source path specified");
-                else
-                    return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
-            }
-            if (string.IsNullOrEmpty(evaluated.TargetPath))
-            {
-                if (string.IsNullOrEmpty(TargetPath))
-                    return EvaluationError(sourceAction, "Copy File", "No target path specified");
-                else
-                    return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
-            }
-            return evaluated;
         }
     }
 
@@ -149,24 +151,32 @@ namespace VSRAD.Package.Options
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
-            var evaluated = new ExecuteStep
+            if (string.IsNullOrEmpty(Executable))
+                return EvaluationError(sourceAction, "Execute", "No executable specified");
+
+            var executableResult = await evaluator.EvaluateAsync(Executable);
+            if (!executableResult.TryGetResult(out var evaluatedExecutable, out var error))
+                return error;
+            var argumentsResult = await evaluator.EvaluateAsync(Arguments);
+            if (!argumentsResult.TryGetResult(out var evaluatedArguments, out error))
+                return error;
+            var workdirResult = await evaluator.EvaluateAsync(WorkingDirectory);
+            if (!workdirResult.TryGetResult(out var evaluatedWorkdir, out error))
+                return error;
+
+            if (string.IsNullOrEmpty(evaluatedExecutable))
+                return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
+
+            return new ExecuteStep
             {
                 Environment = Environment,
-                Executable = await evaluator.EvaluateAsync(Executable),
-                Arguments = await evaluator.EvaluateAsync(Arguments),
-                WorkingDirectory = await evaluator.EvaluateAsync(WorkingDirectory),
+                Executable = evaluatedExecutable,
+                Arguments = evaluatedArguments,
+                WorkingDirectory = evaluatedWorkdir,
                 RunAsAdmin = RunAsAdmin,
                 WaitForCompletion = WaitForCompletion,
                 TimeoutSecs = TimeoutSecs
             };
-            if (string.IsNullOrEmpty(evaluated.Executable))
-            {
-                if (string.IsNullOrEmpty(Executable))
-                    return EvaluationError(sourceAction, "Execute", "No executable specified");
-                else
-                    return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
-            }
-            return evaluated;
         }
     }
 
@@ -188,19 +198,17 @@ namespace VSRAD.Package.Options
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
-            var evaluated = new OpenInEditorStep
-            {
-                Path = await evaluator.EvaluateAsync(Path),
-                LineMarker = LineMarker
-            };
-            if (string.IsNullOrEmpty(evaluated.Path))
-            {
-                if (string.IsNullOrEmpty(Path))
-                    return EvaluationError(sourceAction, "Open in Editor", "No file path specified");
-                else
-                    return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
-            }
-            return evaluated;
+            if (string.IsNullOrEmpty(Path))
+                return EvaluationError(sourceAction, "Open in Editor", "No file path specified");
+
+            var pathResult = await evaluator.EvaluateAsync(Path);
+            if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
+                return error;
+
+            if (string.IsNullOrEmpty(evaluatedPath))
+                return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
+
+            return new OpenInEditorStep { Path = evaluatedPath, LineMarker = LineMarker };
         }
     }
 

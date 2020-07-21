@@ -4,6 +4,7 @@ using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
@@ -25,7 +26,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             profile.Actions[2].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, CheckTimestamp = true, TargetPath = "incubator", SourcePath = "soul" });
 
             var evaluator = new Mock<IMacroEvaluator>();
-            evaluator.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult(s));
+            evaluator.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s));
 
             Assert.True((await profile.Actions[2].EvaluateAsync(evaluator.Object, profile)).TryGetResult(out var level1action, out _));
             var level2action = (RunActionStep)level1action.Steps[0];
