@@ -136,7 +136,7 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task RunActionUnconfiguredTestAsync()
+        public async Task RunActionNoActionTestAsync()
         {
             var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
@@ -153,6 +153,27 @@ namespace VSRAD.PackageTests.Server
             Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
             Assert.Equal(@"Action ""B"" could not be run due to a misconfigured Run Action step", error.Title);
             Assert.Equal(@"No action specified", error.Message);
+        }
+
+        [Fact]
+        public async Task RunActionUnconfiguredReferenceTestAsync()
+        {
+            var profile = new ProfileOptions();
+            var a = new ActionProfileOptions { Name = "A" };
+            a.Steps.Add(new RunActionStep { Name = "B" });
+            var b = new ActionProfileOptions { Name = "B" };
+            b.Steps.Add(new RunActionStep { Name = "C" });
+            var c = new ActionProfileOptions { Name = "C" };
+            c.Steps.Add(new CopyFileStep());
+            profile.Actions.Add(a);
+            profile.Actions.Add(b);
+            profile.Actions.Add(c);
+
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Action ""C"" is misconfigured, required by ""A"" -> ""B""", error.Message);
+
+            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
+            Assert.Equal(@"Action ""C"" is misconfigured", error.Message);
         }
     }
 }

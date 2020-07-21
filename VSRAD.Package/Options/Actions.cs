@@ -244,11 +244,10 @@ namespace VSRAD.Package.Options
         {
             if (string.IsNullOrEmpty(Name))
             {
-                if (actionsTraversed.Count == 1)
-                    return EvaluationError(actionsTraversed[0], "Run Action", "No action specified");
-                else
-                    return EvaluationError(actionsTraversed[0], "Run Action", "No action specified, required by " +
-                        string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")));
+                var message = "No action specified";
+                if (actionsTraversed.Count > 1)
+                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
+                return EvaluationError(actionsTraversed[0], "Run Action", message);
             }
             if (actionsTraversed.Contains(Name))
             {
@@ -259,11 +258,10 @@ namespace VSRAD.Package.Options
             var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
             {
-                if (actionsTraversed.Count == 1)
-                    return EvaluationError(actionsTraversed[0], "Run Action", "Action \"" + Name + "\" is not found");
-                else
-                    return EvaluationError(actionsTraversed[0], "Run Action", "Action \"" + Name + "\" is not found, required by " +
-                        string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")));
+                var message = "Action \"" + Name + "\" is not found";
+                if (actionsTraversed.Count > 1)
+                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
+                return EvaluationError(actionsTraversed[0], "Run Action", message);
             }
 
             actionsTraversed.Add(Name);
@@ -282,7 +280,13 @@ namespace VSRAD.Package.Options
                 {
                     var evalResult = await step.EvaluateAsync(evaluator, profile, actionsTraversed[0]);
                     if (!evalResult.TryGetResult(out evaluated, out _))
-                        return EvaluationError(actionsTraversed[0], "Run Action", "Action \"" + Name + "\" is misconfigured");
+                    {
+                        var message = "Action \"" + Name + "\" is misconfigured";
+                        actionsTraversed.Remove(Name);
+                        if (actionsTraversed.Count > 1)
+                            message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
+                        return EvaluationError(actionsTraversed[0], "Run Action", message);
+                    }
                 }
                 evaluatedSteps.Add(evaluated);
             }

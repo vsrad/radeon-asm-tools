@@ -37,7 +37,8 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
             var result = await evaluator.EvaluateAsync("$(RadDebugArgs)");
-            Assert.Equal("/home/sayaka/projects/debug_bin.py --solution /opt/rocm/examples/h", result);
+            Assert.True(result.TryGetResult(out var evaluated, out _));
+            Assert.Equal("/home/sayaka/projects/debug_bin.py --solution /opt/rocm/examples/h", evaluated);
         }
 
         [Fact]
@@ -50,21 +51,26 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
             var result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
-            Assert.Equal("a:c:tide", result);
+            Assert.True(result.TryGetResult(out var evaluated, out _));
+            Assert.Equal("a:c:tide", evaluated);
 
             var transients = new MacroEvaluatorTransientValues(sourceLine: 666, sourcePath: @"B:\welcome\home",
                 breakLines: new[] { 13u }, watchesOverride: new[] { "m", "c", "ride" });
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
 
             result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
-            Assert.Equal("m:c:ride", result);
+            Assert.True(result.TryGetResult(out evaluated, out _));
+            Assert.Equal("m:c:ride", evaluated);
+
             result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceDir})\\$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLine})");
-            Assert.Equal(@"B:\welcome\home:666, stop at 13", result);
+            Assert.True(result.TryGetResult(out evaluated, out _));
+            Assert.Equal(@"B:\welcome\home:666, stop at 13", evaluated);
 
             transients = new MacroEvaluatorTransientValues(0, "nofile", breakLines: new[] { 20u, 1u, 9u });
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
             result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLine})");
-            Assert.Equal("-l 20:1:9", result);
+            Assert.True(result.TryGetResult(out evaluated, out _));
+            Assert.Equal("-l 20:1:9", evaluated);
         }
 
         [Fact]
@@ -76,10 +82,12 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var evaluator = new MacroEvaluator(props.Object, default, remoteEnv, new DebuggerOptions(), new ProfileOptions());
             var result = await evaluator.EvaluateAsync("Local: $ENV(PATH), Remote: $ENVR(PATH), Break at: $ENVR(MAMI_BREAKPOINT)");
-            Assert.Equal($"Local: {localPath}, Remote: /usr/bin:/root/soulgems, Break at: head", result);
+            Assert.True(result.TryGetResult(out var evaluated, out _));
+            Assert.Equal($"Local: {localPath}, Remote: /usr/bin:/root/soulgems, Break at: head", evaluated);
 
             result = await evaluator.EvaluateAsync("Local: $ENV(HOPEFULLY_NON_EXISTENT_VAR), Remote: $ENVR(HOPEFULLY_NON_EXISTENT_VAR)");
-            Assert.Equal("Local: , Remote: ", result);
+            Assert.True(result.TryGetResult(out evaluated, out _));
+            Assert.Equal("Local: , Remote: ", evaluated);
         }
 
         [Fact]
@@ -87,8 +95,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         {
             var props = new Mock<IProjectProperties>(MockBehavior.Strict); // fails the test if called
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
-            Assert.Equal("$()", await evaluator.EvaluateAsync("$()"));
-            Assert.Equal("", await evaluator.EvaluateAsync(""));
+            Assert.True((await evaluator.EvaluateAsync("$()")).TryGetResult(out var evaluated, out _));
+            Assert.Equal("$()", evaluated);
+            Assert.True((await evaluator.EvaluateAsync("")).TryGetResult(out evaluated, out _));
+            Assert.Equal("", evaluated);
         }
 
         [Fact]
@@ -96,8 +106,8 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         {
             var evaluator = new MacroEvaluator(new Mock<IProjectProperties>().Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
             // Null strings may come from external sources (e.g. the .user.json file) and should be treated as empty
-            var value = await evaluator.EvaluateAsync(null);
-            Assert.Equal("", value);
+            Assert.True((await evaluator.EvaluateAsync(null)).TryGetResult(out var evaluated, out _));
+            Assert.Equal("", evaluated);
         }
 
         [Fact]
@@ -109,8 +119,8 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             options.Macros.Add(new MacroItem("RadDebugArgs", "--exec $(RadDebugExe)", userDefined: true));
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
-            var exception = await Assert.ThrowsAsync<MacroEvaluationException>(() => _ = evaluator.EvaluateAsync("$(RadDebugExe)"));
-            Assert.Equal("$(RadDebugExe) contains a cycle: $(RadDebugExe) -> $(RadDebugArgs) -> $(RadDebugExe)", exception.Message);
+            Assert.False((await evaluator.EvaluateAsync("$(RadDebugExe)")).TryGetResult(out _, out var error));
+            Assert.Equal("$(RadDebugExe) contains a cycle: $(RadDebugExe) -> $(RadDebugArgs) -> $(RadDebugExe)", error.Message);
         }
 
         [Fact]
@@ -122,8 +132,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             options.Macros.Add(new MacroItem("B", "$(A)", userDefined: true));
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
-            var exception = await Assert.ThrowsAsync<MacroEvaluationException>(() => _ = evaluator.EvaluateAsync("$(B)"));
-            Assert.Equal("$(B) contains a cycle: $(B) -> $(A) -> $(A)", exception.Message);
+
+            Assert.False((await evaluator.EvaluateAsync("$(B)")).TryGetResult(out _, out var error));
+            Assert.Equal("$(B) contains a cycle: $(B) -> $(A) -> $(A)", error.Message);
         }
 
         [Fact]
@@ -135,9 +146,12 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             props.Setup((p) => p.GetEvaluatedPropertyValueAsync("E")).ReturnsAsync("end");
 
             var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
-            Assert.Equal("start middle end", await evaluator.EvaluateAsync("$(S) $(M) $(E)"));
-            Assert.Equal("start $$() $( middle end", await evaluator.EvaluateAsync("$(S) $$() $( $(M) $(E)"));
-            Assert.Equal("$( nested middle $( $", await evaluator.EvaluateAsync("$( nested $(M) $( $"));
+            Assert.True((await evaluator.EvaluateAsync("$(S) $(M) $(E)")).TryGetResult(out var evaluated, out _));
+            Assert.Equal("start middle end", evaluated);
+            Assert.True((await evaluator.EvaluateAsync("$(S) $$() $( $(M) $(E)")).TryGetResult(out evaluated, out _));
+            Assert.Equal("start $$() $( middle end", evaluated);
+            Assert.True((await evaluator.EvaluateAsync("$( nested $(M) $( $")).TryGetResult(out evaluated, out _));
+            Assert.Equal("$( nested middle $( $", evaluated);
         }
     }
 }
