@@ -79,6 +79,8 @@ namespace VSRAD.Syntax.FunctionList
 
                     if (asmType == AsmType.RadAsm || asmType == AsmType.RadAsm2)
                         ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(textBuffer));
+                    else
+                        ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(version: null, blocks: new List<IBlock>()));
                 }
             }
         }
