@@ -40,7 +40,7 @@ namespace VSRAD.Syntax.FunctionList
             Autoscroll = optionsProvider.Autoscroll;
             FunctionListSortState = optionsProvider.SortOptions;
             optionsProvider.OptionsUpdated += OptionsUpdated;
-            tokens.LayoutUpdated += (s, e) => ResizeOtherColumns();
+            tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
         }
 
         private void OptionsUpdated(OptionsProvider sender)
@@ -117,7 +117,7 @@ namespace VSRAD.Syntax.FunctionList
                 tokens.Items.Add(token);
 
             /* Needs to update line number column width after adding new items */
-            ResizeLineNumberColumn();
+            AutosizeColumns();
         }
 
         private void ByNumber_Click(object sender, RoutedEventArgs e)
@@ -152,25 +152,29 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private void ResizeLineNumberColumn()
+        private void AutosizeColumns()
         {
             /* This is a well know behaviour of GridView https://stackoverflow.com/questions/560581/how-to-autosize-and-right-align-gridviewcolumn-data-in-wpf/1931423#1931423 */
             functionsGridView.Columns[0].Width = 0;
             if (!isHideLineNumber)
                 functionsGridView.Columns[0].Width = double.NaN;
+            functionsGridView.Columns[1].Width = 0;
+            functionsGridView.Columns[1].Width = double.NaN;
         }
 
-        private void ResizeOtherColumns()
+        private void SetLineNumberColumnWidth()
         {
-            // Line Number ActualWidth will apply only after UpdateLayout. After that, other columns width can be changed
-            functionsGridView.Columns[1].Width = tokens.ActualWidth - functionsGridView.Columns[0].ActualWidth;
+            // Line Number ActualWidth will apply only after UpdateLayout only then it can be compared with min width
+            if (functionsGridView.Columns[0].ActualWidth > 0)
+                functionsGridView.Columns[0].Width = Math.Max(functionsGridView.Columns[0].ActualWidth, 45.4 /*min width equals to 5 digits*/);
+
             LineNumberButtonColumn.Width = new GridLength(functionsGridView.Columns[0].ActualWidth);
         }
 
         private void ShowHideLineNumber(object sender, EventArgs e)
         {
             isHideLineNumber = !isHideLineNumber;
-            ResizeLineNumberColumn();
+            AutosizeColumns();
         }
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
