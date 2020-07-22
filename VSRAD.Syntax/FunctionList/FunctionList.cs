@@ -122,32 +122,34 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private Task HighlightCurrentFunctionAsync(SnapshotPoint position)
+        private async Task HighlightCurrentFunctionAsync(SnapshotPoint position)
         {
             try
             {
-                if (lastSelectedFunction != null && PointInFunction(lastSelectedFunction, position))
-                    return Task.CompletedTask;
-
                 var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(position.Snapshot.TextBuffer);
                 var functions = documentAnalysis.LastParserResult.GetFunctions();
-                lastSelectedFunction = GetFunctionBy(functions, position);
+                var currentFunction = GetFunctionBy(functions, position);
 
-                if (lastSelectedFunction == null)
-                    return FunctionListControl.ClearHighlightCurrentFunctionAsync();
+                if (currentFunction == lastSelectedFunction) return;
 
-                var functionToken = lastSelectedFunction.Name;
+                lastSelectedFunction = currentFunction;
+                if (currentFunction == null)
+                {
+                    await FunctionListControl.ClearHighlightCurrentFunctionAsync();
+                    return;
+                }
+
+                var functionToken = currentFunction.Name;
                 var lineNumber = functionToken
                     .TrackingToken.Start
                     .GetPoint(documentAnalysis.CurrentSnapshot)
                     .GetContainingLine().LineNumber;
 
-                return FunctionListControl.HighlightCurrentFunctionAsync(functionToken.Type, lineNumber + 1 /* numbering starts from 1 */);
+                await FunctionListControl.HighlightCurrentFunctionAsync(functionToken.Type, lineNumber + 1 /* numbering starts from 1 */);
             }
             catch (Exception e)
             {
                 Error.LogError(e);
-                return Task.CompletedTask;
             }
         }
 
@@ -168,9 +170,8 @@ namespace VSRAD.Syntax.FunctionList
 
         private static bool PointInFunction(FunctionBlock func, SnapshotPoint position)
         {
-            var pointStart = func.TokenStart.GetStart(position.Snapshot);
-            var pointEnd = func.TokenEnd.GetEnd(position.Snapshot);
-            return pointStart < position && pointEnd > position;
+            var scope = func.GetActualScope(position.Snapshot);
+            return scope.Contains(position);
         }
     }
 }
