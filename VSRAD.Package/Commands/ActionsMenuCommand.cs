@@ -19,18 +19,25 @@ namespace VSRAD.Package.Commands
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
         private readonly ICommunicationChannel _channel;
+        private readonly IFileSynchronizationManager _deployManager;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLogger actionLogger, ICommunicationChannel channel, SVsServiceProvider serviceProvider)
+        public ActionsMenuCommand(
+            IProject project,
+            IActionLogger actionLogger,
+            ICommunicationChannel channel,
+            IFileSynchronizationManager deployManager,
+            SVsServiceProvider serviceProvider)
         {
             _project = project;
             _actionLogger = actionLogger;
             _channel = channel;
             _serviceProvider = serviceProvider;
+            _deployManager = deployManager;
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
@@ -106,14 +113,26 @@ namespace VSRAD.Package.Commands
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
-                var env = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
-                action = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+                var envResult = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
+                if (!envResult.TryGetResult(out var env, out var evalError))
+                {
+                    Errors.Show(evalError);
+                    return;
+                }
+                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
+                if (!evalResult.TryGetResult(out action, out evalError))
+                {
+                    Errors.Show(evalError);
+                    return;
+                }
+
+                await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
                 var runner = new ActionRunner(_channel, _serviceProvider, env);
                 var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>()).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
-                if (actionError is Error e)
-                    Errors.Show(e);
+                if (actionError is Error runError)
+                    Errors.Show(runError);
             }
             finally
             {

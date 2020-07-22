@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
+using static VSRAD.Package.Options.ActionExtensions;
 
 namespace VSRAD.Package.Options
 {
@@ -20,10 +21,7 @@ namespace VSRAD.Package.Options
 
     public interface IActionStep : INotifyPropertyChanged
     {
-        [JsonIgnore]
-        string Description { get; }
-
-        Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile);
+        Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction);
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -42,44 +40,32 @@ namespace VSRAD.Package.Options
     {
         public static bool IsRemote(this BuiltinActionFile file) =>
             file.Location == StepEnvironment.Remote;
+
+        public static Error EvaluationError(string action, string step, string description) =>
+            new Error(description, title: $"Action \"{action}\" could not be run due to a misconfigured {step} step");
     }
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private FileCopyDirection _direction;
-        public FileCopyDirection Direction
-        {
-            get => _direction;
-            set { SetField(ref _direction, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public FileCopyDirection Direction { get => _direction; set => SetField(ref _direction, value); }
 
         private string _sourcePath = "";
-        public string SourcePath
-        {
-            get => _sourcePath;
-            set { SetField(ref _sourcePath, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string SourcePath { get => _sourcePath; set => SetField(ref _sourcePath, value); }
 
         private string _targetPath = "";
-        public string TargetPath
-        {
-            get => _targetPath;
-            set { SetField(ref _targetPath, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
         private bool _checkTimestamp;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 
-        public string Description
+        public override string ToString()
         {
-            get
-            {
-                if (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath))
-                    return "Copy File (not configured)";
+            if (string.IsNullOrEmpty(SourcePath) || string.IsNullOrEmpty(TargetPath))
+                return "Copy File";
 
-                var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote" : "from Remote";
-                return $"Copy {dir} {SourcePath} -> {TargetPath}";
-            }
+            var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote" : "from Remote";
+            return $"Copy {dir} {SourcePath} -> {TargetPath}";
         }
 
         public override bool Equals(object obj) =>
@@ -90,38 +76,45 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 1;
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
-            new CopyFileStep
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        {
+            if (string.IsNullOrEmpty(SourcePath))
+                return EvaluationError(sourceAction, "Copy File", "No source path specified");
+            if (string.IsNullOrEmpty(TargetPath))
+                return EvaluationError(sourceAction, "Copy File", "No target path specified");
+
+            var sourcePathResult = await evaluator.EvaluateAsync(SourcePath);
+            if (!sourcePathResult.TryGetResult(out var evaluatedSourcePath, out var error))
+                return error;
+            var targetPathResult = await evaluator.EvaluateAsync(TargetPath);
+            if (!targetPathResult.TryGetResult(out var evaluatedTargetPath, out error))
+                return error;
+
+            if (string.IsNullOrEmpty(evaluatedSourcePath))
+                return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
+            if (string.IsNullOrEmpty(evaluatedTargetPath))
+                return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
+
+            return new CopyFileStep
             {
                 Direction = Direction,
-                SourcePath = await evaluator.EvaluateAsync(SourcePath),
-                TargetPath = await evaluator.EvaluateAsync(TargetPath),
-                CheckTimestamp = CheckTimestamp
+                CheckTimestamp = CheckTimestamp,
+                SourcePath = evaluatedSourcePath,
+                TargetPath = evaluatedTargetPath
             };
+        }
     }
 
     public sealed class ExecuteStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private StepEnvironment _environment;
-        public StepEnvironment Environment
-        {
-            get => _environment;
-            set { SetField(ref _environment, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public StepEnvironment Environment { get => _environment; set => SetField(ref _environment, value); }
 
         private string _executable = "";
-        public string Executable
-        {
-            get => _executable;
-            set { SetField(ref _executable, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string Executable { get => _executable; set => SetField(ref _executable, value); }
 
         private string _arguments = "";
-        public string Arguments
-        {
-            get => _arguments;
-            set { SetField(ref _arguments, value); RaisePropertyChanged(nameof(Description)); }
-        }
+        public string Arguments { get => _arguments; set => SetField(ref _arguments, value); }
 
         private string _workingDirectory = "";
         public string WorkingDirectory { get => _workingDirectory; set => SetField(ref _workingDirectory, value); }
@@ -135,16 +128,13 @@ namespace VSRAD.Package.Options
         private int _timeoutSecs = 0;
         public int TimeoutSecs { get => _timeoutSecs; set => SetField(ref _timeoutSecs, value); }
 
-        public string Description
+        public override string ToString()
         {
-            get
-            {
-                if (string.IsNullOrEmpty(Executable))
-                    return "Execute (not configured)";
+            if (string.IsNullOrEmpty(Executable))
+                return "Execute";
 
-                var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
-                return $"Execute {env} {Executable} {Arguments}";
-            }
+            var env = Environment == StepEnvironment.Remote ? "Remote" : "Local";
+            return $"Execute {env} {Executable} {Arguments}";
         }
 
         public override bool Equals(object obj) =>
@@ -159,70 +149,73 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 3;
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
-            new ExecuteStep
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        {
+            if (string.IsNullOrEmpty(Executable))
+                return EvaluationError(sourceAction, "Execute", "No executable specified");
+
+            var executableResult = await evaluator.EvaluateAsync(Executable);
+            if (!executableResult.TryGetResult(out var evaluatedExecutable, out var error))
+                return error;
+            var argumentsResult = await evaluator.EvaluateAsync(Arguments);
+            if (!argumentsResult.TryGetResult(out var evaluatedArguments, out error))
+                return error;
+            var workdirResult = await evaluator.EvaluateAsync(WorkingDirectory);
+            if (!workdirResult.TryGetResult(out var evaluatedWorkdir, out error))
+                return error;
+
+            if (string.IsNullOrEmpty(evaluatedExecutable))
+                return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
+
+            return new ExecuteStep
             {
                 Environment = Environment,
-                Executable = await evaluator.EvaluateAsync(Executable),
-                Arguments = await evaluator.EvaluateAsync(Arguments),
-                WorkingDirectory = await evaluator.EvaluateAsync(WorkingDirectory),
+                Executable = evaluatedExecutable,
+                Arguments = evaluatedArguments,
+                WorkingDirectory = evaluatedWorkdir,
                 RunAsAdmin = RunAsAdmin,
                 WaitForCompletion = WaitForCompletion,
                 TimeoutSecs = TimeoutSecs
             };
+        }
     }
 
     public sealed class OpenInEditorStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private string _path = "";
-        public string Path
-        {
-            get => _path;
-            set
-            {
-                SetField(ref _path, value);
-                RaisePropertyChanged(nameof(Description));
-            }
-        }
+        public string Path { get => _path; set => SetField(ref _path, value); }
 
         private string _lineMarker = "";
         public string LineMarker { get => _lineMarker; set => SetField(ref _lineMarker, value); }
 
-        public string Description
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Path))
-                    return "Open in Editor (not configured)";
-                return $"Open {Path}";
-            }
-        }
+        public override string ToString() =>
+            string.IsNullOrEmpty(Path) ? "Open in Editor" : $"Open {Path}";
 
         public override bool Equals(object obj) =>
             obj is OpenInEditorStep step && Path == step.Path && LineMarker == step.LineMarker;
 
         public override int GetHashCode() => 5;
 
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
-            new OpenInEditorStep
-            {
-                Path = await evaluator.EvaluateAsync(Path),
-                LineMarker = LineMarker
-            };
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        {
+            if (string.IsNullOrEmpty(Path))
+                return EvaluationError(sourceAction, "Open in Editor", "No file path specified");
+
+            var pathResult = await evaluator.EvaluateAsync(Path);
+            if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
+                return error;
+
+            if (string.IsNullOrEmpty(evaluatedPath))
+                return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
+
+            return new OpenInEditorStep { Path = evaluatedPath, LineMarker = LineMarker };
+        }
     }
 
     public sealed class RunActionStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private string _name = "";
-        public string Name
-        {
-            get => _name;
-            set
-            {
-                SetField(ref _name, value);
-                RaisePropertyChanged(nameof(Description));
-            }
-        }
+        public string Name { get => _name; set => SetField(ref _name, value); }
 
         [JsonIgnore]
         public List<IActionStep> EvaluatedSteps { get; }
@@ -234,46 +227,71 @@ namespace VSRAD.Package.Options
             EvaluatedSteps = evaluatedSteps;
         }
 
-        public string Description
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(Name))
-                    return "Run Action (not configured)";
-                return $"Run {Name}";
-            }
-        }
+        public override string ToString() =>
+            string.IsNullOrEmpty(Name) ? "Run Action" : $"Run {Name}";
 
         public override bool Equals(object obj) => obj is RunActionStep step && Name == step.Name;
 
         public override int GetHashCode() => 7;
 
-        public Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile) =>
-            EvaluateAsync(evaluator, profile, new Stack<string>());
-
-        public async Task<IActionStep> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, Stack<string> callers)
+        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
-            if (callers.Contains(Name))
-                throw new Exception("Encountered a circular action: " + string.Join(" -> ", callers.Reverse()) + " -> " + Name);
+            var traversed = new List<string>() { sourceAction };
+            return EvaluateAsync(evaluator, profile, traversed);
+        }
+
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, List<string> actionsTraversed)
+        {
+            if (string.IsNullOrEmpty(Name))
+            {
+                var message = "No action specified";
+                if (actionsTraversed.Count > 1)
+                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
+                return EvaluationError(actionsTraversed[0], "Run Action", message);
+            }
+            if (actionsTraversed.Contains(Name))
+            {
+                var t = string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")) + " -> \"" + Name + "\"";
+                return EvaluationError(actionsTraversed[0], "Run Action", "Encountered a circular dependency: " + t);
+            }
 
             var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
-                throw new Exception("Action " + Name + " not found" + (callers.Count == 0 ? "" : ", required by " + string.Join(" -> ", callers.Reverse()) + " -> " + Name));
+            {
+                var message = "Action \"" + Name + "\" is not found";
+                if (actionsTraversed.Count > 1)
+                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
+                return EvaluationError(actionsTraversed[0], "Run Action", message);
+            }
 
-            callers.Push(Name);
+            actionsTraversed.Add(Name);
 
             var evaluatedSteps = new List<IActionStep>();
             foreach (var step in action.Steps)
             {
                 IActionStep evaluated;
                 if (step is RunActionStep runAction)
-                    evaluated = await runAction.EvaluateAsync(evaluator, profile, callers);
+                {
+                    var evalResult = await runAction.EvaluateAsync(evaluator, profile, actionsTraversed);
+                    if (!evalResult.TryGetResult(out evaluated, out var error))
+                        return error;
+                }
                 else
-                    evaluated = await step.EvaluateAsync(evaluator, profile);
+                {
+                    var evalResult = await step.EvaluateAsync(evaluator, profile, actionsTraversed[0]);
+                    if (!evalResult.TryGetResult(out evaluated, out _))
+                    {
+                        var message = "Action \"" + Name + "\" is misconfigured";
+                        actionsTraversed.Remove(Name);
+                        if (actionsTraversed.Count > 1)
+                            message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
+                        return EvaluationError(actionsTraversed[0], "Run Action", message);
+                    }
+                }
                 evaluatedSteps.Add(evaluated);
             }
 
-            callers.Pop();
+            actionsTraversed.RemoveAt(actionsTraversed.Count - 1);
 
             return new RunActionStep(evaluatedSteps) { Name = Name };
         }

@@ -155,8 +155,9 @@ namespace VSRAD.PackageTests.Server
         }
         #endregion
 
+        #region ExecuteStep
         [Fact]
-        public async Task ExecuteStepErrorTestAsync()
+        public async Task ExecuteRemoteErrorTestAsync()
         {
             var channel = new MockCommunicationChannel();
             var steps = new List<IActionStep>
@@ -191,7 +192,7 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task LocalExecuteTestAsync()
+        public async Task ExecuteLocalTestAsync()
         {
             var file = Path.GetTempFileName();
 
@@ -209,6 +210,55 @@ namespace VSRAD.PackageTests.Server
             File.Delete(file);
             Assert.Equal("success\r\n", output);
         }
+
+        [Fact]
+        public async Task ExecuteLocalWorkingDirectoryTestAsync()
+        {
+            var steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = $"-c \"import os; print(os.getcwd())\"" }
+            };
+            var env = new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "");
+            var runner = new ActionRunner(channel: null, serviceProvider: null, env);
+            var result = await runner.RunAsync("", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(result.Successful);
+
+            // When working directory is not specified, it defaults to ActionEnvironment.LocalWorkDir
+            var expectedWorkDir = env.LocalWorkDir.TrimEnd('\\');
+            Assert.Equal($"Captured stdout (exit code 0):\r\n{expectedWorkDir}\r\n", result.StepResults[0].Log);
+
+            ((ExecuteStep)steps[0]).WorkingDirectory = Directory.GetCurrentDirectory();
+            result = await runner.RunAsync("", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(result.Successful);
+
+            // When working directory is set, it should override ActionEnvironment.LocalWorkDir
+            expectedWorkDir = Directory.GetCurrentDirectory();
+            Assert.Equal($"Captured stdout (exit code 0):\r\n{expectedWorkDir}\r\n", result.StepResults[0].Log);
+        }
+
+        [Fact]
+        public async Task ExecuteRemoteWorkingDirectoryTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var steps = new List<IActionStep> { new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "exe" } };
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/action/env/remote/dir"));
+
+            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted(), command =>
+            {
+                Assert.Equal("/action/env/remote/dir", command.WorkingDirectory);
+            });
+            await runner.RunAsync("", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(channel.AllInteractionsHandled);
+
+            ((ExecuteStep)steps[0]).WorkingDirectory = "/explicitly/set/remote/dir";
+            channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted(), command =>
+            {
+                Assert.Equal("/explicitly/set/remote/dir", command.WorkingDirectory);
+            });
+            await runner.RunAsync("", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.True(channel.AllInteractionsHandled);
+        }
+        #endregion
 
         [Fact]
         public async Task RunActionStepTestAsync()

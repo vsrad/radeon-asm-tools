@@ -41,7 +41,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         public static MacroListDisplayCollection GetPredefinedMacroCollection() => new MacroListDisplayCollection
         {
-            new MacroItem(RadMacros.ActiveSourceFile, "<current source file>", userDefined: false),
+            new MacroItem(RadMacros.ActiveSourceFullPath, "<current source full path>", userDefined: false),
+            new MacroItem(RadMacros.ActiveSourceDir, "<current source dir name>", userDefined: false),
+            new MacroItem(RadMacros.ActiveSourceFile, "<current source file name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
             new MacroItem(RadMacros.Watches, "<visualizer watches, colon-separated>", userDefined: false),
             new MacroItem(RadMacros.BreakLine, "<next breakpoint line(s), colon-separated>", userDefined: false),

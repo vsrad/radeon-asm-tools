@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -97,11 +96,16 @@ namespace VSRAD.Package.Options
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
         public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
 
-        public async Task<ActionProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
         {
             var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
+            {
+                if ((await step.EvaluateAsync(evaluator, profile, Name)).TryGetResult(out var evaluatedStep, out var error))
+                    evaluated.Steps.Add(evaluatedStep);
+                else
+                    return error;
+            }
             return evaluated;
         }
     }
@@ -136,20 +140,39 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
 
-        public async Task<GeneralProfileOptions> EvaluateAsync(IMacroEvaluator evaluator) => new GeneralProfileOptions
+        public async Task<Result<GeneralProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator)
         {
-            ProfileName = ProfileName,
-            RemoteMachine = RemoteMachine,
-            Port = Port,
-            CopySources = CopySources,
-            DeployDirectory = await evaluator.EvaluateAsync(DeployDirectory),
-            LocalWorkDir = await evaluator.EvaluateAsync(LocalWorkDir),
-            RemoteWorkDir = await evaluator.EvaluateAsync(RemoteWorkDir),
-            AdditionalSources = AdditionalSources
-        };
+            var deployDirResult = await evaluator.EvaluateAsync(DeployDirectory);
+            if (!deployDirResult.TryGetResult(out var evaluatedDeployDir, out var error))
+                return error;
+            var envResult = await EvaluateActionEnvironmentAsync(evaluator);
+            if (!envResult.TryGetResult(out var evaluatedEnv, out error))
+                return error;
 
-        public async Task<ActionEnvironment> EvaluateActionEnvironmentAsync(IMacroEvaluator evaluator) =>
-            new ActionEnvironment(await evaluator.EvaluateAsync(LocalWorkDir), await evaluator.EvaluateAsync(RemoteWorkDir));
+            return new GeneralProfileOptions
+            {
+                ProfileName = ProfileName,
+                RemoteMachine = RemoteMachine,
+                Port = Port,
+                CopySources = CopySources,
+                DeployDirectory = evaluatedDeployDir,
+                LocalWorkDir = evaluatedEnv.LocalWorkDir,
+                RemoteWorkDir = evaluatedEnv.RemoteWorkDir,
+                AdditionalSources = AdditionalSources
+            };
+        }
+
+        public async Task<Result<ActionEnvironment>> EvaluateActionEnvironmentAsync(IMacroEvaluator evaluator)
+        {
+            var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
+            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out var error))
+                return error;
+            var remoteDirResult = await evaluator.EvaluateAsync(RemoteWorkDir);
+            if (!remoteDirResult.TryGetResult(out var evaluatedRemoteDir, out error))
+                return error;
+
+            return new ActionEnvironment(evaluatedLocalDir, evaluatedRemoteDir);
+        }
     }
 
     public sealed class DebuggerProfileOptions
@@ -164,16 +187,30 @@ namespace VSRAD.Package.Options
         public bool BinaryOutput { get; set; }
         public int OutputOffset { get; set; }
 
-        public async Task<DebuggerProfileOptions> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        public async Task<Result<DebuggerProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
         {
-            var evaluated = new DebuggerProfileOptions(
-                outputOffset: OutputOffset,
-                binaryOutput: BinaryOutput,
-                outputFile: await OutputFile.EvaluateAsync(evaluator),
-                watchesFile: await WatchesFile.EvaluateAsync(evaluator),
-                statusFile: await StatusFile.EvaluateAsync(evaluator));
+            var outputResult = await OutputFile.EvaluateAsync(evaluator);
+            if (!outputResult.TryGetResult(out var outputFile, out var error))
+                return error;
+            var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
+            if (!watchesResult.TryGetResult(out var watchesFile, out error))
+                return error;
+            var statusResult = await StatusFile.EvaluateAsync(evaluator);
+            if (!statusResult.TryGetResult(out var statusFile, out error))
+                return error;
+
+            var evaluated = new DebuggerProfileOptions(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
+                outputFile: outputFile, watchesFile: watchesFile, statusFile: statusFile);
+
             foreach (var step in Steps)
-                evaluated.Steps.Add(await step.EvaluateAsync(evaluator, profile));
+            {
+                var evalResult = await step.EvaluateAsync(evaluator, profile, ActionProfileOptions.BuiltinActionDebug);
+                if (evalResult.TryGetResult(out var evaluatedStep, out error))
+                    evaluated.Steps.Add(evaluatedStep);
+                else
+                    return error;
+            }
+
             return evaluated;
         }
 
@@ -187,6 +224,7 @@ namespace VSRAD.Package.Options
         }
     }
 
+#if false
     public sealed class DisassemblerProfileOptions
     {
         [Macro(RadMacros.DisassemblerExecutable)]
@@ -386,6 +424,7 @@ namespace VSRAD.Package.Options
             WorkingDirectory = workingDirectory;
         }
     }
+#endif
 
     public readonly struct ServerConnectionOptions : IEquatable<ServerConnectionOptions>
     {

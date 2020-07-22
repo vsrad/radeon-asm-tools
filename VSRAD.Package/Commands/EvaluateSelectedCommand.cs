@@ -61,7 +61,7 @@ namespace VSRAD.Package.Commands
             await SetStatusBarTextAsync($"RAD Debug: Evaluating {watchName}...");
             try
             {
-                var data = await RunAsync(options);
+                uint[] data = null;// await RunAsync(options);
                 if (data == null)
                 {
                     Errors.ShowCritical($"Please add {watchName} to watches and start a regular debug session.", $"Unable to evaluate {watchName}");

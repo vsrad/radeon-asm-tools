@@ -1,4 +1,5 @@
 ﻿<UserControl x:Class="VSRAD.Package.ProjectSystem.Profiles.ActionEditor"
+             x:Name="EditorRoot"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -25,6 +26,7 @@
                 <x:Type TypeName="opts:FileCopyDirection"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+        <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
@@ -68,7 +70,9 @@
                                                 <ColumnDefinition/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Margin="4,0" TextTrimming="CharacterEllipsis" Text="{Binding Description}" VerticalAlignment="Center" Grid.Column="0" />
+                                            <TextBlock Margin="4,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Grid.Column="0"
+                                                       DataContext="{Binding RelativeSource={RelativeSource Self}, Converter={StaticResource StepDescriptionConverter}}"
+                                                       Text="{Binding Description}" ToolTip="{Binding Description}" Tag="{Binding ElementName=EditorRoot}" />
                                             <StackPanel Orientation="Horizontal" Grid.Column="1" Margin="4,0">
                                                 <Button Content="▲" Command="{Binding DataContext.MoveUpCommand, ElementName=Root}" CommandParameter="{TemplateBinding Content}"
                                                         ToolTip="Move up" Width="22" Height="22" Margin="0,0,4,0" />
@@ -157,7 +161,19 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
+                                <RowDefinition>
+                                    <!-- Wait for Completion is not configurable for remote execution (see VSRAD.DebugServer.IPC.Commands) -->
+                                    <RowDefinition.Style>
+                                        <Style TargetType="{x:Type RowDefinition}">
+                                            <Setter Property="Height" Value="26" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Environment}" Value="Remote">
+                                                    <Setter Property="Height" Value="0" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </RowDefinition.Style>
+                                </RowDefinition>
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>

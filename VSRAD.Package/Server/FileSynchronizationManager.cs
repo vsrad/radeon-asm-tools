@@ -43,7 +43,10 @@ namespace VSRAD.Package.Server
         public async Task SynchronizeRemoteAsync()
         {
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
-            var options = await _project.Options.Profile.General.EvaluateAsync(evaluator);
+            var optionsResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
+            if (!optionsResult.TryGetResult(out var options, out var error))
+                throw new Exception(error.Message);
+
             var mode = _project.Options.DebuggerOptions.Autosave ? DocumentSaveType.OpenDocuments : DocumentSaveType.None;
 
             await _projectSourceManager.SaveDocumentsAsync(mode);

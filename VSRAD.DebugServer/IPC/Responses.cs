@@ -4,42 +4,53 @@ using System.IO;
 
 namespace VSRAD.DebugServer.IPC.Responses
 {
-    public static class BinaryResponseExtensions
+#pragma warning disable CA1028 // Using byte for enum storage because it's used for binary serialization
+    public enum ResponseType : byte
     {
-        public static IResponse ReadResponse(this IPCReader reader)
-        {
-            var responseType = reader.ReadByte();
-            switch (responseType)
-            {
-                case 0: return ExecutionCompleted.Deserialize(reader);
-                case 1: return MetadataFetched.Deserialize(reader);
-                case 2: return ResultRangeFetched.Deserialize(reader);
-                case 3: return PutFileResponse.Deserialize(reader);
-                case 4: return EnvironmentVariablesListed.Deserialize(reader);
-            }
-            throw new InvalidDataException($"Unexpected response type byte: {responseType}");
-        }
-
-        public static void WriteResponse(this IPCWriter writer, IResponse response)
-        {
-            byte responseType;
-            switch (response)
-            {
-                case ExecutionCompleted _: responseType = 0; break;
-                case MetadataFetched _: responseType = 1; break;
-                case ResultRangeFetched _: responseType = 2; break;
-                case PutFileResponse _: responseType = 3; break;
-                case EnvironmentVariablesListed _: responseType = 4; break;
-                default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
-            }
-            writer.Write(responseType);
-            response.Serialize(writer);
-        }
+        ExecutionCompleted = 0,
+        MetadataFetched = 1,
+        ResultRangeFetched = 2,
+        EnvironmentVariablesListed = 3,
+        PutFile = 4
     }
+#pragma warning restore CA1028
 
     public interface IResponse
     {
         void Serialize(IPCWriter writer);
+    }
+
+    public static class BinaryResponseExtensions
+    {
+        public static IResponse ReadResponse(this IPCReader reader)
+        {
+            var type = reader.ReadByte();
+            switch ((ResponseType)type)
+            {
+                case ResponseType.ExecutionCompleted: return ExecutionCompleted.Deserialize(reader);
+                case ResponseType.MetadataFetched: return MetadataFetched.Deserialize(reader);
+                case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
+                case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
+                case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
+            }
+            throw new InvalidDataException($"Unexpected response type byte: {type}");
+        }
+
+        public static void WriteResponse(this IPCWriter writer, IResponse response)
+        {
+            ResponseType type;
+            switch (response)
+            {
+                case ExecutionCompleted _: type = ResponseType.ExecutionCompleted; break;
+                case MetadataFetched _: type = ResponseType.MetadataFetched; break;
+                case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
+                case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
+                case PutFileResponse _: type = ResponseType.PutFile; break;
+                default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
+            }
+            writer.Write((byte)type);
+            response.Serialize(writer);
+        }
     }
 
     public sealed class ExecutionCompleted : IResponse
