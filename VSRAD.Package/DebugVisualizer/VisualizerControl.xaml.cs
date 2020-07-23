@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Windows;
 using System.Windows.Controls;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -11,6 +10,7 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
+        private readonly FontAndColorProvider _fontAndColor;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
@@ -27,6 +27,7 @@ namespace VSRAD.Package.DebugVisualizer
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
 
             var tableFontAndColor = new FontAndColorProvider();
+            _fontAndColor = tableFontAndColor;
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
                 _context.Options.VisualizerColumnStyling,
@@ -53,8 +54,16 @@ namespace VSRAD.Package.DebugVisualizer
         private void RefreshDataStyling() =>
             _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());
 
-        private void GrayOutWatches() =>
-            _table.GrayOutColumns(_context.GroupSize);
+        private void GrayOutWatches()
+        {
+            if (_table.ShowSystemRow)
+                RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, _table.Rows[0]);
+
+            foreach (System.Windows.Forms.DataGridViewRow row in _table.DataRows)
+            {
+                RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, row);
+            }
+        }
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {

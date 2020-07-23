@@ -37,5 +37,10 @@ namespace VSRAD.Package.DebugVisualizer
             row.DefaultCellStyle.BackColor = bgColor;
             row.DefaultCellStyle.Tag = (rowFg, rowBg);
         }
+
+        public static void GrayOutRow(FontAndColorState colors, DataGridViewRow row)
+        {
+            row.DefaultCellStyle.BackColor = colors.HighlightBackground[(int)DataHighlightColor.Inactive];
+        }
     }
 }
