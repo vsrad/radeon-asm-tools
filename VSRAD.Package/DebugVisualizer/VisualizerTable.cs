@@ -308,9 +308,16 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutColumns(uint groupSize)
-        {
-            _computedStyling.GrayOutColumns(groupSize);
+        public void GrayOutColumns()
+        {;
+            if (ShowSystemRow)
+                RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, Rows[0]);
+
+            foreach (DataGridViewRow row in DataRows)
+            {
+                RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, row);
+            }
+
             Invalidate();
         }
 
