@@ -14,7 +14,7 @@ namespace VSRAD.Package.DebugVisualizer
             var rowBg = DataHighlightColor.None;
             var inactiveBg = colors.HighlightBackground[(int)DataHighlightColor.Inactive];
             var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-            var isUnevaluated = watches != null ? !string.IsNullOrWhiteSpace(watch) && watch != "System" && !watches.Contains(watch) : true;
+            var isUnevaluated = watches == null || !string.IsNullOrWhiteSpace(watch) && watch != "System" && !watches.Contains(watch);
 
             if (isUnevaluated)
             {
