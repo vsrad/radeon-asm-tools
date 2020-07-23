@@ -52,11 +52,5 @@ namespace VSRAD.Package.DebugVisualizer
                 }
             }
         }
-
-        public static void GrayOutColumns(IReadOnlyList<DataGridViewColumn> columns, FontAndColorState fontAndColor, uint groupSize)
-        {
-            for (int i = 0; i < groupSize; i++)
-                columns[i].DefaultCellStyle.BackColor = fontAndColor.HighlightBackground[(int)DataHighlightColor.Inactive];
-        }
     }
 }

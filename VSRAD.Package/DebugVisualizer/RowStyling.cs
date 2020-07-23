@@ -8,10 +8,20 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class RowStyling
     {
-        public static void UpdateRowHighlight(DataGridViewRow row, FontAndColorState colors, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
+        public static void UpdateRowHighlight(DataGridViewRow row, FontAndColorState colors, ReadOnlyCollection<string> watches, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
             var rowFg = DataHighlightColor.None;
             var rowBg = DataHighlightColor.None;
+            var inactiveBg = colors.HighlightBackground[(int)DataHighlightColor.Inactive];
+            var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
+            var isUnevaluated = watches == null || !string.IsNullOrWhiteSpace(watch) && watch != "System" && !watches.Contains(watch);
+
+            if (isUnevaluated)
+            {
+                row.DefaultCellStyle.BackColor = inactiveBg;
+                return;
+            }
+
             if (row.DefaultCellStyle.Tag is ValueTuple<DataHighlightColor, DataHighlightColor> existingColors)
                 (rowFg, rowBg) = existingColors;
 
@@ -28,19 +38,9 @@ namespace VSRAD.Package.DebugVisualizer
             row.DefaultCellStyle.Tag = (rowFg, rowBg);
         }
 
-        public static void GrayOutUnevaluatedWatches(IEnumerable<DataGridViewRow> rows, FontAndColorState colors, ReadOnlyCollection<string> watches)
+        public static void GrayOutRow(FontAndColorState colors, DataGridViewRow row)
         {
-            var inactiveBg = colors.HighlightBackground[(int)DataHighlightColor.Inactive];
-            foreach (var row in rows)
-            {
-                var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-                var isUnevaluated = !string.IsNullOrWhiteSpace(watch) && watch != "System" && !watches.Contains(watch);
-
-                if (isUnevaluated)
-                    row.DefaultCellStyle.BackColor = inactiveBg;
-                else if (row.DefaultCellStyle.BackColor == inactiveBg) // used to be unevaluated
-                    UpdateRowHighlight(row, colors, changeFg: null, changeBg: null); // restore old highlight
-            }
+            row.DefaultCellStyle.BackColor = colors.HighlightBackground[(int)DataHighlightColor.Inactive];
         }
     }
 }

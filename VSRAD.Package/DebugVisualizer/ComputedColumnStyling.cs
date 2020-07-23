@@ -23,13 +23,6 @@ namespace VSRAD.Package.DebugVisualizer
         private ColumnStates[] _columnState = new ColumnStates[512];
         public ColumnStates[] ColumnState { get => _columnState; }
 
-        public void GrayOutColumns(uint groupSize)
-        {
-            GroupSize = groupSize;
-            for (int i = 0; i < groupSize; i++)
-                _columnState[i] |= ColumnStates.Inactive;
-        }
-
         public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, Server.WatchView system)
         {
             GroupSize = groupSize;

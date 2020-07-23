@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel;
-using System.Windows;
 using System.Windows.Controls;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -32,7 +31,8 @@ namespace VSRAD.Package.DebugVisualizer
                 _context.Options.VisualizerColumnStyling,
                 _context.Options.VisualizerAppearance,
                 tableFontAndColor,
-                getGroupSize: () => _context.GroupSize);
+                getGroupSize: () => _context.GroupSize,
+                getValidWatches: () => _context?.BreakData?.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _context.Options.DebuggerOptions.Watches.Clear();
@@ -53,7 +53,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());
 
         private void GrayOutWatches() =>
-            _table.GrayOutColumns(_context.GroupSize);
+            _table.GrayOutRows();
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
@@ -76,7 +76,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (e.Warning != null)
                 Errors.ShowWarning(e.Warning);
 
-            _table.ApplyWatchStyling(_context.BreakData.Watches);
+            _table.ApplyWatchStyling();
             RefreshDataStyling();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
