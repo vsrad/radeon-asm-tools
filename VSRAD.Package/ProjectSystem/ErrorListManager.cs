@@ -39,6 +39,8 @@ namespace VSRAD.Package.ProjectSystem
             _buildErrorProcessor = buildErrorProcessor;
             _project = project;
             _unconfiguredProject = unconfiguredProject;
+
+            _project.Unloaded += () => _errorListProvider.Tasks.Clear();
         }
 
         public async Task AddToErrorListAsync(string stderr)
