@@ -104,7 +104,7 @@
             </ListView>
         </Border>
         <Border Margin="0,8,0,0" Height="190" Padding="4" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1">
-            <ContentControl>
+            <ContentControl x:Name="StepEditor">
                 <Binding Path="SelectedStep">
                     <Binding.TargetNullValue>
                         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center">

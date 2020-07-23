@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
@@ -53,14 +54,22 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 }
             }
 
-            if (generator.Status == GeneratorStatus.NotStarted)
-                generator.StatusChanged += (s, e) =>
+            if (generator.Status != GeneratorStatus.ContainersGenerated)
+            {
+                void statusChangeHandler(object s, EventArgs e)
                 {
                     if (generator.ContainerFromItem(item) is TreeViewItem childContainer)
+                    {
                         childContainer.IsSelected = true;
-                };
+                        generator.StatusChanged -= statusChangeHandler;
+                    }
+                }
+                generator.StatusChanged += statusChangeHandler;
+            }
             else if (generator.ContainerFromItem(item) is TreeViewItem childContainer)
+            {
                 childContainer.IsSelected = true;
+            }
         }
     }
 }

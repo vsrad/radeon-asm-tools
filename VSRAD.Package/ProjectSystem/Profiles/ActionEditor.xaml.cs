@@ -134,9 +134,11 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void AddStep(object stepKind)
         {
+            NewStepPopup.IsOpen = false;
             var step = (IActionStep)Activator.CreateInstance((Type)stepKind);
             Steps.Add(step);
-            NewStepPopup.IsOpen = false;
+            SelectedStep = step;
+            Keyboard.Focus(StepEditor);
         }
 
         private void MoveStep(object item, bool moveUp)
