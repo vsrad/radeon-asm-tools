@@ -309,7 +309,7 @@ namespace VSRAD.Package.DebugVisualizer
         #region Styling
 
         public void GrayOutColumns()
-        {;
+        {
             if (ShowSystemRow)
                 RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, Rows[0]);
 
