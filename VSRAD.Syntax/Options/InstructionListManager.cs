@@ -19,13 +19,13 @@ namespace VSRAD.Syntax.Options
 
         private readonly OptionsProvider _optionsProvider;
         private Lazy<DocumentAnalysisProvoder> _documentAnalysisProvoder { get; set; }
+        private string _loadedPaths { get; set; }
 
         public Dictionary<string, List<KeyValuePair<NavigationToken, AsmType>>> InstructionList { get; }
 
         [ImportingConstructor]
         public InstructionListManager([Import(AllowDefault = true, AllowRecomposition = true)]Lazy<DocumentAnalysisProvoder> documentAnalysisProvoder /* circular dependency approach */, 
-            OptionsProvider optionsEventProvider, 
-            RadeonServiceProvider serviceProvider)
+            OptionsProvider optionsEventProvider)
         {
             _optionsProvider = optionsEventProvider;
 
@@ -35,13 +35,16 @@ namespace VSRAD.Syntax.Options
         }
 
         private void InstructionPathsUpdated(OptionsProvider provider) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths));
+            LoadInstructionsFromDirectories(provider.InstructionsPaths);
 
-        public Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
+        public void LoadInstructionsFromDirectories(string dirPathsString)
         {
+            // skip if options haven't changed
+            if (dirPathsString == _loadedPaths)
+                return;
+
+            _loadedPaths = dirPathsString;
             InstructionList.Clear();
-            if (string.IsNullOrWhiteSpace(dirPathsString))
-                return Task.CompletedTask;
 
             var paths = dirPathsString.Split(';')
                 .Select(x => x.Trim())
@@ -53,7 +56,6 @@ namespace VSRAD.Syntax.Options
             }
 
             InstructionUpdated?.Invoke(InstructionList.Keys.ToList());
-            return Task.CompletedTask;
         }
 
         public bool TryGetInstructions(string text, AsmType asmType, out IEnumerable<NavigationToken> instructions)

@@ -177,7 +177,7 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 while (currentBlock != null)
                 {
-                    foreach (var token in currentBlock.Tokens.Where(t => t.Type != RadAsmTokenType.Instruction))
+                    foreach (var token in currentBlock.Tokens.GetDefinitionToken())
                     {
                         if (token.TrackingToken.GetText(version) == text)
                         {
@@ -201,7 +201,7 @@ namespace VSRAD.Syntax.IntelliSense
                 {
                     var codeBlock = codeBlockStack.Pop();
 
-                    foreach (var token in codeBlock.Tokens.Where(t => t.Type != RadAsmTokenType.Instruction))
+                    foreach (var token in codeBlock.Tokens.GetDefinitionToken())
                     {
                         if (token.TrackingToken.GetText(version) == text)
                         {
