@@ -1,5 +1,5 @@
-﻿using Microsoft.VisualStudio.Text;
-using System.Text;
+﻿using System.Text;
+using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 {
@@ -13,9 +13,9 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
         public DefinitionToken(NavigationToken navigationToken)
         {
             NavigationToken = navigationToken;
-            if (NavigationToken.Snapshot.TextBuffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out var document))
+            if (NavigationToken.Snapshot.TextBuffer.Properties.TryGetProperty<DocumentInfo>(typeof(DocumentInfo), out var document))
             {
-                FilePath = document.FilePath;
+                FilePath = document.Path;
             }
             else
             {

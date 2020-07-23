@@ -77,17 +77,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
-                { RadAsmTokenType.Instruction, registryService.GetClassificationType(PredefinedClassificationTypeNames.Instructions) },
-                { RadAsmTokenType.FunctionName, registryService.GetClassificationType(PredefinedClassificationTypeNames.Functions) },
-                { RadAsmTokenType.FunctionReference, registryService.GetClassificationType(PredefinedClassificationTypeNames.Functions) },
-                { RadAsmTokenType.FunctionParameter, registryService.GetClassificationType(PredefinedClassificationTypeNames.Arguments) },
-                { RadAsmTokenType.FunctionParameterReference, registryService.GetClassificationType(PredefinedClassificationTypeNames.Arguments) },
-                { RadAsmTokenType.Label, registryService.GetClassificationType(PredefinedClassificationTypeNames.Labels) },
-                { RadAsmTokenType.LabelReference, registryService.GetClassificationType(PredefinedClassificationTypeNames.Labels) },
+                { RadAsmTokenType.Instruction, registryService.GetClassificationType(RadAsmTokenType.Instruction.GetClassificationTypeName()) },
+                { RadAsmTokenType.FunctionName, registryService.GetClassificationType(RadAsmTokenType.FunctionName.GetClassificationTypeName()) },
+                { RadAsmTokenType.FunctionReference, registryService.GetClassificationType(RadAsmTokenType.FunctionReference.GetClassificationTypeName()) },
+                { RadAsmTokenType.FunctionParameter, registryService.GetClassificationType(RadAsmTokenType.FunctionParameter.GetClassificationTypeName()) },
+                { RadAsmTokenType.FunctionParameterReference, registryService.GetClassificationType(RadAsmTokenType.FunctionParameterReference.GetClassificationTypeName()) },
+                { RadAsmTokenType.Label, registryService.GetClassificationType(RadAsmTokenType.Label.GetClassificationTypeName()) },
+                { RadAsmTokenType.LabelReference, registryService.GetClassificationType(RadAsmTokenType.LabelReference.GetClassificationTypeName()) },
                 { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
                 { RadAsmTokenType.GlobalVariableReference, typeService.FormalLanguage },
                 { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
-                { RadAsmTokenType.Include, typeService.StringLiteral },
             };
         }
 

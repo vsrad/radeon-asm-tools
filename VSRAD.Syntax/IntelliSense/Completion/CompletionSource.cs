@@ -19,11 +19,16 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     {
         public const string CompletionItemKey = nameof(CompletionItem);
         private readonly DocumentAnalysis _documentAnalysis;
+        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
         private readonly IReadOnlyList<Providers.CompletionProvider> _completionProviders;
 
-        public CompletionSource(DocumentAnalysis documentAnalysis, IReadOnlyList<Providers.CompletionProvider> providers)
+        public CompletionSource(
+            DocumentAnalysis documentAnalysis, 
+            IIntellisenseDescriptionBuilder descriptionBuilder, 
+            IReadOnlyList<Providers.CompletionProvider> providers)
         {
             _documentAnalysis = documentAnalysis;
+            _descriptionBuilder = descriptionBuilder;
             _completionProviders = providers;
         }
 
@@ -56,7 +61,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         public Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
         {
             var completionItem = (RadCompletionItem)item.Properties[CompletionItemKey];
-            return Task.FromResult(IntellisenseTokenDescription.GetColorizedDescription(completionItem.Tokens));
+            return Task.FromResult(_descriptionBuilder.GetColorizedDescription(completionItem.Tokens));
         }
 
         private async Task<ImmutableArray<RadCompletionContext>> ComputeNonEmptyCompletionContextsAsync(SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan)
