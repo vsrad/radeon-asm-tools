@@ -13,34 +13,39 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     [Export(typeof(IViewTaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TagType(typeof(IErrorTag))]
-    internal sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
+    public sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
     {
         public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, List<(int line, int column, string message)>> errors);
 
         public event ErrorsUpdateDelegate ErrorsUpdated;
 
-        private readonly DTE2 _dte;
-        private readonly EnvDTE.BuildEvents _buildEvents;
+        private readonly SVsServiceProvider _serviceProvider;
+        private ErrorList _errorList;
 
         [ImportingConstructor]
         public ErrorHighlighterTaggerProvider(SVsServiceProvider serviceProvider)
         {
-            _dte = serviceProvider.GetService(typeof(SDTE)) as DTE2;
-            _buildEvents = _dte.Events.BuildEvents;
-            _buildEvents.OnBuildProjConfigDone += ProjectBuildDone;
+            _serviceProvider = serviceProvider;
         }
 
-        private void ProjectBuildDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
+        // Called by VSRAD.Package.ProjectSystem.ErrorListManager
+        public void ErrorListUpdated()
         {
+            if (_errorList == null)
+            {
+                var dte = (DTE2)_serviceProvider.GetService(typeof(SDTE));
+                _errorList = dte.ToolWindows.ErrorList;
+            }
+
             var errors = new Dictionary<string, List<(int line, int column, string message)>>();
             // the list doesn't contain hidden elements and we can’t affect it.
             // But we can show it and then return the state
-            var showError = _dte.ToolWindows.ErrorList.ShowErrors;
-            var showWarning = _dte.ToolWindows.ErrorList.ShowWarnings;
-            _dte.ToolWindows.ErrorList.ShowErrors = true;
-            _dte.ToolWindows.ErrorList.ShowWarnings = true;
+            var showError = _errorList.ShowErrors;
+            var showWarning = _errorList.ShowWarnings;
+            _errorList.ShowErrors = true;
+            _errorList.ShowWarnings = true;
 
-            var errorList = _dte.ToolWindows.ErrorList.ErrorItems;
+            var errorList = _errorList.ErrorItems;
             for (int i = 1; i <= errorList.Count; i++)
             {
                 var error = errorList.Item(i);
@@ -50,8 +55,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
                 errors[error.FileName].Add((error.Line, error.Column, error.Description));
             }
-            _dte.ToolWindows.ErrorList.ShowErrors = showError;
-            _dte.ToolWindows.ErrorList.ShowWarnings = showWarning;
+
+            _errorList.ShowErrors = showError;
+            _errorList.ShowWarnings = showWarning;
             ErrorsUpdated?.Invoke(errors);
         }
 

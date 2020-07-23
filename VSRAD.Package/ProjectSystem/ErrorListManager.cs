@@ -1,8 +1,10 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using VSRAD.Package.BuildTools;
 using static VSRAD.BuildTools.IPCBuildResult;
 using Task = System.Threading.Tasks.Task;
@@ -21,18 +23,21 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ErrorListProvider _errorListProvider;
         private readonly IBuildErrorProcessor _buildErrorProcessor;
+        private readonly UnconfiguredProject _unconfiguredProject;
         private readonly IProject _project;
 
         [ImportingConstructor]
         public ErrorListManager(
             SVsServiceProvider serviceProvider,
             IBuildErrorProcessor buildErrorProcessor,
-            IProject project)
+            IProject project,
+            UnconfiguredProject unconfiguredProject)
         {
             _serviceProvider = serviceProvider;
             _errorListProvider = new ErrorListProvider(_serviceProvider);
             _buildErrorProcessor = buildErrorProcessor;
             _project = project;
+            _unconfiguredProject = unconfiguredProject;
         }
 
         public async Task AddToErrorListAsync(string stderr)
@@ -40,6 +45,7 @@ namespace VSRAD.Package.ProjectSystem
             if (stderr == null) return;
 
             _errorListProvider.Tasks.Clear();
+
             var messages = await _buildErrorProcessor.ExtractMessagesAsync(stderr, null);
             foreach (var message in messages)
             {
@@ -60,6 +66,24 @@ namespace VSRAD.Package.ProjectSystem
                 };
 
                 _errorListProvider.Tasks.Add(task);
+            }
+
+            ErrorTagger?.ErrorListUpdated();
+        }
+
+        private bool _errorTaggerInitialized;
+        private dynamic _errorTagger;
+        private dynamic ErrorTagger
+        {
+            get
+            {
+                if (!_errorTaggerInitialized)
+                {
+                    var taggers = _unconfiguredProject.Services.ExportProvider.GetExportedValues<IViewTaggerProvider>();
+                    _errorTagger = taggers.FirstOrDefault(t => t.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
+                    _errorTaggerInitialized = true;
+                }
+                return _errorTagger;
             }
         }
 
