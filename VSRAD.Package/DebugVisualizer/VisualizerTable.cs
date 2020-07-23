@@ -308,7 +308,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutColumns()
+        public void GrayOutRows()
         {
             if (ShowSystemRow)
                 RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, Rows[0]);
@@ -362,7 +362,6 @@ namespace VSRAD.Package.DebugVisualizer
                 _fontAndColor.FontAndColorState);
             columnStyling.Apply(_state.DataColumns);
 
-            
             foreach (DataGridViewRow row in Rows)
                 RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
 

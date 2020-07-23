@@ -53,7 +53,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());
 
         private void GrayOutWatches() =>
-            _table.GrayOutColumns();
+            _table.GrayOutRows();
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
