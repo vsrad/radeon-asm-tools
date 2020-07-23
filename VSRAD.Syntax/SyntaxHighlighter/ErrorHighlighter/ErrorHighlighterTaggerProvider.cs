@@ -1,10 +1,9 @@
-﻿using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 
@@ -15,50 +14,30 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     [TagType(typeof(IErrorTag))]
     public sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
     {
-        public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, List<(int line, int column, string message)>> errors);
-
-        public event ErrorsUpdateDelegate ErrorsUpdated;
-
-        private readonly SVsServiceProvider _serviceProvider;
-        private ErrorList _errorList;
-
-        [ImportingConstructor]
-        public ErrorHighlighterTaggerProvider(SVsServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
+        public event EventHandler<IReadOnlyDictionary<string, List<ErrorMessage>>> ErrorsUpdated;
 
         // Called by VSRAD.Package.ProjectSystem.ErrorListManager
-        public void ErrorListUpdated()
+        public void ErrorListUpdated(IEnumerable<ErrorTask> errorList)
         {
-            if (_errorList == null)
+            var errorsPerFile = new Dictionary<string, List<ErrorMessage>>();
+
+            foreach (var error in errorList)
             {
-                var dte = (DTE2)_serviceProvider.GetService(typeof(SDTE));
-                _errorList = dte.ToolWindows.ErrorList;
+                if (!errorsPerFile.TryGetValue(error.Document, out var fileErrors))
+                {
+                    fileErrors = new List<ErrorMessage>();
+                    errorsPerFile[error.Document] = fileErrors;
+                }
+                fileErrors.Add(new ErrorMessage
+                {
+                    Line = error.Line,
+                    Column = error.Column,
+                    Message = error.Text,
+                    IsFatal = error.ErrorCategory == TaskErrorCategory.Error
+                });
             }
 
-            var errors = new Dictionary<string, List<(int line, int column, string message)>>();
-            // the list doesn't contain hidden elements and we can’t affect it.
-            // But we can show it and then return the state
-            var showError = _errorList.ShowErrors;
-            var showWarning = _errorList.ShowWarnings;
-            _errorList.ShowErrors = true;
-            _errorList.ShowWarnings = true;
-
-            var errorList = _errorList.ErrorItems;
-            for (int i = 1; i <= errorList.Count; i++)
-            {
-                var error = errorList.Item(i);
-
-                if (!errors.ContainsKey(error.FileName))
-                    errors[error.FileName] = new List<(int line, int column, string message)>();
-
-                errors[error.FileName].Add((error.Line, error.Column, error.Description));
-            }
-
-            _errorList.ShowErrors = showError;
-            _errorList.ShowWarnings = showWarning;
-            ErrorsUpdated?.Invoke(errors);
+            ErrorsUpdated?.Invoke(this, errorsPerFile);
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
@@ -68,5 +47,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
             return new ErrorHighlighterTagger(this, textView, buffer) as ITagger<T>;
         }
+    }
+
+    public sealed class ErrorMessage
+    {
+        public int Line { get; set; }
+        public int Column { get; set; }
+        public string Message { get; set; }
+        public bool IsFatal { get; set; }
     }
 }

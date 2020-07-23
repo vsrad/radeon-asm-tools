@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -16,8 +17,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         private readonly ITextBuffer buffer;
         private readonly object updateLock;
         private readonly ITextDocument textDocument;
-        private List<(int line, int column, string message)> requestedErrorList;
-        private IList<(SnapshotSpan errorSpan, string message)> currentErrorSnapshotList;
+        private List<ErrorMessage> requestedErrorList;
+        private IEnumerable<TagSpan<IErrorTag>> currentErrorSnapshotList;
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
         internal ErrorHighlighterTagger(ErrorHighlighterTaggerProvider provider, ITextView textView, ITextBuffer sourceBuffer)
@@ -34,15 +35,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
             if (currentErrorSnapshotList == null)
-                yield break;
+                return Enumerable.Empty<ITagSpan<IErrorTag>>();
 
-            foreach (var (errorSpan, message) in currentErrorSnapshotList)
-            {
-                yield return new TagSpan<IErrorTag>(errorSpan, new ErrorTag(PredefinedErrorTypeNames.SyntaxError, message));
-            }
+            return currentErrorSnapshotList;
         }
 
-        private void ErrorsUpdatedEvent(IReadOnlyDictionary<string, List<(int line, int column, string message)>> errors)
+        private void ErrorsUpdatedEvent(object sender, IReadOnlyDictionary<string, List<ErrorMessage>> errors)
         {
             if (errors.TryGetValue(textDocument.FilePath, out requestedErrorList))
             {
@@ -50,7 +48,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             }
             else
             {
-                SynchronousUpdate(new List<(SnapshotSpan errorSpan, string message)>());
+                SynchronousUpdate(null);
             }
         }
 
@@ -63,29 +61,30 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         {
             try
             {
-                var errorSnapshotList = new List<(SnapshotSpan errorSpan, string message)>();
+                var errorSnapshotList = new List<TagSpan<IErrorTag>>();
 
                 // Note that line and column numbers in the error list start at 1
-                foreach (var (line, column, message) in requestedErrorList)
+                foreach (var error in requestedErrorList)
                 {
                     // Reported lines may not always match the document; check to avoid an out-of-range
-                    if (line > view.TextSnapshot.LineCount)
+                    if (error.Line >= view.TextSnapshot.LineCount)
                         continue;
 
-                    var snapshotLine = view.TextSnapshot.GetLineFromLineNumber(line - 1);
+                    var snapshotLine = view.TextSnapshot.GetLineFromLineNumber(error.Line);
                     SnapshotSpan errorSpan;
 
-                    if (column == 1)
+                    if (error.Column == 0)
                     {
                         errorSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
                     }
                     else
                     {
-                        var (start, lenght) = GetExtentOnLine(snapshotLine, column - 1);
+                        var (start, lenght) = GetExtentOnLine(snapshotLine, error.Column);
                         errorSpan = new SnapshotSpan(view.TextSnapshot, start + snapshotLine.Start, lenght);
                     }
 
-                    errorSnapshotList.Add((errorSpan, message));
+                    var errorType = error.IsFatal ? PredefinedErrorTypeNames.SyntaxError : PredefinedErrorTypeNames.Warning;
+                    errorSnapshotList.Add(new TagSpan<IErrorTag>(errorSpan, new ErrorTag(errorType, error.Message)));
                 }
 
                 SynchronousUpdate(errorSnapshotList);
@@ -96,7 +95,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             }
         }
 
-        private void SynchronousUpdate(IList<(SnapshotSpan errorSpan, string message)> errorSnapshotList)
+        private void SynchronousUpdate(IEnumerable<TagSpan<IErrorTag>> errorSnapshotList)
         {
             lock (updateLock)
             {

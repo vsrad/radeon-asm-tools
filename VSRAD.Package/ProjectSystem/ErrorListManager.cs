@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
@@ -46,6 +47,7 @@ namespace VSRAD.Package.ProjectSystem
 
             _errorListProvider.Tasks.Clear();
 
+            var errors = new List<ErrorTask>();
             var messages = await _buildErrorProcessor.ExtractMessagesAsync(stderr, null);
             foreach (var message in messages)
             {
@@ -64,11 +66,11 @@ namespace VSRAD.Package.ProjectSystem
                     _errorListProvider.Navigate(task, Guid.Parse(/*EnvDTE.Constants.vsViewKindCode*/"{7651A701-06E5-11D1-8EBD-00A0C90F26EA}"));
                     task.Line--;
                 };
-
                 _errorListProvider.Tasks.Add(task);
+                errors.Add(task);
             }
 
-            ErrorTagger?.ErrorListUpdated();
+            ErrorTagger?.ErrorListUpdated(errors);
         }
 
         private bool _errorTaggerInitialized;
