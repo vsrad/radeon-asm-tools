@@ -191,9 +191,11 @@ namespace VSRAD.Syntax.FunctionList
             try
             {
                 var token = (FunctionListItem)tokens.SelectedItem;
-                FunctionList.Instance
-                    .GetActiveTextView()
-                    .ChangeCaretPosition(token.LineNumber - 1);
+                if (token != null)
+                {
+                    var view = FunctionList.Instance.GetActiveTextView();
+                    view?.ChangeCaretPosition(token.LineNumber - 1);
+                }
             }
             catch (Exception e)
             {
