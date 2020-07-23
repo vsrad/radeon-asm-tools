@@ -70,22 +70,30 @@ namespace VSRAD.Package.ProjectSystem
                 errors.Add(task);
             }
 
-            ErrorTagger?.ErrorListUpdated(errors);
+            NotifyErrorTagger?.Invoke(errors);
         }
 
-        private bool _errorTaggerInitialized;
-        private dynamic _errorTagger;
-        private dynamic ErrorTagger
+        private delegate void NotifyErrorTaggerDelegate(IEnumerable<ErrorTask> errorList);
+
+        private bool _errorTaggerDelegateInitialized;
+        private NotifyErrorTaggerDelegate _notifyErrorTagger;
+        private NotifyErrorTaggerDelegate NotifyErrorTagger
         {
             get
             {
-                if (!_errorTaggerInitialized)
+                if (!_errorTaggerDelegateInitialized)
                 {
                     var taggers = _unconfiguredProject.Services.ExportProvider.GetExportedValues<IViewTaggerProvider>();
-                    _errorTagger = taggers.FirstOrDefault(t => t.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
-                    _errorTaggerInitialized = true;
+                    var syntaxTagger = taggers.FirstOrDefault(t => t.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
+                    if (syntaxTagger != null)
+                    {
+                        var notifyMethod = syntaxTagger.GetType().GetMethod("ErrorListUpdated");
+                        if (notifyMethod != null)
+                            _notifyErrorTagger = (NotifyErrorTaggerDelegate)Delegate.CreateDelegate(typeof(NotifyErrorTaggerDelegate), syntaxTagger, notifyMethod);
+                    }
+                    _errorTaggerDelegateInitialized = true;
                 }
-                return _errorTagger;
+                return _notifyErrorTagger;
             }
         }
 
