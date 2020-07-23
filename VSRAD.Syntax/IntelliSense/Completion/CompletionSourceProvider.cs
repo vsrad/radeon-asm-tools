@@ -17,16 +17,19 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     {
         private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly OptionsProvider _optionsEventProvider;
+        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
         private readonly IReadOnlyList<CompletionProvider> _providers;
 
         [ImportingConstructor]
         public CompletionSourceProvider(
             OptionsProvider optionsEventProvider,
             InstructionListManager instructionListManager,
-            DocumentAnalysisProvoder documentAnalysisProvoder)
+            DocumentAnalysisProvoder documentAnalysisProvoder,
+            IIntellisenseDescriptionBuilder descriptionBuilder)
         {
             _documentAnalysisProvoder = documentAnalysisProvoder;
             _optionsEventProvider = optionsEventProvider;
+            _descriptionBuilder = descriptionBuilder;
 
             _providers = new List<CompletionProvider>()
             {
@@ -42,7 +45,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 throw new ArgumentNullException(nameof(textView));
 
             var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textView.TextBuffer);
-            return new CompletionSource(documentAnalysis, _providers);
+            return new CompletionSource(documentAnalysis, _descriptionBuilder, _providers);
         }
     }
 }

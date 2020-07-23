@@ -15,13 +15,16 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     {
         private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly INavigationTokenService _navigationService;
+        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
 
         [ImportingConstructor]
         public QuickInfoSourceProvider(DocumentAnalysisProvoder documentAnalysisProvoder,
-            INavigationTokenService navigationService)
+            INavigationTokenService navigationService,
+            IIntellisenseDescriptionBuilder descriptionBuilder)
         {
             _documentAnalysisProvoder = documentAnalysisProvoder;
             _navigationService = navigationService;
+            _descriptionBuilder = descriptionBuilder;
         }
 
         public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
@@ -30,7 +33,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
                 throw new ArgumentNullException(nameof(textBuffer));
 
             var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textBuffer);
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new QuickInfoSource(textBuffer, documentAnalysis, _navigationService));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new QuickInfoSource(textBuffer, documentAnalysis, _navigationService, _descriptionBuilder));
         }
     }
 }
