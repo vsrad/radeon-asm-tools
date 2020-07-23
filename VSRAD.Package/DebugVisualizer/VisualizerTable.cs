@@ -363,7 +363,8 @@ namespace VSRAD.Package.DebugVisualizer
             columnStyling.Apply(_state.DataColumns);
 
             foreach (DataGridViewRow row in Rows)
-                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
+                if (row.Index != NewWatchRowIndex)
+                    RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
 
             _disableColumnWidthChangeHandler = false;
             ((Control)this).ResumeDrawing();
