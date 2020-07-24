@@ -21,84 +21,86 @@ select *Properties*.
 
 ## Plugin features
 
-### Radeon asm syntax options
-* Radeon asm extra keywords
-* Radeon asm function argument
-* Radeon asm function name
-* Radeon asm identifier dark theme
-* Radeon asm identifier light theme
-* Radeon asm instructions
-* Radeon asm labels
-<p align="center">
-  <img src="docs/syntax_highlight.PNG" width="49%" height="250px" title="Syntax highlight">
-  <img src="docs/syntax_highlight_options.PNG" width="49%" height="250px" title="Syntax highlight options">
-</p>
+### Radeon asm syntax colors
+![Syntax colors](docs/color-options.gif)
+
+Defined colors:
+* RAD function name
+* RAD function arguments
+* RAD instructions
+* RAD labels
+* RAD definition identifier
+* RAD reference identifier
+* RAD brace matching
 
 ### File extensions
 User can define file extensions, which will be displayed as RadeonAsm1 syntax or RadeonAsm2 syntax.
-<p align="center">
-  <img src="docs/additional_file_extension_options.PNG" title="File extensions option">
-</p>
 
-### Indent guide lines
-<p align="center">
-  <img src="docs/indent_guide.PNG" width="49%" height="250px" title="Syntax highlight">
-  <img src="docs/indent_guide_options.PNG" width="49%" height="250px" title="Syntax highlight options">
-</p>
+![Syntax file extensions](docs/file-extension-options.gif)
 
 ### Error highlight (only with debugger extension)
 <p align="center">
-  <img src="docs/error_highlight.PNG" title="Error highlight">
-</p>
-
-### Outlining regions 
-<p align="center">
-  <img src="docs/outlining.PNG" title="Outlining regions">
+  <img src="docs/error-highlight.PNG" title="Error highlight">
 </p>
 
 ### Function list
-* Tool window location is `View -> Other Windows -> Radeon Asm Function List`
+ * Tool window location is `View -> Other Windows -> Radeon Asm Function List`
+
+![Syntax open function list](docs/fl-open.gif)
+
 * The function list is filtered by text in search field.
 * Use *Up* or *Down* in order to scroll through the function list.
 * Use *Line* or *Name* buttons to sort function list by line number or function name.
 * Click *RMB* to **Show/Hide** line number column.
+* If the cursor is in the function scope, then it will be highlighted.
+* Function List will automatically scroll when cursor moves to another function.
+  > To disable autoscroll: `Tools -> Options -> RadeonAsm options -> set Autoscroll function list to false`
 * Use *clear hotkey* to clear the search field. To 
   > To set clear special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Clear" and set shortcut keys`.
 * *Enter*, *redirect hotkey* or *click on the function in list* redirect to a function in code.
   > To set redirect special hotkey: `Tool -> Options -> Environment, Keyboard -> find command "FunctionList.Select" and set shortcut keys`.
 
-<p align="center">
-  <img src="docs/function_list.PNG" width="49%" height="250px" title="Function list">
-  <img src="docs/function_list_search.PNG" width="49%" height="250px" title="Function list search field">
-</p>
-<p align="center">
-  <img src="docs/function_list_show_hide.PNG" width="49%" height="250px" title="Function list show/hide">
-  <img src="docs/funtion_list_options.PNG" width="49%" height="250px" title="Function list options">
-</p>
+![Syntax function list features](docs/fl-features.gif)
 
 ### Code navigation
-* Navigation between project fiels by `#inclide` or `.include` keywords
-* Navigation to `macros`
-* Navigation to `variable` (variable definition is explicit `.set` or implicit `vaiable_name = 0x01`)
-* Navigation to `macro argument`
+* Navigation to `macros`, `variables`, `labels` and `macro arguments`.
+* Navigation to external definitions using `.include` or `#include` supported.
+* `Peek Definition` and `GoTo Definition` supported.
 
-<p align="center">
-  <img src="docs/peek_goto_definition_show.PNG" title="Peek/GoTo definition">
-</p>
+![Syntax code navigation](docs/code-navigation.gif)
+
+### Intellisense
+* Autocompletion supported for variables, functions, labels and instructions.
+* Autocompletion can be enabled or disabled.
+ > `Tools -> Options -> RadeonAsm options -> Autocompletion -> set true to enable and false to disable for specific token type`
+
+ ![Syntax autocompletion](docs/autocompletion.gif)
+
+* *Quick info* feature is supported. When you hover over an element, tooltip with information about the element is shown.
+* If the comment is to the right of the element or above, then it will be shown in the tooltip.
+* The default value of variables can be displayed, if any.
+
+ ![Syntax quick info](docs/quick-info.gif)
 
 ### Identifier highlight
-* Highlighting an element in its scope
+* Highlighting an element in its scope.
 
-<p align="center">
-  <img src="docs/identifier_highlight.PNG" title="Indentifier highlight">
-</p>
+![Syntax identifier hihlighter](docs/identifier-highlighter.gif)
 
-### Quick info
-* Quick info for functions/variables/arguments showing comments in description
+### Instruction list
+The instruction documentation is stored in files with `.radasm1` or `.radasm2` extensions. When installing the extension, the default documentation for `asm1` instructions will be added.
 
-<p align="center">
-  <img src="docs/quick_info.PNG" title="Quick info">
-</p>
+* User can add his own instruction documentation.
+ > To add documentation: `Tools -> Options -> RadeonAsm options -> Instruction folder paths -> add paths to directory with .radasm1 or .radasm2 files separated by semi-colon`
+* Intellisense will work with new instructions.
+* User can navigate through the documentation as with source files.
+
+![Syntax instruction example](docs/instruction-example.gif)
 
 ### Other features
 * Comment/Uncomment block
+* Indent guide lines for block scopes
+ > `Tools -> Options -> RadeonAsm options -> enable or disable Indent guide lines`
+ > <p align="center"><img src="docs/indent-guide.PNG" title="Indent guide"></p>
+* Function list default sort options (when opening a window)
+ > `Tools -> Options -> RadeonAsm options -> Function List default sort options`
