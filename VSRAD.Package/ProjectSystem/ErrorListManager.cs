@@ -1,8 +1,11 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text.Tagging;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using VSRAD.Package.BuildTools;
 using static VSRAD.BuildTools.IPCBuildResult;
 using Task = System.Threading.Tasks.Task;
@@ -21,18 +24,23 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ErrorListProvider _errorListProvider;
         private readonly IBuildErrorProcessor _buildErrorProcessor;
+        private readonly UnconfiguredProject _unconfiguredProject;
         private readonly IProject _project;
 
         [ImportingConstructor]
         public ErrorListManager(
             SVsServiceProvider serviceProvider,
             IBuildErrorProcessor buildErrorProcessor,
-            IProject project)
+            IProject project,
+            UnconfiguredProject unconfiguredProject)
         {
             _serviceProvider = serviceProvider;
             _errorListProvider = new ErrorListProvider(_serviceProvider);
             _buildErrorProcessor = buildErrorProcessor;
             _project = project;
+            _unconfiguredProject = unconfiguredProject;
+
+            _project.Unloaded += () => _errorListProvider.Tasks.Clear();
         }
 
         public async Task AddToErrorListAsync(string stderr)
@@ -40,6 +48,8 @@ namespace VSRAD.Package.ProjectSystem
             if (stderr == null) return;
 
             _errorListProvider.Tasks.Clear();
+
+            var errors = new List<ErrorTask>();
             var messages = await _buildErrorProcessor.ExtractMessagesAsync(stderr, null);
             foreach (var message in messages)
             {
@@ -58,8 +68,34 @@ namespace VSRAD.Package.ProjectSystem
                     _errorListProvider.Navigate(task, Guid.Parse(/*EnvDTE.Constants.vsViewKindCode*/"{7651A701-06E5-11D1-8EBD-00A0C90F26EA}"));
                     task.Line--;
                 };
-
                 _errorListProvider.Tasks.Add(task);
+                errors.Add(task);
+            }
+
+            NotifyErrorTagger?.Invoke(errors);
+        }
+
+        private delegate void NotifyErrorTaggerDelegate(IEnumerable<ErrorTask> errorList);
+
+        private bool _errorTaggerDelegateInitialized;
+        private NotifyErrorTaggerDelegate _notifyErrorTagger;
+        private NotifyErrorTaggerDelegate NotifyErrorTagger
+        {
+            get
+            {
+                if (!_errorTaggerDelegateInitialized)
+                {
+                    var taggers = _unconfiguredProject.Services.ExportProvider.GetExportedValues<IViewTaggerProvider>();
+                    var syntaxTagger = taggers.FirstOrDefault(t => t.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
+                    if (syntaxTagger != null)
+                    {
+                        var notifyMethod = syntaxTagger.GetType().GetMethod("ErrorListUpdated");
+                        if (notifyMethod != null)
+                            _notifyErrorTagger = (NotifyErrorTaggerDelegate)Delegate.CreateDelegate(typeof(NotifyErrorTaggerDelegate), syntaxTagger, notifyMethod);
+                    }
+                    _errorTaggerDelegateInitialized = true;
+                }
+                return _notifyErrorTagger;
             }
         }
 

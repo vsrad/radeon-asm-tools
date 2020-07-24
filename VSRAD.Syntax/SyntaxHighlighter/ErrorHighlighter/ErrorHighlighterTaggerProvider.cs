@@ -1,10 +1,9 @@
-﻿using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 
@@ -13,46 +12,32 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     [Export(typeof(IViewTaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TagType(typeof(IErrorTag))]
-    internal sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
+    public sealed class ErrorHighlighterTaggerProvider : IViewTaggerProvider
     {
-        public delegate void ErrorsUpdateDelegate(IReadOnlyDictionary<string, List<(int line, int column, string message)>> errors);
+        public event EventHandler<IReadOnlyDictionary<string, List<ErrorMessage>>> ErrorsUpdated;
 
-        public event ErrorsUpdateDelegate ErrorsUpdated;
-
-        private readonly DTE2 _dte;
-        private readonly EnvDTE.BuildEvents _buildEvents;
-
-        [ImportingConstructor]
-        public ErrorHighlighterTaggerProvider(SVsServiceProvider serviceProvider)
+        // Called by VSRAD.Package.ProjectSystem.ErrorListManager
+        public void ErrorListUpdated(IEnumerable<ErrorTask> errorList)
         {
-            _dte = serviceProvider.GetService(typeof(SDTE)) as DTE2;
-            _buildEvents = _dte.Events.BuildEvents;
-            _buildEvents.OnBuildProjConfigDone += ProjectBuildDone;
-        }
+            var errorsPerFile = new Dictionary<string, List<ErrorMessage>>();
 
-        private void ProjectBuildDone(string project, string projectConfig, string platform, string solutionConfig, bool success)
-        {
-            var errors = new Dictionary<string, List<(int line, int column, string message)>>();
-            // the list doesn't contain hidden elements and we can’t affect it.
-            // But we can show it and then return the state
-            var showError = _dte.ToolWindows.ErrorList.ShowErrors;
-            var showWarning = _dte.ToolWindows.ErrorList.ShowWarnings;
-            _dte.ToolWindows.ErrorList.ShowErrors = true;
-            _dte.ToolWindows.ErrorList.ShowWarnings = true;
-
-            var errorList = _dte.ToolWindows.ErrorList.ErrorItems;
-            for (int i = 1; i <= errorList.Count; i++)
+            foreach (var error in errorList)
             {
-                var error = errorList.Item(i);
-
-                if (!errors.ContainsKey(error.FileName))
-                    errors[error.FileName] = new List<(int line, int column, string message)>();
-
-                errors[error.FileName].Add((error.Line, error.Column, error.Description));
+                if (!errorsPerFile.TryGetValue(error.Document, out var fileErrors))
+                {
+                    fileErrors = new List<ErrorMessage>();
+                    errorsPerFile[error.Document] = fileErrors;
+                }
+                fileErrors.Add(new ErrorMessage
+                {
+                    Line = error.Line,
+                    Column = error.Column,
+                    Message = error.Text,
+                    IsFatal = error.ErrorCategory == TaskErrorCategory.Error
+                });
             }
-            _dte.ToolWindows.ErrorList.ShowErrors = showError;
-            _dte.ToolWindows.ErrorList.ShowWarnings = showWarning;
-            ErrorsUpdated?.Invoke(errors);
+
+            ErrorsUpdated?.Invoke(this, errorsPerFile);
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
@@ -62,5 +47,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
             return new ErrorHighlighterTagger(this, textView, buffer) as ITagger<T>;
         }
+    }
+
+    public sealed class ErrorMessage
+    {
+        public int Line { get; set; }
+        public int Column { get; set; }
+        public string Message { get; set; }
+        public bool IsFatal { get; set; }
     }
 }
