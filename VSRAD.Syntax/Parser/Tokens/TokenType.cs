@@ -94,5 +94,19 @@ namespace VSRAD.Syntax.Parser.Tokens
 
         public static string GetClassificationTypeName(this RadAsmTokenType tokenType) =>
             _classificationTypeNames[tokenType];
+
+        public static string GetDescriptionClassificationTypeName(this RadAsmTokenType tokenType)
+        {
+            switch (tokenType)
+            {
+                // it is necessary to highlight important elements because by default they have plain text color
+                case RadAsmTokenType.GlobalVariable:
+                case RadAsmTokenType.GlobalVariableReference:
+                case RadAsmTokenType.LocalVariable:
+                    return RadAsmTokenType.Keyword.GetClassificationTypeName();
+                default:
+                    return tokenType.GetClassificationTypeName();
+            }
+        }
     }
 }

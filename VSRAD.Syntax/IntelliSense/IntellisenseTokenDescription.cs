@@ -142,7 +142,7 @@ namespace VSRAD.Syntax.IntelliSense
         {
             string tokenText = token.GetText();
             Action navigate = () => _navigationTokenService.Value.GoToPoint(token);
-            string classificationType = token.AnalysisToken.Type.GetClassificationTypeName();
+            string classificationType = token.AnalysisToken.Type.GetDescriptionClassificationTypeName();
 
             return new ClassifiedTextRun(classificationType, tokenText, navigate);
         }
