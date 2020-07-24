@@ -44,7 +44,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
-            SliceRowStyling.ApplyRowStylingOnRowPostPaint(this);
+            SliceRowStyling.ApplyOnRowPostPaint(this);
             SliceCellStyling.ApplyCellStylingOnCellPainting(this, ColumnStyling, fontAndColor, _context);
             ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
 
