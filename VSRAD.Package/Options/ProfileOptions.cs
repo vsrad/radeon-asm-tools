@@ -60,13 +60,13 @@ namespace VSRAD.Package.Options
 
     public sealed class MenuCommandProfileOptions : DefaultNotifyPropertyChanged
     {
-        private string _profileAction = "Profile";
+        private string _profileAction;
         public string ProfileAction { get => _profileAction; set => SetField(ref _profileAction, value ?? ""); }
 
-        private string _disassembleAction = "Disassemble";
+        private string _disassembleAction;
         public string DisassembleAction { get => _disassembleAction; set => SetField(ref _disassembleAction, value ?? ""); }
 
-        private string _preprocessAction = "Preprocess";
+        private string _preprocessAction;
         public string PreprocessAction { get => _preprocessAction; set => SetField(ref _preprocessAction, value ?? ""); }
     }
 
