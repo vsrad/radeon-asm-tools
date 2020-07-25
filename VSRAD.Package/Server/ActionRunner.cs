@@ -101,9 +101,9 @@ namespace VSRAD.Package.Server
                 if (step.CheckTimestamp && GetInitialFileTimestamp(step.SourcePath) == response.Timestamp)
                     return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}", "");
 
+                var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                 try
                 {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                     Directory.CreateDirectory(Path.GetDirectoryName(localPath));
                     File.WriteAllBytes(localPath, response.Data);
                 }
@@ -111,9 +111,9 @@ namespace VSRAD.Package.Server
                 {
                     return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
                 }
-                catch (ArgumentException)
+                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
                 {
-                    return new StepResult(false, $"The target path \"{Path.Combine(_environment.LocalWorkDir, step.TargetPath)}\" in copy file step of action {actionName} contains illegal characters", "");
+                    return new StepResult(false, $"The target path \"{localPath}\" in copy file step of action {actionName} contains illegal characters", "");
                 }
             }
 
