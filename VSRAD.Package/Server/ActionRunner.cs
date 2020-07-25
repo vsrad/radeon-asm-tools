@@ -113,8 +113,7 @@ namespace VSRAD.Package.Server
                 }
                 catch (ArgumentException)
                 {
-                    return new StepResult(false, $"The target path \"{Path.Combine(_environment.LocalWorkDir, step.TargetPath)}\"" +
-                        $"in copy file step of action {actionName} contains illegal characters", "");
+                    return new StepResult(false, $"The target path \"{Path.Combine(_environment.LocalWorkDir, step.TargetPath)}\" in copy file step of action {actionName} contains illegal characters", "");
                 }
             }
 
