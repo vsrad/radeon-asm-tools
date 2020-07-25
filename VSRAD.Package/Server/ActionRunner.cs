@@ -44,7 +44,7 @@ namespace VSRAD.Package.Server
                 switch (steps[i])
                 {
                     case CopyFileStep copyFile:
-                        result = await DoCopyFileAsync(copyFile);
+                        result = await DoCopyFileAsync(copyFile, actionName);
                         break;
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute);
@@ -67,7 +67,7 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
+        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step, string actionName)
         {
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
@@ -110,6 +110,11 @@ namespace VSRAD.Package.Server
                 catch (UnauthorizedAccessException)
                 {
                     return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
+                }
+                catch (ArgumentException)
+                {
+                    return new StepResult(false, $"The target path \"{Path.Combine(_environment.LocalWorkDir, step.TargetPath)}\"" +
+                        $"in copy file step of action {actionName} contains illegal characters", "");
                 }
             }
 
