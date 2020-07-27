@@ -53,10 +53,13 @@ namespace VSRAD.Package.ProjectSystem
             var messages = await _buildErrorProcessor.ExtractMessagesAsync(stderr, null);
             foreach (var message in messages)
             {
+                var document = message.SourceFile.IndexOfAny(Path.GetInvalidPathChars()) == -1  
+                    ? Path.Combine(_project.RootPath, message.SourceFile)
+                    : "";
                 var task = new ErrorTask
                 {
                     Text = message.Text,
-                    Document = Path.Combine(_project.RootPath, message.SourceFile),
+                    Document = document,
                     Line = message.Line - 1,
                     Column = message.Column,
                     ErrorCategory = ParseKind(message.Kind),
