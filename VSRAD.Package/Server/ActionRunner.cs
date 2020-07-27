@@ -72,9 +72,9 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 byte[] data;
+                var localPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
                 try
                 {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
                     data = File.ReadAllBytes(localPath);
                 }
                 catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
@@ -84,6 +84,10 @@ namespace VSRAD.Package.Server
                 catch (UnauthorizedAccessException)
                 {
                     return new StepResult(false, $"Access to path {step.SourcePath} on the local machine is denied", "");
+                }
+                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+                {
+                    return new StepResult(false, $"The source path \"{localPath}\" in copy file step of action {actionName} contains illegal characters", "");
                 }
                 var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
