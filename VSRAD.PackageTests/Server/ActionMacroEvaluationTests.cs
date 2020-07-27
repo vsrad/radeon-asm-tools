@@ -68,7 +68,7 @@ namespace VSRAD.PackageTests.Server
             var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
 
-            a.Steps.Add(new OpenInEditorStep { Path = "" });
+            a.Steps.Add(new OpenInEditorStep { Path = "      " });
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal("No file path specified", error.Message);
 

@@ -44,7 +44,7 @@ namespace VSRAD.Package.Server
                 switch (steps[i])
                 {
                     case CopyFileStep copyFile:
-                        result = await DoCopyFileAsync(copyFile);
+                        result = await DoCopyFileAsync(copyFile, actionName);
                         break;
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute);
@@ -67,7 +67,7 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
+        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step, string actionName)
         {
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
@@ -84,6 +84,10 @@ namespace VSRAD.Package.Server
                 catch (UnauthorizedAccessException)
                 {
                     return new StepResult(false, $"Access to path {step.SourcePath} on the local machine is denied", "");
+                }
+                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+                {
+                    return new StepResult(false, $"The source path in copy file step of action {actionName} contains illegal characters.\n\nSource path: \"{step.SourcePath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
                 var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
@@ -110,6 +114,10 @@ namespace VSRAD.Package.Server
                 catch (UnauthorizedAccessException)
                 {
                     return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
+                }
+                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+                {
+                    return new StepResult(false, $"The target path in copy file step of action {actionName} contains illegal characters.\n\nTarget path: \"{step.TargetPath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
             }
 

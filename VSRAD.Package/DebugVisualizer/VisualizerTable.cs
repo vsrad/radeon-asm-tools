@@ -413,9 +413,10 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (!IsCurrentCellInEditMode)
             {
-                foreach (var row in _selectionController.GetSelectedRows())
-                    if (row.Index != 0) // deleting System is forbidden
-                        Rows.Remove(row);
+                var selectedRowsIndexes = _selectionController.GetSelectedRows().Select(r => r.Index).Reverse();
+                foreach (var rowIndex in selectedRowsIndexes)
+                    if (rowIndex != 0) // deleting System is forbidden
+                        Rows.RemoveAt(rowIndex);
 
                 RaiseWatchStateChanged();
 
