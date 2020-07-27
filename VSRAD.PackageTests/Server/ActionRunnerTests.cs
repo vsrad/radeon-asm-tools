@@ -108,6 +108,14 @@ namespace VSRAD.PackageTests.Server
             var result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
             Assert.False(result.Successful);
             Assert.Equal($"Access to path {file} on the local machine is denied", result.StepResults[0].Warning);
+
+            file = @"C:\Users\mizu*~*\raw";
+            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "raw3", TargetPath = file } };
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
+
+            result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal($"The target path \"{file}\" in copy file step of action HTMT contains illegal characters", result.StepResults[0].Warning);
         }
 
         [Fact]
@@ -152,6 +160,12 @@ namespace VSRAD.PackageTests.Server
             Assert.False(result.Successful);
             Assert.Equal($"Access to path {lockedPath} on the local machine is denied", result.StepResults[0].Warning);
             File.Delete(lockedPath);
+
+            var illegalPath = @"C:\Users\mizu\raw*";
+            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = illegalPath, TargetPath = "" } };
+            result = await runner.RunAsync("HTMT", steps, Enumerable.Empty<BuiltinActionFile>());
+            Assert.False(result.Successful);
+            Assert.Equal($"The source path \"{illegalPath}\" in copy file step of action HTMT contains illegal characters", result.StepResults[0].Warning);
         }
         #endregion
 
