@@ -117,7 +117,6 @@ namespace VSRAD.PackageTests.Server
             Assert.False(result.Successful);
             Assert.Equal($"The target path in copy file step of action HTMT contains illegal characters.\n\nTarget path: \"{file}\"\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
 
-            
             file = Path.Combine(Path.GetTempPath(), "raw*o*");
             file += "=>_<=";
             steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "raw3", TargetPath = file } };
