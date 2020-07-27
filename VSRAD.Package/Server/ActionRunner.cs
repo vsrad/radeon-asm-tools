@@ -72,9 +72,9 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 byte[] data;
-                var localPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
                 try
                 {
+                    var localPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
                     data = File.ReadAllBytes(localPath);
                 }
                 catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
@@ -87,7 +87,7 @@ namespace VSRAD.Package.Server
                 }
                 catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
                 {
-                    return new StepResult(false, $"The source path \"{localPath}\" in copy file step of action {actionName} contains illegal characters", "");
+                    return new StepResult(false, $"The source path in copy file step of action {actionName} contains illegal characters.\n\nSource path: \"{step.SourcePath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
                 var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
@@ -105,9 +105,9 @@ namespace VSRAD.Package.Server
                 if (step.CheckTimestamp && GetInitialFileTimestamp(step.SourcePath) == response.Timestamp)
                     return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}", "");
 
-                var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                 try
                 {
+                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                     Directory.CreateDirectory(Path.GetDirectoryName(localPath));
                     File.WriteAllBytes(localPath, response.Data);
                 }
@@ -117,7 +117,7 @@ namespace VSRAD.Package.Server
                 }
                 catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
                 {
-                    return new StepResult(false, $"The target path \"{localPath}\" in copy file step of action {actionName} contains illegal characters", "");
+                    return new StepResult(false, $"The target path in copy file step of action {actionName} contains illegal characters.\n\nTarget path: \"{step.TargetPath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
             }
 
