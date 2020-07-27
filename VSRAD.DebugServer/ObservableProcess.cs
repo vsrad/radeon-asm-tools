@@ -23,7 +23,8 @@ namespace VSRAD.DebugServer
             {
                 StartInfo = new ProcessStartInfo(command.Executable, command.Arguments)
                 {
-                    WorkingDirectory = command.WorkingDirectory
+                    WorkingDirectory = command.WorkingDirectory,
+                    CreateNoWindow = true,
                 },
                 EnableRaisingEvents = true
             };
