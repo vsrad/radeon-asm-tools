@@ -24,8 +24,11 @@ namespace VSRAD.DebugServer
                 StartInfo = new ProcessStartInfo(command.Executable, command.Arguments)
                 {
                     WorkingDirectory = command.WorkingDirectory,
-                    CreateNoWindow = true,
-                },
+                    // window creation is necessary for run as admin
+                    // because we can't capture stdout/stderr, so disable window
+                    // creation only for non-administrator commands
+                    CreateNoWindow = !command.RunAsAdministrator
+        },
                 EnableRaisingEvents = true
             };
             if (command.RunAsAdministrator)
