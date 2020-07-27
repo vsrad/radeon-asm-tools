@@ -28,7 +28,7 @@ namespace VSRAD.DebugServer
                     // because we can't capture stdout/stderr, so disable window
                     // creation only for non-administrator commands
                     CreateNoWindow = !command.RunAsAdministrator
-        },
+                },
                 EnableRaisingEvents = true
             };
             if (command.RunAsAdministrator)
