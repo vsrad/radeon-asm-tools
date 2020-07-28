@@ -16,8 +16,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private int _orgScroll;
         private int _orgWidth;
         private int _orgMouseX;
+        private int _orgeX;
         private int _orgNColumns; // number of visible columns before mouse cursor
         private int _orgSColumns; // number of fully scrolled columns
+        private bool _lefthalf; // mouse is in left half of the data columns region
         private float _orgSPixels; // number of scrolled pixels in first displayed column
 
         public ScaleOperation(DataGridView table, TableState state)
@@ -39,23 +41,41 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
+            _orgeX = e.X;
             _orgWidth = _tableState.ColumnWidth;
             _orgScroll = _tableState.GetCurrentScroll();
             _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, !leftedge);
             _orgSColumns = _orgScroll / _orgWidth;
             _orgSPixels = _orgScroll % _orgWidth;
+            _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < 0.5;
+
 
             return true;
         }
 
         public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x)
         {
-            if (hit.Type != DataGridViewHitTestType.ColumnHeader)
-                return false;
-            if (Math.Abs(x - hit.ColumnX) > _maxDistanceFromDivider && Math.Abs(x - hit.ColumnX - state.ColumnWidth) > _maxDistanceFromDivider)
-                return false;
+            if (state.ScalingMode == ScalingMode.ResizeQuad)
+            {
+                float f = state.GetNormalizedXCoordinate(x);
 
-            return true;
+                if (!((f > 0 && f < 0.25) || (f > 0.75 && f < 1)))
+                    return false;
+
+                if (hit.Type != DataGridViewHitTestType.ColumnHeader && hit.Type != DataGridViewHitTestType.Cell)
+                    return false;
+
+                return true;
+            }
+            else
+            {
+                if (hit.Type != DataGridViewHitTestType.ColumnHeader)
+                    return false;
+                if (Math.Abs(x - hit.ColumnX) > _maxDistanceFromDivider && Math.Abs(x - hit.ColumnX - state.ColumnWidth) > _maxDistanceFromDivider)
+                    return false;
+
+                return true;
+            }
         }
 
         public bool HandleMouseMove(MouseEventArgs e)
@@ -66,7 +86,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var minWidth = _tableState.minAllowedWidth;
 
             int diff = Cursor.Position.X - _orgMouseX;
-            if (_tableState.ScalingMode == ScalingMode.ResizeTable)
+            if (_tableState.ScalingMode == ScalingMode.ResizeTable || (_tableState.ScalingMode == ScalingMode.ResizeQuad && !_lefthalf))
             {
                 int orgL = _orgNColumns * _orgWidth - _orgScroll;
                 int curL = orgL + diff;
@@ -77,6 +97,20 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     curWidth = Math.Max(minWidth, curWidth);
                     s = (float)curWidth / _orgWidth;
                     int curScroll = _orgSColumns * curWidth + (int)(s * _orgSPixels);
+                    _tableState.SetWidthAndScroll(curWidth, curScroll);
+                }
+            }
+            else if (_tableState.ScalingMode == ScalingMode.ResizeQuad && _lefthalf)
+            {
+                int orgL = _tableState.Table.Width - _orgeX;
+                int curL = orgL - diff;
+                if (orgL > 0)
+                {
+                    float s = (float)curL / orgL;
+                    int curWidth = (int)(s * _orgWidth);
+                    curWidth = Math.Max(minWidth, curWidth);
+                    s = (float)curWidth / _orgWidth;
+                    int curScroll = (int)(_orgScroll * s + _tableState.GetDataRegionWidth() * (s - 1));
                     _tableState.SetWidthAndScroll(curWidth, curScroll);
                 }
             }

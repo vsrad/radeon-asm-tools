@@ -458,7 +458,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
-            if (_state.ScalingMode == ScalingMode.ResizeColumn) // TODO: move to appropriate place
+            if (_state.ScalingMode == ScalingMode.ResizeColumn || _state.ScalingMode == ScalingMode.ResizeQuad) // TODO: move to appropriate place
                 _state.RemoveScrollPadding();
 
             if (_mouseMoveController.OperationDidNotFinishOnMouseUp())

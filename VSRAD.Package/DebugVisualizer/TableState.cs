@@ -129,6 +129,18 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
 
+        public int GetDataRegionWidth()
+        {
+            return Table.Size.Width - Table.RowHeadersWidth - Table.Columns[0].Width;
+        }
+
+        public float GetNormalizedXCoordinate(int x)
+        {
+            var DataRegionWidth = GetDataRegionWidth();
+            var DataRegionMouseX = x - Table.RowHeadersWidth - Table.Columns[0].Width;
+
+            return (float)DataRegionMouseX / DataRegionWidth;
+        }
 
 
 

@@ -23,8 +23,18 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (e.Button != MouseButtons.Left || hit.RowIndex == -1) return false;
-            if (hit.ColumnIndex < VisualizerTable.DataColumnOffset && hit.ColumnIndex != VisualizerTable.PhantomColumnIndex ) return false;
+            if (e.Button != MouseButtons.Left) return false;
+            if (_state.ScalingMode == ScalingMode.ResizeQuad)
+            {
+                float f = _state.GetNormalizedXCoordinate(e.X);
+                if (f <= 0.25 || f >= 0.75)
+                    return false;
+            }
+            else
+            {
+                if (hit.RowIndex == -1) return false;
+                if (hit.ColumnIndex < VisualizerTable.DataColumnOffset && hit.ColumnIndex != VisualizerTable.PhantomColumnIndex) return false;
+            }
 
             _lastX = Cursor.Position.X;
             _thresholdReached = false;

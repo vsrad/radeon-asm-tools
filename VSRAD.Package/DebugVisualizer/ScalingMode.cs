@@ -8,6 +8,6 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public enum ScalingMode
     {
-        ResizeColumnAllowWide, ResizeColumn, ResizeTable
+        ResizeColumnAllowWide, ResizeColumn, ResizeTable, ResizeQuad
     }
 }
