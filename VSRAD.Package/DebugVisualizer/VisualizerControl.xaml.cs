@@ -15,6 +15,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
+            _context.Options.DebuggerOptions.PropertyChanged += DebuggerOptionChanged;
             _context.GroupFetched += GroupFetched;
             DataContext = _context;
             InitializeComponent();
@@ -44,6 +45,12 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
+        private void DebuggerOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(VisualizerContext.Options.DebuggerOptions.GroupSize))
+                RefreshDataStyling();
+        }
+
         public void WindowFocusChanged(bool hasFocus) =>
             _table.HostWindowFocusChanged(hasFocus);
 
@@ -55,18 +62,11 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            switch (e.PropertyName)
-            {
-                case nameof(VisualizerContext.Options.DebuggerOptions.GroupSize):
+            if (e.PropertyName == nameof(VisualizerContext.WatchesValid))
+                if (_context.WatchesValid)
                     RefreshDataStyling();
-                    break;
-                case nameof(VisualizerContext.WatchesValid):
-                    if (_context.WatchesValid)
-                        RefreshDataStyling();
-                    else
-                        GrayOutWatches();
-                    break;
-            }
+                else
+                    GrayOutWatches();
         }
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)

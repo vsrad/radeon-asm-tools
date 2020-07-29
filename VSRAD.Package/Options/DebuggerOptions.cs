@@ -39,7 +39,7 @@ namespace VSRAD.Package.Options
         public bool SingleActiveBreakpoint { get => _singleActiveBreakpoint; set => SetField(ref _singleActiveBreakpoint, value); }
 
         private uint _groupSize = 512;
-        public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, value); }
+        public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, value < 1 ? 1 : value); }
 
         private Deborgar.BreakMode _breakMode;
         public Deborgar.BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
