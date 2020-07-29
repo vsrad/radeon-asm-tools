@@ -49,7 +49,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private readonly TableState _state;
 
-        public VisualizerTable(ColumnStylingOptions stylingOptions, VisualizerAppearance appearance, FontAndColorProvider fontAndColor, GetGroupSize getGroupSize, GetValidWatches getValidWatches) : base()
+        public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor, GetValidWatches getValidWatches) : base()
         {
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();
@@ -87,9 +87,9 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, _state, stylingOptions, getGroupSize)
+                new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
             });
-            _ = new CellStyling(this, appearance, _computedStyling, _fontAndColor);
+            _ = new CellStyling(this, options.VisualizerAppearance, _computedStyling, _fontAndColor);
             _ = new CustomTableGraphics(this);
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);

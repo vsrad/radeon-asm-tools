@@ -40,7 +40,6 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 
-        public uint GroupSize => GroupIndex.GroupSize;
         public BreakStateData BreakData => _breakState?.Data;
 
         private readonly ICommunicationChannel _channel;
@@ -53,10 +52,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             debugger.BreakEntered += EnterBreak;
 
-            GroupIndex = new GroupIndexSelector(options.VisualizerOptions);
+            GroupIndex = new GroupIndexSelector(options);
             GroupIndex.IndexChanged += GroupIndexChanged;
-            GroupIndex.PropertyChanged += OptionsChanged;
-            Options.DebuggerOptions.PropertyChanged += OptionsChanged;
         }
 
         private void EnterBreak(BreakState breakState)
@@ -65,19 +62,6 @@ namespace VSRAD.Package.DebugVisualizer
             WatchesValid = breakState != null;
             if (WatchesValid)
                 GroupIndex.Update();
-        }
-
-        private void OptionsChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(GroupIndex.GroupSize):
-                    RaisePropertyChanged(nameof(GroupSize));
-                    break;
-                case nameof(Options.DebuggerOptions.NGroups):
-                    GroupIndex.Update();
-                    break;
-            }
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)

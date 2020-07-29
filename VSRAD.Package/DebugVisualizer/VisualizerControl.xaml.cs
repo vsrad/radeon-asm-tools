@@ -28,10 +28,8 @@ namespace VSRAD.Package.DebugVisualizer
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
-                _context.Options.VisualizerColumnStyling,
-                _context.Options.VisualizerAppearance,
+                _context.Options,
                 tableFontAndColor,
-                getGroupSize: () => _context.GroupSize,
                 getValidWatches: () => _context?.BreakData?.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
@@ -50,7 +48,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());
+            _table.ApplyDataStyling(_context.Options, _context.Options.DebuggerOptions.GroupSize, _context.BreakData?.GetSystem());
 
         private void GrayOutWatches() =>
             _table.GrayOutRows();
@@ -59,7 +57,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             switch (e.PropertyName)
             {
-                case nameof(VisualizerContext.GroupSize):
+                case nameof(VisualizerContext.Options.DebuggerOptions.GroupSize):
                     RefreshDataStyling();
                     break;
                 case nameof(VisualizerContext.WatchesValid):
@@ -152,14 +150,14 @@ namespace VSRAD.Package.DebugVisualizer
                 return;
             if (row.Index == 0)
             {
-                RenderRowData(row, _context.GroupSize, _context.BreakData.GetSystem());
+                RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem());
             }
             else
             {
                 var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
                 var watchData = _context.BreakData.GetWatch(watch);
                 if (watchData != null)
-                    RenderRowData(row, _context.GroupSize, watchData);
+                    RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData);
                 else
                     EraseRowData(row, _table.DataColumnCount);
             }

@@ -10,7 +10,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
         [Fact]
         public void DimensionClippingTest()
         {
-            var options = new VisualizerOptions() { NDRange3D = true };
+            var options = new ProjectOptions();
+            options.VisualizerOptions.NDRange3D = true;
             var selector = new GroupIndexSelector(options);
 
             var changedPropertyName = "";
@@ -27,7 +28,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
         [Fact]
         public void ValidationErrorTest()
         {
-            var options = new VisualizerOptions() { NDRange3D = true };
+            var options = new ProjectOptions();
+            options.VisualizerOptions.NDRange3D = true;
             var selector = new GroupIndexSelector(options) { DimX = 20, X = 19 };
 
             Assert.False(selector.HasErrors);
@@ -59,7 +61,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
         {
             GroupIndexChangedEventArgs eventArgs = null;
 
-            var options = new VisualizerOptions() { NDRange3D = true };
+            var options = new ProjectOptions();
+            options.VisualizerOptions.NDRange3D = true;
             var selector = new GroupIndexSelector(options);
 
             selector.IndexChanged += (s, e) => { eventArgs = e; e.IsValid = true; };
