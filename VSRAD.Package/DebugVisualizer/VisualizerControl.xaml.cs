@@ -63,10 +63,12 @@ namespace VSRAD.Package.DebugVisualizer
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             if (e.PropertyName == nameof(VisualizerContext.WatchesValid))
+            {
                 if (_context.WatchesValid)
                     RefreshDataStyling();
                 else
                     GrayOutWatches();
+            }
         }
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
