@@ -30,6 +30,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 if (f <= 0.25 || f >= 0.75)
                     return false;
             }
+            else if(_state.ScalingMode == ScalingMode.ResizeHalf)
+            {
+                if (hit.Type != DataGridViewHitTestType.Cell) return false;
+            }
             else
             {
                 if (hit.RowIndex == -1) return false;

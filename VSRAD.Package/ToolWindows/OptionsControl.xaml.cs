@@ -133,6 +133,8 @@ namespace VSRAD.Package.ToolWindows
                     return "Resize Table";
                 case DebugVisualizer.ScalingMode.ResizeQuad:
                     return "Resize on side quads, pan on middle";
+                case DebugVisualizer.ScalingMode.ResizeHalf:
+                    return "Resize on header, pan on data cells";
                 default:
                     return DependencyProperty.UnsetValue;
             }

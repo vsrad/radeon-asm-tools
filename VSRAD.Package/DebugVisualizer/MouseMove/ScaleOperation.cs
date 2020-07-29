@@ -64,8 +64,15 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
                 if (hit.Type != DataGridViewHitTestType.ColumnHeader && hit.Type != DataGridViewHitTestType.Cell)
                     return false;
+            }
+            else if (state.ScalingMode == ScalingMode.ResizeHalf)
+            {
+                if (hit.Type != DataGridViewHitTestType.ColumnHeader)
+                    return false;
 
-                return true;
+                float f = state.GetNormalizedXCoordinate(x);
+                if (!(f > 0 && f < 1))
+                    return false;
             }
             else
             {
@@ -73,9 +80,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     return false;
                 if (Math.Abs(x - hit.ColumnX) > _maxDistanceFromDivider && Math.Abs(x - hit.ColumnX - state.ColumnWidth) > _maxDistanceFromDivider)
                     return false;
-
-                return true;
             }
+
+            return true;
         }
 
         public bool HandleMouseMove(MouseEventArgs e)
@@ -86,7 +93,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             var minWidth = _tableState.minAllowedWidth;
 
             int diff = Cursor.Position.X - _orgMouseX;
-            if (_tableState.ScalingMode == ScalingMode.ResizeTable || (_tableState.ScalingMode == ScalingMode.ResizeQuad && !_lefthalf))
+            if (_tableState.ScalingMode == ScalingMode.ResizeTable
+                || (_tableState.ScalingMode == ScalingMode.ResizeQuad && !_lefthalf)
+                || (_tableState.ScalingMode == ScalingMode.ResizeHalf && !_lefthalf))
             {
                 int orgL = _orgNColumns * _orgWidth - _orgScroll;
                 int curL = orgL + diff;
@@ -100,7 +109,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     _tableState.SetWidthAndScroll(curWidth, curScroll);
                 }
             }
-            else if (_tableState.ScalingMode == ScalingMode.ResizeQuad && _lefthalf)
+            else if ((_tableState.ScalingMode == ScalingMode.ResizeQuad && _lefthalf)
+                || (_tableState.ScalingMode == ScalingMode.ResizeHalf && _lefthalf))
             {
                 int orgL = _tableState.Table.Width - _orgeX;
                 int curL = orgL - diff;
