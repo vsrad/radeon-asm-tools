@@ -120,8 +120,9 @@ namespace VSRAD.Package.Server
         public int GetGroupCount(int groupSize, int nGroups)
         {
             var realCount = _data.Length / groupSize / _laneDataSize;
-            if (nGroups != 0 && nGroups < realCount)
-                return nGroups;
+            // Disabled for now as it should be refactored
+            //if (nGroups != 0 && nGroups < realCount)
+            //    return nGroups;
             return realCount;
         }
 
