@@ -48,32 +48,40 @@ namespace VSRAD.Package.DebugVisualizer
         private uint _dimZ = 1;
         public uint DimZ { get => _dimZ; set { SetField(ref _dimZ, value); Z = Z; } }
 
-        private uint _groupSize = 512;
-        public uint GroupSize { get => _groupSize; set { SetField(ref _groupSize, value); } }
-
         private string _error;
         public bool HasErrors => _error != null;
 
-        private readonly Options.VisualizerOptions _visualizerOptions;
+        private readonly Options.ProjectOptions _projectOptions;
 
-        public GroupIndexSelector(Options.VisualizerOptions visualizerOptions)
+        public GroupIndexSelector(Options.ProjectOptions options)
         {
-            _visualizerOptions = visualizerOptions;
-            _visualizerOptions.PropertyChanged += (sender, args) =>
+            _projectOptions = options;
+            _projectOptions.VisualizerOptions.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == nameof(Options.VisualizerOptions.NDRange3D))
                     X = 0; // reset group index to clear errors
             };
+
+            _projectOptions.DebuggerOptions.PropertyChanged += (sender, args) =>
+            {
+                switch (args.PropertyName)
+                {
+                    case nameof(Options.DebuggerOptions.GroupSize):
+                    case nameof(Options.DebuggerOptions.NGroups):
+                        Update();
+                        break;
+                }
+            };
         }
 
         private uint LimitIndex(uint index, uint limit) =>
-            (index < limit || !_visualizerOptions.NDRange3D) ? index : limit - 1;
+            (index < limit || !_projectOptions.VisualizerOptions.NDRange3D) ? index : limit - 1;
 
         public void Update()
         {
-            var index = _visualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
-            var coordinates = _visualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
-            var args = new GroupIndexChangedEventArgs(coordinates, index, GroupSize);
+            var index = _projectOptions.VisualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
+            var coordinates = _projectOptions.VisualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
+            var args = new GroupIndexChangedEventArgs(coordinates, index, _projectOptions.DebuggerOptions.GroupSize);
             IndexChanged?.Invoke(this, args);
 
             _error = args.IsValid ? null : $"Invalid group index: {index} >= {args.DataGroupCount}";

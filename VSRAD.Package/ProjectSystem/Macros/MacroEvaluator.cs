@@ -83,6 +83,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string DebugBreakArgs = "RadDebugBreakArgs";
         public const string Counter = "RadCounter";
         public const string NGroups = "RadNGroups";
+        public const string GroupSize = "RadGroupSize";
 
         public const string BuildExecutable = "RadBuildExe";
         public const string BuildArguments = "RadBuildArgs";
@@ -140,7 +141,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
                 { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
                 { RadMacros.Counter, debuggerOptions.Counter.ToString() },
-                { RadMacros.NGroups, debuggerOptions.NGroups.ToString() }
+                { RadMacros.NGroups, debuggerOptions.NGroups.ToString() },
+                { RadMacros.GroupSize, debuggerOptions.GroupSize.ToString() }
             };
         }
 

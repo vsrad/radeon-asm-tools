@@ -15,6 +15,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
+            _context.Options.DebuggerOptions.PropertyChanged += DebuggerOptionChanged;
             _context.GroupFetched += GroupFetched;
             DataContext = _context;
             InitializeComponent();
@@ -28,10 +29,8 @@ namespace VSRAD.Package.DebugVisualizer
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
-                _context.Options.VisualizerColumnStyling,
-                _context.Options.VisualizerAppearance,
+                _context.Options,
                 tableFontAndColor,
-                getGroupSize: () => _context.GroupSize,
                 getValidWatches: () => _context?.BreakData?.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
@@ -46,28 +45,29 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
+        private void DebuggerOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(VisualizerContext.Options.DebuggerOptions.GroupSize))
+                RefreshDataStyling();
+        }
+
         public void WindowFocusChanged(bool hasFocus) =>
             _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_context.Options, _context.GroupSize, _context.BreakData?.GetSystem());
+            _table.ApplyDataStyling(_context.Options, _context.Options.DebuggerOptions.GroupSize, _context.BreakData?.GetSystem());
 
         private void GrayOutWatches() =>
             _table.GrayOutRows();
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            switch (e.PropertyName)
+            if (e.PropertyName == nameof(VisualizerContext.WatchesValid))
             {
-                case nameof(VisualizerContext.GroupSize):
+                if (_context.WatchesValid)
                     RefreshDataStyling();
-                    break;
-                case nameof(VisualizerContext.WatchesValid):
-                    if (_context.WatchesValid)
-                        RefreshDataStyling();
-                    else
-                        GrayOutWatches();
-                    break;
+                else
+                    GrayOutWatches();
             }
         }
 
@@ -152,14 +152,14 @@ namespace VSRAD.Package.DebugVisualizer
                 return;
             if (row.Index == 0)
             {
-                RenderRowData(row, _context.GroupSize, _context.BreakData.GetSystem());
+                RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem());
             }
             else
             {
                 var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
                 var watchData = _context.BreakData.GetWatch(watch);
                 if (watchData != null)
-                    RenderRowData(row, _context.GroupSize, watchData);
+                    RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData);
                 else
                     EraseRowData(row, _table.DataColumnCount);
             }
