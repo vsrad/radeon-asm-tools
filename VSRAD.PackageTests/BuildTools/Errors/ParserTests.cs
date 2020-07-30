@@ -80,5 +80,30 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
             var messages = ParseStderr(ScriptStderr).ToArray();
             Assert.Equal(ScriptExpectedMessages, messages);
         }
+
+        public const string KeywordStderr = @"
+Captured stdout (exit code 2):
+Command line 'python test.py'
+Captured stderr (exit code 2):
+*E,fatal: undefined reference to 'printf' (<stdin>:3)
+ERROR: check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'
+WARNING: you are incredibly beautiful!
+*E,fatal (auth.c:35): Uncaught error: Undefined variable: user
+";
+
+        public static readonly Message[] KeywordErrorExpectedMessages = new Message[]
+        {
+            new Message { Kind = MessageKind.Error, Line = 3, SourceFile = "<stdin>", Text = "fatal: undefined reference to 'printf'" },
+            new Message { Kind = MessageKind.Error, Line = 0, SourceFile = "", Text = @" check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'" },
+            new Message { Kind = MessageKind.Warning, Line = 0, SourceFile = "", Text = @" you are incredibly beautiful!" },
+            new Message { Kind = MessageKind.Error, Line = 35, SourceFile = "auth.c", Text = "fatal: Uncaught error: Undefined variable: user" },
+        };
+
+        [Fact]
+        public void KeywordErrorTest()
+        {
+            var messages = ParseStderr(KeywordStderr).ToArray();
+            Assert.Equal(KeywordErrorExpectedMessages, messages);
+        }
     }
 }
