@@ -20,17 +20,18 @@ namespace VSRAD.Package.BuildTools.Errors
                 while ((line = reader.ReadLine()) != null)
                 {
                     Message message;
-                    switch (format)
-                    {
-                        case ErrorFormat.Clang: message = ParseClangMessage(line); break;
-                        case ErrorFormat.Script: message = ParseScriptMessage(line); break;
-                        default:
-                            if ((message = ParseClangMessage(line)) != null)
-                                format = ErrorFormat.Clang;
-                            else if ((message = ParseScriptMessage(line)) != null)
-                                format = ErrorFormat.Script;
-                            break;
-                    }
+                    if ((message = ParseKeywordMessage(line)) == null)
+                        switch (format)
+                        {
+                            case ErrorFormat.Clang: message = ParseClangMessage(line); break;
+                            case ErrorFormat.Script: message = ParseScriptMessage(line); break;
+                            default:
+                                if ((message = ParseClangMessage(line)) != null)
+                                    format = ErrorFormat.Clang;
+                                else if ((message = ParseScriptMessage(line)) != null)
+                                    format = ErrorFormat.Script;
+                                break;
+                        }
                     if (message != null)
                         messages.AddLast(message);
                     else if (messages.Last != null)
@@ -87,12 +88,29 @@ namespace VSRAD.Package.BuildTools.Errors
             return message;
         }
 
+        private static readonly Regex KeywordErrorRegex = new Regex(
+            @"(?<kind>ERROR|WARNING):(?<text>.+)", RegexOptions.Compiled);
+
+        private static Message ParseKeywordMessage(string header)
+        {
+            var match = KeywordErrorRegex.Match(header);
+            if (!match.Success) return null;
+
+            var message = new Message
+            {
+                Kind = ParseMessageKind(match.Groups["kind"].Value),
+                Text = match.Groups["text"].Value
+            };
+
+            return message;
+        }
+
         private static MessageKind ParseMessageKind(string kind)
         {
             switch (kind)
             {
-                case "E": case "error": return MessageKind.Error;
-                case "W": case "warning": return MessageKind.Warning;
+                case "E": case "error": case "ERROR": return MessageKind.Error;
+                case "W": case "warning": case "WARNING": return MessageKind.Warning;
                 case "note": return MessageKind.Note;
                 default: throw new ArgumentException(kind, nameof(kind));
             }
