@@ -182,7 +182,7 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoRunActionAsync(RunActionStep step)
         {
             var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>());
-            return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
+            return new StepResult(subActionResult.Successful, "", "", subActionResult);
         }
 
         private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)

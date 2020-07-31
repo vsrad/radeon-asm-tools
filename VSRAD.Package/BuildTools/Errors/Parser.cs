@@ -12,10 +12,10 @@ namespace VSRAD.Package.BuildTools.Errors
 
         public static ICollection<Message> ParseStderr(IEnumerable<string> outputs)
         {
-            var messages = new LinkedList<Message>();
-
+            var combinedMessages = new List<Message>();
             foreach (var output in outputs)
             {
+                var messages = new LinkedList<Message>();
                 var format = ErrorFormat.Undefined;
                 using (var reader = new StringReader(output))
                 {
@@ -41,8 +41,9 @@ namespace VSRAD.Package.BuildTools.Errors
                             messages.Last.Value.Text += Environment.NewLine + line;
                     }
                 }
+                combinedMessages.AddRange(messages);
             }
-            return messages;
+            return combinedMessages;
         }
 
         private static readonly Regex ClangErrorRegex = new Regex(

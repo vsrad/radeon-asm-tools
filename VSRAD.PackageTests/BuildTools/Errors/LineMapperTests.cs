@@ -81,7 +81,7 @@ int main(int argc, char** argv)
         [Fact]
         public void ParseErrorsWithPreprocessedTest()
         {
-            var messages = ParseStderr(ErrString);
+            var messages = ParseStderr(new string[] { ErrString });
             UpdateErrorLocations(messages, PpString, new string[] { "source.c", "code.c" });
             Assert.Equal(2, messages.First().Line);
             Assert.Equal("code.c", messages.First().SourceFile);
@@ -92,14 +92,14 @@ int main(int argc, char** argv)
         [Fact]
         public void EmptyLineTest()
         {
-            var messages = ParseStderr(@"
+            var messages = ParseStderr(new string[] { @"
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
 *W,undefined: 1 undefined references found
 *E,syntax error (<stdin>:12): at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?
 *E,fatal (auth.c:35): Uncaught error: Undefined variable: user
-").ToArray();
+" }).ToArray();
             UpdateErrorLocations(messages, PpString, new string[] { "source.c", "code.c" });
             Assert.Equal(0, messages[1].Line);
 

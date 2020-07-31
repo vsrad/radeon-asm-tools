@@ -75,13 +75,13 @@ namespace VSRAD.Package.Server
         public string[] ErrorListOutput { get; }
         public ActionRunResult SubAction { get; }
 
-        public StepResult(bool successful, string warning, string log, string[] errorListOutput = null, ActionRunResult subAction = null)
+        public StepResult(bool successful, string warning, string log, ActionRunResult subAction = null, string[] errorListOutput = null)
         {
             Successful = successful;
             Warning = warning;
             Log = log;
-            ErrorListOutput = errorListOutput;
             SubAction = subAction;
+            ErrorListOutput = errorListOutput;
         }
 
         public bool Equals(StepResult result) =>
