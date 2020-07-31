@@ -59,10 +59,10 @@ namespace VSRAD.Package.BuildTools.Errors
         }
 
         private static readonly Regex ScriptErrorRegex = new Regex(
-            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>[^:]+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
+            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>.+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
 
         private static readonly Regex ScriptErrorLocationInTextRegex = new Regex(
-            @"(?<text>.+)\s\((?<file>[^:]+):(?<line>\d+)\)", RegexOptions.Compiled);
+            @"(?<text>.+)\s\((?<file>.+):(?<line>\d+)\)", RegexOptions.Compiled);
 
         private static Message ParseScriptMessage(string header)
         {
