@@ -183,10 +183,12 @@
                                      Text="{Binding AdditionalSources, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      ToolTip="Semicolon-separated list of of out-of-project paths to deploy on remote machine" />
 
-                            <Label Content="Continue action execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="8" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="8" Grid.Column="1"
+                            <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                <Label Content="Continue action execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" HorizontalContentAlignment="Left"/>
+                                <CheckBox VerticalContentAlignment="Center" Height="22"
                                       IsChecked="{Binding ContinueActionExecOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       ToolTip="Continue action execution on errors"/>
+                            </StackPanel>
                         </Grid>
                     </ScrollViewer>
                 </DataTemplate>
