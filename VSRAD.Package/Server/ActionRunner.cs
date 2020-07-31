@@ -164,7 +164,7 @@ namespace VSRAD.Package.Server
                 case ExecutionStatus.Completed when response.ExitCode == 0:
                     return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.Completed:
-                    return new StepResult(true, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                    return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.TimedOut:
                     return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
                 default:
