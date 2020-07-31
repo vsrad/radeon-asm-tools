@@ -34,7 +34,7 @@ namespace VSRAD.Package.BuildTools
             var deployManager = new Mock<IFileSynchronizationManager>();
             var errorProcessor = new Mock<IBuildErrorProcessor>(MockBehavior.Strict);
             errorProcessor
-                .Setup((e) => e.ExtractMessagesAsync("stderr", It.IsAny<string>()))
+                .Setup((e) => e.ExtractMessagesAsync(new string[] { "stderr" }, It.IsAny<string>()))
                 .Returns(Task.FromResult<IEnumerable<Message>>(Array.Empty<Message>()));
             var server = StartBuildServer(projectMock, channel.Object, deployManager.Object, errorProcessor.Object);
 

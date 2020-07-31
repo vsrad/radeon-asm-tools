@@ -10,35 +10,40 @@ namespace VSRAD.Package.BuildTools.Errors
     {
         private enum ErrorFormat { Clang, Script, Undefined };
 
-        public static ICollection<Message> ParseStderr(string stderr)
+        public static ICollection<Message> ParseStderr(IEnumerable<string> outputs)
         {
-            var messages = new LinkedList<Message>();
-            var format = ErrorFormat.Undefined;
-            using (var reader = new StringReader(stderr))
+            var combinedMessages = new List<Message>();
+            foreach (var output in outputs)
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                var messages = new LinkedList<Message>();
+                var format = ErrorFormat.Undefined;
+                using (var reader = new StringReader(output))
                 {
-                    Message message;
-                    if ((message = ParseKeywordMessage(line)) == null)
-                        switch (format)
-                        {
-                            case ErrorFormat.Clang: message = ParseClangMessage(line); break;
-                            case ErrorFormat.Script: message = ParseScriptMessage(line); break;
-                            default:
-                                if ((message = ParseClangMessage(line)) != null)
-                                    format = ErrorFormat.Clang;
-                                else if ((message = ParseScriptMessage(line)) != null)
-                                    format = ErrorFormat.Script;
-                                break;
-                        }
-                    if (message != null)
-                        messages.AddLast(message);
-                    else if (messages.Last != null)
-                        messages.Last.Value.Text += Environment.NewLine + line;
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        Message message;
+                        if ((message = ParseKeywordMessage(line)) == null)
+                            switch (format)
+                            {
+                                case ErrorFormat.Clang: message = ParseClangMessage(line); break;
+                                case ErrorFormat.Script: message = ParseScriptMessage(line); break;
+                                default:
+                                    if ((message = ParseClangMessage(line)) != null)
+                                        format = ErrorFormat.Clang;
+                                    else if ((message = ParseScriptMessage(line)) != null)
+                                        format = ErrorFormat.Script;
+                                    break;
+                            }
+                        if (message != null)
+                            messages.AddLast(message);
+                        else if (messages.Last != null)
+                            messages.Last.Value.Text += Environment.NewLine + line;
+                    }
                 }
+                combinedMessages.AddRange(messages);
             }
-            return messages;
+            return combinedMessages;
         }
 
         private static readonly Regex ClangErrorRegex = new Regex(
@@ -59,10 +64,10 @@ namespace VSRAD.Package.BuildTools.Errors
         }
 
         private static readonly Regex ScriptErrorRegex = new Regex(
-            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>[^:]+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
+            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>.+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
 
         private static readonly Regex ScriptErrorLocationInTextRegex = new Regex(
-            @"(?<text>.+)\s\((?<file>[^:]+):(?<line>\d+)\)", RegexOptions.Compiled);
+            @"(?<text>.+)\s\((?<file>.+):(?<line>\d+)\)", RegexOptions.Compiled);
 
         private static Message ParseScriptMessage(string header)
         {

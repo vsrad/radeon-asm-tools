@@ -14,7 +14,7 @@ namespace VSRAD.Package.ProjectSystem
 {
     public interface IErrorListManager
     {
-        Task AddToErrorListAsync(string contents);
+        Task AddToErrorListAsync(IEnumerable<string> outputs);
     }
 
     [Export(typeof(IErrorListManager))]
@@ -43,14 +43,12 @@ namespace VSRAD.Package.ProjectSystem
             _project.Unloaded += () => _errorListProvider.Tasks.Clear();
         }
 
-        public async Task AddToErrorListAsync(string stderr)
+        public async Task AddToErrorListAsync(IEnumerable<string> outputs)
         {
-            if (stderr == null) return;
-
             _errorListProvider.Tasks.Clear();
 
             var errors = new List<ErrorTask>();
-            var messages = await _buildErrorProcessor.ExtractMessagesAsync(stderr, null);
+            var messages = await _buildErrorProcessor.ExtractMessagesAsync(outputs, null);
             foreach (var message in messages)
             {
                 var document = string.IsNullOrEmpty(message.SourceFile) // make unclickable error otherwise it will refer to the project root

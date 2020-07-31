@@ -122,7 +122,7 @@ namespace VSRAD.PackageTests.Server
         private static IErrorListManager MockErrorListManager()
         {
             var errorListManager = new Mock<IErrorListManager>();
-            errorListManager.Setup((m) => m.AddToErrorListAsync("")).Returns(Task.CompletedTask);
+            errorListManager.Setup((m) => m.AddToErrorListAsync(new string[] { })).Returns(Task.CompletedTask);
             return errorListManager.Object;
         }
     }

@@ -42,6 +42,22 @@ namespace VSRAD.Package.Server
         public void FinishRun() =>
             TotalMillis = _stopwatch.ElapsedMilliseconds;
 
+        public IEnumerable<string> GetStepOutputs()
+        {
+            // recursive algorithm to get action outputs
+            // if there are loops in the actions, it will be detected before the action starts
+            foreach (var result in StepResults)
+            {
+                if (result.ErrorListOutput != null)
+                    foreach (var output in result.ErrorListOutput)
+                        yield return output;
+
+                if (result.SubAction != null)
+                    foreach (var output in result.SubAction.GetStepOutputs())
+                        yield return output;
+            }
+        }
+
         private long MeasureInterval()
         {
             var currentTime = _stopwatch.ElapsedMilliseconds;
@@ -56,20 +72,22 @@ namespace VSRAD.Package.Server
         public bool Successful { get; }
         public string Warning { get; }
         public string Log { get; }
+        public string[] ErrorListOutput { get; }
         public ActionRunResult SubAction { get; }
 
-        public StepResult(bool successful, string warning, string log, ActionRunResult subAction = null)
+        public StepResult(bool successful, string warning, string log, ActionRunResult subAction = null, string[] errorListOutput = null)
         {
             Successful = successful;
             Warning = warning;
             Log = log;
             SubAction = subAction;
+            ErrorListOutput = errorListOutput;
         }
 
         public bool Equals(StepResult result) =>
-            Successful == result.Successful && Warning == result.Warning && Log == result.Log && SubAction == result.SubAction;
+            Successful == result.Successful && Warning == result.Warning && Log == result.Log && ErrorListOutput == result.ErrorListOutput && SubAction == result.SubAction;
         public override bool Equals(object obj) => obj is StepResult result && Equals(result);
-        public override int GetHashCode() => (Successful, Warning, Log, SubAction).GetHashCode();
+        public override int GetHashCode() => (Successful, Warning, Log, ErrorListOutput, SubAction).GetHashCode();
         public static bool operator ==(StepResult left, StepResult right) => left.Equals(right);
         public static bool operator !=(StepResult left, StepResult right) => !(left == right);
     }
