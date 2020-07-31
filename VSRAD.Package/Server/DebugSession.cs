@@ -48,7 +48,7 @@ namespace VSRAD.Package.Server
             var auxFiles = new[] { options.OutputFile, options.WatchesFile, options.StatusFile };
             var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles).ConfigureAwait(false);
 
-            if (!result.Successful)
+            if (!result.Successful && !_project.Options.Profile.General.ContinueActionExecOnError)
                 return new DebugRunResult(result, null, null);
 
             var fetchCommands = new List<ICommand>();

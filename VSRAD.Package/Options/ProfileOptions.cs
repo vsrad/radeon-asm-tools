@@ -125,6 +125,9 @@ namespace VSRAD.Package.Options
         private bool _copySources = true;
         public bool CopySources { get => _copySources; set => SetField(ref _copySources, value); }
 
+        private bool _continueActionExecOnError = false;
+        public bool ContinueActionExecOnError { get => _continueActionExecOnError; set => SetField(ref _continueActionExecOnError, value); }
+
         private string _deployDirectory = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
 

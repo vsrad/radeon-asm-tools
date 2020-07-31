@@ -59,7 +59,7 @@ namespace VSRAD.Package.Server
                         throw new NotImplementedException();
                 }
                 runStats.RecordStep(i, result);
-                if (!result.Successful)
+                if (!result.Successful)         // TODO: insert check continue on error check?
                     break;
             }
 
