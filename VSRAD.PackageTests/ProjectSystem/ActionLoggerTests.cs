@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using Moq;
+using System.Collections.Generic;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -90,6 +91,74 @@ Captured stdout (exit code 2):
 * ...
 ";
             Assert.Equal(expectedWarnings, warnings.Value.Message);
+        }
+
+        [Fact]
+        public async Task ContinueOnErrorTestAsync()
+        {
+            var profile = new ProfileOptions();
+            profile.Actions.Add(new ActionProfileOptions { Name = "Shibahama Yūfō Taisen!" });
+            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "draw_anime", Arguments = "--dont-miss-deadlines" });
+            profile.Actions[0].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "ending_theme.wav", SourcePath = "some_dudes_email" });
+            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "combine_ending_animation_and_music", Arguments = "--hope-music-fits" });
+            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "rework_ending", Arguments = "--one-night" });
+            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "comet_a", Arguments = "--showcase" });
+            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "sell_dvds", Arguments = "--lots" });
+
+            var actionResult = new ActionRunResult(profile.Actions[0].Name, profile.Actions[0].Steps);
+
+            actionResult.StepResults[0] = new StepResult(true, "", "");
+            actionResult.StepResults[1] = new StepResult(true, "", "");
+            actionResult.StepResults[2] = new StepResult(false, "", "");
+            actionResult.StepResults[3] = new StepResult(true, "", "");
+            actionResult.StepResults[4] = new StepResult(true, "", "");
+            actionResult.StepResults[5] = new StepResult(true, "", "");
+
+            string logTitle = "", logMessage = "";
+
+            var writer = new Mock<IOutputWindowWriter>();
+            writer.Setup(w => w.PrintMessageAsync(It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask).Callback<string, string>((title, message) =>
+            {
+                logTitle = title;
+                logMessage = message;
+            });
+
+            var output = new Mock<IOutputWindowManager>(MockBehavior.Strict);
+            output.Setup(o => o.GetExecutionResultPane()).Returns(writer.Object);
+
+            var logger = new ActionLogger(output.Object, new Mock<IErrorListManager>().Object);
+            var warnings = await logger.LogActionWithWarningsAsync(actionResult);
+
+            Assert.Equal("Shibahama Yūfō Taisen! action FAILED in 0ms", logTitle);
+            var expectedMessage =
+@"=> Fetched initial timestamps in 0ms
+=> [0] Execute Remote draw_anime --dont-miss-deadlines SUCCEEDED in 0ms
+=> [1] Copy from Remote some_dudes_email -> ending_theme.wav SUCCEEDED in 0ms
+=> [2] Execute Remote combine_ending_animation_and_music --hope-music-fits FAILED in 0ms
+=> [3] Execute Remote rework_ending --one-night SKIPPED
+=> [4] Execute Remote comet_a --showcase SKIPPED
+=> [5] Execute Remote sell_dvds --lots SKIPPED
+";
+            Assert.Equal(expectedMessage, logMessage);
+
+            profile.Actions[0].Name += " (without difficulties)";
+            TestHelper.SetReadOnlyProp(actionResult, nameof(actionResult.ActionName), profile.Actions[0].Name);
+            actionResult.ContinueOnError = true;
+
+            warnings = await logger.LogActionWithWarningsAsync(actionResult);
+
+            Assert.Equal("Shibahama Yūfō Taisen! (without difficulties) action FAILED in 0ms", logTitle);
+
+            expectedMessage =
+@"=> Fetched initial timestamps in 0ms
+=> [0] Execute Remote draw_anime --dont-miss-deadlines SUCCEEDED in 0ms
+=> [1] Copy from Remote some_dudes_email -> ending_theme.wav SUCCEEDED in 0ms
+=> [2] Execute Remote combine_ending_animation_and_music --hope-music-fits FAILED in 0ms
+=> [3] Execute Remote rework_ending --one-night SUCCEEDED in 0ms
+=> [4] Execute Remote comet_a --showcase SUCCEEDED in 0ms
+=> [5] Execute Remote sell_dvds --lots SUCCEEDED in 0ms
+";
+            Assert.Equal(expectedMessage, logMessage);
         }
     }
 }
