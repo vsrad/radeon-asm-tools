@@ -36,7 +36,9 @@ namespace VSRAD.Package.ProjectSystem
 
             var logString = log.ToString();
             await _outputWriter.PrintMessageAsync(title, logString);
-            await _errorList.AddToErrorListAsync(logString);
+
+            var errorListOutput = runResult.GetStepOutputs();
+            await _errorList.AddToErrorListAsync(errorListOutput);
 
             if (warnings.Length == 0)
                 return null;

@@ -70,7 +70,7 @@ namespace VSRAD.Package.Server
                 await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stdout ({status})", stdout).ConfigureAwait(false);
                 await _outputWriter.PrintMessageAsync($"[{_outputTag}] Captured stderr ({status})", stderr).ConfigureAwait(false);
                 if (_errorListManager != null)
-                    await _errorListManager.AddToErrorListAsync(stderr).ConfigureAwait(false);
+                    await _errorListManager.AddToErrorListAsync(new string[] { stderr }).ConfigureAwait(false);
             }
 
             switch (result.Status)

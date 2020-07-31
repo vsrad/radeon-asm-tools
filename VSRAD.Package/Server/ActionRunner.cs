@@ -162,9 +162,9 @@ namespace VSRAD.Package.Server
             switch (response.Status)
             {
                 case ExecutionStatus.Completed when response.ExitCode == 0:
-                    return new StepResult(true, "", log.ToString());
+                    return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.Completed:
-                    return new StepResult(true, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString());
+                    return new StepResult(true, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.TimedOut:
                     return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
                 default:
@@ -182,7 +182,7 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoRunActionAsync(RunActionStep step)
         {
             var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>());
-            return new StepResult(subActionResult.Successful, "", "", subActionResult);
+            return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
         }
 
         private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)

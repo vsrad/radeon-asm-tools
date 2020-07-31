@@ -10,7 +10,7 @@ namespace VSRAD.Package.BuildTools
 {
     public interface IBuildErrorProcessor
     {
-        Task<IEnumerable<Message>> ExtractMessagesAsync(string output, string preprocessedSource);
+        Task<IEnumerable<Message>> ExtractMessagesAsync(IEnumerable<string> outputs, string preprocessedSource);
     }
 
     [Export(typeof(IBuildErrorProcessor))]
@@ -25,9 +25,9 @@ namespace VSRAD.Package.BuildTools
             _sourceManager = sourceManager;
         }
 
-        public async Task<IEnumerable<Message>> ExtractMessagesAsync(string output, string preprocessedSource)
+        public async Task<IEnumerable<Message>> ExtractMessagesAsync(IEnumerable<string> outputs, string preprocessedSource)
         {
-            var messages = Errors.Parser.ParseStderr(output);
+            var messages = Errors.Parser.ParseStderr(outputs);
             if (messages.Count > 0)
             {
                 var projectSources = (await _sourceManager.ListProjectFilesAsync()).Select(f => f.relativePath);
