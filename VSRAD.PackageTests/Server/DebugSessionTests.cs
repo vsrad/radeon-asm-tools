@@ -67,7 +67,7 @@ namespace VSRAD.PackageTests.Server
 
             var session = new DebugSession(project, channel.Object, new Mock<IFileSynchronizationManager>().Object, null);
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "jill", "julianne" }.ToList()));
-            Assert.True(channel.AllInteractionsHandled);
+            Assert.False(channel.AllInteractionsHandled);
             Assert.Null(result.Error);
             Assert.Equal("va11 process exited with a non-zero code (33). Check your application or debug script output in Output -> RAD Debug.", result.ActionResult.StepResults[0].Warning);
         }

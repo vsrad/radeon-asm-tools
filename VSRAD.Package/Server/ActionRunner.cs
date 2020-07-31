@@ -31,9 +31,10 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles, bool continueOnError = true)
         {
             var runStats = new ActionRunResult(actionName, steps);
+            runStats.ContinueOnError = continueOnError;
 
             await FillInitialTimestampsAsync(steps, auxFiles);
             runStats.RecordInitTimestampFetch();
@@ -53,13 +54,13 @@ namespace VSRAD.Package.Server
                         result = await DoOpenInEditorAsync(openInEditor);
                         break;
                     case RunActionStep runAction:
-                        result = await DoRunActionAsync(runAction);
+                        result = await DoRunActionAsync(runAction, continueOnError);
                         break;
                     default:
                         throw new NotImplementedException();
                 }
                 runStats.RecordStep(i, result);
-                if (!result.Successful)
+                if (!result.Successful && !continueOnError)
                     break;
             }
 
@@ -164,7 +165,7 @@ namespace VSRAD.Package.Server
                 case ExecutionStatus.Completed when response.ExitCode == 0:
                     return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.Completed:
-                    return new StepResult(true, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                    return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
                 case ExecutionStatus.TimedOut:
                     return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
                 default:
@@ -179,9 +180,9 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoRunActionAsync(RunActionStep step)
+        private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
         {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>());
+            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>(), continueOnError);
             return new StepResult(subActionResult.Successful, "", "", subActionResult);
         }
 
