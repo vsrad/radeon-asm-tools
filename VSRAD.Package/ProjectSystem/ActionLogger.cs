@@ -57,7 +57,7 @@ namespace VSRAD.Package.ProjectSystem
             for (int i = 0; i < run.Steps.Count; ++i)
             {
                 var step = run.Steps[i];
-                if (prevStepsSucceeded)
+                if (prevStepsSucceeded || run.ContinueOnError)
                 {
                     var result = run.StepResults[i];
                     log.AppendFormat("{0}=> [{1}] {2} {3} in {4}ms\r\n", logIndent, i, step, result.Successful ? "SUCCEEDED" : "FAILED", run.StepRunMillis[i]);

@@ -17,6 +17,7 @@ namespace VSRAD.Package.Server
         public StepResult[] StepResults { get; }
 
         public bool Successful => StepResults.All(r => r.Successful);
+        public bool ContinueOnError;
 
         private readonly Stopwatch _stopwatch;
         private long _lastRecordedTime;
