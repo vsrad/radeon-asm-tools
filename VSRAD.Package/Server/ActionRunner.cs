@@ -31,7 +31,7 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles, bool continueOnError)
         {
             var runStats = new ActionRunResult(actionName, steps);
 
@@ -53,13 +53,13 @@ namespace VSRAD.Package.Server
                         result = await DoOpenInEditorAsync(openInEditor);
                         break;
                     case RunActionStep runAction:
-                        result = await DoRunActionAsync(runAction);
+                        result = await DoRunActionAsync(runAction, continueOnError);
                         break;
                     default:
                         throw new NotImplementedException();
                 }
                 runStats.RecordStep(i, result);
-                if (!result.Successful)         // TODO: insert check continue on error check?
+                if (!result.Successful && !continueOnError)
                     break;
             }
 
@@ -179,9 +179,9 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoRunActionAsync(RunActionStep step)
+        private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
         {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>());
+            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>(), continueOnError);
             return new StepResult(subActionResult.Successful, "", "", subActionResult);
         }
 

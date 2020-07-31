@@ -46,7 +46,7 @@ namespace VSRAD.Package.Server
 
             var runner = new ActionRunner(_channel, _serviceProvider, env);
             var auxFiles = new[] { options.OutputFile, options.WatchesFile, options.StatusFile };
-            var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles).ConfigureAwait(false);
+            var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
 
             if (!result.Successful && !_project.Options.Profile.General.ContinueActionExecOnError)
                 return new DebugRunResult(result, null, null);
