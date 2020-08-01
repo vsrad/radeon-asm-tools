@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Microsoft.VisualStudio.Text;
+using System.Text;
 using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
@@ -7,8 +8,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
     {
         public NavigationToken NavigationToken { get; }
         public string FilePath { get; }
-        public int LineNumber { get; }
-        public string LineText { get; }
+        public int LineNumber => Line.LineNumber;
+        public ITextSnapshotLine Line { get; }
 
         public DefinitionToken(NavigationToken navigationToken)
         {
@@ -22,9 +23,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
                 FilePath = null;
             }
 
-            var line = NavigationToken.Snapshot.GetLineFromPosition(NavigationToken.AnalysisToken.TrackingToken.GetStart(NavigationToken.Snapshot));
-            LineNumber = line.LineNumber;
-            LineText = line.GetText();
+            Line = NavigationToken.Snapshot.GetLineFromPosition(NavigationToken.AnalysisToken.TrackingToken.GetStart(NavigationToken.Snapshot));
         }
 
         public override string ToString()
@@ -39,7 +38,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
             sb.Append(LineNumber + 1);
             sb.Append("): ");
 
-            sb.Append(LineText);
+            sb.Append(Line.GetText());
             return sb.ToString();
         }
     }

@@ -62,11 +62,15 @@ namespace VSRAD.Syntax.IntelliSense
                     var navigationToken = token.NavigationToken;
                     var analysisToken = navigationToken.AnalysisToken;
                     var typeName = analysisToken.Type.GetName();
+
+                    var spanBeforeToken = new SnapshotSpan(token.Line.Start, navigationToken.GetStart());
+                    var spanAfterToken = new SnapshotSpan(navigationToken.GetEnd(), token.Line.End);
                     elements.Add(new ClassifiedTextElement(new ClassifiedTextRun[]
                     {
                         new ClassifiedTextRun(RadAsmTokenType.Identifier.GetClassificationTypeName(), $"({typeName}) "),
+                        new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), $"{spanBeforeToken.GetText()}"),
                         GetNameElement(navigationToken),
-                        new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), $": {token.LineText}"),
+                        new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), $"{spanAfterToken.GetText()}"),
                     }));
                 }
 
@@ -174,7 +178,7 @@ namespace VSRAD.Syntax.IntelliSense
             else if (type == RadAsmTokenType.Instruction)
             {
                 var definition = new DefinitionToken(token);
-                description = definition.LineText;
+                description = definition.Line.GetText();
             }
 
             return description;

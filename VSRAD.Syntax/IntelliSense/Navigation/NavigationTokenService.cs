@@ -100,7 +100,7 @@ namespace VSRAD.Syntax.IntelliSense
         public void GoToPoint(NavigationToken point)
         {
             if (point != NavigationToken.Empty)
-                GoToPoint(new SnapshotPoint(point.Snapshot, point.GetEnd()));
+                GoToPoint(point.GetEnd());
         }
 
         public IReadOnlyList<NavigationToken> GetNaviationItem(TextExtent extent, bool searchWithInclude = false)
