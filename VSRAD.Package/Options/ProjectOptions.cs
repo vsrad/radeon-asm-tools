@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
 
@@ -97,6 +98,23 @@ namespace VSRAD.Package.Options
             try
             {
                 File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
+            }
+            catch (UnauthorizedAccessException e)
+            {
+                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {path} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                if (res == DialogResult.OK)
+                {
+                    try
+                    {
+                        File.SetAttributes(path, FileAttributes.Normal);
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.ShowWarning("Cannot make file writable: " + ex.Message);
+                        return;
+                    }
+                    File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
+                }
             }
             catch (SystemException e)
             {
