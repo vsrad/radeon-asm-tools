@@ -18,7 +18,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
     {
         public DefinitionToken DefinitionToken { get; }
         public NavigationListDefinitionItem(DefinitionToken definitionToken) 
-            : base($"{definitionToken.LineNumber + 1}: {definitionToken.LineText}")
+            : base($"{definitionToken.LineNumber + 1}: {definitionToken.Line.GetText()}")
         {
             DefinitionToken = definitionToken;
         }

@@ -16,8 +16,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
             Snapshot = version;
         }
 
-        public int GetEnd() =>
-            AnalysisToken.TrackingToken.GetEnd(Snapshot);
+        public SnapshotPoint GetStart() =>
+            new SnapshotPoint(Snapshot, AnalysisToken.TrackingToken.GetStart(Snapshot));
+
+        public SnapshotPoint GetEnd() =>
+            new SnapshotPoint(Snapshot, AnalysisToken.TrackingToken.GetEnd(Snapshot));
 
         public string GetText() =>
             AnalysisToken.TrackingToken.GetText(Snapshot);
