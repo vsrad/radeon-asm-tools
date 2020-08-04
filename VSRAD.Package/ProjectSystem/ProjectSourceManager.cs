@@ -56,7 +56,24 @@ namespace VSRAD.Package.ProjectSystem
                         dte.ActiveDocument.Save();
                     break;
                 case DocumentSaveType.OpenDocuments:
-                    dte.Documents.SaveAll();
+                    try
+                    {
+                        // TODO: try to find a better way to save open documents
+                        // The dte.Documents collection could be in invalid state
+                        // preventing any access to its Items or Count
+                        dte.Documents.SaveAll();
+                    }
+                    catch (Exception e)
+                    {
+                        if (e.HResult == Microsoft.VisualStudio.VSConstants.E_FAIL)
+                        {
+                            VSRAD.Package.Errors.ShowCritical("Unable to save opened files. Try to close tabs with deleted or unavailable files.");
+                        }
+                        else
+                        {
+                            throw e;
+                        }
+                    }
                     break;
                 case DocumentSaveType.ProjectDocuments:
                     if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
