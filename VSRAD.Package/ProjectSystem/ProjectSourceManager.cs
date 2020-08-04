@@ -63,16 +63,9 @@ namespace VSRAD.Package.ProjectSystem
                         // preventing any access to its Items or Count
                         dte.Documents.SaveAll();
                     }
-                    catch (Exception e)
+                    catch (Exception e) when (e.HResult == Microsoft.VisualStudio.VSConstants.E_FAIL)
                     {
-                        if (e.HResult == Microsoft.VisualStudio.VSConstants.E_FAIL)
-                        {
-                            VSRAD.Package.Errors.ShowCritical("Unable to save opened files. Try to close tabs with deleted or unavailable files.");
-                        }
-                        else
-                        {
-                            throw e;
-                        }
+                        Errors.ShowCritical("Unable to save opened files. Try to close tabs with deleted or unavailable files.");
                     }
                     break;
                 case DocumentSaveType.ProjectDocuments:
