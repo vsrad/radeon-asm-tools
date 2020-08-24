@@ -63,8 +63,8 @@ namespace VSRAD.Package.ProjectSystem
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
             Assumes.Present(dte);
 
-            var solutionDir = dte.Solution.FileName.Replace(".sln", "");
-            _optionsFilePath = solutionDir + ".conf.json";
+
+            _optionsFilePath = GetConfigPath(dte.Solution.FullName);
             var legacyOptionsFilePath = _unconfiguredProject.FullPath + ".conf.json";
             var legacyOptionsFilePathAlternative = _unconfiguredProject.FullPath + ".user.json";
 
@@ -83,6 +83,14 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
             Loaded?.Invoke(Options);
+        }
+
+        private string GetConfigPath(string solutionPath)
+        {
+            var lastIndex = solutionPath.LastIndexOf(".sln");
+            if (lastIndex == -1)
+                return solutionPath + ".conf.json";
+            else return solutionPath.Remove(lastIndex, 4) + ".conf.json";
         }
 
         private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => SaveOptions();
