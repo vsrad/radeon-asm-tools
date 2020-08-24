@@ -63,8 +63,11 @@ namespace VSRAD.Package.ProjectSystem
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
             Assumes.Present(dte);
 
+            var solutionPath = dte.Solution.FullName;
+            _optionsFilePath = string.IsNullOrWhiteSpace(solutionPath)
+                ? _unconfiguredProject.FullPath + ".conf.json"
+                : GetConfigPath(dte.Solution.FullName);
 
-            _optionsFilePath = GetConfigPath(dte.Solution.FullName);
             var legacyOptionsFilePath = _unconfiguredProject.FullPath + ".conf.json";
             var legacyOptionsFilePathAlternative = _unconfiguredProject.FullPath + ".user.json";
 
@@ -75,7 +78,7 @@ namespace VSRAD.Package.ProjectSystem
             else
                 Options = ProjectOptions.ReadLegacy(legacyOptionsFilePathAlternative);
 
-            SaveOptions(); // create options file path if we read legacy
+            SaveOptions(); // create options file if we read legacy
 
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
