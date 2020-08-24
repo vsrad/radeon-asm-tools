@@ -1,6 +1,9 @@
-﻿using Microsoft.VisualStudio.Composition;
+﻿using EnvDTE;
+using Microsoft;
+using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using Newtonsoft.Json.Linq;
 using System;
@@ -41,26 +44,38 @@ namespace VSRAD.Package.ProjectSystem
 
         public string RootPath { get; }
 
-        private readonly string _optionsFilePath;
-        private readonly string _legacyOptionsFilePath;
+        private string _optionsFilePath;
+        private readonly SVsServiceProvider _serviceProvider;
 
         private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
-        public Project(UnconfiguredProject unconfiguredProject)
+        public Project(UnconfiguredProject unconfiguredProject, SVsServiceProvider serviceProvider)
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
-            _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
-            _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             _unconfiguredProject = unconfiguredProject;
+            _serviceProvider = serviceProvider;
         }
 
         public void Load()
         {
-            if (!File.Exists(_optionsFilePath) && File.Exists(_legacyOptionsFilePath))
-                Options = ProjectOptions.ReadLegacy(_legacyOptionsFilePath);
-            else
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+            Assumes.Present(dte);
+
+            var solutionDir = dte.Solution.FileName.Replace(".sln", "");
+            _optionsFilePath = solutionDir + ".conf.json";
+            var legacyOptionsFilePath = _unconfiguredProject.FullPath + ".conf.json";
+            var legacyOptionsFilePathAlternative = _unconfiguredProject.FullPath + ".user.json";
+
+            if (File.Exists(_optionsFilePath))
                 Options = ProjectOptions.Read(_optionsFilePath);
+            else if (File.Exists(legacyOptionsFilePath))
+                Options = ProjectOptions.Read(legacyOptionsFilePath);
+            else
+                Options = ProjectOptions.ReadLegacy(legacyOptionsFilePathAlternative);
+
+            SaveOptions(); // create options file path if we read legacy
 
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
