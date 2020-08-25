@@ -5,8 +5,6 @@ using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
-using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
@@ -46,12 +44,14 @@ namespace VSRAD.Package.ProjectSystem
 
         private string _optionsFilePath;
         private readonly SVsServiceProvider _serviceProvider;
+        private readonly SolutionProperties _solutionProperties;
 
         private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
-        public Project(UnconfiguredProject unconfiguredProject, SVsServiceProvider serviceProvider)
+        public Project(UnconfiguredProject unconfiguredProject, SVsServiceProvider serviceProvider, SolutionProperties props)
         {
+            _solutionProperties = props;
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
             _unconfiguredProject = unconfiguredProject;
             _serviceProvider = serviceProvider;
@@ -60,26 +60,15 @@ namespace VSRAD.Package.ProjectSystem
         public void Load()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
             Assumes.Present(dte);
+            _optionsFilePath = GetConfigPath(dte.Solution.FullName);
 
-            var solutionPath = dte.Solution.FullName;
-            _optionsFilePath = string.IsNullOrWhiteSpace(solutionPath)
-                ? _unconfiguredProject.FullPath + ".conf.json"
-                : GetConfigPath(dte.Solution.FullName);
+            if (_solutionProperties.Options == null)
+                _solutionProperties.SetOptions(_optionsFilePath);
 
-            var legacyOptionsFilePath = _unconfiguredProject.FullPath + ".conf.json";
-            var legacyOptionsFilePathAlternative = _unconfiguredProject.FullPath + ".user.json";
-
-            if (File.Exists(_optionsFilePath))
-                Options = ProjectOptions.Read(_optionsFilePath);
-            else if (File.Exists(legacyOptionsFilePath))
-                Options = ProjectOptions.Read(legacyOptionsFilePath);
-            else
-                Options = ProjectOptions.ReadLegacy(legacyOptionsFilePathAlternative);
-
-            SaveOptions(); // create options file if we read legacy
-
+            Options = _solutionProperties.Options;
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
@@ -100,6 +89,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Unload() => Unloaded?.Invoke();
 
+        // TODO: Move to SolutionProperties and prevent multiple write to config
         public void SaveOptions() => Options.Write(_optionsFilePath);
 
         public IProjectProperties GetProjectProperties()
