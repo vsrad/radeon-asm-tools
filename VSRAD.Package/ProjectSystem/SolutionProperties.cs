@@ -47,7 +47,7 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
         }
 
-        public static string GetConfigPath(string solutionPath)
+        private static string GetConfigPath(string solutionPath)
         {
             var lastIndex = solutionPath.LastIndexOf(".sln", System.StringComparison.OrdinalIgnoreCase);
             if (lastIndex == -1)
