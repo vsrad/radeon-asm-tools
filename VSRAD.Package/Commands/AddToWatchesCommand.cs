@@ -12,7 +12,7 @@ namespace VSRAD.Package.Commands
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class AddToWatchesCommand : ICommandHandler
     {
-        private static readonly Regex EmptyBracketsRegex = new Regex(@"(\[\s*\]|\(\s*\))", RegexOptions.Compiled);
+        private static readonly Regex EmptyBracketsRegex = new Regex(@"\[\s*\]", RegexOptions.Compiled);
 
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
