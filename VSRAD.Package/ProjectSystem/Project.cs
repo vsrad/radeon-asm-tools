@@ -63,18 +63,10 @@ namespace VSRAD.Package.ProjectSystem
             Assumes.Present(dte);
 
             if (_solutionProperties.Options == null)
-                _solutionProperties.SetOptions(GetConfigPath(dte.Solution.FullName));
+                _solutionProperties.SetOptions(dte.Solution, _unconfiguredProject);
 
             Options = _solutionProperties.Options;
             Loaded?.Invoke(Options);
-        }
-
-        private string GetConfigPath(string solutionPath)
-        {
-            var lastIndex = solutionPath.LastIndexOf(".sln");
-            if (lastIndex == -1)
-                return solutionPath + ".conf.json";
-            else return solutionPath.Remove(lastIndex, 4) + ".conf.json";
         }
 
         public void Unload()
