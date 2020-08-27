@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.ProjectSystem;
 using System;
 using System.ComponentModel.Composition;
+using System.Text.RegularExpressions;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ToolWindows;
 
@@ -11,6 +12,8 @@ namespace VSRAD.Package.Commands
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class AddToWatchesCommand : ICommandHandler
     {
+        private static readonly Regex EmptyBracketsRegex = new Regex(@"(\[\s*\]|\(\s*\))", RegexOptions.Compiled);
+
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
 
@@ -38,7 +41,7 @@ namespace VSRAD.Package.Commands
             var activeWord = _codeEditor.GetActiveWord();
             if (!string.IsNullOrWhiteSpace(activeWord))
             {
-                var watchName = activeWord.Trim();
+                var watchName = EmptyBracketsRegex.Replace(activeWord, "").Trim();
                 _toolIntegration.AddWatchFromEditor(watchName);
             }
         }
