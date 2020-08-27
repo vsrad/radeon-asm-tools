@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
@@ -43,7 +42,6 @@ namespace VSRAD.Package
     [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
     [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
     [Guid(Constants.PackageId)]
-    [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     public sealed class VSPackage : AsyncPackage, IOleCommandTarget
     {
         public static VisualizerWindow VisualizerToolWindow { get; private set; }
