@@ -19,11 +19,12 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
 
             var solutionPath = solution.FullName;
+            var isSolutionExists = !string.IsNullOrWhiteSpace(solutionPath);
             var legacyOptionsPath = project.FullPath + ".conf.json";
             var legacyOptionsPathAternative = project.FullPath + ".user.json";
-            var solutionConfigPath = !string.IsNullOrWhiteSpace(solutionPath) ? GetConfigPath(solutionPath) : "";
+            var solutionConfigPath = isSolutionExists ? GetConfigPath(solutionPath) : "";
 
-            Options = !string.IsNullOrWhiteSpace(solutionPath) && File.Exists(solutionConfigPath)
+            Options = isSolutionExists && File.Exists(solutionConfigPath)
                 ? ProjectOptions.Read(solutionConfigPath)
                 : File.Exists(legacyOptionsPath)
                     ? ProjectOptions.Read(legacyOptionsPath)
@@ -31,7 +32,7 @@ namespace VSRAD.Package.ProjectSystem
                         ? ProjectOptions.ReadLegacy(legacyOptionsPathAternative)
                         : new ProjectOptions();
 
-            _optionsFilePath = string.IsNullOrWhiteSpace(solutionPath)
+            _optionsFilePath = !isSolutionExists
                 // we opened project outside of any solution
                 // we'll save profiles to the legacy options location
                 ? legacyOptionsPath
