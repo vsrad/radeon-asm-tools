@@ -22,11 +22,11 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
+            _newWatchRowIndex = _table.RowCount - 1;
             if (hit.Type != DataGridViewHitTestType.RowHeader
                 || hit.RowIndex <= VisualizerTable.SystemRowIndex
                 || hit.RowIndex == _newWatchRowIndex)
                 return false;
-            _newWatchRowIndex = _table.RowCount - 1;
             _operationStarted = false;
             _hoverRowIndex = hit.RowIndex;
             return true;
