@@ -50,7 +50,7 @@ namespace VSRAD.Package.Server
             var mode = _project.Options.DebuggerOptions.Autosave ? DocumentSaveType.OpenDocuments : DocumentSaveType.None;
 
             await _projectSourceManager.SaveDocumentsAsync(mode);
-            _project.SaveOptions();
+            //_project.SaveOptions();
 
             if (!options.CopySources)
                 return;

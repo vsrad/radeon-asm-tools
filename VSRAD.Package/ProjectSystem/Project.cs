@@ -28,7 +28,6 @@ namespace VSRAD.Package.ProjectSystem
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
         IProjectProperties GetProjectProperties();
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
-        void SaveOptions();
     }
 
     [Export(typeof(IProject))]
@@ -69,11 +68,6 @@ namespace VSRAD.Package.ProjectSystem
                 _solutionProperties.SetOptions(_optionsFilePath);
 
             Options = _solutionProperties.Options;
-            Options.PropertyChanged += OptionsPropertyChanged;
-            Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
             Loaded?.Invoke(Options);
         }
 
@@ -85,12 +79,7 @@ namespace VSRAD.Package.ProjectSystem
             else return solutionPath.Remove(lastIndex, 4) + ".conf.json";
         }
 
-        private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => SaveOptions();
-
         public void Unload() => Unloaded?.Invoke();
-
-        // TODO: Move to SolutionProperties and prevent multiple write to config
-        public void SaveOptions() => Options.Write(_optionsFilePath);
 
         public IProjectProperties GetProjectProperties()
         {
