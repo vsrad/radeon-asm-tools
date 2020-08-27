@@ -41,7 +41,6 @@ namespace VSRAD.Package.ProjectSystem
 
         public string RootPath { get; }
 
-        private string _optionsFilePath;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly SolutionProperties _solutionProperties;
 
@@ -62,10 +61,9 @@ namespace VSRAD.Package.ProjectSystem
 
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
             Assumes.Present(dte);
-            _optionsFilePath = GetConfigPath(dte.Solution.FullName);
 
             if (_solutionProperties.Options == null)
-                _solutionProperties.SetOptions(_optionsFilePath);
+                _solutionProperties.SetOptions(GetConfigPath(dte.Solution.FullName));
 
             Options = _solutionProperties.Options;
             Loaded?.Invoke(Options);
