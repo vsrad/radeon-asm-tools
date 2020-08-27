@@ -21,12 +21,15 @@ namespace VSRAD.Package.ProjectSystem
             var solutionPath = solution.FullName;
             var legacyOptionsPath = project.FullPath + ".conf.json";
             var legacyOptionsPathAternative = project.FullPath + ".user.json";
+            var solutionConfigPath = !string.IsNullOrWhiteSpace(solutionPath) ? GetConfigPath(solutionPath) : "";
 
-            Options = File.Exists(legacyOptionsPath)
-                ? ProjectOptions.Read(legacyOptionsPath)
-                : File.Exists(legacyOptionsPathAternative)
-                    ? ProjectOptions.ReadLegacy(legacyOptionsPathAternative)
-                    : new ProjectOptions();
+            Options = !string.IsNullOrWhiteSpace(solutionPath) && File.Exists(solutionConfigPath)
+                ? ProjectOptions.Read(solutionConfigPath)
+                : File.Exists(legacyOptionsPath)
+                    ? ProjectOptions.Read(legacyOptionsPath)
+                    : File.Exists(legacyOptionsPathAternative)
+                        ? ProjectOptions.ReadLegacy(legacyOptionsPathAternative)
+                        : new ProjectOptions();
 
             _optionsFilePath = string.IsNullOrWhiteSpace(solutionPath)
                 // we opened project outside of any solution
@@ -34,7 +37,7 @@ namespace VSRAD.Package.ProjectSystem
                 ? legacyOptionsPath
                 // we opened solution with at least one project
                 // we'll save profiles to the new location in solution dir
-                : GetConfigPath(solutionPath);
+                : solutionConfigPath;
 
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
