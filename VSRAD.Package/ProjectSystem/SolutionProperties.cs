@@ -24,6 +24,8 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
         }
 
+        public void ResetOptions() => Options = null;
+
         private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => Options.Write(_optionsFilePath);
     }
 }

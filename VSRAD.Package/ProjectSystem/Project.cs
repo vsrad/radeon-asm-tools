@@ -77,7 +77,13 @@ namespace VSRAD.Package.ProjectSystem
             else return solutionPath.Remove(lastIndex, 4) + ".conf.json";
         }
 
-        public void Unload() => Unloaded?.Invoke();
+        public void Unload()
+        {
+            if (_solutionProperties.Options != null)
+                _solutionProperties.ResetOptions();
+
+            Unloaded?.Invoke();
+        }
 
         public IProjectProperties GetProjectProperties()
         {
