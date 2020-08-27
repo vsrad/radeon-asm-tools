@@ -1,5 +1,4 @@
 ﻿using EnvDTE;
-using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System.ComponentModel;
@@ -23,31 +22,19 @@ namespace VSRAD.Package.ProjectSystem
             var legacyOptionsPath = project.FullPath + ".conf.json";
             var legacyOptionsPathAternative = project.FullPath + ".user.json";
 
-            // we opened project outside of any solution
-            // load legacy path if exist, load legacy alternative if exists
-            // if both not exist than create default options
-            // we'll save profiles to the legacy options location
-            if (string.IsNullOrWhiteSpace(solutionPath))
-            {
-                Options = File.Exists(legacyOptionsPath)
-                    ? ProjectOptions.Read(legacyOptionsPath)
-                    : File.Exists(legacyOptionsPathAternative)
-                        ? ProjectOptions.ReadLegacy(legacyOptionsPathAternative)
-                        : new ProjectOptions();
-                _optionsFilePath = legacyOptionsPath;
-            }
-            // we opened solution with at least one project
-            // trying to retrieve any version of obsolete profiles
-            // we'll save profiles to the new location in solution dir
-            else
-            {
-                Options = File.Exists(legacyOptionsPath)
-                    ? ProjectOptions.Read(legacyOptionsPath)
-                    : File.Exists(legacyOptionsPathAternative)
-                        ? ProjectOptions.ReadLegacy(legacyOptionsPathAternative)
-                        : new ProjectOptions();
-                _optionsFilePath = GetConfigPath(solutionPath);
-            }
+            Options = File.Exists(legacyOptionsPath)
+                ? ProjectOptions.Read(legacyOptionsPath)
+                : File.Exists(legacyOptionsPathAternative)
+                    ? ProjectOptions.ReadLegacy(legacyOptionsPathAternative)
+                    : new ProjectOptions();
+
+            _optionsFilePath = string.IsNullOrWhiteSpace(solutionPath)
+                // we opened project outside of any solution
+                // we'll save profiles to the legacy options location
+                ? legacyOptionsPath
+                // we opened solution with at least one project
+                // we'll save profiles to the new location in solution dir
+                : GetConfigPath(solutionPath);
 
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
