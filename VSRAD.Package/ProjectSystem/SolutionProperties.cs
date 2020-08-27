@@ -52,7 +52,8 @@ namespace VSRAD.Package.ProjectSystem
             var lastIndex = solutionPath.LastIndexOf(".sln", System.StringComparison.OrdinalIgnoreCase);
             if (lastIndex == -1)
                 return solutionPath + ".conf.json";
-            else return solutionPath.Remove(lastIndex, 4) + ".conf.json";
+            
+            return solutionPath.Remove(lastIndex, 4) + ".conf.json";
         }
 
         public void ResetOptions() => Options = null;
