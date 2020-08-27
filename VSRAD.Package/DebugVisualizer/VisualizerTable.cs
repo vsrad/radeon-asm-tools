@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
@@ -12,6 +13,8 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class VisualizerTable : DataGridView
     {
+        private static readonly Regex EmptyBracketsRegex = new Regex(@"(\[\s*\]|\(\s*\))", RegexOptions.Compiled);
+
         public delegate void ChangeWatchState(List<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
         public delegate uint GetGroupSize();
         public delegate ReadOnlyCollection<string> GetValidWatches();
@@ -256,6 +259,7 @@ namespace VSRAD.Package.DebugVisualizer
                 if (e.ColumnIndex == NameColumnIndex && !string.IsNullOrEmpty(rowWatchName))
                 {
                     var scrollingOffset = HorizontalScrollingOffset;
+                    rowWatchName = EmptyBracketsRegex.Replace(rowWatchName, "");
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
                     Rows[e.RowIndex].HeaderCell.Value = VariableType.Hex.ShortName();
