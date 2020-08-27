@@ -1,5 +1,4 @@
-﻿using EnvDTE;
-using Microsoft;
+﻿using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
