@@ -34,11 +34,6 @@ namespace VSRAD.Package.ProjectSystem
             if (IsTemporaryVisualCProject(_unconfiguredProject))
                 return;
 
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-            Assumes.Present(dte);
-
             // Initialize our project components. We cannot use [Import] declarations because that would
             // result in components getting recreated for temporary VisualC projects
             // (particularly bad for DebuggerIntegration which has global state)
@@ -47,6 +42,10 @@ namespace VSRAD.Package.ProjectSystem
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 project.Unload();
+
+                var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+                Assumes.Present(dte);
+
                 if (dte.Solution.Projects.Count != 1) return;
                 VSPackage.ProjectUnloaded();
             };
@@ -56,6 +55,8 @@ namespace VSRAD.Package.ProjectSystem
             _exportProvider.GetExportedValue<BuildToolsServer>();
             var toolWindowIntegration = _exportProvider.GetExportedValue<IToolWindowIntegration>();
             var commandRouter = _exportProvider.GetExportedValue<ICommandRouter>();
+
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
             project.Load();
             await GetPackage().ProjectLoadedAsync(toolWindowIntegration, commandRouter);
