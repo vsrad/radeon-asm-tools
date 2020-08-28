@@ -1,13 +1,9 @@
-﻿using EnvDTE;
-using Microsoft;
-using Microsoft.VisualStudio.OLE.Interop;
+﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
-using System.Text.RegularExpressions;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ToolWindows;
 
 namespace VSRAD.Package.Commands
 {
@@ -15,8 +11,6 @@ namespace VSRAD.Package.Commands
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class AddToWatchesCommand : ICommandHandler
     {
-        private static readonly Regex EmptyBracketsRegex = new Regex(@"\[\s*\]", RegexOptions.Compiled);
-
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly SVsServiceProvider _serviceProvider;
@@ -43,21 +37,9 @@ namespace VSRAD.Package.Commands
             if (commandId != Constants.MenuCommandId)
                 return;
 
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             var activeWord = _codeEditor.GetActiveWord();
-
             if (!string.IsNullOrWhiteSpace(activeWord))
-            {
-                var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-                Assumes.Present(dte);
-                var selectionText = (dte.ActiveDocument.Selection as TextSelection).Text;
-                // dont omit empty brackets or trim if user manually selected text
-                var watchName = string.IsNullOrEmpty(selectionText)
-                    ? EmptyBracketsRegex.Replace(activeWord, "").Trim()
-                    : selectionText;
-                _toolIntegration.AddWatchFromEditor(watchName);
-            }
+                _toolIntegration.AddWatchFromEditor(activeWord);
         }
     }
 }
