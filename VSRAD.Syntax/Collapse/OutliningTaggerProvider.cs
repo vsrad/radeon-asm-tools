@@ -1,4 +1,4 @@
-﻿using VSRAD.Syntax.Parser;
+﻿using VSRAD.Syntax.Core;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
@@ -12,13 +12,13 @@ namespace VSRAD.Syntax.Collapse
     internal sealed class OutliningTaggerAsmProvider : ITaggerProvider
     {
         [Import]
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+        private readonly IDocumentFactory _documentFactory;
 
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
-            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(buffer);
+            var document = _documentFactory.GetOrCreateDocument(buffer);
 
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(documentAnalysis) as ITagger<T>);
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(document.DocumentAnalysis) as ITagger<T>);
         }
     }
 }

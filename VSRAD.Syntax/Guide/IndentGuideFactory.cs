@@ -4,7 +4,7 @@ using System;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.Guide
 {

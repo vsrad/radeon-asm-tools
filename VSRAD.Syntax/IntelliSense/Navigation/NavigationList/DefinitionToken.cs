@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System.Text;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 {

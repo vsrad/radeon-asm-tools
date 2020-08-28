@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {

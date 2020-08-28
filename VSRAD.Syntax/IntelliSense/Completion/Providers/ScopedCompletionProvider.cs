@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {

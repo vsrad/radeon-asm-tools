@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.FunctionList
 {

@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {

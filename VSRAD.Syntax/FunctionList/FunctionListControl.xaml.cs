@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options;
 using Microsoft.VisualStudio.Text;
 

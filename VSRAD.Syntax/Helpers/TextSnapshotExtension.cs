@@ -1,5 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.Helpers
 {

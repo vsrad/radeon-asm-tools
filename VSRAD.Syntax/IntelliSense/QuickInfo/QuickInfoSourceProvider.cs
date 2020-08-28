@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
@@ -13,16 +13,16 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     [Order]
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+        private readonly IDocumentFactory _documentFactory;
         private readonly INavigationTokenService _navigationService;
         private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
 
         [ImportingConstructor]
-        public QuickInfoSourceProvider(DocumentAnalysisProvoder documentAnalysisProvoder,
+        public QuickInfoSourceProvider(IDocumentFactory documentFactory,
             INavigationTokenService navigationService,
             IIntellisenseDescriptionBuilder descriptionBuilder)
         {
-            _documentAnalysisProvoder = documentAnalysisProvoder;
+            _documentFactory = documentFactory;
             _navigationService = navigationService;
             _descriptionBuilder = descriptionBuilder;
         }

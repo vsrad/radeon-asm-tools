@@ -1,4 +1,4 @@
-﻿using VSRAD.Syntax.Parser;
+﻿using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Helpers;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Text;
@@ -8,8 +8,8 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Parser.Blocks;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Tokens;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;

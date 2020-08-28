@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.IntelliSense.Completion.Providers;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {

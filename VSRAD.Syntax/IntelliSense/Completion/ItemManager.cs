@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {

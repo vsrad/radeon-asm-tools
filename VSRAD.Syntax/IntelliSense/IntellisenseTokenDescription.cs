@@ -8,9 +8,9 @@ using System.Linq;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
-using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Blocks;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense
 {

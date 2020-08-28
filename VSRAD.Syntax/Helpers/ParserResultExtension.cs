@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
 using System.Linq;
-using VSRAD.Syntax.Parser.Blocks;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Helpers
 {

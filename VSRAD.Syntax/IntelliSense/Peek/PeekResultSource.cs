@@ -1,4 +1,4 @@
-﻿using VSRAD.Syntax.Parser.Tokens;
+﻿using VSRAD.Syntax.Core.Tokens;
 using Microsoft.VisualStudio.Language.Intellisense;
 using System;
 using System.Threading;

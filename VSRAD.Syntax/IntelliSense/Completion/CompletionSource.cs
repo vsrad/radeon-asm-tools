@@ -7,10 +7,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 using RadCompletionItem = VSRAD.Syntax.IntelliSense.Completion.Providers.CompletionItem;
 using RadCompletionContext = VSRAD.Syntax.IntelliSense.Completion.Providers.CompletionContext;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core.Tokens;
 using System;
 
 namespace VSRAD.Syntax.IntelliSense.Completion

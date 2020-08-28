@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Options
@@ -108,7 +108,7 @@ namespace VSRAD.Syntax.Options
                     var instructions = documentAnalysis
                         .LastParserResult[0]
                         .Tokens
-                        .Where(t => t.Type == Parser.Tokens.RadAsmTokenType.Instruction);
+                        .Where(t => t.Type == Core.Tokens.RadAsmTokenType.Instruction);
 
                     var version = documentAnalysis.CurrentSnapshot;
                     foreach (var instruction in instructions)

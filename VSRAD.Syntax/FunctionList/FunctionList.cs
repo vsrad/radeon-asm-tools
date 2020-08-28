@@ -12,9 +12,9 @@ using VSRAD.Syntax.Helpers;
 using System.Linq;
 using VSRAD.Syntax.Options;
 using Microsoft.VisualStudio.Text;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 using System.Collections.Generic;
-using VSRAD.Syntax.Parser.Blocks;
+using VSRAD.Syntax.Core.Blocks;
 using Microsoft.VisualStudio;
 
 namespace VSRAD.Syntax.FunctionList
@@ -109,7 +109,7 @@ namespace VSRAD.Syntax.FunctionList
 
                 var labels = blocks
                     .SelectMany(b => b.Tokens)
-                    .Where(t => t.Type == Parser.Tokens.RadAsmTokenType.Label);
+                    .Where(t => t.Type == Core.Tokens.RadAsmTokenType.Label);
 
                 var functionListTokens = functionNames
                     .Concat(labels)

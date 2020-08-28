@@ -1,5 +1,5 @@
-﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Blocks;
+﻿using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Blocks;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Formatting;

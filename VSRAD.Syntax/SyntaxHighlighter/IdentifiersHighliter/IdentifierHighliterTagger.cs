@@ -7,8 +7,8 @@ using System.Linq;
 using System.Threading;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense;
-using VSRAD.Syntax.Parser.Tokens;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
@@ -131,7 +131,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
             cancellation.ThrowIfCancellationRequested();
             var block = _documentAnalysis.LastParserResult.GetBlockBy(navigationItem);
-            var blockSpan = (block.Type == Parser.Blocks.BlockType.Root) ? new Span(0, version.Length) : block.Scope.GetSpan(version);
+            var blockSpan = (block.Type == Core.Blocks.BlockType.Root) ? new Span(0, version.Length) : block.Scope.GetSpan(version);
             var wordText = currentWord.GetText();
 
             var lexerTokens = _documentAnalysis
