@@ -13,14 +13,12 @@ namespace VSRAD.Package.Commands
     {
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
-        private readonly SVsServiceProvider _serviceProvider;
 
         [ImportingConstructor]
-        public AddToWatchesCommand(IToolWindowIntegration toolIntegration, IActiveCodeEditor codeEditor, SVsServiceProvider serviceProvider)
+        public AddToWatchesCommand(IToolWindowIntegration toolIntegration, IActiveCodeEditor codeEditor)
         {
             _toolIntegration = toolIntegration;
             _codeEditor = codeEditor;
-            _serviceProvider = serviceProvider;
         }
 
         public Guid CommandSet => Constants.AddToWatchesCommandSet;
