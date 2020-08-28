@@ -37,6 +37,7 @@ namespace VSRAD.Package.ProjectSystem
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+            Assumes.Present(dte);
 
             // Initialize our project components. We cannot use [Import] declarations because that would
             // result in components getting recreated for temporary VisualC projects
