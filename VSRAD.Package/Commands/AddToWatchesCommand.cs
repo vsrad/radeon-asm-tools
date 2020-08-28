@@ -1,5 +1,8 @@
-﻿using Microsoft.VisualStudio.OLE.Interop;
+﻿using EnvDTE;
+using Microsoft;
+using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using System.Text.RegularExpressions;
@@ -16,12 +19,14 @@ namespace VSRAD.Package.Commands
 
         private readonly IToolWindowIntegration _toolIntegration;
         private readonly IActiveCodeEditor _codeEditor;
+        private readonly SVsServiceProvider _serviceProvider;
 
         [ImportingConstructor]
-        public AddToWatchesCommand(IToolWindowIntegration toolIntegration, IActiveCodeEditor codeEditor)
+        public AddToWatchesCommand(IToolWindowIntegration toolIntegration, IActiveCodeEditor codeEditor, SVsServiceProvider serviceProvider)
         {
             _toolIntegration = toolIntegration;
             _codeEditor = codeEditor;
+            _serviceProvider = serviceProvider;
         }
 
         public Guid CommandSet => Constants.AddToWatchesCommandSet;
@@ -38,10 +43,19 @@ namespace VSRAD.Package.Commands
             if (commandId != Constants.MenuCommandId)
                 return;
 
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var activeWord = _codeEditor.GetActiveWord();
+
             if (!string.IsNullOrWhiteSpace(activeWord))
             {
-                var watchName = EmptyBracketsRegex.Replace(activeWord, "").Trim();
+                var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+                Assumes.Present(dte);
+                var selectionText = (dte.ActiveDocument.Selection as TextSelection).Text;
+                // dont omit empty brackets if user manually selected text with them
+                var watchName = string.IsNullOrWhiteSpace(selectionText)
+                    ? EmptyBracketsRegex.Replace(activeWord, "").Trim()
+                    : selectionText.Trim();
                 _toolIntegration.AddWatchFromEditor(watchName);
             }
         }
