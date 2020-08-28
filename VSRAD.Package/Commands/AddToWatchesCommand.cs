@@ -52,10 +52,10 @@ namespace VSRAD.Package.Commands
                 var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
                 Assumes.Present(dte);
                 var selectionText = (dte.ActiveDocument.Selection as TextSelection).Text;
-                // dont omit empty brackets if user manually selected text with them
-                var watchName = string.IsNullOrWhiteSpace(selectionText)
+                // dont omit empty brackets or trim if user manually selected text
+                var watchName = string.IsNullOrEmpty(selectionText)
                     ? EmptyBracketsRegex.Replace(activeWord, "").Trim()
-                    : selectionText.Trim();
+                    : selectionText;
                 _toolIntegration.AddWatchFromEditor(watchName);
             }
         }
