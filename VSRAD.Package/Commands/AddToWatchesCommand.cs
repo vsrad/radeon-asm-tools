@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.ProjectSystem;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ToolWindows;
 
 namespace VSRAD.Package.Commands
 {
@@ -37,10 +36,7 @@ namespace VSRAD.Package.Commands
 
             var activeWord = _codeEditor.GetActiveWord();
             if (!string.IsNullOrWhiteSpace(activeWord))
-            {
-                var watchName = activeWord.Trim();
-                _toolIntegration.AddWatchFromEditor(watchName);
-            }
+                _toolIntegration.AddWatchFromEditor(activeWord);
         }
     }
 }
