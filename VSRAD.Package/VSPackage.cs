@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio;
+﻿using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -69,7 +70,8 @@ namespace VSRAD.Package
             await TaskFactory.SwitchToMainThreadAsync();
 
             var vsMonitorSelection = await GetServiceAsync(typeof(IVsMonitorSelection)) as IVsMonitorSelection;
-            _solutionManager = new SolutionManager(vsMonitorSelection);
+            var solution = (await GetServiceAsync(typeof(DTE)) as DTE).Solution;
+            _solutionManager = new SolutionManager(vsMonitorSelection, solution);
 #if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
