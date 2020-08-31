@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
@@ -57,14 +58,19 @@ namespace VSRAD.Package
         }
 
         private ICommandRouter _commandRouter;
+        private SolutionManager _solutionManager;
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             await base.InitializeAsync(cancellationToken, progress);
             AddService(typeof(DebugVisualizer.FontAndColorService),
                 (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorService()), promote: true);
-#if DEBUG
+
             await TaskFactory.SwitchToMainThreadAsync();
+
+            var vsMonitorSelection = await GetServiceAsync(typeof(IVsMonitorSelection)) as IVsMonitorSelection;
+            _solutionManager = new SolutionManager(vsMonitorSelection);
+#if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
         }

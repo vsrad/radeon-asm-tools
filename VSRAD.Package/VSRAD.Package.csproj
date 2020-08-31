@@ -199,6 +199,7 @@
     <Compile Include="ProjectSystem\Profiles\LegacyProfileImporter.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
+    <Compile Include="ProjectSystem\SolutionManager.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
