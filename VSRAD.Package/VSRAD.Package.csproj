@@ -244,7 +244,6 @@
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsReflector.cs" />
     <Compile Include="ProjectSystem\ProjectSourceManager.cs" />
     <Compile Include="ProjectSystem\ProjectEvents.cs" />
-    <Compile Include="ProjectSystem\ProjectLifecycle.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditorWindow.xaml.cs">
       <DependentUpon>MacroEditorWindow.xaml</DependentUpon>
     </Compile>

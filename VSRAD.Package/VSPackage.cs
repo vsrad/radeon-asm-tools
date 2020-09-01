@@ -43,6 +43,7 @@ namespace VSRAD.Package
     [ProvideLanguageService(typeof(VSLanguageInfo), Deborgar.Constants.LanguageName, 106)]
     [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
     [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
+    [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [Guid(Constants.PackageId)]
     public sealed class VSPackage : AsyncPackage, IOleCommandTarget
     {
@@ -69,17 +70,17 @@ namespace VSRAD.Package
 
             await TaskFactory.SwitchToMainThreadAsync();
 
-            var vsMonitorSelection = await GetServiceAsync(typeof(IVsMonitorSelection)) as IVsMonitorSelection;
-            var solution = (await GetServiceAsync(typeof(DTE)) as DTE).Solution;
-            _solutionManager = new SolutionManager(vsMonitorSelection, solution);
+            var vsMonitorSelection = (IVsMonitorSelection)await GetServiceAsync(typeof(IVsMonitorSelection));
+            _solutionManager = new SolutionManager(vsMonitorSelection);
+            _solutionManager.ProjectLoaded += (s, e) => TaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
 #if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
         }
 
-        public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration, ICommandRouter commandRouter)
+        public async Task ProjectLoadedAsync(object sender, ProjectLoadedEventArgs e)
         {
-            _commandRouter = commandRouter;
+            _commandRouter = e.CommandRouter;
 
             VisualizerToolWindow = (VisualizerWindow)await FindToolWindowAsync(
                 typeof(VisualizerWindow), 0, true, CancellationToken.None);
@@ -91,9 +92,9 @@ namespace VSRAD.Package
             //    typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
 
             await TaskFactory.SwitchToMainThreadAsync();
-            VisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
-            SliceVisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
-            OptionsToolWindow.OnProjectLoaded(toolWindowIntegration);
+            VisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
+            SliceVisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
+            OptionsToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             //EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
 
