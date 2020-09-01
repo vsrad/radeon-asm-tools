@@ -4,12 +4,11 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
-    public delegate void TokenizerUpdatedEventHandler(ITextSnapshot snapshot, IEnumerable<TrackingToken> tokens);
+    public delegate void TokenizerUpdatedEventHandler(TokenizerResult result);
 
     public interface IDocumentTokenizer
     {
-        TrackingToken GetToken(int point);
-        IEnumerable<TrackingToken> GetTokens(Span span);
+        TokenizerResult CurrentResult { get; }
         RadAsmTokenType GetTokenType(int type);
 
         event TokenizerUpdatedEventHandler TokenizerUpdated;

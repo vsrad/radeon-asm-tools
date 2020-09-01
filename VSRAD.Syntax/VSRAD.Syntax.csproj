@@ -72,7 +72,8 @@
     <Compile Include="Core\DocumentTokenizer.cs" />
     <Compile Include="Core\Helper\BitHelper.cs" />
     <Compile Include="Core\Helper\SortedSet.cs" />
-    <Compile Include="Core\Helper\SortedSetHelper.cs" />
+    <Compile Include="Core\Helper\ITokenizerCollection.cs" />
+    <Compile Include="Core\Helper\TokenizerCollection.cs" />
     <Compile Include="Core\IAnalysisResult.cs" />
     <Compile Include="Core\IDocument.cs" />
     <Compile Include="Core\IDocumentAnalysis.cs" />
@@ -84,8 +85,9 @@
     <Compile Include="Core\Lexer\Lexer.cs" />
     <Compile Include="Core\Parser\Asm2Parser.cs" />
     <Compile Include="Core\Parser\AsmDocParser.cs" />
-    <Compile Include="Core\Parser\AsmParser.cs" />
-    <Compile Include="Core\Parser\Parser.cs" />
+    <Compile Include="Core\Parser\Asm1Parser.cs" />
+    <Compile Include="Core\Parser\AbstractParser.cs" />
+    <Compile Include="Core\TokenizerResult.cs" />
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />

@@ -5,27 +5,30 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core.Helper
 {
-    internal static class SortedSetHelpers
+    public class TokenizerCollection : SortedSet<TrackingToken>, ITokenizerCollection<TrackingToken>
     {
-        internal static List<TrackingToken> GetInvalidatedBy(this SortedSet<TrackingToken> tree, ITextSnapshot version, Span span)
+        public TokenizerCollection(IEnumerable<TrackingToken> collection, IComparer<TrackingToken> comparer)
+            : base(collection, comparer) { }
+
+        public List<TrackingToken> GetInvalidated(ITextSnapshot version, Span span)
         {
             List<TrackingToken> tokens = new List<TrackingToken>();
-            if (tree.Root != null)
+            if (Root != null)
             {
-                FillInvalidatedTokens(tree.Root, version, span, tokens);
+                FillInvalidatedTokens(Root, version, span, tokens);
                 if (tokens.Count == 0)
-                    tokens.Add(tree.Min);
+                    tokens.Add(Min);
             }
             return tokens;
         }
 
-        internal static IEnumerable<TrackingToken> InOrderAfter(this SortedSet<TrackingToken> tree, ITextSnapshot version, int start)
+        public IEnumerable<TrackingToken> InOrderAfter(ITextSnapshot version, int start)
         {
             // search first
-            SortedSet<TrackingToken>.Node current = tree.Root;
-            if (tree.Root == null)
+            Node current = Root;
+            if (this.Root == null)
                 yield break;
-            Stack<SortedSet<TrackingToken>.Node> stack = new Stack<SortedSet<TrackingToken>.Node>(2 * (SortedSet<TrackingToken>.log2(tree.Count + 1)));
+            Stack<Node> stack = new Stack<Node>(2 * (log2(Count + 1)));
             // find exact
             while (true)
             {
@@ -64,9 +67,9 @@ namespace VSRAD.Syntax.Core.Helper
             }
         }
 
-        internal static TrackingToken GetCoveringToken(this SortedSet<TrackingToken> tree, ITextSnapshot version, int pos)
+        public TrackingToken GetCoveringToken(ITextSnapshot version, int pos)
         {
-            SortedSet<TrackingToken>.Node current = tree.Root;
+            SortedSet<TrackingToken>.Node current = Root;
             while (current != null)
             {
                 Span span = current.Item.GetSpan(version);
@@ -82,15 +85,15 @@ namespace VSRAD.Syntax.Core.Helper
             throw new ArgumentOutOfRangeException(nameof(pos));
         }
 
-        internal static IEnumerable<TrackingToken> GetCoveringTokens(this SortedSet<TrackingToken> tree, ITextSnapshot version, Span span)
+        public IEnumerable<TrackingToken> GetCoveringTokens(ITextSnapshot version, Span span)
         {
             List<TrackingToken> tokens = new List<TrackingToken>();
-            if (tree.Root != null)
-                FillCoveringTokens(tree.Root, version, span, tokens);
+            if (Root != null)
+                FillCoveringTokens(Root, version, span, tokens);
             return tokens;
         }
 
-        public static void FillCoveringTokens(SortedSet<TrackingToken>.Node current, ITextSnapshot version, Span span, List<TrackingToken> tokens)
+        private static void FillCoveringTokens(Node current, ITextSnapshot version, Span span, List<TrackingToken> tokens)
         {
             var currentSpan = current.Item.GetSpan(version);
             if (current.Left != null && span.Start < currentSpan.Start)
@@ -101,7 +104,7 @@ namespace VSRAD.Syntax.Core.Helper
                 FillCoveringTokens(current.Right, version, span, tokens);
         }
 
-        static void FillInvalidatedTokens(SortedSet<TrackingToken>.Node current, ITextSnapshot version, Span span, List<TrackingToken> tokens)
+        private static void FillInvalidatedTokens(Node current, ITextSnapshot version, Span span, List<TrackingToken> tokens)
         {
             var currentSpan = current.Item.GetSpan(version);
             if (current.Left != null && span.Start <= currentSpan.Start)
@@ -112,7 +115,7 @@ namespace VSRAD.Syntax.Core.Helper
                 FillInvalidatedTokens(current.Right, version, span, tokens);
         }
 
-        static bool RightInclusiveOverlap(Span current, Span span)
+        private static bool RightInclusiveOverlap(Span current, Span span)
         {
             if (span.End >= current.End)
                 return span.Start <= current.End;
@@ -121,7 +124,7 @@ namespace VSRAD.Syntax.Core.Helper
             return true;
         }
 
-        static SortedSet<TrackingToken>.Node Next(SortedSet<TrackingToken>.Node current, Stack<SortedSet<TrackingToken>.Node> parents)
+        private static Node Next(Node current, Stack<Node> parents)
         {
             if (current.Right != null)
             {
@@ -131,7 +134,7 @@ namespace VSRAD.Syntax.Core.Helper
             return PopUntilLeftChild(current, parents);
         }
 
-        static SortedSet<TrackingToken>.Node Minimum(SortedSet<TrackingToken>.Node current, Stack<SortedSet<TrackingToken>.Node> parents)
+        private static Node Minimum(Node current, Stack<Node> parents)
         {
             while (current.Left != null)
             {
@@ -141,7 +144,7 @@ namespace VSRAD.Syntax.Core.Helper
             return current;
         }
 
-        static SortedSet<TrackingToken>.Node PopUntilLeftChild(SortedSet<TrackingToken>.Node current, Stack<SortedSet<TrackingToken>.Node> parents)
+        private static Node PopUntilLeftChild(Node current, Stack<Node> parents)
         {
             while (parents.Count > 0)
             {

@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.Core.Lexer;
+using VSRAD.Syntax.Core.Parser;
+using VSRAD.Syntax.Core.RadAsm;
 using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.Core
@@ -9,14 +12,28 @@ namespace VSRAD.Syntax.Core
     [Export(typeof(IDocumentFactory))]
     internal class DocumentFactory : IDocumentFactory
     {
-        private readonly RadeonServiceProvider _serviceProvider;
         private readonly ContentTypeManager _contentTypeManager;
         private readonly Dictionary<string, IDocument> _documents;
 
+        #region parsers
+        private readonly IParser Asm1Parser;
+        private readonly IParser Asm2Parser;
+        private readonly IParser AsmDocParser;
+        #endregion
+
+        #region lexers
+        private static readonly ILexer Asm1Lexer = new AsmLexer();
+        private static readonly ILexer Asm2Lexer = new Asm2Lexer();
+        private static readonly ILexer AsmDocLexer = new AsmDocLexer();
+        #endregion
+
         [ImportingConstructor]
-        DocumentFactory(RadeonServiceProvider serviceProvider, ContentTypeManager contentTypeManager)
+        DocumentFactory(ContentTypeManager contentTypeManager)
         {
-            _serviceProvider = serviceProvider;
+            Asm1Parser = new Asm1Parser(this);
+            Asm2Parser = new Asm2Parser(this);
+            AsmDocParser = new AsmDocParser(this);
+            _documents = new Dictionary<string, IDocument>();
             _contentTypeManager = contentTypeManager;
         }
 
@@ -54,7 +71,11 @@ namespace VSRAD.Syntax.Core
 
         private IDocument CreateDocument(ITextDocument textDocument)
         {
-            var document = new Document(textDocument);
+            // TODO: select specific lexer and parser
+            var lexer = Asm1Lexer;
+            var parser = Asm1Parser;
+
+            var document = new Document(textDocument, lexer, parser);
             _documents.Add(document.Path, document);
             document.DocumentRenamed += DocumentRenamed;
 

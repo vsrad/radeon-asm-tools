@@ -1,20 +1,22 @@
 ﻿using Microsoft.VisualStudio.Text;
-using System;
+using VSRAD.Syntax.Core.Lexer;
 
 namespace VSRAD.Syntax.Core
 {
     internal class Document : IDocument
     {
-        public Document(ITextDocument textDocument)
+        public Document(ITextDocument textDocument, ILexer lexer, IParser parser)
         {
-            Path = textDocument.FilePath;
             _textBuffer = textDocument.TextBuffer;
+            Path = textDocument.FilePath;
+            DocumentTokenizer = new DocumentTokenizer(_textBuffer, lexer);
+            DocumentAnalysis = new DocumentAnalysis(DocumentTokenizer, parser);
 
             textDocument.FileActionOccurred += FileActionOccurred;
         }
 
-        public IDocumentAnalysis DocumentAnalysis => throw new NotImplementedException();
-        public IDocumentTokenizer DocumentTokenizer => throw new NotImplementedException();
+        public IDocumentAnalysis DocumentAnalysis { get; private set; }
+        public IDocumentTokenizer DocumentTokenizer { get; private set; }
         public string Path { get; private set; }
         public ITextSnapshot CurrentSnapshot => _textBuffer.CurrentSnapshot;
 

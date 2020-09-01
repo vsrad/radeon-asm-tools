@@ -13,8 +13,9 @@ namespace VSRAD.Syntax.Core
     {
         private readonly TrackingToken.NonOverlappingComparer _comparer;
         private readonly ILexer _lexer;
-        private Helper.SortedSet<TrackingToken> LastLexerResult;
+        private TokenizerCollection CurrentTokens;
 
+        public TokenizerResult CurrentResult { get; private set; }
         public event TokenizerUpdatedEventHandler TokenizerUpdated;
 
         public ITextSnapshot CurrentSnapshot
@@ -29,6 +30,7 @@ namespace VSRAD.Syntax.Core
             _comparer = new TrackingToken.NonOverlappingComparer();
             CurrentSnapshot = buffer.CurrentSnapshot;
 
+            Initialize();
             buffer.Changed += BufferChanged;
         }
 
@@ -37,23 +39,8 @@ namespace VSRAD.Syntax.Core
             var initialTextSegment = new[] { CurrentSnapshot.GetText() };
             var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));
 
-            LastLexerResult = new Helper.SortedSet<TrackingToken>(lexerTokens, _comparer);
-            RaiseTokensChanged(LastLexerResult.ToList());
-        }
-
-        public TrackingToken GetToken(int point) =>
-            LastLexerResult.GetCoveringToken(CurrentSnapshot, point);
-
-        public IEnumerable<TrackingToken> GetTokens(Span span)
-        {
-            if (span.Length == 0)
-            {
-                if (span.Start == 0 && span.End == 0)
-                    return Enumerable.Empty<TrackingToken>();
-
-                return new[] { GetToken(span.Start) };
-            }
-            return LastLexerResult.GetCoveringTokens(CurrentSnapshot, span);
+            CurrentTokens = new TokenizerCollection(lexerTokens, _comparer);
+            RaiseTokensChanged(CurrentTokens.ToList());
         }
 
         public RadAsmTokenType GetTokenType(int type) =>
@@ -85,21 +72,24 @@ namespace VSRAD.Syntax.Core
             // because otherwise some trackingtokens will have broken spans
             int i = 0;
             for (; i < forRemoval.Count; i++)
-                LastLexerResult.Remove(forRemoval[i]);
+                CurrentTokens.Remove(forRemoval[i]);
             CurrentSnapshot = after;
             IList<TrackingToken> updated = Rescan(forRemoval, before, change.Delta);
             for (; i < forRemoval.Count; i++)
-                LastLexerResult.Remove(forRemoval[i]);
+                CurrentTokens.Remove(forRemoval[i]);
             foreach (var token in updated)
-                LastLexerResult.Add(token);
+                CurrentTokens.Add(token);
             RaiseTokensChanged(updated);
         }
 
         private void RaiseTokensChanged(IList<TrackingToken> updated)
-            => TokenizerUpdated?.Invoke(CurrentSnapshot, updated);
+        {
+            CurrentResult = new TokenizerResult(CurrentSnapshot, tokens: CurrentTokens, updatedTokens: updated);
+            TokenizerUpdated?.Invoke(CurrentResult);
+        }
 
         private List<TrackingToken> GetInvalidated(ITextSnapshot oldSnapshot, ITextChange change) =>
-            LastLexerResult.GetInvalidatedBy(oldSnapshot, change.OldSpan);
+            CurrentTokens.GetInvalidated(oldSnapshot, change.OldSpan);
 
         private IList<TrackingToken> Rescan(List<TrackingToken> forRemoval, ITextSnapshot oldSnapshot, int delta)
         {
@@ -114,7 +104,7 @@ namespace VSRAD.Syntax.Core
             var newlyCreated = new List<TrackingToken>();
             var removalCandidates = new List<TrackingToken>();
             // this lazy iterator walks tokens that are outside of the initial invalidation span
-            var excessText = LastLexerResult.InOrderAfter(CurrentSnapshot, invalidatedSpan.End)
+            var excessText = CurrentTokens.InOrderAfter(CurrentSnapshot, invalidatedSpan.End)
                                  .Select(t => GetTextAndMarkForRemoval(t, ref removalCandidates))
                                  .TakeWhile(s => s != null);
             var tokens = _lexer.Run(new string[] { invalidatedText }.Concat(excessText), invalidatedSpan.Start);

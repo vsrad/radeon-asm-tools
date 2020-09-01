@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,10 +11,11 @@ using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.RadAsm
 {
-    internal class AsmParser : AbstractParser
+    [Export(typeof(Asm1Parser))]
+    internal class Asm1Parser : AbstractParser
     {
-        public AsmParser(IDocument document, IDocumentFactory documentFactory)
-            : base(document, documentFactory) { }
+        public Asm1Parser(IDocumentFactory documentFactory)
+            : base(documentFactory) { }
 
         public override async Task<List<IBlock>> RunAsync(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation)
         {

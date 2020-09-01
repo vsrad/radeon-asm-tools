@@ -7,13 +7,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Core.Tokens;
+using Microsoft.VisualStudio.Threading;
+using Microsoft.VisualStudio.Shell;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Core
 {
     internal class DocumentAnalysis : IDocumentAnalysis
     {
         private readonly IParser _parser;
-        private readonly ConcurrentDictionary<int, IAnalysisResult> _results;
+        private readonly ConcurrentDictionary<ITextSnapshot, AsyncLazy<IAnalysisResult>> _resultsRequests;
+        private readonly DocumentSnapshotComparer _comparer;
         private CancellationTokenSource _cts;
 
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
@@ -23,42 +27,61 @@ namespace VSRAD.Syntax.Core
             _parser = parser;
             _cts = new CancellationTokenSource();
 
+            _comparer = new DocumentSnapshotComparer();
+            _resultsRequests = new ConcurrentDictionary<ITextSnapshot, AsyncLazy<IAnalysisResult>>(_comparer);
+
             tokenizer.TokenizerUpdated += TokenizerUpdated;
+            TokenizerUpdated(tokenizer.CurrentResult);
         }
 
         public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
         {
-            if (_results.TryGetValue(textSnapshot.Version.VersionNumber, out var analysisResult))
-                return analysisResult;
+            if (_resultsRequests.TryGetValue(textSnapshot, out var asyncLazy))
+                return await asyncLazy.GetValueAsync();
 
             throw new NotImplementedException();
         }
 
-        private void TokenizerUpdated(ITextSnapshot snapshot, IEnumerable<TrackingToken> tokens)
+        private void TokenizerUpdated(TokenizerResult tokenizerResult)
         {
             _cts.Cancel();
             _cts = new CancellationTokenSource();
-            RunAnalysisAsync(snapshot, tokens, _cts.Token).RunAsyncWithoutAwait();
+            RunAnalysisAsync(tokenizerResult, _cts.Token).RunAsyncWithoutAwait();
         }
 
-        private Task<IAnalysisResult> RunAnalysisAsync(ITextSnapshot snapshot, IEnumerable<TrackingToken> tokens, CancellationToken cancellationToken) 
-            => Task.Run(() =>
-            {
-                var analysisResult = _results.GetOrAdd(snapshot.Version.VersionNumber, (version) =>
-                {
-                    var blocks = _parser.Run(tokens, snapshot, cancellationToken);
-                    var rootBlock = blocks[0];
+        private async Task RunAnalysisAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        {
+            var analysisResult = await _resultsRequests
+                .GetOrAdd(
+                    tokenizerResult.Snapshot, 
+                    version => new AsyncLazy<IAnalysisResult>(() =>
+                        Task.Run(async () => await RunParserAsync(tokenizerResult, cancellationToken)),
+                        ThreadHelper.JoinableTaskFactory))
+                .GetValueAsync();
 
-                    var includes = rootBlock.Tokens
-                        .Where(t => t.Type == RadAsmTokenType.Include)
-                        .Cast<IncludeToken>()
-                        .Select(i => i.Document)
-                        .ToList();
+            AnalysisUpdated?.Invoke(analysisResult);
+        }
 
-                    return new AnalysisResult(blocks, includes, snapshot);
-                });
+        private async Task<IAnalysisResult> RunParserAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        {
+            var blocks = await _parser.RunAsync(tokenizerResult.Tokens, tokenizerResult.Snapshot, cancellationToken);
+            var rootBlock = blocks[0];
 
-                return analysisResult;
-            }, cancellationToken);
+            var includes = rootBlock.Tokens
+                .Where(t => t.Type == RadAsmTokenType.Include)
+                .Cast<IncludeToken>()
+                .Select(i => i.Document)
+                .ToList();
+
+            return new AnalysisResult(blocks, includes, tokenizerResult.Snapshot);
+        }
+
+        private class DocumentSnapshotComparer : IEqualityComparer<ITextSnapshot>
+        {
+            public bool Equals(ITextSnapshot x, ITextSnapshot y) =>
+                x.Version.VersionNumber == y.Version.VersionNumber;
+
+            public int GetHashCode(ITextSnapshot obj) => obj.GetHashCode();
+        }
     }
 }

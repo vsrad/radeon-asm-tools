@@ -9,7 +9,6 @@ namespace VSRAD.Syntax.Core
     public interface IDocumentAnalysis
     {
         Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot);
-        Task<AnalysisToken> GetTokenAsync(SnapshotPoint point);
 
         event AnalysisUpdatedEventHandler AnalysisUpdated;
     }

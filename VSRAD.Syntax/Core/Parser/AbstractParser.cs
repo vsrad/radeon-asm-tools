@@ -20,13 +20,11 @@ namespace VSRAD.Syntax.Core
 
     internal abstract class AbstractParser : IParser
     {
-        private readonly IDocument _document;
         private readonly IDocumentFactory _documentFactory;
         protected HashSet<string> _instructions;
 
-        public AbstractParser(IDocument document, IDocumentFactory documentFactory)
+        public AbstractParser(IDocumentFactory documentFactory)
         {
-            _document = document;
             _documentFactory = documentFactory;
             _instructions = new HashSet<string>();
         }
@@ -51,19 +49,19 @@ namespace VSRAD.Syntax.Core
         {
             try
             {
-                var filePath = Path.Combine(Path.GetDirectoryName(_document.Path), includeStr.GetText(version).Trim('"'));
-                var externalDocument = _documentFactory.GetOrCreateDocument(filePath);
+                //var filePath = Path.Combine(Path.GetDirectoryName(_document.Path), includeStr.GetText(version).Trim('"'));
+                //var externalDocument = _documentFactory.GetOrCreateDocument(filePath);
 
-                if (externalDocument != null)
-                {
-                    var externalDocumentAnalysis = externalDocument.DocumentAnalysis;
-                    var analysisResult = await externalDocumentAnalysis.GetAnalysisResultAsync(externalDocument.CurrentSnapshot);
+                //if (externalDocument != null)
+                //{
+                //    var externalDocumentAnalysis = externalDocument.DocumentAnalysis;
+                //    var analysisResult = await externalDocumentAnalysis.GetAnalysisResultAsync(externalDocument.CurrentSnapshot);
 
-                    //foreach (var tokens in analysisResult.Scopes[0].Tokens)
-                    //{
-                    //    definitions.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
-                    //}
-                }
+                //    foreach (var tokens in analysisResult.Scopes[0].Tokens)
+                //    {
+                //        definitions.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
+                //    }
+                //}
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException)
             {
