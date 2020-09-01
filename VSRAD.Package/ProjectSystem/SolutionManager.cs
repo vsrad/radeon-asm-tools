@@ -18,6 +18,8 @@ namespace VSRAD.Package.ProjectSystem
     {
         public event EventHandler<ProjectLoadedEventArgs> ProjectLoaded;
 
+        private Project _currentRadProject;
+
         public SolutionManager(IVsMonitorSelection vsMonitorSelection)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -30,24 +32,22 @@ namespace VSRAD.Package.ProjectSystem
 
             if (elementid == (uint)VSConstants.VSSELELEMID.SEID_StartupProject)
             {
-                if (varValueOld is IVsProject vsProjectOld && GetCpsProject(vsProjectOld) is UnconfiguredProject cpsProjectOld)
-                {
-                    if (!IsTemporaryVisualCProject(cpsProjectOld))
-                    {
-                        if (cpsProjectOld.Services.ExportProvider.GetExportedValueOrDefault<IProject>() is Project radProject)
-                            radProject.Unload();
-                    }
-                }
+                if (varValueOld == varValueNew)
+                    return VSConstants.S_OK;
+
+                _currentRadProject?.Unload();
+                _currentRadProject = null;
+
                 if (varValueNew is IVsProject vsProject && GetCpsProject(vsProject) is UnconfiguredProject cpsProject)
                 {
                     if (IsTemporaryVisualCProject(cpsProject))
                         return VSConstants.S_OK;
 
-                    var radProject = cpsProject.Services.ExportProvider.GetExportedValueOrDefault<IProject>();
-                    if (radProject == null)
+                    _currentRadProject = (Project)cpsProject.Services.ExportProvider.GetExportedValueOrDefault<IProject>();
+                    if (_currentRadProject == null)
                         return VSConstants.S_OK;
 
-                    ((Project)radProject).Load();
+                    _currentRadProject.Load();
 
                     var exportProvider = cpsProject.Services.ExportProvider;
                     var loadedEventArgs = new ProjectLoadedEventArgs
@@ -56,6 +56,10 @@ namespace VSRAD.Package.ProjectSystem
                         CommandRouter = exportProvider.GetExportedValue<ICommandRouter>()
                     };
                     ProjectLoaded?.Invoke(this, loadedEventArgs);
+                }
+                else
+                {
+                    VSPackage.SolutionUnloaded();
                 }
             }
 
