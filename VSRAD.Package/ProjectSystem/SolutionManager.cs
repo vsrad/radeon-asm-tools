@@ -32,10 +32,10 @@ namespace VSRAD.Package.ProjectSystem
         public void LoadCurrentSolution(DTE dte)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            if (dte.Solution is Solution sln && sln.SolutionBuild.StartupProjects is Array startup && startup.GetValue(0) is string startupProject)
+            if (dte.Solution is Solution sln && sln.SolutionBuild.StartupProjects is Array sp && sp.GetValue(0) is string startupProject)
             {
                 var dteProject = sln.Item(startupProject);
-                if (dteProject is IVsBrowseObjectContext ctx && ctx.UnconfiguredProject is UnconfiguredProject cpsProject)
+                if (GetCpsProject(dteProject) is UnconfiguredProject cpsProject)
                     LoadRadProject(cpsProject);
             }
         }
@@ -92,16 +92,31 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         // https://github.com/microsoft/VSProjectSystem/blob/1c0a47aba5a22d3eb071dc097b73851bdeaf68db/doc/automation/finding_CPS_in_a_VS_project.md
-        private static UnconfiguredProject GetCpsProject(IVsProject project)
+        private static UnconfiguredProject GetCpsProject(IVsProject vsProject)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            if (project is IVsBrowseObjectContext context && project is IVsHierarchy hierarchy)
-            {
+
+            if (vsProject is IVsBrowseObjectContext ctx) // RADProject
+                return ctx.UnconfiguredProject;
+
+            if (vsProject is IVsHierarchy hierarchy) // VisualC
                 if (ErrorHandler.Succeeded(hierarchy.GetProperty((uint)VSConstants.VSITEMID.Root, (int)__VSHPROPID.VSHPROPID_ExtObject, out var extObject)))
-                    if (extObject is EnvDTE.Project dteProject && dteProject.Object is IVsBrowseObjectContext dteContext)
-                        context = dteContext;
-                return context?.UnconfiguredProject;
-            }
+                    if (extObject is EnvDTE.Project dteProject && dteProject.Object is IVsBrowseObjectContext dteCtx)
+                        return dteCtx.UnconfiguredProject;
+
+            return null;
+        }
+
+        private static UnconfiguredProject GetCpsProject(EnvDTE.Project dteProject)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            if (dteProject is IVsBrowseObjectContext ctx) // RADProject
+                return ctx.UnconfiguredProject;
+
+            if (dteProject.Object is IVsBrowseObjectContext objCtx) // VisualC
+                return objCtx.UnconfiguredProject;
+
             return null;
         }
 
