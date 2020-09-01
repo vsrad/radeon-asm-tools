@@ -71,8 +71,10 @@ namespace VSRAD.Package
             await TaskFactory.SwitchToMainThreadAsync();
 
             var vsMonitorSelection = (IVsMonitorSelection)await GetServiceAsync(typeof(IVsMonitorSelection));
+            var dte = (DTE)await GetServiceAsync(typeof(DTE));
             _solutionManager = new SolutionManager(vsMonitorSelection);
             _solutionManager.ProjectLoaded += (s, e) => TaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
+            _solutionManager.LoadCurrentSolution(dte);
 #if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
@@ -100,8 +102,8 @@ namespace VSRAD.Package
 
         public static void SolutionUnloaded()
         {
-            VisualizerToolWindow.OnProjectUnloaded();
-            OptionsToolWindow.OnProjectUnloaded();
+            VisualizerToolWindow?.OnProjectUnloaded();
+            OptionsToolWindow?.OnProjectUnloaded();
         }
 
         int IOleCommandTarget.QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)

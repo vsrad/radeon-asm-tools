@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio;
+﻿using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
@@ -26,6 +27,19 @@ namespace VSRAD.Package.ProjectSystem
             vsMonitorSelection.AdviseSelectionEvents(this, out _);
         }
 
+        // VS can load our extension after opening a solution (and raising OnElementValueChanged),
+        // so we need to check the startup project manually after the extension is loaded
+        public void LoadCurrentSolution(DTE dte)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (dte.Solution is Solution sln && sln.SolutionBuild.StartupProjects is Array startup && startup.GetValue(0) is string startupProject)
+            {
+                var dteProject = sln.Item(startupProject);
+                if (dteProject is IVsBrowseObjectContext ctx && ctx.UnconfiguredProject is UnconfiguredProject cpsProject)
+                    LoadRadProject(cpsProject);
+            }
+        }
+
         int IVsSelectionEvents.OnElementValueChanged(uint elementid, object varValueOld, object varValueNew)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -39,31 +53,32 @@ namespace VSRAD.Package.ProjectSystem
                 _currentRadProject = null;
 
                 if (varValueNew is IVsProject vsProject && GetCpsProject(vsProject) is UnconfiguredProject cpsProject)
-                {
-                    if (IsTemporaryVisualCProject(cpsProject))
-                        return VSConstants.S_OK;
-
-                    _currentRadProject = (Project)cpsProject.Services.ExportProvider.GetExportedValueOrDefault<IProject>();
-                    if (_currentRadProject == null)
-                        return VSConstants.S_OK;
-
-                    _currentRadProject.Load();
-
-                    var exportProvider = cpsProject.Services.ExportProvider;
-                    var loadedEventArgs = new ProjectLoadedEventArgs
-                    {
-                        ToolWindowIntegration = exportProvider.GetExportedValue<IToolWindowIntegration>(),
-                        CommandRouter = exportProvider.GetExportedValue<ICommandRouter>()
-                    };
-                    ProjectLoaded?.Invoke(this, loadedEventArgs);
-                }
+                    LoadRadProject(cpsProject);
                 else
-                {
                     VSPackage.SolutionUnloaded();
-                }
             }
 
             return VSConstants.S_OK;
+        }
+
+        private void LoadRadProject(UnconfiguredProject cpsProject)
+        {
+            if (IsTemporaryVisualCProject(cpsProject))
+                return;
+
+            _currentRadProject = (Project)cpsProject.Services.ExportProvider.GetExportedValueOrDefault<IProject>();
+            if (_currentRadProject == null)
+                return;
+
+            _currentRadProject.Load();
+
+            var exportProvider = cpsProject.Services.ExportProvider;
+            var loadedEventArgs = new ProjectLoadedEventArgs
+            {
+                ToolWindowIntegration = exportProvider.GetExportedValue<IToolWindowIntegration>(),
+                CommandRouter = exportProvider.GetExportedValue<ICommandRouter>()
+            };
+            ProjectLoaded?.Invoke(this, loadedEventArgs);
         }
 
         int IVsSelectionEvents.OnCmdUIContextChanged(uint dwCmdUICookie, int fActive)
