@@ -46,9 +46,6 @@ namespace VSRAD.Package.ProjectSystem
             _deployManager = deployManager;
             _channel = channel;
             _actionLogger = actionLogger;
-
-            DebugEngine.InitializationCallback = RegisterEngine;
-            DebugEngine.TerminationCallback = DeregisterEngine;
         }
 
         public IEngineIntegration RegisterEngine()
@@ -77,6 +74,9 @@ namespace VSRAD.Package.ProjectSystem
             }
 
             _debugSession = new DebugSession(_project, _channel, _deployManager, _serviceProvider);
+            DebugEngine.InitializationCallback = RegisterEngine;
+            DebugEngine.TerminationCallback = DeregisterEngine;
+
             return true;
         }
 
