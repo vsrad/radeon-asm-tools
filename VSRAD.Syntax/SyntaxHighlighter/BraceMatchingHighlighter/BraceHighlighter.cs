@@ -93,7 +93,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             var rbracketType = RadAsmTokenType.Unknown;
 
             cancellation.ThrowIfCancellationRequested();
-            var currentToken = _tokenizer.GetToken(currentRequest);
+            var currentResult = _tokenizer.CurrentResult;
+            var currentToken = currentResult.GetToken(currentRequest);
             if (_tokenizer.GetTokenType(currentToken.Type) == RadAsmTokenType.Comment)
             {
                 SynchronousUpdate(new NormalizedSnapshotSpanCollection(), null);
@@ -149,7 +150,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
             if (bracketType == BracketType.Lbracket)
             {
-                var searchTokens = _tokenizer
+                var searchTokens = currentResult
                     .GetTokens(new Span(currentWord.End, currentWord.Snapshot.Length - currentWord.End))
                     .Where(t => IsLeftOrRightBracket(t.Type, lbracketType, rbracketType));
 
@@ -173,7 +174,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             }
             else if (bracketType == BracketType.Rbracket)
             {
-                var searchTokens = _tokenizer
+                var searchTokens = currentResult
                     .GetTokens(new Span(0, currentWord.Start))
                     .Where(t => IsLeftOrRightBracket(t.Type, lbracketType, rbracketType));
 

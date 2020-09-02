@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.Core
             _textBuffer = textDocument.TextBuffer;
             Path = textDocument.FilePath;
             DocumentTokenizer = new DocumentTokenizer(_textBuffer, lexer);
-            DocumentAnalysis = new DocumentAnalysis(DocumentTokenizer, parser);
+            DocumentAnalysis = new DocumentAnalysis(this, DocumentTokenizer, parser);
 
             textDocument.FileActionOccurred += FileActionOccurred;
         }

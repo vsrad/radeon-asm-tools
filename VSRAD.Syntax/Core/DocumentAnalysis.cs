@@ -15,6 +15,7 @@ namespace VSRAD.Syntax.Core
 {
     internal class DocumentAnalysis : IDocumentAnalysis
     {
+        private readonly IDocument _document;
         private readonly IParser _parser;
         private readonly ConcurrentDictionary<ITextSnapshot, AsyncLazy<IAnalysisResult>> _resultsRequests;
         private readonly DocumentSnapshotComparer _comparer;
@@ -22,8 +23,9 @@ namespace VSRAD.Syntax.Core
 
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
 
-        public DocumentAnalysis(IDocumentTokenizer tokenizer, IParser parser)
+        public DocumentAnalysis(IDocument document, IDocumentTokenizer tokenizer, IParser parser)
         {
+            _document = document;
             _parser = parser;
             _cts = new CancellationTokenSource();
 
@@ -64,7 +66,7 @@ namespace VSRAD.Syntax.Core
 
         private async Task<IAnalysisResult> RunParserAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
-            var blocks = await _parser.RunAsync(tokenizerResult.Tokens, tokenizerResult.Snapshot, cancellationToken);
+            var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
             var rootBlock = blocks[0];
 
             var includes = rootBlock.Tokens
@@ -73,7 +75,7 @@ namespace VSRAD.Syntax.Core
                 .Select(i => i.Document)
                 .ToList();
 
-            return new AnalysisResult(blocks, includes, tokenizerResult.Snapshot);
+            return new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
         }
 
         private class DocumentSnapshotComparer : IEqualityComparer<ITextSnapshot>

@@ -17,32 +17,33 @@ namespace VSRAD.Syntax.Core.Blocks
     public interface IBlock
     {
         IBlock Parrent { get; }
+        ITextSnapshot Snapshot { get; }
         TrackingBlock Scope { get; }
         BlockType Type { get; }
-        TrackingToken TokenStart { get; }
-        TrackingToken TokenEnd { get; }
         List<IBlock> Childrens { get; }
         List<AnalysisToken> Tokens { get; }
 
-        void AddToken(RadAsmTokenType tokenType, TrackingToken trackingToken);
         void AddChildren(IBlock block);
-        bool InScope(ITextSnapshot version, int point);
-        bool InScope(ITextSnapshot version, Span span);
-        void SetEnd(ITextSnapshot version, int endPosition, TrackingToken tokenEnd);
-        void SetScopeStart(int startPosition);
+        void AddToken(AnalysisToken token);
+        bool InScope(int point);
+        bool InScope(Span span);
+        bool InRange(int point);
+        bool InRange(Span span);
+        void SetEnd(int endPosition, TrackingToken tokenEnd);
+        void SetStart(int startPosition);
     }
 
     internal class Block : IBlock
     {
-        public static IBlock Empty() => new Block(null, BlockType.Root, TrackingToken.Empty);
-
         public IBlock Parrent { get; }
+        public ITextSnapshot Snapshot { get; }
         public BlockType Type { get; }
-        public TrackingToken TokenStart { get; }
-        public TrackingToken TokenEnd { get; private set; }
         public List<IBlock> Childrens { get; }
         public List<AnalysisToken> Tokens { get; }
         public TrackingBlock Scope { get; private set; }
+
+        private int _actualStart;
+        private int _actualEnd;
 
         private int startPosition;
 
@@ -50,40 +51,69 @@ namespace VSRAD.Syntax.Core.Blocks
         {
             Parrent = parrent;
             Type = type;
-            TokenStart = tokenStart;
+            Snapshot = parrent.Snapshot;
+            _actualStart = tokenStart.GetStart(Snapshot);
 
             Childrens = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
         }
 
-        public void SetScope(ITextSnapshot version, Span span) =>
-            Scope = new TrackingBlock(version, span);
+        public Block(IBlock parrent, BlockType type, TrackingToken tokenStart, TrackingToken tokenEnd)
+        {
+            Parrent = parrent;
+            Type = type;
+            Snapshot = parrent.Snapshot;
+            _actualStart = tokenStart.GetStart(Snapshot);
+            _actualEnd = tokenEnd.GetEnd(Snapshot);
+            Scope = new TrackingBlock(Snapshot, _actualStart, _actualEnd);
 
-        public void SetScopeStart(int scopeStart) =>
+            Childrens = new List<IBlock>();
+            Tokens = new List<AnalysisToken>();
+        }
+
+        public Block(ITextSnapshot snapshot)
+        {
+            Parrent = null;
+            Type = BlockType.Root;
+            Snapshot = snapshot;
+            _actualStart = 0;
+            _actualEnd = Snapshot.Length - 1;
+
+            Childrens = new List<IBlock>();
+            Tokens = new List<AnalysisToken>();
+        }
+
+        public void SetStart(int scopeStart) =>
             startPosition = scopeStart;
 
-        public void SetEnd(ITextSnapshot version, int endPosition, TrackingToken tokenEnd)
+        public void SetEnd(int endPosition, TrackingToken tokenEnd)
         {
-            SetScopeEnd(version, endPosition);
-            TokenEnd = tokenEnd;
+            SetScopeEnd(endPosition);
+            _actualEnd = tokenEnd.GetEnd(Snapshot);
         }
 
         public void AddChildren(IBlock block) =>
             Childrens.Add(block);
 
-        public void AddToken(RadAsmTokenType tokenType, TrackingToken trackingToken) =>
-            Tokens.Add(new AnalysisToken(tokenType, trackingToken));
+        public void AddToken(AnalysisToken token) =>
+            Tokens.Add(token);
 
-        public bool InScope(ITextSnapshot version, int point) =>
-            Scope.GetSpan(version).Contains(point);
+        public bool InScope(int point) =>
+            Scope.GetSpan(Snapshot).Contains(point);
 
-        public bool InScope(ITextSnapshot version, Span span) =>
-            Scope.GetSpan(version).Contains(span);
+        public bool InScope(Span span) =>
+            Scope.GetSpan(Snapshot).Contains(span);
 
-        private void SetScopeEnd(ITextSnapshot version, int endPosition)
+        public bool InRange(int point) =>
+            _actualStart <= point && _actualEnd >= point;
+
+        public bool InRange(Span span) =>
+            _actualStart <= span.Start && _actualEnd >= span.End;
+
+        private void SetScopeEnd(int endPosition)
         {
             if (startPosition < endPosition)
-                Scope = new TrackingBlock(version, startPosition, endPosition);
+                Scope = new TrackingBlock(Snapshot, startPosition, endPosition);
         }
     }
 }

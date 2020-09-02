@@ -90,6 +90,7 @@
     <Compile Include="Core\Parser\AbstractParser.cs" />
     <Compile Include="Core\TokenizerResult.cs" />
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
+    <Compile Include="Core\Tokens\DefinitionToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
     <Compile Include="Core\Tokens\TokenSpan.cs" />

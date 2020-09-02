@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Core
 {
     public interface IParser
     {
-        Task<List<IBlock>> RunAsync(IEnumerable<TrackingToken> tokens, ITextSnapshot version, CancellationToken cancellation);
+        Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, IEnumerable<TrackingToken> tokens, CancellationToken cancellation);
     }
 
     internal abstract class AbstractParser : IParser
@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.Core
             _documentFactory = documentFactory;
         }
 
-        public abstract Task<List<IBlock>> RunAsync(IEnumerable<TrackingToken> tokens, ITextSnapshot snapshot, CancellationToken cancellation);
+        public abstract Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, IEnumerable<TrackingToken> tokens, CancellationToken cancellation);
 
         protected static IBlock SetBlockReady(IBlock block, List<IBlock> list)
         {
@@ -39,37 +39,31 @@ namespace VSRAD.Syntax.Core
             return block.Parrent ?? block;
         }
 
-        protected async Task AddExternalDefinitionsAsync(List<KeyValuePair<AnalysisToken, ITextSnapshot>> definitions, TrackingToken includeStr, ITextSnapshot version)
+        protected async Task AddExternalDefinitionsAsync(string path, ITextSnapshot version, List<DefinitionToken> definitions, TrackingToken includeStr)
         {
             try
             {
-                //var filePath = Path.Combine(Path.GetDirectoryName(_document.Path), includeStr.GetText(version).Trim('"'));
-                //var externalDocument = _documentFactory.GetOrCreateDocument(filePath);
+                var externalFileName = includeStr.GetText(version).Trim('"');
+                var externalFilePath = Path.Combine(Path.GetDirectoryName(path), externalFileName);
+                var externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
 
-                //if (externalDocument != null)
-                //{
-                //    var externalDocumentAnalysis = externalDocument.DocumentAnalysis;
-                //    var analysisResult = await externalDocumentAnalysis.GetAnalysisResultAsync(externalDocument.CurrentSnapshot);
+                if (externalDocument != null)
+                {
+                    var externalDocumentAnalysis = externalDocument.DocumentAnalysis;
+                    var externalAnalysisResult = await externalDocumentAnalysis.GetAnalysisResultAsync(externalDocument.CurrentSnapshot);
 
-                //    foreach (var tokens in analysisResult.Scopes[0].Tokens)
-                //    {
-                //        definitions.Add(new KeyValuePair<AnalysisToken, ITextSnapshot>(funcToken, documentAnalysis.CurrentSnapshot));
-                //    }
-                //}
+                    definitions.AddRange(externalAnalysisResult.GetGlobalDefinitions());
+                }
             }
-            catch (Exception e) when (e is ArgumentException || e is FileNotFoundException)
-            {
-                Error.LogError(e, "External definitions loader");
-            }
+            catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }
         }
 
-        protected void ParseReferenceCandidate(List<KeyValuePair<AnalysisToken, ITextSnapshot>> definitionTokens, Dictionary<string, List<KeyValuePair<IBlock, TrackingToken>>> referenceCandidate, CancellationToken cancellation)
+        protected void ParseReferenceCandidate(List<DefinitionToken> definitionTokens, Dictionary<string, List<KeyValuePair<IBlock, TrackingToken>>> referenceCandidate, ITextSnapshot snapshot, CancellationToken cancellation)
         {
-            foreach (var definitionTokenPair in definitionTokens)
+            foreach (var definitionToken in definitionTokens)
             {
                 cancellation.ThrowIfCancellationRequested();
 
-                var definitionToken = definitionTokenPair.Key;
                 RadAsmTokenType referenceType;
                 switch (definitionToken.Type)
                 {
@@ -86,11 +80,11 @@ namespace VSRAD.Syntax.Core
                         continue; // skip unknown token
                 }
 
-                var tokenText = definitionToken.TrackingToken.GetText(definitionTokenPair.Value);
+                var tokenText = definitionToken.GetText();
                 if (referenceCandidate.TryGetValue(tokenText, out var referenceTokenPairs))
                 {
                     foreach (var referenceTokenPair in referenceTokenPairs)
-                        referenceTokenPair.Key.Tokens.Add(new ReferenceToken(referenceType, referenceTokenPair.Value, definitionToken));
+                        referenceTokenPair.Key.Tokens.Add(new ReferenceToken(referenceType, referenceTokenPair.Value, snapshot, definitionToken));
                 }
             }
         }

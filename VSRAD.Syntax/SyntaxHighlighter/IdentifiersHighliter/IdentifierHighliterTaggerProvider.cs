@@ -14,13 +14,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
     [TagType(typeof(TextMarkerTag))]
     internal sealed class IdentifierHighliterTaggerProvider : IViewTaggerProvider
     {
-        private readonly INavigationTokenService _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
 
         [ImportingConstructor]
-        public IdentifierHighliterTaggerProvider(INavigationTokenService navigationTokenService, IDocumentFactory documentFactory)
+        public IdentifierHighliterTaggerProvider(IDocumentFactory documentFactory)
         {
-            _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
         }
 
@@ -30,7 +28,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return null;
 
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            return new HighlightWordTagger(textView, buffer, documentAnalysis, _navigationTokenService) as ITagger<T>;
+            return new HighlightWordTagger(textView, buffer, document.DocumentAnalysis) as ITagger<T>;
         }
     }
 }

@@ -1,13 +1,16 @@
-﻿namespace VSRAD.Syntax.Core.Tokens
-{
-    internal class ReferenceToken : AnalysisToken
-    {
-        public readonly AnalysisToken Definition;
+﻿using Microsoft.VisualStudio.Text;
 
-        public ReferenceToken(RadAsmTokenType tokenType, TrackingToken trackingToken, AnalysisToken definitionToken)
-            : base (tokenType, trackingToken)
+namespace VSRAD.Syntax.Core.Tokens
+{
+    public class ReferenceToken : AnalysisToken
+    {
+        public readonly DefinitionToken Definition;
+
+        public ReferenceToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot, DefinitionToken definitionToken)
+            : base (tokenType, trackingToken, snapshot)
         {
             Definition = definitionToken;
+            Definition.AddReference(this);
         }
     }
 }

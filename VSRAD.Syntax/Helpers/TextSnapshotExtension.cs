@@ -3,7 +3,7 @@ using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.Helpers
 {
-    internal enum AsmType
+    public enum AsmType
     {
         RadAsm = 1,
         RadAsm2 = 2,

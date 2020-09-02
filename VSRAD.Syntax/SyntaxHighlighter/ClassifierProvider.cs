@@ -30,31 +30,31 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         }
     }
 
-    //[Export(typeof(ITaggerProvider))]
-    //[ContentType(Constants.RadeonAsmSyntaxContentType)]
-    //[TagType(typeof(ClassificationTag))]
-    //internal class AnalysisClassifierProvider : ITaggerProvider
-    //{
-    //    private readonly IStandardClassificationService _classificationService;
-    //    private readonly IClassificationTypeRegistryService _classificationTypeRegistryService;
-    //    private readonly DocumentAnalysisProvoder _documentAnalysisProvider;
+    [Export(typeof(ITaggerProvider))]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [TagType(typeof(ClassificationTag))]
+    internal class AnalysisClassifierProvider : ITaggerProvider
+    {
+        private readonly IStandardClassificationService _classificationService;
+        private readonly IClassificationTypeRegistryService _classificationTypeRegistryService;
+        private readonly IDocumentFactory _documentFactory;
 
-    //    [ImportingConstructor]
-    //    public AnalysisClassifierProvider(IStandardClassificationService classificationService,
-    //        IClassificationTypeRegistryService classificationTypeRegistryService,
-    //        DocumentAnalysisProvoder documentAnalysisProvoder,
-    //        ThemeColorManager classificationColorManager)
-    //    {
-    //        _classificationService = classificationService;
-    //        _classificationTypeRegistryService = classificationTypeRegistryService;
-    //        _documentAnalysisProvider = documentAnalysisProvoder;
-    //        Microsoft.VisualStudio.PlatformUI.VSColorTheme.ThemeChanged += (e) => classificationColorManager.UpdateColors();
-    //    }
+        [ImportingConstructor]
+        public AnalysisClassifierProvider(IStandardClassificationService classificationService,
+            IClassificationTypeRegistryService classificationTypeRegistryService,
+            IDocumentFactory documentFactory,
+            ThemeColorManager classificationColorManager)
+        {
+            _classificationService = classificationService;
+            _classificationTypeRegistryService = classificationTypeRegistryService;
+            _documentFactory = documentFactory;
+            Microsoft.VisualStudio.PlatformUI.VSColorTheme.ThemeChanged += (e) => classificationColorManager.UpdateColors();
+        }
 
-    //    public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
-    //    {
-    //        var documentAnalysis = _documentAnalysisProvider.CreateDocumentAnalysis(buffer);
-    //        return buffer.Properties.GetOrCreateSingletonProperty(() => new AnalysisClassifier(buffer, documentAnalysis, _classificationTypeRegistryService, _classificationService)) as ITagger<T>;
-    //    }
-    //}
+        public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
+        {
+            var document = _documentFactory.GetOrCreateDocument(buffer);
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new AnalysisClassifier(document.DocumentAnalysis, _classificationTypeRegistryService, _classificationService)) as ITagger<T>;
+        }
+    }
 }
