@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options.Instructions;
 using DisplayNameAttribute = System.ComponentModel.DisplayNameAttribute;
 using Task = System.Threading.Tasks.Task;
 
@@ -175,7 +176,7 @@ namespace VSRAD.Syntax.Options
         {
             // make sure this managers initialized before initial option event
             _ = Package.Instance.GetMEFComponent<ContentTypeManager>();
-            _ = Package.Instance.GetMEFComponent<InstructionListManager>();
+            _ = Package.Instance.GetMEFComponent<IInstructionListManager>();
 
             _optionsEventProvider.OptionsUpdatedInvoke();
             return Task.CompletedTask;

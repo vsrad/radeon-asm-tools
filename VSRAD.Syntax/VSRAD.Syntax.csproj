@@ -83,6 +83,7 @@
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
     <Compile Include="Core\Lexer\AsmLexer.cs" />
     <Compile Include="Core\Lexer\Lexer.cs" />
+    <Compile Include="Core\Parser\AbstractInstructionParser.cs" />
     <Compile Include="Core\Parser\Asm2Parser.cs" />
     <Compile Include="Core\Parser\AsmDocParser.cs" />
     <Compile Include="Core\Parser\Asm1Parser.cs" />
@@ -135,7 +136,9 @@
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
-    <Compile Include="Options\InstructionListManager.cs" />
+    <Compile Include="Options\Instructions\IInstructionListManager.cs" />
+    <Compile Include="Options\Instructions\Instruction.cs" />
+    <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs" />

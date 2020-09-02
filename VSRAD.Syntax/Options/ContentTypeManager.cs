@@ -16,13 +16,14 @@ namespace VSRAD.Syntax.Options
     [Export(typeof(ContentTypeManager))]
     internal sealed class ContentTypeManager
     {
+        public readonly IContentType Asm1ContentType;
+        public readonly IContentType Asm2ContentType;
+        public readonly IContentType AsmDocContentType;
+
         private readonly SVsServiceProvider _serviceProvider;
         private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
         private readonly DTE _dte;
-        private readonly IContentType _asm1ContentType;
-        private readonly IContentType _asm2ContentType;
-        private readonly IContentType _asmDocContentType;
         private IEnumerable<string> _asm1Extensions;
         private IEnumerable<string> _asm2Extensions;
         private readonly List<string> _asmDocExtensions;
@@ -41,9 +42,9 @@ namespace VSRAD.Syntax.Options
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
             optionsEventProvider.OptionsUpdated += FileExtensionChanged;
-            _asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
-            _asm2ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
-            _asmDocContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
+            Asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
+            Asm2ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
+            AsmDocContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
             _asm1Extensions = optionsEventProvider.Asm1FileExtensions;
             _asm2Extensions = optionsEventProvider.Asm2FileExtensions;
             _asmDocExtensions = new List<string>() { Constants.FileExtensionAsm1Doc, Constants.FileExtensionAsm2Doc };
@@ -56,13 +57,13 @@ namespace VSRAD.Syntax.Options
         {
             var fileExtension = Path.GetExtension(path);
             if (_asm1Extensions.Contains(fileExtension))
-                return _asm1ContentType;
+                return Asm1ContentType;
 
             if (_asm2Extensions.Contains(fileExtension))
-                return _asm2ContentType;
+                return Asm2ContentType;
 
             if (_asmDocExtensions.Contains(fileExtension))
-                return _asmDocContentType;
+                return AsmDocContentType;
 
             return null;
         }
@@ -88,11 +89,11 @@ namespace VSRAD.Syntax.Options
             _asm2Extensions = asm2Extensions;
             try
             {
-                DeleteExtensions(_asm1ContentType);
-                DeleteExtensions(_asm2ContentType);
+                DeleteExtensions(Asm1ContentType);
+                DeleteExtensions(Asm2ContentType);
 
-                ChangeExtensions(_asm1ContentType, asm1Extensions);
-                ChangeExtensions(_asm2ContentType, asm2Extensions);
+                ChangeExtensions(Asm1ContentType, asm1Extensions);
+                ChangeExtensions(Asm2ContentType, asm2Extensions);
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (_dte.ActiveDocument != null)
@@ -121,7 +122,7 @@ namespace VSRAD.Syntax.Options
 
         private void UpdateTextBufferContentType(ITextBuffer textBuffer, string path)
         {
-            if (textBuffer == null || textBuffer.ContentType == _asm1ContentType || textBuffer.ContentType == _asm2ContentType || textBuffer.ContentType == _asmDocContentType)
+            if (textBuffer == null || textBuffer.ContentType == Asm1ContentType || textBuffer.ContentType == Asm2ContentType || textBuffer.ContentType == AsmDocContentType)
                 return;
 
             var contentType = DetermineContentType(path);

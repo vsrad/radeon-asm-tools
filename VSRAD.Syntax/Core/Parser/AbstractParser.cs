@@ -15,24 +15,18 @@ namespace VSRAD.Syntax.Core
     public interface IParser
     {
         Task<List<IBlock>> RunAsync(IEnumerable<TrackingToken> tokens, ITextSnapshot version, CancellationToken cancellation);
-        void UpdateInstructionSet(IReadOnlyList<string> instructions);
     }
 
     internal abstract class AbstractParser : IParser
     {
         private readonly IDocumentFactory _documentFactory;
-        protected HashSet<string> _instructions;
 
         public AbstractParser(IDocumentFactory documentFactory)
         {
             _documentFactory = documentFactory;
-            _instructions = new HashSet<string>();
         }
 
         public abstract Task<List<IBlock>> RunAsync(IEnumerable<TrackingToken> tokens, ITextSnapshot snapshot, CancellationToken cancellation);
-
-        public void UpdateInstructionSet(IReadOnlyList<string> instructions) =>
-            _instructions = instructions.ToHashSet();
 
         protected static IBlock SetBlockReady(IBlock block, List<IBlock> list)
         {

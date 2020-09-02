@@ -1,11 +1,11 @@
 ﻿using Microsoft.VisualStudio.Text;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Core.RadAsm;
 using VSRAD.Syntax.Options;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.Core
 {
@@ -13,6 +13,7 @@ namespace VSRAD.Syntax.Core
     internal class DocumentFactory : IDocumentFactory
     {
         private readonly ContentTypeManager _contentTypeManager;
+        private readonly RadeonServiceProvider _serviceProvider;
         private readonly Dictionary<string, IDocument> _documents;
 
         #region parsers
@@ -28,30 +29,34 @@ namespace VSRAD.Syntax.Core
         #endregion
 
         [ImportingConstructor]
-        DocumentFactory(ContentTypeManager contentTypeManager)
+        DocumentFactory(RadeonServiceProvider serviceProvider,
+            ContentTypeManager contentTypeManager,
+            IInstructionListManager instructionManager)
         {
-            Asm1Parser = new Asm1Parser(this);
-            Asm2Parser = new Asm2Parser(this);
+            Asm1Parser = new Asm1Parser(this, instructionManager);
+            Asm2Parser = new Asm2Parser(this, instructionManager);
             AsmDocParser = new AsmDocParser(this);
+
             _documents = new Dictionary<string, IDocument>();
             _contentTypeManager = contentTypeManager;
+            _serviceProvider = serviceProvider;
+            _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += DocumentDisposed;
         }
 
         public IDocument GetOrCreateDocument(string path)
         {
-            //if (Utils.IsDocumentOpen(_serviceProvider.ServiceProvider, path, out var vsTextBuffer))
-            //{
-            //    var textBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDataBuffer(vsTextBuffer);
-            //    return GetOrCreateDocument(textBuffer);
-            //}
+            if (_documents.TryGetValue(path, out var document))
+                return document;
 
-            //var contentType = _contentTypeManager.DetermineContentType(path)
-            //    ?? throw new ArgumentException($"File {path} do not belog to asm1 or asm2 or asmdoc");
+            var contentType = _contentTypeManager.DetermineContentType(path);
+            if (contentType == null) 
+                return null;
 
-            //var textDocument = _serviceProvider.TextDocumentFactoryService.CreateAndLoadTextDocument(path, contentType);
+            var textDocument = _serviceProvider
+                .TextDocumentFactoryService
+                .CreateAndLoadTextDocument(path, contentType);
 
-            //return GetOrCreateDocumentInfo(textDocument);
-            throw new NotImplementedException();
+            return CreateDocument(textDocument);
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
@@ -60,26 +65,43 @@ namespace VSRAD.Syntax.Core
                 return document;
 
             var textDocument = buffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
-            if (_documents.TryGetValue(textDocument.FilePath, out document))
-            {
-                buffer.Properties.AddProperty(typeof(IDocument), document);
-                return document;
-            }
-
             return CreateDocument(textDocument);
         }
 
         private IDocument CreateDocument(ITextDocument textDocument)
         {
-            // TODO: select specific lexer and parser
-            var lexer = Asm1Lexer;
-            var parser = Asm1Parser;
+            ILexer lexer;
+            IParser parser;
+            var contentType = textDocument.TextBuffer.ContentType;
+            if (contentType == _contentTypeManager.Asm1ContentType)
+            {
+                lexer = Asm1Lexer;
+                parser = Asm1Parser;
+            }
+            else if (contentType == _contentTypeManager.Asm2ContentType)
+            {
+                lexer = Asm2Lexer;
+                parser = Asm2Parser;
+            }
+            else if (contentType == _contentTypeManager.AsmDocContentType)
+            {
+                lexer = AsmDocLexer;
+                parser = AsmDocParser;
+            }
+            else return null;
 
             var document = new Document(textDocument, lexer, parser);
-            _documents.Add(document.Path, document);
             document.DocumentRenamed += DocumentRenamed;
 
+            textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
+            _documents.Add(document.Path, document);
             return document;
+        }
+
+        private void DocumentDisposed(object sender, TextDocumentEventArgs e)
+        {
+            if (_documents.ContainsKey(e.TextDocument.FilePath))
+                _documents.Remove(e.TextDocument.FilePath);
         }
 
         private void DocumentRenamed(IDocument document, string oldPath, string newPath)

@@ -1,21 +1,20 @@
 ﻿using Microsoft.VisualStudio.Text;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.RadAsm
 {
-    [Export(typeof(Asm1Parser))]
-    internal class Asm1Parser : AbstractParser
+    internal class Asm1Parser : AbstractInstructionParser
     {
-        public Asm1Parser(IDocumentFactory documentFactory)
-            : base(documentFactory) { }
+        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionManager)
+            : base(documentFactory, instructionManager, Helpers.AsmType.RadAsm) { }
 
         public override async Task<List<IBlock>> RunAsync(IEnumerable<TrackingToken> trackingTokens, ITextSnapshot version, CancellationToken cancellation)
         {
@@ -164,7 +163,7 @@ namespace VSRAD.Syntax.Core.RadAsm
                         }
 
                         var tokenText = token.GetText(version);
-                        if (_instructions.Contains(tokenText))
+                        if (Instructions.Contains(tokenText))
                             currentBlock.AddToken(RadAsmTokenType.Instruction, token);
                         else
                         {
