@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
@@ -96,11 +97,12 @@ namespace VSRAD.Package.Options
 
         public void Write(string path)
         {
+            var serializedOptions = JsonConvert.SerializeObject(this, Formatting.Indented);
             try
             {
-                File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
+                WriteAtomic(path, serializedOptions);
             }
-            catch (UnauthorizedAccessException e)
+            catch (UnauthorizedAccessException)
             {
                 DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {path} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
                 if (res == DialogResult.OK)
@@ -114,12 +116,37 @@ namespace VSRAD.Package.Options
                         Errors.ShowWarning("Cannot make file writable: " + ex.Message);
                         return;
                     }
-                    File.WriteAllText(path, JsonConvert.SerializeObject(this, Formatting.Indented));
+                    WriteAtomic(path, serializedOptions);
                 }
             }
             catch (SystemException e)
             {
                 Errors.ShowWarning("Project options could not be saved: " + e.Message);
+            }
+        }
+
+        private static void WriteAtomic(string destPath, string contents)
+        {
+            // Source and destination files for File.Replace need to be located on the same volume,
+            // and since the project can be located anywhere, we can't use Path.GetTempFileName
+            var tmpPath = destPath + ".tmp";
+
+            // Specify WriteThrough to skip caching and write directly to disk
+            using (var tmp = File.Create(tmpPath, 4096, FileOptions.WriteThrough))
+            {
+                var data = Encoding.UTF8.GetBytes(contents);
+                tmp.Write(data, 0, data.Length);
+            }
+
+            try
+            {
+                // Atomically replace file contents
+                File.Replace(tmpPath, destPath, null);
+            }
+            catch (FileNotFoundException)
+            {
+                // Destination file does not exist
+                File.Move(tmpPath, destPath);
             }
         }
         #endregion
