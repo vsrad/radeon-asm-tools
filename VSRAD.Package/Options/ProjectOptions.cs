@@ -62,18 +62,19 @@ namespace VSRAD.Package.Options
         #region Read/Write
         public static ProjectOptions Read(string path)
         {
-            ProjectOptions options;
+            ProjectOptions options = null;
             try
             {
                 options = JsonConvert.DeserializeObject<ProjectOptions>(File.ReadAllText(path),
                     new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Populate });
             }
+            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)
             {
-                options = new ProjectOptions();
-                if (!(e is FileNotFoundException)) // File not found => creating a new project, don't show the error
-                    Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
+                Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
             }
+            if (options == null) // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
+                options = new ProjectOptions();
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
