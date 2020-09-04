@@ -75,6 +75,8 @@ namespace VSRAD.Package.Server
         private TcpClient _connection;
         private IReadOnlyDictionary<string, string> _remoteEnvironment;
 
+        private readonly SemaphoreSlim _mutex = new SemaphoreSlim(1);
+
         [ImportingConstructor]
         public CommunicationChannel(SVsServiceProvider provider, IProject project)
         {
@@ -106,9 +108,10 @@ namespace VSRAD.Package.Server
 
         public async Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse
         {
-            await SendAsync(command).ConfigureAwait(false);
+            await _mutex.WaitAsync();
             try
             {
+                await SendAsync(command).ConfigureAwait(false);
                 var response = await _connection.GetStream().ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
                 await _outputWindowWriter.PrintMessageAsync($"Received response from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
                 return (T)response;
@@ -121,6 +124,10 @@ namespace VSRAD.Package.Server
             {
                 ForceDisconnect();
                 throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+            }
+            finally
+            {
+                _mutex.Release();
             }
         }
 
