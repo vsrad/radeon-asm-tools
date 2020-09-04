@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -72,6 +73,22 @@ namespace VSRAD.Package.DebugVisualizer
                         break;
                 }
             };
+        }
+
+        public void UpdateOnBreak(BreakState breakState)
+        {
+            _projectOptions.VisualizerOptions.NDRange3D = breakState.NDRange3D;
+
+            _dimX = breakState.DimX;
+            _dimY = breakState.DimY;
+            _dimZ = breakState.DimZ;
+
+            // assign NGroups after all others because it calls Update()
+            _projectOptions.DebuggerOptions.NGroups = breakState.NDRange3D
+                ? breakState.DimX * breakState.DimY * breakState.DimZ
+                : breakState.DimX;
+            // TODO: handle wavesize
+            Update();
         }
 
         private uint LimitIndex(uint index, uint limit) =>

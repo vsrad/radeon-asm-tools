@@ -60,25 +60,7 @@ namespace VSRAD.Package.DebugVisualizer
             _breakState = breakState;
             WatchesValid = breakState != null;
             if (WatchesValid)
-            {
-                UpdateProjectState(breakState);
-                GroupIndex.Update();
-            }
-        }
-
-        private void UpdateProjectState(BreakState breakState)
-        {
-            Options.VisualizerOptions.NDRange3D = breakState.NDRange3D;
-
-            Options.DebuggerOptions.GroupSize = breakState.DimX;
-            GroupIndex.DimX = breakState.DimX;
-            GroupIndex.DimY = breakState.DimY;
-            GroupIndex.DimZ = breakState.DimZ;
-
-            Options.DebuggerOptions.NGroups = breakState.NDRange3D
-                ? breakState.DimX * breakState.DimY * breakState.DimZ
-                : breakState.DimX;
-            // TODO: handle wavesize
+                GroupIndex.UpdateOnBreak(breakState);
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
