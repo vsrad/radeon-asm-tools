@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -59,9 +60,22 @@ namespace VSRAD.Package.DebugVisualizer
         private void EnterBreak(BreakState breakState)
         {
             _breakState = breakState;
+            UpdateProjectState(breakState);
             WatchesValid = breakState != null;
             if (WatchesValid)
                 GroupIndex.Update();
+        }
+
+        private void UpdateProjectState(BreakState breakState)
+        {
+            if (breakState == null) return;
+
+            Options.VisualizerOptions.NDRange3D = breakState.GridY != 0 && breakState.GridZ != 0;
+            Options.DebuggerOptions.GroupSize = breakState.GroupX;
+            GroupIndex.DimX = breakState.GridX;
+            GroupIndex.DimY = breakState.GridY;
+            GroupIndex.DimZ = breakState.GridZ;
+            // TODO: handle 3d group sizes and wavesize
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
