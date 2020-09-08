@@ -1,236 +1,94 @@
 ﻿using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Helpers;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Operations;
-using Microsoft.VisualStudio.TextManager.Interop;
-using System;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Core.Blocks;
-using VSRAD.Syntax.Core.Tokens;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
-using VSRAD.Syntax.Options;
+using System.Threading.Tasks;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Options.Instructions;
+using System;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
-using Microsoft.VisualStudio.Shell;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     public interface INavigationTokenService
     {
-        void GoToDefinition(ITextView view);
-        void GoToPointOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
-        void GoToPoint(SnapshotPoint point);
-        void GoToPoint(NavigationToken point);
-        IReadOnlyList<NavigationToken> GetNaviationItem(TextExtent extent, bool searchWithInclude = false);
+        NavigationToken CreateToken(AnalysisToken analysisToken, string path);
+        Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
+        void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
     }
 
     [Export(typeof(INavigationTokenService))]
     internal class NavigationTokenService : INavigationTokenService
     {
-        private static List<NavigationToken> EmptyNavigations { get { return new List<NavigationToken>(); } }
-
-        private readonly RadeonServiceProvider _serviceProvider;
-        private readonly InstructionListManager _instructionListManager;
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
-        private readonly IVsTextManager _textManager;
+        private readonly IDocumentFactory _documentFactory;
+        private readonly IInstructionListManager _instructionListManager;
 
         [ImportingConstructor]
-        public NavigationTokenService(RadeonServiceProvider serviceProvider, InstructionListManager instructionListManager, DocumentAnalysisProvoder documentAnalysisProvoder)
+        public NavigationTokenService(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
         {
-            _serviceProvider = serviceProvider;
+            _documentFactory = documentFactory;
             _instructionListManager = instructionListManager;
-            _documentAnalysisProvoder = documentAnalysisProvoder;
-            _textManager = serviceProvider.ServiceProvider.GetService(typeof(VsTextManagerClass)) as IVsTextManager;
         }
 
-        public void GoToDefinition(ITextView view)
+        public NavigationToken CreateToken(AnalysisToken analysisToken, string path)
         {
-            try
-            {
-                var extent = view.GetTextExtentOnCursor();
-                var tokens = GetNaviationItem(extent, true);
-
-                GoToPointOrOpenNavigationList(tokens);
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e, "RadAsm navigation serivce");
-            }
+            var document = _documentFactory.GetOrCreateDocument(analysisToken.Snapshot.TextBuffer);
+            var navigate = document != null
+                ? new Action(() => document.NavigateToPosition(analysisToken.GetStart()))
+                : null;
+            return new NavigationToken(analysisToken, path, navigate);
         }
 
-        public void GoToPointOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations)
+        public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
         {
-            if (navigations.Count == 1)
-            {
-                GoToPoint(navigations[0]);
-            }
-            else if (navigations.Count > 1)
-            {
-                ThreadHelper.JoinableTaskFactory.RunAsync(() => NavigationList.UpdateNavigationListAsync(navigations));
-            }
-        }
+            var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
+            if (document == null) return NavigationTokenServiceResult.Empty;
 
-        public void GoToPoint(SnapshotPoint point)
-        {
-            var buffer = _serviceProvider.EditorAdaptersFactoryService.GetBufferAdapter(point.Snapshot.TextBuffer);
-            if (buffer == null)
+            var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
+            var analysisToken = analysisResult.GetToken(point);
+
+            if (analysisToken == null) return NavigationTokenServiceResult.Empty;
+            var tokens = new List<NavigationToken>();
+
+            if (analysisToken is DefinitionToken definitionToken)
             {
-                if (_serviceProvider.TextDocumentFactoryService.TryGetTextDocument(point.Snapshot.TextBuffer, out var textDocument))
+                tokens.Add(CreateToken(definitionToken, document.Path));
+            }
+            else if (analysisToken is ReferenceToken referenceToken)
+            {
+                var definition = referenceToken.Definition;
+                var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
+                tokens.Add(CreateToken(definition, definitionDocument.Path));
+            }
+            else
+            {
+                if (analysisToken.Type == RadAsmTokenType.Instruction)
                 {
-                    if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, textDocument.FilePath, out buffer))
-                        throw new InvalidOperationException($"Cannot open file associated with {textDocument.FilePath}");
+                    var asmType = analysisToken.Snapshot.GetAsmType();
+                    var instructions = _instructionListManager.GetInstructions(asmType);
+                    var instructionText = analysisToken.GetText();
+                    foreach (var i in instructions)
+                    {
+                        if (i.Text == instructionText)
+                            tokens.Add(i.Navigation);
+                    }
                 }
                 else
                 {
-                    // if external definition parsed but the document was closed we should reopen document
-                    if (!point.Snapshot.TextBuffer.Properties.TryGetProperty<DocumentInfo>(typeof(DocumentInfo), out var documentInfo))
-                        throw new InvalidOperationException("Cannot determine the file that contains the navigation definition");
-                    if (!Utils.TryOpenDocument(_serviceProvider.ServiceProvider, documentInfo.Path, out buffer))
-                        throw new InvalidOperationException($"Cannot open file associated with {textDocument.FilePath}");
+                    return NavigationTokenServiceResult.Empty;
                 }
             }
 
-            _textManager.NavigateToPosition(buffer, VSConstants.LOGVIEWID.TextView_guid, point.Position, 0);
+            return new NavigationTokenServiceResult(tokens, analysisToken);
         }
 
-        public void GoToPoint(NavigationToken point)
+        public void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations)
         {
-            if (point != NavigationToken.Empty)
-                GoToPoint(point.GetEnd());
-        }
-
-        public IReadOnlyList<NavigationToken> GetNaviationItem(TextExtent extent, bool searchWithInclude = false)
-        {
-            try
-            {
-                return GetNaviationToken(extent, searchWithInclude);
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e, "RadAsm navigation serivce");
-                return EmptyNavigations;
-            }
-        }
-
-        private IReadOnlyList<NavigationToken> GetNaviationToken(TextExtent extent, bool searchWithInclude)
-        {
-            if (!extent.IsSignificant)
-                return EmptyNavigations;
-
-            var text = extent.Span.GetText();
-            var version = extent.Span.Snapshot;
-            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(version.TextBuffer);
-
-            if (documentAnalysis.LexerTokenToRadAsmToken(documentAnalysis.GetToken(extent.Span.Start).Type) == RadAsmTokenType.Comment)
-                return EmptyNavigations;
-
-            if (documentAnalysis.LastParserResult.Count == 0)
-                return EmptyNavigations;
-
-            var currentBlock = documentAnalysis.LastParserResult.GetBlockBy(extent.Span.Start);
-
-            if (currentBlock == null)
-                return EmptyNavigations;
-
-            var currentToken = GetCurrentToken(currentBlock, extent.Span);
-            if (currentToken is ReferenceToken referenceToken)
-                return new List<NavigationToken>() { new NavigationToken(referenceToken.Definition, referenceToken.Definition.TrackingToken.Start.TextBuffer.CurrentSnapshot) };
-
-            var asmType = version.GetAsmType();
-            if (_instructionListManager.TryGetInstructions(text, asmType, out var navigationTokens))
-                return navigationTokens.ToList();
-
-            if (FindNavigationTokenInBlock(version, asmType, currentBlock, text, out var token))
-                return new List<NavigationToken>() { token };
-
-            if (FindNavigationTokenInFunctionList(version, documentAnalysis.LastParserResult, text, out var functionToken))
-                return new List<NavigationToken>() { functionToken };
-
-            return EmptyNavigations;
-        }
-
-        private AnalysisToken GetCurrentToken(IBlock currentBlock, SnapshotSpan span) =>
-            currentBlock.Tokens.FirstOrDefault(t => t.TrackingToken.GetSpan(span.Snapshot).Contains(span));
-
-        private static bool FindNavigationTokenInBlock(ITextSnapshot version, AsmType asmType, IBlock currentBlock, string text, out NavigationToken outToken)
-        {
-            if (asmType == AsmType.RadAsmDoc)
-            {
-                foreach (var token in currentBlock.Tokens)
-                {
-                    if (token.TrackingToken.GetText(version) == text)
-                    {
-                        outToken = new NavigationToken(token, version);
-                        return true;
-                    }
-                }
-
-                // skip find in function list in the documentation navigation
-                outToken = NavigationToken.Empty;
-                return true;
-            }
-            else if (asmType == AsmType.RadAsm2)
-            {
-                while (currentBlock != null)
-                {
-                    foreach (var token in currentBlock.Tokens.GetDefinitionToken())
-                    {
-                        if (token.TrackingToken.GetText(version) == text)
-                        {
-                            outToken = new NavigationToken(token, version);
-                            return true;
-                        }
-                    }
-                    currentBlock = currentBlock.Parrent;
-                }
-            }
-            else if (asmType == AsmType.RadAsm)
-            {
-                var codeBlockStack = new Stack<IBlock>();
-                while (currentBlock != null)
-                {
-                    codeBlockStack.Push(currentBlock);
-                    currentBlock = currentBlock.Parrent;
-                }
-
-                while (codeBlockStack.Count != 0)
-                {
-                    var codeBlock = codeBlockStack.Pop();
-
-                    foreach (var token in codeBlock.Tokens.GetDefinitionToken())
-                    {
-                        if (token.TrackingToken.GetText(version) == text)
-                        {
-                            outToken = new NavigationToken(token, version);
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            outToken = NavigationToken.Empty;
-            return false;
-        }
-
-        private static bool FindNavigationTokenInFunctionList(ITextSnapshot version, IReadOnlyList<IBlock> blocks, string text, out NavigationToken functionToken)
-        {
-            var functionTokens = blocks.GetFunctions().Select(b => b.Name);
-
-            foreach (var token in functionTokens)
-            {
-                if (token.TrackingToken.GetText(version) == text)
-                {
-                    functionToken = new NavigationToken(token, version);
-                    return true;
-                }
-            }
-
-            functionToken = NavigationToken.Empty;
-            return false;
+            if (navigations.Count == 1) navigations[0].Navigate();
+            else if (navigations.Count > 1) NavigationList.UpdateNavigationList(navigations);
+            else Error.ShowWarningMessage("Cannot navigate to the symbol under the cared");
         }
     }
 }

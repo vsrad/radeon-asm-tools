@@ -2,31 +2,31 @@
 using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
     internal class NavigableSymbolSource : INavigableSymbolSource
     {
+        private readonly IDocumentAnalysis _documentAnalysis;
         private readonly INavigationTokenService _navigationService;
 
-        public NavigableSymbolSource(INavigationTokenService navigationService)
+        public NavigableSymbolSource(IDocumentAnalysis documentAnalysis, INavigationTokenService navigationService)
         {
+            _documentAnalysis = documentAnalysis;
             _navigationService = navigationService;
         }
 
-        public Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
+        public async Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
         {
-            var extent = triggerSpan.Start.GetExtent();
-            var navigableTokens = _navigationService.GetNaviationItem(extent, true);
+            var triggerPoint = triggerSpan.Start;
+            var tokensResult = await _navigationService.GetNavigationsAsync(triggerPoint);
+            if (!tokensResult.HasValue) return null;
 
-            return (navigableTokens.Count == 0)
-                ? Task.FromResult<INavigableSymbol>(null)
-                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, navigableTokens, _navigationService));
+            return new NavigableSymbol(tokensResult.ApplicableToken.GetSpan(),
+                () => _navigationService.NavigateOrOpenNavigationList(tokensResult.Values));
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
     }
 }

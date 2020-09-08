@@ -10,15 +10,15 @@ namespace VSRAD.Syntax.IntelliSense
     {
         private readonly ITextView _textView;
         private readonly RadeonServiceProvider _editorService;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly INavigationService _navigationService;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(RadeonServiceProvider editorService, INavigationTokenService navigationTokenService, ITextView textView)
+        public IntellisenseController(RadeonServiceProvider editorService, INavigationService navigationService, ITextView textView)
         {
             _textView = textView;
             _editorService = editorService;
-            _navigationTokenService = navigationTokenService;
+            _navigationService = navigationService;
         }
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
@@ -64,7 +64,7 @@ namespace VSRAD.Syntax.IntelliSense
                 switch ((VSConstants.VSStd97CmdID)nCmdID)
                 {
                     case VSConstants.VSStd97CmdID.GotoDefn:
-                        _navigationTokenService.GoToDefinition(_textView);
+                        _navigationService.GoToDefinition(_textView.Caret.Position.BufferPosition);
                         return VSConstants.S_OK;
                 }
             }
