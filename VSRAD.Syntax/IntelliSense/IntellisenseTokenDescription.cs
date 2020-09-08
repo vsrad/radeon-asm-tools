@@ -1,244 +1,119 @@
-﻿using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Adornments;
-using System;
+﻿using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
-using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
-using VSRAD.Syntax.Core;
-using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntellisenseDescriptionBuilder
     {
-        object GetColorizedDescription(IEnumerable<NavigationToken> tokens);
+        object GetColorizedDescription(IReadOnlyList<NavigationToken> tokens);
+        object GetColorizedDescription(NavigationToken token);
     }
 
     [Export(typeof(IIntellisenseDescriptionBuilder))]
     internal class IntellisenseDescriptionBuilder : IIntellisenseDescriptionBuilder
     {
-        private readonly Lazy<INavigationTokenService> _navigationTokenService;
-
-        [ImportingConstructor]
-        IntellisenseDescriptionBuilder(Lazy<INavigationTokenService> navigationTokenService)
+        public object GetColorizedDescription(IReadOnlyList<NavigationToken> tokens)
         {
-            _navigationTokenService = navigationTokenService;
+            if (tokens == null || tokens.Count == 0) return null;
+            else if (tokens.Count == 1) return GetColorizedDescription(tokens[0]);
+            else return GetColorizedDescriptions(tokens);
         }
 
-        public object GetColorizedDescription(IEnumerable<NavigationToken> tokens)
+        private object GetColorizedDescriptions(IReadOnlyList<NavigationToken> tokens)
         {
-            try
+            var builder = new ClassifiedTextBuilder();
+            foreach (var tokenGroup in tokens.GroupBy(t => t.Path))
             {
-                return tokens.Count() == 1
-                    ? GetColorizedTokenDescription(tokens.First())
-                    : GetColorizedTokensDescription(tokens);
+                var filePath = tokenGroup.All(t => t.Type == RadAsmTokenType.Instruction)
+                    ? Path.GetFileNameWithoutExtension(tokenGroup.Key)
+                    : tokenGroup.Key;
+
+                builder.AddClassifiedText(filePath).SetAsElement();
+                foreach (var token in tokenGroup)
+                {
+                    var typeName = token.Type.GetName();
+                    var textBeforeToken = token.LineText.Substring(0, token.LineTokenStart);
+                    var textAfterToken = token.LineText.Substring(token.LineTokenEnd);
+
+                    builder.AddClassifiedText($"({typeName}) ")
+                        .AddClassifiedText(textBeforeToken)
+                        .AddClassifiedText(token)
+                        .AddClassifiedText(textAfterToken)
+                        .SetAsElement();
+                }
             }
-            catch (Exception e)
-            {
-                Error.LogError(e, "Token colorized description");
-                return null;
-            }
+
+            return builder.Build();
         }
 
-        private object GetColorizedTokensDescription(IEnumerable<NavigationToken> tokens)
+        public object GetColorizedDescription(NavigationToken token)
         {
-            var elements = new List<object>();
-            foreach (var group in tokens.Select(t => new DefinitionToken(t)).GroupBy(d => d.FilePath))
+            if (token == NavigationToken.Empty) return null;
+
+            var typeName = token.Type.GetName();
+            var builder = new ClassifiedTextBuilder();
+            builder.AddClassifiedText($"({typeName}) ");
+            if (token.Type == RadAsmTokenType.FunctionName)
             {
-                // for instructions show only the name of the file with documentation without .radasm1 and .radasm2 extensions
-                var filePath = group.All(t => t.NavigationToken.AnalysisToken.Type == RadAsmTokenType.Instruction)
-                        ? Path.GetFileNameWithoutExtension(group.Key)
-                        : group.Key;
 
-                elements.Add(new ClassifiedTextElement(new ClassifiedTextRun(RadAsmTokenType.Identifier.GetClassificationTypeName(), filePath)));
-
-                foreach (var token in group)
-                {
-                    var navigationToken = token.NavigationToken;
-                    var analysisToken = navigationToken.AnalysisToken;
-                    var typeName = analysisToken.Type.GetName();
-
-                    var spanBeforeToken = new SnapshotSpan(token.Line.Start, navigationToken.GetStart());
-                    var spanAfterToken = new SnapshotSpan(navigationToken.GetEnd(), token.Line.End);
-                    elements.Add(new ClassifiedTextElement(new ClassifiedTextRun[]
-                    {
-                        new ClassifiedTextRun(RadAsmTokenType.Identifier.GetClassificationTypeName(), $"({typeName}) "),
-                        new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), $"{spanBeforeToken.GetText()}"),
-                        GetNameElement(navigationToken),
-                        new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), $"{spanAfterToken.GetText()}"),
-                    }));
-                }
-
-                elements.Add(new ClassifiedTextElement(new ClassifiedTextRun(RadAsmTokenType.Whitespace.GetClassificationTypeName(), "")));
             }
-
-            return new ContainerElement(ContainerElementStyle.Stacked, elements);
-        }
-
-        private object GetColorizedTokenDescription(NavigationToken token)
-        {
-            var version = token.Snapshot;
-            if (!version.TryGetDocumentAnalysis(out var documentAnalysis))
-                return null;
-
-            var description = GetTokenDescription(token, documentAnalysis);
-            var type = token.AnalysisToken.Type;
-            var typeName = type.GetName();
-
-            ClassifiedTextElement textElement = null;
-            if (type == RadAsmTokenType.FunctionName)
+            else if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.LocalVariable)
             {
-                var fb = GetFunctionBlockByToken(documentAnalysis, token.AnalysisToken);
-                if (fb == null)
-                    return null;
-
-                var addBrackets = version.GetAsmType() == AsmType.RadAsm2;
-                var textRuns = new List<ClassifiedTextRun>()
-                {
-                    GetNameElement(token),
-                    new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), addBrackets ? "(" : " "),
-                };
-
-                var arguments = fb.Tokens
-                    .Where(t => t.Type == RadAsmTokenType.FunctionParameter)
-                    .Select(t => new NavigationToken(t, version))
-                    .ToArray();
-                for (int i = 0; i < arguments.Length; i++)
-                {
-                    textRuns.Add(GetNameElement(arguments[i]));
-                    if (i < arguments.Length - 1)
-                        textRuns.Add(new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), ", "));
-                }
-
-                if (addBrackets)
-                    textRuns.Add(new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), ")"));
-
-                textElement = new ClassifiedTextElement(textRuns);
-            }
-            else if (type == RadAsmTokenType.GlobalVariable || type == RadAsmTokenType.LocalVariable)
-            {
-                var variable = (VariableToken)token.AnalysisToken;
-                var textRuns = new List<ClassifiedTextRun>() { GetNameElement(token) };
-
-                if (variable.DefaultValue != TrackingToken.Empty)
-                {
-                    textRuns.Add(new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), " = "));
-                    textRuns.Add(new ClassifiedTextRun(RadAsmTokenType.Number.GetClassificationTypeName(), variable.DefaultValue.GetText(version)));
-                }
-
-                textElement = new ClassifiedTextElement(textRuns);
+                var variableToken = (VariableToken)token.AnalysisToken;
+                var defaultValue = variableToken.DefaultValue.GetText(variableToken.Snapshot);
+                builder.AddClassifiedText(token)
+                    .AddClassifiedText(" = ")
+                    .AddClassifiedText(RadAsmTokenType.Number, defaultValue);
             }
             else
             {
-                var nameElement = GetNameElement(token);
-                textElement = new ClassifiedTextElement(nameElement);
+                builder.AddClassifiedText(token);
             }
 
-            return GetDescriptionElement(typeName, textElement, description);
+            builder.SetAsElement();
+            return builder.Build();
         }
 
-        private ClassifiedTextRun GetNameElement(NavigationToken token)
+        public class ClassifiedTextBuilder
         {
-            string tokenText = token.GetText();
-            Action navigate = () => _navigationTokenService.Value.GoToPoint(token);
-            string classificationType = token.AnalysisToken.Type.GetDescriptionClassificationTypeName();
+            private readonly LinkedList<ClassifiedTextRun> _classifiedTextRuns;
+            private readonly LinkedList<ClassifiedTextElement> _classifiedTextElements;
 
-            return new ClassifiedTextRun(classificationType, tokenText, navigate);
-        }
-
-        private static string GetTokenDescription(NavigationToken token, DocumentAnalysis documentAnalysis)
-        {
-            string description = null;
-            var type = token.AnalysisToken.Type;
-            if (type == RadAsmTokenType.FunctionName
-                || type == RadAsmTokenType.GlobalVariable
-                || type == RadAsmTokenType.LocalVariable
-                || type == RadAsmTokenType.Label)
+            public ClassifiedTextBuilder()
             {
-                var snapshot = token.Snapshot;
-                var tokenSpan = token.AnalysisToken.TrackingToken.GetSpan(snapshot);
-                var line = snapshot.GetLineFromPosition(tokenSpan.Start);
-
-                // try get description to the right of the declaration
-                var tokens = documentAnalysis.GetTokens(new Span(tokenSpan.End, line.EndIncludingLineBreak - tokenSpan.End));
-                if (!GetDescriptionFromComment(documentAnalysis, snapshot, tokens, out description))
-                {
-                    // try get description above the declaration
-                    line = snapshot.GetLineFromLineNumber(line.LineNumber - 1);
-                    tokens = documentAnalysis.GetTokens(new Span(line.Start, line.EndIncludingLineBreak - line.Start));
-
-                    GetDescriptionFromComment(documentAnalysis, snapshot, tokens, out description);
-                }
-            }
-            else if (type == RadAsmTokenType.Instruction)
-            {
-                var definition = new DefinitionToken(token);
-                description = definition.Line.GetText();
+                _classifiedTextRuns = new LinkedList<ClassifiedTextRun>();
+                _classifiedTextElements = new LinkedList<ClassifiedTextElement>();
             }
 
-            return description;
-        }
+            public ContainerElement Build() =>
+                new ContainerElement(ContainerElementStyle.Stacked, _classifiedTextElements);
 
-        private static ContainerElement GetDescriptionElement(string typeName, ClassifiedTextElement nameElement, string description)
-        {
-            var tokenElement = new ContainerElement(
-                ContainerElementStyle.Wrapped,
-                new ClassifiedTextElement(
-                    new ClassifiedTextRun(RadAsmTokenType.Identifier.GetClassificationTypeName(), $"({typeName}) ")
-                ),
-                nameElement
-                );
-
-            if (string.IsNullOrEmpty(description))
-                return tokenElement;
-
-            return new ContainerElement(
-                    ContainerElementStyle.Stacked,
-                    tokenElement,
-                    new ClassifiedTextElement(
-                        new ClassifiedTextRun(RadAsmTokenType.Structural.GetClassificationTypeName(), description)
-                    )
-                );
-        }
-
-        private static bool GetDescriptionFromComment(DocumentAnalysis documentAnalysis, ITextSnapshot version, IEnumerable<TrackingToken> tokens, out string description)
-        {
-            var commentTokens = tokens.Where(t => documentAnalysis.LexerTokenToRadAsmToken(t.Type) == RadAsmTokenType.Comment);
-
-            if (commentTokens.Any())
+            public ClassifiedTextBuilder SetAsElement()
             {
-                description = commentTokens
-                    .First()
-                    .GetText(version)
-                    .Trim(new char[] { '/', '*', ' ', '\r', '\n' })
-                    .Replace("*", string.Empty);
-                return true;
-            }
-            else
-            {
-                description = null;
-                return false;
-            }
-        }
-
-        private static FunctionBlock GetFunctionBlockByToken(DocumentAnalysis documentAnalysis, AnalysisToken functionToken)
-        {
-            foreach (var block in documentAnalysis.LastParserResult)
-            {
-                if (block.Type == BlockType.Function)
-                {
-                    var funcBlock = (FunctionBlock)block;
-                    if (funcBlock.Name == functionToken)
-                        return funcBlock;
-                }
+                _classifiedTextElements.AddLast(new ClassifiedTextElement(_classifiedTextRuns));
+                _classifiedTextRuns.Clear();
+                return this;
             }
 
-            return null;
+            public ClassifiedTextBuilder AddClassifiedText(NavigationToken navigationToken)
+            {
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.GetText(), navigationToken.Navigate));
+                return this;
+            }
+
+            public ClassifiedTextBuilder AddClassifiedText(RadAsmTokenType tokenType, string text)
+            {
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(tokenType.GetClassificationTypeName(), text));
+                return this;
+            }
+
+            public ClassifiedTextBuilder AddClassifiedText(string text) =>
+                AddClassifiedText(RadAsmTokenType.Identifier, text);
         }
     }
 }
