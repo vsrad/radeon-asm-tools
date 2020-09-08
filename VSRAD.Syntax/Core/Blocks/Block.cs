@@ -22,6 +22,8 @@ namespace VSRAD.Syntax.Core.Blocks
         BlockType Type { get; }
         List<IBlock> Childrens { get; }
         List<AnalysisToken> Tokens { get; }
+        int ActualStart { get; }
+        int ActualEnd { get; }
 
         void AddChildren(IBlock block);
         void AddToken(AnalysisToken token);
@@ -42,8 +44,8 @@ namespace VSRAD.Syntax.Core.Blocks
         public List<AnalysisToken> Tokens { get; }
         public TrackingBlock Scope { get; private set; }
 
-        private int _actualStart;
-        private int _actualEnd;
+        public int ActualStart { get; private set; }
+        public int ActualEnd { get; private set; }
 
         private int startPosition;
 
@@ -52,7 +54,7 @@ namespace VSRAD.Syntax.Core.Blocks
             Parrent = parrent;
             Type = type;
             Snapshot = parrent.Snapshot;
-            _actualStart = tokenStart.GetStart(Snapshot);
+            ActualStart = tokenStart.GetStart(Snapshot);
 
             Childrens = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
@@ -63,9 +65,9 @@ namespace VSRAD.Syntax.Core.Blocks
             Parrent = parrent;
             Type = type;
             Snapshot = parrent.Snapshot;
-            _actualStart = tokenStart.GetStart(Snapshot);
-            _actualEnd = tokenEnd.GetEnd(Snapshot);
-            Scope = new TrackingBlock(Snapshot, _actualStart, _actualEnd);
+            ActualStart = tokenStart.GetStart(Snapshot);
+            ActualEnd = tokenEnd.GetEnd(Snapshot);
+            Scope = new TrackingBlock(Snapshot, ActualStart, ActualEnd);
 
             Childrens = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
@@ -76,8 +78,8 @@ namespace VSRAD.Syntax.Core.Blocks
             Parrent = null;
             Type = BlockType.Root;
             Snapshot = snapshot;
-            _actualStart = 0;
-            _actualEnd = Snapshot.Length - 1;
+            ActualStart = 0;
+            ActualEnd = Snapshot.Length - 1;
 
             Childrens = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
@@ -89,7 +91,7 @@ namespace VSRAD.Syntax.Core.Blocks
         public void SetEnd(int endPosition, TrackingToken tokenEnd)
         {
             SetScopeEnd(endPosition);
-            _actualEnd = tokenEnd.GetEnd(Snapshot);
+            ActualEnd = tokenEnd.GetEnd(Snapshot);
         }
 
         public void AddChildren(IBlock block) =>
@@ -105,10 +107,10 @@ namespace VSRAD.Syntax.Core.Blocks
             Scope.GetSpan(Snapshot).Contains(span);
 
         public bool InRange(int point) =>
-            _actualStart <= point && _actualEnd >= point;
+            ActualStart <= point && ActualEnd >= point;
 
         public bool InRange(Span span) =>
-            _actualStart <= span.Start && _actualEnd >= span.End;
+            ActualStart <= span.Start && ActualEnd >= span.End;
 
         private void SetScopeEnd(int endPosition)
         {

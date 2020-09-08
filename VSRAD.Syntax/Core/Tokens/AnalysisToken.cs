@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.Core.Tokens
         public SnapshotPoint GetStart() =>
             new SnapshotPoint(Snapshot, TrackingToken.GetStart(Snapshot));
 
-        public int GetEnd() =>
+        public SnapshotPoint GetEnd() =>
             new SnapshotPoint(Snapshot, TrackingToken.GetEnd(Snapshot));
 
         public string GetText() =>

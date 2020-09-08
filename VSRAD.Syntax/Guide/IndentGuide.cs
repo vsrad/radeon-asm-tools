@@ -22,12 +22,13 @@ namespace VSRAD.Syntax.Guide
         private readonly IWpfTextView _textView;
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
-        private readonly DocumentAnalysis _documentAnalysis;
+        private readonly IDocumentAnalysis _documentAnalysis;
+        private IAnalysisResult _currentResult;
         private IList<Line> _currentAdornments;
         private bool _isEnables;
         private int _tabSize;
 
-        public IndentGuide(IWpfTextView textView, DocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
+        public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
         {
             _textView = textView ?? throw new NullReferenceException();
             _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
@@ -45,7 +46,8 @@ namespace VSRAD.Syntax.Guide
 
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
             _textView.LayoutChanged += (sender, args) => UpdateIndentGuides();
-            _documentAnalysis.ParserUpdated += ParserUpdated;
+
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
             optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
             textView.Options.OptionChanged += TabSizeOptionsChanged;
         }
@@ -56,8 +58,11 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks) =>
+        private void AnalysisUpdated(IAnalysisResult analysisResult)
+        {
+            _currentResult = analysisResult;
             UpdateIndentGuides();
+        }
 
         private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
@@ -77,7 +82,8 @@ namespace VSRAD.Syntax.Guide
         private void UpdateIndentGuides()
         {
             if (_isEnables)
-                ThreadHelper.JoinableTaskFactory.RunAsync(SetupIndentGuidesAsync);
+                Task.Run(async () => await SetupIndentGuidesAsync())
+                    .RunAsyncWithoutAwait();
         }
 
         private async Task CleanupIndentGuidesAsync()
@@ -100,8 +106,8 @@ namespace VSRAD.Syntax.Guide
                 var firstVisibleLine = _textView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
                 var lastVisibleLine = _textView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
 
-                var newSpanElements = _documentAnalysis
-                    .LastParserResult
+                var newSpanElements = _currentResult
+                    .Scopes
                     .Where(b => b.Type != BlockType.Root && b.Type != BlockType.Comment && IsInVisualBuffer(b, firstVisibleLine, lastVisibleLine));
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -109,7 +115,7 @@ namespace VSRAD.Syntax.Guide
 
                 ClearAndUpdateCurrentGuides(updatedIndentGuides);
             }
-            catch (ObjectDisposedException) 
+            catch (ObjectDisposedException)
             {
                 // If the buffer was changed during the calculation of the first and last line
             }
@@ -121,8 +127,8 @@ namespace VSRAD.Syntax.Guide
 
         private static bool IsInVisualBuffer(IBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
-            var blockStart = block.TokenStart.Start.GetPoint(firstVisibleLine.Snapshot);
-            var blockEnd = block.TokenEnd.GetEnd(firstVisibleLine.Snapshot);
+            var blockStart = block.ActualStart;
+            var blockEnd = block.ActualEnd;
 
             bool isOnStart = blockStart <= lastVisibleLine.End;
             bool isOnEnd = blockEnd >= firstVisibleLine.End;
@@ -137,8 +143,8 @@ namespace VSRAD.Syntax.Guide
             ThreadHelper.ThrowIfNotOnUIThread();
             foreach (var block in blocks)
             {
-                var pointStart = block.TokenStart.Start.GetPoint(_textView.TextSnapshot);
-                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.TokenEnd.GetEnd(_textView.TextSnapshot));
+                var pointStart = new SnapshotPoint(_textView.TextSnapshot, block.ActualStart);
+                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.ActualEnd);
 
                 var viewLineStart = _textView.GetTextViewLineContainingBufferPosition(pointStart);
                 var viewLineEnd = _textView.GetTextViewLineContainingBufferPosition(pointEnd);

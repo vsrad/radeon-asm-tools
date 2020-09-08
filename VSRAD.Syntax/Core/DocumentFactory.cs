@@ -1,9 +1,11 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using EnvDTE;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Utilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
-using VSRAD.Syntax.Core.RadAsm;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Options.Instructions;
 
@@ -28,6 +30,10 @@ namespace VSRAD.Syntax.Core
         private static readonly ILexer AsmDocLexer = new AsmDocLexer();
         #endregion
 
+        public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
+        public event DocumentCreatedEventHandler DocumentCreated;
+        public event DocumentDisposedEventHandler DocumentDisposed;
+
         [ImportingConstructor]
         DocumentFactory(RadeonServiceProvider serviceProvider,
             ContentTypeManager contentTypeManager,
@@ -40,7 +46,10 @@ namespace VSRAD.Syntax.Core
             _documents = new Dictionary<string, IDocument>();
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
-            _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += DocumentDisposed;
+            _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += TextDocumentDisposed;
+
+            var dte = _serviceProvider.ServiceProvider.GetService(typeof(DTE)) as DTE;
+            dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
         }
 
         public IDocument GetOrCreateDocument(string path)
@@ -49,14 +58,14 @@ namespace VSRAD.Syntax.Core
                 return document;
 
             var contentType = _contentTypeManager.DetermineContentType(path);
-            if (contentType == null) 
+            if (contentType == null)
                 return null;
 
             var textDocument = _serviceProvider
                 .TextDocumentFactoryService
                 .CreateAndLoadTextDocument(path, contentType);
 
-            return CreateDocument(textDocument);
+            return CreateDocument<InvisibleDocument>(textDocument);
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
@@ -65,49 +74,85 @@ namespace VSRAD.Syntax.Core
                 return document;
 
             var textDocument = buffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
-            return CreateDocument(textDocument);
-        }
-
-        private IDocument CreateDocument(ITextDocument textDocument)
-        {
-            ILexer lexer;
-            IParser parser;
-            var contentType = textDocument.TextBuffer.ContentType;
-            if (contentType == _contentTypeManager.Asm1ContentType)
+            if (_documents.TryGetValue(textDocument.FilePath, out document)
+                && document is InvisibleDocument invisibleDocument)
             {
-                lexer = Asm1Lexer;
-                parser = Asm1Parser;
+                document = invisibleDocument.ToVisibleDocument(textDocument);
+                ObserveDocument(document, textDocument);
             }
-            else if (contentType == _contentTypeManager.Asm2ContentType)
+            else
             {
-                lexer = Asm2Lexer;
-                parser = Asm2Parser;
+                document = CreateDocument<Document>(textDocument);
             }
-            else if (contentType == _contentTypeManager.AsmDocContentType)
-            {
-                lexer = AsmDocLexer;
-                parser = AsmDocParser;
-            }
-            else return null;
 
-            var document = new Document(textDocument, lexer, parser);
-            document.DocumentRenamed += DocumentRenamed;
-
-            textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
-            _documents.Add(document.Path, document);
+            DocumentCreated?.Invoke(document);
             return document;
         }
 
-        private void DocumentDisposed(object sender, TextDocumentEventArgs e)
+        private IDocument CreateDocument<T>(ITextDocument textDocument) where T : Document, new()
+        {
+            var lexerParser = GetLexerParser(textDocument.TextBuffer.ContentType);
+            if (!lexerParser.HasValue)
+                return null;
+
+            var lexer = lexerParser.Value.Item1;
+            var parser = lexerParser.Value.Item2;
+
+            var document = new T();
+            document.Initialize(textDocument, lexer, parser);
+            ObserveDocument(document, textDocument);
+
+            return document;
+        }
+
+        private void ObserveDocument(IDocument document, ITextDocument textDocument)
+        {
+            document.DocumentRenamed += DocumentRenamed;
+            textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
+
+            _documents.Add(document.Path, document);
+        }
+
+        private (ILexer, IParser)? GetLexerParser(IContentType contentType)
+        {
+            if (contentType == _contentTypeManager.Asm1ContentType)
+                return (Asm1Lexer, Asm1Parser);
+            else if (contentType == _contentTypeManager.Asm2ContentType)
+                return (Asm2Lexer, Asm2Parser);
+            else if (contentType == _contentTypeManager.AsmDocContentType)
+                return (AsmDocLexer, AsmDocParser);
+
+            else return null;
+        }
+
+        private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
         {
             if (_documents.ContainsKey(e.TextDocument.FilePath))
-                _documents.Remove(e.TextDocument.FilePath);
+            {
+                if (_documents.TryGetValue(e.TextDocument.FilePath, out var document))
+                {
+                    document.DocumentRenamed -= DocumentRenamed;
+                    document.Dispose();
+                    _documents.Remove(e.TextDocument.FilePath);
+                    DocumentDisposed(document);
+                }
+            }
         }
 
         private void DocumentRenamed(IDocument document, string oldPath, string newPath)
         {
-            _documents.Remove(oldPath);
-            _documents.Add(newPath, document);
+            if (_documents.Remove(oldPath))
+                _documents.Add(newPath, document);
+        }
+
+        private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)
+        {
+            if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
+            {
+                var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
+                _documents.TryGetValue(openWindowPath, out var document);
+                ActiveDocumentChanged?.Invoke(document);
+            }
         }
     }
 }

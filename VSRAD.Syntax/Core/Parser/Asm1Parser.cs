@@ -4,12 +4,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
-using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
-namespace VSRAD.Syntax.Core.RadAsm
+namespace VSRAD.Syntax.Core.Parser
 {
     internal class Asm1Parser : AbstractInstructionParser
     {

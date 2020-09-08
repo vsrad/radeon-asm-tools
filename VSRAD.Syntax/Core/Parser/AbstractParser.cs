@@ -1,16 +1,13 @@
-﻿using EnvDTE;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
 
-namespace VSRAD.Syntax.Core
+namespace VSRAD.Syntax.Core.Parser
 {
     public interface IParser
     {

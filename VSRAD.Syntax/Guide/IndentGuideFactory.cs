@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
-using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Core;
 
@@ -13,13 +11,13 @@ namespace VSRAD.Syntax.Guide
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class IndentGuideFactory : IWpfTextViewCreationListener
     {
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
+        private readonly IDocumentFactory _documentFactory;
         private readonly OptionsProvider _optionsProvider;
 
         [ImportingConstructor]
-        public IndentGuideFactory(DocumentAnalysisProvoder documentAnalysisProvoder, OptionsProvider optionsProvider)
+        public IndentGuideFactory(IDocumentFactory documentFactory, OptionsProvider optionsProvider)
         {
-            _documentAnalysisProvoder = documentAnalysisProvoder;
+            _documentFactory = documentFactory;
             _optionsProvider = optionsProvider;
         }
 
@@ -31,21 +29,9 @@ namespace VSRAD.Syntax.Guide
 
         public void TextViewCreated(IWpfTextView textView)
         {
-            try
-            {
-                InitializeIndentGuide(textView);
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
-        }
-
-        private IndentGuide InitializeIndentGuide(IWpfTextView textView)
-        {
-            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textView.TextBuffer);
-
-            return new IndentGuide(textView, documentAnalysis, _optionsProvider);
+            var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
+            if (document != null)
+                textView.Properties.AddProperty(typeof(IndentGuide), new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider));
         }
     }
 }

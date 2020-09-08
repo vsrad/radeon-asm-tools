@@ -10,6 +10,7 @@ using VSRAD.Syntax.Core.Tokens;
 using Microsoft.VisualStudio.Threading;
 using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
+using VSRAD.Syntax.Core.Parser;
 
 namespace VSRAD.Syntax.Core
 {
