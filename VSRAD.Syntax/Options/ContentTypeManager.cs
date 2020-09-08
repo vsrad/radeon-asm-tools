@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
@@ -77,9 +78,11 @@ namespace VSRAD.Syntax.Options
             if (VsShellUtilities.IsDocumentOpen(_serviceProvider, fullPath, Guid.Empty, out _, out _, out var windowFrame))
             {
                 var textView = VsShellUtilities.GetTextView(windowFrame);
-                var wpfTextView = _textEditorAdaptersFactoryService.GetWpfTextView(textView);
-
-                UpdateTextBufferContentType(wpfTextView.TextBuffer, window.Document.Name);
+                if (textView.GetBuffer(out var vsTextBuffer) == VSConstants.S_OK)
+                {
+                    var textBuffer = _textEditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
+                    UpdateTextBufferContentType(textBuffer, window.Document.Name);
+                }
             }
         }
 

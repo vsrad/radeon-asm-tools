@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
@@ -18,6 +18,7 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         private readonly OptionsProvider _optionsProvider;
         private readonly Lazy<IDocumentFactory> _documentFactory;
+        private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly List<Instruction> _instructions;
         private string _loadedPaths;
 
@@ -25,10 +26,12 @@ namespace VSRAD.Syntax.Options.Instructions
 
         [ImportingConstructor]
         public InstructionListManager(OptionsProvider optionsEventProvider, 
-            [Import(AllowDefault = true, AllowRecomposition = true)] Lazy<IDocumentFactory> documentFactory)
+            Lazy<IDocumentFactory> documentFactory,
+            Lazy<INavigationTokenService> navigationTokenService)
         {
             _optionsProvider = optionsEventProvider;
             _documentFactory = documentFactory;
+            _navigationTokenService = navigationTokenService;
             _instructions = new List<Instruction>();
 
             _optionsProvider.OptionsUpdated += OptionsUpdated;
@@ -112,15 +115,13 @@ namespace VSRAD.Syntax.Options.Instructions
             var snapshot = document.CurrentSnapshot;
             var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);
 
-            var instructions = analysisResult
-                .Scopes[0] // TODO: fix it
-                .Tokens
+            var instructions = analysisResult.Root.Tokens
                 .Where(t => t.Type == RadAsmTokenType.Instruction);
 
             foreach (var instructionToken in instructions)
             {
                 var text = instructionToken.TrackingToken.GetText(snapshot);
-                var navigation = new NavigationToken(instructionToken, snapshot);
+                var navigation = _navigationTokenService.Value.CreateToken(instructionToken, path);
                 var instruction = new Instruction(text, navigation, type);
 
                 _instructions.Add(instruction);
