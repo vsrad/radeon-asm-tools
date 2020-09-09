@@ -37,11 +37,11 @@ namespace VSRAD.Package.Server
                 var groupY = uint.Parse(match.Groups["gp_y"].Value);
                 var groupZ = uint.Parse(match.Groups["gp_z"].Value);
 
+                NDRange3D = gridY != 0 && gridZ != 0;
                 GroupSize = groupX;
                 DimX = gridX / groupX;
-                DimY = gridY / groupY;
-                DimZ = gridZ / groupZ;
-                NDRange3D = gridY != 0 && gridZ != 0;
+                DimY = NDRange3D ? gridY / groupY : 0;
+                DimZ = NDRange3D ? gridZ / groupZ : 0;
                 WaveSize = uint.Parse(match.Groups["wv"].Value);
                 StatusString = match.Groups["comment"].Value;
             }
