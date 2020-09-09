@@ -1,16 +1,12 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Core.Tokens;
-using Microsoft.VisualStudio.Threading;
-using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Core.Parser;
+using VSRAD.Syntax.Core.Helper;
 
 namespace VSRAD.Syntax.Core
 {
@@ -18,8 +14,7 @@ namespace VSRAD.Syntax.Core
     {
         private readonly IDocument _document;
         private readonly IParser _parser;
-        private readonly ConcurrentDictionary<ITextSnapshot, AsyncLazy<IAnalysisResult>> _resultsRequests;
-        private readonly DocumentSnapshotComparer _comparer;
+        private readonly FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>> _resultsRequests;
         private CancellationTokenSource _cts;
 
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
@@ -29,9 +24,7 @@ namespace VSRAD.Syntax.Core
             _document = document;
             _parser = parser;
             _cts = new CancellationTokenSource();
-
-            _comparer = new DocumentSnapshotComparer();
-            _resultsRequests = new ConcurrentDictionary<ITextSnapshot, AsyncLazy<IAnalysisResult>>(_comparer);
+            _resultsRequests = new FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(100);
 
             tokenizer.TokenizerUpdated += TokenizerUpdated;
             TokenizerUpdated(tokenizer.CurrentResult);
@@ -39,8 +32,8 @@ namespace VSRAD.Syntax.Core
 
         public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
         {
-            if (_resultsRequests.TryGetValue(textSnapshot, out var asyncLazy))
-                return await asyncLazy.GetValueAsync();
+            if (_resultsRequests.TryGetValue(textSnapshot, out var task))
+                return await task.ConfigureAwait(false);
 
             throw new NotImplementedException();
         }
@@ -49,25 +42,17 @@ namespace VSRAD.Syntax.Core
         {
             _cts.Cancel();
             _cts = new CancellationTokenSource();
-            RunAnalysisAsync(tokenizerResult, _cts.Token).RunAsyncWithoutAwait();
+
+            _resultsRequests.TryAddValue(tokenizerResult.Snapshot, 
+                () => RunAnalysisAsync(tokenizerResult, _cts.Token));
         }
 
-        private async Task RunAnalysisAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
-        {
-            var analysisResult = await _resultsRequests
-                .GetOrAdd(
-                    tokenizerResult.Snapshot, 
-                    version => new AsyncLazy<IAnalysisResult>(() =>
-                        Task.Run(async () => await RunParserAsync(tokenizerResult, cancellationToken)),
-                        ThreadHelper.JoinableTaskFactory))
-                .GetValueAsync();
-
-            AnalysisUpdated?.Invoke(analysisResult);
-        }
+        private Task<IAnalysisResult> RunAnalysisAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken) =>
+            Task.Run(async () => await RunParserAsync(tokenizerResult, cancellationToken));
 
         private async Task<IAnalysisResult> RunParserAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
-            var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
+            var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken).ConfigureAwait(false);
             var rootBlock = blocks[0];
 
             var includes = rootBlock.Tokens
@@ -76,15 +61,13 @@ namespace VSRAD.Syntax.Core
                 .Select(i => i.Document)
                 .ToList();
 
-            return new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
+            var analysisResult = new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
+
+            InvokeUpdate(analysisResult);
+            return analysisResult;
         }
 
-        private class DocumentSnapshotComparer : IEqualityComparer<ITextSnapshot>
-        {
-            public bool Equals(ITextSnapshot x, ITextSnapshot y) =>
-                x.Version.VersionNumber == y.Version.VersionNumber;
-
-            public int GetHashCode(ITextSnapshot obj) => obj.GetHashCode();
-        }
+        private void InvokeUpdate(IAnalysisResult analysisResult) =>
+            AnalysisUpdated?.Invoke(analysisResult);
     }
 }
