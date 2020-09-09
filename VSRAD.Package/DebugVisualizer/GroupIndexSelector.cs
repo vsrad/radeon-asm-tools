@@ -52,6 +52,8 @@ namespace VSRAD.Package.DebugVisualizer
         private string _error;
         public bool HasErrors => _error != null;
 
+        private bool _updateOptions = true;
+
         private readonly Options.ProjectOptions _projectOptions;
 
         public GroupIndexSelector(Options.ProjectOptions options)
@@ -69,7 +71,7 @@ namespace VSRAD.Package.DebugVisualizer
                 {
                     case nameof(Options.DebuggerOptions.GroupSize):
                     case nameof(Options.DebuggerOptions.NGroups):
-                        Update();
+                        if (_updateOptions) Update();
                         break;
                 }
             };
@@ -77,16 +79,20 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void UpdateOnBreak(BreakState breakState)
         {
+            _updateOptions = false;
+
             _projectOptions.VisualizerOptions.NDRange3D = breakState.NDRange3D;
 
             _dimX = breakState.DimX;
             _dimY = breakState.DimY;
             _dimZ = breakState.DimZ;
 
-            // assign NGroups after all others because it calls Update()
             _projectOptions.DebuggerOptions.NGroups = breakState.NDRange3D
                 ? breakState.DimX * breakState.DimY * breakState.DimZ
                 : breakState.DimX;
+            _projectOptions.DebuggerOptions.GroupSize = breakState.GroupSize;
+
+            _updateOptions = true;
             // TODO: handle wavesize
             Update();
         }

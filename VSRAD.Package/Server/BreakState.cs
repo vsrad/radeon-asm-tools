@@ -15,6 +15,7 @@ namespace VSRAD.Package.Server
         public uint DimX { get; }
         public uint DimY { get; }
         public uint DimZ { get; }
+        public uint GroupSize { get; } // TODO: handle 3d group sizes
         public bool NDRange3D { get; }
 
         private static readonly Regex StatusFileRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)\s+comment (?<comment>.+)", RegexOptions.Compiled);
@@ -36,6 +37,7 @@ namespace VSRAD.Package.Server
                 var groupY = uint.Parse(match.Groups["gp_y"].Value);
                 var groupZ = uint.Parse(match.Groups["gp_z"].Value);
 
+                GroupSize = groupX;
                 DimX = gridX / groupX;
                 DimY = gridY / groupY;
                 DimZ = gridZ / groupZ;
