@@ -43,7 +43,7 @@ namespace VSRAD.Syntax.FunctionList.Commands
             if ((null == window) || (null == window.Frame)) return;
 
             // Handle the toolWindow's content as Window (our control)
-            window.FunctionListControl.OnClearSearchField();
+            //window.FunctionListControl.OnClearSearchField();
         }
     }
 }

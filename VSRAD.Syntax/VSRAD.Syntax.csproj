@@ -103,6 +103,7 @@
     <Compile Include="FunctionList\Commands\ClearSearchFieldCommand.cs" />
     <Compile Include="FunctionList\Commands\SelectItemCommand.cs" />
     <Compile Include="FunctionList\FunctionListItem.cs" />
+    <Compile Include="FunctionList\FunctionListProvider.cs" />
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />

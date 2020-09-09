@@ -1,5 +1,4 @@
-﻿using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.FunctionList.Commands;
+﻿using VSRAD.Syntax.FunctionList.Commands;
 using static VSRAD.Syntax.Options.GeneralOptionPage;
 using Microsoft.VisualStudio.Shell;
 using System;
@@ -10,98 +9,61 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
-using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Options;
-using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.FunctionList
 {
     public partial class FunctionListControl : UserControl
     {
-        private readonly OleMenuCommandService commandService;
-        private SortState FunctionListSortState;
-        private bool Autoscroll;
-        private bool isHideLineNumber = false;
-        private List<FunctionListItem> Tokens;
-        private FunctionListItem LastHighlightedToken;
-        private ITextSnapshot CurrentVersion;
-        private string SearchText;
+        public SortState SortState
+        {
+            get { return _sortState; }
+            set
+            {
+                if (_sortState != value)
+                {
+                    _sortState = value;
+                    SortAndReloadFunctionList();
+                }
+            }
+        }
+        public bool Autoscroll { get; set; }
 
-        public FunctionListControl(OleMenuCommandService service, OptionsProvider optionsProvider)
+        private readonly OleMenuCommandService commandService;
+        private SortState _sortState;
+        private bool _isHideLineNumber;
+        private List<FunctionListItem> _tokens;
+        private string _searchText;
+
+        public FunctionListControl(OleMenuCommandService service)
         {
             var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
             service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
-            Tokens = new List<FunctionListItem>();
-            SearchText = string.Empty;
+            _tokens = new List<FunctionListItem>();
+            _isHideLineNumber = false;
+            _searchText = string.Empty;
 
             InitializeComponent();
             commandService = service;
-
-            Autoscroll = optionsProvider.Autoscroll;
-            FunctionListSortState = optionsProvider.SortOptions;
-            optionsProvider.OptionsUpdated += OptionsUpdated;
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
         }
 
-        private void OptionsUpdated(OptionsProvider sender)
+        public async Task UpdateListAsync(IEnumerable<FunctionListItem> newTokens)
         {
-            try
-            {
-                Autoscroll = sender.Autoscroll;
-                FunctionListSortState = sender.SortOptions;
-                SortAndReloadFunctionList();
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
-        }
+            _tokens = newTokens.ToList();
+            var filteredTokens = Helper.SortAndFilter(_tokens, SortState, _searchText);
 
-        public async Task UpdateFunctionListAsync(ITextSnapshot textSnapshot, IEnumerable<FunctionListItem> newTokens)
-        {
-            if (textSnapshot == CurrentVersion)
-                return;
-
-            CurrentVersion = textSnapshot;
-            Tokens = newTokens.ToList();
-            var filteredTokens = Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
-            
             await AddTokensToViewAsync(filteredTokens);
-            if (LastHighlightedToken != null)
-                await HighlightCurrentFunctionAsync(LastHighlightedToken.Type, LastHighlightedToken.LineNumber);
         }
 
-        public async Task ClearHighlightCurrentFunctionAsync()
+        public void ClearList()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (LastHighlightedToken != null)
-            {
-                LastHighlightedToken.IsCurrentWorkingItem = false;
-                LastHighlightedToken = null;
-            }
-        }
-
-        public async Task HighlightCurrentFunctionAsync(RadAsmTokenType tokenType, int lineNumber)
-        {
-            var value = Tokens.FirstOrDefault(t => t.Type == tokenType && t.LineNumber == lineNumber);
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            if (LastHighlightedToken != null) 
-                LastHighlightedToken.IsCurrentWorkingItem = false;
-            if (value == null) 
-                return;
-
-            value.IsCurrentWorkingItem = true;
-            LastHighlightedToken = value;
-
-            if (Autoscroll)
-                tokens.ScrollIntoView(value);
+            _tokens = new List<FunctionListItem>();
+            tokens.Items.Clear();
         }
 
         private void SortAndReloadFunctionList()
         {
-            var filteredTokens = Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
+            var filteredTokens = Helper.SortAndFilter(_tokens, SortState, _searchText);
             ReloadFunctionList(filteredTokens);
         }
 
@@ -122,8 +84,8 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ByNumber_Click(object sender, RoutedEventArgs e)
         {
-            FunctionListSortState = FunctionListSortState != SortState.ByLine 
-                ? SortState.ByLine 
+            SortState = SortState != SortState.ByLine
+                ? SortState.ByLine
                 : SortState.ByLineDescending;
 
             SortAndReloadFunctionList();
@@ -131,7 +93,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ByName_Click(object sender, RoutedEventArgs e)
         {
-            FunctionListSortState = FunctionListSortState != SortState.ByName
+            SortState = SortState != SortState.ByName
                 ? SortState.ByName
                 : SortState.ByNameDescending;
 
@@ -147,7 +109,7 @@ namespace VSRAD.Syntax.FunctionList
                 CommandID menuID = new CommandID(
                     FunctionListCommand.CommandSet,
                     Constants.FunctionListMenu);
-                Point p = this.PointToScreen(e.GetPosition(this));
+                Point p = PointToScreen(e.GetPosition(this));
                 commandService.ShowContextMenu(menuID, (int)p.X, (int)p.Y);
             }
         }
@@ -156,7 +118,7 @@ namespace VSRAD.Syntax.FunctionList
         {
             /* This is a well know behaviour of GridView https://stackoverflow.com/questions/560581/how-to-autosize-and-right-align-gridviewcolumn-data-in-wpf/1931423#1931423 */
             functionsGridView.Columns[0].Width = 0;
-            if (!isHideLineNumber)
+            if (!_isHideLineNumber)
                 functionsGridView.Columns[0].Width = double.NaN;
             functionsGridView.Columns[1].Width = 0;
             functionsGridView.Columns[1].Width = double.NaN;
@@ -173,14 +135,14 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ShowHideLineNumber(object sender, EventArgs e)
         {
-            isHideLineNumber = !isHideLineNumber;
+            _isHideLineNumber = !_isHideLineNumber;
             AutosizeColumns();
         }
 
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
-            SearchText = Search.Text;
-            var filteredTokens = Helper.Filter(Tokens, SearchText);
+            _searchText = Search.Text;
+            var filteredTokens = Helper.Filter(_tokens, _searchText);
             ReloadFunctionList(filteredTokens);
         }
 
@@ -188,19 +150,9 @@ namespace VSRAD.Syntax.FunctionList
 
         public void GoToSelectedItem()
         {
-            try
-            {
-                var token = (FunctionListItem)tokens.SelectedItem;
-                if (token != null)
-                {
-                    var view = FunctionList.Instance.GetActiveTextView();
-                    view?.ChangeCaretPosition(token.LineNumber - 1);
-                }
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e);
-            }
+            var token = (FunctionListItem)tokens.SelectedItem;
+            if (token != null)
+                token.Navigate();
         }
 
         private void FunctionListContentGridOnLoad(object sender, RoutedEventArgs e) => functionListContentGrid.Focus();

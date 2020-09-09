@@ -43,7 +43,7 @@ namespace VSRAD.Syntax.FunctionList.Commands
             if ((null == window) || (null == window.Frame)) 
                 return;
 
-            window.FunctionListControl.GoToSelectedItem();
+            //window.FunctionListControl.GoToSelectedItem();
         }
     }
 }

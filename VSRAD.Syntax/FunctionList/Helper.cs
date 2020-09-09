@@ -14,7 +14,9 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         public static IEnumerable<FunctionListItem> Filter(List<FunctionListItem> items, string filterText) =>
-            items.Where(t => t.Text.Contains(filterText));
+            string.IsNullOrEmpty(filterText) 
+                ? items 
+                : items.Where(t => t.Text.Contains(filterText));
 
         public static void Sort(SortState sortState, List<FunctionListItem> items)
         {
