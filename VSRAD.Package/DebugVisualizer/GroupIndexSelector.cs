@@ -83,9 +83,9 @@ namespace VSRAD.Package.DebugVisualizer
 
             _projectOptions.VisualizerOptions.NDRange3D = breakState.NDRange3D;
 
-            _dimX = breakState.DimX;
-            _dimY = breakState.DimY;
-            _dimZ = breakState.DimZ;
+            DimX = breakState.DimX;
+            DimY = breakState.DimY;
+            DimZ = breakState.DimZ;
 
             _projectOptions.DebuggerOptions.NGroups = breakState.NDRange3D
                 ? breakState.DimX * breakState.DimY * breakState.DimZ
@@ -129,7 +129,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             field = value;
 
-            Update();
+            if (_updateOptions) Update();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
             return true;
