@@ -28,6 +28,7 @@ namespace VSRAD.Package.Server
             ExitCode = 0;
 
             var match = StatusFileRegex.Match(statusFileContents);
+
             if (match.Success)
             {
                 var gridX = uint.Parse(match.Groups["gd_x"].Value);
@@ -36,14 +37,18 @@ namespace VSRAD.Package.Server
                 var groupX = uint.Parse(match.Groups["gp_x"].Value);
                 var groupY = uint.Parse(match.Groups["gp_y"].Value);
                 var groupZ = uint.Parse(match.Groups["gp_z"].Value);
+                WaveSize = uint.Parse(match.Groups["wv"].Value);
 
                 NDRange3D = gridY != 0 && gridZ != 0;
                 GroupSize = groupX;
                 DimX = gridX / groupX;
                 DimY = NDRange3D ? gridY / groupY : 0;
                 DimZ = NDRange3D ? gridZ / groupZ : 0;
-                WaveSize = uint.Parse(match.Groups["wv"].Value);
                 StatusString = match.Groups["comment"].Value;
+            }
+            else if (!string.IsNullOrEmpty(statusFileContents))
+            {
+                Errors.ShowWarning("Could not set dispatch parameters from the status file. Make sure that the status file contents match the format.");
             }
         }
     }
