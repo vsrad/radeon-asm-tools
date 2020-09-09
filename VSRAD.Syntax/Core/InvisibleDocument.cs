@@ -18,7 +18,7 @@ namespace VSRAD.Syntax.Core
         {
             var document = new Document();
             document.Initialize(textDocument, _lexer, _parser);
-            Dispose();
+            _textDocument.Dispose();
 
             _visibleDocument = document;
             return _visibleDocument;

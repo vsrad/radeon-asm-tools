@@ -73,10 +73,13 @@ namespace VSRAD.Syntax.Core
 
         public void Dispose()
         {
-            _textDocument.FileActionOccurred -= FileActionOccurred;
-            _textDocument.Dispose();
-            IsDisposed = true;
-            GC.SuppressFinalize(this);
+            if (!IsDisposed)
+            {
+                _textDocument.FileActionOccurred -= FileActionOccurred;
+                _textDocument.Dispose();
+                IsDisposed = true;
+                GC.SuppressFinalize(this);
+            }
         }
 
         ~Document()
