@@ -9,6 +9,7 @@ using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.IntelliSense;
+using System.Threading;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -18,6 +19,8 @@ namespace VSRAD.Syntax.FunctionList
         private const string CaptionName = "Function list";
         private FunctionListControl FunctionListControl;
         private Lazy<INavigationTokenService> _navigationTokenService;
+        private CancellationTokenSource _cts;
+        private readonly object _lock = new object();
 
         public FunctionList() : base(null)
         {
@@ -33,6 +36,7 @@ namespace VSRAD.Syntax.FunctionList
 
             FunctionListControl = new FunctionListControl(commandService);
             Content = FunctionListControl;
+            _cts = new CancellationTokenSource();
 
             documentFactory.DocumentCreated += DocumentCreated;
             documentFactory.DocumentDisposed += DocumentDisposed;
@@ -65,19 +69,29 @@ namespace VSRAD.Syntax.FunctionList
 
         private async Task UpdateFunctionListAsync(IDocument document, IAnalysisResult analysisResult)
         {
+            var ct = CancellationToken.None;
+            lock (_lock)
+            {
+                _cts.Cancel();
+                _cts = new CancellationTokenSource();
+                ct = _cts.Token;
+            }
+
             var tokens = analysisResult.Scopes
                 .SelectMany(s => s.Tokens)
                 .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
                 .Select(t => _navigationTokenService.Value.CreateToken(t, document))
                 .Select(t => new FunctionListItem(t));
 
-            await FunctionListControl.UpdateListAsync(tokens);
+            await FunctionListControl.UpdateListAsync(tokens, ct);
         }
 
         private void UpdateFunctionList(IDocument document) =>
             Task.Run(async () =>
             {
-                var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(document.CurrentSnapshot);
+                var analysisResult = await document.DocumentAnalysis
+                    .GetAnalysisResultAsync(document.CurrentSnapshot)
+                    .ConfigureAwait(false);
                 await UpdateFunctionListAsync(document, analysisResult);
             }).RunAsyncWithoutAwait();
 

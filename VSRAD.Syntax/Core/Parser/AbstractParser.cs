@@ -47,7 +47,9 @@ namespace VSRAD.Syntax.Core.Parser
                 if (externalDocument != null)
                 {
                     var externalDocumentAnalysis = externalDocument.DocumentAnalysis;
-                    var externalAnalysisResult = await externalDocumentAnalysis.GetAnalysisResultAsync(externalDocument.CurrentSnapshot);
+                    var externalAnalysisResult = await externalDocumentAnalysis
+                        .GetAnalysisResultAsync(externalDocument.CurrentSnapshot)
+                        .ConfigureAwait(false);
 
                     definitions.AddRange(externalAnalysisResult.GetGlobalDefinitions());
                 }

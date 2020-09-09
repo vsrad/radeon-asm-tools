@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
+using System.Threading;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -47,12 +48,13 @@ namespace VSRAD.Syntax.FunctionList
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
         }
 
-        public async Task UpdateListAsync(IEnumerable<FunctionListItem> newTokens)
+        public async Task UpdateListAsync(IEnumerable<FunctionListItem> newTokens, CancellationToken cancellationToken)
         {
             _tokens = newTokens.ToList();
             var filteredTokens = Helper.SortAndFilter(_tokens, SortState, _searchText);
+            if (cancellationToken.IsCancellationRequested) return;
 
-            await AddTokensToViewAsync(filteredTokens);
+            await AddTokensToViewAsync(filteredTokens, cancellationToken);
         }
 
         public void ClearList()
@@ -68,11 +70,12 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         private void ReloadFunctionList(IEnumerable<FunctionListItem> tokens) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(tokens));
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(tokens, CancellationToken.None));
 
-        private async Task AddTokensToViewAsync(IEnumerable<FunctionListItem> functionListTokens)
+        private async Task AddTokensToViewAsync(IEnumerable<FunctionListItem> functionListTokens, CancellationToken cancellationToken)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (cancellationToken.IsCancellationRequested) return;
 
             tokens.Items.Clear();
             foreach (var token in functionListTokens)

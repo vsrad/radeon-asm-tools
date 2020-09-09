@@ -71,6 +71,7 @@
     <Compile Include="Core\DocumentFactory.cs" />
     <Compile Include="Core\DocumentTokenizer.cs" />
     <Compile Include="Core\Helper\BitHelper.cs" />
+    <Compile Include="Core\Helper\FixedSizeDictionary.cs" />
     <Compile Include="Core\Helper\SortedSet.cs" />
     <Compile Include="Core\Helper\ITokenizerCollection.cs" />
     <Compile Include="Core\Helper\TokenizerCollection.cs" />
