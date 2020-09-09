@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.Text;
-using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.Helpers
 {
@@ -24,8 +23,5 @@ namespace VSRAD.Syntax.Helpers
 
             return AsmType.Unknown;
         }
-
-        internal static bool TryGetDocumentAnalysis(this ITextSnapshot textSnapshot, out DocumentAnalysis documentAnalysis) =>
-            textSnapshot.TextBuffer.Properties.TryGetProperty(typeof(DocumentAnalysis), out documentAnalysis);
     }
 }

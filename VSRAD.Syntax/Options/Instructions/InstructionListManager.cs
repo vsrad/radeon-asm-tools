@@ -10,6 +10,7 @@ using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
@@ -81,11 +82,11 @@ namespace VSRAD.Syntax.Options.Instructions
             }
         }
 
-        private Task LoadInstructionsFromDirectoryAsync(string path)
+        private async Task LoadInstructionsFromDirectoryAsync(string path)
         {
             try
             {
-                List<Task> loadTasks = new List<Task>();
+                var loadTasks = new List<Task<(InstructionType, IReadOnlyList<NavigationToken>)>>();
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
                     if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
@@ -95,7 +96,19 @@ namespace VSRAD.Syntax.Options.Instructions
                         loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
                 }
 
-                return Task.WhenAll(loadTasks);
+                var results = await Task.WhenAll(loadTasks);
+                foreach (var instructionTypeGroup in results.GroupBy(t => t.Item1))
+                {
+                    var type = instructionTypeGroup.Key;
+                    var instructionNameGroups = instructionTypeGroup.SelectMany(g => g.Item2).GroupBy(n => n.GetText());
+
+                    foreach (var instructionNameGroup in instructionNameGroups)
+                    {
+                        var name = instructionNameGroup.Key;
+                        var navigations = instructionNameGroup.ToList();
+                        _instructions.Add(new Instruction(name, navigations, type));
+                    }
+                }
             }
             catch (Exception e) when (
                e is DirectoryNotFoundException ||
@@ -104,11 +117,11 @@ namespace VSRAD.Syntax.Options.Instructions
                e is SecurityException ||
                e is UnauthorizedAccessException)
             {
-                return Task.FromException(e);
+                Error.ShowError(e, "Instruction loader");
             }
         }
 
-        private async Task LoadInstructionsFromFileAsync(string path, InstructionType type)
+        private async Task<(InstructionType, IReadOnlyList<NavigationToken>)> LoadInstructionsFromFileAsync(string path, InstructionType type)
         {
             var document = _documentFactory.Value.GetOrCreateDocument(path);
             var documentAnalysis = document.DocumentAnalysis;
@@ -118,14 +131,11 @@ namespace VSRAD.Syntax.Options.Instructions
             var instructions = analysisResult.Root.Tokens
                 .Where(t => t.Type == RadAsmTokenType.Instruction);
 
+            var navigationTokens = new List<NavigationToken>();
             foreach (var instructionToken in instructions)
-            {
-                var text = instructionToken.TrackingToken.GetText(snapshot);
-                var navigation = _navigationTokenService.Value.CreateToken(instructionToken, path);
-                var instruction = new Instruction(text, navigation, type);
+                navigationTokens.Add(_navigationTokenService.Value.CreateToken(instructionToken, document));
 
-                _instructions.Add(instruction);
-            }
+            return (type, navigationTokens);
         }
         public IReadOnlyList<Instruction> GetInstructions(AsmType asmType)
         {

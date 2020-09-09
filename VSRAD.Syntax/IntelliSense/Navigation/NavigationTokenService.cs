@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
-using System;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 
 namespace VSRAD.Syntax.IntelliSense
@@ -15,6 +14,7 @@ namespace VSRAD.Syntax.IntelliSense
     public interface INavigationTokenService
     {
         NavigationToken CreateToken(AnalysisToken analysisToken, string path);
+        NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document);
         Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
         void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
     }
@@ -35,10 +35,14 @@ namespace VSRAD.Syntax.IntelliSense
         public NavigationToken CreateToken(AnalysisToken analysisToken, string path)
         {
             var document = _documentFactory.GetOrCreateDocument(analysisToken.Snapshot.TextBuffer);
-            var navigate = document != null
-                ? new Action(() => document.NavigateToPosition(analysisToken.GetStart()))
-                : null;
-            return new NavigationToken(analysisToken, path, navigate);
+            return CreateToken(analysisToken, document);
+        }
+
+        public NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document)
+        {
+            if (document == null) return NavigationToken.Empty;
+
+            return new NavigationToken(analysisToken, document.Path, () => document.NavigateToPosition(analysisToken.GetStart()));
         }
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
@@ -54,13 +58,13 @@ namespace VSRAD.Syntax.IntelliSense
 
             if (analysisToken is DefinitionToken definitionToken)
             {
-                tokens.Add(CreateToken(definitionToken, document.Path));
+                tokens.Add(CreateToken(definitionToken, document));
             }
             else if (analysisToken is ReferenceToken referenceToken)
             {
                 var definition = referenceToken.Definition;
                 var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
-                tokens.Add(CreateToken(definition, definitionDocument.Path));
+                tokens.Add(CreateToken(definition, definitionDocument));
             }
             else
             {
@@ -72,7 +76,7 @@ namespace VSRAD.Syntax.IntelliSense
                     foreach (var i in instructions)
                     {
                         if (i.Text == instructionText)
-                            tokens.Add(i.Navigation);
+                            return new NavigationTokenServiceResult(i.Navigations, analysisToken);
                     }
                 }
                 else

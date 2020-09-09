@@ -11,7 +11,7 @@ namespace VSRAD.Syntax.Helpers
         public static IEnumerable<FunctionBlock> GetFunctions(this IReadOnlyList<IBlock> blocks) =>
             blocks.Where(b => b.Type == BlockType.Function).Cast<FunctionBlock>();
 
-        public static IEnumerable<AnalysisToken> GetScopedTokens(this IBlock block, RadAsmTokenType type)
+        public static IReadOnlyList<AnalysisToken> GetScopedTokens(this IBlock block, RadAsmTokenType type)
         {
             var currentBlock = block;
             var scopedTokens = new List<AnalysisToken>();

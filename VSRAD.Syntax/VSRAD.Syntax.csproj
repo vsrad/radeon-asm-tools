@@ -116,7 +116,8 @@
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="IntelliSense\Completion\ItemManager.cs" />
     <Compile Include="IntelliSense\Completion\ItemManagerProvider.cs" />
-    <Compile Include="IntelliSense\Completion\Providers\CompletionProvider.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\CompletionItem.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\RadCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\FunctionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\ScopedCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />

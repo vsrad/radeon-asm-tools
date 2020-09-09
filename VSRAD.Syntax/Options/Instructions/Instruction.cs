@@ -1,4 +1,5 @@
-﻿using VSRAD.Syntax.IntelliSense.Navigation;
+﻿using System.Collections.Generic;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
@@ -11,13 +12,13 @@ namespace VSRAD.Syntax.Options.Instructions
     public sealed class Instruction
     {
         public string Text { get; private set; }
-        public NavigationToken Navigation { get; private set; }
+        public IReadOnlyList<NavigationToken> Navigations { get; private set; }
         public InstructionType Type { get; private set; }
 
-        public Instruction(string text, NavigationToken navigation, InstructionType instructionType)
+        public Instruction(string text, IReadOnlyList<NavigationToken> navigations, InstructionType instructionType)
         {
             Text = text;
-            Navigation = navigation;
+            Navigations = navigations;
             Type = instructionType;
         }
     }

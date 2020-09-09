@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
@@ -14,10 +14,12 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     internal class ItemManager : IAsyncCompletionItemManager
     {
         private readonly IPatternMatcherFactory _patternMatcherFactory;
+        private readonly IDocumentFactory _documentFactory;
 
-        public ItemManager(IPatternMatcherFactory patternMatcherFactory)
+        public ItemManager(IPatternMatcherFactory patternMatcherFactory, IDocumentFactory documentFactory)
         {
             _patternMatcherFactory = patternMatcherFactory;
+            _documentFactory = documentFactory;
         }
 
         public Task<ImmutableArray<CompletionItem>> SortCompletionListAsync(IAsyncCompletionSession session, AsyncCompletionSessionInitialDataSnapshot data, CancellationToken token) =>
@@ -46,13 +48,16 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
             if (initialTriggerReason == CompletionTriggerReason.Insertion)
             {
-                if (!session.TextView.TextSnapshot.TryGetDocumentAnalysis(out var documentAnalysis))
-                    return null;
+                var document = _documentFactory.GetOrCreateDocument(startPoint.Snapshot.TextBuffer);
+                if (document == null) return null;
 
-                var endApplicableTokenType = documentAnalysis.LexerTokenToRadAsmToken(documentAnalysis.GetToken(startPoint).Type);
-                if (endApplicableTokenType == RadAsmTokenType.Keyword ||
-                    endApplicableTokenType == RadAsmTokenType.Preprocessor ||
-                    endApplicableTokenType == RadAsmTokenType.Number)
+                var triggerToken = document.DocumentTokenizer.CurrentResult.GetToken(startPoint);
+                var triggerTokenType = document.DocumentTokenizer.GetTokenType(triggerToken.Type);
+
+                if (triggerTokenType == RadAsmTokenType.Keyword ||
+                    triggerTokenType == RadAsmTokenType.Preprocessor ||
+                    triggerTokenType == RadAsmTokenType.Number ||
+                    triggerTokenType == RadAsmTokenType.Comment)
                 {
                     return null;
                 }

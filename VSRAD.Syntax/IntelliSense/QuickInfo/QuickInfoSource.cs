@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var navigationsResult = await _navigationTokenService.GetNavigationsAsync(triggerPoint.Value);
             if (!navigationsResult.HasValue) return null;
 
-            var dataElement = _descriptionBuilder.GetColorizedDescription(navigationsResult.Values);
+            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
             if (dataElement == null) return null;
 
             var tokenSpan = navigationsResult.ApplicableToken.GetSpan();

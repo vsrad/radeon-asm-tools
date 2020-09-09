@@ -4,9 +4,10 @@ using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.Core;
 using VSRAD.Syntax.IntelliSense.Completion.Providers;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -15,27 +16,27 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(CompletionSourceProvider))]
     internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
     {
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
         private readonly OptionsProvider _optionsEventProvider;
         private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
-        private readonly IReadOnlyList<CompletionProvider> _providers;
+        private readonly IDocumentFactory _documentFactory;
+        private readonly IReadOnlyList<RadCompletionProvider> _providers;
 
         [ImportingConstructor]
-        public CompletionSourceProvider(
-            OptionsProvider optionsEventProvider,
-            InstructionListManager instructionListManager,
-            DocumentAnalysisProvoder documentAnalysisProvoder,
-            IIntellisenseDescriptionBuilder descriptionBuilder)
+        public CompletionSourceProvider(OptionsProvider optionsEventProvider,
+            IInstructionListManager instructionListManager,
+            IIntellisenseDescriptionBuilder descriptionBuilder,
+            IDocumentFactory documentFactory, 
+            INavigationTokenService navigationTokenService)
         {
-            _documentAnalysisProvoder = documentAnalysisProvoder;
             _optionsEventProvider = optionsEventProvider;
             _descriptionBuilder = descriptionBuilder;
+            _documentFactory = documentFactory;
 
-            _providers = new List<CompletionProvider>()
+            _providers = new List<RadCompletionProvider>()
             {
-                new InstructionCompletionProvider(instructionListManager, optionsEventProvider),
-                new FunctionCompletionProvider(optionsEventProvider),
-                new ScopedCompletionProvider(optionsEventProvider)
+                new InstructionCompletionProvider(optionsEventProvider, instructionListManager),
+                new FunctionCompletionProvider(optionsEventProvider, navigationTokenService),
+                new ScopedCompletionProvider(optionsEventProvider, navigationTokenService),
             };
         }
 
@@ -44,8 +45,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             if (textView == null)
                 throw new ArgumentNullException(nameof(textView));
 
-            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textView.TextBuffer);
-            return new CompletionSource(documentAnalysis, _descriptionBuilder, _providers);
+            var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
+            if (document == null) return null;
+
+            return new CompletionSource(document, _descriptionBuilder, _providers);
         }
     }
 }

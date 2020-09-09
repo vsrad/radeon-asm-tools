@@ -94,22 +94,22 @@ namespace VSRAD.Syntax.Core.Blocks
             ActualEnd = tokenEnd.GetEnd(Snapshot);
         }
 
-        public void AddChildren(IBlock block) =>
+        public virtual void AddChildren(IBlock block) =>
             Childrens.Add(block);
 
-        public void AddToken(AnalysisToken token) =>
+        public virtual void AddToken(AnalysisToken token) =>
             Tokens.Add(token);
 
-        public bool InScope(int point) =>
+        public virtual bool InScope(int point) =>
             Scope.GetSpan(Snapshot).Contains(point);
 
-        public bool InScope(Span span) =>
+        public virtual bool InScope(Span span) =>
             Scope.GetSpan(Snapshot).Contains(span);
 
-        public bool InRange(int point) =>
+        public virtual bool InRange(int point) =>
             ActualStart <= point && ActualEnd >= point;
 
-        public bool InRange(Span span) =>
+        public virtual bool InRange(Span span) =>
             ActualStart <= span.Start && ActualEnd >= span.End;
 
         private void SetScopeEnd(int endPosition)
