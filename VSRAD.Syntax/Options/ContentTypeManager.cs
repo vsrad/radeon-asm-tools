@@ -71,7 +71,7 @@ namespace VSRAD.Syntax.Options
 
         private void UpdateWindowContentType(Window window)
         {
-            if (window == null || !window.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
+            if (window == null || !window.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase) || window.Document == null)
                 return;
 
             var fullPath = Path.Combine(window.Document.Path, window.Document.Name);
