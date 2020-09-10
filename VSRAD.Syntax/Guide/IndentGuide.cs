@@ -14,6 +14,7 @@ using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using Microsoft.VisualStudio.Text;
+using System.Threading;
 
 namespace VSRAD.Syntax.Guide
 {
@@ -58,7 +59,7 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken ct)
         {
             _currentResult = analysisResult;
             UpdateIndentGuides();

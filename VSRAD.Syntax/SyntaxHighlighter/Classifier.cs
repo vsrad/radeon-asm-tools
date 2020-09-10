@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Core.Blocks;
+using System.Threading;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
@@ -16,6 +17,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private readonly IDocumentAnalysis _documentAnalysis;
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private IAnalysisResult _analysisResult;
+        private CancellationToken _cancellationToken;
 
         public AnalysisClassifier(IDocumentAnalysis documentAnalysis,
             IClassificationTypeRegistryService classificationTypeRegistryService,
@@ -37,6 +39,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
             foreach (var block in analysisResult.Scopes)
             {
+                if (_cancellationToken.IsCancellationRequested) yield break;
                 if (block.Type == BlockType.Comment)
                     continue;
 
@@ -75,11 +78,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
                 { RadAsmTokenType.GlobalVariableReference, typeService.FormalLanguage },
                 { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
+                { RadAsmTokenType.LocalVariableReference, typeService.FormalLanguage },
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
+            _cancellationToken = cancellationToken;
             _analysisResult = analysisResult;
 
             var span = new SnapshotSpan(_analysisResult.Snapshot, new Span(0, _analysisResult.Snapshot.Length));
@@ -96,7 +101,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
         {
             _tokenizer = tokenizer;
-            _tokenizer.TokenizerUpdated += TokenizerUpdated;
+            _tokenizer.TokenizerUpdated += (result, ct) => TokenizerUpdated(result);
 
             InitializeClassifierDictionary(standardClassificationService);
             TokenizerUpdated(_tokenizer.CurrentResult);

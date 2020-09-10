@@ -6,6 +6,7 @@ using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Lexer;
+using System.Threading;
 
 namespace VSRAD.Syntax.Core
 {
@@ -14,6 +15,7 @@ namespace VSRAD.Syntax.Core
         private readonly TrackingToken.NonOverlappingComparer _comparer;
         private readonly ILexer _lexer;
         private TokenizerCollection CurrentTokens;
+        private CancellationTokenSource _cts;
 
         public TokenizerResult CurrentResult { get; private set; }
         public event TokenizerUpdatedEventHandler TokenizerUpdated;
@@ -29,6 +31,7 @@ namespace VSRAD.Syntax.Core
             _lexer = lexer;
             _comparer = new TrackingToken.NonOverlappingComparer();
             CurrentSnapshot = buffer.CurrentSnapshot;
+            _cts = new CancellationTokenSource();
 
             Initialize();
             buffer.Changed += BufferChanged;
@@ -46,8 +49,12 @@ namespace VSRAD.Syntax.Core
         public RadAsmTokenType GetTokenType(int type) =>
             _lexer.LexerTokenToRadAsmToken(type);
 
-        private void BufferChanged(object src, TextContentChangedEventArgs arg) =>
+        private void BufferChanged(object src, TextContentChangedEventArgs arg)
+        {
+            _cts.Cancel();
+            _cts = new CancellationTokenSource();
             ApplyTextChanges(arg);
+        }
 
         private void ApplyTextChanges(TextContentChangedEventArgs args) 
         {
@@ -85,7 +92,7 @@ namespace VSRAD.Syntax.Core
         private void RaiseTokensChanged(IList<TrackingToken> updated)
         {
             CurrentResult = new TokenizerResult(CurrentSnapshot, tokens: CurrentTokens, updatedTokens: updated);
-            TokenizerUpdated?.Invoke(CurrentResult);
+            TokenizerUpdated?.Invoke(CurrentResult, _cts.Token);
         }
 
         private List<TrackingToken> GetInvalidated(ITextSnapshot oldSnapshot, ITextChange change) =>

@@ -1,10 +1,10 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
-    public delegate void AnalysisUpdatedEventHandler(IAnalysisResult analysisResult);
+    public delegate void AnalysisUpdatedEventHandler(IAnalysisResult analysisResult, CancellationToken cancellationToken);
 
     public interface IDocumentAnalysis
     {

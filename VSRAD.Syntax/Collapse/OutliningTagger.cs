@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Core.Blocks;
+using System.Threading;
 
 namespace VSRAD.Syntax.Collapse
 {
@@ -47,12 +48,13 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes));
+        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken cancellationToken) =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes, cancellationToken));
 
-        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot, IReadOnlyList<IBlock> blocks)
+        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot, IReadOnlyList<IBlock> blocks, CancellationToken cancellationToken)
         {
-            var newSpanElements = blocks
+            var newSpanElements = blocks.AsParallel()
+                .WithCancellation(cancellationToken)
                 .Where(b => b.Type != BlockType.Root)
                 .Select(b => b.Scope.GetSpan(textSnapshot))
                 .ToList();

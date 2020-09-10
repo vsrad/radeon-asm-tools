@@ -52,12 +52,12 @@ namespace VSRAD.Syntax.FunctionList
 
         private void DocumentCreated(IDocument document)
         {
-            document.DocumentAnalysis.AnalysisUpdated += (result) => UpdateFunctionList(document, result);
+            document.DocumentAnalysis.AnalysisUpdated += (result, ct) => UpdateFunctionList(document, result);
             UpdateFunctionList(document);
         }
 
         private void DocumentDisposed(IDocument document) =>
-            document.DocumentAnalysis.AnalysisUpdated -= (result) => UpdateFunctionList(document, result);
+            document.DocumentAnalysis.AnalysisUpdated -= (result, ct) => UpdateFunctionList(document, result);
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
