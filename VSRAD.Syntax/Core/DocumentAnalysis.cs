@@ -50,7 +50,7 @@ namespace VSRAD.Syntax.Core
 
         private async Task<IAnalysisResult> RunParserAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
-            var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens);
+            var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
             var rootBlock = blocks[0];
 
             var includes = rootBlock.Tokens

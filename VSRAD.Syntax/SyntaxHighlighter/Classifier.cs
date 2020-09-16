@@ -78,7 +78,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
                 { RadAsmTokenType.GlobalVariableReference, typeService.FormalLanguage },
                 { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
-                { RadAsmTokenType.LocalVariableReference, typeService.FormalLanguage },
+                //{ RadAsmTokenType.LocalVariableReference, typeService.FormalLanguage },
             };
         }
 
