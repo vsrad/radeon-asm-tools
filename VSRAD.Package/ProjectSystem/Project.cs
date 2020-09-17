@@ -2,13 +2,12 @@
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
-using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
+using VSRAD.Package.BuildTools;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
@@ -67,6 +66,11 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
+
+            _unconfiguredProject.Services.ExportProvider.GetExportedValue<DebuggerIntegration>();
+            _unconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
+            _unconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
+
             Loaded?.Invoke(Options);
         }
 
