@@ -82,6 +82,7 @@ namespace VSRAD.Package.DebugVisualizer
             _updateOptions = false;
 
             _projectOptions.VisualizerOptions.NDRange3D = breakState.NDRange3D;
+            _projectOptions.VisualizerOptions.WaveSize = breakState.WaveSize;
 
             DimX = breakState.DimX;
             DimY = breakState.DimY;
@@ -93,7 +94,6 @@ namespace VSRAD.Package.DebugVisualizer
             _projectOptions.DebuggerOptions.GroupSize = breakState.GroupSize;
 
             _updateOptions = true;
-            // TODO: handle wavesize
             Update();
         }
 

@@ -42,8 +42,8 @@ namespace VSRAD.Package.DebugVisualizer
             if (system == null)
                 return;
 
-            var wfrontSize = Math.Min(64, GroupSize);
-            for (int wfrontOffset = 0; wfrontOffset < GroupSize; wfrontOffset += 64)
+            var wfrontSize = options.WaveSize;
+            for (int wfrontOffset = 0; wfrontOffset < GroupSize; wfrontOffset += (int)wfrontSize)
             {
                 if (options.CheckMagicNumber && system[wfrontOffset] != options.MagicNumber)
                 {

@@ -93,5 +93,28 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (int i = 192; i < 256; i++)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
         }
+
+        [Fact]
+        public void MagicNumberWithNonConstatnWaveSizeTest()
+        {
+            var system = new uint[128];
+            system[0] = 0x7;
+            system[32] = 0x5;
+            system[64] = 0x7;
+            system[96] = 0x5;
+
+            var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7, WaveSize = 32 };
+            var styling = new ComputedColumnStyling();
+            styling.Recompute(visualizerOptions, new ColumnStylingOptions(), groupSize: 128, system: new WatchView(system));
+
+            for (int i = 0; i < 32; i++)
+                Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
+            for (int i = 32; i < 64; i++)
+                Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
+            for (int i = 64; i < 96; i++)
+                Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
+            for (int i = 96; i < 128; i++)
+                Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
+        }
     }
 }
