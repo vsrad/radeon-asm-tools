@@ -233,7 +233,6 @@
     <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
     <Compile Include="ProjectSystem\Macros\DirtyProfileMacroEditor.cs" />
     <Compile Include="ProjectSystem\OutputWindow.cs" />
-    <Compile Include="ProjectSystem\Profiles\PropertyPageEditorWrapper.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">
       <DependentUpon>ProfileNameWindow.xaml</DependentUpon>
     </Compile>
@@ -241,9 +240,7 @@
       <DependentUpon>ProfileOptionsWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\Profiles\ProfileTransferManager.cs" />
-    <Compile Include="ProjectSystem\Profiles\ProfileOptionsReflector.cs" />
     <Compile Include="ProjectSystem\ProjectSourceManager.cs" />
-    <Compile Include="ProjectSystem\ProjectEvents.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditorWindow.xaml.cs">
       <DependentUpon>MacroEditorWindow.xaml</DependentUpon>
     </Compile>
@@ -276,17 +273,13 @@
     <Compile Include="Registry\ProvideDebugPortSupplierAttribute.cs" />
     <Compile Include="Registry\ProvideFontAndColorsCategoryAttribute.cs" />
     <Compile Include="Server\FileSynchronizationManager.cs" />
-    <Compile Include="Server\RemoteCommandExecutor.cs" />
     <Compile Include="ToolWindows\BaseToolWindow.cs" />
     <Compile Include="ToolWindows\OptionsWindow.cs" />
     <Compile Include="ToolWindows\VisualizerWindow.cs" />
     <Compile Include="Utils\DataFormatter.cs" />
     <Compile Include="Utils\NotifyPropertyChanged.cs" />
-    <Compile Include="Utils\Ensure.cs" />
     <Compile Include="Utils\Half.cs" />
-    <Compile Include="Utils\ReflectionUtils.cs" />
     <Compile Include="Utils\Result.cs" />
-    <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
     <Compile Include="VSLanguageInfo.cs" />
