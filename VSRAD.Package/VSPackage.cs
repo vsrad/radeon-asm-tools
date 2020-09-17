@@ -74,7 +74,14 @@ namespace VSRAD.Package
             var dte = (DTE)await GetServiceAsync(typeof(DTE));
             _solutionManager = new SolutionManager(vsMonitorSelection);
             _solutionManager.ProjectLoaded += (s, e) => TaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
-            _solutionManager.LoadCurrentSolution(dte);
+
+#pragma warning disable CS4014     // LoadCurrentSolution needs to be invoked _after_ we leave InitializeAsync,
+#pragma warning disable VSTHRD001  // otherwise we enter a deadlock waiting for the package to finish loading
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                (Action)(() => _solutionManager.LoadCurrentSolution(dte)), System.Windows.Threading.DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
+#pragma warning restore CS4014
+
 #if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
