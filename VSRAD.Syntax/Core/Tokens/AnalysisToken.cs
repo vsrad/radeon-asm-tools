@@ -13,18 +13,12 @@ namespace VSRAD.Syntax.Core.Tokens
             Type = tokenType;
             TrackingToken = trackingToken;
             Snapshot = snapshot;
+            Span = new SnapshotSpan(Snapshot, TrackingToken.GetSpan(Snapshot));
         }
 
-        public SnapshotSpan GetSpan() =>
-            new SnapshotSpan(Snapshot, TrackingToken.GetSpan(Snapshot));
-
-        public SnapshotPoint GetStart() =>
-            new SnapshotPoint(Snapshot, TrackingToken.GetStart(Snapshot));
-
-        public SnapshotPoint GetEnd() =>
-            new SnapshotPoint(Snapshot, TrackingToken.GetEnd(Snapshot));
+        public SnapshotSpan Span { get; }
 
         public string GetText() =>
-            GetSpan().GetText();
+            Span.GetText();
     }
 }

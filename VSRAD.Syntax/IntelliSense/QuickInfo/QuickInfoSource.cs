@@ -32,7 +32,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
             if (dataElement == null) return null;
 
-            var tokenSpan = navigationsResult.ApplicableToken.GetSpan();
+            var tokenSpan = navigationsResult.ApplicableToken.Span;
             var applicableSpan = snapshot.CreateTrackingSpan(tokenSpan, SpanTrackingMode.EdgeInclusive);
 
             return new QuickInfoItem(applicableSpan, dataElement);

@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Core
 
             foreach (var token in block.Tokens)
             {
-                if (token.GetSpan().Contains(point))
+                if (token.Span.Contains(point))
                     return token;
             }
 

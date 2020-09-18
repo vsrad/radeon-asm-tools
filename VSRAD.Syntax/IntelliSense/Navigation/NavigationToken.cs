@@ -26,22 +26,19 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
             Path = path;
 
             var lineText = analysisToken
-                .GetStart()
+                .Span.Start
                 .GetContainingLine();
             Line = lineText.LineNumber;
             LineText = lineText.GetText();
-            LineTokenStart = AnalysisToken.GetStart() - lineText.Start;
-            LineTokenEnd = AnalysisToken.GetEnd() - lineText.Start;
+            LineTokenStart = AnalysisToken.Span.Start - lineText.Start;
+            LineTokenEnd = AnalysisToken.Span.End - lineText.Start;
         }
 
         public void Navigate() =>
             _navigate?.Invoke();
 
-        public SnapshotPoint GetStart() =>
-            AnalysisToken.GetStart();
-
         public SnapshotPoint GetEnd() =>
-            AnalysisToken.GetEnd();
+            AnalysisToken.Span.End;
 
         public string GetText() =>
             AnalysisToken.GetText();

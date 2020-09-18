@@ -42,7 +42,7 @@ namespace VSRAD.Syntax.IntelliSense
         {
             if (document == null) return NavigationToken.Empty;
 
-            return new NavigationToken(analysisToken, document.Path, () => document.NavigateToPosition(analysisToken.GetEnd()));
+            return new NavigationToken(analysisToken, document.Path, () => document.NavigateToPosition(analysisToken.Span.End));
         }
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
