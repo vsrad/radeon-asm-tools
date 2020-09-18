@@ -40,7 +40,18 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 if (block.Type == BlockType.Comment) continue;
 
                 foreach (var scopeToken in block.Tokens)
+                {
+                    switch (scopeToken.Type)
+                    {
+                        case RadAsmTokenType.GlobalVariable:
+                        case RadAsmTokenType.GlobalVariableReference:
+                        case RadAsmTokenType.LocalVariable:
+                        case RadAsmTokenType.LocalVariableReference:
+                            continue;
+                    }
+
                     yield return GetTag(scopeToken);
+                }
             }
         }
 
@@ -64,10 +75,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.FunctionParameterReference, registryService.GetClassificationType(RadAsmTokenType.FunctionParameterReference.GetClassificationTypeName()) },
                 { RadAsmTokenType.Label, registryService.GetClassificationType(RadAsmTokenType.Label.GetClassificationTypeName()) },
                 { RadAsmTokenType.LabelReference, registryService.GetClassificationType(RadAsmTokenType.LabelReference.GetClassificationTypeName()) },
-                { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
-                { RadAsmTokenType.GlobalVariableReference, typeService.FormalLanguage },
-                { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
-                //{ RadAsmTokenType.LocalVariableReference, typeService.FormalLanguage },
             };
         }
 

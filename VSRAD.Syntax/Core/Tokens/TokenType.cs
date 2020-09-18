@@ -34,6 +34,7 @@ namespace VSRAD.Syntax.Core.Tokens
         GlobalVariable,
         GlobalVariableReference,
         LocalVariable,
+        LocalVariableReference,
         Include,
     }
 
@@ -90,24 +91,11 @@ namespace VSRAD.Syntax.Core.Tokens
             { RadAsmTokenType.GlobalVariable, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.GlobalVariableReference, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.LocalVariable, PredefinedClassificationTypeNames.FormalLanguage },
+            { RadAsmTokenType.LocalVariableReference, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.Instruction, SyntaxHighlighter.PredefinedClassificationTypeNames.Instructions },
         };
 
         public static string GetClassificationTypeName(this RadAsmTokenType tokenType) =>
             _classificationTypeNames[tokenType];
-
-        public static string GetDescriptionClassificationTypeName(this RadAsmTokenType tokenType)
-        {
-            switch (tokenType)
-            {
-                // it is necessary to highlight important elements because by default they have plain text color
-                case RadAsmTokenType.GlobalVariable:
-                case RadAsmTokenType.GlobalVariableReference:
-                case RadAsmTokenType.LocalVariable:
-                    return RadAsmTokenType.Keyword.GetClassificationTypeName();
-                default:
-                    return tokenType.GetClassificationTypeName();
-            }
-        }
     }
 }

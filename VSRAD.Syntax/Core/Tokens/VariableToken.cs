@@ -2,7 +2,7 @@
 
 namespace VSRAD.Syntax.Core.Tokens
 {
-    public class VariableToken : AnalysisToken
+    public class VariableToken : DefinitionToken
     {
         public TrackingToken DefaultValue { get; }
 

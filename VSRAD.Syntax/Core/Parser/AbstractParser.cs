@@ -18,10 +18,12 @@ namespace VSRAD.Syntax.Core.Parser
     internal abstract class AbstractParser : IParser
     {
         private readonly IDocumentFactory _documentFactory;
+        protected readonly DefinitionContainer _definitionContainer;
 
         public AbstractParser(IDocumentFactory documentFactory)
         {
             _documentFactory = documentFactory;
+            _definitionContainer = new DefinitionContainer();
         }
 
         public abstract Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
@@ -37,11 +39,11 @@ namespace VSRAD.Syntax.Core.Parser
             return block.Parrent ?? block;
         }
 
-        protected async Task AddExternalDefinitionsAsync(string path, ITextSnapshot version, List<DefinitionToken> definitions, TrackingToken includeStr)
+        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
         {
             try
             {
-                var externalFileName = includeStr.GetText(version).Trim('"');
+                var externalFileName = includeStr.GetText(block.Snapshot).Trim('"');
                 var externalFilePath = Path.Combine(Path.GetDirectoryName(path), externalFileName);
                 var externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
 
@@ -52,23 +54,25 @@ namespace VSRAD.Syntax.Core.Parser
                         .GetAnalysisResultAsync(externalDocument.CurrentSnapshot)
                         .ConfigureAwait(false);
 
-                    definitions.AddRange(externalAnalysisResult.GetGlobalDefinitions());
+                    foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
+                        definitionContainer.Add(block, externalDefinition);
                 }
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }
         }
 
-        protected void ParseReferenceCandidate(List<DefinitionToken> definitionTokens, Dictionary<string, List<KeyValuePair<IBlock, TrackingToken>>> referenceCandidate, ITextSnapshot snapshot, CancellationToken cancellation)
+        protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
         {
-            foreach (var definitionToken in definitionTokens)
+            if (_definitionContainer.TryGetDefinition(tokenText, out var definitionToken))
             {
-                cancellation.ThrowIfCancellationRequested();
-
                 RadAsmTokenType referenceType;
                 switch (definitionToken.Type)
                 {
                     case RadAsmTokenType.FunctionName:
                         referenceType = RadAsmTokenType.FunctionReference;
+                        break;
+                    case RadAsmTokenType.FunctionParameter:
+                        referenceType = RadAsmTokenType.FunctionParameterReference;
                         break;
                     case RadAsmTokenType.Label:
                         referenceType = RadAsmTokenType.LabelReference;
@@ -76,17 +80,17 @@ namespace VSRAD.Syntax.Core.Parser
                     case RadAsmTokenType.GlobalVariable:
                         referenceType = RadAsmTokenType.GlobalVariableReference;
                         break;
-                    default:
-                        continue; // skip unknown token
+                    case RadAsmTokenType.LocalVariable:
+                        referenceType = RadAsmTokenType.LocalVariableReference;
+                        break;
+                    default: return true;
                 }
 
-                var tokenText = definitionToken.GetText();
-                if (referenceCandidate.TryGetValue(tokenText, out var referenceTokenPairs))
-                {
-                    foreach (var referenceTokenPair in referenceTokenPairs)
-                        referenceTokenPair.Key.Tokens.Add(new ReferenceToken(referenceType, referenceTokenPair.Value, snapshot, definitionToken));
-                }
+                block.AddToken(new ReferenceToken(referenceType, token, version, definitionToken));
+                return true;
             }
+
+            return false;
         }
     }
 }

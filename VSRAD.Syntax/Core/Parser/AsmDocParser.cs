@@ -17,8 +17,7 @@ namespace VSRAD.Syntax.Core.Parser
 
         public override Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
-            cancellation.ThrowIfCancellationRequested();
-
+            _definitionContainer.Clear();
             IBlock rootBlock = new Block(version);
             var blocks = new List<IBlock>() { rootBlock };
             var tokens = trackingTokens
@@ -37,13 +36,20 @@ namespace VSRAD.Syntax.Core.Parser
                 {
                     if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                     {
-                        rootBlock.AddToken(new DefinitionToken(RadAsmTokenType.GlobalVariable, tokens[i + 1], version));
+                        var definition = new VariableToken(RadAsmTokenType.GlobalVariable, tokens[i + 1], version);
+                        _definitionContainer.Add(rootBlock, definition);
                         i += 1;
                     }
                 }
                 else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                 {
                     rootBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
+                }
+                else if (token.Type == RadAsmDocLexer.IDENTIFIER)
+                {
+                    var text = token.GetText(version);
+                    if (_definitionContainer.TryGetDefinition(text, out var definition))
+                        rootBlock.AddToken(new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition));
                 }
             }
 
