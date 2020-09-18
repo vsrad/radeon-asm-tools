@@ -40,19 +40,6 @@ namespace VSRAD.Syntax.Editor
 
         public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
         {
-
-            try
-            {
-                return ExecuteCommand(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-            }
-            catch (Exception)
-            {
-                return VSConstants.E_FAIL;
-            }
-        }
-
-        private int ExecuteCommand(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
-        {
             if (pguidCmdGroup == typeof(VSConstants.VSStd2KCmdID).GUID)
             {
                 switch ((VSConstants.VSStd2KCmdID)nCmdID)
