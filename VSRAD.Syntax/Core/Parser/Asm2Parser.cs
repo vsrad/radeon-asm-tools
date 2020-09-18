@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
@@ -15,7 +16,7 @@ namespace VSRAD.Syntax.Core.Parser
         public Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionManager) 
             : base(documentFactory, instructionManager, Helpers.AsmType.RadAsm2) { }
 
-        public override async Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, IEnumerable<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public override async Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
 
@@ -25,6 +26,9 @@ namespace VSRAD.Syntax.Core.Parser
 
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsm2Lexer.WHITESPACE && t.Type != RadAsm2Lexer.LINE_COMMENT)
+                .AsParallel()
+                .AsOrdered()
+                .WithCancellation(cancellation)
                 .ToArray();
 
             IBlock currentBlock = new Block(version);

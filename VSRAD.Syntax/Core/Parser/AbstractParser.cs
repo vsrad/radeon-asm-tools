@@ -5,13 +5,14 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core.Parser
 {
     public interface IParser
     {
-        Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, IEnumerable<TrackingToken> tokens, CancellationToken cancellation);
+        Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
     }
 
     internal abstract class AbstractParser : IParser
@@ -23,7 +24,7 @@ namespace VSRAD.Syntax.Core.Parser
             _documentFactory = documentFactory;
         }
 
-        public abstract Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, IEnumerable<TrackingToken> tokens, CancellationToken cancellation);
+        public abstract Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         protected static IBlock SetBlockReady(IBlock block, List<IBlock> list)
         {

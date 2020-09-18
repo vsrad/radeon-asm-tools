@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.SyntaxParser;
 
@@ -14,14 +15,17 @@ namespace VSRAD.Syntax.Core.Parser
         public AsmDocParser(IDocumentFactory documentFactory) 
             : base(documentFactory) { }
 
-        public override Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, IEnumerable<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public override Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
 
             IBlock rootBlock = new Block(version);
             var blocks = new List<IBlock>() { rootBlock };
             var tokens = trackingTokens
-                .Where(t => t.Type != RadAsmDocLexer.WHITESPACE)
+                .Where(t => t.Type != RadAsmDocLexer.WHITESPACE && t.Type != RadAsmDocLexer.BLOCK_COMMENT)
+                .AsParallel()
+                .AsOrdered()
+                .WithCancellation(cancellation)
                 .ToArray();
 
             for (int i = 0; i < tokens.Length; i++)
