@@ -17,7 +17,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private readonly IDocumentAnalysis _documentAnalysis;
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private IAnalysisResult _analysisResult;
-        private CancellationToken _cancellationToken;
 
         public AnalysisClassifier(IDocumentAnalysis documentAnalysis,
             IClassificationTypeRegistryService classificationTypeRegistryService,
@@ -34,34 +33,24 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
             var analysisResult = _analysisResult;
-            if (analysisResult == null)
-                yield break;
+            if (analysisResult == null) yield break;
 
             foreach (var block in analysisResult.Scopes)
             {
-                if (_cancellationToken.IsCancellationRequested) yield break;
-                if (block.Type == BlockType.Comment)
-                    continue;
+                if (block.Type == BlockType.Comment) continue;
 
                 foreach (var scopeToken in block.Tokens)
-                {
-                    yield return GetTag(scopeToken, analysisResult.Snapshot);
-                }
+                    yield return GetTag(scopeToken);
             }
         }
 
-        private TagSpan<ClassificationTag> GetTag(AnalysisToken token, ITextSnapshot snapshot)
+        private TagSpan<ClassificationTag> GetTag(AnalysisToken token)
         {
             // iteration of the tagger can be invoked by VSStd2KCmdID.BACKSPACE of default IOleCommandTarget,
             // while the parser may not have been executed yet and may occur ArgumentOutOfRangeException
-            var span = token.TrackingToken.GetSpan(snapshot);
-            if (span.End > snapshot.Length)
-                return null;
-
-            var snapshotSpan = new SnapshotSpan(snapshot, span);
             var tag = new ClassificationTag(_tokenClassification[token.Type]);
 
-            return new TagSpan<ClassificationTag>(snapshotSpan, tag);
+            return new TagSpan<ClassificationTag>(token.Span, tag);
         }
 
         private void InitializeClassifierDictonary(IStandardClassificationService typeService, IClassificationTypeRegistryService registryService)
@@ -82,9 +71,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken _)
         {
-            _cancellationToken = cancellationToken;
             _analysisResult = analysisResult;
 
             var span = new SnapshotSpan(_analysisResult.Snapshot, new Span(0, _analysisResult.Snapshot.Length));
