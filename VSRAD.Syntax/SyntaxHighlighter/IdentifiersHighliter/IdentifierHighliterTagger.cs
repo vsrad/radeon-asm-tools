@@ -122,14 +122,14 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
             var wordSpans = new List<SnapshotSpan>();
             var navigationTokenSpan = definition.Snapshot == version
-                ? (SnapshotSpan?)definition.GetSpan()
+                ? (SnapshotSpan?)definition.Span
                 : null;
 
             foreach (var reference in definition.References)
             {
                 cancellation.ThrowIfCancellationRequested();
                 if (reference.Snapshot == version)
-                    wordSpans.Add(reference.GetSpan());
+                    wordSpans.Add(reference.Span);
             }
 
             if (currentRequest == requestedPoint)
