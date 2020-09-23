@@ -14,10 +14,10 @@ input.s:267:27: error: expected absolute expression
 <stdin>:392:25: warning: not a valid operand.
       s_add_u32         s[loop_xss], s[loop_x], 1
                         ^
-host.c:4:2: warning: implicitly declaring library function 'printf' with type 'int (const char *, ...)'
+Relative\path\host.c:4:2: warning: implicitly declaring library function 'printf' with type 'int (const char *, ...)'
         printf(""h"");
         ^
-host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
+C:\Absolute\Path\host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
 ";
 
         [Fact]
@@ -44,7 +44,7 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
             Assert.Equal(MessageKind.Warning, messages[2].Kind);
             Assert.Equal(4, messages[2].Line);
             Assert.Equal(2, messages[2].Column);
-            Assert.Equal("host.c", messages[2].SourceFile);
+            Assert.Equal(@"Relative\path\host.c", messages[2].SourceFile);
             Assert.Equal(@"implicitly declaring library function 'printf' with type 'int (const char *, ...)'
         printf(""h"");
         ^", messages[2].Text);
@@ -52,28 +52,30 @@ host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaratio
             Assert.Equal(MessageKind.Note, messages[3].Kind);
             Assert.Equal(4, messages[3].Line);
             Assert.Equal(2, messages[3].Column);
-            Assert.Equal("host.c", messages[3].SourceFile);
+            Assert.Equal(@"C:\Absolute\Path\host.c", messages[3].SourceFile);
             Assert.Equal(@"include the header<stdio.h> or explicitly provide a declaration for 'printf'", messages[3].Text);
         }
 
         public const string ScriptStderr = @"
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
+*E,fatal: undefined reference to 'printf' (C:\Absolute\Path\source.c:3)
 *W,undefined: 1 undefined references found
 *E,syntax error (<stdin>:12): at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?
-*E,fatal (auth.c:35): Uncaught error: Undefined variable: user
+*E,fatal (C:\Absolute\Path\source.c:35): Uncaught error: Undefined variable: user
 ";
 
         public static readonly Message[] ScriptExpectedMessages = new Message[]
         {
             new Message { Kind = MessageKind.Error, Line = 3, SourceFile = "<stdin>", Text = "fatal: undefined reference to 'printf'"},
+            new Message { Kind = MessageKind.Error, Line = 3, SourceFile = @"C:\Absolute\Path\source.c", Text = "fatal: undefined reference to 'printf'"},
             new Message { Kind = MessageKind.Warning, Line = 0, SourceFile = "", Text = "undefined: 1 undefined references found" },
             new Message { Kind = MessageKind.Error, Line = 12, SourceFile = "<stdin>", Text =
 @"syntax error: at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?" },
-            new Message { Kind = MessageKind.Error, Line = 35, SourceFile = "auth.c", Text = "fatal: Uncaught error: Undefined variable: user" }
+            new Message { Kind = MessageKind.Error, Line = 35, SourceFile = @"C:\Absolute\Path\source.c", Text = "fatal: Uncaught error: Undefined variable: user" }
         };
 
         [Fact]

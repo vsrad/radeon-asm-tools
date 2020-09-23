@@ -47,7 +47,7 @@ namespace VSRAD.Package.BuildTools.Errors
         }
 
         private static readonly Regex ClangErrorRegex = new Regex(
-            @"(?<file>[^:]+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note):\s(?<text>.+)", RegexOptions.Compiled);
+            @"(?<file>.+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note):\s(?<text>.+)", RegexOptions.Compiled);
 
         private static Message ParseClangMessage(string header)
         {
