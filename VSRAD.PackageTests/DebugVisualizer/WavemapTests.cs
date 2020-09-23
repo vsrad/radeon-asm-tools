@@ -20,7 +20,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
         [Fact]
         public void BreakLineTest()
         {
-            for (uint  i = 3, j = 313; i < 360; i += 18, j += 313)
+            for (uint i = 3, j = 313; i < 360; i += 18, j += 313)
                 _data[i] = j;
 
             var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);

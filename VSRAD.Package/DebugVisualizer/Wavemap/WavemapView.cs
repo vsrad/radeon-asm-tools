@@ -39,7 +39,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 _breakpointColorMapping.Add(breakLine, c);
                 return c;
             }
-
         }
     }
 
