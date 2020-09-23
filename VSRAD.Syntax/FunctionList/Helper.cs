@@ -7,16 +7,30 @@ namespace VSRAD.Syntax.FunctionList
 {
     public static class Helper
     {
-        public static IEnumerable<FunctionListItem> SortAndFilter(List<FunctionListItem> items, SortState sortState, string filterText)
+        public static IList<FunctionListItem> FilterAndSort(IEnumerable<FunctionListItem> items, SortState sortState, TypeFilterState filterType, string filterText)
         {
-            Sort(sortState, items);
-            return Filter(items, filterText);
+            items = FilterText(items, filterText);
+            items = FilterType(items, filterType);
+
+            var filteredValues = items.AsParallel().ToList();
+            Sort(filteredValues, sortState);
+            return filteredValues;
         }
 
-        public static IEnumerable<FunctionListItem> Filter(List<FunctionListItem> items, string filterText) =>
+        private static IEnumerable<FunctionListItem> FilterText(IEnumerable<FunctionListItem> items, string filterText) =>
             items.Where(t => t.Text.Contains(filterText));
 
-        public static void Sort(SortState sortState, List<FunctionListItem> items)
+        private static IEnumerable<FunctionListItem> FilterType(IEnumerable<FunctionListItem> items, TypeFilterState filterType)
+        {
+            switch (filterType)
+            {
+                case TypeFilterState.F: return items.Where(t => t.Type == FunctionListItemType.Function);
+                case TypeFilterState.L: return items.Where(t => t.Type == FunctionListItemType.Label);
+                default: return items;
+            }
+        }
+
+        private static void Sort(List<FunctionListItem> items, SortState sortState)
         {
             switch (sortState)
             {
