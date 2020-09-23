@@ -23,10 +23,17 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (uint i = 3, j = 313; i < 360; i += 18, j += 313)
                 _data[i] = j;
 
-            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
 
-            for (uint i = 0, expected = 313; i < 20; ++i, expected += 313)
-                Assert.Equal(expected, wavemapView.GetBreakpointLine((int)i));
+            uint expected = 313;
+            for (int i = 0; i < 10; ++i)
+            {
+                for (int j = 0; j < 2; ++j)
+                {
+                    Assert.Equal(expected, wavemapView[j, i].BreakLine);
+                    expected += 313;
+                }
+            }
         }
 
         [Fact]
@@ -37,25 +44,45 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 _data[i] = j;
 
             /* Red, Blue, Green, Yellow, Cyan */
-            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
 
-            for (int i = 0; i < 20; ++i)
-                Assert.Equal(Color.Red, wavemapView.GetWaveColor(i));
+            for (int i = 0; i < 10; ++i)
+            {
+                for (int j = 0; j < 2; ++j)
+                {
+                    Assert.Equal(Color.Red, wavemapView[j, i].BreakColor);
+                }
+            }
 
             // now lets assume that all waves hitted unique breakpoint
             for (uint i = 3, j = 313; i < 360; i += 18, j += 313)
                 _data[i] = j;
 
-            wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);
+            wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
 
-            for (int i = 0; i < 20; i += 5)
-            {
-                Assert.Equal(Color.Red, wavemapView.GetWaveColor(i));
-                Assert.Equal(Color.Blue, wavemapView.GetWaveColor(i+1));
-                Assert.Equal(Color.Green, wavemapView.GetWaveColor(i+2));
-                Assert.Equal(Color.Yellow, wavemapView.GetWaveColor(i+3));
-                Assert.Equal(Color.Cyan, wavemapView.GetWaveColor(i+4));
-            }
+            Assert.Equal(Color.Red, wavemapView[0, 0].BreakColor);
+            Assert.Equal(Color.Blue, wavemapView[1, 0].BreakColor);
+            Assert.Equal(Color.Green, wavemapView[0, 1].BreakColor);
+            Assert.Equal(Color.Yellow, wavemapView[1, 1].BreakColor);
+            Assert.Equal(Color.Cyan, wavemapView[0, 2].BreakColor);
+
+            Assert.Equal(Color.Red, wavemapView[1, 2].BreakColor);
+            Assert.Equal(Color.Blue, wavemapView[0, 3].BreakColor);
+            Assert.Equal(Color.Green, wavemapView[1, 3].BreakColor);
+            Assert.Equal(Color.Yellow, wavemapView[0, 4].BreakColor);
+            Assert.Equal(Color.Cyan, wavemapView[1, 4].BreakColor);
+
+            Assert.Equal(Color.Red, wavemapView[0, 5].BreakColor);
+            Assert.Equal(Color.Blue, wavemapView[1, 5].BreakColor);
+            Assert.Equal(Color.Green, wavemapView[0, 6].BreakColor);
+            Assert.Equal(Color.Yellow, wavemapView[1, 6].BreakColor);
+            Assert.Equal(Color.Cyan, wavemapView[0, 7].BreakColor);
+
+            Assert.Equal(Color.Red, wavemapView[1, 7].BreakColor);
+            Assert.Equal(Color.Blue, wavemapView[0, 8].BreakColor);
+            Assert.Equal(Color.Green, wavemapView[1, 8].BreakColor);
+            Assert.Equal(Color.Yellow, wavemapView[0, 9].BreakColor);
+            Assert.Equal(Color.Cyan, wavemapView[1, 9].BreakColor);
         }
     }
 }

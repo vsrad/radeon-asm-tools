@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
-    struct WaveInfo
+    public struct WaveInfo
     {
-        Color BreakColor;
-        uint BreakLine;
-        uint GroupIdx;
-        uint WaveIdx;
+        public Color BreakColor;
+        public uint BreakLine;
+        public int GroupIdx;
+        public int WaveIdx;
     }
 
     class BreakpointColorManager
@@ -46,28 +46,46 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     {
         private readonly int _waveSize;
         private readonly int _laneDataSize;
+        private readonly int _wavesPerGroup;
 
         private readonly uint[] _data;
 
         private readonly BreakpointColorManager _colorManager;
 
-        public WavemapView(uint[] data, int waveSize, int laneDataSize)
+        public WavemapView(uint[] data, int waveSize, int laneDataSize, int groupSize)
         {
             _data = data;
             _waveSize = waveSize;
             _laneDataSize = laneDataSize;
+            _wavesPerGroup = groupSize / waveSize;
             _colorManager = new BreakpointColorManager();
         }
 
-        public uint GetBreakpointLine(int waveIndex)
+        private uint GetBreakpointLine(int waveIndex)
         {
             var breakIndex = waveIndex * _waveSize * _laneDataSize + _laneDataSize; // break line is in the first lane of system watch
             return _data[breakIndex];
         }
 
-        public Color GetWaveColor(int waveIndex)
+        private int GetWaveFlatIndex(int row, int column) => column * _wavesPerGroup + row;
+
+        private WaveInfo GetWaveInfoByRowAndColumn(int row, int column)
         {
-            return _colorManager.GetColorForBreakpoint(GetBreakpointLine(waveIndex));
+            var flatIndex = GetWaveFlatIndex(row, column);
+            var breakLine = GetBreakpointLine(flatIndex);
+
+            return new WaveInfo
+            {
+                BreakColor = _colorManager.GetColorForBreakpoint(breakLine),
+                BreakLine = breakLine,
+                GroupIdx = column,
+                WaveIdx = row
+            };
+        }
+
+        public WaveInfo this[int row, int column]
+        {
+            get => GetWaveInfoByRowAndColumn(row, column);
         }
     }
 }
