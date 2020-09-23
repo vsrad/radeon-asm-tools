@@ -1,4 +1,5 @@
-﻿using System.Xml.Serialization;
+﻿using System.Drawing;
+using System.Xml.Serialization;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using Xunit;
 
@@ -6,43 +7,55 @@ namespace VSRAD.PackageTests.DebugVisualizer
 {
     public class WavemapTests
     {
-        // 4 groups, 1 watch + system, group size 11
-        private readonly uint[] _data = new uint[]
-        {
-            777, 0, 15, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 100, 0, 100, 0, 0, 0,  // 1-st group, break on line 15, not-empty exec-mask
-            777, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1,       // 2-nd group, empty exec-mask
-            777, 0, 105, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 100, 0, 0, 0, // 3-rd group, break on line 105, not-empty exec-mask
-            777, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1,       // 4-th group, empty exec-mask
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       // extra data
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       // extra data
-        };
+        /*
+         * assuning data parameters is:
+         * * wave size = 6
+         * * group size = 12
+         * * watches count = 2
+         * * group count = 10
+         * data size = (watches_count + 1[system]) * group_size * group_count
+         */
+        private readonly uint[] _data = new uint[360];
 
         [Fact]
-        public void IsActiveGroupTest()
+        public void BreakLineTest()
         {
-            var wavemapView = new WavemapView(_data, groupSize: 11, laneDataSize: 2, groupCount: 4);
-            for (int i = 0; i < 10; ++i)
-                Assert.Equal(i < 4, wavemapView.IsActiveGroup(i));
+            for (uint  i = 3, j = 313; i < 360; i += 18, j += 313)
+                _data[i] = j;
+
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);
+
+            for (uint i = 0, expected = 313; i < 20; ++i, expected += 313)
+                Assert.Equal(expected, wavemapView.GetBreakpointLine((int)i));
         }
 
         [Fact]
-        public void GroupExecutedTest()
+        public void ColorAssignTest()
         {
-            var wavemapView = new WavemapView(_data, groupSize: 11, laneDataSize: 2, groupCount: 4);
+            // assume that all waves hitted the same breakpoint
+            for (uint i = 3, j = 313; i < 360; i += 18)
+                _data[i] = j;
 
-            var executionMap = new bool[] { true, false, true, false };
-            for (int i = 0; i < 4; ++i)
-                Assert.Equal(executionMap[i], wavemapView.GroupExecuted(i));
-        }
+            /* Red, Blue, Green, Yellow, Cyan */
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);
 
-        [Fact]
-        public void BreapointLineTest()
-        {
-            var wavemapView = new WavemapView(_data, groupSize: 11, laneDataSize: 2, groupCount: 4);
+            for (int i = 0; i < 20; ++i)
+                Assert.Equal(Color.Red, wavemapView.GetWaveColor(i));
 
-            var breakpointMap = new int[] { 15, 1, 105, 0 };
-            for (int i = 0; i < 4; ++i)
-                Assert.Equal(breakpointMap[i], wavemapView.GetBreakpointLine(i));
+            // now lets assume that all waves hitted unique breakpoint
+            for (uint i = 3, j = 313; i < 360; i += 18, j += 313)
+                _data[i] = j;
+
+            wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3);
+
+            for (int i = 0; i < 20; i += 5)
+            {
+                Assert.Equal(Color.Red, wavemapView.GetWaveColor(i));
+                Assert.Equal(Color.Blue, wavemapView.GetWaveColor(i+1));
+                Assert.Equal(Color.Green, wavemapView.GetWaveColor(i+2));
+                Assert.Equal(Color.Yellow, wavemapView.GetWaveColor(i+3));
+                Assert.Equal(Color.Cyan, wavemapView.GetWaveColor(i+4));
+            }
         }
     }
 }
