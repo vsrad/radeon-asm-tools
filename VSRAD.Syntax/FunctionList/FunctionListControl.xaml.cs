@@ -4,68 +4,109 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
 using System.Threading;
+using System.Linq;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {
     public partial class FunctionListControl : UserControl
     {
-        public SortState SortState
-        {
-            get { return _sortState; }
-            set
-            {
-                if (_sortState != value)
-                {
-                    _sortState = value;
-                    SortAndReloadFunctionList();
-                }
-            }
-        }
-        public bool Autoscroll { get; set; }
+        public static FunctionListControl Instance { get; private set; }
 
-        private readonly OleMenuCommandService commandService;
-        private SortState _sortState;
-        private bool _isHideLineNumber;
-        private List<FunctionListItem> _tokens;
-        private string _searchText;
+        private SortState SortState;
+        private bool Autoscroll;
 
-        public FunctionListControl(OleMenuCommandService service)
+        private readonly OleMenuCommandService _commandService;
+        private bool hideLineNumber;
+        private List<FunctionListItem> items;
+        private string searchText;
+        private FunctionListItem lastHighlightedItem;
+
+        public FunctionListControl(OptionsProvider optionsProvider, OleMenuCommandService service)
         {
-            var showHideLineNumberCommand = new CommandID(FunctionListCommand.CommandSet, Constants.ShowHideLineNumberCommandId);
-            service.AddCommand(new MenuCommand(ShowHideLineNumber, showHideLineNumberCommand));
-            _tokens = new List<FunctionListItem>();
-            _isHideLineNumber = false;
-            _searchText = string.Empty;
+            items = new List<FunctionListItem>();
+            hideLineNumber = false;
+            searchText = string.Empty;
+            SortState = optionsProvider.SortOptions;
+            Autoscroll = optionsProvider.Autoscroll;
+            _commandService = service;
 
             InitializeComponent();
-            commandService = service;
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
+            optionsProvider.OptionsUpdated += OptionsUpdated;
+            Instance = this;
         }
 
-        public async Task UpdateListAsync(IEnumerable<FunctionListItem> newTokens, CancellationToken cancellationToken)
+        private void OptionsUpdated(OptionsProvider sender)
         {
-            _tokens = newTokens.ToList();
-            var filteredTokens = Helper.SortAndFilter(_tokens, SortState, _searchText);
+            if (sender.SortOptions != SortState)
+            {
+                SortState = sender.SortOptions;
+                SortAndReloadFunctionList();
+            }
+            Autoscroll = sender.Autoscroll;
+        }
+
+        #region public methods
+        public void ShowHideLineNumber()
+        {
+            hideLineNumber = !hideLineNumber;
+            AutosizeColumns();
+        }
+
+        public void ClearSearch() => Search.Text = "";
+
+        public void GoToSelectedItem()
+        {
+            var token = (FunctionListItem)tokens.SelectedItem;
+            if (token != null)
+                token.Navigate();
+        }
+
+        public async Task UpdateListAsync(List<FunctionListItem> newTokens, CancellationToken cancellationToken)
+        {
+            items = newTokens;
+            var filteredTokens = Helper.SortAndFilter(items, SortState, searchText);
             if (cancellationToken.IsCancellationRequested) return;
 
-            await AddTokensToViewAsync(filteredTokens, cancellationToken);
+            await AddTokensToViewAsync(filteredTokens, cancellationToken).ConfigureAwait(false);
+            if (lastHighlightedItem != null)
+                HighlightItemAtLine(lastHighlightedItem.LineNumber);
         }
 
         public void ClearList()
         {
-            _tokens = new List<FunctionListItem>();
+            items = new List<FunctionListItem>();
             tokens.Items.Clear();
         }
 
+        public void HighlightItemAtLine(int lineNumber)
+        {
+            var item = items.FirstOrDefault(i => i.LineNumber == lineNumber);
+
+            if (lastHighlightedItem != null) lastHighlightedItem.IsCurrentWorkingItem = false;
+            if (item == null) return;
+
+            item.IsCurrentWorkingItem = true;
+            lastHighlightedItem = item;
+
+            if (Autoscroll) tokens.ScrollIntoView(item);
+        }
+
+        public void ClearHighlightItem()
+        {
+            if (lastHighlightedItem != null) lastHighlightedItem.IsCurrentWorkingItem = false;
+        }
+        #endregion
+
         private void SortAndReloadFunctionList()
         {
-            var filteredTokens = Helper.SortAndFilter(_tokens, SortState, _searchText);
+            var filteredTokens = Helper.SortAndFilter(items, SortState, searchText);
             ReloadFunctionList(filteredTokens);
         }
 
@@ -74,8 +115,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private async Task AddTokensToViewAsync(IEnumerable<FunctionListItem> functionListTokens, CancellationToken cancellationToken)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (cancellationToken.IsCancellationRequested) return;
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             tokens.Items.Clear();
             foreach (var token in functionListTokens)
@@ -84,6 +124,30 @@ namespace VSRAD.Syntax.FunctionList
             /* Needs to update line number column width after adding new items */
             AutosizeColumns();
         }
+
+        private void AutosizeColumns()
+        {
+            /* This is a well know behaviour of GridView https://stackoverflow.com/questions/560581/how-to-autosize-and-right-align-gridviewcolumn-data-in-wpf/1931423#1931423 */
+            functionsGridView.Columns[0].Width = 0;
+            if (!hideLineNumber)
+                functionsGridView.Columns[0].Width = double.NaN;
+            functionsGridView.Columns[1].Width = 0;
+            functionsGridView.Columns[1].Width = double.NaN;
+        }
+
+        private void SetLineNumberColumnWidth()
+        {
+            // Line Number ActualWidth will apply only after UpdateLayout only then it can be compared with min width
+            if (functionsGridView.Columns[0].ActualWidth > 0)
+                functionsGridView.Columns[0].Width = Math.Max(functionsGridView.Columns[0].ActualWidth, 45.4 /*min width equals to 5 digits*/);
+
+            LineNumberButtonColumn.Width = new GridLength(functionsGridView.Columns[0].ActualWidth);
+        }
+
+        #region control handlers
+        private void FunctionListContentGridOnLoad(object sender, RoutedEventArgs e) => functionListContentGrid.Focus();
+
+        private void FunctionListContentGrid_KeyDown(object sender, KeyEventArgs e) => Keyboard.Focus(Search);
 
         private void ByNumber_Click(object sender, RoutedEventArgs e)
         {
@@ -107,60 +171,13 @@ namespace VSRAD.Syntax.FunctionList
 
         private void FunctionListWindow_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (null != commandService)
+            if (null != _commandService)
             {
-                CommandID menuID = new CommandID(
-                    FunctionListCommand.CommandSet,
-                    Constants.FunctionListMenu);
+                CommandID menuID = new CommandID(AbstractFunctionListCommand.CommandSet, Constants.FunctionListMenu);
                 Point p = PointToScreen(e.GetPosition(this));
-                commandService.ShowContextMenu(menuID, (int)p.X, (int)p.Y);
+                _commandService.ShowContextMenu(menuID, (int)p.X, (int)p.Y);
             }
         }
-
-        private void AutosizeColumns()
-        {
-            /* This is a well know behaviour of GridView https://stackoverflow.com/questions/560581/how-to-autosize-and-right-align-gridviewcolumn-data-in-wpf/1931423#1931423 */
-            functionsGridView.Columns[0].Width = 0;
-            if (!_isHideLineNumber)
-                functionsGridView.Columns[0].Width = double.NaN;
-            functionsGridView.Columns[1].Width = 0;
-            functionsGridView.Columns[1].Width = double.NaN;
-        }
-
-        private void SetLineNumberColumnWidth()
-        {
-            // Line Number ActualWidth will apply only after UpdateLayout only then it can be compared with min width
-            if (functionsGridView.Columns[0].ActualWidth > 0)
-                functionsGridView.Columns[0].Width = Math.Max(functionsGridView.Columns[0].ActualWidth, 45.4 /*min width equals to 5 digits*/);
-
-            LineNumberButtonColumn.Width = new GridLength(functionsGridView.Columns[0].ActualWidth);
-        }
-
-        private void ShowHideLineNumber(object sender, EventArgs e)
-        {
-            _isHideLineNumber = !_isHideLineNumber;
-            AutosizeColumns();
-        }
-
-        private void Search_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            _searchText = Search.Text;
-            var filteredTokens = Helper.Filter(_tokens, _searchText);
-            ReloadFunctionList(filteredTokens);
-        }
-
-        public void OnClearSearchField() => Search.Text = "";
-
-        public void GoToSelectedItem()
-        {
-            var token = (FunctionListItem)tokens.SelectedItem;
-            if (token != null)
-                token.Navigate();
-        }
-
-        private void FunctionListContentGridOnLoad(object sender, RoutedEventArgs e) => functionListContentGrid.Focus();
-
-        private void FunctionListContentGrid_KeyDown(object sender, KeyEventArgs e) => Keyboard.Focus(Search);
 
         private void Search_KeyDown(object sender, KeyEventArgs e)
         {
@@ -176,5 +193,13 @@ namespace VSRAD.Syntax.FunctionList
                 GoToSelectedItem();
             }
         }
+
+        private void Search_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            searchText = Search.Text;
+            var filteredTokens = Helper.Filter(items, searchText);
+            ReloadFunctionList(filteredTokens);
+        }
+        #endregion
     }
 }

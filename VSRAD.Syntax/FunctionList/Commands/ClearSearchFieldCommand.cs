@@ -1,49 +1,23 @@
-﻿using System;
-using System.ComponentModel.Design;
-using Task = System.Threading.Tasks.Task;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Shell;
 
 namespace VSRAD.Syntax.FunctionList.Commands
 {
-    internal sealed class ClearSearchFieldCommand
+    internal sealed class ClearSearchFieldCommand : AbstractFunctionListCommand
     {
-
-        internal static readonly Guid CommandSet = new Guid(Constants.FunctionListCommandSetGuid);
-
-        private readonly AsyncPackage package;
+        public static ClearSearchFieldCommand Instance;
 
         private ClearSearchFieldCommand(AsyncPackage package, OleMenuCommandService commandService)
+            : base(package, commandService, Constants.ClearSearchFieldCommandId) { }
+
+        protected override void Execute(FunctionListWindow window)
         {
-            this.package = package ?? throw new ArgumentNullException(nameof(package));
-            commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
+            if (window == null || window.Frame == null || window.FunctionListControl == null)
+                return;
 
-            var menuCommandID = new CommandID(CommandSet, Constants.ClearSearchFieldCommandId);
-            var menuItem = new MenuCommand(this.Execute, menuCommandID);
-
-            commandService.AddCommand(menuItem);
+            window.FunctionListControl.ClearSearch();
         }
 
-        public static ClearSearchFieldCommand Instance
-        {
-            get;
-            private set;
-        }
-
-        public static async Task InitializeAsync(AsyncPackage package)
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
-            OleMenuCommandService commandService = await package.GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
+        public static void Initialize(AsyncPackage package, OleMenuCommandService commandService) =>
             Instance = new ClearSearchFieldCommand(package, commandService);
-        }
-
-        private void Execute(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var window = (FunctionList)package.FindToolWindow(typeof(FunctionList), 0, true);
-            if ((null == window) || (null == window.Frame)) return;
-
-            // Handle the toolWindow's content as Window (our control)
-            //window.FunctionListControl.OnClearSearchField();
-        }
     }
 }

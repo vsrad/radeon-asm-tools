@@ -1,49 +1,23 @@
-﻿using System;
-using System.ComponentModel.Design;
-using Task = System.Threading.Tasks.Task;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Shell;
 
 namespace VSRAD.Syntax.FunctionList.Commands
 {
-    internal sealed class SelectItemCommand
+    internal sealed class SelectItemCommand : AbstractFunctionListCommand
     {
-
-        internal static readonly Guid CommandSet = new Guid(Constants.FunctionListCommandSetGuid);
-
-        private readonly AsyncPackage package;
+        public static SelectItemCommand Instance;
 
         private SelectItemCommand(AsyncPackage package, OleMenuCommandService commandService)
+            : base(package, commandService, Constants.SelectItemCommandId) { }
+
+        protected override void Execute(FunctionListWindow window)
         {
-            this.package = package ?? throw new ArgumentNullException(nameof(package));
-            commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
-
-            var menuCommandID = new CommandID(CommandSet, Constants.SelectItemCommandId);
-            var menuItem = new MenuCommand(this.Execute, menuCommandID);
-
-            commandService.AddCommand(menuItem);
-        }
-
-        public static SelectItemCommand Instance
-        {
-            get;
-            private set;
-        }
-
-        public static async Task InitializeAsync(AsyncPackage package)
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
-            OleMenuCommandService commandService = await package.GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
-            Instance = new SelectItemCommand(package, commandService);
-        }
-
-        private void Execute(object sender, EventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var window = (FunctionList)package.FindToolWindow(typeof(FunctionList), 0, true);
-            if ((null == window) || (null == window.Frame)) 
+            if (window == null || window.Frame == null || window.FunctionListControl == null) 
                 return;
 
-            //window.FunctionListControl.GoToSelectedItem();
+            window.FunctionListControl.GoToSelectedItem();
         }
+
+        public static void Initialize(AsyncPackage package, OleMenuCommandService commandService) =>
+            Instance = new SelectItemCommand(package, commandService);
     }
 }
