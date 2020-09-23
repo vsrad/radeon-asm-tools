@@ -16,6 +16,7 @@ namespace VSRAD.Syntax.Core
         private readonly IParser _parser;
         private readonly FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>> _resultsRequests;
 
+        public IAnalysisResult CurrentResult { get; private set; }
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
 
         public DocumentAnalysis(IDocument document, IDocumentTokenizer tokenizer, IParser parser)
@@ -61,6 +62,7 @@ namespace VSRAD.Syntax.Core
 
             var analysisResult = new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
 
+            CurrentResult = analysisResult;
             AnalysisUpdated?.Invoke(analysisResult, cancellationToken);
             return analysisResult;
         }

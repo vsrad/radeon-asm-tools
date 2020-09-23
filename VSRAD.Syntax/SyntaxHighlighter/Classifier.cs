@@ -8,7 +8,6 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Core.Blocks;
-using System.Threading;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
@@ -23,9 +22,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             IStandardClassificationService standardClassificationService)
         {
             _documentAnalysis = documentAnalysis;
-            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
+            _documentAnalysis.AnalysisUpdated += (result, cancellation) => AnalysisUpdated(result);
 
             InitializeClassifierDictonary(standardClassificationService, classificationTypeRegistryService);
+            if (_documentAnalysis.CurrentResult != null) AnalysisUpdated(_documentAnalysis.CurrentResult);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -78,7 +78,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken _)
+        private void AnalysisUpdated(IAnalysisResult analysisResult)
         {
             _analysisResult = analysisResult;
 
