@@ -134,7 +134,7 @@ namespace VSRAD.Syntax.Core
                     document.DocumentRenamed -= DocumentRenamed;
                     document.Dispose();
                     _documents.Remove(e.TextDocument.FilePath);
-                    DocumentDisposed(document);
+                    DocumentDisposed?.Invoke(document);
                 }
             }
         }
