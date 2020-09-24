@@ -100,7 +100,9 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private void UpdateFunctionList(IDocument document) =>
+        private void UpdateFunctionList(IDocument document)
+        {
+            if (FunctionListControl == null) return;
             Task.Run(async () =>
             {
                 var analysisResult = await document.DocumentAnalysis
@@ -108,9 +110,13 @@ namespace VSRAD.Syntax.FunctionList
                     .ConfigureAwait(false);
                 await UpdateFunctionListAsync(document, analysisResult, CancellationToken.None);
             }).RunAsyncWithoutAwait();
+        }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken) =>
+        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        {
+            if (FunctionListControl == null) return;
             ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(document, analysisResult, cancellationToken));
+        }
 
         private async Task UpdateFunctionListAsync(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
