@@ -1,9 +1,10 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 
 namespace VSRAD.Syntax.Core.Tokens
 {
-    public readonly struct TrackingToken
+    public readonly struct TrackingToken : IEquatable<TrackingToken>
     {
         public static TrackingToken Empty { get { return new TrackingToken(); } }
 
@@ -49,9 +50,14 @@ namespace VSRAD.Syntax.Core.Tokens
         public string GetText(ITextSnapshot snap) =>
             snap.GetText(GetSpan(snap));
 
-        public static bool operator ==(TrackingToken left, TrackingToken right) =>
-            left.Type == right.Type && left.Length == right.Length && left.Start == right.Start;
+        public bool Equals(TrackingToken o) => Type == o.Type && Length == o.Length && Start == o.Start;
+
+        public static bool operator ==(TrackingToken left, TrackingToken right) => left.Equals(right);
 
         public static bool operator !=(TrackingToken left, TrackingToken right) => !(left == right);
+
+        public override bool Equals(object obj) => obj is TrackingToken o && Equals(o);
+
+        public override int GetHashCode() => (Type, Length, Start).GetHashCode();
     }
 }

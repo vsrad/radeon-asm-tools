@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
             return (document != null)
-                ? new NavigableSymbolSource(document.DocumentAnalysis, _navigationService)
+                ? new NavigableSymbolSource(_navigationService)
                 : null;
         }
     }

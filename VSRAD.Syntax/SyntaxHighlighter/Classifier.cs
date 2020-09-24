@@ -17,14 +17,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private IAnalysisResult _analysisResult;
 
-        public AnalysisClassifier(IDocumentAnalysis documentAnalysis,
-            IClassificationTypeRegistryService classificationTypeRegistryService,
-            IStandardClassificationService standardClassificationService)
+        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService classificationTypeRegistryService)
         {
             _documentAnalysis = documentAnalysis;
             _documentAnalysis.AnalysisUpdated += (result, cancellation) => AnalysisUpdated(result);
 
-            InitializeClassifierDictonary(standardClassificationService, classificationTypeRegistryService);
+            InitializeClassifierDictonary(classificationTypeRegistryService);
             if (_documentAnalysis.CurrentResult != null) AnalysisUpdated(_documentAnalysis.CurrentResult);
         }
 
@@ -64,7 +62,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             return new TagSpan<ClassificationTag>(token.Span, tag);
         }
 
-        private void InitializeClassifierDictonary(IStandardClassificationService typeService, IClassificationTypeRegistryService registryService)
+        private void InitializeClassifierDictonary(IClassificationTypeRegistryService registryService)
         {
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {

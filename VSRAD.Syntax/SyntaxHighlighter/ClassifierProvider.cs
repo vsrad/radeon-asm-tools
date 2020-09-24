@@ -35,17 +35,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter
     [TagType(typeof(ClassificationTag))]
     internal class AnalysisClassifierProvider : ITaggerProvider
     {
-        private readonly IStandardClassificationService _classificationService;
         private readonly IClassificationTypeRegistryService _classificationTypeRegistryService;
         private readonly IDocumentFactory _documentFactory;
 
         [ImportingConstructor]
-        public AnalysisClassifierProvider(IStandardClassificationService classificationService,
+        public AnalysisClassifierProvider(
             IClassificationTypeRegistryService classificationTypeRegistryService,
             IDocumentFactory documentFactory,
             ThemeColorManager classificationColorManager)
         {
-            _classificationService = classificationService;
             _classificationTypeRegistryService = classificationTypeRegistryService;
             _documentFactory = documentFactory;
             Microsoft.VisualStudio.PlatformUI.VSColorTheme.ThemeChanged += (e) => classificationColorManager.UpdateColors();
@@ -54,7 +52,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new AnalysisClassifier(document.DocumentAnalysis, _classificationTypeRegistryService, _classificationService)) as ITagger<T>;
+            return buffer.Properties.GetOrCreateSingletonProperty(() => new AnalysisClassifier(document.DocumentAnalysis, _classificationTypeRegistryService)) as ITagger<T>;
         }
     }
 }

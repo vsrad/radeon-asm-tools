@@ -13,8 +13,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
     [TagType(typeof(TextMarkerTag))]
     internal sealed class BraceHighlighterProvider : IViewTaggerProvider
     {
-        [Import]
         private readonly IDocumentFactory _documentFactory;
+        
+        [ImportingConstructor]
+        public BraceHighlighterProvider(IDocumentFactory documentFactory)
+        {
+            _documentFactory = documentFactory;
+        }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
         {

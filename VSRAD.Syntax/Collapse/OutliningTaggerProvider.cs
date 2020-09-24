@@ -11,8 +11,13 @@ namespace VSRAD.Syntax.Collapse
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     internal sealed class OutliningTaggerAsmProvider : ITaggerProvider
     {
-        [Import]
         private readonly IDocumentFactory _documentFactory;
+
+        [ImportingConstructor]
+        public OutliningTaggerAsmProvider(IDocumentFactory documentFactory)
+        {
+            _documentFactory = documentFactory;
+        }
 
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {

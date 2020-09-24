@@ -8,12 +8,10 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
 {
     internal class NavigableSymbolSource : INavigableSymbolSource
     {
-        private readonly IDocumentAnalysis _documentAnalysis;
         private readonly INavigationTokenService _navigationService;
 
-        public NavigableSymbolSource(IDocumentAnalysis documentAnalysis, INavigationTokenService navigationService)
+        public NavigableSymbolSource(INavigationTokenService navigationService)
         {
-            _documentAnalysis = documentAnalysis;
             _navigationService = navigationService;
         }
 

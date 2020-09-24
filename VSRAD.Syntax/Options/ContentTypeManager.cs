@@ -135,7 +135,7 @@ namespace VSRAD.Syntax.Options
             UpdateTextBufferContentType(textBuffer, contentType);
         }
 
-        private void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)
+        private static void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)
         {
             if (textBuffer == null || contentType == null)
                 return;
