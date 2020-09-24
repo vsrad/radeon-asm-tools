@@ -11,9 +11,9 @@ namespace VSRAD.Syntax.Options.Instructions
 
     public sealed class Instruction
     {
-        public string Text { get; private set; }
-        public IReadOnlyList<NavigationToken> Navigations { get; private set; }
-        public InstructionType Type { get; private set; }
+        public string Text { get; }
+        public IReadOnlyList<NavigationToken> Navigations { get; }
+        public InstructionType Type { get; }
 
         public Instruction(string text, IReadOnlyList<NavigationToken> navigations, InstructionType instructionType)
         {

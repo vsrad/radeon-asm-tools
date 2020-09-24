@@ -1,10 +1,15 @@
 ﻿using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.Core.Lexer;
+using VSRAD.Syntax.Core.Parser;
 
 namespace VSRAD.Syntax.Core
 {
     internal class InvisibleDocument : Document
     {
         private IDocument _visibleDocument;
+
+        public InvisibleDocument(ITextDocument textDocument, ILexer lexer, IParser parser)
+            : base(textDocument, lexer, parser) { }
 
         public override void NavigateToPosition(int position)
         {
@@ -16,8 +21,7 @@ namespace VSRAD.Syntax.Core
 
         public IDocument ToVisibleDocument(ITextDocument textDocument)
         {
-            var document = new Document();
-            document.Initialize(textDocument, _lexer, _parser);
+            var document = new Document(textDocument, _lexer, _parser);
             _textDocument.Dispose();
 
             _visibleDocument = document;

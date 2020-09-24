@@ -19,10 +19,10 @@ namespace VSRAD.Syntax.Core
             Snapshot = snapshot;
         }
 
-        public IBlock Root { get; private set; }
-        public IReadOnlyList<IBlock> Scopes { get; private set; }
-        public IReadOnlyList<IDocument> Includes { get; private set; }
-        public ITextSnapshot Snapshot { get; private set; }
+        public IBlock Root { get; }
+        public IReadOnlyList<IBlock> Scopes { get; }
+        public IReadOnlyList<IDocument> Includes { get; }
+        public ITextSnapshot Snapshot { get; }
 
         public AnalysisToken GetToken(int point)
         {

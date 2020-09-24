@@ -44,7 +44,7 @@ namespace VSRAD.Syntax.Core.Blocks
         public List<AnalysisToken> Tokens { get; }
         public TrackingBlock Scope { get; private set; }
 
-        public int ActualStart { get; private set; }
+        public int ActualStart { get; }
         public int ActualEnd { get; private set; }
 
         private int startPosition;

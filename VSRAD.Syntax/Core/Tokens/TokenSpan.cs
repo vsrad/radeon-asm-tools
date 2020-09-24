@@ -4,8 +4,8 @@ namespace VSRAD.Syntax.Core.Tokens
 {
     public struct TokenSpan
     {
-        public Span Span { get; private set; }
-        public int Type { get; private set; }
+        public Span Span { get; }
+        public int Type { get; }
 
         public TokenSpan(int token, Span span) : this()
         {

@@ -4,8 +4,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 {
     public class NavigationListNode
     {
-        public string Text { get; private set; }
-        public ObservableCollection<NavigationListNode> Items { get; private set; }
+        public string Text { get; }
+        public ObservableCollection<NavigationListNode> Items { get; }
 
         public NavigationListNode(string name)
         {

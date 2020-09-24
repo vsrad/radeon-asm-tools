@@ -13,20 +13,20 @@ namespace VSRAD.Syntax.Core
 {
     internal class Document : IDocument, IDisposable
     {
-        public IDocumentAnalysis DocumentAnalysis { get; private set; }
-        public IDocumentTokenizer DocumentTokenizer { get; private set; }
+        public IDocumentAnalysis DocumentAnalysis { get; }
+        public IDocumentTokenizer DocumentTokenizer { get; }
         public string Path { get; private set; }
         public ITextSnapshot CurrentSnapshot => _textBuffer.CurrentSnapshot;
         public bool IsDisposed { get; private set; }
 
         public event DocumentRenamedEventHandler DocumentRenamed;
 
-        protected ITextDocument _textDocument;
-        protected ILexer _lexer;
-        protected IParser _parser;
-        private ITextBuffer _textBuffer;
+        protected readonly ITextDocument _textDocument;
+        protected readonly ILexer _lexer;
+        protected readonly IParser _parser;
+        private readonly ITextBuffer _textBuffer;
 
-        public void Initialize(ITextDocument textDocument, ILexer lexer, IParser parser)
+        public Document(ITextDocument textDocument, ILexer lexer, IParser parser)
         {
             _lexer = lexer;
             _parser = parser;

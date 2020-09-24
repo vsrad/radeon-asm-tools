@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.Core
         public event DocumentDisposedEventHandler DocumentDisposed;
 
         [ImportingConstructor]
-        DocumentFactory(RadeonServiceProvider serviceProvider,
+        public DocumentFactory(RadeonServiceProvider serviceProvider,
             ContentTypeManager contentTypeManager,
             IInstructionListManager instructionManager)
         {
@@ -65,7 +65,7 @@ namespace VSRAD.Syntax.Core
                 .TextDocumentFactoryService
                 .CreateAndLoadTextDocument(path, contentType);
 
-            return CreateDocument<InvisibleDocument>(textDocument);
+            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(textDocument, lexer, parser));
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
@@ -82,14 +82,14 @@ namespace VSRAD.Syntax.Core
             }
             else
             {
-                document = CreateDocument<Document>(textDocument);
+                document = CreateDocument(textDocument, (lexer, parser) => new Document(textDocument, lexer, parser));
             }
 
             DocumentCreated?.Invoke(document);
             return document;
         }
 
-        private IDocument CreateDocument<T>(ITextDocument textDocument) where T : Document, new()
+        private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)
         {
             var lexerParser = GetLexerParser(textDocument.TextBuffer.ContentType);
             if (!lexerParser.HasValue)
@@ -98,8 +98,7 @@ namespace VSRAD.Syntax.Core
             var lexer = lexerParser.Value.Item1;
             var parser = lexerParser.Value.Item2;
 
-            var document = new T();
-            document.Initialize(textDocument, lexer, parser);
+            var document = creator(lexer, parser);
             ObserveDocument(document, textDocument);
 
             return document;
