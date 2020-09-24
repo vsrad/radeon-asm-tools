@@ -5,7 +5,7 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
-    public struct NavigationToken : IEquatable<NavigationToken>
+    public readonly struct NavigationToken : IEquatable<NavigationToken>
     {
         public static NavigationToken Empty { get { return new NavigationToken(); } }
 

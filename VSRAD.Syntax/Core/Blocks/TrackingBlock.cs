@@ -2,7 +2,7 @@
 
 namespace VSRAD.Syntax.Core.Blocks
 {
-    public struct TrackingBlock
+    public readonly struct TrackingBlock
     {
         public static TrackingBlock Empty { get { return new TrackingBlock(); } }
 

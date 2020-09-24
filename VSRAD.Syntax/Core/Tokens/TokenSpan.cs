@@ -2,7 +2,7 @@
 
 namespace VSRAD.Syntax.Core.Tokens
 {
-    public struct TokenSpan
+    public readonly struct TokenSpan
     {
         public Span Span { get; }
         public int Type { get; }

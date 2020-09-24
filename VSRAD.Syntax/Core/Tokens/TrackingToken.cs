@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace VSRAD.Syntax.Core.Tokens
 {
-    public struct TrackingToken
+    public readonly struct TrackingToken
     {
         public static TrackingToken Empty { get { return new TrackingToken(); } }
 
@@ -18,10 +18,9 @@ namespace VSRAD.Syntax.Core.Tokens
             }
         }
 
-        public ITrackingPoint Start;
-        public int Length;
-        public int Type;
-
+        public ITrackingPoint Start { get; }
+        public int Length { get; }
+        public int Type { get; }
         public bool IsEmpty { get { return Start == null; } }
 
         public TrackingToken(ITextSnapshot snapshot, TokenSpan tokenSpan) : this()
