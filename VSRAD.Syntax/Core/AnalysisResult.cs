@@ -43,7 +43,7 @@ namespace VSRAD.Syntax.Core
             while (true)
             {
                 var continueSearch = false;
-                foreach (var innerBlock in block.Childrens)
+                foreach (var innerBlock in block.Children)
                 {
                     if (innerBlock.Type == BlockType.Comment) 
                         continue;

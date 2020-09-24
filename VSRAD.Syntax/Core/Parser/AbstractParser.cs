@@ -33,10 +33,10 @@ namespace VSRAD.Syntax.Core.Parser
             if (block.Scope != TrackingBlock.Empty)
                 list.Add(block);
 
-            if (block.Parrent != null)
-                block.Parrent.AddChildren(block);
+            if (block.Parent != null)
+                block.Parent.AddChildren(block);
 
-            return block.Parrent ?? block;
+            return block.Parent ?? block;
         }
 
         protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)

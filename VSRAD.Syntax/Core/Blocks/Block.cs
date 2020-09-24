@@ -16,11 +16,11 @@ namespace VSRAD.Syntax.Core.Blocks
 
     public interface IBlock
     {
-        IBlock Parrent { get; }
+        IBlock Parent { get; }
         ITextSnapshot Snapshot { get; }
         TrackingBlock Scope { get; }
         BlockType Type { get; }
-        List<IBlock> Childrens { get; }
+        List<IBlock> Children { get; }
         List<AnalysisToken> Tokens { get; }
         int ActualStart { get; }
         int ActualEnd { get; }
@@ -37,10 +37,10 @@ namespace VSRAD.Syntax.Core.Blocks
 
     internal class Block : IBlock
     {
-        public IBlock Parrent { get; }
+        public IBlock Parent { get; }
         public ITextSnapshot Snapshot { get; }
         public BlockType Type { get; }
-        public List<IBlock> Childrens { get; }
+        public List<IBlock> Children { get; }
         public List<AnalysisToken> Tokens { get; }
         public TrackingBlock Scope { get; private set; }
 
@@ -51,37 +51,37 @@ namespace VSRAD.Syntax.Core.Blocks
 
         public Block(IBlock parrent, BlockType type, TrackingToken tokenStart)
         {
-            Parrent = parrent;
+            Parent = parrent;
             Type = type;
             Snapshot = parrent.Snapshot;
             ActualStart = tokenStart.GetStart(Snapshot);
 
-            Childrens = new List<IBlock>();
+            Children = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
         }
 
         public Block(IBlock parrent, BlockType type, TrackingToken tokenStart, TrackingToken tokenEnd)
         {
-            Parrent = parrent;
+            Parent = parrent;
             Type = type;
             Snapshot = parrent.Snapshot;
             ActualStart = tokenStart.GetStart(Snapshot);
             ActualEnd = tokenEnd.GetEnd(Snapshot);
             Scope = new TrackingBlock(Snapshot, ActualStart, ActualEnd);
 
-            Childrens = new List<IBlock>();
+            Children = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
         }
 
         public Block(ITextSnapshot snapshot)
         {
-            Parrent = null;
+            Parent = null;
             Type = BlockType.Root;
             Snapshot = snapshot;
             ActualStart = 0;
             ActualEnd = Snapshot.Length - 1;
 
-            Childrens = new List<IBlock>();
+            Children = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
         }
 
@@ -95,7 +95,7 @@ namespace VSRAD.Syntax.Core.Blocks
         }
 
         public virtual void AddChildren(IBlock block) =>
-            Childrens.Add(block);
+            Children.Add(block);
 
         public virtual void AddToken(AnalysisToken token) =>
             Tokens.Add(token);

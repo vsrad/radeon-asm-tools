@@ -76,7 +76,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                     }
                 }
 
-                currentBlock = currentBlock.Parrent;
+                currentBlock = currentBlock.Parent;
             }
         }
     }
