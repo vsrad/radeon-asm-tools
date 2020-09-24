@@ -48,12 +48,12 @@ namespace VSRAD.Syntax.IntelliSense
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
         {
             var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
-            if (document == null) return NavigationTokenServiceResult.Empty;
+            if (document == null) return null;
 
             var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
             var analysisToken = analysisResult.GetToken(point);
 
-            if (analysisToken == null) return NavigationTokenServiceResult.Empty;
+            if (analysisToken == null) return null;
             var tokens = new List<NavigationToken>();
 
             if (analysisToken is DefinitionToken definitionToken)
@@ -81,7 +81,7 @@ namespace VSRAD.Syntax.IntelliSense
                 }
                 else
                 {
-                    return NavigationTokenServiceResult.Empty;
+                    return null;
                 }
             }
 

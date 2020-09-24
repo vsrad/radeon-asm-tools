@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             if (!triggerPoint.HasValue) return null;
 
             var navigationsResult = await _navigationTokenService.GetNavigationsAsync(triggerPoint.Value);
-            if (!navigationsResult.HasValue) return null;
+            if (navigationsResult == null) return null;
 
             var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
             if (dataElement == null) return null;

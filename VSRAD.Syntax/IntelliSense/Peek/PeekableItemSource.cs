@@ -38,9 +38,8 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             var tokensResult = ThreadHelper.JoinableTaskFactory.Run(
                 () => _navigationTokenService.GetNavigationsAsync(triggerPoint.Value));
 
-            if (!tokensResult.HasValue) return;
-            if (tokensResult.Values.Count == 1)
-                peekableItems.Add(new PeekableItem(_peekResultFactory, tokensResult.Values[0]));
+            if (tokensResult == null || tokensResult.Values.Count != 1) return;
+            peekableItems.Add(new PeekableItem(_peekResultFactory, tokensResult.Values[0]));
         }
 
         public void Dispose() { }

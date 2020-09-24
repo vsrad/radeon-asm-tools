@@ -19,7 +19,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         {
             var triggerPoint = triggerSpan.Start;
             var tokensResult = await _navigationService.GetNavigationsAsync(triggerPoint);
-            if (!tokensResult.HasValue) return null;
+            if (tokensResult == null) return null;
 
             return new NavigableSymbol(tokensResult.ApplicableToken.Span,
                 () => _navigationService.NavigateOrOpenNavigationList(tokensResult.Values));
