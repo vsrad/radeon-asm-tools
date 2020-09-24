@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.Text;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using VSRAD.Syntax.Core.Helper;
@@ -7,14 +6,14 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
-    public struct TokenizerResult : IEquatable<TokenizerResult>
+    public class TokenizerResult : ITokenizerResult
     {
-        public ITextSnapshot Snapshot;
-        public ITokenizerCollection<TrackingToken> Tokens;
-        public IEnumerable<TrackingToken> UpdatedTokens;
+        public ITextSnapshot Snapshot { get; }
+        public ITokenizerCollection<TrackingToken> Tokens { get; }
+        public IEnumerable<TrackingToken> UpdatedTokens { get; }
 
-        public TokenizerResult(ITextSnapshot snapshot, 
-            ITokenizerCollection<TrackingToken> tokens, 
+        public TokenizerResult(ITextSnapshot snapshot,
+            ITokenizerCollection<TrackingToken> tokens,
             IEnumerable<TrackingToken> updatedTokens)
         {
             Snapshot = snapshot;
@@ -37,11 +36,5 @@ namespace VSRAD.Syntax.Core
 
             return Tokens.GetCoveringTokens(Snapshot, span);
         }
-
-        public bool Equals(TokenizerResult m) => Snapshot == m.Snapshot && Tokens == m.Tokens && UpdatedTokens == m.UpdatedTokens;
-        public override bool Equals(object obj) => obj is TokenizerResult && Equals(obj);
-        public static bool operator ==(TokenizerResult left, TokenizerResult right) => left.Equals(right);
-        public static bool operator !=(TokenizerResult left, TokenizerResult right) => !(left == right);
-        public override int GetHashCode() => (Snapshot, Tokens, UpdatedTokens).GetHashCode();
     }
 }

@@ -91,7 +91,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentTokenizer _tokenizer;
-        private TokenizerResult _currentResult;
+        private ITokenizerResult _currentResult;
 
         public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
         {
@@ -149,7 +149,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokenizerUpdated(TokenizerResult result)
+        private void TokenizerUpdated(ITokenizerResult result)
         {
             var tokens = result.UpdatedTokens;
             if (!tokens.Any())

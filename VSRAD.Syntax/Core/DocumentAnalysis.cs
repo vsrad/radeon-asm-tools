@@ -37,19 +37,19 @@ namespace VSRAD.Syntax.Core
             throw new NotImplementedException();
         }
 
-        private void TokenizerUpdated(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private void TokenizerUpdated(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
             _resultsRequests.TryAddValue(tokenizerResult.Snapshot,
                 () => RunAnalysisAsync(tokenizerResult, cancellationToken));
         }
 
-        private async Task<IAnalysisResult> RunAnalysisAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
             var result = await Task.Run(() => RunParserAsync(tokenizerResult, cancellationToken), cancellationToken).ConfigureAwait(false);
             return result;
         }
 
-        private async Task<IAnalysisResult> RunParserAsync(TokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
             var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
             var rootBlock = blocks[0];

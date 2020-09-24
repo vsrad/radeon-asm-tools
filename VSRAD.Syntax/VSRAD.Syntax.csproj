@@ -90,6 +90,7 @@
     <Compile Include="Core\Parser\Asm1Parser.cs" />
     <Compile Include="Core\Parser\AbstractParser.cs" />
     <Compile Include="Core\Parser\DefinitionContainer.cs" />
+    <Compile Include="Core\ITokenizerResult.cs" />
     <Compile Include="Core\TokenizerResult.cs" />
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
