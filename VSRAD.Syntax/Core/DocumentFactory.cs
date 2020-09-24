@@ -126,15 +126,12 @@ namespace VSRAD.Syntax.Core
 
         private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
         {
-            if (_documents.ContainsKey(e.TextDocument.FilePath))
+            if (_documents.TryGetValue(e.TextDocument.FilePath, out var document))
             {
-                if (_documents.TryGetValue(e.TextDocument.FilePath, out var document))
-                {
-                    document.DocumentRenamed -= DocumentRenamed;
-                    document.Dispose();
-                    _documents.Remove(e.TextDocument.FilePath);
-                    DocumentDisposed?.Invoke(document);
-                }
+                document.DocumentRenamed -= DocumentRenamed;
+                document.Dispose();
+                _documents.Remove(e.TextDocument.FilePath);
+                DocumentDisposed?.Invoke(document);
             }
         }
 
