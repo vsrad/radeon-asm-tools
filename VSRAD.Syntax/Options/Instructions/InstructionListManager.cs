@@ -20,7 +20,7 @@ namespace VSRAD.Syntax.Options.Instructions
         private readonly OptionsProvider _optionsProvider;
         private readonly Lazy<IDocumentFactory> _documentFactory;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
-        private readonly List<Instruction> _instructions;
+        private List<Instruction> _instructions;
         private string _loadedPaths;
 
         public event InstructionsUpdateDelegate InstructionsUpdated;
@@ -45,14 +45,12 @@ namespace VSRAD.Syntax.Options.Instructions
             // skip if options haven't changed
             if (instructionPaths == _loadedPaths) return;
 
-            Task.Run(() => LoadInstructionsFromDirectories(instructionPaths))
+            Task.Run(() => LoadInstructionsFromDirectoriesAsync(instructionPaths))
                 .RunAsyncWithoutAwait();
         }
 
-        public void LoadInstructionsFromDirectories(string dirPathsString)
+        public async Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {
-            _instructions.Clear();
-
             var paths = dirPathsString.Split(';')
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrWhiteSpace(x));
@@ -63,9 +61,13 @@ namespace VSRAD.Syntax.Options.Instructions
 
             try
             {
-                Task.WaitAll(loadFromDirectoryTasks);
+                var results = await Task.WhenAll(loadFromDirectoryTasks);
+                var instructions = new List<Instruction>();
+                foreach (var result in results)
+                    instructions.AddRange(result);
 
                 _loadedPaths = dirPathsString;
+                _instructions = instructions;
                 InstructionsUpdated?.Invoke(this);
             }catch(AggregateException e)
             {
@@ -82,8 +84,9 @@ namespace VSRAD.Syntax.Options.Instructions
             }
         }
 
-        private async Task LoadInstructionsFromDirectoryAsync(string path)
+        private async Task<List<Instruction>> LoadInstructionsFromDirectoryAsync(string path)
         {
+            var instructions = new List<Instruction>();
             try
             {
                 var loadTasks = new List<Task<(InstructionType, IReadOnlyList<NavigationToken>)>>();
@@ -106,7 +109,7 @@ namespace VSRAD.Syntax.Options.Instructions
                     {
                         var name = instructionNameGroup.Key;
                         var navigations = instructionNameGroup.ToList();
-                        _instructions.Add(new Instruction(name, navigations, type));
+                        instructions.Add(new Instruction(name, navigations, type));
                     }
                 }
             }
@@ -119,6 +122,8 @@ namespace VSRAD.Syntax.Options.Instructions
             {
                 Error.ShowError(e, "Instruction loader");
             }
+
+            return instructions;
         }
 
         private async Task<(InstructionType, IReadOnlyList<NavigationToken>)> LoadInstructionsFromFileAsync(string path, InstructionType type)
