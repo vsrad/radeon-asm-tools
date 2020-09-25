@@ -13,6 +13,7 @@ namespace VSRAD.Syntax.Core.Blocks
             Name = name;
             Parameters = new List<DefinitionToken>();
             parrent.AddToken(name);
+            Tokens.Add(name);
         }
 
         public override void AddToken(AnalysisToken token)

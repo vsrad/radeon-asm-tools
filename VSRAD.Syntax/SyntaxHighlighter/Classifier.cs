@@ -48,11 +48,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 
                 classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
             }
-            if (block.Type == BlockType.Function)
-            {
-                var fb = (FunctionBlock)block;
-                classificationSpans.Add(new ClassificationSpan(fb.Name.Span, _tokenClassification[fb.Name.Type]));
-            }
 
             return classificationSpans;
         }
