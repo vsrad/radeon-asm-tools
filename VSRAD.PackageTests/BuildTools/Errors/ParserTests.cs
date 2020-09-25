@@ -20,40 +20,29 @@ Relative\path\host.c:4:2: warning: implicitly declaring library function 'printf
 C:\Absolute\Path\host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
 ";
 
+        public static readonly Message[] ClangExpectedMessages = new Message[]
+        {
+            new Message { Kind = MessageKind.Error, Line = 267, Column = 27, SourceFile = "input.s", Text =
+@"expected absolute expression
+      s_sub_u32         s[loop_xss], s[loop_x], 1
+                          ^" },
+            new Message { Kind = MessageKind.Warning, Line = 392, Column = 25, SourceFile = "<stdin>", Text =
+@"not a valid operand.
+      s_add_u32         s[loop_xss], s[loop_x], 1
+                        ^" },
+            new Message { Kind = MessageKind.Warning, Line = 4, Column = 2, SourceFile = @"Relative\path\host.c", Text =
+@"implicitly declaring library function 'printf' with type 'int (const char *, ...)'
+        printf(""h"");
+        ^"},
+            new Message { Kind = MessageKind.Note, Line = 4, Column = 2, SourceFile = @"C:\Absolute\Path\host.c", Text =
+                "include the header<stdio.h> or explicitly provide a declaration for 'printf'" },
+        };
+
         [Fact]
         public void ClangErrorTest()
         {
-            var messages = ParseStderr(new string[] { ClangStderr }).ToList();
-
-            Assert.Equal(MessageKind.Error, messages[0].Kind);
-            Assert.Equal(27, messages[0].Column);
-            Assert.Equal(267, messages[0].Line);
-            Assert.Equal("input.s", messages[0].SourceFile);
-            Assert.Equal(@"expected absolute expression
-      s_sub_u32         s[loop_xss], s[loop_x], 1
-                          ^", messages[0].Text);
-
-            Assert.Equal(MessageKind.Warning, messages[1].Kind);
-            Assert.Equal(392, messages[1].Line);
-            Assert.Equal(25, messages[1].Column);
-            Assert.Equal("<stdin>", messages[1].SourceFile);
-            Assert.Equal(@"not a valid operand.
-      s_add_u32         s[loop_xss], s[loop_x], 1
-                        ^", messages[1].Text);
-
-            Assert.Equal(MessageKind.Warning, messages[2].Kind);
-            Assert.Equal(4, messages[2].Line);
-            Assert.Equal(2, messages[2].Column);
-            Assert.Equal(@"Relative\path\host.c", messages[2].SourceFile);
-            Assert.Equal(@"implicitly declaring library function 'printf' with type 'int (const char *, ...)'
-        printf(""h"");
-        ^", messages[2].Text);
-
-            Assert.Equal(MessageKind.Note, messages[3].Kind);
-            Assert.Equal(4, messages[3].Line);
-            Assert.Equal(2, messages[3].Column);
-            Assert.Equal(@"C:\Absolute\Path\host.c", messages[3].SourceFile);
-            Assert.Equal(@"include the header<stdio.h> or explicitly provide a declaration for 'printf'", messages[3].Text);
+            var messages = ParseStderr(new string[] { ClangStderr }).ToArray();
+            Assert.Equal(ClangExpectedMessages, messages);
         }
 
         public const string ScriptStderr = @"
@@ -86,9 +75,6 @@ C:\Absolute\Path\host.c:4:2: note: include the header<stdio.h> or explicitly pro
         }
 
         public const string KeywordStderr = @"
-Captured stdout (exit code 2):
-Command line 'python test.py'
-Captured stderr (exit code 2):
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
 ERROR: check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'
 WARNING: you are incredibly beautiful!
@@ -98,8 +84,8 @@ WARNING: you are incredibly beautiful!
         public static readonly Message[] KeywordErrorExpectedMessages = new Message[]
         {
             new Message { Kind = MessageKind.Error, Line = 3, SourceFile = "<stdin>", Text = "fatal: undefined reference to 'printf'" },
-            new Message { Kind = MessageKind.Error, Line = 0, SourceFile = "", Text = @" check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'" },
-            new Message { Kind = MessageKind.Warning, Line = 0, SourceFile = "", Text = @" you are incredibly beautiful!" },
+            new Message { Kind = MessageKind.Error, Line = 0, SourceFile = "", Text = @"check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'" },
+            new Message { Kind = MessageKind.Warning, Line = 0, SourceFile = "", Text = @"you are incredibly beautiful!" },
             new Message { Kind = MessageKind.Error, Line = 35, SourceFile = "auth.c", Text = "fatal: Uncaught error: Undefined variable: user" },
         };
 
@@ -111,11 +97,17 @@ WARNING: you are incredibly beautiful!
         }
 
         [Fact]
-        public void SeveralOutputsErrorTest()
+        public void MixedErrorFormatsTest()
         {
-            var messages = ParseStderr(new string[] { KeywordStderr, ScriptStderr }).ToArray();
-            var expectedMessages = KeywordErrorExpectedMessages.Concat(ScriptExpectedMessages).ToArray();
-            Assert.Equal(expectedMessages, messages);
+            var expectedMessages = ClangExpectedMessages.Concat(KeywordErrorExpectedMessages).Concat(ScriptExpectedMessages).ToArray();
+
+            var separateOutputs = new[] { ClangStderr, KeywordStderr, ScriptStderr };
+            var separateOutputsMessages = ParseStderr(separateOutputs).ToArray();
+            Assert.Equal(expectedMessages, separateOutputsMessages);
+
+            var combinedOutput = string.Join("\r\n", separateOutputs.Select(o => o.Trim()));
+            var combinedOutputMessages = ParseStderr(new[] { combinedOutput }).ToArray();
+            Assert.Equal(expectedMessages, combinedOutputMessages);
         }
     }
 }
