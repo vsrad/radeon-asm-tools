@@ -51,20 +51,26 @@ namespace VSRAD.Syntax.Core
 
         private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
-            var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
-            var rootBlock = blocks[0];
+            try
+            {
+                var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
+                var rootBlock = blocks[0];
 
-            var includes = rootBlock.Tokens
-                .Where(t => t.Type == RadAsmTokenType.Include)
-                .Cast<IncludeToken>()
-                .Select(i => i.Document)
-                .ToList();
+                var includes = rootBlock.Tokens
+                    .Where(t => t.Type == RadAsmTokenType.Include)
+                    .Cast<IncludeToken>()
+                    .Select(i => i.Document)
+                    .ToList();
 
-            var analysisResult = new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
+                var analysisResult = new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
 
-            CurrentResult = analysisResult;
-            AnalysisUpdated?.Invoke(analysisResult, cancellationToken);
-            return analysisResult;
+                CurrentResult = analysisResult;
+                AnalysisUpdated?.Invoke(analysisResult, cancellationToken);
+                return analysisResult;
+            }catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)
+            {
+                throw new OperationCanceledException();
+            }
         }
     }
 }
