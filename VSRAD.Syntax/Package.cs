@@ -19,6 +19,7 @@ namespace VSRAD.Syntax
     [ProvideToolWindow(typeof(NavigationList), Style = VsDockStyle.Linked, Orientation = ToolWindowOrientation.Bottom, Transient = true)]
     [ProvideOptionPage(typeof(GeneralOptionPage), Constants.RadeonAsmOptionsCategoryName, Constants.RadeonAsmOptionsBasePageName, 0, 0, true)]
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [Guid(Constants.PackageGuid)]
     public sealed class Package : AsyncPackage
     {
