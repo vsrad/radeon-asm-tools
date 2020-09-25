@@ -11,55 +11,50 @@ using VSRAD.Syntax.Core.Blocks;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class AnalysisClassifier : ITagger<ClassificationTag>
+    internal class AnalysisClassifier : IClassifier
     {
-        private readonly IDocumentAnalysis _documentAnalysis;
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private IAnalysisResult _analysisResult;
 
-        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService classificationTypeRegistryService)
+        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
         {
-            _documentAnalysis = documentAnalysis;
-            _documentAnalysis.AnalysisUpdated += (result, cancellation) => AnalysisUpdated(result);
+            _analysisResult = documentAnalysis.CurrentResult;
+            documentAnalysis.AnalysisUpdated += (result, cancellation) => AnalysisUpdated(result);
 
-            InitializeClassifierDictonary(classificationTypeRegistryService);
-            if (_documentAnalysis.CurrentResult != null) AnalysisUpdated(_documentAnalysis.CurrentResult);
+            InitializeClassifierDictonary(typeRegistryService);
         }
 
-        public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+        public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
 
-        public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
+        public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
+            var classificationSpans = new List<ClassificationSpan>();
             var analysisResult = _analysisResult;
-            if (analysisResult == null) yield break;
+            if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            foreach (var block in analysisResult.Scopes)
+            var block = analysisResult.GetBlock(span.Start);
+            if (block.Type == BlockType.Comment) return classificationSpans;
+
+            foreach (var scopeToken in block.Tokens)
             {
-                if (block.Type == BlockType.Comment) continue;
-
-                foreach (var scopeToken in block.Tokens)
+                switch (scopeToken.Type)
                 {
-                    switch (scopeToken.Type)
-                    {
-                        case RadAsmTokenType.GlobalVariable:
-                        case RadAsmTokenType.GlobalVariableReference:
-                        case RadAsmTokenType.LocalVariable:
-                        case RadAsmTokenType.LocalVariableReference:
-                            continue;
-                    }
-
-                    yield return GetTag(scopeToken);
+                    case RadAsmTokenType.GlobalVariable:
+                    case RadAsmTokenType.GlobalVariableReference:
+                    case RadAsmTokenType.LocalVariable:
+                    case RadAsmTokenType.LocalVariableReference:
+                        continue;
                 }
+
+                classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
             }
-        }
+            if (block.Type == BlockType.Function)
+            {
+                var fb = (FunctionBlock)block;
+                classificationSpans.Add(new ClassificationSpan(fb.Name.Span, _tokenClassification[fb.Name.Type]));
+            }
 
-        private TagSpan<ClassificationTag> GetTag(AnalysisToken token)
-        {
-            // iteration of the tagger can be invoked by VSStd2KCmdID.BACKSPACE of default IOleCommandTarget,
-            // while the parser may not have been executed yet and may occur ArgumentOutOfRangeException
-            var tag = new ClassificationTag(_tokenClassification[token.Type]);
-
-            return new TagSpan<ClassificationTag>(token.Span, tag);
+            return classificationSpans;
         }
 
         private void InitializeClassifierDictonary(IClassificationTypeRegistryService registryService)
@@ -79,9 +74,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private void AnalysisUpdated(IAnalysisResult analysisResult)
         {
             _analysisResult = analysisResult;
-
-            var span = new SnapshotSpan(_analysisResult.Snapshot, new Span(0, _analysisResult.Snapshot.Length));
-            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(span));
         }
     }
 
