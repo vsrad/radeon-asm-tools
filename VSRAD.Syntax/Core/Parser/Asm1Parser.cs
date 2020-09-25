@@ -25,7 +25,7 @@ namespace VSRAD.Syntax.Core.Parser
                 .WithCancellation(cancellation)
                 .ToArray();
 
-            var referenceCandidates = new LinkedList<(string, TrackingToken, IBlock)>();
+            var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
             _definitionContainer.Clear();
             var blocks = new List<IBlock>();
             IBlock currentBlock = new Block(version);
@@ -148,7 +148,7 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             currentBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
                         }
-                        else if (!TryAddReference(tokenText, token, currentBlock, version))
+                        else if (!TryAddReference(tokenText, token, currentBlock, version, cancellation))
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.EQ) {
                                 var variableDefinition = new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
@@ -166,7 +166,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
                         {
-                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock, _definitionContainer);
+                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock);
                             i += 1;
                         }
                     }
@@ -189,8 +189,8 @@ namespace VSRAD.Syntax.Core.Parser
                 }
             }
 
-            foreach (var referenceCandidate in referenceCandidates)
-                TryAddReference(referenceCandidate.Item1, referenceCandidate.Item2, referenceCandidate.Item3, version);
+            foreach (var (text, trackingToken, block) in referenceCandidates)
+                TryAddReference(text, trackingToken, block, version, cancellation);
 
             return blocks;
         }

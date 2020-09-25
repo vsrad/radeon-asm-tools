@@ -39,7 +39,7 @@ namespace VSRAD.Syntax.Core.Parser
             return block.Parent ?? block;
         }
 
-        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
+        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block)
         {
             try
             {
@@ -55,14 +55,15 @@ namespace VSRAD.Syntax.Core.Parser
                         .ConfigureAwait(false);
 
                     foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
-                        definitionContainer.Add(block, externalDefinition);
+                        _definitionContainer.Add(block, externalDefinition);
                 }
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }
         }
 
-        protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
+        protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version, CancellationToken cancellation)
         {
+            cancellation.ThrowIfCancellationRequested();
             if (_definitionContainer.TryGetDefinition(tokenText, out var definitionToken))
             {
                 RadAsmTokenType referenceType;

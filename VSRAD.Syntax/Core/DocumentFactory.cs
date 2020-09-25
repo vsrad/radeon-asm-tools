@@ -17,18 +17,8 @@ namespace VSRAD.Syntax.Core
         private readonly ContentTypeManager _contentTypeManager;
         private readonly RadeonServiceProvider _serviceProvider;
         private readonly Dictionary<string, IDocument> _documents;
+        private readonly IInstructionListManager _instructionManager;
 
-        #region parsers
-        private readonly IParser Asm1Parser;
-        private readonly IParser Asm2Parser;
-        private readonly IParser AsmDocParser;
-        #endregion
-
-        #region lexers
-        private static readonly ILexer Asm1Lexer = new AsmLexer();
-        private static readonly ILexer Asm2Lexer = new Asm2Lexer();
-        private static readonly ILexer AsmDocLexer = new AsmDocLexer();
-        #endregion
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
         public event DocumentCreatedEventHandler DocumentCreated;
@@ -39,9 +29,7 @@ namespace VSRAD.Syntax.Core
             ContentTypeManager contentTypeManager,
             IInstructionListManager instructionManager)
         {
-            Asm1Parser = new Asm1Parser(this, instructionManager);
-            Asm2Parser = new Asm2Parser(this, instructionManager);
-            AsmDocParser = new AsmDocParser(this);
+            _instructionManager = instructionManager;
 
             _documents = new Dictionary<string, IDocument>();
             _contentTypeManager = contentTypeManager;
@@ -92,11 +80,10 @@ namespace VSRAD.Syntax.Core
         private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)
         {
             var lexerParser = GetLexerParser(textDocument.TextBuffer.ContentType);
-            if (!lexerParser.HasValue)
-                return null;
+            if (!lexerParser.HasValue) return null;
 
-            var lexer = lexerParser.Value.Item1;
-            var parser = lexerParser.Value.Item2;
+            var lexer = lexerParser.Value.lexer;
+            var parser = lexerParser.Value.parser;
 
             var document = creator(lexer, parser);
             ObserveDocument(document, textDocument);
@@ -112,14 +99,14 @@ namespace VSRAD.Syntax.Core
             _documents.Add(document.Path, document);
         }
 
-        private (ILexer, IParser)? GetLexerParser(IContentType contentType)
+        private (ILexer lexer, IParser parser)? GetLexerParser(IContentType contentType)
         {
             if (contentType == _contentTypeManager.Asm1ContentType)
-                return (Asm1Lexer, Asm1Parser);
+                return (new AsmLexer(), new Asm1Parser(this, _instructionManager));
             else if (contentType == _contentTypeManager.Asm2ContentType)
-                return (Asm2Lexer, Asm2Parser);
+                return (new Asm2Lexer(), new Asm2Parser(this, _instructionManager));
             else if (contentType == _contentTypeManager.AsmDocContentType)
-                return (AsmDocLexer, AsmDocParser);
+                return (new AsmDocLexer(), new AsmDocParser());
 
             else return null;
         }

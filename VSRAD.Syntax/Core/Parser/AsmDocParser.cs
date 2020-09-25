@@ -12,12 +12,12 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal class AsmDocParser : AbstractParser
     {
-        public AsmDocParser(IDocumentFactory documentFactory) 
-            : base(documentFactory) { }
+        public AsmDocParser() 
+            : base(null) { }
 
         public override Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
-            _definitionContainer.Clear();
+            var definitions = new Dictionary<string, DefinitionToken>();
             IBlock rootBlock = new Block(version);
             var blocks = new List<IBlock>() { rootBlock };
             var tokens = trackingTokens
@@ -37,7 +37,7 @@ namespace VSRAD.Syntax.Core.Parser
                     if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                     {
                         var definition = new VariableToken(RadAsmTokenType.GlobalVariable, tokens[i + 1], version);
-                        _definitionContainer.Add(rootBlock, definition);
+                        definitions.Add(definition.GetText(), definition);
                         i += 1;
                     }
                 }
@@ -48,7 +48,7 @@ namespace VSRAD.Syntax.Core.Parser
                 else if (token.Type == RadAsmDocLexer.IDENTIFIER)
                 {
                     var text = token.GetText(version);
-                    if (_definitionContainer.TryGetDefinition(text, out var definition))
+                    if (definitions.TryGetValue(text, out var definition))
                         rootBlock.AddToken(new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition));
                 }
             }
