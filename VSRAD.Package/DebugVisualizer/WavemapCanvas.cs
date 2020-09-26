@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media;
 using VSRAD.Package.DebugVisualizer.Wavemap;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Debugger.Interop;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -20,8 +22,8 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _canvas = canvas;
 
-            var _data = new uint[7200];
-            for (uint i = 3, j = 313; i < 7200; i += 18, j += 313)
+            var _data = new uint[7000];
+            for (uint i = 3, j = 313; i < 7000; i += 18, j += 313)
                 _data[i] = j;
 
             _wiew = new WavemapView(_data, 6, 3, 12);
@@ -39,16 +41,19 @@ namespace VSRAD.Package.DebugVisualizer
 
         private Rectangle GetWaveRectangleByCoordinates(int row, int column)
         {
-            var wave = _wiew[row, column];
+            var validWave = _wiew.IsValidWave(row, column);
             var r = new Rectangle();
-            r.ToolTip = new ToolTip() { Content = $"Group: {wave.GroupIdx}\nWave: {wave.WaveIdx}\nLine: {wave.BreakLine}" };
-            r.Fill = wave.BreakColor;
+            r.ToolTip = new ToolTip() { Content = validWave ?
+                $"Group: {_wiew[row, column].GroupIdx}\nWave: {_wiew[row, column].WaveIdx}\nLine: {_wiew[row, column].BreakLine}"
+                : "No data"
+            };
+            r.Fill = validWave ? _wiew[row, column].BreakColor : Brushes.Gray;
             r.Height = 7;
             r.Width = 7;
             r.StrokeThickness = 1;
             r.Stroke = Brushes.Black;
             Canvas.SetLeft(r, 1 + 6 * column);
-            Canvas.SetTop(r, 1 + 7 * row);
+            Canvas.SetTop(r, 1 + 6 * row);
             return r;
         }
     }

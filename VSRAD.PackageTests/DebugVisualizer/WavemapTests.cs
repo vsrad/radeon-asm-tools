@@ -83,5 +83,15 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.Equal(Brushes.Yellow, wavemapView[0, 9].BreakColor);
             Assert.Equal(Brushes.Cyan, wavemapView[1, 9].BreakColor);
         }
+
+        [Fact]
+        public void IsValidWaveTest()
+        {
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
+
+            for (int i = 0; i < 20; ++i)
+                for (int j = 0; j < 5; ++j)
+                    Assert.Equal(i < 10 && j < 2, wavemapView.IsValidWave(j, i));
+        }
     }
 }

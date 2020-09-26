@@ -63,6 +63,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             return _data[breakIndex];
         }
 
+        public bool IsValidWave(int row, int column) =>
+            GetWaveFlatIndex(row, column) * _waveSize * _laneDataSize + _laneDataSize < _data.Length && row < _wavesPerGroup;
+
         private int GetWaveFlatIndex(int row, int column) => column * _wavesPerGroup + row;
 
         private WaveInfo GetWaveInfoByRowAndColumn(int row, int column)
