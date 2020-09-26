@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Drawing;
+using System.Windows.Media;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
     public struct WaveInfo
     {
-        public Color BreakColor;
+        public Brush BreakColor;
         public uint BreakLine;
         public int GroupIdx;
         public int WaveIdx;
@@ -13,17 +13,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
     class BreakpointColorManager
     {
-        private readonly Dictionary<uint, Color> _breakpointColorMapping = new Dictionary<uint, Color>();
-        private readonly Color[] _colors = new Color[] { Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Cyan };
+        private readonly Dictionary<uint, Brush> _breakpointColorMapping = new Dictionary<uint, Brush>();
+        private readonly Brush[] _colors = new Brush[] { Brushes.Red, Brushes.Blue, Brushes.Green, Brushes.Yellow, Brushes.Cyan };
         private uint _currentColorIndex;
 
-        private Color GetNextColor()
+        private Brush GetNextColor()
         {
             if (_currentColorIndex == _colors.Length) _currentColorIndex = 0;
             return _colors[_currentColorIndex++];
         }
 
-        public Color GetColorForBreakpoint(uint breakLine)
+        public Brush GetColorForBreakpoint(uint breakLine)
         {
             if (_breakpointColorMapping.TryGetValue(breakLine, out var color))
             {
