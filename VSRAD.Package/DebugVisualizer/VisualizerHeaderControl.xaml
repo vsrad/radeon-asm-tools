@@ -15,6 +15,7 @@
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="App args" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="Break args" IsChecked="{Binding Options.VisualizerOptions.ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Wavemap" IsChecked="{Binding Options.VisualizerOptions.ShowWavemapField, Mode=TwoWay}" IsCheckable="True"/>
         </ContextMenu>
     </UserControl.ContextMenu>
     <UserControl.Resources>
@@ -123,7 +124,7 @@
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="Auto" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowBreakArgsField}" Value="False">
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemapField}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
