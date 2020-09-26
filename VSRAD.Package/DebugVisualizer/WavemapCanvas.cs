@@ -26,24 +26,30 @@ namespace VSRAD.Package.DebugVisualizer
 
             _wiew = new WavemapView(_data, 6, 3, 12);
 
-            for (int y = 0; y < 2; ++y)
+            for (int i = 0; i < 200; ++i)
             {
-                for (int i = 0, x = 1; i < 200; ++i, x += 6)
+                for (int j = 0; j < 2; ++j)
                 {
-                    var wave = _wiew[y, i];
-                    var r = new Rectangle();
-                    r.ToolTip = new ToolTip() { Content = $"Group: {wave.GroupIdx}\nWave: {wave.WaveIdx}\nLine: {wave.BreakLine}" };
-                    r.Fill = wave.BreakColor;
-                    r.Height = 7;
-                    r.Width = 7;
-                    r.StrokeThickness = 1;
-                    r.Stroke = Brushes.Black;
-                    Canvas.SetLeft(r, x);
-                    Canvas.SetTop(r, 7 * y);
-                    _rectangles[y][i] = r;
+                    var r = GetWaveRectangleByCoordinates(j, i);
+                    _rectangles[j][i] = r;
                     _canvas.Children.Add(r);
                 }
             }
+        }
+
+        private Rectangle GetWaveRectangleByCoordinates(int row, int column)
+        {
+            var wave = _wiew[row, column];
+            var r = new Rectangle();
+            r.ToolTip = new ToolTip() { Content = $"Group: {wave.GroupIdx}\nWave: {wave.WaveIdx}\nLine: {wave.BreakLine}" };
+            r.Fill = wave.BreakColor;
+            r.Height = 7;
+            r.Width = 7;
+            r.StrokeThickness = 1;
+            r.Stroke = Brushes.Black;
+            Canvas.SetLeft(r, 1 + 6 * column);
+            Canvas.SetTop(r, 1 + 7 * row);
+            return r;
         }
     }
 }
