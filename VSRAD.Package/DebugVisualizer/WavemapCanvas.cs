@@ -30,8 +30,10 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 for (int i = 0, x = 1; i < 200; ++i, x += 6)
                 {
+                    var wave = _wiew[y, i];
                     var r = new Rectangle();
-                    r.Fill = _wiew[y, i].BreakColor;
+                    r.ToolTip = new ToolTip() { Content = $"Group: {wave.GroupIdx}\nWave: {wave.WaveIdx}\nLine: {wave.BreakLine}" };
+                    r.Fill = wave.BreakColor;
                     r.Height = 7;
                     r.Width = 7;
                     r.StrokeThickness = 1;
