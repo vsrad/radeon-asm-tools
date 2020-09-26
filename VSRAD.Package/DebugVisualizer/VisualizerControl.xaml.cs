@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -19,6 +21,14 @@ namespace VSRAD.Package.DebugVisualizer
             _context.GroupFetched += GroupFetched;
             DataContext = _context;
             InitializeComponent();
+
+            var r = new Rectangle();
+            r.Fill = new SolidColorBrush(Color.FromRgb(255, 0, 0));
+            r.Height = 20;
+            r.Width = 20;
+            Canvas.SetLeft(r, 0);
+            Canvas.SetTop(r, 0);
+            HeaderHost.WavemapCanvas.Children.Add(r);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
