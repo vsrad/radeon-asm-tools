@@ -20,7 +20,7 @@ namespace VSRAD.Package.Server
 
         private static readonly Regex StatusFileRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)\s+comment (?<comment>.+)", RegexOptions.Compiled);
 
-        public BreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, string statusFileContents)
+        private BreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, string statusFileContents)
         {
             Data = breakStateData;
             TotalElapsedMilliseconds = totalElapsedMilliseconds;
@@ -29,7 +29,10 @@ namespace VSRAD.Package.Server
 
             var match = StatusFileRegex.Match(statusFileContents);
 
-            if (match.Success)
+            if (match.Success
+                && uint.Parse(match.Groups["gp_x"].Value) != 0
+                && uint.Parse(match.Groups["wv"].Value) != 0
+                && uint.Parse(match.Groups["gd_x"].Value) != 0)
             {
                 var gridX = uint.Parse(match.Groups["gd_x"].Value);
                 var gridY = uint.Parse(match.Groups["gd_y"].Value);
@@ -38,8 +41,12 @@ namespace VSRAD.Package.Server
                 var groupY = uint.Parse(match.Groups["gp_y"].Value);
                 var groupZ = uint.Parse(match.Groups["gp_z"].Value);
                 WaveSize = uint.Parse(match.Groups["wv"].Value);
-
                 NDRange3D = gridY != 0 && gridZ != 0;
+
+                if ((NDRange3D && (groupY == 0 || groupZ == 0 || groupY > gridY || groupZ > gridZ))
+                    || groupX > gridX || WaveSize > groupX)
+                    throw new ArgumentException();
+
                 GroupSize = groupX;
                 DimX = gridX / groupX;
                 DimY = NDRange3D ? gridY / groupY : 0;
@@ -48,7 +55,20 @@ namespace VSRAD.Package.Server
             }
             else if (!string.IsNullOrEmpty(statusFileContents))
             {
+                throw new ArgumentException();
+            }
+        }
+
+        public static BreakState GetBreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, string statusFileContents)
+        {
+            try
+            {
+                return new BreakState(breakStateData, totalElapsedMilliseconds, statusFileContents);
+            }
+            catch (ArgumentException)
+            {
                 Errors.ShowWarning("Could not set dispatch parameters from the status file. Make sure that the status file contents match the format.");
+                return null;
             }
         }
     }
