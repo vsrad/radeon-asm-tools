@@ -12,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
+        private readonly WavemapCanvas _wavemap;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
@@ -22,7 +23,7 @@ namespace VSRAD.Package.DebugVisualizer
             DataContext = _context;
             InitializeComponent();
 
-            _ = new WavemapCanvas(HeaderHost.WavemapCanvas);
+            _wavemap = new WavemapCanvas(HeaderHost.WavemapCanvas);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
@@ -82,6 +83,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             _table.ApplyWatchStyling();
             RefreshDataStyling();
+
+            _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.DebuggerOptions.GroupSize / 2)); // depends on status-file branch
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
