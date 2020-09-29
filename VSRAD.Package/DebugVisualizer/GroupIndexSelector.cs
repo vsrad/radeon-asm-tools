@@ -79,21 +79,24 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void UpdateOnBreak(BreakState breakState)
         {
-            _updateOptions = false;
+            if (!string.IsNullOrEmpty(_projectOptions.Profile.Debugger.StatusFile.Path))
+            {
+                _updateOptions = false;
 
-            _projectOptions.VisualizerOptions.NDRange3D = breakState.NDRange3D;
-            _projectOptions.VisualizerOptions.WaveSize = breakState.WaveSize;
+                _projectOptions.VisualizerOptions.NDRange3D = breakState.NDRange3D;
+                _projectOptions.VisualizerOptions.WaveSize = breakState.WaveSize;
 
-            DimX = breakState.DimX;
-            DimY = breakState.DimY;
-            DimZ = breakState.DimZ;
+                DimX = breakState.DimX;
+                DimY = breakState.DimY;
+                DimZ = breakState.DimZ;
 
-            _projectOptions.DebuggerOptions.NGroups = breakState.NDRange3D
-                ? breakState.DimX * breakState.DimY * breakState.DimZ
-                : breakState.DimX;
-            _projectOptions.DebuggerOptions.GroupSize = breakState.GroupSize;
+                _projectOptions.DebuggerOptions.NGroups = breakState.NDRange3D
+                    ? breakState.DimX * breakState.DimY * breakState.DimZ
+                    : breakState.DimX;
+                _projectOptions.DebuggerOptions.GroupSize = breakState.GroupSize;
 
-            _updateOptions = true;
+                _updateOptions = true;
+            }
             Update();
         }
 
