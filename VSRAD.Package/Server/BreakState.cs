@@ -29,10 +29,7 @@ namespace VSRAD.Package.Server
 
             var match = StatusFileRegex.Match(statusFileContents);
 
-            if (match.Success
-                && uint.Parse(match.Groups["gp_x"].Value) != 0
-                && uint.Parse(match.Groups["wv"].Value) != 0
-                && uint.Parse(match.Groups["gd_x"].Value) != 0)
+            if (match.Success)
             {
                 var gridX = uint.Parse(match.Groups["gd_x"].Value);
                 var gridY = uint.Parse(match.Groups["gd_y"].Value);
@@ -44,7 +41,7 @@ namespace VSRAD.Package.Server
                 NDRange3D = gridY != 0 && gridZ != 0;
 
                 if ((NDRange3D && (groupY == 0 || groupZ == 0 || groupY > gridY || groupZ > gridZ))
-                    || groupX > gridX || WaveSize > groupX)
+                    || groupX > gridX || WaveSize > groupX || groupX == 0 || WaveSize == 0 || gridX == 0)
                     throw new ArgumentException();
 
                 GroupSize = groupX;
