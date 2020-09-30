@@ -43,6 +43,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var r = GetWaveRectangleByCoordinates(j, i);
                     _rectangles[j][i].Fill = r.Fill;
                     _rectangles[j][i].ToolTip = r.ToolTip;
+                    _rectangles[j][i].Visibility = r.Visibility;
                 }
             }
             _canvas.InvalidateVisual();
@@ -54,9 +55,10 @@ namespace VSRAD.Package.DebugVisualizer
             var r = new Rectangle();
             r.ToolTip = new ToolTip() { Content = validWave ?
                 $"Group: {_view[row, column].GroupIdx}\nWave: {_view[row, column].WaveIdx}\nLine: {_view[row, column].BreakLine}"
-                : "No data"
+                : ""
             };
             r.Fill = validWave ? _view[row, column].BreakColor : Brushes.Gray;
+            r.Visibility = validWave ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
             r.Height = 7;
             r.Width = 7;
             r.StrokeThickness = 1;
