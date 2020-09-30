@@ -41,8 +41,8 @@ namespace VSRAD.Package.DebugVisualizer
                 for (int j = 0; j < 2; ++j)
                 {
                     var r = GetWaveRectangleByCoordinates(j, i);
-                    _canvas.Children.OfType<Rectangle>().ElementAt(j * 200 + i).Fill = r.Fill;
-                    _canvas.Children.OfType<Rectangle>().ElementAt(j * 200 + i).ToolTip = r.ToolTip;
+                    _rectangles[j][i].Fill = r.Fill;
+                    _rectangles[j][i].ToolTip = r.ToolTip;
                 }
             }
             _canvas.InvalidateVisual();
