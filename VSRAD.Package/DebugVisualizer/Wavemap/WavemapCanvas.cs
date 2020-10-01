@@ -2,13 +2,15 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 using VSRAD.Package.DebugVisualizer.Wavemap;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     class WavemapCanvas
     {
         private readonly Canvas _canvas;
-        private readonly Rectangle[][] _rectangles = { new Rectangle[200], new Rectangle[200] };
+        private readonly List<Rectangle[]> _rectangles = new List<Rectangle[]> { new Rectangle[200], new Rectangle[200] };
         private WavemapView _view;
 
         public WavemapCanvas(Canvas canvas)
@@ -28,8 +30,39 @@ namespace VSRAD.Package.DebugVisualizer
         public void SetData(WavemapView view)
         {
             _view = view;
+
+            if (view.WavesPerGroup != _rectangles.Count)
+            {
+                if (view.WavesPerGroup > _rectangles.Count)
+                {
+                    var rCount = _rectangles.Count;
+                    for (int i = rCount; i < view.WavesPerGroup; ++i)
+                    {
+                        _rectangles.Add(new Rectangle[200]);
+                    }
+
+                    for (int i = 0; i < 200; ++i)
+                    {
+                        for (int j = rCount; j < view.WavesPerGroup; ++j)
+                        {
+                            var r = InitiateWaveRectangle(j, i);
+                            _rectangles[j][i] = r;
+                            _canvas.Children.Add(r);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = view.WavesPerGroup; i < _rectangles.Count; ++i)
+                    {
+                        for (int j = 0; j < 200; ++j)
+                            _rectangles[i][j].Visibility = System.Windows.Visibility.Hidden;
+                    }
+                }
+            }
+
             for (int i = 0; i < 200; ++i)
-                for (int j = 0; j < 2; ++j)
+                for (int j = 0; j < view.WavesPerGroup; ++j)
                     UpdateWaveRectangle(j, i);
             _canvas.InvalidateVisual();
         }

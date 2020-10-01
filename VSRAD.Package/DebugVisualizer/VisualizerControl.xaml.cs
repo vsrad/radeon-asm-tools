@@ -84,7 +84,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ApplyWatchStyling();
             RefreshDataStyling();
 
-            _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.DebuggerOptions.GroupSize / 2)); // depends on status-file branch
+            _wavemap.SetData(_context.BreakData.GetWavemapView(16)); // depends on status-file branch
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
