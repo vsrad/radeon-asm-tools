@@ -20,6 +20,7 @@ namespace VSRAD.Package.DebugVisualizer
             _context.PropertyChanged += ContextPropertyChanged;
             _context.Options.DebuggerOptions.PropertyChanged += DebuggerOptionChanged;
             _context.GroupFetched += GroupFetched;
+            _context.GroupFetching += SetupDataFetch;
             DataContext = _context;
             InitializeComponent();
 
@@ -48,6 +49,11 @@ namespace VSRAD.Package.DebugVisualizer
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
+        }
+
+        private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
+        {
+            e.FetchWholeFile = _context.Options.VisualizerOptions.ShowWavemapField || e.FetchWholeFile; // slice visualizer can set this field too
         }
 
         private void DebuggerOptionChanged(object sender, PropertyChangedEventArgs e)
