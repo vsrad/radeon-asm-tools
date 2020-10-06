@@ -39,6 +39,9 @@ namespace VSRAD.Package.DebugVisualizer
         private int _canvasWidth = 100;
         public int CanvasWidth { get => _canvasWidth; set => SetField(ref _canvasWidth, value); }
 
+        private int _canvasHeight = 10;
+        public int CanvasHeight { get => _canvasHeight; set => SetField(ref _canvasHeight, value); }
+
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 

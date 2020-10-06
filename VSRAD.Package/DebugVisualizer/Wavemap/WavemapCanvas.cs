@@ -12,12 +12,15 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly List<List<Rectangle>> _rectangles = new List<List<Rectangle>> { new List<Rectangle>(), new List<Rectangle>() };
         private WavemapView _view;
 
+        public int Height => _view.WavesPerGroup * 6 + 2; // 6 is rectangle width, +2 for borders
+        public int Width => _view.GroupCount * 6 + 2;
+
         public WavemapCanvas(Canvas canvas)
         {
             _canvas = canvas;
         }
 
-        public int SetData(WavemapView view)
+        public void SetData(WavemapView view)
         {
             _view = view;
 
@@ -65,8 +68,6 @@ namespace VSRAD.Package.DebugVisualizer
                 for (int j = 0; j < view.WavesPerGroup; ++j)
                     UpdateWaveRectangle(j, i);
             _canvas.InvalidateVisual();
-
-            return view.GroupCount * 6 + 2; // 6 is rectangle width, +2 for borders
         }
 
         private static Rectangle InitiateWaveRectangle(int row, int column)
