@@ -53,7 +53,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
         {
-            e.FetchWholeFile = _context.Options.VisualizerOptions.ShowWavemapField || e.FetchWholeFile; // slice visualizer can set this field too
+            e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemapField;
         }
 
         private void DebuggerOptionChanged(object sender, PropertyChangedEventArgs e)
