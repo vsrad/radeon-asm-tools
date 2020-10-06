@@ -34,10 +34,8 @@ namespace VSRAD.Package.DebugVisualizer
                 else
                 {
                     for (int i = view.WavesPerGroup; i < _rectangles.Count; ++i)
-                    {
                         for (int j = 0; j < view.GroupCount; ++j)
                             _rectangles[i][j].Visibility = System.Windows.Visibility.Hidden;
-                    }
                 }
             }
 
@@ -54,6 +52,12 @@ namespace VSRAD.Package.DebugVisualizer
                             _canvas.Children.Add(r);
                         }
                     }
+                }
+                else
+                {
+                    for (int i = 0; i < view.WavesPerGroup; ++i)
+                        for (int j = view.GroupCount; j < _rectangles[0].Count; ++j)
+                            _rectangles[i][j].Visibility = System.Windows.Visibility.Hidden;
                 }
             }
 
