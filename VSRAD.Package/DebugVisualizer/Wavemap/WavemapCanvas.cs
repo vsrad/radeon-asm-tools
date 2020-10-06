@@ -1,33 +1,23 @@
-﻿using System.Windows.Shapes;
+﻿using System.Collections.Generic;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Shapes;
 using VSRAD.Package.DebugVisualizer.Wavemap;
-using System.Linq;
-using System.Collections.Generic;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     class WavemapCanvas
     {
         private readonly Canvas _canvas;
-        private readonly List<Rectangle[]> _rectangles = new List<Rectangle[]> { new Rectangle[200], new Rectangle[200] };
+        private readonly List<List<Rectangle>> _rectangles = new List<List<Rectangle>> { new List<Rectangle>(), new List<Rectangle>() };
         private WavemapView _view;
 
         public WavemapCanvas(Canvas canvas)
         {
             _canvas = canvas;
-            for (int i = 0; i < 200; ++i)
-            {
-                for (int j = 0; j < 2; ++j)
-                {
-                    var r = InitiateWaveRectangle(j, i);
-                    _rectangles[j][i] = r;
-                    _canvas.Children.Add(r);
-                }
-            }
         }
 
-        public void SetData(WavemapView view)
+        public int SetData(WavemapView view)
         {
             _view = view;
 
@@ -38,39 +28,47 @@ namespace VSRAD.Package.DebugVisualizer
                     var rCount = _rectangles.Count;
                     for (int i = rCount; i < view.WavesPerGroup; ++i)
                     {
-                        _rectangles.Add(new Rectangle[200]);
-                    }
-
-                    for (int i = 0; i < 200; ++i)
-                    {
-                        for (int j = rCount; j < view.WavesPerGroup; ++j)
-                        {
-                            var r = InitiateWaveRectangle(j, i);
-                            _rectangles[j][i] = r;
-                            _canvas.Children.Add(r);
-                        }
+                        _rectangles.Add(new List<Rectangle>());
                     }
                 }
                 else
                 {
                     for (int i = view.WavesPerGroup; i < _rectangles.Count; ++i)
                     {
-                        for (int j = 0; j < 200; ++j)
+                        for (int j = 0; j < view.GroupCount; ++j)
                             _rectangles[i][j].Visibility = System.Windows.Visibility.Hidden;
                     }
                 }
             }
 
-            for (int i = 0; i < 200; ++i)
+            if (_rectangles[0].Count != view.GroupCount)
+            {
+                if (view.GroupCount > _rectangles[0].Count)
+                {
+                    for (int i = _rectangles[0].Count; i < view.GroupCount; ++i)
+                    {
+                        for (int j = 0; j < _rectangles.Count; ++j)
+                        {
+                            var r = InitiateWaveRectangle(j, i);
+                            _rectangles[j].Add(r);
+                            _canvas.Children.Add(r);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < view.GroupCount; ++i)
                 for (int j = 0; j < view.WavesPerGroup; ++j)
                     UpdateWaveRectangle(j, i);
             _canvas.InvalidateVisual();
+
+            return view.GroupCount * 6 + 2; // 6 is rectangle width, +2 for borders
         }
 
-        private Rectangle InitiateWaveRectangle(int row, int column)
+        private static Rectangle InitiateWaveRectangle(int row, int column)
         {
             var r = new Rectangle();
-            r.Visibility =  System.Windows.Visibility.Hidden;
+            r.Visibility = System.Windows.Visibility.Hidden;
             r.Height = 7;
             r.Width = 7;
             r.StrokeThickness = 1;

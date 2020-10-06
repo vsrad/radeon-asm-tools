@@ -151,7 +151,9 @@
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <Canvas x:Name="WavemapCanvas" Grid.Row="3" Grid.Column="1"/>
+            <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden" Grid.Row="3" Grid.Column="1">
+                <Canvas x:Name="WavemapCanvas" Width="{Binding CanvasWidth}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Margin="0,0,0,25"/>
+            </ScrollViewer>
         </Grid>
     </StackPanel>
 </UserControl>

@@ -36,6 +36,9 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _watchesValid = true;
         public bool WatchesValid { get => _watchesValid; set => SetField(ref _watchesValid, value); }
 
+        private int _canvasWidth = 100;
+        public int CanvasWidth { get => _canvasWidth; set => SetField(ref _canvasWidth, value); }
+
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 

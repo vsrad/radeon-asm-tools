@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Windows.Media;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
@@ -43,17 +44,19 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private readonly int _waveSize;
         private readonly int _laneDataSize;
         public int WavesPerGroup { get; }
+        public int GroupCount { get; }
 
         private readonly uint[] _data;
 
         private readonly BreakpointColorManager _colorManager;
 
-        public WavemapView(uint[] data, int waveSize, int laneDataSize, int groupSize)
+        public WavemapView(uint[] data, int waveSize, int laneDataSize, int groupSize, int groupCount)
         {
             _data = data;
             _waveSize = waveSize;
             _laneDataSize = laneDataSize;
             WavesPerGroup = groupSize / waveSize;
+            GroupCount = groupCount;
             _colorManager = new BreakpointColorManager();
         }
 
