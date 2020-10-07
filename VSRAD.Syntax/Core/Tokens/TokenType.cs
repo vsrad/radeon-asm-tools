@@ -7,7 +7,9 @@ namespace VSRAD.Syntax.Core.Tokens
     {
         Comment,
         Identifier,
+#pragma warning disable CA1720 // disable Identifier contains type name
         String,
+#pragma warning restore CA1720
         Number,
         Operation,
         Structural,

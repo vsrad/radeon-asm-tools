@@ -14,7 +14,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter
     {
         private readonly IClassificationTypeRegistryService _classificationTypeRegistryService;
         private readonly IDocumentFactory _documentFactory;
-        private readonly RadeonServiceProvider _serviceProvider;
 
         [ImportingConstructor]
         public AnalysisClassifierProvider(

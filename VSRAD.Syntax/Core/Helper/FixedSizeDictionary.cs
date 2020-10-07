@@ -3,22 +3,22 @@ using System.Collections.Specialized;
 
 namespace VSRAD.Syntax.Core.Helper
 {
-    public class FixedSizeDictionary<K, V>
+    public class FixedSizeDictionary<TKey, TValue>
     {
-        private OrderedDictionary orderedDictionary;
+        private readonly OrderedDictionary orderedDictionary;
 
         public FixedSizeDictionary(int capacity)
         {
             orderedDictionary = new OrderedDictionary(capacity);
         }
 
-        public bool TryGetValue(K key, out V value)
+        public bool TryGetValue(TKey key, out TValue value)
         {
-            value = (V)orderedDictionary[key];
+            value = (TValue)orderedDictionary[key];
             return value != null;
         }
 
-        public bool TryAddValue(K key, Func<V> valueFactory)
+        public bool TryAddValue(TKey key, Func<TValue> valueFactory)
         {
             if (!orderedDictionary.Contains(key))
             {

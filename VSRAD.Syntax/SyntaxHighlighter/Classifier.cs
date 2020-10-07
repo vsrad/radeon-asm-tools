@@ -24,7 +24,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             InitializeClassifierDictonary(typeRegistryService);
         }
 
+#pragma warning disable CS0067 // disable "The event is never used". It's required by IClassifier
         public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
+#pragma warning restore CS0067
 
         public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
