@@ -93,10 +93,10 @@ namespace VSRAD.Package.DebugVisualizer
             var status = new StringBuilder();
             status.AppendFormat("{0} groups, last run at {1}, total: {2}ms, execute: {3}ms",
                 e.DataGroupCount, _breakState.ExecutedAt.ToString("HH:mm:ss"), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds);
-            if (!string.IsNullOrEmpty(_breakState.StatusString))
+            if (_breakState.DispatchParameters?.StatusString is string statusStr && statusStr.Length != 0)
             {
                 status.Append(", status: ");
-                status.Append(_breakState.StatusString);
+                status.Append(statusStr);
             }
             Status = status.ToString();
             GroupIndexEditable = true;
