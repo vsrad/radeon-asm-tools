@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
 using System.Threading;
 using Microsoft.VisualStudio.Text;
+using System.Text.RegularExpressions;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -77,9 +78,20 @@ namespace VSRAD.Syntax.IntelliSense
             var document = _documentFactory.GetOrCreateDocument(token.AnalysisToken.Snapshot.TextBuffer);
 
             var builder = new ClassifiedTextBuilder();
-            builder
-                .AddClassifiedText($"({typeName}) ")
-                .AddClassifiedText(token);
+
+            if (token.Type == RadAsmTokenType.Instruction)
+            {
+                builder
+                    .AddClassifiedText($"({typeName} ")
+                    .AddClassifiedText(RadAsmTokenType.Instruction, Path.GetFileNameWithoutExtension(token.Path))
+                    .AddClassifiedText(") ");
+            }
+            else
+            {
+                builder.AddClassifiedText($"({typeName}) ");
+            }
+
+            builder.AddClassifiedText(token);
             if (token.Type == RadAsmTokenType.FunctionName)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -121,17 +133,15 @@ namespace VSRAD.Syntax.IntelliSense
             var snapshot = tokenEnd.Snapshot;
             var currentLine = tokenEnd.GetContainingLine();
             var tokenizerResult = documentTokenizer.CurrentResult;
+
             var tokenLineComment = tokenizerResult
                 .GetTokens(new Span(tokenEnd, currentLine.End - tokenEnd))
-                .Where(t => documentTokenizer.GetTokenType(t.Type) == RadAsmTokenType.Comment)
-                .FirstOrDefault();
+                .Where(t => documentTokenizer.GetTokenType(t.Type) == RadAsmTokenType.Comment);
 
-            string GetText(TrackingToken trackingToken) =>
-                trackingToken.GetText(snapshot).Trim('/', '*', ' ', '\r', '\n');
-
-            if (tokenLineComment != default)
+            if (tokenLineComment.Any())
             {
-                message = GetText(tokenLineComment);
+                var text = tokenLineComment.First().GetText(snapshot);
+                message = GetCommentText(text);
                 return true;
             }
 
@@ -151,8 +161,10 @@ namespace VSRAD.Syntax.IntelliSense
                     var trackingToken = tokensAtLine.First();
                     if (documentTokenizer.GetTokenType(trackingToken.Type) == RadAsmTokenType.Comment)
                     {
-                        lines.AddFirst(GetText(trackingToken));
-                        currentLineNumber = snapshot.GetLineNumberFromPosition(trackingToken.GetStart(snapshot)) - 1;
+                        var tokenSpan = new SnapshotSpan(snapshot, trackingToken.GetSpan(snapshot));
+
+                        lines.AddFirst(tokenSpan.GetText());
+                        currentLineNumber = tokenSpan.Start.GetContainingLine().LineNumber - 1;
                         continue;
                     }
                 }
@@ -162,12 +174,18 @@ namespace VSRAD.Syntax.IntelliSense
 
             if (lines.Count != 0)
             {
-                message = string.Join(System.Environment.NewLine, lines);
+                message = GetCommentText(string.Join(System.Environment.NewLine, lines));
                 return true;
             }
 
             message = null;
             return false;
+        }
+
+        private static string GetCommentText(string text)
+        {
+            var comment = text.Trim('/', '*', ' ', '\t', '\r', '\n', '\f');
+            return Regex.Replace(comment, @"(?<=\n)\s*(\*|\/\/)", "", RegexOptions.Compiled);
         }
 
         public class ClassifiedTextBuilder
