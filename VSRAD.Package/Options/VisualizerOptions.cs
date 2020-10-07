@@ -26,7 +26,7 @@ namespace VSRAD.Package.Options
         public uint LaneGrouping { get =>  _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
         private uint _waveSize = 64;
-        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, value); }
+        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }  // < 1 causes VS hang
 
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
