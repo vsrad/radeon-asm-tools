@@ -95,7 +95,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
         }
 
         [Fact]
-        public void MagicNumberWithNonConstatnWaveSizeTest()
+        public void MagicNumberWithNonConstantWaveSizeTest()
         {
             var system = new uint[128];
             system[0] = 0x7;
