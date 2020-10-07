@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
+using System;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -42,8 +43,17 @@ namespace VSRAD.Syntax.IntelliSense
         {
             if (document == null) return NavigationToken.Empty;
 
-            return new NavigationToken(analysisToken, document.Path, () => document.NavigateToPosition(analysisToken.Span.End));
+            var navigateAction = GetNavigateAction(analysisToken, document);
+            return new NavigationToken(analysisToken, document.Path, navigateAction);
         }
+
+        private Action GetNavigateAction(AnalysisToken analysisToken, IDocument document) =>
+            () =>
+            {
+                // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
+                var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
+                document.NavigateToPosition(navigatePosition);
+            };
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
         {
