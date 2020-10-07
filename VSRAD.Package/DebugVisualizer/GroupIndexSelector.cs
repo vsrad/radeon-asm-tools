@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -51,6 +52,8 @@ namespace VSRAD.Package.DebugVisualizer
         private string _error;
         public bool HasErrors => _error != null;
 
+        private bool _updateOptions = true;
+
         private readonly Options.ProjectOptions _projectOptions;
 
         public GroupIndexSelector(Options.ProjectOptions options)
@@ -68,10 +71,33 @@ namespace VSRAD.Package.DebugVisualizer
                 {
                     case nameof(Options.DebuggerOptions.GroupSize):
                     case nameof(Options.DebuggerOptions.NGroups):
-                        Update();
+                        if (_updateOptions) Update();
                         break;
                 }
             };
+        }
+
+        public void UpdateOnBreak(BreakState breakState)
+        {
+            if (breakState.DispatchParameters is BreakStateDispatchParameters dispatchParams)
+            {
+                _updateOptions = false;
+
+                _projectOptions.VisualizerOptions.NDRange3D = dispatchParams.NDRange3D;
+                _projectOptions.VisualizerOptions.WaveSize = dispatchParams.WaveSize;
+
+                DimX = dispatchParams.DimX;
+                DimY = dispatchParams.DimY;
+                DimZ = dispatchParams.DimZ;
+
+                _projectOptions.DebuggerOptions.NGroups = dispatchParams.NDRange3D
+                    ? dispatchParams.DimX * dispatchParams.DimY * dispatchParams.DimZ
+                    : dispatchParams.DimX;
+                _projectOptions.DebuggerOptions.GroupSize = dispatchParams.GroupSize;
+
+                _updateOptions = true;
+            }
+            Update();
         }
 
         private uint LimitIndex(uint index, uint limit) =>
@@ -106,7 +132,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             field = value;
 
-            Update();
+            if (_updateOptions) Update();
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
             return true;

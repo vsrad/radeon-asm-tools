@@ -75,7 +75,7 @@ namespace VSRAD.Package.Server
                 var watchArray = watchesString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
                 watches = Array.AsReadOnly(watchArray);
             }
-            var statusString = "";
+            string statusString = null;
             if (!string.IsNullOrEmpty(options.StatusFile.Path))
             {
                 var initTimestamp = runner.GetInitialFileTimestamp(options.StatusFile.Path);
@@ -96,7 +96,12 @@ namespace VSRAD.Package.Server
                 // TODO: refactor OutputFile away
                 var output = new OutputFile(directory: env.RemoteWorkDir, file: options.OutputFile.Path, options.BinaryOutput);
                 var data = new BreakStateData(watches, output, outputMeta.timestamp, outputMeta.byteCount, options.OutputOffset);
-                return new DebugRunResult(result, null, new BreakState(data, execTimer.ElapsedMilliseconds, statusString));
+
+                var dispatchParamsResult = BreakStateDispatchParameters.Parse(statusString);
+                if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out error))
+                    return new DebugRunResult(result, error, null);
+                
+                return new DebugRunResult(result, null, new BreakState(data, dispatchParams, execTimer.ElapsedMilliseconds));
             }
         }
 

@@ -5,19 +5,17 @@ namespace VSRAD.Package.Server
     public sealed class BreakState
     {
         public BreakStateData Data { get; }
+        public BreakStateDispatchParameters DispatchParameters { get; }
         public long TotalElapsedMilliseconds { get; }
-        public long ExecElapsedMilliseconds { get; }
-        public string StatusString { get; }
-        public int ExitCode { get; }
+        public long ExecElapsedMilliseconds { get; } = 0; // TODO: is this obsolete?
+        public int ExitCode { get; } = 0; // TODO: is this obsolete?
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
-        public BreakState(BreakStateData breakStateData, long totalElapsedMilliseconds, string statusString)
+        public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters, long totalElapsedMilliseconds)
         {
             Data = breakStateData;
+            DispatchParameters = dispatchParameters;
             TotalElapsedMilliseconds = totalElapsedMilliseconds;
-            ExecElapsedMilliseconds = 0;
-            StatusString = statusString;
-            ExitCode = 0;
         }
     }
 }
