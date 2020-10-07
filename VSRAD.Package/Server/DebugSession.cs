@@ -96,7 +96,12 @@ namespace VSRAD.Package.Server
                 // TODO: refactor OutputFile away
                 var output = new OutputFile(directory: env.RemoteWorkDir, file: options.OutputFile.Path, options.BinaryOutput);
                 var data = new BreakStateData(watches, output, outputMeta.timestamp, outputMeta.byteCount, options.OutputOffset);
-                return new DebugRunResult(result, null, BreakState.GetBreakState(data, execTimer.ElapsedMilliseconds, statusString));
+
+                var breakStateResult = BreakState.Create(data, execTimer.ElapsedMilliseconds, statusString);
+                if (!breakStateResult.TryGetResult(out var breakState, out var debugResError))
+                    return new DebugRunResult(result, debugResError, null);
+                
+                return new DebugRunResult(result, null, breakState);
             }
         }
 
