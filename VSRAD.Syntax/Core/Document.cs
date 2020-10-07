@@ -66,6 +66,8 @@ namespace VSRAD.Syntax.Core
             var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager;
             var adapterService = serviceProvider.GetMefService<IVsEditorAdaptersFactoryService>();
 
+            if (IsDisposed) OpenDocumentInEditor();
+
             var vsTextBuffer = adapterService.GetBufferAdapter(_textBuffer);
             var hr = textManager.NavigateToPosition(vsTextBuffer, VSConstants.LOGVIEWID.TextView_guid, position, 0);
             if (hr != VSConstants.S_OK) Error.LogError(Marshal.GetExceptionForHR(hr));

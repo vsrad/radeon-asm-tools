@@ -14,17 +14,16 @@ namespace VSRAD.Syntax.Core
         public override void NavigateToPosition(int position)
         {
             if (_visibleDocument == null || _visibleDocument.IsDisposed)
-                base.OpenDocumentInEditor();
+                OpenDocumentInEditor();
 
             _visibleDocument.NavigateToPosition(position);
         }
 
         public IDocument ToVisibleDocument(ITextDocument textDocument)
         {
-            var document = new Document(textDocument, _lexer, _parser);
-            _textDocument.Dispose();
+            Dispose();
 
-            _visibleDocument = document;
+            _visibleDocument = new Document(textDocument, _lexer, _parser);
             return _visibleDocument;
         }
     }
