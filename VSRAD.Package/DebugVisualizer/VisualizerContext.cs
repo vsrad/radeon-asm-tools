@@ -95,7 +95,7 @@ namespace VSRAD.Package.DebugVisualizer
                 e.DataGroupCount, _breakState.ExecutedAt.ToString("HH:mm:ss"), _breakState.TotalElapsedMilliseconds, _breakState.ExecElapsedMilliseconds);
             if (!string.IsNullOrEmpty(_breakState.StatusString))
             {
-                status.Append(", status:");
+                status.Append(", status: ");
                 status.Append(_breakState.StatusString);
             }
             Status = status.ToString();
