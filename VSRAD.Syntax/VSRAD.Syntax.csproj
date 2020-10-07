@@ -132,7 +132,6 @@
     <Compile Include="IntelliSense\IntellisenseController.cs" />
     <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
-    <Compile Include="IntelliSense\NavigationService.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />

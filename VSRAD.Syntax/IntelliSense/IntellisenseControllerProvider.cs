@@ -12,10 +12,10 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntellisenseControllerProvider : IVsTextViewCreationListener
     {
         private readonly RadeonServiceProvider _editorService;
-        private readonly INavigationService _navigationService;
+        private readonly INavigationTokenService _navigationService;
 
         [ImportingConstructor]
-        public IntellisenseControllerProvider(RadeonServiceProvider editorService, INavigationService navigationService)
+        public IntellisenseControllerProvider(RadeonServiceProvider editorService, INavigationTokenService navigationService)
         {
             _editorService = editorService;
             _navigationService = navigationService;
