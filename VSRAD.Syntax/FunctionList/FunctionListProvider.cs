@@ -17,7 +17,7 @@ using Task = System.Threading.Tasks.Task;
 namespace VSRAD.Syntax.FunctionList
 {
     [Export(typeof(IVsTextViewCreationListener))]
-    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [ContentType("text")]
     [TextViewRole(PredefinedTextViewRoles.Interactive)]
     internal sealed class FunctionListProvider : IVsTextViewCreationListener
     {
@@ -34,7 +34,6 @@ namespace VSRAD.Syntax.FunctionList
             _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
 
-            _documentFactory.DocumentCreated += DocumentCreated;
             _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
         }
@@ -70,15 +69,14 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         #region update function list
-        private void DocumentCreated(IDocument document)
+        private void DocumentDisposed(IDocument document) =>
+            document.DocumentAnalysis.AnalysisUpdated -= (result, ct) => UpdateFunctionList(document, result, ct);
+
+        private void AssignDocumentToFunctionList(IDocument document)
         {
             document.DocumentAnalysis.AnalysisUpdated += (result, ct) => UpdateFunctionList(document, result, ct);
             document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
-            UpdateFunctionList(document);
         }
-
-        private void DocumentDisposed(IDocument document) =>
-            document.DocumentAnalysis.AnalysisUpdated -= (result, ct) => UpdateFunctionList(document, result, ct);
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
@@ -89,12 +87,8 @@ namespace VSRAD.Syntax.FunctionList
             }
             else
             {
-                if (!activeDocument.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
-                {
-                    // if document opened before function list window
-                    DocumentCreated(activeDocument);
-                    return;
-                }
+               if (!activeDocument.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
+                    AssignDocumentToFunctionList(activeDocument); // if document opened before function list window
 
                 UpdateFunctionList(activeDocument);
             }
