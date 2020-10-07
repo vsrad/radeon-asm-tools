@@ -64,6 +64,15 @@ namespace VSRAD.Package.Server
             var ndRange3D = gridY != 0 && gridZ != 0;
             var statusString = match.Groups["comment"].Value;
 
+            if (groupX == 0)
+                return new Error("Could not set dispatch parameters from the status file. GroupX cannot be zero.");
+
+            if (gridX == 0)
+                return new Error("Could not set dispatch parameters from the status file. GridX cannot be zero.");
+
+            if (waveSize == 0)
+                return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be zero.");
+
             if (ndRange3D && (groupY == 0 || groupZ == 0))
                 return new Error("Could not set dispatch parameters from the status file. If GridY and GridZ is set, GroupY and GroupZ cannot be zero.");
 
@@ -75,15 +84,6 @@ namespace VSRAD.Package.Server
 
             if (waveSize > groupX)
                 return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be bigger than GroupX.");
-
-            if (groupX == 0)
-                return new Error("Could not set dispatch parameters from the status file. GroupX cannot be zero.");
-
-            if (gridX == 0)
-                return new Error("Could not set dispatch parameters from the status file. GridX cannot be zero.");
-
-            if (waveSize == 0)
-                return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be zero.");
 
             var dimX = gridX / groupX;
             var dimY = ndRange3D ? gridY / groupY : 0;
