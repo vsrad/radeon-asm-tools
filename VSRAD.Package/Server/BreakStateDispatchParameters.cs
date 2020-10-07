@@ -46,32 +46,31 @@ namespace VSRAD.Package.Server
             var ndRange3D = gridY != 0 && gridZ != 0;
             var statusString = match.Groups["comment"].Value;
 
+            if (gridX == 0)
+                return new Error("Could not set dispatch parameters from the status file. GridX cannot be zero.");
             if (groupX == 0)
                 return new Error("Could not set dispatch parameters from the status file. GroupX cannot be zero.");
 
-            if (gridX == 0)
-                return new Error("Could not set dispatch parameters from the status file. GridX cannot be zero.");
-
             if (waveSize == 0)
                 return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be zero.");
+            if (waveSize > groupX)
+                return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be bigger than GroupX.");
 
             if (ndRange3D && (groupY == 0 || groupZ == 0))
-                return new Error("Could not set dispatch parameters from the status file. If GridY and GridZ is set, GroupY and GroupZ cannot be zero.");
-
-            if (ndRange3D && (groupY > gridY || groupZ > gridZ))
-                return new Error("Could not set dispatch parameters from the status file. If GridY and GridZ is set, GroupY and GroupZ cannot be bigger than correspond Grid value.");
+                return new Error("Could not set dispatch parameters from the status file. If GridY and GridZ are set, GroupY and GroupZ cannot be zero.");
 
             if (groupX > gridX)
                 return new Error("Could not set dispatch parameters from the status file. GroupX cannot be bigger than GridX.");
-
-            if (waveSize > groupX)
-                return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be bigger than GroupX.");
+            if (ndRange3D && groupY > gridY)
+                return new Error("Could not set dispatch parameters from the status file. GroupY cannot be bigger than GridY.");
+            if (ndRange3D && groupZ > gridZ)
+                return new Error("Could not set dispatch parameters from the status file. GroupZ cannot be bigger than GridZ.");
 
             var dimX = gridX / groupX;
             var dimY = ndRange3D ? gridY / groupY : 0;
             var dimZ = ndRange3D ? gridZ / groupZ : 0;
 
-            return new BreakStateDispatchParameters(waveSize, dimX, dimY, dimZ, groupX, ndRange3D, statusString);
+            return new BreakStateDispatchParameters(waveSize, dimX, dimY, dimZ, groupSize: groupX, ndRange3D, statusString);
         }
     }
 }
