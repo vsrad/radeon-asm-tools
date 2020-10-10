@@ -42,25 +42,24 @@ namespace VSRAD.Package.DebugVisualizer
                 }
             }
 
-            if (_rectangles[0].Count != view.GroupCount)
+            for (int j = 0; j < _rectangles.Count; ++j)
             {
-                if (view.GroupCount > _rectangles[0].Count)
+                if (_rectangles[j].Count != view.GroupCount)
                 {
-                    for (int i = _rectangles[0].Count; i < view.GroupCount; ++i)
+                    if (view.GroupCount > _rectangles[j].Count)
                     {
-                        for (int j = 0; j < _rectangles.Count; ++j)
+                        for (int i = _rectangles[j].Count; i < view.GroupCount; ++i)
                         {
                             var r = InitiateWaveRectangle(j, i);
                             _rectangles[j].Add(r);
                             _canvas.Children.Add(r);
                         }
                     }
-                }
-                else
-                {
-                    for (int i = 0; i < view.WavesPerGroup; ++i)
-                        for (int j = view.GroupCount; j < _rectangles[0].Count; ++j)
-                            _rectangles[i][j].Visibility = System.Windows.Visibility.Hidden;
+                    else
+                    {
+                        for (int i = view.GroupCount; i < _rectangles[j].Count; ++i)
+                            _rectangles[j][i].Visibility = System.Windows.Visibility.Hidden;
+                    }
                 }
             }
 

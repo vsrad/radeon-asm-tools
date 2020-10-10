@@ -90,7 +90,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ApplyWatchStyling();
             RefreshDataStyling();
 
-            _wavemap.SetData(_context.BreakData.GetWavemapView(16)); // depends on status-file branch
+            _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
             _context.CanvasWidth = _wavemap.Width;
             _context.CanvasHeight = _wavemap.Height;
 
