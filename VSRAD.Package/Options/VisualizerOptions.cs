@@ -28,6 +28,9 @@ namespace VSRAD.Package.Options
         private uint _waveSize = 64;
         public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }  // < 1 causes VS hang
 
+        private int _wavemapElementSize = 7;
+        public int WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
+
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
 
