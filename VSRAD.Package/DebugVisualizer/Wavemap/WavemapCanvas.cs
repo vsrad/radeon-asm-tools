@@ -12,12 +12,36 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly List<List<Rectangle>> _rectangles = new List<List<Rectangle>> { new List<Rectangle>(), new List<Rectangle>() };
         private WavemapView _view;
 
-        public int Height => _view.WavesPerGroup * 6 + 2; // 6 is rectangle width, +2 for borders
-        public int Width => _view.GroupCount * 6 + 2;
+        public int Height => _view.WavesPerGroup * (_rectangleSize - 1) + 2; // 6 is rectangle width, +2 for borders
+        public int Width => _view.GroupCount * (_rectangleSize - 1) + 2;
 
-        public WavemapCanvas(Canvas canvas)
+        private int _rectangleSize;
+        public int RectangleSize
+        {
+            get => _rectangleSize;
+            set => SetRectangleSize(value);
+        }
+
+        public WavemapCanvas(Canvas canvas, int rectangleSize)
         {
             _canvas = canvas;
+            _rectangleSize = rectangleSize;
+        }
+
+        private void SetRectangleSize(int size)
+        {
+            _rectangleSize = size;
+            for (int i = 0; i < _rectangles.Count; ++i)
+            {
+                for (int j = 0; j < _rectangles[i].Count; ++j)
+                {
+                    _rectangles[i][j].Height = size;
+                    _rectangles[i][j].Width = size;
+                    Canvas.SetLeft(_rectangles[i][j], 1 + (size - 1) * i);
+                    Canvas.SetTop(_rectangles[i][j], 1 + (size - 1) * j);
+                }
+            }
+            _canvas.InvalidateVisual();
         }
 
         public void SetData(WavemapView view)
@@ -69,16 +93,16 @@ namespace VSRAD.Package.DebugVisualizer
             _canvas.InvalidateVisual();
         }
 
-        private static Rectangle InitiateWaveRectangle(int row, int column)
+        private Rectangle InitiateWaveRectangle(int row, int column)
         {
             var r = new Rectangle();
             r.Visibility = System.Windows.Visibility.Hidden;
-            r.Height = 7;
-            r.Width = 7;
+            r.Height = _rectangleSize;
+            r.Width = _rectangleSize;
             r.StrokeThickness = 1;
             r.Stroke = Brushes.Black;
-            Canvas.SetLeft(r, 1 + 6 * column);
-            Canvas.SetTop(r, 1 + 6 * row);
+            Canvas.SetLeft(r, 1 + (_rectangleSize - 1) * column);
+            Canvas.SetTop(r, 1 + (_rectangleSize - 1) * row);
             return r;
         }
 
