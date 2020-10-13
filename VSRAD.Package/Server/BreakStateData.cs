@@ -177,7 +177,7 @@ namespace VSRAD.Package.Server
                 return null;
 
             var requestedByteOffset = waveOffset * _waveDataSize * 4;
-            var requestedByteCount = fetchWholeFile ? 0 : waveCount * _waveDataSize * 4;
+            var requestedByteCount = waveCount * _waveDataSize * 4;
 
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
