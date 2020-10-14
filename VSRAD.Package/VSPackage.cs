@@ -1,6 +1,8 @@
-﻿using Microsoft.VisualStudio;
+﻿using EnvDTE;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
@@ -41,6 +43,7 @@ namespace VSRAD.Package
     [ProvideLanguageService(typeof(VSLanguageInfo), Deborgar.Constants.LanguageName, 106)]
     [ProvideService(typeof(DebugVisualizer.FontAndColorService))]
     [ProvideFontAndColorsCategory("VSRAD", Constants.FontAndColorsCategoryId, typeof(DebugVisualizer.FontAndColorService))]
+    [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
     [Guid(Constants.PackageId)]
     public sealed class VSPackage : AsyncPackage, IOleCommandTarget
     {
@@ -57,21 +60,36 @@ namespace VSRAD.Package
         }
 
         private ICommandRouter _commandRouter;
+        private SolutionManager _solutionManager;
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             await base.InitializeAsync(cancellationToken, progress);
             AddService(typeof(DebugVisualizer.FontAndColorService),
                 (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorService()), promote: true);
-#if DEBUG
+
             await TaskFactory.SwitchToMainThreadAsync();
+
+            var vsMonitorSelection = (IVsMonitorSelection)await GetServiceAsync(typeof(IVsMonitorSelection));
+            var dte = (DTE)await GetServiceAsync(typeof(DTE));
+            _solutionManager = new SolutionManager(vsMonitorSelection);
+            _solutionManager.ProjectLoaded += (s, e) => TaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
+
+#pragma warning disable CS4014     // LoadCurrentSolution needs to be invoked _after_ we leave InitializeAsync,
+#pragma warning disable VSTHRD001  // otherwise we enter a deadlock waiting for the package to finish loading
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvoke(
+                (Action)(() => _solutionManager.LoadCurrentSolution(dte)), System.Windows.Threading.DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
+#pragma warning restore CS4014
+
+#if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
         }
 
-        public async Task ProjectLoadedAsync(IToolWindowIntegration toolWindowIntegration, ICommandRouter commandRouter)
+        public async Task ProjectLoadedAsync(object sender, ProjectLoadedEventArgs e)
         {
-            _commandRouter = commandRouter;
+            _commandRouter = e.CommandRouter;
 
             VisualizerToolWindow = (VisualizerWindow)await FindToolWindowAsync(
                 typeof(VisualizerWindow), 0, true, CancellationToken.None);
@@ -83,16 +101,16 @@ namespace VSRAD.Package
             //    typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
 
             await TaskFactory.SwitchToMainThreadAsync();
-            VisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
-            SliceVisualizerToolWindow.OnProjectLoaded(toolWindowIntegration);
-            OptionsToolWindow.OnProjectLoaded(toolWindowIntegration);
+            VisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
+            SliceVisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
+            OptionsToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             //EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
 
-        public static void ProjectUnloaded()
+        public static void SolutionUnloaded()
         {
-            VisualizerToolWindow.OnProjectUnloaded();
-            OptionsToolWindow.OnProjectUnloaded();
+            VisualizerToolWindow?.OnProjectUnloaded();
+            OptionsToolWindow?.OnProjectUnloaded();
         }
 
         int IOleCommandTarget.QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)

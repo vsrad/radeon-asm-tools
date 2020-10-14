@@ -41,7 +41,7 @@ namespace VSRAD.Package.BuildTools
         private readonly IOutputWindowManager _outputWindow;
         private readonly IFileSynchronizationManager _deployManager;
         private readonly IBuildErrorProcessor _errorProcessor;
-        private readonly CancellationTokenSource _serverLoopCts = new CancellationTokenSource();
+        private CancellationTokenSource _serverLoopCts;
         private readonly string _projectName;
 
         private BuildSteps? _buildStepsOverride;
@@ -64,8 +64,12 @@ namespace VSRAD.Package.BuildTools
             // Build integration is not implemented for VisualC projects
             if (unconfiguredProject?.Capabilities?.Contains("VisualC") != true)
             {
-                _project.Loaded += (_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
-                _project.Unloaded += _serverLoopCts.Cancel;
+                _project.Loaded += (_) =>
+                    {
+                        _serverLoopCts = new CancellationTokenSource();
+                        VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
+                    };
+                _project.Unloaded += () => _serverLoopCts.Cancel();
             }
 
             _projectName = unconfiguredProject != null ? Path.GetFileName(unconfiguredProject.FullPath) : "";
