@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Options.Instructions;
 
@@ -135,6 +137,19 @@ namespace VSRAD.Syntax.Core
             {
                 var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
                 _documents.TryGetValue(openWindowPath, out var document);
+
+                // if this document is opened for the first time, then it can be a RadeonAsm document, but 
+                // the parser is initialized after visual buffer initialization, so
+                // it is necessary to force initialize RadeonAsm document
+                if (document == null)
+                {
+                    var vsTextBuffer = Utils.GetWindowVisualBuffer(GotFocus, _serviceProvider.ServiceProvider);
+                    if (vsTextBuffer != null)
+                    {
+                        var textBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
+                        document = GetOrCreateDocument(textBuffer);
+                    }
+                }
                 ActiveDocumentChanged?.Invoke(document);
             }
         }
