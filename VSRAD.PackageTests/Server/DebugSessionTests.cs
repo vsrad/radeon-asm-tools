@@ -147,7 +147,7 @@ comment 115200"), Timestamp = DateTime.Now },
             var result = await session.ExecuteAsync(new[] { 13u }, new ReadOnlyCollection<string>(new[] { "watch" }.ToList()));
             Assert.True(channel.AllInteractionsHandled);
             Assert.Null(result.BreakState);
-            Assert.Equal("Could not set dispatch parameters from the status file. Make sure that the status file contents match the format.", result.Error.Value.Message);
+            Assert.StartsWith("Could not read dispatch parameters from the status file", result.Error.Value.Message);
         }
     }
 }

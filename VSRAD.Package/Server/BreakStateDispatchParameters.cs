@@ -5,7 +5,12 @@ namespace VSRAD.Package.Server
 {
     public sealed class BreakStateDispatchParameters
     {
-        private static readonly Regex StatusFileRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)\s+comment (?<comment>.+)", RegexOptions.Compiled);
+        private static readonly Regex _statusRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)(\s+comment (?<comment>.*))?", RegexOptions.Compiled);
+        private const string _exampleStatusContents = @"
+grid size (2048, 1, 1)
+group size (512, 1, 1)
+wave size 64
+comment optional comment";
 
         public uint WaveSize { get; }
         public uint DimX { get; }
@@ -31,10 +36,10 @@ namespace VSRAD.Package.Server
             if (statusFileContents == null)
                 return (BreakStateDispatchParameters)null;
 
-            var match = StatusFileRegex.Match(statusFileContents);
+            var match = _statusRegex.Match(statusFileContents);
 
             if (!match.Success)
-                return new Error("Could not set dispatch parameters from the status file. Make sure that the status file contents match the format.");
+                return new Error("Could not read dispatch parameters from the status file. The following is an example of the expected status file contents:\r\n" + _exampleStatusContents);
 
             var gridX = uint.Parse(match.Groups["gd_x"].Value);
             var gridY = uint.Parse(match.Groups["gd_y"].Value);

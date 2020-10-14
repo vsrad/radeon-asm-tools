@@ -97,5 +97,49 @@ wave size 64
 comment -").TryGetResult(out _, out error));
             Assert.Equal("Could not set dispatch parameters from the status file. WaveSize cannot be bigger than GroupX.", error.Message);
         }
+
+        [Fact]
+        public void StatusStringTest()
+        {
+            var result = BreakStateDispatchParameters.Parse(@"
+grid size (8192, 0, 0)
+group size (512, 0, 0)
+wave size 64");
+            Assert.True(result.TryGetResult(out var ps, out _));
+            Assert.Equal("", ps.StatusString);
+
+            result = BreakStateDispatchParameters.Parse(@"
+grid size (8192, 0, 0)
+group size (512, 0, 0)
+wave size 64
+comment ");
+            Assert.True(result.TryGetResult(out ps, out _));
+            Assert.Equal("", ps.StatusString);
+
+            result = BreakStateDispatchParameters.Parse(@"
+grid size (8192, 0, 0)
+group size (512, 0, 0)
+wave size 64
+comment status string");
+            Assert.True(result.TryGetResult(out ps, out _));
+            Assert.Equal("status string", ps.StatusString);
+        }
+
+        [Fact]
+        public void InvalidFormatTest()
+        {
+            var result = BreakStateDispatchParameters.Parse(@"
+global size (8192, 0, 0)
+local size (512, 0, 0)
+warp size 32");
+            Assert.False(result.TryGetResult(out _, out var error));
+            Assert.Equal(
+@"Could not read dispatch parameters from the status file. The following is an example of the expected status file contents:
+
+grid size (2048, 1, 1)
+group size (512, 1, 1)
+wave size 64
+comment optional comment", error.Message);
+        }
     }
 }
