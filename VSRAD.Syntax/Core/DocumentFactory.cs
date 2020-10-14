@@ -17,7 +17,7 @@ namespace VSRAD.Syntax.Core
         private readonly ContentTypeManager _contentTypeManager;
         private readonly RadeonServiceProvider _serviceProvider;
         private readonly Dictionary<string, IDocument> _documents;
-        private readonly IInstructionListManager _instructionManager;
+        private readonly Lazy<IInstructionListManager> _instructionManager;
 
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.Core
         [ImportingConstructor]
         public DocumentFactory(RadeonServiceProvider serviceProvider,
             ContentTypeManager contentTypeManager,
-            IInstructionListManager instructionManager)
+            Lazy<IInstructionListManager> instructionManager)
         {
             _instructionManager = instructionManager;
 
@@ -101,10 +101,11 @@ namespace VSRAD.Syntax.Core
 
         private (ILexer lexer, IParser parser)? GetLexerParser(IContentType contentType)
         {
+            var instructionManager = _instructionManager.Value;
             if (contentType == _contentTypeManager.Asm1ContentType)
-                return (new AsmLexer(), new Asm1Parser(this, _instructionManager));
+                return (new AsmLexer(), new Asm1Parser(this, instructionManager));
             else if (contentType == _contentTypeManager.Asm2ContentType)
-                return (new Asm2Lexer(), new Asm2Parser(this, _instructionManager));
+                return (new Asm2Lexer(), new Asm2Parser(this, instructionManager));
             else if (contentType == _contentTypeManager.AsmDocContentType)
                 return (new AsmDocLexer(), new AsmDocParser());
 
