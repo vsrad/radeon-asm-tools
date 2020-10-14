@@ -146,9 +146,10 @@
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
-    <Compile Include="Options\Instructions\IInstructionListManager.cs" />
+    <Compile Include="Options\Instructions\InstructionListLoader.cs" />
     <Compile Include="Options\Instructions\Instruction.cs" />
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
+    <Compile Include="Options\Instructions\InstructionSet.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs" />

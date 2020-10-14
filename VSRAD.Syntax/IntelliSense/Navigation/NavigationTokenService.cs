@@ -9,6 +9,7 @@ using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using System;
+using System.Linq;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -83,11 +84,14 @@ namespace VSRAD.Syntax.IntelliSense
                     var asmType = analysisToken.Snapshot.GetAsmType();
                     var instructions = _instructionListManager.GetInstructions(asmType);
                     var instructionText = analysisToken.GetText();
-                    foreach (var i in instructions)
-                    {
-                        if (i.Text == instructionText)
-                            return new NavigationTokenServiceResult(i.Navigations, analysisToken);
-                    }
+                    var instructionNavigations = new List<NavigationToken>();
+
+                    foreach (var i in instructions.Where(i => i.Text == instructionText))
+                        instructionNavigations.AddRange(i.Navigations);
+                    
+                    if (instructionNavigations.Count != 0)
+                        return new NavigationTokenServiceResult(instructionNavigations, analysisToken);
+                    
                 }
                 else
                 {
