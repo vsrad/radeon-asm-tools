@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer
                 else
                 {
                     for (int i = view.WavesPerGroup; i < _rectangles.Count; ++i)
-                        for (int j = 0; j < view.GroupCount; ++j)
+                        for (int j = 0; j < _rectangles[i].Count; ++j)
                             _rectangles[i][j].Visibility = System.Windows.Visibility.Hidden;
                 }
             }
