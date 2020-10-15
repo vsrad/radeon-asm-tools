@@ -57,7 +57,7 @@ namespace VSRAD.Package.Server
             if (options.StatusFile.IsRemote() && !string.IsNullOrEmpty(options.StatusFile.Path))
                 fetchCommands.Add(new FetchResultRange { FilePath = new[] { env.RemoteWorkDir, options.StatusFile.Path } });
             if (options.OutputFile.IsRemote())
-                fetchCommands.Add(new FetchMetadata { FilePath = new[] { env.RemoteWorkDir, options.OutputFile.Path } });
+                fetchCommands.Add(new FetchMetadata { FilePath = new[] { env.RemoteWorkDir, options.OutputFile.Path }, BinaryOutput = options.BinaryOutput });
 
             IResponse[] fetchReplies = null;
             if (fetchCommands.Count > 0)
