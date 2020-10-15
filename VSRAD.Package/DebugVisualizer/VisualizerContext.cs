@@ -73,7 +73,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (!WatchesValid)
                 return;
 
-            VSPackage.TaskFactory.RunAsync(() => ChangeGroupAsync(e));
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));
         }
 
         private async Task ChangeGroupAsync(GroupIndexChangedEventArgs e)
