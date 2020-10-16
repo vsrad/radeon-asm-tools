@@ -10,7 +10,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
-using VSRAD.Syntax.Parser.Tokens;
 using VSRAD.Syntax.Options;
 using Microsoft.VisualStudio.Text;
 
@@ -26,6 +25,7 @@ namespace VSRAD.Syntax.FunctionList
         private FunctionListItem LastHighlightedToken;
         private ITextSnapshot CurrentVersion;
         private string SearchText;
+        private TypeFilterState TypeFilterStateValue = TypeFilterState.FL;
 
         public FunctionListControl(OleMenuCommandService service, OptionsProvider optionsProvider)
         {
@@ -41,6 +41,7 @@ namespace VSRAD.Syntax.FunctionList
             FunctionListSortState = optionsProvider.SortOptions;
             optionsProvider.OptionsUpdated += OptionsUpdated;
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
+            typeFilter.Content = TypeFilterStateValue.ToString();
         }
 
         private void OptionsUpdated(OptionsProvider sender)
@@ -64,11 +65,11 @@ namespace VSRAD.Syntax.FunctionList
 
             CurrentVersion = textSnapshot;
             Tokens = newTokens.ToList();
-            var filteredTokens = Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
+            var filteredTokens = Helper.FilterAndSort(Tokens, FunctionListSortState, TypeFilterStateValue, SearchText);
             
             await AddTokensToViewAsync(filteredTokens);
             if (LastHighlightedToken != null)
-                await HighlightCurrentFunctionAsync(LastHighlightedToken.Type, LastHighlightedToken.LineNumber);
+                await HighlightCurrentFunctionAsync(LastHighlightedToken.LineNumber);
         }
 
         public async Task ClearHighlightCurrentFunctionAsync()
@@ -81,9 +82,9 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        public async Task HighlightCurrentFunctionAsync(RadAsmTokenType tokenType, int lineNumber)
+        public async Task HighlightCurrentFunctionAsync(int lineNumber)
         {
-            var value = Tokens.FirstOrDefault(t => t.Type == tokenType && t.LineNumber == lineNumber);
+            var value = Tokens.FirstOrDefault(t => t.Type == FunctionListItemType.Function && t.LineNumber == lineNumber);
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
@@ -101,12 +102,9 @@ namespace VSRAD.Syntax.FunctionList
 
         private void SortAndReloadFunctionList()
         {
-            var filteredTokens = Helper.SortAndFilter(Tokens, FunctionListSortState, SearchText);
-            ReloadFunctionList(filteredTokens);
+            var filteredTokens = Helper.FilterAndSort(Tokens, FunctionListSortState, TypeFilterStateValue, SearchText);
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(filteredTokens));
         }
-
-        private void ReloadFunctionList(IEnumerable<FunctionListItem> tokens) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(tokens));
 
         private async Task AddTokensToViewAsync(IEnumerable<FunctionListItem> functionListTokens)
         {
@@ -180,8 +178,7 @@ namespace VSRAD.Syntax.FunctionList
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
             SearchText = Search.Text;
-            var filteredTokens = Helper.Filter(Tokens, SearchText);
-            ReloadFunctionList(filteredTokens);
+            SortAndReloadFunctionList();
         }
 
         public void OnClearSearchField() => Search.Text = "";
@@ -221,5 +218,25 @@ namespace VSRAD.Syntax.FunctionList
                 GoToSelectedItem();
             }
         }
+
+        private void typeFilter_Click(object sender, RoutedEventArgs e)
+        {
+            switch (TypeFilterStateValue)
+            {
+                case TypeFilterState.FL: TypeFilterStateValue = TypeFilterState.F; break;
+                case TypeFilterState.F: TypeFilterStateValue = TypeFilterState.L; break;
+                case TypeFilterState.L: TypeFilterStateValue = TypeFilterState.FL; break;
+            }
+
+            typeFilter.Content = TypeFilterStateValue.ToString();
+            SortAndReloadFunctionList();
+        }
+    }
+
+    public enum TypeFilterState
+    {
+        FL = 1, // functions and labels
+        F = 2, // only functions
+        L = 3, // only labels
     }
 }

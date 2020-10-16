@@ -105,15 +105,16 @@ namespace VSRAD.Syntax.FunctionList
         {
             try
             {
-                var functionNames = blocks.GetFunctions().Select(b => b.Name);
+                var functions = blocks.GetFunctions()
+                    .Select(b => b.Name)
+                    .Select(t => new FunctionListItem(FunctionListItemType.Function, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
 
                 var labels = blocks
                     .SelectMany(b => b.Tokens)
-                    .Where(t => t.Type == Parser.Tokens.RadAsmTokenType.Label);
+                    .Where(t => t.Type == Parser.Tokens.RadAsmTokenType.Label)
+                    .Select(t => new FunctionListItem(FunctionListItemType.Label, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
 
-                var functionListTokens = functionNames
-                    .Concat(labels)
-                    .Select(t => new FunctionListItem(t.Type, t.TrackingToken.GetText(version), t.TrackingToken.Start.GetPoint(version).GetContainingLine().LineNumber));
+                var functionListTokens = functions.Concat(labels);
 
                 return FunctionListControl.UpdateFunctionListAsync(version, functionListTokens);
             }
@@ -147,7 +148,7 @@ namespace VSRAD.Syntax.FunctionList
                     .GetPoint(documentAnalysis.CurrentSnapshot)
                     .GetContainingLine().LineNumber;
 
-                await FunctionListControl.HighlightCurrentFunctionAsync(functionToken.Type, lineNumber + 1 /* numbering starts from 1 */);
+                await FunctionListControl.HighlightCurrentFunctionAsync(lineNumber + 1 /* numbering starts from 1 */);
             }
             catch (Exception e)
             {

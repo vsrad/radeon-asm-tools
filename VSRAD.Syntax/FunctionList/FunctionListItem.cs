@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using VSRAD.Syntax.Parser.Tokens;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -9,7 +8,7 @@ namespace VSRAD.Syntax.FunctionList
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public RadAsmTokenType Type { get; }
+        public FunctionListItemType Type { get; }
         public string Text { get; }
         public int LineNumber { get; }
 
@@ -20,7 +19,7 @@ namespace VSRAD.Syntax.FunctionList
             set => OnPropertyChanged(ref _isCurrentWorkingItem, value);
         }
 
-        public FunctionListItem(RadAsmTokenType type, string text, int lineNumber)
+        public FunctionListItem(FunctionListItemType type, string text, int lineNumber)
         {
             Type = type;
             Text = text;
@@ -39,6 +38,11 @@ namespace VSRAD.Syntax.FunctionList
 
         private void RaisePropertyChanged(string propertyName) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
 
+    public enum FunctionListItemType
+    {
+        Function,
+        Label,
     }
 }
