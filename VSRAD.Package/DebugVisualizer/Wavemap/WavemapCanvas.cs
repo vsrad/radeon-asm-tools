@@ -12,8 +12,8 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly List<List<Rectangle>> _rectangles = new List<List<Rectangle>> { new List<Rectangle>(), new List<Rectangle>() };
         private WavemapView _view;
 
-        public int Height => _view.WavesPerGroup * (_rectangleSize - 1) + 2;
-        public int Width => _view.GroupCount * (_rectangleSize - 1) + 2;
+        public int Height => _view.WavesPerGroup == 0 ? 0 : _view.WavesPerGroup * (_rectangleSize - 1) + 2;
+        public int Width => _view.WavesPerGroup == 0 ? 0 : _view.GroupCount * (_rectangleSize - 1) + 2;
 
         private int _rectangleSize;
         public int RectangleSize
@@ -47,6 +47,19 @@ namespace VSRAD.Package.DebugVisualizer
         public void SetData(WavemapView view)
         {
             _view = view;
+
+            /*
+             * if waves per group is 0
+             * we just want to hide wavemap
+             * table without any reshaping
+             */
+            if (view.WavesPerGroup == 0)
+            {
+                foreach (var row in _rectangles)
+                    foreach (var el in row)
+                        el.Visibility = System.Windows.Visibility.Hidden;
+                return;
+            }
 
             if (view.WavesPerGroup != _rectangles.Count)
             {
