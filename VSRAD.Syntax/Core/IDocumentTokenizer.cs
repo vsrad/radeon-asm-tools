@@ -9,6 +9,7 @@ namespace VSRAD.Syntax.Core
     {
         ITokenizerResult CurrentResult { get; }
         RadAsmTokenType GetTokenType(int type);
+        void Rescan();
 
         event TokenizerUpdatedEventHandler TokenizerUpdated;
     }

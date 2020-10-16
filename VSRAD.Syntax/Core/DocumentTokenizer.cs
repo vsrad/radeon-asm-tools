@@ -37,7 +37,9 @@ namespace VSRAD.Syntax.Core
             buffer.Changed += BufferChanged;
         }
 
-        public void Initialize()
+        public void Initialize() => Rescan();
+
+        public void Rescan()
         {
             var initialTextSegment = new[] { CurrentSnapshot.GetText() };
             var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));

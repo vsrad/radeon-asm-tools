@@ -6,15 +6,14 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal class Asm1Parser : AbstractInstructionParser
+    internal class Asm1Parser : AbstractCodeParser
     {
-        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionManager)
-            : base(documentFactory, instructionManager, Helpers.AsmType.RadAsm) { }
+        public Asm1Parser(IDocumentFactory documentFactory) 
+            : base(documentFactory) { }
 
         public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {

@@ -72,7 +72,16 @@ namespace VSRAD.Syntax.Core
             }
             else
             {
-                document = CreateDocument(textDocument, (lexer, parser) => new Document(textDocument, lexer, parser));
+                switch (buffer.CurrentSnapshot.GetAsmType())
+                {
+                    case AsmType.RadAsm:
+                    case AsmType.RadAsm2:
+                        document = CreateDocument(textDocument, (lexer, parser) => new CodeDocument(_instructionManager.Value, textDocument, lexer, (ICodeParser)parser)); 
+                        break;
+                    case AsmType.RadAsmDoc:
+                        document = CreateDocument(textDocument, (lexer, parser) => new Document(textDocument, lexer, parser)); 
+                        break;
+                }
             }
 
             DocumentCreated?.Invoke(document);
@@ -103,11 +112,10 @@ namespace VSRAD.Syntax.Core
 
         private (ILexer lexer, IParser parser)? GetLexerParser(IContentType contentType)
         {
-            var instructionManager = _instructionManager.Value;
             if (contentType == _contentTypeManager.Asm1ContentType)
-                return (new AsmLexer(), new Asm1Parser(this, instructionManager));
+                return (new AsmLexer(), new Asm1Parser(this));
             else if (contentType == _contentTypeManager.Asm2ContentType)
-                return (new Asm2Lexer(), new Asm2Parser(this, instructionManager));
+                return (new Asm2Lexer(), new Asm2Parser(this));
             else if (contentType == _contentTypeManager.AsmDocContentType)
                 return (new AsmDocLexer(), new AsmDocParser());
 

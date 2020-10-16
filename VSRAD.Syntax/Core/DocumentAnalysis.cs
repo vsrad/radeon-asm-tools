@@ -39,7 +39,7 @@ namespace VSRAD.Syntax.Core
 
         private void TokenizerUpdated(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
         {
-            _resultsRequests.TryAddValue(tokenizerResult.Snapshot,
+            _resultsRequests.AddValue(tokenizerResult.Snapshot,
                 () => RunAnalysisAsync(tokenizerResult, cancellationToken));
         }
 

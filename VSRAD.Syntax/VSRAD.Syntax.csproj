@@ -80,11 +80,12 @@
     <Compile Include="Core\IDocumentAnalysis.cs" />
     <Compile Include="Core\IDocumentFactory.cs" />
     <Compile Include="Core\IDocumentTokenizer.cs" />
+    <Compile Include="Core\CodeDocument.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
     <Compile Include="Core\Lexer\AsmLexer.cs" />
     <Compile Include="Core\Lexer\Lexer.cs" />
-    <Compile Include="Core\Parser\AbstractInstructionParser.cs" />
+    <Compile Include="Core\Parser\AbstractCodeParser.cs" />
     <Compile Include="Core\Parser\Asm2Parser.cs" />
     <Compile Include="Core\Parser\AsmDocParser.cs" />
     <Compile Include="Core\Parser\Asm1Parser.cs" />

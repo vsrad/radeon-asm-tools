@@ -6,7 +6,7 @@ using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
-    public delegate void InstructionsUpdateDelegate(IInstructionListManager sender);
+    public delegate void InstructionsUpdateDelegate(IInstructionListManager sender, AsmType asmType);
     public interface IInstructionListManager
     {
         IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType);
@@ -73,7 +73,7 @@ namespace VSRAD.Syntax.Options.Instructions
             radAsm1SelectedSet = null;
             radAsm2SelectedSet = null;
 
-            InstructionsUpdated?.Invoke(this);
+            InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
         }
 
         public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
@@ -125,7 +125,7 @@ namespace VSRAD.Syntax.Options.Instructions
                 }
             }
 
-            InstructionsUpdated?.Invoke(this);
+            InstructionsUpdated?.Invoke(this, activeDocumentAsm);
         }
 
         private void ChangeInstructionSet(string setName, List<IInstructionSet> sets, ref IInstructionSet selectedSet)

@@ -18,15 +18,9 @@ namespace VSRAD.Syntax.Core.Helper
             return value != null;
         }
 
-        public bool TryAddValue(TKey key, Func<TValue> valueFactory)
+        public void AddValue(TKey key, Func<TValue> valueFactory)
         {
-            if (!orderedDictionary.Contains(key))
-            {
-                orderedDictionary[key] = valueFactory.Invoke();
-                return true;
-            }
-
-            return false;
+            orderedDictionary[key] = valueFactory.Invoke();
         }
     }
 }
