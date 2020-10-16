@@ -9,6 +9,7 @@ namespace VSRAD.Syntax.Options.Instructions
     public delegate void InstructionsUpdateDelegate(IInstructionListManager sender);
     public interface IInstructionListManager
     {
+        IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType);
         IEnumerable<Instruction> GetInstructions(AsmType asmType);
         event InstructionsUpdateDelegate InstructionsUpdated;
     }
@@ -75,12 +76,22 @@ namespace VSRAD.Syntax.Options.Instructions
             InstructionsUpdated?.Invoke(this);
         }
 
-        public IEnumerable<Instruction> GetInstructions(AsmType asmType)
+        public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
         {
             switch (asmType)
             {
                 case AsmType.RadAsm: return radAsm1SelectedSet ?? (IEnumerable<Instruction>)_radAsm1Instructions;
                 case AsmType.RadAsm2: return radAsm2SelectedSet ?? (IEnumerable<Instruction>)_radAsm2Instructions;
+                default: return Enumerable.Empty<Instruction>();
+            }
+        }
+
+        public IEnumerable<Instruction> GetInstructions(AsmType asmType)
+        {
+            switch (asmType)
+            {
+                case AsmType.RadAsm: return _radAsm1Instructions;
+                case AsmType.RadAsm2: return _radAsm2Instructions;
                 default: return Enumerable.Empty<Instruction>();
             }
         }

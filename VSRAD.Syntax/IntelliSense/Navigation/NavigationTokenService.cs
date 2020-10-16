@@ -82,12 +82,12 @@ namespace VSRAD.Syntax.IntelliSense
                 if (analysisToken.Type == RadAsmTokenType.Instruction)
                 {
                     var asmType = analysisToken.Snapshot.GetAsmType();
-                    var instructions = _instructionListManager.GetInstructions(asmType);
+                    var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
                     var instructionText = analysisToken.GetText();
                     var instructionNavigations = new List<NavigationToken>();
 
-                    foreach (var i in instructions.Where(i => i.Text == instructionText))
-                        instructionNavigations.AddRange(i.Navigations);
+                    var navigations = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations);
+                    instructionNavigations.AddRange(navigations);
                     
                     if (instructionNavigations.Count != 0)
                         return new NavigationTokenServiceResult(instructionNavigations, analysisToken);

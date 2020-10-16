@@ -53,16 +53,15 @@ namespace VSRAD.Syntax.Core
         {
             try
             {
-                var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
-                var rootBlock = blocks[0];
+                var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
 
-                var includes = rootBlock.Tokens
+                var includes = parserResult.RootBlock.Tokens
                     .Where(t => t.Type == RadAsmTokenType.Include)
                     .Cast<IncludeToken>()
                     .Select(i => i.Document)
                     .ToList();
 
-                var analysisResult = new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
+                var analysisResult = new AnalysisResult(parserResult, includes, tokenizerResult.Snapshot);
 
                 CurrentResult = analysisResult;
                 AnalysisUpdated?.Invoke(analysisResult, cancellationToken);

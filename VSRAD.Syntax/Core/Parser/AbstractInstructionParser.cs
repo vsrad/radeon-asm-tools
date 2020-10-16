@@ -7,7 +7,8 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal abstract class AbstractInstructionParser : AbstractParser
     {
-        protected readonly HashSet<string> Instructions;
+        protected HashSet<string> Instructions { get; private set; }
+        protected HashSet<string> OtherInstructions { get; private set; }
         private readonly AsmType _type;
 
         public AbstractInstructionParser(IDocumentFactory documentFactory,
@@ -24,14 +25,19 @@ namespace VSRAD.Syntax.Core.Parser
 
         private void InstructionsUpdated(IInstructionListManager manager)
         {
-            var instructions = manager
+            Instructions = manager
+                .GetSelectedSetInstructions(_type)
+                .Select(i => i.Text)
+                .Distinct()
+                .ToHashSet();
+
+            OtherInstructions = manager
                 .GetInstructions(_type)
                 .Select(i => i.Text)
-                .Distinct();
+                .Distinct()
+                .ToHashSet();
 
-            Instructions.Clear();
-            foreach (var instruction in instructions)
-                Instructions.Add(instruction);
+            OtherInstructions.ExceptWith(Instructions);
         }
     }
 }

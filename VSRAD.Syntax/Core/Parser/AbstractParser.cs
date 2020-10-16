@@ -12,7 +12,7 @@ namespace VSRAD.Syntax.Core.Parser
 {
     public interface IParser
     {
-        Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
+        Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
     }
 
     internal abstract class AbstractParser : IParser
@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.Core.Parser
             _definitionContainer = new DefinitionContainer();
         }
 
-        public abstract Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
+        public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         protected static IBlock SetBlockReady(IBlock block, List<IBlock> list)
         {

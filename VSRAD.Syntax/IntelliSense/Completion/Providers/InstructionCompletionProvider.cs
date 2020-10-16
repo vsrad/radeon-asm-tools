@@ -63,12 +63,12 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         {
             _asm1InstructionCompletions.Clear();
             _asm1InstructionCompletions.AddRange(
-                sender.GetInstructions(AsmType.RadAsm)
+                sender.GetSelectedSetInstructions(AsmType.RadAsm)
                       .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
 
             _asm2InstructionCompletions.Clear();
             _asm2InstructionCompletions.AddRange(
-                sender.GetInstructions(AsmType.RadAsm2)
+                sender.GetSelectedSetInstructions(AsmType.RadAsm2)
                       .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
         }
     }

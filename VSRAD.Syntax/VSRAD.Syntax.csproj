@@ -91,9 +91,12 @@
     <Compile Include="Core\Parser\AbstractParser.cs" />
     <Compile Include="Core\Parser\DefinitionContainer.cs" />
     <Compile Include="Core\ITokenizerResult.cs" />
+    <Compile Include="Core\Parser\ErrorMessages.cs" />
+    <Compile Include="Core\Parser\ParserResult.cs" />
     <Compile Include="Core\TokenizerResult.cs" />
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
+    <Compile Include="Core\Tokens\ErrorToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
     <Compile Include="Core\Tokens\TokenSpan.cs" />
@@ -174,6 +177,8 @@
     <Compile Include="RadeonServiceProvider.cs" />
     <Compile Include="SyntaxHighlighter\BraceMatchingHighlighter\BraceHighlighter.cs" />
     <Compile Include="SyntaxHighlighter\BraceMatchingHighlighter\BraceHighlighterProvider.cs" />
+    <Compile Include="SyntaxHighlighter\ErrorHighlighter\SyntaxErrorHighlighterTaggerProvider.cs" />
+    <Compile Include="SyntaxHighlighter\ErrorHighlighter\SyntaxErrorHighlighterTagger.cs" />
     <Compile Include="SyntaxHighlighter\ThemeColorManager.cs" />
     <Compile Include="SyntaxHighlighter\Classifier.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierClassificationDefinition.cs" />

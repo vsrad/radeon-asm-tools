@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.Core.Parser
         public Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionManager) 
             : base(documentFactory, instructionManager, Helpers.AsmType.RadAsm2) { }
 
-        public override async Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsm2Lexer.WHITESPACE && t.Type != RadAsm2Lexer.LINE_COMMENT)
@@ -28,6 +28,7 @@ namespace VSRAD.Syntax.Core.Parser
             var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
             _definitionContainer.Clear();
             var blocks = new List<IBlock>();
+            var errors = new List<IErrorToken>();
             IBlock currentBlock = new Block(version);
             var parserState = ParserState.SearchInScope;
             var parenthCnt = 0;
@@ -151,6 +152,10 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             currentBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
                         }
+                        else if (OtherInstructions.Contains(tokenText))
+                        {
+                            errors.Add(new ErrorToken(token, version, ErrorMessages.InvalidInstructionSetErrorMessage));
+                        }
                         else if (!TryAddReference(tokenText, token, currentBlock, version, cancellation))
                         {
                             referenceCandidates.AddLast((tokenText, token, currentBlock));
@@ -191,7 +196,7 @@ namespace VSRAD.Syntax.Core.Parser
             foreach (var (text, trackingToken, block) in referenceCandidates)
                 TryAddReference(text, trackingToken, block, version, cancellation);
 
-            return blocks;
+            return new ParserResult(blocks, errors);
         }
 
         private enum ParserState
