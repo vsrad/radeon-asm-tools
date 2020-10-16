@@ -73,6 +73,7 @@ namespace VSRAD.Syntax.Options.Instructions
             radAsm1SelectedSet = null;
             radAsm2SelectedSet = null;
 
+            AsmTypeChanged?.Invoke();
             InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
         }
 
