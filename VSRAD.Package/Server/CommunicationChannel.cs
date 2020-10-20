@@ -23,7 +23,7 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        Task SendAsync(ICommand command);
+        Task SendAsync(ICommand command, bool tryReconnect = true);
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
@@ -85,9 +85,19 @@ namespace VSRAD.Package.Server
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); };
         }
 
-        public async Task SendAsync(ICommand command)
+        public async Task SendAsync(ICommand command, bool tryReconnect = true)
         {
-            await EstablishServerConnectionAsync().ConfigureAwait(false);
+            try
+            {
+                await EstablishServerConnectionAsync().ConfigureAwait(false);
+            }
+            catch (ConnectionRefusedException e) when (!tryReconnect)
+            {
+                ForceDisconnect();
+                await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
+                throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+            }
+
             try
             {
                 await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
@@ -99,8 +109,17 @@ namespace VSRAD.Package.Server
             }
             catch (Exception e)
             {
-                ForceDisconnect();
-                throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                if (tryReconnect)
+                {
+                    await _outputWindowWriter.PrintMessageAsync($"Server lost, trying to reconnect...").ConfigureAwait(false);
+                    await SendAsync(command, false);
+                }
+                else
+                {
+                    ForceDisconnect();
+                    await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
+                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                }
             }
         }
 
