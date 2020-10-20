@@ -23,7 +23,7 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        Task SendAsync(ICommand command, bool tryReconnect = true);
+        Task SendAsync(ICommand command);
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
@@ -85,7 +85,9 @@ namespace VSRAD.Package.Server
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); };
         }
 
-        public async Task SendAsync(ICommand command, bool tryReconnect = true)
+        public async Task SendAsync(ICommand command) => await SendAsync(command, true);
+
+        private async Task SendAsync(ICommand command, bool tryReconnect)
         {
             try
             {
@@ -111,7 +113,7 @@ namespace VSRAD.Package.Server
             {
                 if (tryReconnect)
                 {
-                    await _outputWindowWriter.PrintMessageAsync($"Server lost, trying to reconnect...").ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Connection lost, attempting to reconnect...").ConfigureAwait(false);
                     await SendAsync(command, false);
                 }
                 else
