@@ -111,6 +111,7 @@ namespace VSRAD.Package.Server
             }
             catch (Exception e)
             {
+                ForceDisconnect();
                 if (tryReconnect)
                 {
                     await _outputWindowWriter.PrintMessageAsync($"Connection lost, attempting to reconnect...").ConfigureAwait(false);
@@ -118,7 +119,6 @@ namespace VSRAD.Package.Server
                 }
                 else
                 {
-                    ForceDisconnect();
                     await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
                     throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
                 }
