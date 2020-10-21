@@ -4,6 +4,7 @@ using System.Windows.Media;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
+#pragma warning disable CA1815 // the comparing of this structs is not a case, so disable warning that tells us to implement Equals()
     public struct WaveInfo
     {
         public Brush BreakColor;
@@ -11,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public int GroupIdx;
         public int WaveIdx;
     }
+#pragma warning restore CA1815
 
     class BreakpointColorManager
     {
