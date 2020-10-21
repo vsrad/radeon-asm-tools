@@ -22,7 +22,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (uint i = 3, j = 313; i < 360; i += 18, j += 313)
                 _data[i] = j;
 
-            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12, groupCount: 10);
 
             uint expected = 313;
             for (int i = 0; i < 10; ++i)
@@ -43,7 +43,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 _data[i] = j;
 
             /* Red, Blue, Green, Yellow, Cyan */
-            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12, groupCount: 10);
 
             for (int i = 0; i < 10; ++i)
             {
@@ -57,7 +57,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (uint i = 3, j = 313; i < 360; i += 18, j += 313)
                 _data[i] = j;
 
-            wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
+            wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12, groupCount: 10);
 
             Assert.Equal(Brushes.Red, wavemapView[0, 0].BreakColor);
             Assert.Equal(Brushes.Blue, wavemapView[1, 0].BreakColor);
@@ -87,11 +87,11 @@ namespace VSRAD.PackageTests.DebugVisualizer
         [Fact]
         public void IsValidWaveTest()
         {
-            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12);
+            var wavemapView = new WavemapView(_data, waveSize: 6, laneDataSize: 3, groupSize: 12, groupCount: 10);
 
             for (int i = 0; i < 20; ++i)
                 for (int j = 0; j < 5; ++j)
-                    Assert.Equal(i < 10 && j < 2, wavemapView.IsValidWave(j, i));
+                    Assert.Equal(i < 10 && j < 2, wavemapView[j, i].IsVisible);
         }
     }
 }

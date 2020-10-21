@@ -11,6 +11,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public uint BreakLine;
         public int GroupIdx;
         public int WaveIdx;
+        public string ToolTipText;
+        public bool IsVisible;
     }
 #pragma warning restore CA1815
 
@@ -68,13 +70,25 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             return _data[breakIndex];
         }
 
-        public bool IsValidWave(int row, int column) =>
+        private bool IsValidWave(int row, int column) =>
             GetWaveFlatIndex(row, column) * _waveSize * _laneDataSize + _laneDataSize < _data.Length && row < WavesPerGroup;
 
         private int GetWaveFlatIndex(int row, int column) => column * WavesPerGroup + row;
 
         private WaveInfo GetWaveInfoByRowAndColumn(int row, int column)
         {
+            if (!IsValidWave(row, column))
+                return new WaveInfo
+                {
+                    BreakColor = Brushes.Gray,
+                    BreakLine = 0,
+                    GroupIdx = 0,
+                    WaveIdx = 0,
+                    ToolTipText = "",
+                    IsVisible = false
+                };
+
+
             var flatIndex = GetWaveFlatIndex(row, column);
             var breakLine = GetBreakpointLine(flatIndex);
 
@@ -83,7 +97,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 BreakColor = _colorManager.GetColorForBreakpoint(breakLine),
                 BreakLine = breakLine,
                 GroupIdx = column,
-                WaveIdx = row
+                WaveIdx = row,
+                ToolTipText = $"Group: {column}\nWave: {row}\nLine: {breakLine}",
+                IsVisible = true
             };
         }
 

@@ -121,17 +121,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void UpdateWaveRectangle(int row, int column)
         {
+            if (_view == null) return;
             var r = _rectangles[row][column];
-            var validWave = _view != null && _view.IsValidWave(row, column);
-            r.ToolTip = new ToolTip()
-            {
-                Content = validWave ?
-                    $"Group: {_view[row, column].GroupIdx}\nWave: {_view[row, column].WaveIdx}\nLine: {_view[row, column].BreakLine}"
-                    : ""
-            };
-
-            r.Fill = validWave ? _view[row, column].BreakColor : Brushes.Gray;
-            r.Visibility = validWave ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
+            var wave = _view[row, column];
+            r.ToolTip = new ToolTip() { Content = wave.ToolTipText };
+            r.Fill = wave.BreakColor;
+            r.Visibility = wave.IsVisible ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
         }
     }
 }
