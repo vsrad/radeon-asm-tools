@@ -85,7 +85,7 @@ namespace VSRAD.Package.Server
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); };
         }
 
-        public async Task SendAsync(ICommand command) => await SendAsync(command, true);
+        public Task SendAsync(ICommand command) => SendAsync(command, true);
 
         private async Task SendAsync(ICommand command, bool tryReconnect)
         {
