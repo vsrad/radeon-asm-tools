@@ -1,7 +1,5 @@
 ﻿using EnvDTE;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -14,7 +12,7 @@ using VSRAD.Syntax.Options.Instructions;
 namespace VSRAD.Syntax.Core
 {
     [Export(typeof(IDocumentFactory))]
-    internal class DocumentFactory : IDocumentFactory
+    internal partial class DocumentFactory : IDocumentFactory
     {
         private readonly ContentTypeManager _contentTypeManager;
         private readonly RadeonServiceProvider _serviceProvider;
@@ -76,7 +74,7 @@ namespace VSRAD.Syntax.Core
                 {
                     case AsmType.RadAsm:
                     case AsmType.RadAsm2:
-                        document = CreateDocument(textDocument, (lexer, parser) => new CodeDocument(_instructionManager.Value, textDocument, lexer, (ICodeParser)parser)); 
+                        document = CreateDocument(textDocument, (lexer, parser) => new CodeDocument(_instructionManager.Value, textDocument, lexer, parser)); 
                         break;
                     case AsmType.RadAsmDoc:
                         document = CreateDocument(textDocument, (lexer, parser) => new Document(textDocument, lexer, parser)); 
@@ -93,10 +91,7 @@ namespace VSRAD.Syntax.Core
             var lexerParser = GetLexerParser(textDocument.TextBuffer.ContentType);
             if (!lexerParser.HasValue) return null;
 
-            var lexer = lexerParser.Value.lexer;
-            var parser = lexerParser.Value.parser;
-
-            var document = creator(lexer, parser);
+            var document = creator(lexerParser.Value.Lexer, lexerParser.Value.Parser);
             ObserveDocument(document, textDocument);
 
             return document;
@@ -108,18 +103,6 @@ namespace VSRAD.Syntax.Core
             textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
 
             _documents.Add(document.Path, document);
-        }
-
-        private (ILexer lexer, IParser parser)? GetLexerParser(IContentType contentType)
-        {
-            if (contentType == _contentTypeManager.Asm1ContentType)
-                return (new AsmLexer(), new Asm1Parser(this));
-            else if (contentType == _contentTypeManager.Asm2ContentType)
-                return (new Asm2Lexer(), new Asm2Parser(this));
-            else if (contentType == _contentTypeManager.AsmDocContentType)
-                return (new AsmDocLexer(), new AsmDocParser());
-
-            else return null;
         }
 
         private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)

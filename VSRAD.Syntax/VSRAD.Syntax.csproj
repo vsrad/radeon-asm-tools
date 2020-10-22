@@ -81,6 +81,7 @@
     <Compile Include="Core\IDocumentFactory.cs" />
     <Compile Include="Core\IDocumentTokenizer.cs" />
     <Compile Include="Core\CodeDocument.cs" />
+    <Compile Include="Core\LexerParserFactory.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
     <Compile Include="Core\Lexer\AsmLexer.cs" />

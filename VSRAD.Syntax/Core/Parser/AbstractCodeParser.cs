@@ -7,44 +7,50 @@ using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    public interface ICodeParser : IParser
+    internal abstract class AbstractCodeParser : AbstractParser
     {
-        void UpdateInstructions(IEnumerable<Instruction> instructions, IEnumerable<Instruction> selectedSetInstructions);
-    }
-
-    internal abstract class AbstractCodeParser : AbstractParser, ICodeParser
-    {
+        abstract protected AsmType AsmType { get; }
         protected HashSet<string> Instructions { get; private set; }
         protected HashSet<string> OtherInstructions { get; private set; }
 
         private readonly IDocumentFactory _documentFactory;
         protected readonly DefinitionContainer _definitionContainer;
 
-        public AbstractCodeParser(IDocumentFactory documentFactory)
+        public AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
         {
             _documentFactory = documentFactory;
             _definitionContainer = new DefinitionContainer();
             Instructions = new HashSet<string>();
             OtherInstructions = new HashSet<string>();
+
+            instructionListManager.InstructionsUpdated += InstructionsUpdated;
+            InstructionsUpdated(instructionListManager, AsmType);
         }
 
-        public void UpdateInstructions(IEnumerable<Instruction> instructions, IEnumerable<Instruction> selectedSetInstructions)
+        private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {
-            Instructions = selectedSetInstructions
-                .Select(i => i.Text)
-                .Distinct()
-                .ToHashSet();
+            if ((asmType & AsmType) == AsmType)
+            {
+                var instructions = sender.GetInstructions(AsmType);
+                var selectedSetInstructions = sender.GetSelectedSetInstructions(AsmType);
 
-            OtherInstructions = instructions
-                .Select(i => i.Text)
-                .Distinct()
-                .ToHashSet();
+                Instructions = selectedSetInstructions
+                    .Select(i => i.Text)
+                    .Distinct()
+                    .ToHashSet();
 
-            OtherInstructions.ExceptWith(Instructions);
+                OtherInstructions = instructions
+                    .Select(i => i.Text)
+                    .Distinct()
+                    .ToHashSet();
+
+                OtherInstructions.ExceptWith(Instructions);
+            }
         }
 
         protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block)
