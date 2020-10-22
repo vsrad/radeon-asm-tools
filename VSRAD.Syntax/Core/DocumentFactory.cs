@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.Core
                 .TextDocumentFactoryService
                 .CreateAndLoadTextDocument(path, contentType);
 
-            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(textDocument, lexer, parser));
+            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(this, textDocument, lexer, parser));
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
