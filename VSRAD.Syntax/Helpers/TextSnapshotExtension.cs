@@ -24,5 +24,8 @@ namespace VSRAD.Syntax.Helpers
 
             return AsmType.Unknown;
         }
+
+        internal static AsmType GetAsmType(this ITextBuffer textBuffer) =>
+            GetAsmType(textBuffer.CurrentSnapshot);
     }
 }

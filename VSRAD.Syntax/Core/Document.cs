@@ -70,7 +70,7 @@ namespace VSRAD.Syntax.Core
 
             var vsTextBuffer = adapterService.GetBufferAdapter(_textBuffer);
             var hr = textManager.NavigateToPosition(vsTextBuffer, VSConstants.LOGVIEWID.TextView_guid, position, 0);
-            if (hr != VSConstants.S_OK) Error.LogError(Marshal.GetExceptionForHR(hr));
+            if (hr != VSConstants.S_OK) throw Marshal.GetExceptionForHR(hr);
         }
 
         public void Dispose()

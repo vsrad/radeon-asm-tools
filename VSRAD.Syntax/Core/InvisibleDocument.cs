@@ -1,30 +1,61 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Editor;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
+using System;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Core
 {
     internal class InvisibleDocument : Document
     {
-        private IDocument _visibleDocument;
+        private readonly IDocumentFactory _documentFactory;
+        private IDocument visibleDocument;
 
-        public InvisibleDocument(ITextDocument textDocument, ILexer lexer, IParser parser)
-            : base(textDocument, lexer, parser) { }
+        public InvisibleDocument(IDocumentFactory documentFactory, ITextDocument textDocument, ILexer lexer, IParser parser)
+            : base(textDocument, lexer, parser)
+        {
+            _documentFactory = documentFactory;
+        }
 
         public override void NavigateToPosition(int position)
         {
-            if (_visibleDocument == null || _visibleDocument.IsDisposed)
-                OpenDocumentInEditor();
+            ThreadHelper.ThrowIfNotOnUIThread();
 
-            _visibleDocument.NavigateToPosition(position);
+            if (visibleDocument != null)
+            {
+                visibleDocument.NavigateToPosition(position);
+                return;
+            }
+
+            var serviceProvider = ServiceProvider.GlobalProvider;
+            var adapterService = serviceProvider.GetMefService<IVsEditorAdaptersFactoryService>();
+
+            VsShellUtilities.OpenDocument(serviceProvider, Path, Guid.Empty, out _, out _, out var windowFrame);
+            var textView = VsShellUtilities.GetTextView(windowFrame);
+            if (textView.GetBuffer(out var vsTextBuffer) == VSConstants.S_OK)
+            {
+                var textBuffer = adapterService.GetDocumentBuffer(vsTextBuffer);
+                var document = _documentFactory.GetOrCreateDocument(textBuffer);
+                if (document != null)
+                {
+                    visibleDocument = document;
+                    document.NavigateToPosition(position);
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException($"Cannot open document {Path}");
         }
 
         public IDocument ToVisibleDocument(ITextDocument textDocument)
         {
             Dispose();
 
-            _visibleDocument = new Document(textDocument, _lexer, _parser);
-            return _visibleDocument;
+            visibleDocument = new Document(textDocument, _lexer, _parser);
+            return visibleDocument;
         }
     }
 }

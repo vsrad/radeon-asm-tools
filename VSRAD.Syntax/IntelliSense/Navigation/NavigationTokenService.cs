@@ -51,9 +51,15 @@ namespace VSRAD.Syntax.IntelliSense
         private Action GetNavigateAction(AnalysisToken analysisToken, IDocument document) =>
             () =>
             {
-                // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
-                var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
-                document.NavigateToPosition(navigatePosition);
+                try
+                {
+                    // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
+                    var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
+                    document.NavigateToPosition(navigatePosition);
+                }catch (Exception e)
+                {
+                    Error.ShowError(e, "Navigation service");
+                }
             };
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)

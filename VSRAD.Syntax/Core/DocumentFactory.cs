@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.Core
                 .TextDocumentFactoryService
                 .CreateAndLoadTextDocument(path, contentType);
 
-            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(textDocument, lexer, parser));
+            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(this, textDocument, lexer, parser));
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
@@ -70,7 +70,7 @@ namespace VSRAD.Syntax.Core
             }
             else
             {
-                switch (buffer.CurrentSnapshot.GetAsmType())
+                switch (buffer.GetAsmType())
                 {
                     case AsmType.RadAsm:
                     case AsmType.RadAsm2:
@@ -89,7 +89,7 @@ namespace VSRAD.Syntax.Core
 
         private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)
         {
-            var lexerParser = GetLexerParser(textDocument.TextBuffer.ContentType);
+            var lexerParser = GetLexerParser(textDocument.TextBuffer.GetAsmType());
             if (!lexerParser.HasValue) return null;
 
             var document = creator(lexerParser.Value.Lexer, lexerParser.Value.Parser);
