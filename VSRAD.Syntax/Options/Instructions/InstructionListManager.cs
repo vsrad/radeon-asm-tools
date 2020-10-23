@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.Options.Instructions
         public event InstructionsUpdateDelegate InstructionsUpdated;
 
         [ImportingConstructor]
-        public InstructionListManager(OptionsProvider optionsEventProvider, 
+        public InstructionListManager(OptionsProvider optionsEventProvider,
             Lazy<IDocumentFactory> documentFactory,
             Lazy<INavigationTokenService> navigationTokenService)
         {
@@ -69,7 +69,8 @@ namespace VSRAD.Syntax.Options.Instructions
                 _loadedPaths = dirPathsString;
                 _instructions = instructions;
                 InstructionsUpdated?.Invoke(this);
-            }catch(AggregateException e)
+            }
+            catch (AggregateException e)
             {
                 var sb = new StringBuilder();
                 sb.AppendLine(e.Message);
@@ -142,6 +143,7 @@ namespace VSRAD.Syntax.Options.Instructions
 
             return (type, navigationTokens);
         }
+
         public IReadOnlyList<Instruction> GetInstructions(AsmType asmType)
         {
             IEnumerable<Instruction> instructions;

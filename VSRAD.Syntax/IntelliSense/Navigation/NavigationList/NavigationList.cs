@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
             if (Syntax.Package.Instance == null) return;
 
             var window = (NavigationList)Syntax.Package.Instance.FindToolWindow(typeof(NavigationList), 0, true);
-            if ((null == window) || (null == window.Frame)) return;
+            if (window == null || window.Frame == null) return;
 
             if (window.Content is NavigationListControl navigationListControl)
             {

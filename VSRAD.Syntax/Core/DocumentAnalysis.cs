@@ -67,7 +67,8 @@ namespace VSRAD.Syntax.Core
                 CurrentResult = analysisResult;
                 AnalysisUpdated?.Invoke(analysisResult, cancellationToken);
                 return analysisResult;
-            }catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)
+            }
+            catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)
             {
                 throw new OperationCanceledException();
             }

@@ -19,7 +19,6 @@ namespace VSRAD.Syntax.Core
         private readonly Dictionary<string, IDocument> _documents;
         private readonly IInstructionListManager _instructionManager;
 
-
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
         public event DocumentCreatedEventHandler DocumentCreated;
         public event DocumentDisposedEventHandler DocumentDisposed;
