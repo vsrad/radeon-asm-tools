@@ -44,6 +44,7 @@ namespace VSRAD.Syntax.Options.Instructions
         {
             instructionListLoader.InstructionsUpdated += InstructionsLoaded;
             documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
+            documentFactory.DocumentCreated += ActiveDocumentChanged;
 
             _radAsm1InstructionSets = new List<IInstructionSet>();
             _radAsm2InstructionSets = new List<IInstructionSet>();
@@ -143,9 +144,9 @@ namespace VSRAD.Syntax.Options.Instructions
         }
 
         public IReadOnlyList<IInstructionSet> GetInstructionSets() =>
-            activeDocumentAsm == AsmType.RadAsm 
-                ? _radAsm1InstructionSets 
-                : activeDocumentAsm == AsmType.RadAsm2 
+            activeDocumentAsm == AsmType.RadAsm
+                ? _radAsm1InstructionSets
+                : activeDocumentAsm == AsmType.RadAsm2
                     ? _radAsm2InstructionSets : new List<IInstructionSet>();
 
         public IInstructionSet GetInstructionSet()

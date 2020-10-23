@@ -82,7 +82,8 @@ namespace VSRAD.Syntax.Core
                 }
             }
 
-            DocumentCreated?.Invoke(document);
+            // CreateDocument can return null if document does not belong to RadAsmSyntax
+            if (document != null) DocumentCreated?.Invoke(document);
             return document;
         }
 
