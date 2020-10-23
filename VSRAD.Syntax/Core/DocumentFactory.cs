@@ -62,29 +62,37 @@ namespace VSRAD.Syntax.Core
                 return document;
 
             var textDocument = buffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
+            var factory = GetDocumentFactory(textDocument);
+            if (factory == null) return null;
+
             if (_documents.TryGetValue(textDocument.FilePath, out document)
                 && document is InvisibleDocument invisibleDocument)
             {
-                document = invisibleDocument.ToVisibleDocument(textDocument);
+                document = invisibleDocument.ToVisibleDocument(factory);
                 ObserveDocument(document, textDocument);
             }
             else
             {
-                switch (buffer.GetAsmType())
-                {
-                    case AsmType.RadAsm:
-                    case AsmType.RadAsm2:
-                        document = CreateDocument(textDocument, (lexer, parser) => new CodeDocument(_instructionManager.Value, textDocument, lexer, parser)); 
-                        break;
-                    case AsmType.RadAsmDoc:
-                        document = CreateDocument(textDocument, (lexer, parser) => new Document(textDocument, lexer, parser)); 
-                        break;
-                }
+                document = CreateDocument(textDocument, factory);
             }
 
             // CreateDocument can return null if document does not belong to RadAsmSyntax
             if (document != null) DocumentCreated?.Invoke(document);
             return document;
+        }
+
+        private Func<ILexer, IParser, IDocument> GetDocumentFactory(ITextDocument document)
+        {
+            switch (document.TextBuffer.GetAsmType())
+            {
+                case AsmType.RadAsm:
+                case AsmType.RadAsm2:
+                    return (lexer, parser) => new CodeDocument(_instructionManager.Value, document, lexer, parser);
+                case AsmType.RadAsmDoc:
+                    return (lexer, parser) => new Document(document, lexer, parser);
+                default:
+                    return null;
+            }
         }
 
         private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)

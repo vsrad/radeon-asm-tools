@@ -19,7 +19,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
         {
             _analysisResult = documentAnalysis.CurrentResult;
-            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result);
+            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result, rs);
 
             InitializeClassifierDictonary(typeRegistryService);
         }
@@ -68,9 +68,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason)
         {
             _analysisResult = analysisResult;
+
+            if (reason != RescanReason.ContentChanged)
+                ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(analysisResult.Snapshot, 0, analysisResult.Snapshot.Length)));
         }
     }
 
