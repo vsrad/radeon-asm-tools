@@ -1,11 +1,11 @@
 ﻿using EnvDTE;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Options.Instructions;
 
@@ -78,7 +78,7 @@ namespace VSRAD.Syntax.Core
 
         private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)
         {
-            var lexerParser = GetLexerParser(textDocument.TextBuffer.ContentType);
+            var lexerParser = GetLexerParser(textDocument.TextBuffer.GetAsmType());
             if (!lexerParser.HasValue) return null;
 
             var lexer = lexerParser.Value.lexer;
@@ -98,16 +98,15 @@ namespace VSRAD.Syntax.Core
             _documents.Add(document.Path, document);
         }
 
-        private (ILexer lexer, IParser parser)? GetLexerParser(IContentType contentType)
+        private (ILexer lexer, IParser parser)? GetLexerParser(AsmType asmType)
         {
-            if (contentType == _contentTypeManager.Asm1ContentType)
-                return (new AsmLexer(), new Asm1Parser(this, _instructionManager));
-            else if (contentType == _contentTypeManager.Asm2ContentType)
-                return (new Asm2Lexer(), new Asm2Parser(this, _instructionManager));
-            else if (contentType == _contentTypeManager.AsmDocContentType)
-                return (new AsmDocLexer(), new AsmDocParser());
-
-            else return null;
+            switch (asmType)
+            {
+                case AsmType.RadAsm: return (new AsmLexer(), new Asm1Parser(this, _instructionManager));
+                case AsmType.RadAsm2: return (new Asm2Lexer(), new Asm2Parser(this, _instructionManager));
+                case AsmType.RadAsmDoc: return (new AsmDocLexer(), new AsmDocParser());
+                default: return null;
+            }
         }
 
         private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
