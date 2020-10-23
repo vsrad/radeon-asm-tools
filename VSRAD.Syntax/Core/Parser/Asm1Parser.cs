@@ -152,10 +152,6 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             currentBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
                         }
-                        else if (OtherInstructions.Contains(tokenText))
-                        {
-                            errors.Add(new ErrorToken(token, version, ErrorMessages.InvalidInstructionSetErrorMessage));
-                        }
                         else if (!TryAddReference(tokenText, token, currentBlock, version, cancellation))
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.EQ) {
@@ -198,7 +194,10 @@ namespace VSRAD.Syntax.Core.Parser
             }
 
             foreach (var (text, trackingToken, block) in referenceCandidates)
-                TryAddReference(text, trackingToken, block, version, cancellation);
+            {
+                if (!TryAddReference(text, trackingToken, block, version, cancellation) && OtherInstructions.Contains(text))
+                    errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
+            }
 
             return new ParserResult(blocks, errors);
         }
