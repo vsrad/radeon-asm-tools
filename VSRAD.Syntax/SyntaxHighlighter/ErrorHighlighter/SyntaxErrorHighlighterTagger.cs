@@ -20,6 +20,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         public SyntaxErrorHighlighterTagger(IDocumentAnalysis documentAnalysis)
         {
             documentAnalysis.AnalysisUpdated += UpdateErorMarker;
+            if (documentAnalysis.CurrentResult != null)
+                UpdateErorMarker(documentAnalysis.CurrentResult, CancellationToken.None);
         }
 
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans) =>
