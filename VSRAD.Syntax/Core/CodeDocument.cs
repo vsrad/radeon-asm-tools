@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.Core
         public CodeDocument(IInstructionListManager instructionListManager, ITextDocument textDocument, ILexer lexer, IParser parser)
             : base(textDocument, lexer, parser)
         {
-            instructionListManager.InstructionsUpdated += (s, t) => DocumentTokenizer.Rescan();
+            instructionListManager.InstructionsUpdated += (s, t) => DocumentTokenizer.Rescan(RescanReason.InstructionsChanged);
         }
     }
 }

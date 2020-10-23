@@ -19,7 +19,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
         {
             _analysisResult = documentAnalysis.CurrentResult;
-            documentAnalysis.AnalysisUpdated += (result, cancellation) => AnalysisUpdated(result);
+            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result);
 
             InitializeClassifierDictonary(typeRegistryService);
         }
@@ -83,7 +83,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
         {
             _tokenizer = tokenizer;
-            _tokenizer.TokenizerUpdated += (result, ct) => TokenizerUpdated(result);
+            _tokenizer.TokenizerUpdated += (result, rs, ct) => TokenizerUpdated(result);
 
             InitializeClassifierDictionary(standardClassificationService);
             TokenizerUpdated(_tokenizer.CurrentResult);

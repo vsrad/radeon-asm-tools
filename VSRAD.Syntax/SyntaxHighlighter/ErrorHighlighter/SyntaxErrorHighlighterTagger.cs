@@ -19,7 +19,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
         public SyntaxErrorHighlighterTagger(IDocumentAnalysis documentAnalysis)
         {
-            documentAnalysis.AnalysisUpdated += UpdateErorMarker;
+            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => UpdateErorMarker(result, cancellation);
             if (documentAnalysis.CurrentResult != null)
                 UpdateErorMarker(documentAnalysis.CurrentResult, CancellationToken.None);
         }

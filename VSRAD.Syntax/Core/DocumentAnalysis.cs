@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.Core
             _resultsRequests = new FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(100);
 
             tokenizer.TokenizerUpdated += TokenizerUpdated;
-            TokenizerUpdated(tokenizer.CurrentResult, CancellationToken.None);
+            TokenizerUpdated(tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
@@ -37,19 +37,19 @@ namespace VSRAD.Syntax.Core
             throw new NotImplementedException();
         }
 
-        private void TokenizerUpdated(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private void TokenizerUpdated(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
             _resultsRequests.AddValue(tokenizerResult.Snapshot,
-                () => RunAnalysisAsync(tokenizerResult, cancellationToken));
+                () => RunAnalysisAsync(tokenizerResult, reason, cancellationToken));
         }
 
-        private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            var result = await Task.Run(() => RunParserAsync(tokenizerResult, cancellationToken), cancellationToken).ConfigureAwait(false);
+            var result = await Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken).ConfigureAwait(false);
             return result;
         }
 
-        private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace VSRAD.Syntax.Core
                 var analysisResult = new AnalysisResult(parserResult, includes, tokenizerResult.Snapshot);
 
                 CurrentResult = analysisResult;
-                AnalysisUpdated?.Invoke(analysisResult, cancellationToken);
+                AnalysisUpdated?.Invoke(analysisResult, reason, cancellationToken);
                 return analysisResult;
             }
             catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)

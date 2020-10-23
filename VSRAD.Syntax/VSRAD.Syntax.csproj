@@ -95,6 +95,7 @@
     <Compile Include="Core\ITokenizerResult.cs" />
     <Compile Include="Core\Parser\ErrorMessages.cs" />
     <Compile Include="Core\Parser\ParserResult.cs" />
+    <Compile Include="Core\RescanReason.cs" />
     <Compile Include="Core\TokenizerResult.cs" />
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
