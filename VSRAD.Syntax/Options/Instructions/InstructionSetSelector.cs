@@ -11,6 +11,7 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         public static InstructionSetSelector Instance;
         private static readonly Guid CommandSet = new Guid(Constants.InstructionSetSelectorCommandSetGuid);
+        private const string AllSets = "all";
 
         private readonly IInstructionSetManager _instructionSetManager;
         private string[] instructionSets;
@@ -20,6 +21,7 @@ namespace VSRAD.Syntax.Options.Instructions
         {
             _instructionSetManager = package.GetMEFComponent<IInstructionSetManager>();
             _instructionSetManager.AsmTypeChanged += AsmTypeChanged;
+            currentSet = AllSets;
 
             var instructionSetDropDownComboCommandId = new CommandID(CommandSet, Constants.InstructionSetDropDownComboCommandId);
             var instructionSetDropDownCombo = new OleMenuCommand(new EventHandler(OnMenuCombo), instructionSetDropDownComboCommandId);
@@ -34,12 +36,12 @@ namespace VSRAD.Syntax.Options.Instructions
 
         private void InitializeSets()
         {
-            var sets = new List<string>() { "all" };
+            var sets = new List<string>() { AllSets };
             sets.AddRange(_instructionSetManager.GetInstructionSets().Select(s => s.SetName));
 
             instructionSets = sets.ToArray();
             var currentSet = _instructionSetManager.GetInstructionSet();
-            this.currentSet = currentSet == null ? "all" : currentSet.SetName;
+            this.currentSet = currentSet == null ? AllSets : currentSet.SetName;
         }
 
         private void OnMenuCombo(object sender, EventArgs e)
@@ -58,7 +60,7 @@ namespace VSRAD.Syntax.Options.Instructions
             else if (input != null)
             {
                 currentSet = input.ToString();
-                _instructionSetManager.ChangeInstructionSet(currentSet);
+                _instructionSetManager.ChangeInstructionSet(currentSet != AllSets ? currentSet : null);
             }
         }
 

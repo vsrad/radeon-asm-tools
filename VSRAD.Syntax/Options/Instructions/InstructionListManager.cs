@@ -110,7 +110,7 @@ namespace VSRAD.Syntax.Options.Instructions
 
         public void ChangeInstructionSet(string selected)
         {
-            if (selected == null || selected == "all")
+            if (selected == null)
             {
                 switch (activeDocumentAsm)
                 {
