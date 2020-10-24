@@ -9,19 +9,17 @@ namespace VSRAD.Deborgar
     {
         public SourceFileLineContext SourceContext => new SourceFileLineContext(_sourcePath, GetTextPosition());
 
-        private readonly BreakpointManager _manager;
+        private readonly Program _program;
         private readonly IDebugBreakpointRequest2 _request;
-        private readonly IDebugProgram2 _program;
         private readonly IDebugDocumentPosition2 _documentInfo;
         private readonly string _sourcePath;
 
         private bool _enabled = false;
 
-        public Breakpoint(BreakpointManager manager, IDebugBreakpointRequest2 request, IDebugProgram2 program, IDebugDocumentPosition2 documentInfo)
+        public Breakpoint(Program program, IDebugBreakpointRequest2 request, IDebugDocumentPosition2 documentInfo)
         {
-            _manager = manager;
-            _request = request;
             _program = program;
+            _request = request;
             _documentInfo = documentInfo;
 
             ErrorHandler.ThrowOnFailure(_documentInfo.GetFileName(out _sourcePath));
@@ -34,16 +32,16 @@ namespace VSRAD.Deborgar
             {
                 _enabled = newState;
                 if (_enabled == true)
-                    _manager.AddBreakpoint(this);
+                    _program.AddBreakpoint(this);
                 else
-                    _manager.RemoveBreakpoint(this);
+                    _program.RemoveBreakpoint(this);
             }
             return VSConstants.S_OK;
         }
 
         public int Delete()
         {
-            _manager.RemoveBreakpoint(this);
+            _program.RemoveBreakpoint(this);
             return VSConstants.S_OK;
         }
 

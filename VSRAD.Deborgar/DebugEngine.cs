@@ -28,10 +28,8 @@ namespace VSRAD.Deborgar
             _program = programs[0] as Program;
             _callbacks = new EngineCallbacks(this, _program, process, ad7Callback);
 
-            var breakpointManager = new BreakpointManager(_callbacks.OnBreakpointBound);
-
             /* Since VS will add breakpoints right after OnAttach callback, we need to invoke Program.AttachDebugger first */
-            _program.AttachDebugger(integration, _callbacks, breakpointManager);
+            _program.AttachDebugger(integration, _callbacks);
             _callbacks.OnAttach();
 
             return VSConstants.S_OK;

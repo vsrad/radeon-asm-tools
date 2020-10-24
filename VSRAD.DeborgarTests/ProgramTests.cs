@@ -6,79 +6,54 @@ namespace VSRAD.DeborgarTests
 {
     public class ProgramTests
     {
-        private static (Program, Mock<IEngineIntegration>, Mock<IEngineCallbacks>, Mock<IBreakpointManager>) InitProgram(string file)
+        private static (Program, Mock<IEngineIntegration>, Mock<IEngineCallbacks>) InitProgram(string file)
         {
             var program = new Program(null);
             var integration = new Mock<IEngineIntegration>();
             var callbacks = new Mock<IEngineCallbacks>();
-            var breakpointManager = new Mock<IBreakpointManager>();
             integration.Setup((i) => i.GetActiveSourcePath()).Returns(file);
-            program.AttachDebugger(integration.Object, callbacks.Object, breakpointManager.Object);
-            return (program, integration, callbacks, breakpointManager);
+            program.AttachDebugger(integration.Object, callbacks.Object);
+            return (program, integration, callbacks);
         }
 
         [Fact]
         public void TestBreakFrameWithoutBreakpoints()
         {
-            var (program, _, _, _) = InitProgram("h.s");
+            var (program, _, _) = InitProgram("h.s");
             // When no breakpoints are set, the first break frame should be at the start of the file
             Helpers.VerifyBreakFrameLocation(program, "h.s", 0);
         }
 
         [Fact]
-        public void TestSuccessfulExecutionWithBreakpoints()
+        public void TestStoppingAtBreakpoint()
         {
-            var (program, integration, callbacks, breakpointManager) = InitProgram("h.s");
-            breakpointManager.Setup((b) => b.GetNextBreakpointLine("h.s", 0)).Returns(7);
-            breakpointManager.Setup((b) => b.GetNextBreakpointLine("h.s", 7)).Returns(13);
-            breakpointManager.Setup((b) => b.GetNextBreakpointLine("h.s", 13)).Returns(21);
-            integration.Setup((i) => i.Execute(It.IsAny<uint[]>())).Callback(() =>
-                integration.Raise((i) => i.ExecutionCompleted += null, true));
+            var (program, integration, callbacks) = InitProgram("h.s");
+
+            integration.Setup((i) => i.Execute(false)).Callback(() =>
+                integration.Raise((i) => i.ExecutionCompleted += null, null,
+                new ExecutionCompletedEventArgs(new BreakTarget("h.s", new[] { 7u }, isStepping: false), true)));
 
             program.ExecuteOnThread(null);
-            integration.Verify((i) => i.Execute(new uint[] { 7 }), Times.Once);
+            integration.Verify((i) => i.Execute(false), Times.Once);
             callbacks.Verify((c) => c.OnBreakComplete(), Times.Once);
+            callbacks.Verify((c) => c.OnStepComplete(), Times.Never);
             Helpers.VerifyBreakFrameLocation(program, "h.s", 7);
-
-            program.ExecuteOnThread(null);
-            integration.Verify((i) => i.Execute(new uint[] { 13 }), Times.Once);
-            callbacks.Verify((c) => c.OnBreakComplete(), Times.Exactly(2));
-            Helpers.VerifyBreakFrameLocation(program, "h.s", 13);
-
-            // RunToLine has higher priority than breakpoints
-            uint runToLine = 666;
-            integration.Setup((i) => i.PopRunToLineIfSet("h.s", out runToLine)).Returns(true);
-            program.ExecuteOnThread(null);
-            integration.Verify((i) => i.Execute(new uint[] { 666 }), Times.Once);
-            callbacks.Verify((c) => c.OnBreakComplete(), Times.Exactly(3));
-            Helpers.VerifyBreakFrameLocation(program, "h.s", 666);
         }
 
         [Fact]
-        public void TestExecutionFailed()
+        public void TestStepping()
         {
-            var (program, integration, callbacks, breakpointManager) = InitProgram("h.s");
-            breakpointManager.Setup((b) => b.GetNextBreakpointLine("h.s", 0)).Returns(7);
-            breakpointManager.Setup((b) => b.GetNextBreakpointLine("h.s", 7)).Returns(9);
-            breakpointManager.Setup((b) => b.GetNextBreakpointLine("hhhh.s", 0)).Returns(13);
+            var (program, integration, callbacks) = InitProgram("h.s");
 
-            // Execution to line 7 fails, the editor highlights line 7
-            integration.Setup((i) => i.Execute(It.IsAny<uint[]>())).Callback(() =>
-                integration.Raise((i) => i.ExecutionCompleted += null, false));
+            integration.Setup((i) => i.Execute(false)).Callback(() =>
+                integration.Raise((i) => i.ExecutionCompleted += null, null,
+                new ExecutionCompletedEventArgs(new BreakTarget("h.s", new[] { 7u }, isStepping: true), true)));
+
             program.ExecuteOnThread(null);
-
-            integration.Verify((i) => i.Execute(new uint[] { 7 }), Times.Once);
-            callbacks.Verify((c) => c.OnBreakComplete(), Times.Once);
+            integration.Verify((i) => i.Execute(false), Times.Once);
+            callbacks.Verify((c) => c.OnBreakComplete(), Times.Never);
+            callbacks.Verify((c) => c.OnStepComplete(), Times.Once);
             Helpers.VerifyBreakFrameLocation(program, "h.s", 7);
-
-            // The next run continues to the next breakpoint despite the error
-            integration.Setup((i) => i.Execute(It.IsAny<uint[]>())).Callback(() =>
-                integration.Raise((i) => i.ExecutionCompleted += null, true));
-            program.ExecuteOnThread(null);
-
-            integration.Verify((i) => i.Execute(new uint[] { 9 }), Times.Once);
-            callbacks.Verify((c) => c.OnBreakComplete(), Times.Exactly(2));
-            Helpers.VerifyBreakFrameLocation(program, "h.s", 9);
         }
     }
 }

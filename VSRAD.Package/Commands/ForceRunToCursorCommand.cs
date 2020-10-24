@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
+using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.Commands
 {
@@ -10,12 +11,14 @@ namespace VSRAD.Package.Commands
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class ForceRunToCursorCommand : ICommandHandler
     {
-        private readonly ProjectSystem.DebuggerIntegration _debugger;
+        private readonly IActiveCodeEditor _codeEditor;
+        private readonly IBreakpointTracker _breakpointTracker;
 
         [ImportingConstructor]
-        public ForceRunToCursorCommand(ProjectSystem.DebuggerIntegration debugger)
+        public ForceRunToCursorCommand(IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker)
         {
-            _debugger = debugger;
+            _codeEditor = codeEditor;
+            _breakpointTracker = breakpointTracker;
         }
 
         public Guid CommandSet => Constants.ForceRunToCursorCommandSet;
@@ -31,7 +34,11 @@ namespace VSRAD.Package.Commands
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             if (commandId == Constants.MenuCommandId)
-                _debugger.RunToCurrentLine();
+            {
+                var currentFile = _codeEditor.GetAbsoluteSourcePath();
+                var currentLine = _codeEditor.GetCurrentLine();
+                _breakpointTracker.RunToLine(currentFile, currentLine);
+            }
         }
     }
 }

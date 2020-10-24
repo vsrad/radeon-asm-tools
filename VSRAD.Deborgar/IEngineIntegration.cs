@@ -1,19 +1,38 @@
-﻿namespace VSRAD.Deborgar
-{
-    public delegate void ExecutionCompleted(bool success);
+﻿using System;
 
-    public enum BreakMode
+namespace VSRAD.Deborgar
+{
+    public sealed class BreakTarget
     {
-        SingleRoundRobin, SingleRerun, Multiple
+        public string File { get; }
+        public uint[] Lines { get; }
+        public bool IsStepping { get; }
+
+        public BreakTarget(string file, uint[] lines, bool isStepping)
+        {
+            File = file;
+            Lines = lines;
+            IsStepping = isStepping;
+        }
+    }
+
+    public sealed class ExecutionCompletedEventArgs : EventArgs
+    {
+        public BreakTarget Target { get; }
+        public bool IsSuccessful;
+
+        public ExecutionCompletedEventArgs(BreakTarget target, bool isSuccessful)
+        {
+            Target = target;
+            IsSuccessful = isSuccessful;
+        }
     }
 
     public interface IEngineIntegration
     {
-        void Execute(uint[] breakLines);
+        void Execute(bool step);
         string GetActiveSourcePath();
-        BreakMode GetBreakMode();
-        bool PopRunToLineIfSet(string file, out uint runToLine);
 
-        event ExecutionCompleted ExecutionCompleted;
+        event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
     }
 }
