@@ -11,7 +11,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public uint BreakLine;
         public int GroupIdx;
         public int WaveIdx;
-        public string ToolTipText;
         public bool IsVisible;
     }
 #pragma warning restore CA1815
@@ -84,7 +83,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     BreakLine = 0,
                     GroupIdx = 0,
                     WaveIdx = 0,
-                    ToolTipText = "",
                     IsVisible = false
                 };
 
@@ -98,7 +96,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 BreakLine = breakLine,
                 GroupIdx = column,
                 WaveIdx = row,
-                ToolTipText = $"Group: {column}\nWave: {row}\nLine: {breakLine}",
                 IsVisible = true
             };
         }

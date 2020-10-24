@@ -124,7 +124,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (_view == null) return;
             var r = _rectangles[row][column];
             var wave = _view[row, column];
-            r.ToolTip = new ToolTip() { Content = wave.ToolTipText };
+            r.ToolTip = new ToolTip() { Content = wave.IsVisible ? $"Group: {column}\nWave: {row}\nLine: {wave.BreakLine}" : "" };
             r.Fill = wave.BreakColor;
             r.Visibility = wave.IsVisible ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden;
         }
