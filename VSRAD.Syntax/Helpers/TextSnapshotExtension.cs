@@ -6,8 +6,9 @@ namespace VSRAD.Syntax.Helpers
     {
         RadAsm = 1,
         RadAsm2 = 2,
-        RadAsmDoc = 3,
-        Unknown = 4,
+        RadAsmDoc = 4,
+        Unknown = 8,
+        RadAsmCode = RadAsm | RadAsm2,
     }
 
     internal static class TextSnapshotExtension

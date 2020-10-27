@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using System.ComponentModel.Design;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax
 {
@@ -43,6 +44,7 @@ namespace VSRAD.Syntax
             ClearSearchFieldCommand.Initialize(this, commandService);
             SelectItemCommand.Initialize(this, commandService);
             ShowHideLineNumberCommand.Initialize(this, commandService);
+            InstructionSetSelector.Initialize(this, commandService);
         }
     }
 }

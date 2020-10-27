@@ -12,12 +12,13 @@ using VSRAD.Syntax.Options.Instructions;
 namespace VSRAD.Syntax.Core
 {
     [Export(typeof(IDocumentFactory))]
-    internal class DocumentFactory : IDocumentFactory
+    internal partial class DocumentFactory : IDocumentFactory
     {
         private readonly ContentTypeManager _contentTypeManager;
         private readonly RadeonServiceProvider _serviceProvider;
         private readonly Dictionary<string, IDocument> _documents;
-        private readonly IInstructionListManager _instructionManager;
+        private readonly Lazy<IInstructionListManager> _instructionManager;
+
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
         public event DocumentCreatedEventHandler DocumentCreated;
@@ -26,7 +27,7 @@ namespace VSRAD.Syntax.Core
         [ImportingConstructor]
         public DocumentFactory(RadeonServiceProvider serviceProvider,
             ContentTypeManager contentTypeManager,
-            IInstructionListManager instructionManager)
+            Lazy<IInstructionListManager> instructionManager)
         {
             _instructionManager = instructionManager;
 
@@ -61,19 +62,37 @@ namespace VSRAD.Syntax.Core
                 return document;
 
             var textDocument = buffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
+            var factory = GetDocumentFactory(textDocument);
+            if (factory == null) return null;
+
             if (_documents.TryGetValue(textDocument.FilePath, out document)
                 && document is InvisibleDocument invisibleDocument)
             {
-                document = invisibleDocument.ToVisibleDocument(textDocument);
+                document = invisibleDocument.ToVisibleDocument(factory);
                 ObserveDocument(document, textDocument);
             }
             else
             {
-                document = CreateDocument(textDocument, (lexer, parser) => new Document(textDocument, lexer, parser));
+                document = CreateDocument(textDocument, factory);
             }
 
-            DocumentCreated?.Invoke(document);
+            // CreateDocument can return null if document does not belong to RadAsmSyntax
+            if (document != null) DocumentCreated?.Invoke(document);
             return document;
+        }
+
+        private Func<ILexer, IParser, IDocument> GetDocumentFactory(ITextDocument document)
+        {
+            switch (document.TextBuffer.GetAsmType())
+            {
+                case AsmType.RadAsm:
+                case AsmType.RadAsm2:
+                    return (lexer, parser) => new CodeDocument(_instructionManager.Value, document, lexer, parser);
+                case AsmType.RadAsmDoc:
+                    return (lexer, parser) => new Document(document, lexer, parser);
+                default:
+                    return null;
+            }
         }
 
         private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)
@@ -81,10 +100,7 @@ namespace VSRAD.Syntax.Core
             var lexerParser = GetLexerParser(textDocument.TextBuffer.GetAsmType());
             if (!lexerParser.HasValue) return null;
 
-            var lexer = lexerParser.Value.lexer;
-            var parser = lexerParser.Value.parser;
-
-            var document = creator(lexer, parser);
+            var document = creator(lexerParser.Value.Lexer, lexerParser.Value.Parser);
             ObserveDocument(document, textDocument);
 
             return document;
@@ -96,17 +112,6 @@ namespace VSRAD.Syntax.Core
             textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
 
             _documents.Add(document.Path, document);
-        }
-
-        private (ILexer lexer, IParser parser)? GetLexerParser(AsmType asmType)
-        {
-            switch (asmType)
-            {
-                case AsmType.RadAsm: return (new AsmLexer(), new Asm1Parser(this, _instructionManager));
-                case AsmType.RadAsm2: return (new Asm2Lexer(), new Asm2Parser(this, _instructionManager));
-                case AsmType.RadAsmDoc: return (new AsmDocLexer(), new AsmDocParser());
-                default: return null;
-            }
         }
 
         private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
@@ -132,6 +137,19 @@ namespace VSRAD.Syntax.Core
             {
                 var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
                 _documents.TryGetValue(openWindowPath, out var document);
+
+                // if this document is opened for the first time, then it can be a RadeonAsm document, but 
+                // the parser is initialized after visual buffer initialization, so
+                // it is necessary to force initialize RadeonAsm document
+                if (document == null)
+                {
+                    var vsTextBuffer = Utils.GetWindowVisualBuffer(GotFocus, _serviceProvider.ServiceProvider);
+                    if (vsTextBuffer != null)
+                    {
+                        var textBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
+                        document = GetOrCreateDocument(textBuffer);
+                    }
+                }
                 ActiveDocumentChanged?.Invoke(document);
             }
         }

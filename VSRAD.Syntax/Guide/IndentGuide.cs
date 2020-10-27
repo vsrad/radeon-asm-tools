@@ -59,8 +59,10 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken ct)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
         {
+            if (reason != RescanReason.ContentChanged) return;
+
             _currentResult = analysisResult;
             UpdateIndentGuides();
         }

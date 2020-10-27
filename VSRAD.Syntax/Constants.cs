@@ -12,6 +12,7 @@ namespace VSRAD.Syntax
         internal const string NavigationListToolWindowPaneGuid = "c518eee2-289b-47cf-a877-d48a55f13f9b";
         internal const string FunctionListCommandSetGuid = "a1d46795-2324-4b58-9f8c-aa69414c3e9e";
         internal const string NavigationListCommandSetGuid = "0c7aa63d-bc2a-4d0e-83c2-80bbb30a5ceb";
+        internal const string InstructionSetSelectorCommandSetGuid = "82312F5F-22B0-40CD-A5FF-2DFE6383DE72";
 
         /*
          * Command ID definition
@@ -23,6 +24,10 @@ namespace VSRAD.Syntax
         internal const int FunctionListGroup = 0x1100;
         internal const int ShowHideLineNumberCommandId = 0x102;
         internal const int NavigationListCommandId = 0x0203;
+        internal const int InstructionSetDropDownComboCommandId = 0x100;
+        internal const int InstructionSetDropDownComboGetListCommandId = 0x101;
+        internal const int InstructionSetSelectorMenu = 0x1000;
+        internal const int InstructionSetSelectorGroup = 0x1100;
 
         /*
          * File extensions definition

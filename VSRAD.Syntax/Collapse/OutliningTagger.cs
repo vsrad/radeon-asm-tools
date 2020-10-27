@@ -48,8 +48,11 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, CancellationToken cancellationToken) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes, cancellationToken));
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        {
+            if (reason == RescanReason.ContentChanged)
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes, cancellationToken));
+        }
 
         private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot, IReadOnlyList<IBlock> blocks, CancellationToken cancellationToken)
         {

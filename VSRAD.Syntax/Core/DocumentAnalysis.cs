@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.Core
             _resultsRequests = new FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(100);
 
             tokenizer.TokenizerUpdated += TokenizerUpdated;
-            TokenizerUpdated(tokenizer.CurrentResult, CancellationToken.None);
+            TokenizerUpdated(tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
@@ -37,35 +37,34 @@ namespace VSRAD.Syntax.Core
             throw new NotImplementedException();
         }
 
-        private void TokenizerUpdated(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private void TokenizerUpdated(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            _resultsRequests.TryAddValue(tokenizerResult.Snapshot,
-                () => RunAnalysisAsync(tokenizerResult, cancellationToken));
+            _resultsRequests.AddValue(tokenizerResult.Snapshot,
+                () => RunAnalysisAsync(tokenizerResult, reason, cancellationToken));
         }
 
-        private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            var result = await Task.Run(() => RunParserAsync(tokenizerResult, cancellationToken), cancellationToken).ConfigureAwait(false);
+            var result = await Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken).ConfigureAwait(false);
             return result;
         }
 
-        private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, CancellationToken cancellationToken)
+        private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
             try
             {
-                var blocks = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
-                var rootBlock = blocks[0];
+                var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
 
-                var includes = rootBlock.Tokens
+                var includes = parserResult.RootBlock.Tokens
                     .Where(t => t.Type == RadAsmTokenType.Include)
                     .Cast<IncludeToken>()
                     .Select(i => i.Document)
                     .ToList();
 
-                var analysisResult = new AnalysisResult(rootBlock, blocks, includes, tokenizerResult.Snapshot);
+                var analysisResult = new AnalysisResult(parserResult, includes, tokenizerResult.Snapshot);
 
                 CurrentResult = analysisResult;
-                AnalysisUpdated?.Invoke(analysisResult, cancellationToken);
+                AnalysisUpdated?.Invoke(analysisResult, reason, cancellationToken);
                 return analysisResult;
             }
             catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)

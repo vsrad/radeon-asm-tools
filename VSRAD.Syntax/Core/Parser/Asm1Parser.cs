@@ -6,17 +6,20 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal class Asm1Parser : AbstractInstructionParser
+    internal class Asm1Parser : AbstractCodeParser
     {
-        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionManager)
-            : base(documentFactory, instructionManager, Helpers.AsmType.RadAsm) { }
+        protected override AsmType AsmType => AsmType.RadAsm;
 
-        public override async Task<List<IBlock>> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
+            : base(documentFactory, instructionListManager) { }
+
+        public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsmLexer.WHITESPACE && t.Type != RadAsmLexer.LINE_COMMENT)
@@ -28,6 +31,7 @@ namespace VSRAD.Syntax.Core.Parser
             var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
             _definitionContainer.Clear();
             var blocks = new List<IBlock>();
+            var errors = new List<IErrorToken>();
             IBlock currentBlock = new Block(version);
             var parserState = ParserState.SearchInScope;
             var searchInCondition = false;
@@ -190,9 +194,12 @@ namespace VSRAD.Syntax.Core.Parser
             }
 
             foreach (var (text, trackingToken, block) in referenceCandidates)
-                TryAddReference(text, trackingToken, block, version, cancellation);
+            {
+                if (!TryAddReference(text, trackingToken, block, version, cancellation) && OtherInstructions.Contains(text))
+                    errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
+            }
 
-            return blocks;
+            return new ParserResult(blocks, errors);
         }
 
         private enum ParserState

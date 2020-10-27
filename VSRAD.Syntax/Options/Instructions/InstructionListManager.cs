@@ -1,162 +1,162 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.IO;
 using System.Linq;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
-using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.IntelliSense;
-using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
-    [Export(typeof(IInstructionListManager))]
-    internal sealed class InstructionListManager : IInstructionListManager
+    public delegate void InstructionsUpdateDelegate(IInstructionListManager sender, AsmType asmType);
+    public interface IInstructionListManager
     {
-        private readonly OptionsProvider _optionsProvider;
-        private readonly Lazy<IDocumentFactory> _documentFactory;
-        private readonly Lazy<INavigationTokenService> _navigationTokenService;
-        private List<Instruction> _instructions;
-        private string _loadedPaths;
+        IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType);
+        IEnumerable<Instruction> GetInstructions(AsmType asmType);
+        event InstructionsUpdateDelegate InstructionsUpdated;
+    }
+
+    public delegate void AsmTypeChange();
+    public interface IInstructionSetManager
+    {
+        void ChangeInstructionSet(string selectedSetName);
+        IInstructionSet GetInstructionSet();
+        IReadOnlyList<IInstructionSet> GetInstructionSets();
+        event AsmTypeChange AsmTypeChanged;
+    }
+
+    [Export(typeof(IInstructionListManager))]
+    [Export(typeof(IInstructionSetManager))]
+    internal sealed class InstructionListManager : IInstructionListManager, IInstructionSetManager
+    {
+        private readonly List<IInstructionSet> _radAsm1InstructionSets;
+        private readonly List<IInstructionSet> _radAsm2InstructionSets;
+        private readonly List<Instruction> _radAsm1Instructions;
+        private readonly List<Instruction> _radAsm2Instructions;
+
+        private AsmType activeDocumentAsm;
+        private IInstructionSet radAsm1SelectedSet;
+        private IInstructionSet radAsm2SelectedSet;
 
         public event InstructionsUpdateDelegate InstructionsUpdated;
+        public event AsmTypeChange AsmTypeChanged;
 
         [ImportingConstructor]
-        public InstructionListManager(OptionsProvider optionsEventProvider,
-            Lazy<IDocumentFactory> documentFactory,
-            Lazy<INavigationTokenService> navigationTokenService)
+        public InstructionListManager(IInstructionListLoader instructionListLoader, IDocumentFactory documentFactory)
         {
-            _optionsProvider = optionsEventProvider;
-            _documentFactory = documentFactory;
-            _navigationTokenService = navigationTokenService;
-            _instructions = new List<Instruction>();
+            instructionListLoader.InstructionsUpdated += InstructionsLoaded;
+            documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
+            documentFactory.DocumentCreated += ActiveDocumentChanged;
 
-            _optionsProvider.OptionsUpdated += OptionsUpdated;
+            _radAsm1InstructionSets = new List<IInstructionSet>();
+            _radAsm2InstructionSets = new List<IInstructionSet>();
+            _radAsm1Instructions = new List<Instruction>();
+            _radAsm2Instructions = new List<Instruction>();
+            activeDocumentAsm = AsmType.Unknown;
         }
 
-        private void OptionsUpdated(OptionsProvider provider)
+        private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructions)
         {
-            var instructionPaths = provider.InstructionsPaths;
+            _radAsm1InstructionSets.Clear();
+            _radAsm2InstructionSets.Clear();
+            _radAsm1Instructions.Clear();
+            _radAsm2Instructions.Clear();
 
-            // skip if options haven't changed
-            if (instructionPaths == _loadedPaths) return;
-
-            Task.Run(() => LoadInstructionsFromDirectoriesAsync(instructionPaths))
-                .RunAsyncWithoutAwait();
-        }
-
-        public async Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
-        {
-            var paths = dirPathsString.Split(';')
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x));
-
-            var loadFromDirectoryTasks = paths
-                .Select(p => LoadInstructionsFromDirectoryAsync(p))
-                .ToArray();
-
-            try
+            foreach (var typeGroup in instructions.GroupBy(s => s.Type))
             {
-                var results = await Task.WhenAll(loadFromDirectoryTasks);
-                var instructions = new List<Instruction>();
-                foreach (var result in results)
-                    instructions.AddRange(result);
-
-                _loadedPaths = dirPathsString;
-                _instructions = instructions;
-                InstructionsUpdated?.Invoke(this);
-            }
-            catch (AggregateException e)
-            {
-                var sb = new StringBuilder();
-                sb.AppendLine(e.Message);
-                sb.AppendLine();
-
-                foreach (var innerEx in e.InnerExceptions)
-                    sb.AppendLine(innerEx.Message);
-
-                sb.AppendLine();
-                sb.AppendLine("Change the path to instructions");
-                Error.ShowErrorMessage(sb.ToString(), "Instruction loader");
-            }
-        }
-
-        private async Task<List<Instruction>> LoadInstructionsFromDirectoryAsync(string path)
-        {
-            var instructions = new List<Instruction>();
-            try
-            {
-                var loadTasks = new List<Task<(InstructionType, IReadOnlyList<NavigationToken>)>>();
-                foreach (var filepath in Directory.EnumerateFiles(path))
+                switch (typeGroup.Key)
                 {
-                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
-
-                    else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
-                }
-
-                var results = await Task.WhenAll(loadTasks);
-                foreach (var instructionTypeGroup in results.GroupBy(t => t.Item1))
-                {
-                    var type = instructionTypeGroup.Key;
-                    var instructionNameGroups = instructionTypeGroup.SelectMany(g => g.Item2).GroupBy(n => n.GetText());
-
-                    foreach (var instructionNameGroup in instructionNameGroups)
-                    {
-                        var name = instructionNameGroup.Key;
-                        var navigations = instructionNameGroup.ToList();
-                        instructions.Add(new Instruction(name, navigations, type));
-                    }
+                    case InstructionType.RadAsm1: _radAsm1InstructionSets.AddRange(typeGroup.AsEnumerable()); break;
+                    case InstructionType.RadAsm2: _radAsm2InstructionSets.AddRange(typeGroup.AsEnumerable()); break;
                 }
             }
-            catch (Exception e) when (
-               e is DirectoryNotFoundException ||
-               e is IOException ||
-               e is PathTooLongException ||
-               e is SecurityException ||
-               e is UnauthorizedAccessException)
-            {
-                Error.ShowError(e, "Instruction loader");
-            }
 
-            return instructions;
+            _radAsm1Instructions.AddRange(_radAsm1InstructionSets.SelectMany(s => s.Select(i => i)));
+            _radAsm2Instructions.AddRange(_radAsm2InstructionSets.SelectMany(s => s.Select(i => i)));
+            radAsm1SelectedSet = null;
+            radAsm2SelectedSet = null;
+
+            AsmTypeChanged?.Invoke();
+            InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
         }
 
-        private async Task<(InstructionType, IReadOnlyList<NavigationToken>)> LoadInstructionsFromFileAsync(string path, InstructionType type)
+        public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
         {
-            var document = _documentFactory.Value.GetOrCreateDocument(path);
-            var documentAnalysis = document.DocumentAnalysis;
-            var snapshot = document.CurrentSnapshot;
-            var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);
-
-            var instructions = analysisResult.Root.Tokens
-                .Where(t => t.Type == RadAsmTokenType.Instruction);
-
-            var navigationTokens = new List<NavigationToken>();
-            foreach (var instructionToken in instructions)
-                navigationTokens.Add(_navigationTokenService.Value.CreateToken(instructionToken, document));
-
-            return (type, navigationTokens);
-        }
-
-        public IReadOnlyList<Instruction> GetInstructions(AsmType asmType)
-        {
-            IEnumerable<Instruction> instructions;
             switch (asmType)
             {
-                case AsmType.RadAsm:
-                    instructions = _instructions.Where(i => i.Type == InstructionType.RadAsm1); break;
-                case AsmType.RadAsm2:
-                    instructions = _instructions.Where(i => i.Type == InstructionType.RadAsm2); break;
-                default:
-                    instructions = _instructions; break;
+                case AsmType.RadAsm: return radAsm1SelectedSet ?? (IEnumerable<Instruction>)_radAsm1Instructions;
+                case AsmType.RadAsm2: return radAsm2SelectedSet ?? (IEnumerable<Instruction>)_radAsm2Instructions;
+                default: return Enumerable.Empty<Instruction>();
             }
-            return instructions.ToList();
+        }
+
+        public IEnumerable<Instruction> GetInstructions(AsmType asmType)
+        {
+            switch (asmType)
+            {
+                case AsmType.RadAsm: return _radAsm1Instructions;
+                case AsmType.RadAsm2: return _radAsm2Instructions;
+                default: return Enumerable.Empty<Instruction>();
+            }
+        }
+
+        private void ActiveDocumentChanged(IDocument activeDocument)
+        {
+            var newActiveDocumentAsm = activeDocument == null ? AsmType.Unknown : activeDocument.CurrentSnapshot.GetAsmType();
+            if (newActiveDocumentAsm != activeDocumentAsm)
+            {
+                activeDocumentAsm = newActiveDocumentAsm;
+                AsmTypeChanged?.Invoke();
+            }
+        }
+
+        public void ChangeInstructionSet(string selected)
+        {
+            if (selected == null)
+            {
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: radAsm1SelectedSet = null; break;
+                    case AsmType.RadAsm2: radAsm2SelectedSet = null; break;
+                }
+            }
+            else
+            {
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: ChangeInstructionSet(selected, _radAsm1InstructionSets, ref radAsm1SelectedSet);  break;
+                    case AsmType.RadAsm2: ChangeInstructionSet(selected, _radAsm2InstructionSets, ref radAsm2SelectedSet); break;
+                }
+            }
+
+            InstructionsUpdated?.Invoke(this, activeDocumentAsm);
+        }
+
+        private void ChangeInstructionSet(string setName, List<IInstructionSet> sets, ref IInstructionSet selectedSet)
+        {
+            var set = sets.Find(s => s.SetName == setName);
+            if (set == null)
+            {
+                Error.ShowErrorMessage($"Cannot find selected instruction set: {setName}", "Instruction set selector");
+                selectedSet = null;
+                return;
+            }
+
+            selectedSet = set;
+        }
+
+        public IReadOnlyList<IInstructionSet> GetInstructionSets() =>
+            activeDocumentAsm == AsmType.RadAsm
+                ? _radAsm1InstructionSets
+                : activeDocumentAsm == AsmType.RadAsm2
+                    ? _radAsm2InstructionSets : new List<IInstructionSet>();
+
+        public IInstructionSet GetInstructionSet()
+        {
+            switch (activeDocumentAsm)
+            {
+                case AsmType.RadAsm: return radAsm1SelectedSet;
+                case AsmType.RadAsm2: return radAsm2SelectedSet;
+                default: return null;
+            }
         }
     }
 }

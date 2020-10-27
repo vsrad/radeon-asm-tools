@@ -71,19 +71,11 @@ namespace VSRAD.Syntax.Options
 
         private void UpdateWindowContentType(Window window)
         {
-            if (window == null || !window.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase) || window.Document == null)
-                return;
+            var vsTextBuffer = Utils.GetWindowVisualBuffer(window, _serviceProvider);
+            if (vsTextBuffer == null) return;
 
-            var fullPath = Path.Combine(window.Document.Path, window.Document.Name);
-            if (VsShellUtilities.IsDocumentOpen(_serviceProvider, fullPath, Guid.Empty, out _, out _, out var windowFrame))
-            {
-                var textView = VsShellUtilities.GetTextView(windowFrame);
-                if (textView.GetBuffer(out var vsTextBuffer) == VSConstants.S_OK)
-                {
-                    var textBuffer = _textEditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
-                    UpdateTextBufferContentType(textBuffer, window.Document.Name);
-                }
-            }
+            var textBuffer = _textEditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
+            UpdateTextBufferContentType(textBuffer, window.Document.Name);
         }
 
         public async Task ChangeRadeonExtensionsAsync(IEnumerable<string> asm1Extensions, IEnumerable<string> asm2Extensions)
@@ -129,7 +121,7 @@ namespace VSRAD.Syntax.Options
                 return;
 
             var contentType = DetermineContentType(path);
-            if (contentType == null) 
+            if (contentType == null)
                 return;
 
             UpdateTextBufferContentType(textBuffer, contentType);

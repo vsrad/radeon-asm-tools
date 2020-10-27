@@ -37,13 +37,15 @@ namespace VSRAD.Syntax.Core
             buffer.Changed += BufferChanged;
         }
 
-        public void Initialize()
+        private void Initialize() => Rescan(RescanReason.ContentChanged);
+
+        public void Rescan(RescanReason reason)
         {
             var initialTextSegment = new[] { CurrentSnapshot.GetText() };
             var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));
 
             CurrentTokens = new TokenizerCollection(lexerTokens, _comparer);
-            RaiseTokensChanged(CurrentTokens.ToList());
+            RaiseTokensChanged(CurrentTokens.ToList(), reason);
         }
 
         public RadAsmTokenType GetTokenType(int type) =>
@@ -86,13 +88,13 @@ namespace VSRAD.Syntax.Core
                 CurrentTokens.Remove(forRemoval[i]);
             foreach (var token in updated)
                 CurrentTokens.Add(token);
-            RaiseTokensChanged(updated);
+            RaiseTokensChanged(updated, RescanReason.ContentChanged);
         }
 
-        private void RaiseTokensChanged(IList<TrackingToken> updated)
+        private void RaiseTokensChanged(IList<TrackingToken> updated, RescanReason reason)
         {
             CurrentResult = new TokenizerResult(CurrentSnapshot, tokens: CurrentTokens, updatedTokens: updated);
-            TokenizerUpdated?.Invoke(CurrentResult, _cts.Token);
+            TokenizerUpdated?.Invoke(CurrentResult, reason, _cts.Token);
         }
 
         private List<TrackingToken> GetInvalidated(ITextSnapshot oldSnapshot, ITextChange change) =>

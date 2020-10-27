@@ -2,25 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
     internal class AnalysisResult : IAnalysisResult
     {
-        public AnalysisResult(IBlock root, 
-            IReadOnlyList<IBlock> scopes, 
+        public AnalysisResult(IParserResult parserResult,
             IReadOnlyList<IDocument> includes, 
             ITextSnapshot snapshot)
         {
-            Root = root;
-            Scopes = scopes;
+            Root = parserResult.RootBlock;
+            Scopes = parserResult.Blocks;
+            Errors = parserResult.Errors;
             Includes = includes;
             Snapshot = snapshot;
         }
 
         public IBlock Root { get; }
         public IReadOnlyList<IBlock> Scopes { get; }
+        public IReadOnlyList<IErrorToken> Errors { get; }
         public IReadOnlyList<IDocument> Includes { get; }
         public ITextSnapshot Snapshot { get; }
 

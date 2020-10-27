@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             _asm2InstructionCompletions = new List<MultipleCompletionItem>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
-            InstructionsUpdated(instructionListManager);
+            InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
         }
 
         public override void DisplayOptionsUpdated(OptionsProvider sender) =>
@@ -59,17 +59,23 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             return Task.FromResult(RadCompletionContext.Empty);
         }
 
-        private void InstructionsUpdated(IInstructionListManager sender)
+        private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {
-            _asm1InstructionCompletions.Clear();
-            _asm1InstructionCompletions.AddRange(
-                sender.GetInstructions(AsmType.RadAsm)
-                      .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+            if ((asmType & AsmType.RadAsm) != 0)
+            {
+                _asm1InstructionCompletions.Clear();
+                _asm1InstructionCompletions.AddRange(
+                    sender.GetSelectedSetInstructions(AsmType.RadAsm)
+                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+            }
 
-            _asm2InstructionCompletions.Clear();
-            _asm2InstructionCompletions.AddRange(
-                sender.GetInstructions(AsmType.RadAsm2)
-                      .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+            if ((asmType & AsmType.RadAsm2) != 0)
+            {
+                _asm2InstructionCompletions.Clear();
+                _asm2InstructionCompletions.AddRange(
+                    sender.GetSelectedSetInstructions(AsmType.RadAsm2)
+                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+            }
         }
     }
 }
