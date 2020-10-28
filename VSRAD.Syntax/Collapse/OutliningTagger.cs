@@ -21,6 +21,8 @@ namespace VSRAD.Syntax.Collapse
         {
             currentSpans = new List<Span>();
             documentAnalysis.AnalysisUpdated += AnalysisUpdated;
+            if (documentAnalysis.CurrentResult != null) 
+                AnalysisUpdated(documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
