@@ -7,15 +7,14 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using VSRAD.Deborgar;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.ProjectSystem
 {
     public interface IBreakpointTracker
     {
-        BreakTarget MoveToNextBreakTarget(string file, bool step);
-        uint[] GetBreakTargetLines(string file);
+        (string, uint[]) MoveToNextBreakTarget(bool step);
+        (string, uint[]) GetBreakTarget();
         void RunToLine(string file, uint line);
     }
 
@@ -23,16 +22,18 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class BreakpointTracker : IBreakpointTracker
     {
-        private readonly Dictionary<string, BreakTarget> _breakTargets = new Dictionary<string, BreakTarget>();
+        private readonly Dictionary<string, uint[]> _breakTargets = new Dictionary<string, uint[]>();
+        private readonly IActiveCodeEditor _codeEditor;
 
         private DTE _dte;
         private ProjectOptions _projectOptions;
 
-        private BreakTarget _runToLine;
+        private (string, uint[])? _runToLine;
 
         [ImportingConstructor]
-        public BreakpointTracker(IProject project, SVsServiceProvider serviceProvider)
+        public BreakpointTracker(IProject project, IActiveCodeEditor codeEditor, SVsServiceProvider serviceProvider)
         {
+            _codeEditor = codeEditor;
             project.Loaded += (options) =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
@@ -47,50 +48,48 @@ namespace VSRAD.Package.ProjectSystem
         public void RunToLine(string file, uint line)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            _runToLine = new BreakTarget(file, new[] { line }, isStepping: false);
+            _runToLine = (file, new[] { line });
 
             // Start debugging (F5)
             if (_dte.Debugger.CurrentMode != dbgDebugMode.dbgRunMode) // Go() must not be invoked when the debugger is already running (not in break mode)
                 _dte.Debugger.Go();
         }
 
-        public BreakTarget MoveToNextBreakTarget(string file, bool step)
+        public (string, uint[]) MoveToNextBreakTarget(bool step)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            BreakTarget target;
-            if (step)
+            (string, uint[]) target;
+
+            if (step && _projectOptions.DebuggerOptions.BreakMode != BreakMode.Multiple)
             {
+                var file = _codeEditor.GetAbsoluteSourcePath();
                 if (_breakTargets.TryGetValue(file, out var prevTarget))
-                {
-                    if (_projectOptions.DebuggerOptions.BreakMode == BreakMode.Multiple)
-                        target = new BreakTarget(file, prevTarget.Lines, isStepping: true);
-                    else
-                        target = new BreakTarget(file, new[] { prevTarget.Lines[0] + 1 }, isStepping: true);
-                }
+                    target = (file, new[] { prevTarget[0] + 1 });
                 else
-                {
-                    target = new BreakTarget(file, new[] { 0u }, isStepping: true);
-                }
+                    target = (file, new[] { 0u });
             }
             else
             {
-                target = new BreakTarget(file, GetBreakTargetLines(file), isStepping: true);
+                target = GetBreakTarget();
                 _runToLine = null;
             }
-            _breakTargets[file] = target;
+
+            _breakTargets[target.Item1] = target.Item2;
             return target;
         }
 
-        public uint[] GetBreakTargetLines(string file)
+        public (string, uint[]) GetBreakTarget()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            if (_runToLine is BreakTarget runToLineTarget)
-                return runToLineTarget.Lines;
+            if (_runToLine.HasValue)
+                return _runToLine.Value;
+
+            var file = _codeEditor.GetAbsoluteSourcePath();
 
             var breakpointLines = new List<uint>();
-            foreach (EnvDTE.Breakpoint bp in _dte.Debugger.Breakpoints)
+            foreach (Breakpoint bp in _dte.Debugger.Breakpoints)
                 if (bp.Enabled && bp.File == file)
                     breakpointLines.Add((uint)bp.FileLine - 1);
             breakpointLines.Sort();
@@ -106,20 +105,20 @@ namespace VSRAD.Package.ProjectSystem
             switch (_projectOptions.DebuggerOptions.BreakMode)
             {
                 case BreakMode.Multiple:
-                    return breakpointLines.ToArray();
+                    return (file, breakpointLines.ToArray());
                 case BreakMode.SingleRerun:
                     if (_breakTargets.TryGetValue(file, out var prevTarget))
-                        return prevTarget.Lines;
+                        return (file, prevTarget);
 
-                    return new[] { breakpointLines[0] };
+                    return (file, new[] { breakpointLines[0] });
                 default:
-                    var previousBreakLine = _breakTargets.TryGetValue(file, out prevTarget) ? prevTarget.Lines[0] : 0;
+                    var previousBreakLine = _breakTargets.TryGetValue(file, out prevTarget) ? prevTarget[0] : 0;
 
                     foreach (var breakLine in breakpointLines)
                         if (breakLine > previousBreakLine)
-                            return new[] { breakLine };
+                            return (file, new[] { breakLine });
 
-                    return new[] { breakpointLines[0] };
+                    return (file, new[] { breakpointLines[0] });
             }
         }
     }

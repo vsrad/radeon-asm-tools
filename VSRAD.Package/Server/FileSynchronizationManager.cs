@@ -42,7 +42,7 @@ namespace VSRAD.Package.Server
 
         public async Task SynchronizeRemoteAsync()
         {
-            var evaluator = await _project.GetMacroEvaluatorAsync(default);
+            var evaluator = await _project.GetMacroEvaluatorAsync();
             var optionsResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
             if (!optionsResult.TryGetResult(out var options, out var error))
                 throw new Exception(error.Message);

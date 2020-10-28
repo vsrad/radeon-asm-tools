@@ -146,7 +146,7 @@ namespace VSRAD.PackageTests.Server
             evaluator.Setup((e) => e.EvaluateAsync(_deployDirectory)).Returns(Task.FromResult<Result<string>>(_deployDirectory));
             evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.LocalWorkDir + ")")).Returns(Task.FromResult<Result<string>>(""));
             evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult<Result<string>>(""));
-            project.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
+            project.Setup((p) => p.GetMacroEvaluatorAsync()).Returns(Task.FromResult(evaluator.Object));
 
             sourceManager = sourceManager ?? new Mock<IProjectSourceManager>().Object;
             var syncer = new FileSynchronizationManager(channel, project.Object, sourceManager);

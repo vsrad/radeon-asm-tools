@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
@@ -82,12 +83,13 @@ namespace VSRAD.Package.ProjectSystem
 
         void IEngineIntegration.Execute(bool step)
         {
-            var file = _codeEditor.GetAbsoluteSourcePath();
-            var target = _breakpointTracker.MoveToNextBreakTarget(file, step);
+            var (file, breakLines) = _breakpointTracker.MoveToNextBreakTarget(step);
+            var line = _codeEditor.GetCurrentLine();
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
             {
-                var result = await _debugSession.ExecuteAsync(target.Lines, watches);
+                var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
+                var result = await _debugSession.ExecuteAsync(transients);
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
                 if (result.ActionResult != null)
@@ -100,17 +102,17 @@ namespace VSRAD.Package.ProjectSystem
                 if (result.Error is Error e2)
                     Errors.Show(e2);
 
-                RaiseExecutionCompleted(target, result.BreakState);
+                RaiseExecutionCompleted(file, breakLines, step, result.BreakState);
             },
-            exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(target, null));
+            exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(file, breakLines, step, null));
         }
 
         string IEngineIntegration.GetActiveSourcePath() =>
             _codeEditor.GetAbsoluteSourcePath();
 
-        private void RaiseExecutionCompleted(BreakTarget target, BreakState breakState)
+        private void RaiseExecutionCompleted(string file, uint[] lines, bool isStepping, BreakState breakState)
         {
-            var args = new ExecutionCompletedEventArgs(target, isSuccessful: breakState != null);
+            var args = new ExecutionCompletedEventArgs(file, lines, isStepping, isSuccessful: breakState != null);
             ExecutionCompleted(this, args);
             BreakEntered(breakState);
         }

@@ -9,6 +9,7 @@ using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
@@ -28,10 +29,11 @@ namespace VSRAD.Package.Server
             _serviceProvider = serviceProvider;
         }
 
-        public async Task<DebugRunResult> ExecuteAsync(uint[] breakLines, ReadOnlyCollection<string> watches)
+        public async Task<DebugRunResult> ExecuteAsync(MacroEvaluatorTransientValues transients)
         {
             var execTimer = Stopwatch.StartNew();
-            var evaluator = await _project.GetMacroEvaluatorAsync(breakLines).ConfigureAwait(false);
+            var evaluator = await _project.GetMacroEvaluatorAsync(transients).ConfigureAwait(false);
+            var watches = transients.Watches;
 
             var envResult = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator).ConfigureAwait(false);
             if (!envResult.TryGetResult(out var env, out var evalError))

@@ -3,8 +3,8 @@ using Microsoft.VisualStudio.Threading;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using Xunit;
@@ -24,6 +24,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 #pragma warning restore VSTHRD012
         }
 
+        private static readonly MacroEvaluatorTransientValues _emptyTransients =
+            new MacroEvaluatorTransientValues(0, "", Array.Empty<uint>(), new ReadOnlyCollection<string>(Array.Empty<string>()), "", "");
+
         [Fact]
         public async Task ProjectPropertiesTestAsync()
         {
@@ -35,7 +38,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             var props = new Mock<IProjectProperties>();
             props.Setup((p) => p.GetEvaluatedPropertyValueAsync("SolutionDir")).ReturnsAsync("/opt/rocm/examples/h");
 
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, EmptyRemoteEnv, new DebuggerOptions(), options);
             var result = await evaluator.EvaluateAsync("$(RadDebugArgs)");
             Assert.True(result.TryGetResult(out var evaluated, out _));
             Assert.Equal("/home/sayaka/projects/debug_bin.py --solution /opt/rocm/examples/h", evaluated);
@@ -45,29 +48,20 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         public async Task TransientValuesTestAsync()
         {
             var props = new Mock<IProjectProperties>();
-            var debuggerOptions = new DebuggerOptions(
-                new List<Watch> { new Watch("a", VariableType.Hex, false), new Watch("c", VariableType.Hex, false), new Watch("tide", VariableType.Hex, false) }
-            );
+            var transients = new MacroEvaluatorTransientValues(sourceLine: 666, sourcePath: @"B:\welcome\home",
+                new[] { 13u }, new ReadOnlyCollection<string>(new[] { "m", "c", "ride" }));
+            var evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
 
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
             var result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
             Assert.True(result.TryGetResult(out var evaluated, out _));
-            Assert.Equal("a:c:tide", evaluated);
-
-            var transients = new MacroEvaluatorTransientValues(sourceLine: 666, sourcePath: @"B:\welcome\home",
-                breakLines: new[] { 13u }, watchesOverride: new[] { "m", "c", "ride" });
-            evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
-
-            result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
-            Assert.True(result.TryGetResult(out evaluated, out _));
             Assert.Equal("m:c:ride", evaluated);
 
             result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceDir})\\$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLine})");
             Assert.True(result.TryGetResult(out evaluated, out _));
             Assert.Equal(@"B:\welcome\home:666, stop at 13", evaluated);
 
-            transients = new MacroEvaluatorTransientValues(0, "nofile", breakLines: new[] { 20u, 1u, 9u });
-            evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, debuggerOptions, new ProfileOptions());
+            transients = new MacroEvaluatorTransientValues(0, "nofile", new[] { 20u, 1u, 9u }, new ReadOnlyCollection<string>(new[] { "watch" }));
+            evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
             result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLine})");
             Assert.True(result.TryGetResult(out evaluated, out _));
             Assert.Equal("-l 20:1:9", evaluated);
@@ -80,7 +74,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             var remoteEnv = GetRemoteEnv(new Dictionary<string, string>() { { "MAMI_BREAKPOINT", "head" }, { "PATH", "/usr/bin:/root/soulgems" } });
             var localPath = Environment.GetEnvironmentVariable("PATH");
 
-            var evaluator = new MacroEvaluator(props.Object, default, remoteEnv, new DebuggerOptions(), new ProfileOptions());
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, remoteEnv, new DebuggerOptions(), new ProfileOptions());
             var result = await evaluator.EvaluateAsync("Local: $ENV(PATH), Remote: $ENVR(PATH), Break at: $ENVR(MAMI_BREAKPOINT)");
             Assert.True(result.TryGetResult(out var evaluated, out _));
             Assert.Equal($"Local: {localPath}, Remote: /usr/bin:/root/soulgems, Break at: head", evaluated);
@@ -94,7 +88,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         public async Task EmptyMacroNameTestAsync()
         {
             var props = new Mock<IProjectProperties>(MockBehavior.Strict); // fails the test if called
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
             Assert.True((await evaluator.EvaluateAsync("$()")).TryGetResult(out var evaluated, out _));
             Assert.Equal("$()", evaluated);
             Assert.True((await evaluator.EvaluateAsync("")).TryGetResult(out evaluated, out _));
@@ -104,7 +98,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         [Fact]
         public async Task EvaluateNullStringTestAsync()
         {
-            var evaluator = new MacroEvaluator(new Mock<IProjectProperties>().Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
+            var evaluator = new MacroEvaluator(new Mock<IProjectProperties>().Object, _emptyTransients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
             // Null strings may come from external sources (e.g. the .user.json file) and should be treated as empty
             Assert.True((await evaluator.EvaluateAsync(null)).TryGetResult(out var evaluated, out _));
             Assert.Equal("", evaluated);
@@ -118,7 +112,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             options.Macros.Add(new MacroItem("RadDebugExe", "/opt/rocm/debug_exe $(RadDebugArgs)", userDefined: true));
             options.Macros.Add(new MacroItem("RadDebugArgs", "--exec $(RadDebugExe)", userDefined: true));
 
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, EmptyRemoteEnv, new DebuggerOptions(), options);
             Assert.False((await evaluator.EvaluateAsync("$(RadDebugExe)")).TryGetResult(out _, out var error));
             Assert.Equal("$(RadDebugExe) contains a cycle: $(RadDebugExe) -> $(RadDebugArgs) -> $(RadDebugExe)", error.Message);
         }
@@ -131,7 +125,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             options.Macros.Add(new MacroItem("A", "$(A)", userDefined: true));
             options.Macros.Add(new MacroItem("B", "$(A)", userDefined: true));
 
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), options);
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, EmptyRemoteEnv, new DebuggerOptions(), options);
 
             Assert.False((await evaluator.EvaluateAsync("$(B)")).TryGetResult(out _, out var error));
             Assert.Equal("$(B) contains a cycle: $(B) -> $(A) -> $(A)", error.Message);
@@ -145,7 +139,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
             props.Setup((p) => p.GetEvaluatedPropertyValueAsync("M")).ReturnsAsync("middle");
             props.Setup((p) => p.GetEvaluatedPropertyValueAsync("E")).ReturnsAsync("end");
 
-            var evaluator = new MacroEvaluator(props.Object, default, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
             Assert.True((await evaluator.EvaluateAsync("$(S) $(M) $(E)")).TryGetResult(out var evaluated, out _));
             Assert.Equal("start middle end", evaluated);
             Assert.True((await evaluator.EvaluateAsync("$(S) $$() $( $(M) $(E)")).TryGetResult(out evaluated, out _));

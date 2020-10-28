@@ -2,11 +2,14 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using Task = System.Threading.Tasks.Task;
 
@@ -53,10 +56,13 @@ namespace VSRAD.Package.Commands
             if (string.IsNullOrWhiteSpace(activeWord))
                 return;
 
-            var breakLine = _codeEditor.GetCurrentLine() + 1;
+            var file = _codeEditor.GetAbsoluteSourcePath();
+            var line = _codeEditor.GetCurrentLine();
+            var breakLine = line + 1;
             var watchName = activeWord.Trim();
 
-            var evaluator = await _project.GetMacroEvaluatorAsync(new[] { breakLine }, watchesOverride: new[] { watchName });
+            var evaluator = await _project.GetMacroEvaluatorAsync(new MacroEvaluatorTransientValues(line, file, new[] { breakLine },
+                new ReadOnlyCollection<string>(new[] { watchName })));
             var options = await _project.Options.Profile.Debugger.EvaluateAsync(evaluator, _project.Options.Profile);
             await SetStatusBarTextAsync($"RAD Debug: Evaluating {watchName}...");
             try

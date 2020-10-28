@@ -2,28 +2,18 @@
 
 namespace VSRAD.Deborgar
 {
-    public sealed class BreakTarget
+    public sealed class ExecutionCompletedEventArgs : EventArgs
     {
         public string File { get; }
         public uint[] Lines { get; }
         public bool IsStepping { get; }
+        public bool IsSuccessful;
 
-        public BreakTarget(string file, uint[] lines, bool isStepping)
+        public ExecutionCompletedEventArgs(string file, uint[] lines, bool isStepping, bool isSuccessful)
         {
             File = file;
             Lines = lines;
             IsStepping = isStepping;
-        }
-    }
-
-    public sealed class ExecutionCompletedEventArgs : EventArgs
-    {
-        public BreakTarget Target { get; }
-        public bool IsSuccessful;
-
-        public ExecutionCompletedEventArgs(BreakTarget target, bool isSuccessful)
-        {
-            Target = target;
             IsSuccessful = isSuccessful;
         }
     }

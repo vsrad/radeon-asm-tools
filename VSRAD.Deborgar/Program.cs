@@ -35,12 +35,12 @@ namespace VSRAD.Deborgar
 
         private void ExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
         {
-            if (e.Target.IsStepping)
+            if (e.IsStepping)
                 _callbacks.OnStepComplete();
             else
                 _callbacks.OnBreakComplete();
 
-            CreateBreakFrame(e.Target.File, e.Target.Lines);
+            CreateBreakFrame(e.File, e.Lines);
         }
 
         public int Continue(IDebugThread2 thread) => ExecuteOnThread(thread);
