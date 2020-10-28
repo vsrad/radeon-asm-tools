@@ -7,6 +7,15 @@ namespace VSRAD.Syntax.FunctionList
 {
     public static class Helper
     {
+        static int CompareByLine(FunctionListItem a, FunctionListItem b) => a.LineNumber.CompareTo(b.LineNumber);
+        static int CompareByLineDesc(FunctionListItem a, FunctionListItem b) => -CompareByLine(a, b);
+        static int CompareByName(FunctionListItem a, FunctionListItem b)
+        {
+            var comapre = string.Compare(a.Text, b.Text, StringComparison.Ordinal);
+            return comapre == 0 ? CompareByLine(a, b) : comapre;
+        }
+        static int CompareByNameDesc(FunctionListItem a, FunctionListItem b) => -CompareByName(a, b);
+
         public static IEnumerable<FunctionListItem> SortAndFilter(List<FunctionListItem> items, SortState sortState, string filterText)
         {
             Sort(sortState, items);
@@ -20,27 +29,16 @@ namespace VSRAD.Syntax.FunctionList
 
         public static void Sort(SortState sortState, List<FunctionListItem> items)
         {
+            Func<FunctionListItem, FunctionListItem, int> comparison;
             switch (sortState)
             {
-                case SortState.ByLine:
-                    items.Sort((a, b) => a.LineNumber.CompareTo(b.LineNumber));
-                    break;
-
-                case SortState.ByName:
-                    items.Sort((a, b) => string.Compare(a.Text, b.Text, StringComparison.OrdinalIgnoreCase));
-                    break;
-
-                case SortState.ByLineDescending:
-                    items.Sort((a, b) => b.LineNumber.CompareTo(a.LineNumber));
-                    break;
-
-                case SortState.ByNameDescending:
-                    items.Sort((a, b) => string.Compare(b.Text, a.Text, StringComparison.OrdinalIgnoreCase));
-                    break;
-                default:
-                    items.Sort((a, b) => a.LineNumber.CompareTo(b.LineNumber));
-                    break;
+                case SortState.ByLine: comparison = CompareByLine; break;
+                case SortState.ByName: comparison = CompareByName; break;
+                case SortState.ByLineDescending: comparison = CompareByLineDesc; break;
+                case SortState.ByNameDescending: comparison = CompareByNameDesc; break;
+                default: return;
             }
+            items.Sort(new Comparison<FunctionListItem>(comparison));
         }
     }
 }

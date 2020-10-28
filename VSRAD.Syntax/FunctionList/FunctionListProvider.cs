@@ -24,6 +24,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
+        private IAnalysisResult loadedResult;
 
         private static FunctionListControl FunctionListControl => FunctionListControl.Instance;
 
@@ -111,14 +112,10 @@ namespace VSRAD.Syntax.FunctionList
 
         private void UpdateFunctionList(IDocument document)
         {
-            if (FunctionListControl == null) return;
-            Task.Run(async () =>
-            {
-                var analysisResult = await document.DocumentAnalysis
-                    .GetAnalysisResultAsync(document.CurrentSnapshot)
-                    .ConfigureAwait(false);
-                await UpdateFunctionListAsync(document, analysisResult, CancellationToken.None);
-            }).RunAsyncWithoutAwait();
+            var analysisResult = document.DocumentAnalysis.CurrentResult;
+
+            if (FunctionListControl == null || analysisResult == null) return;
+            UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
@@ -129,8 +126,9 @@ namespace VSRAD.Syntax.FunctionList
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            if (FunctionListControl == null) return;
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(document, analysisResult, cancellationToken));
+            if (FunctionListControl == null || analysisResult == loadedResult) return;
+            loadedResult = analysisResult;
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(document, loadedResult, cancellationToken));
         }
 
         private async Task UpdateFunctionListAsync(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
