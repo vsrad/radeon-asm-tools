@@ -23,7 +23,7 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ActiveCodeEditor : IActiveCodeEditor
     {
-        public const string NoSourceFilesOpenedError = "No source files opened in the editor.";
+        public const string NoFilesOpenError = "No files open in the editor.";
 
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ITextDocumentFactoryService _textDocumentService;
@@ -119,7 +119,7 @@ namespace VSRAD.Package.ProjectSystem
             Assumes.Present(textManager);
 
             textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-            return activeView ?? throw new InvalidOperationException(NoSourceFilesOpenedError);
+            return activeView ?? throw new InvalidOperationException(NoFilesOpenError);
         }
 
         private static IWpfTextView GetTextViewFromVsTextView(IVsTextView view)

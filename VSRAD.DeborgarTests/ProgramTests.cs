@@ -6,28 +6,19 @@ namespace VSRAD.DeborgarTests
 {
     public class ProgramTests
     {
-        private static (Program, Mock<IEngineIntegration>, Mock<IEngineCallbacks>) InitProgram(string file)
+        private static (Program, Mock<IEngineIntegration>, Mock<IEngineCallbacks>) InitProgram()
         {
             var program = new Program(null);
             var integration = new Mock<IEngineIntegration>();
             var callbacks = new Mock<IEngineCallbacks>();
-            integration.Setup((i) => i.GetActiveSourcePath()).Returns(file);
             program.AttachDebugger(integration.Object, callbacks.Object);
             return (program, integration, callbacks);
         }
 
         [Fact]
-        public void TestBreakFrameWithoutBreakpoints()
-        {
-            var (program, _, _) = InitProgram("h.s");
-            // When no breakpoints are set, the first break frame should be at the start of the file
-            Helpers.VerifyBreakFrameLocation(program, "h.s", 0);
-        }
-
-        [Fact]
         public void TestStoppingAtBreakpoint()
         {
-            var (program, integration, callbacks) = InitProgram("h.s");
+            var (program, integration, callbacks) = InitProgram();
 
             integration.Setup((i) => i.Execute(false)).Callback(() =>
                 integration.Raise((i) => i.ExecutionCompleted += null, null,
@@ -43,7 +34,7 @@ namespace VSRAD.DeborgarTests
         [Fact]
         public void TestStepping()
         {
-            var (program, integration, callbacks) = InitProgram("h.s");
+            var (program, integration, callbacks) = InitProgram();
 
             integration.Setup((i) => i.Execute(false)).Callback(() =>
                 integration.Raise((i) => i.ExecutionCompleted += null, null,

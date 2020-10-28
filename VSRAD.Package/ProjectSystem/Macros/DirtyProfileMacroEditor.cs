@@ -105,7 +105,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             {
                 return _project.GetMacroTransients();
             }
-            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoSourceFilesOpenedError)
+            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
             {
                 return new MacroEvaluatorTransientValues(0,
                     sourcePath: "<current source full path>",

@@ -29,18 +29,16 @@ namespace VSRAD.Deborgar
             _engineIntegration = engineIntegration;
             _engineIntegration.ExecutionCompleted += ExecutionCompleted;
             _callbacks = callbacks;
-
-            CreateBreakFrame(engineIntegration.GetActiveSourcePath(), new[] { 0u });
         }
 
         private void ExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
         {
+            _breakFrame = new StackFrame(e.File, new SourceFileLineContext(e.File, e.Lines));
+
             if (e.IsStepping)
                 _callbacks.OnStepComplete();
             else
                 _callbacks.OnBreakComplete();
-
-            CreateBreakFrame(e.File, e.Lines);
         }
 
         public int Continue(IDebugThread2 thread) => ExecuteOnThread(thread);
@@ -67,8 +65,7 @@ namespace VSRAD.Deborgar
 
         public int CauseBreak()
         {
-            CreateBreakFrame(_engineIntegration.GetActiveSourcePath(), new[] { 0u });
-            _callbacks.OnBreakComplete();
+            _engineIntegration.CauseBreak();
             return VSConstants.S_OK;
         }
 
@@ -83,11 +80,6 @@ namespace VSRAD.Deborgar
             _breakFrame.SetFrameInfo(dwFieldSpec, out var frameInfo);
             ppEnum = new AD7FrameInfoEnum(new FRAMEINFO[] { frameInfo });
             return VSConstants.S_OK;
-        }
-
-        private void CreateBreakFrame(string file, uint[] breakLines)
-        {
-            _breakFrame = new StackFrame(file, new SourceFileLineContext(file, breakLines));
         }
 
         public int CreatePendingBreakpoint(IDebugBreakpointRequest2 request, out IDebugPendingBreakpoint2 breakpoint)

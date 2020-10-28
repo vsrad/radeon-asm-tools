@@ -21,8 +21,7 @@ namespace VSRAD.Deborgar
     public interface IEngineIntegration
     {
         void Execute(bool step);
-        string GetActiveSourcePath();
-
+        void CauseBreak();
         event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
     }
 }

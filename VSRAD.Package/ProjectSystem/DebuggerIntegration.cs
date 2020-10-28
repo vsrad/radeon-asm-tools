@@ -83,32 +83,46 @@ namespace VSRAD.Package.ProjectSystem
 
         void IEngineIntegration.Execute(bool step)
         {
-            var (file, breakLines) = _breakpointTracker.MoveToNextBreakTarget(step);
-            var line = _codeEditor.GetCurrentLine();
-            var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            try
             {
-                var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
-                var result = await _debugSession.ExecuteAsync(transients);
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-                if (result.ActionResult != null)
+                var (file, breakLines) = _breakpointTracker.MoveToNextBreakTarget(step);
+                var line = _codeEditor.GetCurrentLine();
+                var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
-                    var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
-                    if (actionError is Error e1)
-                        Errors.Show(e1);
-                }
+                    var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
+                    var result = await _debugSession.ExecuteAsync(transients);
+                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-                if (result.Error is Error e2)
-                    Errors.Show(e2);
+                    if (result.ActionResult != null)
+                    {
+                        var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
+                        if (actionError is Error e1)
+                            Errors.Show(e1);
+                    }
 
-                RaiseExecutionCompleted(file, breakLines, step, result.BreakState);
-            },
-            exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(file, breakLines, step, null));
+                    if (result.Error is Error e2)
+                        Errors.Show(e2);
+
+                    RaiseExecutionCompleted(file, breakLines, step, result.BreakState);
+                },
+                exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(file, breakLines, step, null));
+            }
+            catch (Exception e)
+            {
+                Errors.ShowException(e);
+                RaiseExecutionCompleted("", new[] { 0u }, step, null);
+            }
         }
 
-        string IEngineIntegration.GetActiveSourcePath() =>
-            _codeEditor.GetAbsoluteSourcePath();
+        void IEngineIntegration.CauseBreak()
+        {
+            string file = "";
+            // May throw an exception if no files are open in the editor
+            try { file = _codeEditor.GetAbsoluteSourcePath(); } catch { }
+
+            RaiseExecutionCompleted(file, new[] { 0u }, isStepping: false, null);
+        }
 
         private void RaiseExecutionCompleted(string file, uint[] lines, bool isStepping, BreakState breakState)
         {
