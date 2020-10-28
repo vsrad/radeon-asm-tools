@@ -61,7 +61,9 @@ namespace VSRAD.Syntax.Core
             if (buffer.Properties.TryGetProperty(typeof(IDocument), out IDocument document))
                 return document;
 
-            var textDocument = buffer.Properties.GetProperty<ITextDocument>(typeof(ITextDocument));
+            if (!buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument))
+                return null;
+
             var factory = GetDocumentFactory(textDocument);
             if (factory == null) return null;
 
