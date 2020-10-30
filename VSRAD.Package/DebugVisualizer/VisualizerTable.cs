@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Windows.Media;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
 
@@ -149,7 +150,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
             else
             {
-                DefaultCellStyle.SelectionBackColor = SystemColors.ControlDark;
+                DefaultCellStyle.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
                 CancelEdit();
             }
         }
