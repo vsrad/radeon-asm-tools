@@ -46,4 +46,7 @@ if $(ConfigurationName) == Debug echo 'Warning: you publish debug build' 1&gt;&a
   <ItemGroup>
     <UpToDateCheckInput Include="../VSRAD.Package/Resources/*.png" />
   </ItemGroup>
+  <Target Name="Clean">
+    <RemoveDir Directories="$(ProjectDir)..\$(ConfigurationName)"/>
+  </Target>
 </Project>
