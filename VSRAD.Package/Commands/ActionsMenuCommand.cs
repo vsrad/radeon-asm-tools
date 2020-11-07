@@ -23,6 +23,7 @@ namespace VSRAD.Package.Commands
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
+        private bool _actionRuns;
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
@@ -39,6 +40,7 @@ namespace VSRAD.Package.Commands
             _serviceProvider = serviceProvider;
             _deployManager = deployManager;
             _statusBar = new VsStatusBarWriter(serviceProvider);
+            _actionRuns = false;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
@@ -110,6 +112,12 @@ namespace VSRAD.Package.Commands
         {
             try
             {
+                if (_actionRuns)
+                {
+                    Errors.Show(new Error("Action runs"));
+                    return;
+                }
+                _actionRuns = true;
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
@@ -137,6 +145,7 @@ namespace VSRAD.Package.Commands
             finally
             {
                 await _statusBar.ClearAsync();
+                _actionRuns = false;
             }
         }
     }
