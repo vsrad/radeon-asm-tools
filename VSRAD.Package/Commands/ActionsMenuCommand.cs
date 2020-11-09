@@ -23,7 +23,8 @@ namespace VSRAD.Package.Commands
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
-        private bool _actionRuns;
+        private bool _actionRuns = false;
+        private string _currentActionName;
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
@@ -40,7 +41,6 @@ namespace VSRAD.Package.Commands
             _serviceProvider = serviceProvider;
             _deployManager = deployManager;
             _statusBar = new VsStatusBarWriter(serviceProvider);
-            _actionRuns = false;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
@@ -114,10 +114,11 @@ namespace VSRAD.Package.Commands
             {
                 if (_actionRuns)
                 {
-                    Errors.Show(new Error("Action runs"));
+                    Errors.Show(new Error($"Action {action.Name} is running.\nIf you think that this may be hang, please use Disconnect button."));
                     return;
                 }
                 _actionRuns = true;
+                _currentActionName = action.Name;
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
@@ -125,12 +126,14 @@ namespace VSRAD.Package.Commands
                 if (!envResult.TryGetResult(out var env, out var evalError))
                 {
                     Errors.Show(evalError);
+                    _actionRuns = false;
                     return;
                 }
                 var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
                 if (!evalResult.TryGetResult(out action, out evalError))
                 {
                     Errors.Show(evalError);
+                    _actionRuns = false;
                     return;
                 }
 
@@ -141,11 +144,15 @@ namespace VSRAD.Package.Commands
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
                 if (actionError is Error runError)
                     Errors.Show(runError);
+                _actionRuns = false;
+            }
+            catch (OperationCanceledException)
+            {
+                _actionRuns = false;
             }
             finally
             {
                 await _statusBar.ClearAsync();
-                _actionRuns = false;
             }
         }
     }
