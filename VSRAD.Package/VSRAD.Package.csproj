@@ -174,8 +174,10 @@
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
+    <Compile Include="DebugVisualizer\Wavemap\WavemapCanvas.cs" />
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
+    <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />
     <Compile Include="Options\DefaultOptionValues.cs" />
     <Compile Include="Options\MacroItem.cs" />
     <Compile Include="Options\SliceVisualizerOptions.cs" />

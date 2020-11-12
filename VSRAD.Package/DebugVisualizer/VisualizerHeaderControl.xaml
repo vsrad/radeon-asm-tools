@@ -15,6 +15,7 @@
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="App args" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="Break args" IsChecked="{Binding Options.VisualizerOptions.ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Wavemap" IsChecked="{Binding Options.VisualizerOptions.ShowWavemapField, Mode=TwoWay}" IsCheckable="True"/>
         </ContextMenu>
     </UserControl.ContextMenu>
     <UserControl.Resources>
@@ -118,10 +119,23 @@
                         </Style>
                     </RowDefinition.Style>
                 </RowDefinition>
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="Auto" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemapField}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
             </Grid.RowDefinitions>
             <Label Grid.Row="0" Grid.Column="0" Content="Columns:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <Label Grid.Row="1" Grid.Column="0" Content="App args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <Label Grid.Row="2" Grid.Column="0" Content="Break args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Grid.Row="3" Grid.Column="0" Content="Wavemap:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <TextBox Text="{Binding Options.VisualizerColumnStyling.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
                      Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
@@ -137,6 +151,9 @@
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Hidden" Grid.Row="3" Grid.Column="1">
+                <Canvas x:Name="WavemapCanvas" Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+            </ScrollViewer>
         </Grid>
     </StackPanel>
 </UserControl>

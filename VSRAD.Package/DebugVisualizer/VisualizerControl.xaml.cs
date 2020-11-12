@@ -1,5 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -10,15 +13,20 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
+        private readonly WavemapCanvas _wavemap;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
             _context.Options.DebuggerOptions.PropertyChanged += DebuggerOptionChanged;
+            _context.Options.VisualizerOptions.PropertyChanged += HandleWavemapElementSize;
             _context.GroupFetched += GroupFetched;
+            _context.GroupFetching += SetupDataFetch;
             DataContext = _context;
             InitializeComponent();
+
+            _wavemap = new WavemapCanvas(HeaderHost.WavemapCanvas, _context.Options.VisualizerOptions.WavemapElementSize);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
@@ -43,6 +51,21 @@ namespace VSRAD.Package.DebugVisualizer
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
+        }
+
+        private void HandleWavemapElementSize(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
+            {
+                _wavemap.RectangleSize = _context.Options.VisualizerOptions.WavemapElementSize;
+                _context.CanvasWidth = _wavemap.Width;
+                _context.CanvasHeight = _wavemap.Height;
+            }
+        }
+
+        private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
+        {
+            e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemapField;
         }
 
         private void DebuggerOptionChanged(object sender, PropertyChangedEventArgs e)
@@ -78,6 +101,10 @@ namespace VSRAD.Package.DebugVisualizer
 
             _table.ApplyWatchStyling();
             RefreshDataStyling();
+
+            _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
+            _context.CanvasWidth = _wavemap.Width;
+            _context.CanvasHeight = _wavemap.Height;
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);

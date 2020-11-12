@@ -50,7 +50,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
         {
-            e.FetchWholeFile = _windowVisible;
+            e.FetchWholeFile |= _windowVisible;
         }
 
         private void DisplayFetchedData(object sender, GroupFetchedEventArgs e)

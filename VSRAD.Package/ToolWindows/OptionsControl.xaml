@@ -169,6 +169,12 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Wavemap element size" VerticalAlignment="Center"/>
+                            <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="7" Maximum="100" Margin="5,0,0,0"
+                                            Value="{Binding Options.VisualizerOptions.WavemapElementSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="px" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                 </Expander>
             </StackPanel>

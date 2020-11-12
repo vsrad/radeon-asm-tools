@@ -1,4 +1,4 @@
-﻿using VSRAD.Package.DebugVisualizer;
+using VSRAD.Package.DebugVisualizer;
 using Xunit;
 
 namespace VSRAD.PackageTests.DebugVisualizer

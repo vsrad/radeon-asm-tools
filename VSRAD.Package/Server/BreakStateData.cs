@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.Server
@@ -158,6 +159,8 @@ namespace VSRAD.Package.Server
             }
             return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, nGroups), laneDataOffset, _laneDataSize);
         }
+
+        public WavemapView GetWavemapView(int waveSize) => new WavemapView(_data, waveSize, Watches.Count + 1, GroupSize, _data.Length / GroupSize / _laneDataSize); // real group count
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile = false)
         {

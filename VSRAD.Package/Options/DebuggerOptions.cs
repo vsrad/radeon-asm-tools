@@ -26,7 +26,7 @@ namespace VSRAD.Package.Options
             new ReadOnlyCollection<string>(Watches.Where(w => w.IsAVGPR).Select(w => w.Name).Distinct().ToList());
 
         private uint _nGroups;
-        public uint NGroups { get => _nGroups; set => SetField(ref _nGroups, value); }
+        public uint NGroups { get => _nGroups; set => SetField(ref _nGroups, (uint)0); } // always 0 for now as it should be refactored (see ce37993)
 
         private uint _counter;
         public uint Counter { get => _counter; set => SetField(ref _counter, value); }
