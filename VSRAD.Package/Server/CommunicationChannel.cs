@@ -87,9 +87,21 @@ namespace VSRAD.Package.Server
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); };
         }
 
-        public async Task SendAsync(ICommand command)
+        public Task SendAsync(ICommand command) => SendAsync(command, true);
+
+        private async Task SendAsync(ICommand command, bool tryReconnect)
         {
-            await EstablishServerConnectionAsync().ConfigureAwait(false);
+            try
+            {
+                await EstablishServerConnectionAsync().ConfigureAwait(false);
+            }
+            catch (ConnectionRefusedException e) when (!tryReconnect)
+            {
+                ForceDisconnect();
+                await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
+                throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+            }
+
             try
             {
                 await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
@@ -102,7 +114,16 @@ namespace VSRAD.Package.Server
             catch (Exception e)
             {
                 ForceDisconnect();
-                throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                if (tryReconnect)
+                {
+                    await _outputWindowWriter.PrintMessageAsync($"Connection lost, attempting to reconnect...").ConfigureAwait(false);
+                    await SendAsync(command, false);
+                }
+                else
+                {
+                    await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
+                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                }
             }
         }
 
