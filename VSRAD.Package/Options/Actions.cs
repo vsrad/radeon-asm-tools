@@ -297,6 +297,65 @@ namespace VSRAD.Package.Options
         }
     }
 
+    public sealed class ReadDebugDataStep : DefaultNotifyPropertyChanged, IActionStep
+    {
+        public BuiltinActionFile OutputFile { get; }
+        public BuiltinActionFile WatchesFile { get; }
+        public BuiltinActionFile StatusFile { get; }
+
+        private bool _binaryOutput = true;
+        public bool BinaryOutput { get => _binaryOutput; set => SetField(ref _binaryOutput, value); }
+
+        private int _outputOffset = 0;
+        public int OutputOffset { get => _outputOffset; set => SetField(ref _outputOffset, value); }
+
+        public ReadDebugDataStep() : this(new BuiltinActionFile(), new BuiltinActionFile(), new BuiltinActionFile(), binaryOutput: true, outputOffset: 0) { }
+
+        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile statusFile, bool binaryOutput, int outputOffset)
+        {
+            OutputFile = outputFile;
+            WatchesFile = watchesFile;
+            StatusFile = statusFile;
+            BinaryOutput = binaryOutput;
+            OutputOffset = outputOffset;
+        }
+
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        {
+            var outputResult = await OutputFile.EvaluateAsync(evaluator);
+            if (!outputResult.TryGetResult(out var outputFile, out var error))
+                return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
+            if (!watchesResult.TryGetResult(out var watchesFile, out error))
+                return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            var statusResult = await StatusFile.EvaluateAsync(evaluator);
+            if (!statusResult.TryGetResult(out var statusFile, out error))
+                return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+
+            return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
+                outputFile: outputFile, watchesFile: watchesFile, statusFile: statusFile);
+        }
+
+        public override string ToString()
+        {
+            if (string.IsNullOrWhiteSpace(OutputFile.Path))
+                return "Read Debug Data";
+
+            var env = OutputFile.Location == StepEnvironment.Remote ? "Remote" : "Local";
+            return $"Read Debug Data {env} {OutputFile.Path}";
+        }
+
+        public override int GetHashCode() => 9;
+
+        public override bool Equals(object obj) =>
+            obj is ReadDebugDataStep step &&
+            OutputFile.Equals(step.OutputFile) &&
+            WatchesFile.Equals(step.WatchesFile) &&
+            StatusFile.Equals(step.StatusFile) &&
+            BinaryOutput == step.BinaryOutput &&
+            OutputOffset == step.OutputOffset;
+    }
+
     public sealed class ActionStepJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType) =>
@@ -325,6 +384,7 @@ namespace VSRAD.Package.Options
                 case "CopyFile": return new CopyFileStep();
                 case "OpenInEditor": return new OpenInEditorStep();
                 case "RunAction": return new RunActionStep();
+                case "ReadDebugData": return new ReadDebugDataStep();
             }
             throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
         }
@@ -337,6 +397,7 @@ namespace VSRAD.Package.Options
                 case CopyFileStep _: return "CopyFile";
                 case OpenInEditorStep _: return "OpenInEditor";
                 case RunActionStep _: return "RunAction";
+                case ReadDebugDataStep _: return "ReadDebugData";
             }
             throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));
         }
