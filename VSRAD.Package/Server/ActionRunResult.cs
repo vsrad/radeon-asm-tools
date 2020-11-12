@@ -18,7 +18,7 @@ namespace VSRAD.Package.Server
         public StepResult[] StepResults { get; }
 
         /// <summary>Non-null if the action includes a <c>ReadDebugData</c> step and it was executed successfully.</summary>
-        public BreakState BreakState { get; private set; }
+        public BreakState BreakState { get; set; }
 
         public bool Successful => StepResults.All(r => r.Successful);
 
@@ -42,12 +42,6 @@ namespace VSRAD.Package.Server
         {
             StepRunMillis[stepIndex] = MeasureInterval();
             StepResults[stepIndex] = result;
-        }
-
-        public void RecordDebugDataStep(int stepIndex, StepResult result, BreakState breakState)
-        {
-            RecordStep(stepIndex, result);
-            BreakState = breakState;
         }
 
         public void FinishRun() =>

@@ -1,9 +1,11 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
@@ -54,6 +56,9 @@ namespace VSRAD.Package.Server
                         break;
                     case RunActionStep runAction:
                         result = await DoRunActionAsync(runAction, continueOnError);
+                        break;
+                    case ReadDebugDataStep readDebugData:
+                        (result, runStats.BreakState) = await DoReadDebugDataAsync(readDebugData);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -183,6 +188,90 @@ namespace VSRAD.Package.Server
         {
             var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>(), continueOnError);
             return new StepResult(subActionResult.Successful, "", "", subActionResult);
+        }
+
+        private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
+        {
+            ReadOnlyCollection<string> watches = null;
+            string statusString = null;
+
+            if (!string.IsNullOrEmpty(step.WatchesFile.Path))
+            {
+                var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
+                if (!result.TryGetResult(out var data, out var error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                var watchString = Encoding.UTF8.GetString(data);
+                var watchArray = watchString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                watches = Array.AsReadOnly(watchArray);
+            }
+            if (!string.IsNullOrEmpty(step.StatusFile.Path))
+            {
+                var result = await ReadDebugDataFileAsync("Status string", step.StatusFile.Path, step.StatusFile.IsRemote(), step.StatusFile.CheckTimestamp);
+                if (!result.TryGetResult(out var data, out var error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                statusString = Encoding.UTF8.GetString(data);
+                statusString = Regex.Replace(statusString, @"[^\r]\n", "\r\n");
+            }
+            {
+                var result = await ReadDebugOutputMetadataAsync(step.OutputFile.Path, step.OutputFile.IsRemote(), step.OutputFile.CheckTimestamp, step.BinaryOutput);
+                if (!result.TryGetResult(out var metadata, out var error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                // TODO: refactor OutputFile away
+                var output = new OutputFile(directory: _environment.RemoteWorkDir, file: step.OutputFile.Path, step.BinaryOutput);
+                var data = new BreakStateData(watches, output, metadata.timestamp, metadata.byteCount, step.OutputOffset);
+
+                var dispatchParamsResult = BreakStateDispatchParameters.Parse(statusString);
+                if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                return (new StepResult(true, "", ""), new BreakState(data, dispatchParams));
+            }
+        }
+
+        private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, bool checkTimestamp)
+        {
+            var initTimestamp = GetInitialFileTimestamp(path);
+            if (isRemote)
+            {
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
+                    new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
+
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"{type} file ({path}) could not be found.", title: $"{type} file is missing");
+                if (checkTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"{type} file ({path}) was not modified.", title: "Data may be stale");
+
+                return response.Data;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private async Task<Result<(DateTime timestamp, int byteCount)>> ReadDebugOutputMetadataAsync(string path, bool isRemote, bool checkTimestamp, bool binaryOutput)
+        {
+            var initTimestamp = GetInitialFileTimestamp(path);
+            if (isRemote)
+            {
+                var response = await _channel.SendWithReplyAsync<MetadataFetched>(
+                    new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, path }, BinaryOutput = binaryOutput });
+
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"Output file ({path}) could not be found.", title: "Output file is missing");
+                if (checkTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"Output file ({path}) was not modified.", title: "Data may be stale");
+
+                return (response.Timestamp, response.ByteCount);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)

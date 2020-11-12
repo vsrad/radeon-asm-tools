@@ -11,7 +11,7 @@ namespace VSRAD.Package.Server
         public int ExitCode { get; } = 0; // TODO: is this obsolete?
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
-        public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters, long totalElapsedMilliseconds)
+        public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters, long totalElapsedMilliseconds = 0)
         {
             Data = breakStateData;
             DispatchParameters = dispatchParameters;
