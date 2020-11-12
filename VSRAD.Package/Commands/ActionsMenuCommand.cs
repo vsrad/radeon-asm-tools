@@ -111,8 +111,8 @@ namespace VSRAD.Package.Commands
         {
             if (_currentActionName != null)
             {
-                Errors.Show(new Error($"Action {_currentActionName} is already running.\nIf you believe this to be a hang, use the Disconnect button available in " +
-                    $"Tools -> RAD Debug -> Options to abort the currently running action."));
+                Errors.ShowWarning($"Action {_currentActionName} is already running.\nIf you believe this to be a hang, use the Disconnect button available in " +
+                    $"Tools -> RAD Debug -> Options to abort the currently running action.");
                 return;
             }
 
