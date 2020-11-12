@@ -110,15 +110,6 @@ namespace VSRAD.Package.Server
 #endif
         }
 
-        private static Error? ValidateConfiguration(DebuggerProfileOptions options)
-        {
-            if (string.IsNullOrEmpty(options.OutputFile.Path))
-                return new Error("Debugger output path is not specified. To set it, go to Tools -> RAD Debug -> Options and edit your current profile.");
-            if (!options.OutputFile.IsRemote() || !options.WatchesFile.IsRemote() || !options.StatusFile.IsRemote())
-                return new Error("Local debugger output paths are not supported in this version of RAD Debugger.");
-            return null;
-        }
-
         private static Result<string> ReadTextFile(string title, BuiltinActionFile file, ResultRangeFetched response, DateTime initTimestamp)
         {
             if (file.IsRemote())

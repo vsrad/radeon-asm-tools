@@ -76,24 +76,6 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task ConfigValidationTestAsync()
-        {
-            var project = TestHelper.MakeProjectWithProfile().Object;
-            project.Options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
-            project.Options.Profile.Debugger.OutputFile.Path = "";
-            var session = new DebugSession(project, null, null, null);
-            var transients = new MacroEvaluatorTransientValues(0, "file", new[] { 13u }, new ReadOnlyCollection<string>(Array.Empty<string>()));
-            var result = await session.ExecuteAsync(transients);
-            Assert.Equal("Debugger output path is not specified. To set it, go to Tools -> RAD Debug -> Options and edit your current profile.", result.Error.Value.Message);
-
-            project.Options.Profile.Debugger.OutputFile.Path = "C:\\Users\\J\\output";
-            project.Options.Profile.Debugger.OutputFile.Location = StepEnvironment.Local;
-
-            result = await session.ExecuteAsync(transients);
-            Assert.Equal("Local debugger output paths are not supported in this version of RAD Debugger.", result.Error.Value.Message);
-        }
-
-        [Fact]
         public async Task SuccessfulRunWithStatusFileTestAsync()
         {
             var channel = new MockCommunicationChannel();

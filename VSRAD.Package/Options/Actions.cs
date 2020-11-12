@@ -325,9 +325,13 @@ namespace VSRAD.Package.Options
             var outputResult = await OutputFile.EvaluateAsync(evaluator);
             if (!outputResult.TryGetResult(out var outputFile, out var error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            if (string.IsNullOrEmpty(outputFile.Path))
+                return EvaluationError(sourceAction, "Read Debug Data", "Debug data path is not specified");
+
             var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
             if (!watchesResult.TryGetResult(out var watchesFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+
             var statusResult = await StatusFile.EvaluateAsync(evaluator);
             if (!statusResult.TryGetResult(out var statusFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
