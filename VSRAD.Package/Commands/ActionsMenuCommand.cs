@@ -138,7 +138,7 @@ namespace VSRAD.Package.Commands
                 await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
 
                 var runner = new ActionRunner(_channel, _serviceProvider, env);
-                var result = await runner.RunAsync(action.Name, action.Steps, Enumerable.Empty<BuiltinActionFile>(), _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
+                var result = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
                 if (actionError is Error runError)
                     Errors.Show(runError);

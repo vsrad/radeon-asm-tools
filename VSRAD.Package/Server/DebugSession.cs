@@ -31,6 +31,8 @@ namespace VSRAD.Package.Server
 
         public async Task<DebugRunResult> ExecuteAsync(MacroEvaluatorTransientValues transients)
         {
+            throw new NotImplementedException();
+#if false
             var execTimer = Stopwatch.StartNew();
             var evaluator = await _project.GetMacroEvaluatorAsync(transients).ConfigureAwait(false);
             var watches = transients.Watches;
@@ -48,7 +50,7 @@ namespace VSRAD.Package.Server
 
             var runner = new ActionRunner(_channel, _serviceProvider, env);
             var auxFiles = new[] { options.OutputFile, options.WatchesFile, options.StatusFile };
-            var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, auxFiles, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
+            var result = await runner.RunAsync(ActionProfileOptions.BuiltinActionDebug, options.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
 
             if (!result.Successful && !_project.Options.Profile.General.ContinueActionExecOnError)
                 return new DebugRunResult(result, null, null);
@@ -105,6 +107,7 @@ namespace VSRAD.Package.Server
                 
                 return new DebugRunResult(result, null, new BreakState(data, dispatchParams, execTimer.ElapsedMilliseconds));
             }
+#endif
         }
 
         private static Error? ValidateConfiguration(DebuggerProfileOptions options)

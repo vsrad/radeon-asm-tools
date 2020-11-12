@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -33,11 +32,11 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles, bool continueOnError = true)
+        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, bool continueOnError = true)
         {
             var runStats = new ActionRunResult(actionName, steps, continueOnError);
 
-            await FillInitialTimestampsAsync(steps, auxFiles);
+            await FillInitialTimestampsAsync(steps);
             runStats.RecordInitTimestampFetch();
 
             for (int i = 0; i < steps.Count; ++i)
@@ -186,7 +185,7 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
         {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>(), continueOnError);
+            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError);
             return new StepResult(subActionResult.Successful, "", "", subActionResult);
         }
 
@@ -274,10 +273,8 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps)
         {
-            var remoteCommands = new List<ICommand>();
-
             foreach (var step in steps)
             {
                 if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
@@ -285,29 +282,23 @@ namespace VSRAD.Package.Server
                     if (copyFile.Direction == FileCopyDirection.LocalToRemote)
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
                     else
-                        remoteCommands.Add(new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } });
+                        _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
+                            new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
                 }
-            }
-
-            foreach (var auxFile in auxFiles)
-            {
-                if (!auxFile.CheckTimestamp || string.IsNullOrEmpty(auxFile.Path))
-                    continue;
-                if (auxFile.IsRemote())
-                    remoteCommands.Add(new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, auxFile.Path } });
-                else
-                    _initialTimestamps[auxFile.Path] = GetLocalFileTimestamp(auxFile.Path);
-            }
-
-            if (remoteCommands.Count == 0)
-                return;
-
-            var remoteResponses = await _channel.SendBundleAsync(remoteCommands);
-            for (int i = 0; i < remoteCommands.Count; ++i)
-            {
-                var path = ((FetchMetadata)remoteCommands[i]).FilePath[1];
-                if (remoteResponses[i] is MetadataFetched metadata)
-                    _initialTimestamps[path] = metadata.Timestamp;
+                else if (step is ReadDebugDataStep readDebugData)
+                {
+                    var files = new[] { readDebugData.WatchesFile, readDebugData.StatusFile, readDebugData.OutputFile };
+                    foreach (var file in files)
+                    {
+                        if (!file.CheckTimestamp || string.IsNullOrEmpty(file.Path))
+                            continue;
+                        if (file.IsRemote())
+                            _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
+                                new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, file.Path } })).Timestamp;
+                        else
+                            _initialTimestamps[file.Path] = GetLocalFileTimestamp(file.Path);
+                    }
+                }
             }
         }
 
