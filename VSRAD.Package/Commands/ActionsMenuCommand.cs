@@ -23,6 +23,7 @@ namespace VSRAD.Package.Commands
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
+        private string _currentActionName;
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
@@ -108,8 +109,16 @@ namespace VSRAD.Package.Commands
 
         private async Task ExecuteActionAsync(ActionProfileOptions action)
         {
+            if (_currentActionName != null)
+            {
+                Errors.ShowWarning($"Action {_currentActionName} is already running.\nIf you believe this to be a hang, use the Disconnect button available in " +
+                    $"Tools -> RAD Debug -> Options to abort the currently running action.");
+                return;
+            }
+
             try
             {
+                _currentActionName = action.Name;
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
@@ -137,6 +146,7 @@ namespace VSRAD.Package.Commands
             finally
             {
                 await _statusBar.ClearAsync();
+                _currentActionName = null;
             }
         }
     }
