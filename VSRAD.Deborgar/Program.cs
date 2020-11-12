@@ -1,8 +1,9 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using VSRAD.Deborgar.Server;
+using System.Runtime.InteropServices;
 
 namespace VSRAD.Deborgar
 {
@@ -11,8 +12,8 @@ namespace VSRAD.Deborgar
         private readonly IDebugProcess2 _process;
         private readonly Guid _programId = Guid.NewGuid();
 
-        private IBreakpointManager _breakpointManager;
-        private ExecutionController _executionController;
+        private readonly Dictionary<string, List<Breakpoint>> _breakpoints = new Dictionary<string, List<Breakpoint>>();
+
         private IEngineIntegration _engineIntegration;
         private IEngineCallbacks _callbacks;
 
@@ -23,57 +24,48 @@ namespace VSRAD.Deborgar
             _process = process;
         }
 
-        public void AttachDebugger(IEngineIntegration engineIntegration, IEngineCallbacks callbacks, IBreakpointManager breakpointManager)
+        public void AttachDebugger(IEngineIntegration engineIntegration, IEngineCallbacks callbacks)
         {
             _engineIntegration = engineIntegration;
+            _engineIntegration.ExecutionCompleted += ExecutionCompleted;
             _callbacks = callbacks;
-
-            _engineIntegration.ExecutionCompleted += (_) => CreateBreakFrame();
-
-            _breakpointManager = breakpointManager;
-            _executionController = new ExecutionController(engineIntegration, callbacks);
-
-            CreateBreakFrame(engineIntegration.GetActiveSourcePath(), new[] { 0u });
         }
 
-        public int CreatePendingBreakpoint(IDebugBreakpointRequest2 request, out IDebugPendingBreakpoint2 breakpoint)
+        private void ExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
         {
-            breakpoint = _breakpointManager.TryCreateBreakpoint(this, request);
-            return (breakpoint != null) ? VSConstants.S_OK : VSConstants.E_FAIL;
+            _breakFrame = new StackFrame(e.File, new SourceFileLineContext(e.File, e.Lines));
+
+            if (e.IsStepping)
+                _callbacks.OnStepComplete();
+            else
+                _callbacks.OnBreakComplete();
         }
 
         public int Continue(IDebugThread2 thread) => ExecuteOnThread(thread);
 
         public int ExecuteOnThread(IDebugThread2 thread)
         {
-            var file = _engineIntegration.GetActiveSourcePath();
-            _executionController.ComputeNextBreakTarget(file, _breakpointManager);
-            _engineIntegration.Execute(_executionController.CurrentBreakTarget);
-
+            _engineIntegration.Execute(step: false);
             return VSConstants.S_OK;
         }
 
         public int Step(IDebugThread2 pThread, enum_STEPKIND sk, enum_STEPUNIT step)
         {
-            if (sk == enum_STEPKIND.STEP_INTO || sk == enum_STEPKIND.STEP_OUT || sk == enum_STEPKIND.STEP_OVER)
+            switch (sk)
             {
-                var file = _engineIntegration.GetActiveSourcePath();
-                _executionController.ComputeNextStepTarget(file);
-                _engineIntegration.Execute(_executionController.CurrentBreakTarget);
-
-                return VSConstants.S_OK;
+                case enum_STEPKIND.STEP_INTO:
+                case enum_STEPKIND.STEP_OUT:
+                case enum_STEPKIND.STEP_OVER:
+                    _engineIntegration.Execute(step: true);
+                    return VSConstants.S_OK;
+                default:
+                    return VSConstants.E_NOTIMPL;
             }
-            return VSConstants.E_NOTIMPL;
         }
 
         public int CauseBreak()
         {
-            CreateBreakFrame();
-            var breakpoints = _breakpointManager.GetBreakpointsByLines(_executionController.CurrentFile, _executionController.CurrentBreakTarget);
-            if (breakpoints.Length > 0)
-                _callbacks.OnBreakpointsHit(breakpoints);
-            else
-                _callbacks.OnBreakComplete();
+            _engineIntegration.CauseBreak();
             return VSConstants.S_OK;
         }
 
@@ -90,12 +82,44 @@ namespace VSRAD.Deborgar
             return VSConstants.S_OK;
         }
 
-        private void CreateBreakFrame()
-            => CreateBreakFrame(_executionController.CurrentFile, _executionController.CurrentBreakTarget);
-
-        private void CreateBreakFrame(string file, uint[] breakLines)
+        public int CreatePendingBreakpoint(IDebugBreakpointRequest2 request, out IDebugPendingBreakpoint2 breakpoint)
         {
-            _breakFrame = new StackFrame(file, new SourceFileLineContext(file, breakLines));
+            var requestInfo = new BP_REQUEST_INFO[1];
+            ErrorHandler.ThrowOnFailure(request.GetRequestInfo(enum_BPREQI_FIELDS.BPREQI_BPLOCATION, requestInfo));
+            var bpLocation = requestInfo[0].bpLocation;
+            if (bpLocation.bpLocationType != (uint)enum_BP_LOCATION_TYPE.BPLT_CODE_FILE_LINE)
+            {
+                breakpoint = null;
+                return VSConstants.E_FAIL;
+            }
+
+            var documentInfo = (IDebugDocumentPosition2)Marshal.GetObjectForIUnknown(bpLocation.unionmember2);
+            breakpoint = new Breakpoint(this, request, documentInfo);
+            return VSConstants.S_OK;
+        }
+
+        public void AddBreakpoint(Breakpoint breakpoint)
+        {
+            var fileState = GetFileBreakpoints(breakpoint.SourceContext.SourcePath);
+            fileState.Add(breakpoint);
+
+            _callbacks.OnBreakpointBound(breakpoint);
+        }
+
+        public void RemoveBreakpoint(Breakpoint breakpoint)
+        {
+            var fileState = GetFileBreakpoints(breakpoint.SourceContext.SourcePath);
+            fileState.Remove(breakpoint);
+        }
+
+        private List<Breakpoint> GetFileBreakpoints(string file)
+        {
+            if (!_breakpoints.TryGetValue(file, out var breakpoints))
+            {
+                breakpoints = new List<Breakpoint>();
+                _breakpoints.Add(file, breakpoints);
+            }
+            return breakpoints;
         }
 
         #region IDebugProgram2/IDebugProgram3 Members

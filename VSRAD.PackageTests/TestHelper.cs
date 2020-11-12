@@ -50,7 +50,8 @@ namespace VSRAD.PackageTests
             evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult<Result<string>>(val));
             evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult<Result<string>>(remoteWorkDir));
 
-            mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<uint[]>(), It.IsAny<string[]>())).Returns(Task.FromResult(evaluator.Object));
+            mock.Setup((p) => p.GetMacroEvaluatorAsync()).Returns(Task.FromResult(evaluator.Object));
+            mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<MacroEvaluatorTransientValues>())).Returns(Task.FromResult(evaluator.Object));
             return mock;
         }
 

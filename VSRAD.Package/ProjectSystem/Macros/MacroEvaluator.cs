@@ -2,9 +2,10 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.Package.Utils;
@@ -20,16 +21,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
         public uint[] BreakLines { get; }
-        public string[] WatchesOverride { get; }
+        public ReadOnlyCollection<string> Watches { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string sourceDir = null, string sourceFile = null, uint[] breakLines = null, string[] watchesOverride = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, uint[] breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
             BreakLines = breakLines;
-            WatchesOverride = watchesOverride;
+            Watches = watches;
         }
     }
 
@@ -133,9 +134,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 { RadMacros.ActiveSourceDir, values.ActiveSourceDir },
                 { RadMacros.ActiveSourceFile, values.ActiveSourceFile },
                 { RadMacros.ActiveSourceFileLine, values.ActiveSourceLine.ToString() },
-                { RadMacros.Watches, values.WatchesOverride != null
-                    ? string.Join(":", values.WatchesOverride)
-                    : string.Join(":", debuggerOptions.GetWatchSnapshot()) },
+                { RadMacros.Watches, string.Join(":", values.Watches) },
                 { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
                 { RadMacros.BreakLine, string.Join(":", values.BreakLines ?? new[] { 0u }) },
                 { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },

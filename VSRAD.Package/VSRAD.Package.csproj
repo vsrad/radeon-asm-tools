@@ -182,6 +182,7 @@
     <Compile Include="Options\VisualizerAppearance.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
+    <Compile Include="ProjectSystem\BreakpointTracker.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditContext.cs" />
     <Compile Include="ProjectSystem\Macros\MacroListEditor.xaml.cs">

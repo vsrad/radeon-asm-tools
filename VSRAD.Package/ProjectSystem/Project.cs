@@ -25,7 +25,9 @@ namespace VSRAD.Package.ProjectSystem
         ProjectOptions Options { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
         IProjectProperties GetProjectProperties();
-        Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null);
+        Task<IMacroEvaluator> GetMacroEvaluatorAsync();
+        Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients);
+        MacroEvaluatorTransientValues GetMacroTransients();
         void SaveOptions();
     }
 
@@ -88,30 +90,39 @@ namespace VSRAD.Package.ProjectSystem
 
         #region MacroEvaluator
         private IActiveCodeEditor _codeEditor;
-        private IProjectSourceManager _projectSourceManager;
         private ICommunicationChannel _communicationChannel;
+        private IBreakpointTracker _breakpointTracker;
 
-        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(uint[] breakLines = null, string[] watchesOverride = null)
+        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync()
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            return await GetMacroEvaluatorAsync(GetMacroTransients());
+        }
+
+        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-            if (_codeEditor == null)
-                _codeEditor = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IActiveCodeEditor>();
-            if (_projectSourceManager == null)
-                _projectSourceManager = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IProjectSourceManager>();
             if (_communicationChannel == null)
                 _communicationChannel = _unconfiguredProject.Services.ExportProvider.GetExportedValue<ICommunicationChannel>();
 
             var projectProperties = GetProjectProperties();
-
-            var sourceLine = _codeEditor.GetCurrentLine();
-            var sourcePath = _codeEditor.GetAbsoluteSourcePath();
-            var transients = new MacroEvaluatorTransientValues(sourceLine, sourcePath, breakLines: breakLines, watchesOverride: watchesOverride);
-
             var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(
                 _communicationChannel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
-
             return new MacroEvaluator(projectProperties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
+        }
+
+        public MacroEvaluatorTransientValues GetMacroTransients()
+        {
+            if (_codeEditor == null)
+                _codeEditor = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IActiveCodeEditor>();
+            if (_breakpointTracker == null)
+                _breakpointTracker = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IBreakpointTracker>();
+
+            var (file, breakLines) = _breakpointTracker.GetBreakTarget();
+            var sourceLine = _codeEditor.GetCurrentLine();
+            var watches = Options.DebuggerOptions.GetWatchSnapshot();
+            return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
         }
         #endregion
     }

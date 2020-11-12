@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,19 +18,24 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private readonly ICommunicationChannel _channel;
         private readonly ProfileOptions _dirtyProfile;
 
-        public DirtyProfileMacroEditor(IProject project, ICommunicationChannel channel, ProfileOptions dirtyProfile)
+        public DirtyProfileMacroEditor(
+            IProject project,
+            ICommunicationChannel channel,
+            ProfileOptions dirtyProfile)
         {
             _project = project;
             _channel = channel;
             _dirtyProfile = dirtyProfile;
         }
 
-        public Task<Result<IActionStep>> EvaluateStepAsync(IActionStep step, string sourceAction)
+        public async Task<Result<IActionStep>> EvaluateStepAsync(IActionStep step, string sourceAction)
         {
-            var transients = new MacroEvaluatorTransientValues(sourceLine: 0, sourcePath: "<...>", sourceDir: "<...>", sourceFile: "<...>");
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+
+            var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
-            return step.EvaluateAsync(evaluator, _dirtyProfile, sourceAction);
+            return await step.EvaluateAsync(evaluator, _dirtyProfile, sourceAction);
         }
 
         public async Task EditObjectPropertyAsync(object target, string propertyName)
@@ -42,14 +48,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public async Task<string> EditAsync(string macroName, string currentValue)
         {
-            var transients = new MacroEvaluatorTransientValues(sourceLine: 0,
-                sourcePath: "<current source full path>",
-                sourceDir: "<current source dir name>",
-                sourceFile: "<current source file name>");
-
-            var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
-
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+
+            var transients = GetMacroTransients();
+            var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
             var editor = new MacroEditContext(macroName, currentValue, evaluator);
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
@@ -94,6 +96,23 @@ namespace VSRAD.Package.ProjectSystem.Macros
                         }
                     }, VSPackage.TaskFactory);
                 return _remoteEnv;
+            }
+        }
+
+        private MacroEvaluatorTransientValues GetMacroTransients()
+        {
+            try
+            {
+                return _project.GetMacroTransients();
+            }
+            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
+            {
+                return new MacroEvaluatorTransientValues(0,
+                    sourcePath: "<current source full path>",
+                    new[] { 0u },
+                    _project.Options.DebuggerOptions.GetWatchSnapshot(),
+                    sourceDir: "<current source dir name>",
+                    sourceFile: "<current source file name>");
             }
         }
     }

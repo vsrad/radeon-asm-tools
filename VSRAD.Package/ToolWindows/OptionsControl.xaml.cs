@@ -105,11 +105,11 @@ namespace VSRAD.Package.ToolWindows
         {
             switch (value)
             {
-                case Deborgar.BreakMode.SingleRoundRobin:
+                case BreakMode.SingleRoundRobin:
                     return "Single active breakpoint, round-robin";
-                case Deborgar.BreakMode.SingleRerun:
+                case BreakMode.SingleRerun:
                     return "Single active breakpoint, rerun same line";
-                case Deborgar.BreakMode.Multiple:
+                case BreakMode.Multiple:
                     return "Multiple active breakpoints";
                 default:
                     return DependencyProperty.UnsetValue;

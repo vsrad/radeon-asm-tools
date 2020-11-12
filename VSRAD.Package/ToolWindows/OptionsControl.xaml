@@ -7,7 +7,7 @@
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              xmlns:local="clr-namespace:VSRAD.Package.ToolWindows"
-             xmlns:deborgar="clr-namespace:VSRAD.Deborgar;assembly=VSRAD.Deborgar"
+             xmlns:opts="clr-namespace:VSRAD.Package.Options"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
@@ -19,7 +19,7 @@
             </ObjectDataProvider>
             <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="deborgar:BreakMode"/>
+                    <x:Type TypeName="opts:BreakMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>

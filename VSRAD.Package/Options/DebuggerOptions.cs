@@ -9,6 +9,11 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
+    public enum BreakMode
+    {
+        SingleRoundRobin, SingleRerun, Multiple
+    }
+
     public sealed class DebuggerOptions : DefaultNotifyPropertyChanged
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
@@ -41,8 +46,8 @@ namespace VSRAD.Package.Options
         private uint _groupSize = 512;
         public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, value == 0 ? 512 : value); }
 
-        private Deborgar.BreakMode _breakMode;
-        public Deborgar.BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
+        private BreakMode _breakMode;
+        public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
 
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;

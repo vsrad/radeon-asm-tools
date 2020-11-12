@@ -1,11 +1,9 @@
-﻿using EnvDTE;
-using EnvDTE80;
-using Microsoft;
-using Microsoft.VisualStudio.ProjectSystem;
+﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
@@ -16,8 +14,9 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class DebuggerIntegration : IEngineIntegration
     {
-        public event ExecutionCompleted ExecutionCompleted;
         public event DebugBreakEntered BreakEntered;
+
+        public event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
 
         private readonly IProject _project;
         private readonly SVsServiceProvider _serviceProvider;
@@ -25,10 +24,10 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IFileSynchronizationManager _deployManager;
         private readonly ICommunicationChannel _channel;
         private readonly IActionLogger _actionLogger;
+        private readonly IBreakpointTracker _breakpointTracker;
 
         public bool DebugInProgress { get; private set; } = false;
 
-        private (string file, uint line)? _debugRunToLine;
         private DebugSession _debugSession;
 
         [ImportingConstructor]
@@ -38,7 +37,8 @@ namespace VSRAD.Package.ProjectSystem
             IActiveCodeEditor codeEditor,
             IFileSynchronizationManager deployManager,
             ICommunicationChannel channel,
-            IActionLogger actionLogger)
+            IActionLogger actionLogger,
+            IBreakpointTracker breakpointTracker)
         {
             _project = project;
             _serviceProvider = serviceProvider;
@@ -46,6 +46,7 @@ namespace VSRAD.Package.ProjectSystem
             _deployManager = deployManager;
             _channel = channel;
             _actionLogger = actionLogger;
+            _breakpointTracker = breakpointTracker;
         }
 
         public IEngineIntegration RegisterEngine()
@@ -80,75 +81,53 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
-        internal void RunToCurrentLine()
+        void IEngineIntegration.Execute(bool step)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            var sourcePath = _codeEditor.GetAbsoluteSourcePath();
-            var line = _codeEditor.GetCurrentLine();
-            _debugRunToLine = (sourcePath, line);
-
-            Launch();
-        }
-
-        private void Launch()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE2;
-            Assumes.Present(dte);
-
-            if (dte.Debugger.CurrentMode != dbgDebugMode.dbgRunMode) // Go() must not be invoked when the debugger is already running (not in break mode)
-                dte.Debugger.Go();
-        }
-
-        void IEngineIntegration.Execute(uint[] breakLines)
-        {
-            var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            try
             {
-                var result = await _debugSession.ExecuteAsync(breakLines, watches);
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-                if (result.ActionResult != null)
+                var (file, breakLines) = _breakpointTracker.MoveToNextBreakTarget(step);
+                var line = _codeEditor.GetCurrentLine();
+                var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
-                    var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
-                    if (actionError is Error e1)
-                        Errors.Show(e1);
-                }
+                    var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
+                    var result = await _debugSession.ExecuteAsync(transients);
+                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
-                if (result.Error is Error e2)
-                    Errors.Show(e2);
+                    if (result.ActionResult != null)
+                    {
+                        var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
+                        if (actionError is Error e1)
+                            Errors.Show(e1);
+                    }
 
-                RaiseExecutionCompleted(result.BreakState);
-            },
-            exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(null));
-        }
+                    if (result.Error is Error e2)
+                        Errors.Show(e2);
 
-        string IEngineIntegration.GetActiveSourcePath() =>
-            _codeEditor.GetAbsoluteSourcePath();
-
-        BreakMode IEngineIntegration.GetBreakMode() =>
-            _project.Options.DebuggerOptions.BreakMode;
-
-        bool IEngineIntegration.PopRunToLineIfSet(string file, out uint runToLine)
-        {
-            if (_debugRunToLine.HasValue && _debugRunToLine.Value.file == file)
-            {
-                runToLine = _debugRunToLine.Value.line;
-                _debugRunToLine = null;
-                return true;
+                    RaiseExecutionCompleted(file, breakLines, step, result.BreakState);
+                },
+                exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(file, breakLines, step, null));
             }
-            else
+            catch (Exception e)
             {
-                runToLine = 0;
-                return false;
+                Errors.ShowException(e);
+                RaiseExecutionCompleted("", new[] { 0u }, step, null);
             }
         }
 
-        private void RaiseExecutionCompleted(BreakState breakState)
+        void IEngineIntegration.CauseBreak()
         {
-            ExecutionCompleted(success: breakState != null);
+            string file = "";
+            // May throw an exception if no files are open in the editor
+            try { file = _codeEditor.GetAbsoluteSourcePath(); } catch { }
+
+            RaiseExecutionCompleted(file, new[] { 0u }, isStepping: false, null);
+        }
+
+        private void RaiseExecutionCompleted(string file, uint[] lines, bool isStepping, BreakState breakState)
+        {
+            var args = new ExecutionCompletedEventArgs(file, lines, isStepping, isSuccessful: breakState != null);
+            ExecutionCompleted(this, args);
             BreakEntered(breakState);
         }
     }

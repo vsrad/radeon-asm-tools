@@ -63,7 +63,6 @@
     <Compile Include="AD7Enums.cs" />
     <Compile Include="AD7Events.cs" />
     <Compile Include="Breakpoint.cs" />
-    <Compile Include="BreakpointManager.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DebugEngine.cs" />
     <Compile Include="EngineCallback.cs" />
@@ -73,7 +72,6 @@
     <Compile Include="Remote\RemotePort.cs" />
     <Compile Include="Remote\RemotePortSupplier.cs" />
     <Compile Include="Remote\RemoteProcess.cs" />
-    <Compile Include="ExecutionController.cs" />
     <Compile Include="SourceFileLineContext.cs" />
     <Compile Include="StackFrame.cs" />
   </ItemGroup>
