@@ -33,8 +33,7 @@ namespace VSRAD.Package.Server
 
         public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles, bool continueOnError = true)
         {
-            var runStats = new ActionRunResult(actionName, steps);
-            runStats.ContinueOnError = continueOnError;
+            var runStats = new ActionRunResult(actionName, steps, continueOnError);
 
             await FillInitialTimestampsAsync(steps, auxFiles);
             runStats.RecordInitTimestampFetch();

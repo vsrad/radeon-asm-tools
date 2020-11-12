@@ -33,13 +33,13 @@ namespace VSRAD.PackageTests.ProjectSystem
             var level2action = (RunActionStep)level1action.Steps[0];
             var level3action = (RunActionStep)level2action.EvaluatedSteps[1];
 
-            var level3Result = new ActionRunResult(level3action.Name, level3action.EvaluatedSteps);
+            var level3Result = new ActionRunResult(level3action.Name, level3action.EvaluatedSteps, false);
             TestHelper.SetReadOnlyProp(level3Result, nameof(level3Result.InitTimestampFetchMillis), 0);
             TestHelper.SetReadOnlyProp(level3Result, nameof(level3Result.TotalMillis), 20);
             level3Result.StepResults[0] = new StepResult(true, "...", "Captured stdout (exit code 2):\r\n..\r\n");
             level3Result.StepRunMillis[0] = 20;
 
-            var level2Result = new ActionRunResult(level2action.Name, level2action.EvaluatedSteps);
+            var level2Result = new ActionRunResult(level2action.Name, level2action.EvaluatedSteps, false);
             TestHelper.SetReadOnlyProp(level2Result, nameof(level2Result.InitTimestampFetchMillis), 0);
             TestHelper.SetReadOnlyProp(level2Result, nameof(level2Result.TotalMillis), 40);
             level2Result.StepResults[0] = new StepResult(true, "Some Message Indicating Contract Obtained", "Captured stdout (exit code 1):\r\ncontract obtained\r\n");
@@ -47,7 +47,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             level2Result.StepResults[1] = new StepResult(true, "", "", level3Result);
             level2Result.StepRunMillis[1] = 20;
 
-            var level1Result = new ActionRunResult(level1action.Name, level1action.Steps);
+            var level1Result = new ActionRunResult(level1action.Name, level1action.Steps, false);
             TestHelper.SetReadOnlyProp(level1Result, nameof(level1Result.InitTimestampFetchMillis), 10);
             TestHelper.SetReadOnlyProp(level1Result, nameof(level1Result.TotalMillis), 70);
             level1Result.StepResults[0] = new StepResult(true, "", "", level2Result);
@@ -105,7 +105,7 @@ Captured stdout (exit code 2):
             profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "comet_a", Arguments = "--showcase" });
             profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "sell_dvds", Arguments = "--lots" });
 
-            var actionResult = new ActionRunResult(profile.Actions[0].Name, profile.Actions[0].Steps);
+            var actionResult = new ActionRunResult(profile.Actions[0].Name, profile.Actions[0].Steps, false);
 
             actionResult.StepResults[0] = new StepResult(true, "", "");
             actionResult.StepResults[1] = new StepResult(true, "", "");
@@ -143,7 +143,7 @@ Captured stdout (exit code 2):
 
             profile.Actions[0].Name += " (without difficulties)";
             TestHelper.SetReadOnlyProp(actionResult, nameof(actionResult.ActionName), profile.Actions[0].Name);
-            actionResult.ContinueOnError = true;
+            TestHelper.SetReadOnlyProp(actionResult, nameof(actionResult.ContinueOnError), true);
 
             warnings = await logger.LogActionWithWarningsAsync(actionResult);
 

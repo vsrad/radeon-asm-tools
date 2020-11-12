@@ -13,19 +13,23 @@ namespace VSRAD.Package.Server
         public long TotalMillis { get; private set; }
 
         public string ActionName { get; }
+        public bool ContinueOnError { get; }
         public IReadOnlyList<IActionStep> Steps { get; }
         public StepResult[] StepResults { get; }
 
+        /// <summary>Non-null if the action includes a <c>ReadDebugData</c> step and it was executed successfully.</summary>
+        public BreakState BreakState { get; private set; }
+
         public bool Successful => StepResults.All(r => r.Successful);
-        public bool ContinueOnError;
 
         private readonly Stopwatch _stopwatch;
         private long _lastRecordedTime;
 
-        public ActionRunResult(string actionName, IReadOnlyList<IActionStep> steps)
+        public ActionRunResult(string actionName, IReadOnlyList<IActionStep> steps, bool continueOnError)
         {
             ActionName = actionName;
             Steps = steps;
+            ContinueOnError = continueOnError;
             StepRunMillis = new long[steps.Count];
             StepResults = new StepResult[steps.Count];
             _stopwatch = Stopwatch.StartNew();
@@ -38,6 +42,12 @@ namespace VSRAD.Package.Server
         {
             StepRunMillis[stepIndex] = MeasureInterval();
             StepResults[stepIndex] = result;
+        }
+
+        public void RecordDebugDataStep(int stepIndex, StepResult result, BreakState breakState)
+        {
+            RecordStep(stepIndex, result);
+            BreakState = breakState;
         }
 
         public void FinishRun() =>
