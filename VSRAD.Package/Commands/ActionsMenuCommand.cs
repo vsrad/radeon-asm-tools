@@ -23,7 +23,6 @@ namespace VSRAD.Package.Commands
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
-        private bool _actionRuns = false;
         private string _currentActionName;
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
@@ -110,14 +109,14 @@ namespace VSRAD.Package.Commands
 
         private async Task ExecuteActionAsync(ActionProfileOptions action)
         {
+            if (_currentActionName != null)
+            {
+                Errors.Show(new Error($"Action {_currentActionName} is running.\nIf you think that this may be hang, please use Disconnect button."));
+                return;
+            }
+
             try
             {
-                if (_actionRuns)
-                {
-                    Errors.Show(new Error($"Action {action.Name} is running.\nIf you think that this may be hang, please use Disconnect button."));
-                    return;
-                }
-                _actionRuns = true;
                 _currentActionName = action.Name;
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
@@ -126,14 +125,12 @@ namespace VSRAD.Package.Commands
                 if (!envResult.TryGetResult(out var env, out var evalError))
                 {
                     Errors.Show(evalError);
-                    _actionRuns = false;
                     return;
                 }
                 var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
                 if (!evalResult.TryGetResult(out action, out evalError))
                 {
                     Errors.Show(evalError);
-                    _actionRuns = false;
                     return;
                 }
 
@@ -144,15 +141,11 @@ namespace VSRAD.Package.Commands
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
                 if (actionError is Error runError)
                     Errors.Show(runError);
-                _actionRuns = false;
-            }
-            catch (OperationCanceledException)
-            {
-                _actionRuns = false;
             }
             finally
             {
                 await _statusBar.ClearAsync();
+                _currentActionName = null;
             }
         }
     }
