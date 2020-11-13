@@ -74,19 +74,23 @@ namespace VSRAD.Syntax.FunctionList
             var filteredTokens = Helper.SortAndFilter(items, SortState, searchText);
             if (cancellationToken.IsCancellationRequested) return;
 
-            await AddTokensToViewAsync(filteredTokens, cancellationToken).ConfigureAwait(false);
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            
+            AddTokensToView(filteredTokens);
             if (lastHighlightedItem != null)
                 HighlightItemAtLine(lastHighlightedItem.LineNumber);
         }
 
         public void ClearList()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             items = new List<FunctionListItem>();
             tokens.Items.Clear();
         }
 
         public void HighlightItemAtLine(int lineNumber)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             var item = items.FirstOrDefault(i => i.LineNumber == lineNumber);
 
             if (lastHighlightedItem != null) lastHighlightedItem.IsCurrentWorkingItem = false;
@@ -100,7 +104,12 @@ namespace VSRAD.Syntax.FunctionList
 
         public void ClearHighlightItem()
         {
-            if (lastHighlightedItem != null) lastHighlightedItem.IsCurrentWorkingItem = false;
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (lastHighlightedItem != null)
+            {
+                lastHighlightedItem.IsCurrentWorkingItem = false;
+                lastHighlightedItem = null;
+            }
         }
         #endregion
 
@@ -110,13 +119,11 @@ namespace VSRAD.Syntax.FunctionList
             ReloadFunctionList(filteredTokens);
         }
 
-        private void ReloadFunctionList(IEnumerable<FunctionListItem> tokens) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => AddTokensToViewAsync(tokens, CancellationToken.None));
+        private void ReloadFunctionList(IEnumerable<FunctionListItem> tokens) => AddTokensToView(tokens);
 
-        private async Task AddTokensToViewAsync(IEnumerable<FunctionListItem> functionListTokens, CancellationToken cancellationToken)
+        private void AddTokensToView(IEnumerable<FunctionListItem> functionListTokens)
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-
+            ThreadHelper.ThrowIfNotOnUIThread();
             tokens.Items.Clear();
             foreach (var token in functionListTokens)
                 tokens.Items.Add(token);
