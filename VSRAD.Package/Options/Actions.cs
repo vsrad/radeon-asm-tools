@@ -299,9 +299,14 @@ namespace VSRAD.Package.Options
 
     public sealed class ReadDebugDataStep : DefaultNotifyPropertyChanged, IActionStep
     {
-        public BuiltinActionFile OutputFile { get; }
-        public BuiltinActionFile WatchesFile { get; }
-        public BuiltinActionFile StatusFile { get; }
+        private BuiltinActionFile _outputFile;
+        public BuiltinActionFile OutputFile { get => _outputFile; set => SetField(ref _outputFile, value); }
+
+        private BuiltinActionFile _watchesFile;
+        public BuiltinActionFile WatchesFile { get => _watchesFile; set => SetField(ref _watchesFile, value); }
+
+        private BuiltinActionFile _statusFile;
+        public BuiltinActionFile StatusFile { get => _statusFile; set => SetField(ref _statusFile, value); }
 
         private bool _binaryOutput = true;
         public bool BinaryOutput { get => _binaryOutput; set => SetField(ref _binaryOutput, value); }
