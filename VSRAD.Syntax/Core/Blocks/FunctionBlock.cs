@@ -24,9 +24,9 @@ namespace VSRAD.Syntax.Core.Blocks
         }
 
         public override bool InRange(int point) =>
-            Name.Span.End <= point && ActualEnd >= point;
+            Name.Span.End <= point && actualEnd >= point;
 
         public override bool InRange(Span span) =>
-            Name.Span.End <= span.Start && ActualEnd >= span.End;
+            Name.Span.End <= span.Start && actualEnd >= span.End;
     }
 }
