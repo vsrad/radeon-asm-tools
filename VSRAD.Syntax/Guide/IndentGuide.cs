@@ -24,6 +24,11 @@ namespace VSRAD.Syntax.Guide
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
         private readonly IDocumentAnalysis _documentAnalysis;
+        private double _thickness;
+        private double _dashSize;
+        private double _spaceSize;
+        private double _offsetX;
+        private double _offsetY;
         private IAnalysisResult _currentResult;
         private IList<Line> _currentAdornments;
         private bool _isEnables;
@@ -69,9 +74,20 @@ namespace VSRAD.Syntax.Guide
 
         private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
-            if (sender.IsEnabledIndentGuides != _isEnables)
+            if (sender.IsEnabledIndentGuides != _isEnables
+                || sender.IndentGuideThickness != _thickness
+                || sender.IndentGuideDashSize != _dashSize
+                || sender.IndentGuideSpaceSize != _spaceSize
+                || sender.IndentGuideOffsetX != _offsetX
+                || sender.IndentGuideOffsetY != _offsetY)
             {
                 _isEnables = sender.IsEnabledIndentGuides;
+                _thickness = sender.IndentGuideThickness;
+                _dashSize = sender.IndentGuideDashSize;
+                _spaceSize = sender.IndentGuideSpaceSize;
+                _offsetX = sender.IndentGuideOffsetX;
+                _offsetY = sender.IndentGuideOffsetY;
+
                 _currentResult = _documentAnalysis.CurrentResult;
                 if (_isEnables)
                     UpdateIndentGuides();
@@ -160,17 +176,17 @@ namespace VSRAD.Syntax.Guide
                 var tabs = spaceText.Count(ch => ch == '\t');
 
                 var indentStart = (spaceText.Length - tabs) + tabs * _tabSize;
-                var leftOffset = indentStart * spaceWidth + horizontalOffset;
+                var leftOffset = indentStart * spaceWidth + horizontalOffset + _offsetX;
 
                 yield return new Line()
                 {
                     Stroke = Brushes.DarkGray,
-                    StrokeThickness = 1,
-                    StrokeDashArray = new DoubleCollection() { 2 },
+                    StrokeThickness = _thickness,
+                    StrokeDashArray = new DoubleCollection() { _dashSize, _spaceSize },
                     X1 = leftOffset,
                     X2 = leftOffset,
-                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom : _textView.ViewportTop,
-                    Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top : _textView.ViewportBottom,
+                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom + _offsetY : _textView.ViewportTop,
+                    Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top - _offsetY : _textView.ViewportBottom,
                 };
             }
         }
