@@ -46,8 +46,7 @@ namespace VSRAD.Syntax.Core.Parser
                 {
                     if (token.Type == RadAsmLexer.BLOCK_COMMENT)
                     {
-                        var commentBlock = new Block(currentBlock, BlockType.Comment, token, token);
-                        currentBlock = SetBlockReady(commentBlock, blocks);
+                        blocks.AppendBlock(new Block(currentBlock, BlockType.Comment, token, token));
                     }
                     else if (token.Type == RadAsmLexer.MACRO)
                     {
@@ -55,7 +54,7 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             var funcDefinition = new DefinitionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
                             _definitionContainer.Add(currentBlock, funcDefinition);
-                            currentBlock = new FunctionBlock(currentBlock, BlockType.Function, token, funcDefinition);
+                            currentBlock = blocks.AppendBlock(new FunctionBlock(currentBlock, BlockType.Function, token, funcDefinition));
                             parserState = ParserState.SearchArguments;
                             i += 1;
                         }
@@ -64,7 +63,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
                         _definitionContainer.ClearScope(currentBlock);
-                        currentBlock = SetBlockReady(currentBlock, blocks);
+                        currentBlock = currentBlock.GetParent();
 
                         parserState = ParserState.SearchInScope;
                     }
@@ -103,36 +102,36 @@ namespace VSRAD.Syntax.Core.Parser
                         || token.Type == RadAsmLexer.IFNE
                         || token.Type == RadAsmLexer.IFNES)
                     {
-                        currentBlock = new Block(currentBlock, BlockType.Condition, token);
+                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
                         searchInCondition = true;
                     }
                     else if ((token.Type == RadAsmLexer.ELSEIF || token.Type == RadAsmLexer.ELSE) && currentBlock.Type == BlockType.Condition)
                     {
                         currentBlock.SetEnd(tokens[i - 1].Start.GetPosition(version), token);
                         _definitionContainer.ClearScope(currentBlock);
-                        currentBlock = SetBlockReady(currentBlock, blocks);
+                        currentBlock = currentBlock.GetParent();
 
-                        currentBlock = new Block(currentBlock, BlockType.Condition, token);
+                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
                         searchInCondition = true;
                     }
                     else if (token.Type == RadAsmLexer.ENDIF && currentBlock.Type == BlockType.Condition)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
                         _definitionContainer.ClearScope(currentBlock);
-                        currentBlock = SetBlockReady(currentBlock, blocks);
+                        currentBlock = currentBlock.GetParent();
                     }
                     else if (token.Type == RadAsmLexer.REPT
                         || token.Type == RadAsmLexer.IRP
                         || token.Type == RadAsmLexer.IRPC)
                     {
-                        currentBlock = new Block(currentBlock, BlockType.Repeat, token);
+                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Repeat, token));
                         searchInCondition = true;
                     }
                     else if (token.Type == RadAsmLexer.ENDR && currentBlock.Type == BlockType.Repeat)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
                         _definitionContainer.ClearScope(currentBlock);
-                        currentBlock = SetBlockReady(currentBlock, blocks);
+                        currentBlock = currentBlock.GetParent();
                     }
                     else if (token.Type == RadAsmLexer.SET)
                     {

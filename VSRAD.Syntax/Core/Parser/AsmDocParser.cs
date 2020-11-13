@@ -10,9 +10,9 @@ using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal class AsmDocParser : AbstractParser
+    internal class AsmDocParser : IParser
     {
-        public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();
             IBlock rootBlock = new Block(version);

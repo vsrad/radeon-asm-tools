@@ -44,23 +44,27 @@ namespace VSRAD.Syntax.Core
             var block = Root;
             while (true)
             {
-                var continueSearch = false;
-                foreach (var innerBlock in block.Children)
+                var innerBlock = InnerInRange(block.Children, point);
+                if (innerBlock != null)
                 {
-                    if (innerBlock.Type == BlockType.Comment) 
-                        continue;
-                    if (innerBlock.InRange(point))
-                    {
-                        block = innerBlock;
-                        continueSearch = true;
-                        break;
-                    }
+                    block = innerBlock;
+                    continue;
                 }
 
-                if (!continueSearch)
-                    break;
+                break;
             }
             return block;
+        }
+
+        private static IBlock InnerInRange(IEnumerable<IBlock> blocks, int point)
+        {
+            foreach (var innerBlock in blocks)
+            {
+                if (innerBlock.Type == BlockType.Comment) continue;
+                if (innerBlock.InRange(point)) return innerBlock;
+            }
+
+            return null;
         }
 
         public IEnumerable<DefinitionToken> GetGlobalDefinitions() =>

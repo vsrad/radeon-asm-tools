@@ -53,7 +53,11 @@ namespace VSRAD.Syntax.Core.Blocks
             Parent = parrent;
             Type = type;
             Snapshot = parrent.Snapshot;
+
             actualStart = tokenStart.GetStart(Snapshot);
+            actualEnd = Snapshot.Length - 1;
+            Scope = new TrackingBlock(Snapshot, actualStart, actualEnd);
+            Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
 
             Children = new List<IBlock>();
             Tokens = new List<AnalysisToken>();
@@ -91,7 +95,7 @@ namespace VSRAD.Syntax.Core.Blocks
 
         public void SetEnd(int endPosition, TrackingToken tokenEnd)
         {
-            if (startPosition < endPosition)
+            if (startPosition <= endPosition)
             {
                 actualEnd = tokenEnd.GetEnd(Snapshot);
                 Scope = new TrackingBlock(Snapshot, startPosition, endPosition);

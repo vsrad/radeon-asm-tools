@@ -6,13 +6,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal abstract class AbstractCodeParser : AbstractParser
+    internal abstract class AbstractCodeParser : IParser
     {
         abstract protected AsmType AsmType { get; }
         protected HashSet<string> Instructions { get; private set; }
@@ -31,6 +32,8 @@ namespace VSRAD.Syntax.Core.Parser
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
             InstructionsUpdated(instructionListManager, AsmType);
         }
+
+        public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {
