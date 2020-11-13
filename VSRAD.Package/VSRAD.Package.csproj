@@ -182,6 +182,7 @@
     <Compile Include="Options\MacroItem.cs" />
     <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
+    <Compile Include="ProjectSystem\ActionLauncher.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\BreakpointTracker.cs" />
@@ -219,7 +220,6 @@
     <Compile Include="Server\ActionRunResult.cs" />
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
-    <Compile Include="Server\DebugRunResult.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
@@ -255,7 +255,6 @@
     <Compile Include="ProjectSystem\ToolWindowIntegration.cs" />
     <Compile Include="Server\BreakState.cs" />
     <Compile Include="Server\CommunicationChannel.cs" />
-    <Compile Include="Server\DebugSession.cs" />
     <Compile Include="DebugVisualizer\ColumnStyling.cs" />
     <Compile Include="DebugVisualizer\VariableType.cs" />
     <Compile Include="DebugVisualizer\VisualizerTable.cs">

@@ -81,7 +81,6 @@
     <Compile Include="Server\ActionRunnerTests.cs" />
     <Compile Include="Server\BreakStateDispatchParametersTests.cs" />
     <Compile Include="Server\BreakStateTests.cs" />
-    <Compile Include="Server\DebugSessionTests.cs" />
     <Compile Include="Server\FileSynchronizationManagerTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />

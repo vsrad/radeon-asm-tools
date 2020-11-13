@@ -1,14 +1,11 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Commands
 {
@@ -17,40 +14,27 @@ namespace VSRAD.Package.Commands
     public sealed class ActionsMenuCommand : ICommandHandler
     {
         private readonly IProject _project;
-        private readonly IActionLogger _actionLogger;
-        private readonly ICommunicationChannel _channel;
-        private readonly IFileSynchronizationManager _deployManager;
-        private readonly SVsServiceProvider _serviceProvider;
-        private readonly VsStatusBarWriter _statusBar;
+        private readonly IActionLauncher _actionLauncher;
 
-        private string _currentActionName;
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(
-            IProject project,
-            IActionLogger actionLogger,
-            ICommunicationChannel channel,
-            IFileSynchronizationManager deployManager,
-            SVsServiceProvider serviceProvider)
+        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher)
         {
             _project = project;
-            _actionLogger = actionLogger;
-            _channel = channel;
-            _serviceProvider = serviceProvider;
-            _deployManager = deployManager;
-            _statusBar = new VsStatusBarWriter(serviceProvider);
+            _actionLauncher = actionLauncher;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
 
         public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
-            if (GetActionByCommandId(commandId).TryGetResult(out var action, out _))
+            if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out _)
+                && SelectedProfile.Actions.Any(a => a.Name == actionName))
             {
                 var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
-                    OleCommandText.SetText(commandText, action.Name);
+                    OleCommandText.SetText(commandText, actionName);
 
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
             }
@@ -66,14 +50,14 @@ namespace VSRAD.Package.Commands
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            var actionResult = GetActionByCommandId(commandId);
-            if (actionResult.TryGetResult(out var action, out var error))
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ExecuteActionAsync(action));
+            var actionResult = GetActionNameByCommandId(commandId);
+            if (actionResult.TryGetResult(out var actionName, out var error))
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => _actionLauncher.LaunchActionByNameAsync(actionName, null));
             else
                 Errors.ShowWarning(error.Message);
         }
 
-        private Result<ActionProfileOptions> GetActionByCommandId(uint commandId)
+        private Result<string> GetActionNameByCommandId(uint commandId)
         {
             if (SelectedProfile == null)
                 return new Error("A profile is required to use RAD Debug actions. To create it, go to Tools -> RAD Debug -> Options.");
@@ -81,72 +65,16 @@ namespace VSRAD.Package.Commands
             switch (commandId)
             {
                 case Constants.ProfileCommandId:
-                    return GetActionByName(SelectedProfile.MenuCommands.ProfileAction);
+                    return SelectedProfile.MenuCommands.ProfileAction;
                 case Constants.DisassembleCommandId:
-                    return GetActionByName(SelectedProfile.MenuCommands.DisassembleAction);
+                    return SelectedProfile.MenuCommands.DisassembleAction;
                 case Constants.PreprocessCommandId:
-                    return GetActionByName(SelectedProfile.MenuCommands.PreprocessAction);
+                    return SelectedProfile.MenuCommands.PreprocessAction;
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;
                     if (index >= SelectedProfile.Actions.Count)
                         return new Error("No actions available. To add an action, go to Tools -> RAD Debug -> Options and edit your current profile.");
-                    return SelectedProfile.Actions[index];
-            }
-        }
-
-        private Result<ActionProfileOptions> GetActionByName(string actionName)
-        {
-            if (string.IsNullOrEmpty(actionName))
-                return new Error($"No action is set for this command. To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
-                                  "You can find command mappings in the Toolbar section.");
-
-            var action = SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName);
-            if (action == null)
-                return new Error($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
-                                  "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
-            return action;
-        }
-
-        private async Task ExecuteActionAsync(ActionProfileOptions action)
-        {
-            if (_currentActionName != null)
-            {
-                Errors.ShowWarning($"Action {_currentActionName} is already running.\nIf you believe this to be a hang, use the Disconnect button available in " +
-                    $"Tools -> RAD Debug -> Options to abort the currently running action.");
-                return;
-            }
-
-            try
-            {
-                _currentActionName = action.Name;
-                await _statusBar.SetTextAsync("Running " + action.Name + " action...");
-
-                var evaluator = await _project.GetMacroEvaluatorAsync().ConfigureAwait(false);
-                var envResult = await _project.Options.Profile.General.EvaluateActionEnvironmentAsync(evaluator);
-                if (!envResult.TryGetResult(out var env, out var evalError))
-                {
-                    Errors.Show(evalError);
-                    return;
-                }
-                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
-                if (!evalResult.TryGetResult(out action, out evalError))
-                {
-                    Errors.Show(evalError);
-                    return;
-                }
-
-                await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
-
-                var runner = new ActionRunner(_channel, _serviceProvider, env);
-                var result = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
-                var actionError = await _actionLogger.LogActionWithWarningsAsync(result).ConfigureAwait(false);
-                if (actionError is Error runError)
-                    Errors.Show(runError);
-            }
-            finally
-            {
-                await _statusBar.ClearAsync();
-                _currentActionName = null;
+                    return SelectedProfile.Actions[index].Name;
             }
         }
     }

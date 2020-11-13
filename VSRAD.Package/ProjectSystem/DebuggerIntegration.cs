@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
-using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
@@ -19,39 +19,30 @@ namespace VSRAD.Package.ProjectSystem
         public event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
 
         private readonly IProject _project;
-        private readonly SVsServiceProvider _serviceProvider;
+        private readonly IActionLauncher _actionLauncher;
         private readonly IActiveCodeEditor _codeEditor;
-        private readonly IFileSynchronizationManager _deployManager;
-        private readonly ICommunicationChannel _channel;
-        private readonly IActionLogger _actionLogger;
         private readonly IBreakpointTracker _breakpointTracker;
 
         public bool DebugInProgress { get; private set; } = false;
 
-        private DebugSession _debugSession;
-
         [ImportingConstructor]
         public DebuggerIntegration(
             IProject project,
-            SVsServiceProvider serviceProvider,
+            IActionLauncher actionLauncher,
             IActiveCodeEditor codeEditor,
-            IFileSynchronizationManager deployManager,
             ICommunicationChannel channel,
             IActionLogger actionLogger,
             IBreakpointTracker breakpointTracker)
         {
             _project = project;
-            _serviceProvider = serviceProvider;
+            _actionLauncher = actionLauncher;
             _codeEditor = codeEditor;
-            _deployManager = deployManager;
-            _channel = channel;
-            _actionLogger = actionLogger;
             _breakpointTracker = breakpointTracker;
         }
 
         public IEngineIntegration RegisterEngine()
         {
-            if (_debugSession == null)
+            if (DebugInProgress)
                 throw new InvalidOperationException($"{nameof(RegisterEngine)} must only be called by the engine, and the engine must be launched via {nameof(DebuggerLaunchProvider)}");
 
             DebugInProgress = true;
@@ -61,7 +52,6 @@ namespace VSRAD.Package.ProjectSystem
         public void DeregisterEngine()
         {
             DebugInProgress = false;
-            _debugSession = null;
             // unsubscribe event listeners on the debug engine (VSRAD.Deborgar) side, otherwise we'd get ghost debug sessions
             ExecutionCompleted = null;
         }
@@ -74,7 +64,6 @@ namespace VSRAD.Package.ProjectSystem
                 return false;
             }
 
-            _debugSession = new DebugSession(_project, _channel, _deployManager, _serviceProvider);
             DebugEngine.InitializationCallback = RegisterEngine;
             DebugEngine.TerminationCallback = DeregisterEngine;
 
@@ -91,20 +80,9 @@ namespace VSRAD.Package.ProjectSystem
                 VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
                     var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
-                    var result = await _debugSession.ExecuteAsync(transients);
+                    var result = await _actionLauncher.LaunchActionByNameAsync(ActionProfileOptions.BuiltinActionDebug, transients);
                     await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-                    if (result.ActionResult != null)
-                    {
-                        var actionError = await _actionLogger.LogActionWithWarningsAsync(result.ActionResult);
-                        if (actionError is Error e1)
-                            Errors.Show(e1);
-                    }
-
-                    if (result.Error is Error e2)
-                        Errors.Show(e2);
-
-                    RaiseExecutionCompleted(file, breakLines, step, result.BreakState);
+                    RaiseExecutionCompleted(file, breakLines, step, result?.BreakState);
                 },
                 exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(file, breakLines, step, null));
             }

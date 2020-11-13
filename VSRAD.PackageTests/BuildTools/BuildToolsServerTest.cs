@@ -53,7 +53,7 @@ namespace VSRAD.Package.BuildTools
             });
 
             var message = await FetchResultOnClientAsync(server);
-            deployManager.Verify((d) => d.SynchronizeRemoteAsync(), Times.Once);
+            deployManager.Verify((d) => d.SynchronizeRemoteAsync(It.IsAny<IMacroEvaluator>()), Times.Once);
 
             Assert.False(message.Skipped);
             Assert.Equal("", message.ServerError);

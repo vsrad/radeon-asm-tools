@@ -25,7 +25,6 @@ namespace VSRAD.Package.ProjectSystem
         ProjectOptions Options { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
         IProjectProperties GetProjectProperties();
-        Task<IMacroEvaluator> GetMacroEvaluatorAsync();
         Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients);
         MacroEvaluatorTransientValues GetMacroTransients();
         void SaveOptions();
@@ -93,16 +92,12 @@ namespace VSRAD.Package.ProjectSystem
         private ICommunicationChannel _communicationChannel;
         private IBreakpointTracker _breakpointTracker;
 
-        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync()
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            return await GetMacroEvaluatorAsync(GetMacroTransients());
-        }
-
         public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
 
+            if (transients == null)
+                transients = GetMacroTransients();
             if (_communicationChannel == null)
                 _communicationChannel = _unconfiguredProject.Services.ExportProvider.GetExportedValue<ICommunicationChannel>();
 

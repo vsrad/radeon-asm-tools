@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -326,6 +325,93 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal("Captured stdout (exit code 0):\r\nlevel3\r\n", result.StepResults[0].SubAction.StepResults[1].SubAction.StepResults[0].Log);
             Assert.Null(result.StepResults[1].SubAction);
         }
+
+        #region ReadDebugDataStep
+
+        [Fact]
+        public async Task ReadDebugDataRemoteTestAsync()
+        {
+            var steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "va11" },
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = true },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
+                    statusFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
+                    binaryOutput: true, outputOffset: 0)
+            };
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"));
+
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
+                Assert.Equal(new[] { "/glitch/city", "output" }, initTimestampFetch.FilePath));
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("jill\njulianne") }, (FetchResultRange watchesFetch) =>
+                Assert.Equal(new[] { "/glitch/city", "watches" }, watchesFetch.FilePath));
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"
+grid size (8192, 0, 0)
+group size (512, 0, 0)
+wave size 32
+comment 115200") }, (FetchResultRange statusFetch) =>
+                Assert.Equal(new[] { "/glitch/city", "status" }, statusFetch.FilePath));
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now }, (FetchMetadata outputMetaFetch) =>
+                Assert.Equal(new[] { "/glitch/city", "output" }, outputMetaFetch.FilePath));
+
+            var result = await runner.RunAsync("Debug", steps);
+
+            Assert.True(channel.AllInteractionsHandled);
+            Assert.True(result.Successful);
+            Assert.NotNull(result.BreakState);
+            Assert.Collection(result.BreakState.Data.Watches,
+                (first) => Assert.Equal("jill", first),
+                (second) => Assert.Equal("julianne", second));
+            Assert.NotNull(result.BreakState.DispatchParameters);
+            Assert.Equal<uint>(8192 / 512, result.BreakState.DispatchParameters.DimX);
+            Assert.Equal<uint>(512, result.BreakState.DispatchParameters.GroupSize);
+            Assert.Equal<uint>(32, result.BreakState.DispatchParameters.WaveSize);
+            Assert.False(result.BreakState.DispatchParameters.NDRange3D);
+            Assert.Equal("115200", result.BreakState.DispatchParameters.StatusString);
+        }
+
+        [Fact]
+        public async Task ReadDebugDataRemoteErrorTestAsync()
+        {
+            var steps = new List<IActionStep>
+            {
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/output", CheckTimestamp = true },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/watches", CheckTimestamp = true },
+                    statusFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/status", CheckTimestamp = true },
+                    binaryOutput: true, outputOffset: 0)
+            };
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"));
+
+            /* File not found */
+
+            for (int i = 0; i < 3; ++i) // initial timestamp fetch
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(i) });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.FileNotFound }, (FetchResultRange w) => Assert.Equal("remote/watches", w.FilePath[1]));
+
+            var result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal("Valid watches file (remote/watches) could not be found.", result.StepResults[0].Warning);
+
+            /* File not changed */
+
+            for (int i = 0; i < 3; ++i) // initial timestamp fetch
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(i) });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) },
+                (FetchResultRange w) => Assert.Equal("remote/watches", w.FilePath[1]));
+
+            result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal("Valid watches file (remote/watches) was not modified.", result.StepResults[0].Warning);
+        }
+
+        #endregion
 
         [Fact]
         public async Task VerifiesTimestampsTestAsync()
