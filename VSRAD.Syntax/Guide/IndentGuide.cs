@@ -32,7 +32,6 @@ namespace VSRAD.Syntax.Guide
         public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
         {
             _textView = textView ?? throw new NullReferenceException();
-            _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
             _documentAnalysis = documentAnalysis;
 
             _currentAdornments = new List<Line>();
@@ -43,14 +42,15 @@ namespace VSRAD.Syntax.Guide
             };
 
             _layer = _textView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
-            _isEnables = optionsProvider.IsEnabledIndentGuides;
-
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
             _textView.LayoutChanged += (sender, args) => UpdateIndentGuides();
 
             _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
             optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
             textView.Options.OptionChanged += TabSizeOptionsChanged;
+
+            _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
+            IndentGuideOptionsUpdated(optionsProvider);
         }
 
         private void TabSizeOptionsChanged(object sender, EditorOptionChangedEventArgs e)
@@ -72,6 +72,7 @@ namespace VSRAD.Syntax.Guide
             if (sender.IsEnabledIndentGuides != _isEnables)
             {
                 _isEnables = sender.IsEnabledIndentGuides;
+                _currentResult = _documentAnalysis.CurrentResult;
                 if (_isEnables)
                     UpdateIndentGuides();
                 else
@@ -84,7 +85,7 @@ namespace VSRAD.Syntax.Guide
 
         private void UpdateIndentGuides()
         {
-            if (_isEnables)
+            if (_isEnables && _currentResult != null)
                 Task.Run(async () => await SetupIndentGuidesAsync())
                     .RunAsyncWithoutAwait();
         }
