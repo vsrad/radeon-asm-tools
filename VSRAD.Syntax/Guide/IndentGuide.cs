@@ -31,7 +31,7 @@ namespace VSRAD.Syntax.Guide
         private double _offsetY;
         private IAnalysisResult _currentResult;
         private IList<Line> _currentAdornments;
-        private bool _isEnables;
+        private bool _isEnabled;
         private int _tabSize;
 
         public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
@@ -74,14 +74,14 @@ namespace VSRAD.Syntax.Guide
 
         private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
-            if (sender.IsEnabledIndentGuides != _isEnables
+            if (sender.IsEnabledIndentGuides != _isEnabled
                 || sender.IndentGuideThickness != _thickness
                 || sender.IndentGuideDashSize != _dashSize
                 || sender.IndentGuideSpaceSize != _spaceSize
                 || sender.IndentGuideOffsetX != _offsetX
                 || sender.IndentGuideOffsetY != _offsetY)
             {
-                _isEnables = sender.IsEnabledIndentGuides;
+                _isEnabled = sender.IsEnabledIndentGuides;
                 _thickness = sender.IndentGuideThickness;
                 _dashSize = sender.IndentGuideDashSize;
                 _spaceSize = sender.IndentGuideSpaceSize;
@@ -89,7 +89,7 @@ namespace VSRAD.Syntax.Guide
                 _offsetY = sender.IndentGuideOffsetY;
 
                 _currentResult = _documentAnalysis.CurrentResult;
-                if (_isEnables)
+                if (_isEnabled)
                     UpdateIndentGuides();
                 else
                     CleanupIndentGuidesAsync().ConfigureAwait(false);
@@ -101,7 +101,7 @@ namespace VSRAD.Syntax.Guide
 
         private void UpdateIndentGuides()
         {
-            if (_isEnables && _currentResult != null)
+            if (_isEnabled && _currentResult != null)
                 Task.Run(async () => await SetupIndentGuidesAsync())
                     .RunAsyncWithoutAwait();
         }
