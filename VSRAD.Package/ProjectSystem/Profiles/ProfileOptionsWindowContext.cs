@@ -59,7 +59,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public ProfileOptionsActionsPage(ProfileOptions profile)
         {
             _profile = profile;
-            Pages = new ObservableCollection<object> { profile.Debugger };
+            Pages = new ObservableCollection<object>();
             SyncPagesWithActionCollection(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, profile.Actions));
             CollectionChangedEventManager.AddHandler(profile.Actions, SyncPagesWithActionCollection);
         }
