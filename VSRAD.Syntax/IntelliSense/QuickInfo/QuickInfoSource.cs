@@ -2,50 +2,40 @@
 using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {
-        private readonly INavigationTokenService _navigationService;
+        private readonly INavigationTokenService _navigationTokenService;
         private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
         private readonly ITextBuffer _textBuffer;
-        private readonly DocumentAnalysis _documentAnalysis;
 
-        public QuickInfoSource(
-            ITextBuffer textBuffer, 
-            DocumentAnalysis documentAnalysis,
-            INavigationTokenService navigationService,
+        public QuickInfoSource(ITextBuffer textBuffer, 
+            INavigationTokenService navigationTokenService, 
             IIntellisenseDescriptionBuilder descriptionBuilder)
         {
             _textBuffer = textBuffer;
-            _documentAnalysis = documentAnalysis;
-            _navigationService = navigationService;
+            _navigationTokenService = navigationTokenService;
             _descriptionBuilder = descriptionBuilder;
         }
 
-        public Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
+        public async Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
         {
-            SnapshotPoint? triggerPoint = session.GetTriggerPoint(_textBuffer.CurrentSnapshot);
-            if (!triggerPoint.HasValue)
-                return Task.FromResult<QuickInfoItem>(null);
+            var snapshot = _textBuffer.CurrentSnapshot;
+            var triggerPoint = session.GetTriggerPoint(snapshot);
+            if (!triggerPoint.HasValue) return null;
 
-            var extent = triggerPoint.Value.GetExtent();
+            var navigationsResult = await _navigationTokenService.GetNavigationsAsync(triggerPoint.Value);
+            if (navigationsResult == null) return null;
 
-            var navigationTokens = _navigationService.GetNaviationItem(extent);
-            if (navigationTokens.Count > 0)
-            {
-                var dataElement = _descriptionBuilder.GetColorizedDescription(navigationTokens);
-                if (dataElement == null)
-                    return Task.FromResult<QuickInfoItem>(null);
+            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
+            if (dataElement == null) return null;
 
-                var applicableToSpan = _documentAnalysis.CurrentSnapshot.CreateTrackingSpan(extent.Span.Start, extent.Span.Length, SpanTrackingMode.EdgeInclusive);
-                return Task.FromResult(new QuickInfoItem(applicableToSpan, dataElement));
-            }
+            var tokenSpan = navigationsResult.ApplicableToken.Span;
+            var applicableSpan = snapshot.CreateTrackingSpan(tokenSpan, SpanTrackingMode.EdgeInclusive);
 
-            return Task.FromResult<QuickInfoItem>(null);
+            return new QuickInfoItem(applicableSpan, dataElement);
         }
 
         public void Dispose()

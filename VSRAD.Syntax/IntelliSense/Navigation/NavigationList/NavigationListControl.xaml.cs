@@ -1,41 +1,33 @@
 ﻿using Microsoft.VisualStudio.Shell;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Controls;
-using VSRAD.Syntax.Helpers;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 {
     public partial class NavigationListControl : UserControl
     {
-        private readonly INavigationTokenService _navigationTokenService;
-
-        public NavigationListControl(INavigationTokenService navigationTokenService)
+        public NavigationListControl()
         {
-            _navigationTokenService = navigationTokenService;
             InitializeComponent();
         }
 
         public async Task UpdateNavigationListAsync(IEnumerable<NavigationToken> navitaionList)
         {
-            var definitionGroups = navitaionList
-                .Select(n => new DefinitionToken(n))
-                .GroupBy(d => d.FilePath)
-                .ToList();
+            var navigationGroups = navitaionList.GroupBy(n => n.Path).ToList();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             NavigationTokens.Items.Clear();
-            foreach (var group in definitionGroups)
+            foreach (var group in navigationGroups)
             {
-                var navigationListGroupItem = new NavigationListItem(group.Key);
+                var groupItems = new NavigationListNode(group.Key);
                 foreach (var definitionItem in group)
                 {
-                    navigationListGroupItem.Items.Add(new NavigationListDefinitionItem(definitionItem));
+                    groupItems.Items.Add(new NavigationListItemNode(definitionItem));
                 }
 
-                NavigationTokens.Items.Add(navigationListGroupItem);
+                NavigationTokens.Items.Add(groupItems);
             }
         }
 
@@ -53,15 +45,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
         private void NavigateToToken()
         {
-            try
-            {
-                if (NavigationTokens.SelectedItem is NavigationListDefinitionItem item)
-                    _navigationTokenService.GoToPoint(item.DefinitionToken.NavigationToken);
-            }
-            catch (Exception e)
-            {
-                Error.LogError(e, "Navigation list");
-            }
+            if (NavigationTokens.SelectedItem is NavigationListItemNode item)
+                item.NavigationToken.Navigate();
         }
     }
 }

@@ -86,7 +86,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             }
         }
 
-        private void UpdateEditorColors(IEditorFormatMap formatMap)
+        private static void UpdateEditorColors(IEditorFormatMap formatMap)
         {
             try
             {

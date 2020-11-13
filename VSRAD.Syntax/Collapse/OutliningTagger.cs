@@ -1,4 +1,4 @@
-﻿using VSRAD.Syntax.Parser;
+﻿using VSRAD.Syntax.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,8 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Parser.Blocks;
+using VSRAD.Syntax.Core.Blocks;
+using System.Threading;
 
 namespace VSRAD.Syntax.Collapse
 {
@@ -16,11 +17,12 @@ namespace VSRAD.Syntax.Collapse
         private ITextSnapshot currentSnapshot;
         private IReadOnlyList<Span> currentSpans;
 
-        public OutliningTagger(DocumentAnalysis documentAnalysis)
+        public OutliningTagger(IDocumentAnalysis documentAnalysis)
         {
             currentSpans = new List<Span>();
-            ParserUpdated(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
-            documentAnalysis.ParserUpdated += ParserUpdated;
+            documentAnalysis.AnalysisUpdated += AnalysisUpdated;
+            if (documentAnalysis.CurrentResult != null) 
+                AnalysisUpdated(documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -48,12 +50,16 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(version, blocks));
-
-        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot, IReadOnlyList<IBlock> blocks)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            var newSpanElements = blocks
+            if (reason == RescanReason.ContentChanged)
+                ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes, cancellationToken));
+        }
+
+        private async Task UpdateTagSpansAsync(ITextSnapshot textSnapshot, IReadOnlyList<IBlock> blocks, CancellationToken cancellationToken)
+        {
+            var newSpanElements = blocks.AsParallel()
+                .WithCancellation(cancellationToken)
                 .Where(b => b.Type != BlockType.Root)
                 .Select(b => b.Scope.GetSpan(textSnapshot))
                 .ToList();

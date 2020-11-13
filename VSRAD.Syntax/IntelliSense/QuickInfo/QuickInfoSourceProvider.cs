@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
@@ -13,16 +12,13 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     [Order]
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
-        private readonly INavigationTokenService _navigationService;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly Lazy<INavigationTokenService> _navigationService;
+        private readonly Lazy<IIntellisenseDescriptionBuilder> _descriptionBuilder;
 
         [ImportingConstructor]
-        public QuickInfoSourceProvider(DocumentAnalysisProvoder documentAnalysisProvoder,
-            INavigationTokenService navigationService,
-            IIntellisenseDescriptionBuilder descriptionBuilder)
+        public QuickInfoSourceProvider(Lazy<INavigationTokenService> navigationService,
+            Lazy<IIntellisenseDescriptionBuilder> descriptionBuilder)
         {
-            _documentAnalysisProvoder = documentAnalysisProvoder;
             _navigationService = navigationService;
             _descriptionBuilder = descriptionBuilder;
         }
@@ -32,8 +28,8 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             if (textBuffer == null)
                 throw new ArgumentNullException(nameof(textBuffer));
 
-            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(textBuffer);
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new QuickInfoSource(textBuffer, documentAnalysis, _navigationService, _descriptionBuilder));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => 
+                new QuickInfoSource(textBuffer, _navigationService.Value, _descriptionBuilder.Value));
         }
     }
 }

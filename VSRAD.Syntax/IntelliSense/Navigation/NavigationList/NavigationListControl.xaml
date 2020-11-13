@@ -180,7 +180,7 @@
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Path=Items}">
                     <TextBlock Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}" 
-                               Text="{Binding Name}" 
+                               Text="{Binding Text}" 
                                Padding="0, 2, 0, 2"/>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>

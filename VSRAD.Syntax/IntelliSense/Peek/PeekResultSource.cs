@@ -1,27 +1,19 @@
-﻿using VSRAD.Syntax.Parser.Tokens;
-using Microsoft.VisualStudio.Language.Intellisense;
+﻿using Microsoft.VisualStudio.Language.Intellisense;
 using System;
 using System.Threading;
-using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekResultSource : IPeekResultSource
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly ITextDocumentFactoryService _textDocumentFactory;
-        private readonly ITextSnapshot _version;
-        private readonly AnalysisToken _token;
+        private readonly NavigationToken _token;
 
-        public PeekResultSource(IPeekResultFactory peekResultFactory,
-            ITextDocumentFactoryService textDocumentFactory,
-            ITextSnapshot version,
-            AnalysisToken token)
+        public PeekResultSource(IPeekResultFactory peekResultFactory, NavigationToken navigationToken)
         {
             _peekResultFactory = peekResultFactory;
-            _textDocumentFactory = textDocumentFactory;
-            _version = version;
-            _token = token;
+            _token = navigationToken;
         }
 
         public void FindResults(string relationshipName, IPeekResultCollection resultCollection, CancellationToken cancellationToken, IFindPeekResultsCallback callback)
@@ -37,39 +29,29 @@ namespace VSRAD.Syntax.IntelliSense.Peek
 
         private IDocumentPeekResult CreateResult()
         {
-            if (!_textDocumentFactory.TryGetTextDocument(_version.TextBuffer, out var document))
-                return null;
+            var tokenEnd = _token.GetEnd();
+            var line = tokenEnd.GetContainingLine();
+            var lineNumber = line.LineNumber;
 
-            var endPosition = _token.TrackingToken.GetEnd(_version);
-            var line = _version.GetLineFromPosition(endPosition);
+            var startLineIndex = 0;
+            var endLineIndex = line.End - line.Start;
+            var idIndex = tokenEnd - line.Start;
 
-            var startLineIndex = line.LineNumber;
-            var startIndex = endPosition - line.Start.Position;
-            var endLineIndex = line.LineNumber;
-            var endIndex = endPosition - line.Start.Position;
-
-            var displayInfo = new PeekResultDisplayInfo2(
-                label: string.Format("{0}: {1}-{2} ", document.FilePath, startLineIndex + 1, endLineIndex + 1),
-                labelTooltip: document.FilePath,
-                title: document.FilePath,
-                titleTooltip: document.FilePath,
-                startIndexOfTokenInLabel: 0,
-                lengthOfTokenInLabel: 0
-            );
+            var displayInfo = new PeekResultDisplayInfo(
+                label: _token.Path,
+                labelTooltip: _token.Path,
+                title: _token.Path,
+                titleTooltip: _token.Path);
 
             return _peekResultFactory.Create(
                 displayInfo,
-                default,
-                document.FilePath,
+                _token.Path,
+                lineNumber,
                 startLineIndex,
-                startIndex,
+                lineNumber,
                 endLineIndex,
-                endIndex,
-                0,
-                0,
-                0,
-                0,
-                isReadOnly: false
+                idLine: lineNumber,
+                idIndex: idIndex
             );
         }
     }

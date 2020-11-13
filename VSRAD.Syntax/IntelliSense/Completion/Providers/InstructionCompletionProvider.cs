@@ -5,54 +5,76 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Options.Instructions;
+using VSRAD.Syntax.Helpers;
+using System.Threading;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
-    internal class InstructionCompletionProvider : CompletionProvider
+    internal class InstructionCompletionProvider : RadCompletionProvider
     {
         private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
-        private readonly InstructionListManager _instructionListManager;
-        private readonly List<CompletionItem> _instructions;
-        private bool _autocompleteInstructions;
+        private bool _autocomplete;
+        private readonly List<MultipleCompletionItem> _asm1InstructionCompletions;
+        private readonly List<MultipleCompletionItem> _asm2InstructionCompletions;
 
-        public InstructionCompletionProvider(InstructionListManager instructionListManager, OptionsProvider optionsProvider)
+        public InstructionCompletionProvider(OptionsProvider optionsProvider, IInstructionListManager instructionListManager)
             : base(optionsProvider)
         {
-            _instructionListManager = instructionListManager;
-            _autocompleteInstructions = optionsProvider.AutocompleteInstructions;
-            _instructions = new List<CompletionItem>();
+            _autocomplete = optionsProvider.AutocompleteInstructions;
+            _asm1InstructionCompletions = new List<MultipleCompletionItem>();
+            _asm2InstructionCompletions = new List<MultipleCompletionItem>();
 
-            _instructionListManager.InstructionUpdated += InstructionSetUpdated;
-            UpdateInstructionSet();
+            instructionListManager.InstructionsUpdated += InstructionsUpdated;
+            InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
         }
 
         public override void DisplayOptionsUpdated(OptionsProvider sender) =>
-            _autocompleteInstructions = sender.AutocompleteInstructions;
+            _autocomplete = sender.AutocompleteInstructions;
 
-        public override Task<CompletionContext> GetContextAsync(DocumentAnalysis documentAnalysis, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan)
+        public override Task<RadCompletionContext> GetContextAsync(IDocument _, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
         {
-            if (!_autocompleteInstructions)
-                return Task.FromResult(CompletionContext.Empty);
+            if (!_autocomplete)
+                return Task.FromResult(RadCompletionContext.Empty);
 
             var line = triggerLocation.GetContainingLine();
             var startSpan = new SnapshotSpan(line.Start, applicableToSpan.Start);
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (string.IsNullOrWhiteSpace(startSpan.GetText()))
-                return Task.FromResult(new CompletionContext(_instructions));
+            {
+                var type = triggerLocation.Snapshot.GetAsmType();
+                switch (type)
+                {
+                    case AsmType.RadAsm:
+                        return Task.FromResult(new RadCompletionContext(_asm1InstructionCompletions));
+                    case AsmType.RadAsm2:
+                        return Task.FromResult(new RadCompletionContext(_asm2InstructionCompletions));
+                    default:
+                        return Task.FromResult(RadCompletionContext.Empty);
+                }
+            }
 
-            return Task.FromResult(CompletionContext.Empty);
+            return Task.FromResult(RadCompletionContext.Empty);
         }
 
-        private void InstructionSetUpdated(IReadOnlyList<string> instructions) =>
-            UpdateInstructionSet();
-
-        private void UpdateInstructionSet()
+        private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {
-            _instructions.Clear();
-            foreach (var dictonaryRow in _instructionListManager.InstructionList)
+            if ((asmType & AsmType.RadAsm) != 0)
             {
-                _instructions.Add(new CompletionItem(dictonaryRow.Key, Icon, dictonaryRow.Value.Select(p => p.Key).ToList()));
+                _asm1InstructionCompletions.Clear();
+                _asm1InstructionCompletions.AddRange(
+                    sender.GetSelectedSetInstructions(AsmType.RadAsm)
+                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+            }
+
+            if ((asmType & AsmType.RadAsm2) != 0)
+            {
+                _asm2InstructionCompletions.Clear();
+                _asm2InstructionCompletions.AddRange(
+                    sender.GetSelectedSetInstructions(AsmType.RadAsm2)
+                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
             }
         }
     }

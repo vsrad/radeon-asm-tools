@@ -2,7 +2,7 @@
 using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
@@ -15,18 +15,16 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
             _navigationService = navigationService;
         }
 
-        public Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
+        public async Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
         {
-            var extent = triggerSpan.Start.GetExtent();
-            var navigableTokens = _navigationService.GetNaviationItem(extent, true);
+            var triggerPoint = triggerSpan.Start;
+            var tokensResult = await _navigationService.GetNavigationsAsync(triggerPoint);
+            if (tokensResult == null) return null;
 
-            return (navigableTokens.Count == 0)
-                ? Task.FromResult<INavigableSymbol>(null)
-                : Task.FromResult<INavigableSymbol>(new NavigableSymbol(extent.Span, navigableTokens, _navigationService));
+            return new NavigableSymbol(tokensResult.ApplicableToken.Span,
+                () => _navigationService.NavigateOrOpenNavigationList(tokensResult.Values));
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
     }
 }

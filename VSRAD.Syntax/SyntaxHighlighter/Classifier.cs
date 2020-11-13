@@ -1,4 +1,4 @@
-﻿using VSRAD.Syntax.Parser;
+﻿using VSRAD.Syntax.Core;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using System;
@@ -6,75 +6,56 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
-using VSRAD.Syntax.Parser.Tokens;
-using VSRAD.Syntax.Parser.Blocks;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Core.Blocks;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class AnalysisClassifier : ITagger<ClassificationTag>
+    internal class AnalysisClassifier : IClassifier
     {
-        private readonly ITextBuffer _buffer;
-        private readonly DocumentAnalysis _documentAnalysis;
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
+        private IAnalysisResult _analysisResult;
 
-        public AnalysisClassifier(ITextBuffer buffer,
-            DocumentAnalysis documentAnalysis,
-            IClassificationTypeRegistryService classificationTypeRegistryService,
-            IStandardClassificationService standardClassificationService)
+        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
         {
-            _buffer = buffer;
-            _documentAnalysis = documentAnalysis;
-            documentAnalysis.ParserUpdated += ParserUpdated;
+            _analysisResult = documentAnalysis.CurrentResult;
+            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result, rs);
 
-            InitializeClassifierDictonary(standardClassificationService, classificationTypeRegistryService);
-            ParserUpdated(documentAnalysis.CurrentSnapshot, documentAnalysis.LastParserResult);
+            InitializeClassifierDictonary(typeRegistryService);
         }
 
-        public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+#pragma warning disable CS0067 // disable "The event is never used". It's required by IClassifier
+        public event EventHandler<ClassificationChangedEventArgs> ClassificationChanged;
+#pragma warning restore CS0067
 
-        public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
+        public IList<ClassificationSpan> GetClassificationSpans(SnapshotSpan span)
         {
-            var snapshot = _documentAnalysis.CurrentSnapshot;
-            if (snapshot != _buffer.CurrentSnapshot)
-                yield break;
+            var classificationSpans = new List<ClassificationSpan>();
+            var analysisResult = _analysisResult;
+            if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            foreach (var block in _documentAnalysis.LastParserResult)
+            var block = analysisResult.GetBlock(span.Start);
+            if (block.Type == BlockType.Comment) return classificationSpans;
+
+            foreach (var scopeToken in block.Tokens)
             {
-                if (block.Type == BlockType.Comment)
-                    continue;
-
-                if (block.Type == BlockType.Function)
+                switch (scopeToken.Type)
                 {
-                    var name = ((FunctionBlock)block).Name;
-                    yield return GetTag(snapshot, name);
+                    case RadAsmTokenType.GlobalVariable:
+                    case RadAsmTokenType.GlobalVariableReference:
+                    case RadAsmTokenType.LocalVariable:
+                    case RadAsmTokenType.LocalVariableReference:
+                        continue;
                 }
 
-                foreach (var scopeToken in block.Tokens)
-                {
-                    yield return GetTag(snapshot, scopeToken);
-                }
+                classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
             }
+
+            return classificationSpans;
         }
 
-        private TagSpan<ClassificationTag> GetTag(ITextSnapshot snapshot, AnalysisToken token)
+        private void InitializeClassifierDictonary(IClassificationTypeRegistryService registryService)
         {
-            // iteration of the tagger can be invoked by VSStd2KCmdID.BACKSPACE of default IOleCommandTarget,
-            // while the parser may not have been executed yet and may occur ArgumentOutOfRangeException
-            var span = token.TrackingToken.GetSpan(snapshot);
-            if (span.End > snapshot.Length)
-                return null;
-
-            var snapshotSpan = new SnapshotSpan(snapshot, span);
-            var tag = new ClassificationTag(_tokenClassification[token.Type]);
-
-            return new TagSpan<ClassificationTag>(snapshotSpan, tag);
-        }
-
-        private void InitializeClassifierDictonary(IStandardClassificationService typeService, IClassificationTypeRegistryService registryService)
-        {
-            if (_tokenClassification != null)
-                return;
-
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
                 { RadAsmTokenType.Instruction, registryService.GetClassificationType(RadAsmTokenType.Instruction.GetClassificationTypeName()) },
@@ -84,57 +65,49 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.FunctionParameterReference, registryService.GetClassificationType(RadAsmTokenType.FunctionParameterReference.GetClassificationTypeName()) },
                 { RadAsmTokenType.Label, registryService.GetClassificationType(RadAsmTokenType.Label.GetClassificationTypeName()) },
                 { RadAsmTokenType.LabelReference, registryService.GetClassificationType(RadAsmTokenType.LabelReference.GetClassificationTypeName()) },
-                { RadAsmTokenType.GlobalVariable, typeService.FormalLanguage },
-                { RadAsmTokenType.GlobalVariableReference, typeService.FormalLanguage },
-                { RadAsmTokenType.LocalVariable, typeService.FormalLanguage },
             };
         }
 
-        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason)
         {
-            if (blocks.Count == 0)
-                return;
+            _analysisResult = analysisResult;
 
-            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(version, new Span(0, version.Length))));
+            if (reason != RescanReason.ContentChanged)
+                ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(analysisResult.Snapshot, 0, analysisResult.Snapshot.Length)));
         }
     }
 
     internal class TokenizerClassifier : ITagger<ClassificationTag>
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
-        private readonly ITextBuffer _buffer;
-        private readonly DocumentAnalysis _documentAnalysis;
+        private readonly IDocumentTokenizer _tokenizer;
+        private ITokenizerResult _currentResult;
 
-        public TokenizerClassifier(ITextBuffer buffer,
-            DocumentAnalysis documentAnalysis,
-            IStandardClassificationService standardClassificationService)
+        public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
         {
-            _buffer = buffer;
-            _documentAnalysis = documentAnalysis;
+            _tokenizer = tokenizer;
+            _tokenizer.TokenizerUpdated += (result, rs, ct) => TokenizerUpdated(result);
 
-            _documentAnalysis.TokensChanged += TokensChanged;
             InitializeClassifierDictionary(standardClassificationService);
+            TokenizerUpdated(_tokenizer.CurrentResult);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
         public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
-            if (_documentAnalysis.CurrentSnapshot.Version.VersionNumber != _buffer.CurrentSnapshot.Version.VersionNumber)
-                yield break;
-
+            var result = _currentResult;
             foreach (var span in spans)
             {
-                foreach (var token in _documentAnalysis.GetTokens(span))
+                foreach (var token in result.GetTokens(span))
                 {
-                    if (token.IsEmpty || _documentAnalysis.LexerTokenToRadAsmToken(token.Type) == RadAsmTokenType.Identifier)
+                    if (token.IsEmpty || _tokenizer.GetTokenType(token.Type) == RadAsmTokenType.Identifier)
                         continue;
 
-                    var tag = new ClassificationTag(_tokenClassification[_documentAnalysis.LexerTokenToRadAsmToken(token.Type)]);
-                    yield return new TagSpan<ClassificationTag>(new SnapshotSpan(_documentAnalysis.CurrentSnapshot, token.GetSpan(_documentAnalysis.CurrentSnapshot)), tag);
+                    var tag = new ClassificationTag(_tokenClassification[_tokenizer.GetTokenType(token.Type)]);
+                    yield return new TagSpan<ClassificationTag>(new SnapshotSpan(result.Snapshot, token.GetSpan(result.Snapshot)), tag);
                 }
             }
-
         }
 
         private void InitializeClassifierDictionary(IStandardClassificationService typeService)
@@ -166,16 +139,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokensChanged(IList<TrackingToken> trackingTokens)
+        private void TokenizerUpdated(ITokenizerResult result)
         {
-            if (trackingTokens.Count == 0)
+            var tokens = result.UpdatedTokens;
+            if (!tokens.Any())
                 return;
 
-            var snapshot = _documentAnalysis.CurrentSnapshot;
-            var start = trackingTokens.First().GetStart(snapshot);
-            var end = trackingTokens.Last().GetEnd(snapshot);
-
-            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, new Span(start, end - start))));
+            _currentResult = result;
+            var start = tokens.First().GetStart(result.Snapshot);
+            var end = tokens.Last().GetEnd(result.Snapshot);
+            TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(result.Snapshot, new Span(start, end - start))));
         }
     }
 }

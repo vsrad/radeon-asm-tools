@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 {
     [Guid(Constants.NavigationListToolWindowPaneGuid)]
     public class NavigationList : ToolWindowPane
     {
+        private static NavigationListControl Control;
+
         public NavigationList() : base(null)
         {
             Caption = "Radeon Asm Navigation List";
@@ -17,27 +19,27 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
         protected override void Initialize()
         {
-            var navigationTokenService = Syntax.Package.Instance.GetMEFComponent<INavigationTokenService>();
-            Content = new NavigationListControl(navigationTokenService);
+            Control = new NavigationListControl();
+            Content = Control;
         }
 
-        public static Task UpdateNavigationListAsync(IReadOnlyList<NavigationToken> tokens)
+        public static void UpdateNavigationList(IReadOnlyList<NavigationToken> tokens)
         {
-            if (Syntax.Package.Instance == null)
-                return Task.CompletedTask;
+            if (Control != null) UpdateNavigationList(Control, tokens);
+            if (Syntax.Package.Instance == null) return;
 
             var window = (NavigationList)Syntax.Package.Instance.FindToolWindow(typeof(NavigationList), 0, true);
-            if ((null == window) || (null == window.Frame))
-                return Task.CompletedTask;
+            if (window == null || window.Frame == null) return;
 
             if (window.Content is NavigationListControl navigationListControl)
             {
                 var windowFrame = (IVsWindowFrame)window.Frame;
-                Microsoft.VisualStudio.ErrorHandler.ThrowOnFailure(windowFrame.Show());
-                return navigationListControl.UpdateNavigationListAsync(tokens);
+                ErrorHandler.ThrowOnFailure(windowFrame.Show());
+                UpdateNavigationList(navigationListControl, tokens);
             }
-
-            return Task.CompletedTask;
         }
+
+        private static void UpdateNavigationList(NavigationListControl control, IReadOnlyList<NavigationToken> tokens) =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => control.UpdateNavigationListAsync(tokens));
     }
 }

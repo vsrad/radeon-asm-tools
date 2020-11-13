@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.IntelliSense;
-using VSRAD.Syntax.Parser.Tokens;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Core;
+using System.Threading.Tasks;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
@@ -27,8 +27,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private readonly object updateLock = new object();
         private readonly ITextView _view;
         private readonly ITextBuffer _buffer;
-        private readonly DocumentAnalysis _documentAnalysis;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IDocumentAnalysis _documentAnalysis;
 
         private NormalizedSnapshotSpanCollection wordSpans;
         private SnapshotSpan? navigationWordSpans;
@@ -36,15 +35,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private SnapshotPoint requestedPoint;
         private CancellationTokenSource indentCts;
 
-        internal HighlightWordTagger(ITextView view, 
-            ITextBuffer sourceBuffer, 
-            DocumentAnalysis documentAnalysis,
-            INavigationTokenService definitionService)
+        internal HighlightWordTagger(ITextView view,
+            ITextBuffer sourceBuffer,
+            IDocumentAnalysis documentAnalysis)
         {
             _view = view;
             _buffer = sourceBuffer;
             _documentAnalysis = documentAnalysis;
-            _navigationTokenService = definitionService;
 
             wordSpans = new NormalizedSnapshotSpanCollection();
             indentCts = new CancellationTokenSource();
@@ -60,7 +57,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 UpdateAtCaretPosition(_view.Caret.Position);
         }
 
-        private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) => 
+        private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) =>
             UpdateAtCaretPosition(e.NewPosition);
 
         private void UpdateAtCaretPosition(CaretPosition caretPoisition)
@@ -81,33 +78,18 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
             requestedPoint = point.Value;
             indentCts = new CancellationTokenSource();
-            ThreadPool.QueueUserWorkItem(UpdateWordAdornments, indentCts.Token);
+            Task.Run(async () => await UpdateWordAdornmentsAsync(indentCts.Token))
+                .RunAsyncWithoutAwait();
         }
 
-        private void UpdateWordAdornments(object threadContext)
-        {
-            try
-            {
-                UpdateWordAdornments((CancellationToken)threadContext);
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        private void UpdateWordAdornments(CancellationToken cancellation)
+        private async Task UpdateWordAdornmentsAsync(CancellationToken cancellation)
         {
             var currentRequest = requestedPoint;
             var version = currentRequest.Snapshot;
+            if (currentRequest == version.Length) return;
 
-            if (currentRequest == version.Length)
-                return;
-
-            var wordSpans = new List<SnapshotSpan>();
             var word = currentRequest.GetExtent();
-            var currentTokenRequest = _documentAnalysis.GetToken(currentRequest.Position);
-
-            if (!word.IsSignificant || _documentAnalysis.LexerTokenToRadAsmToken(currentTokenRequest.Type) != RadAsmTokenType.Identifier)
+            if (!word.IsSignificant)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;
@@ -118,31 +100,36 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return;
 
             cancellation.ThrowIfCancellationRequested();
-            var navigationItems = _navigationTokenService.GetNaviationItem(word);
-            if (navigationItems.Count != 1)
+
+            var analysisResult = await _documentAnalysis.GetAnalysisResultAsync(version);
+            var token = analysisResult.GetToken(currentRequest);
+            if (token == null)
             {
                 SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
                 return;
             }
-            var navigationItem = navigationItems[0].AnalysisToken;
-            var navigationTokenSpan = navigationItem.TrackingToken.Start.TextBuffer == version.TextBuffer
-                ? (SnapshotSpan?)new SnapshotSpan(version, navigationItem.TrackingToken.GetSpan(version))
+
+            DefinitionToken definition;
+            if (token is DefinitionToken definitionToken)
+                definition = definitionToken;
+            else if (token is ReferenceToken referenceToken)
+                definition = referenceToken.Definition;
+            else
+            {
+                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(), null, null);
+                return;
+            }
+
+            var wordSpans = new List<SnapshotSpan>();
+            var navigationTokenSpan = definition.Snapshot == version
+                ? (SnapshotSpan?)definition.Span
                 : null;
 
-            cancellation.ThrowIfCancellationRequested();
-            var block = _documentAnalysis.LastParserResult.GetBlockBy(navigationItem);
-            var blockSpan = (block.Type == Parser.Blocks.BlockType.Root) ? new Span(0, version.Length) : block.Scope.GetSpan(version);
-            var wordText = currentWord.GetText();
-
-            var lexerTokens = _documentAnalysis
-                .GetTokens(blockSpan)
-                .Where(t => _documentAnalysis.LexerTokenToRadAsmToken(t.Type) == RadAsmTokenType.Identifier);
-            foreach (var token in lexerTokens)
+            foreach (var reference in definition.References)
             {
                 cancellation.ThrowIfCancellationRequested();
-
-                if (token.GetText(version) == wordText)
-                    wordSpans.Add(new SnapshotSpan(version, token.GetSpan(version)));
+                if (reference.Snapshot == version)
+                    wordSpans.Add(reference.Span);
             }
 
             if (currentRequest == requestedPoint)

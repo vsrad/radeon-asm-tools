@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.IntelliSense;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
@@ -13,12 +13,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
     [TagType(typeof(TextMarkerTag))]
     internal sealed class BraceHighlighterProvider : IViewTaggerProvider
     {
-        private readonly DocumentAnalysisProvoder _documentAnalysisProvoder;
-
+        private readonly IDocumentFactory _documentFactory;
+        
         [ImportingConstructor]
-        public BraceHighlighterProvider(DocumentAnalysisProvoder documentAnalysisProvoder)
+        public BraceHighlighterProvider(IDocumentFactory documentFactory)
         {
-            _documentAnalysisProvoder = documentAnalysisProvoder;
+            _documentFactory = documentFactory;
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
@@ -26,8 +26,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             if (textView.TextBuffer != buffer)
                 return null;
 
-            var documentAnalysis = _documentAnalysisProvoder.CreateDocumentAnalysis(buffer);
-            return new BraceHighlighter(textView, buffer, documentAnalysis) as ITagger<T>;
+            var document = _documentFactory.GetOrCreateDocument(buffer);
+            return new BraceHighlighter(textView, buffer, document.DocumentTokenizer) as ITagger<T>;
         }
     }
 

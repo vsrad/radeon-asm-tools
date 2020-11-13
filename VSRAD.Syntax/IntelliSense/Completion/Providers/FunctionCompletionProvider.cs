@@ -3,40 +3,42 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Linq;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Parser;
+using VSRAD.Syntax.Core;
+using System.Threading;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
-    internal class FunctionCompletionProvider : CompletionProvider
+    internal class FunctionCompletionProvider : RadCompletionProvider
     {
         private static readonly ImageElement FunctionIcon = GetImageElement(KnownImageIds.Method);
         private bool _autocompleteFunctions;
+        private readonly INavigationTokenService _navigationTokenservice;
 
-        public FunctionCompletionProvider(OptionsProvider optionsProvider)
+        public FunctionCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
             : base(optionsProvider)
         {
             _autocompleteFunctions = optionsProvider.AutocompleteFunctions;
+            _navigationTokenservice = navigationTokenService;
         }
 
         public override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocompleteFunctions = sender.AutocompleteFunctions;
 
-        public override Task<CompletionContext> GetContextAsync(DocumentAnalysis documentAnalysis, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan)
+        public override async Task<RadCompletionContext> GetContextAsync(IDocument document, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
         {
             if (!_autocompleteFunctions)
-                return Task.FromResult(CompletionContext.Empty);
+                return RadCompletionContext.Empty;
 
-            var completionList = documentAnalysis
-                    .LastParserResult
-                    .GetFunctions()
-                    .Select(f => new NavigationToken(f.Name, triggerLocation.Snapshot))
-                    .Select(n => new CompletionItem(n.GetText(), FunctionIcon, n))
-                    .ToList();
+            var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(triggerLocation.Snapshot);
+            var completionItems = analysisResult.Root.Tokens
+                .AsParallel()
+                .WithCancellation(cancellationToken)
+                .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
+                .Select(t => _navigationTokenservice.CreateToken(t, document.Path))
+                .Select(t => new CompletionItem(t, FunctionIcon));
 
-            return Task.FromResult(new CompletionContext(completionList));
+            return new RadCompletionContext(completionItems.ToList());
         }
     }
 }

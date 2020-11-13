@@ -1,5 +1,5 @@
-﻿using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Blocks;
+﻿using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Blocks;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Formatting;
@@ -14,6 +14,7 @@ using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using Microsoft.VisualStudio.Text;
+using System.Threading;
 
 namespace VSRAD.Syntax.Guide
 {
@@ -22,15 +23,20 @@ namespace VSRAD.Syntax.Guide
         private readonly IWpfTextView _textView;
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
-        private readonly DocumentAnalysis _documentAnalysis;
+        private readonly IDocumentAnalysis _documentAnalysis;
+        private double _thickness;
+        private double _dashSize;
+        private double _spaceSize;
+        private double _offsetX;
+        private double _offsetY;
+        private IAnalysisResult _currentResult;
         private IList<Line> _currentAdornments;
-        private bool _isEnables;
+        private bool _isEnabled;
         private int _tabSize;
 
-        public IndentGuide(IWpfTextView textView, DocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
+        public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
         {
             _textView = textView ?? throw new NullReferenceException();
-            _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
             _documentAnalysis = documentAnalysis;
 
             _currentAdornments = new List<Line>();
@@ -41,13 +47,15 @@ namespace VSRAD.Syntax.Guide
             };
 
             _layer = _textView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
-            _isEnables = optionsProvider.IsEnabledIndentGuides;
-
             _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
             _textView.LayoutChanged += (sender, args) => UpdateIndentGuides();
-            _documentAnalysis.ParserUpdated += ParserUpdated;
+
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
             optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
             textView.Options.OptionChanged += TabSizeOptionsChanged;
+
+            _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
+            IndentGuideOptionsUpdated(optionsProvider);
         }
 
         private void TabSizeOptionsChanged(object sender, EditorOptionChangedEventArgs e)
@@ -56,15 +64,32 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void ParserUpdated(ITextSnapshot version, IReadOnlyList<IBlock> blocks) =>
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
+        {
+            if (reason != RescanReason.ContentChanged) return;
+
+            _currentResult = analysisResult;
             UpdateIndentGuides();
+        }
 
         private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
-            if (sender.IsEnabledIndentGuides != _isEnables)
+            if (sender.IsEnabledIndentGuides != _isEnabled
+                || sender.IndentGuideThickness != _thickness
+                || sender.IndentGuideDashSize != _dashSize
+                || sender.IndentGuideSpaceSize != _spaceSize
+                || sender.IndentGuideOffsetX != _offsetX
+                || sender.IndentGuideOffsetY != _offsetY)
             {
-                _isEnables = sender.IsEnabledIndentGuides;
-                if (_isEnables)
+                _isEnabled = sender.IsEnabledIndentGuides;
+                _thickness = sender.IndentGuideThickness;
+                _dashSize = sender.IndentGuideDashSize;
+                _spaceSize = sender.IndentGuideSpaceSize;
+                _offsetX = sender.IndentGuideOffsetX;
+                _offsetY = sender.IndentGuideOffsetY;
+
+                _currentResult = _documentAnalysis.CurrentResult;
+                if (_isEnabled)
                     UpdateIndentGuides();
                 else
                     CleanupIndentGuidesAsync().ConfigureAwait(false);
@@ -76,8 +101,9 @@ namespace VSRAD.Syntax.Guide
 
         private void UpdateIndentGuides()
         {
-            if (_isEnables)
-                ThreadHelper.JoinableTaskFactory.RunAsync(SetupIndentGuidesAsync);
+            if (_isEnabled && _currentResult != null)
+                Task.Run(async () => await SetupIndentGuidesAsync())
+                    .RunAsyncWithoutAwait();
         }
 
         private async Task CleanupIndentGuidesAsync()
@@ -100,8 +126,8 @@ namespace VSRAD.Syntax.Guide
                 var firstVisibleLine = _textView.TextViewLines.First(line => line.IsFirstTextViewLineForSnapshotLine);
                 var lastVisibleLine = _textView.TextViewLines.Last(line => line.IsLastTextViewLineForSnapshotLine);
 
-                var newSpanElements = _documentAnalysis
-                    .LastParserResult
+                var newSpanElements = _currentResult
+                    .Scopes
                     .Where(b => b.Type != BlockType.Root && b.Type != BlockType.Comment && IsInVisualBuffer(b, firstVisibleLine, lastVisibleLine));
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
@@ -109,7 +135,7 @@ namespace VSRAD.Syntax.Guide
 
                 ClearAndUpdateCurrentGuides(updatedIndentGuides);
             }
-            catch (ObjectDisposedException) 
+            catch (ObjectDisposedException)
             {
                 // If the buffer was changed during the calculation of the first and last line
             }
@@ -119,10 +145,10 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        private static bool IsInVisualBuffer(IBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
+        private bool IsInVisualBuffer(IBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
-            var blockStart = block.TokenStart.Start.GetPoint(firstVisibleLine.Snapshot);
-            var blockEnd = block.TokenEnd.GetEnd(firstVisibleLine.Snapshot);
+            var blockStart = block.Area.GetStart(_textView.TextSnapshot);
+            var blockEnd = block.Area.GetEnd(_textView.TextSnapshot);
 
             bool isOnStart = blockStart <= lastVisibleLine.End;
             bool isOnEnd = blockEnd >= firstVisibleLine.End;
@@ -137,8 +163,8 @@ namespace VSRAD.Syntax.Guide
             ThreadHelper.ThrowIfNotOnUIThread();
             foreach (var block in blocks)
             {
-                var pointStart = block.TokenStart.Start.GetPoint(_textView.TextSnapshot);
-                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.TokenEnd.GetEnd(_textView.TextSnapshot));
+                var pointStart = new SnapshotPoint(_textView.TextSnapshot, block.Area.GetStart(_textView.TextSnapshot));
+                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.Area.GetEnd(_textView.TextSnapshot));
 
                 var viewLineStart = _textView.GetTextViewLineContainingBufferPosition(pointStart);
                 var viewLineEnd = _textView.GetTextViewLineContainingBufferPosition(pointEnd);
@@ -150,17 +176,17 @@ namespace VSRAD.Syntax.Guide
                 var tabs = spaceText.Count(ch => ch == '\t');
 
                 var indentStart = (spaceText.Length - tabs) + tabs * _tabSize;
-                var leftOffset = indentStart * spaceWidth + horizontalOffset;
+                var leftOffset = indentStart * spaceWidth + horizontalOffset + _offsetX;
 
                 yield return new Line()
                 {
                     Stroke = Brushes.DarkGray,
-                    StrokeThickness = 1,
-                    StrokeDashArray = new DoubleCollection() { 2 },
+                    StrokeThickness = _thickness,
+                    StrokeDashArray = new DoubleCollection() { _dashSize, _spaceSize },
                     X1 = leftOffset,
                     X2 = leftOffset,
-                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom : _textView.ViewportTop,
-                    Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top : _textView.ViewportBottom,
+                    Y1 = (viewLineStart.Top != 0) ? viewLineStart.Bottom + _offsetY : _textView.ViewportTop,
+                    Y2 = (viewLineEnd.Top != 0) ? viewLineEnd.Top - _offsetY : _textView.ViewportBottom,
                 };
             }
         }

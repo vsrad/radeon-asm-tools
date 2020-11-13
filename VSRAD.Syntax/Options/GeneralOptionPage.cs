@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options.Instructions;
 using DisplayNameAttribute = System.ComponentModel.DisplayNameAttribute;
 using Task = System.Threading.Tasks.Task;
 
@@ -24,6 +25,11 @@ namespace VSRAD.Syntax.Options
             SortOptions = GeneralOptionPage.SortState.ByName;
             Autoscroll = true;
             IsEnabledIndentGuides = false;
+            IndentGuideThickness = 0.9;
+            IndentGuideDashSize = 3.0;
+            IndentGuideSpaceSize = 2.9;
+            IndentGuideOffsetX = 3.2;
+            IndentGuideOffsetY = 2.0;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
@@ -36,6 +42,11 @@ namespace VSRAD.Syntax.Options
         public GeneralOptionPage.SortState SortOptions;
         public bool Autoscroll;
         public bool IsEnabledIndentGuides;
+        public double IndentGuideThickness;
+        public double IndentGuideDashSize;
+        public double IndentGuideSpaceSize;
+        public double IndentGuideOffsetY;
+        public double IndentGuideOffsetX;
         public IReadOnlyList<string> Asm1FileExtensions;
         public IReadOnlyList<string> Asm2FileExtensions;
         public string InstructionsPaths;
@@ -94,6 +105,49 @@ namespace VSRAD.Syntax.Options
             get { return _optionsEventProvider.IsEnabledIndentGuides; }
             set { _optionsEventProvider.IsEnabledIndentGuides = value; }
         }
+
+#if DEBUG
+        [Category("Syntax highlight")]
+        [DisplayName("Indent guide line thikness")]
+        public double IndentGuideThikness
+        {
+            get { return _optionsEventProvider.IndentGuideThickness; }
+            set { _optionsEventProvider.IndentGuideThickness = value; }
+        }
+
+        [Category("Syntax highlight")]
+        [DisplayName("Indent guide dash size")]
+        public double IndentGuideDashSize
+        {
+            get { return _optionsEventProvider.IndentGuideDashSize; }
+            set { _optionsEventProvider.IndentGuideDashSize = value; }
+        }
+
+        [Category("Syntax highlight")]
+        [DisplayName("Indent guide space size")]
+        [Description("Space size between indent lines")]
+        public double IndentGuideSpaceSize
+        {
+            get { return _optionsEventProvider.IndentGuideSpaceSize; }
+            set { _optionsEventProvider.IndentGuideSpaceSize = value; }
+        }
+
+        [Category("Syntax highlight")]
+        [DisplayName("Indent guide line offset X")]
+        public double IndentGuideOffsetX
+        {
+            get { return _optionsEventProvider.IndentGuideOffsetX; }
+            set { _optionsEventProvider.IndentGuideOffsetX = value; }
+        }
+
+        [Category("Syntax highlight")]
+        [DisplayName("Indent guide line offset Y")]
+        public double IndentGuideOffsetY
+        {
+            get { return _optionsEventProvider.IndentGuideOffsetY; }
+            set { _optionsEventProvider.IndentGuideOffsetY = value; }
+        }
+#endif
 
         [Category("Syntax file extensions")]
         [DisplayName("Asm1 file extensions")]
@@ -175,7 +229,7 @@ namespace VSRAD.Syntax.Options
         {
             // make sure this managers initialized before initial option event
             _ = Package.Instance.GetMEFComponent<ContentTypeManager>();
-            _ = Package.Instance.GetMEFComponent<InstructionListManager>();
+            _ = Package.Instance.GetMEFComponent<IInstructionListManager>();
 
             _optionsEventProvider.OptionsUpdatedInvoke();
             return Task.CompletedTask;

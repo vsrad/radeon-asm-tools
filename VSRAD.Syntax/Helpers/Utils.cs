@@ -1,47 +1,26 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using EnvDTE;
+using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
+using System.IO;
 
 namespace VSRAD.Syntax.Helpers
 {
     public static class Utils
     {
-        public static bool TryOpenDocument(IServiceProvider serviceProvider, string path, out IVsTextBuffer buffer)
+        public static IVsTextBuffer GetWindowVisualBuffer(Window window, IServiceProvider serviceProvider)
         {
-            VsShellUtilities.OpenDocument(serviceProvider, path, Guid.Empty, out _, out _, out var windowFrame);
-            var view = VsShellUtilities.GetTextView(windowFrame);
+            if (window == null || window.Document == null || !window.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase)) return null;
 
-            if (view.GetBuffer(out var lines) == 0)
+            var fullPath = Path.Combine(window.Document.Path, window.Document.Name);
+            if (VsShellUtilities.IsDocumentOpen(serviceProvider, fullPath, Guid.Empty, out _, out _, out var windowFrame))
             {
-                if (lines is IVsTextBuffer newBuffer)
-                {
-                    buffer = newBuffer;
-                    return true;
-                }
+                var textView = VsShellUtilities.GetTextView(windowFrame);
+                if (textView.GetBuffer(out var vsTextBuffer) == VSConstants.S_OK) return vsTextBuffer;
             }
 
-            buffer = null;
-            return false;
-        }
-
-        public static bool IsDocumentOpen(IServiceProvider serviceProvider, string path, out IVsTextBuffer buffer)
-        {
-            var rc = VsShellUtilities.IsDocumentOpen(serviceProvider, path, Guid.Empty, out _, out _, out var windowFrame);
-            if (rc)
-            {
-                var view = VsShellUtilities.GetTextView(windowFrame);
-                if (view.GetBuffer(out var lines) == 0)
-                {
-                    if (lines is IVsTextBuffer newBuffer)
-                    {
-                        buffer = newBuffer;
-                        return true;
-                    }
-                }
-            }
-
-            buffer = null;
-            return false;
+            return null;
         }
     }
 }

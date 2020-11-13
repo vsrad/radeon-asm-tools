@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using VSRAD.Syntax.Parser;
-using VSRAD.Syntax.Parser.Tokens;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
@@ -20,17 +20,17 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
         private readonly object updateLock = new object();
         private readonly ITextView _view;
         private readonly ITextBuffer _buffer;
-        private readonly DocumentAnalysis _documentAnalysis;
+        private readonly IDocumentTokenizer _tokenizer;
 
         private SnapshotSpan? currentWord;
         private NormalizedSnapshotSpanCollection wordSpans;
         private CancellationTokenSource indentCts;
 
-        internal BraceHighlighter(ITextView view, ITextBuffer sourceBuffer, DocumentAnalysis documentAnalysis)
+        internal BraceHighlighter(ITextView view, ITextBuffer sourceBuffer, IDocumentTokenizer documentTokenizer)
         {
             _view = view;
             _buffer = sourceBuffer;
-            _documentAnalysis = documentAnalysis;
+            _tokenizer = documentTokenizer;
 
             wordSpans = new NormalizedSnapshotSpanCollection();
             indentCts = new CancellationTokenSource();
@@ -93,8 +93,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             var rbracketType = RadAsmTokenType.Unknown;
 
             cancellation.ThrowIfCancellationRequested();
-            var currentToken = _documentAnalysis.GetToken(currentRequest);
-            if (_documentAnalysis.LexerTokenToRadAsmToken(currentToken.Type) == RadAsmTokenType.Comment)
+            var currentResult = _tokenizer.CurrentResult;
+            var currentToken = currentResult.GetToken(currentRequest);
+            if (_tokenizer.GetTokenType(currentToken.Type) == RadAsmTokenType.Comment)
             {
                 SynchronousUpdate(new NormalizedSnapshotSpanCollection(), null);
                 return;
@@ -149,15 +150,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
             if (bracketType == BracketType.Lbracket)
             {
-                var searchTokens = _documentAnalysis
-                    .GetTokens(new Span(currentWord.End, _documentAnalysis.CurrentSnapshot.Length - currentWord.End))
+                var searchTokens = currentResult
+                    .GetTokens(new Span(currentWord.End, currentWord.Snapshot.Length - currentWord.End))
                     .Where(t => IsLeftOrRightBracket(t.Type, lbracketType, rbracketType));
 
                 foreach (var token in searchTokens)
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    if (_documentAnalysis.LexerTokenToRadAsmToken(token.Type) == lbracketType)
+                    if (_tokenizer.GetTokenType(token.Type) == lbracketType)
                     {
                         bracketCounter++;
                     }
@@ -173,7 +174,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             }
             else if (bracketType == BracketType.Rbracket)
             {
-                var searchTokens = _documentAnalysis
+                var searchTokens = currentResult
                     .GetTokens(new Span(0, currentWord.Start))
                     .Where(t => IsLeftOrRightBracket(t.Type, lbracketType, rbracketType));
 
@@ -181,7 +182,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
                 {
                     cancellation.ThrowIfCancellationRequested();
 
-                    if (_documentAnalysis.LexerTokenToRadAsmToken(token.Type) == rbracketType)
+                    if (_tokenizer.GetTokenType(token.Type) == rbracketType)
                     {
                         bracketCounter++;
                     }
@@ -265,7 +266,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
         private bool IsLeftOrRightBracket(int type, RadAsmTokenType lBracket, RadAsmTokenType rBracket)
         {
-            var tokenType = _documentAnalysis.LexerTokenToRadAsmToken(type);
+            var tokenType = _tokenizer.GetTokenType(type);
             return tokenType == lBracket || tokenType == rBracket;
         }
     }

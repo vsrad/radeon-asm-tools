@@ -1,27 +1,18 @@
-﻿using VSRAD.Syntax.Parser.Tokens;
-using Microsoft.VisualStudio.Language.Intellisense;
-using System;
+﻿using Microsoft.VisualStudio.Language.Intellisense;
 using System.Collections.Generic;
-using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
     internal sealed class PeekableItem : IPeekableItem
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly ITextDocumentFactoryService _textDocumentFactory;
-        private readonly AnalysisToken _token;
-        private readonly ITextSnapshot _version;
+        private readonly NavigationToken _navigationToken;
 
-        public PeekableItem(IPeekResultFactory peekResultFactory, 
-            ITextDocumentFactoryService textDocumentFactory, 
-            ITextSnapshot version, 
-            AnalysisToken token)
+        public PeekableItem(IPeekResultFactory peekResultFactory, NavigationToken navigationToken)
         {
-            _token = token;
-            _version = version;
             _peekResultFactory = peekResultFactory;
-            _textDocumentFactory = textDocumentFactory;
+            _navigationToken = navigationToken;
         }
 
         public string DisplayName => null;
@@ -30,6 +21,6 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             new List<IPeekRelationship>() { PredefinedPeekRelationships.Definitions };
 
         public IPeekResultSource GetOrCreateResultSource(string relationshipName) =>
-            new PeekResultSource(_peekResultFactory, _textDocumentFactory, _version, _token);
+            new PeekResultSource(_peekResultFactory, _navigationToken);
     }
 }

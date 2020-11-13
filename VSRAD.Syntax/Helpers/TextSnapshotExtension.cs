@@ -1,14 +1,14 @@
 ﻿using Microsoft.VisualStudio.Text;
-using VSRAD.Syntax.Parser;
 
 namespace VSRAD.Syntax.Helpers
 {
-    internal enum AsmType
+    public enum AsmType
     {
         RadAsm = 1,
         RadAsm2 = 2,
-        RadAsmDoc = 3,
-        Unknown = 4,
+        RadAsmDoc = 4,
+        Unknown = 8,
+        RadAsmCode = RadAsm | RadAsm2,
     }
 
     internal static class TextSnapshotExtension
@@ -25,7 +25,7 @@ namespace VSRAD.Syntax.Helpers
             return AsmType.Unknown;
         }
 
-        internal static bool TryGetDocumentAnalysis(this ITextSnapshot textSnapshot, out DocumentAnalysis documentAnalysis) =>
-            textSnapshot.TextBuffer.Properties.TryGetProperty(typeof(DocumentAnalysis), out documentAnalysis);
+        internal static AsmType GetAsmType(this ITextBuffer textBuffer) =>
+            GetAsmType(textBuffer.CurrentSnapshot);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
 
@@ -10,15 +11,15 @@ namespace VSRAD.Syntax.IntelliSense
     {
         private readonly ITextView _textView;
         private readonly RadeonServiceProvider _editorService;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationService;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(RadeonServiceProvider editorService, INavigationTokenService navigationTokenService, ITextView textView)
+        public IntellisenseController(RadeonServiceProvider editorService, INavigationTokenService navigationService, ITextView textView)
         {
             _textView = textView;
             _editorService = editorService;
-            _navigationTokenService = navigationTokenService;
+            _navigationService = navigationService;
         }
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
@@ -64,8 +65,8 @@ namespace VSRAD.Syntax.IntelliSense
                 switch ((VSConstants.VSStd97CmdID)nCmdID)
                 {
                     case VSConstants.VSStd97CmdID.GotoDefn:
-                        _navigationTokenService.GoToDefinition(_textView);
-                        return VSConstants.S_OK;
+                        if (TryGoToDefinition()) return VSConstants.S_OK;
+                        break;
                 }
             }
             else if (pguidCmdGroup == VSConstants.VsStd12)
@@ -84,6 +85,17 @@ namespace VSRAD.Syntax.IntelliSense
             }
 
             return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
+        private bool TryGoToDefinition()
+        {
+            var point = _textView.Caret.Position.BufferPosition;
+
+            var navigationServiceResult = ThreadHelper.JoinableTaskFactory.Run(() => _navigationService.GetNavigationsAsync(point));
+            if (navigationServiceResult == null || navigationServiceResult.Values.Count == 0) return false;
+
+            _navigationService.NavigateOrOpenNavigationList(navigationServiceResult.Values);
+            return true;
         }
     }
 }

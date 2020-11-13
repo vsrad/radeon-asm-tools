@@ -62,23 +62,75 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Core\AnalysisResult.cs" />
+    <Compile Include="Core\Blocks\Block.cs" />
+    <Compile Include="Core\Blocks\FunctionBlock.cs" />
+    <Compile Include="Core\Blocks\TrackingBlock.cs" />
+    <Compile Include="Core\Document.cs" />
+    <Compile Include="Core\DocumentAnalysis.cs" />
+    <Compile Include="Core\DocumentFactory.cs" />
+    <Compile Include="Core\DocumentTokenizer.cs" />
+    <Compile Include="Core\Helper\BitHelper.cs" />
+    <Compile Include="Core\Helper\FixedSizeDictionary.cs" />
+    <Compile Include="Core\Helper\ListBlockExtension.cs" />
+    <Compile Include="Core\Helper\SortedSet.cs" />
+    <Compile Include="Core\Helper\ITokenizerCollection.cs" />
+    <Compile Include="Core\Helper\TokenizerCollection.cs" />
+    <Compile Include="Core\IAnalysisResult.cs" />
+    <Compile Include="Core\IDocument.cs" />
+    <Compile Include="Core\IDocumentAnalysis.cs" />
+    <Compile Include="Core\IDocumentFactory.cs" />
+    <Compile Include="Core\IDocumentTokenizer.cs" />
+    <Compile Include="Core\CodeDocument.cs" />
+    <Compile Include="Core\LexerParserFactory.cs" />
+    <Compile Include="Core\Lexer\Asm2Lexer.cs" />
+    <Compile Include="Core\Lexer\AsmDocLexer.cs" />
+    <Compile Include="Core\Lexer\AsmLexer.cs" />
+    <Compile Include="Core\Lexer\Lexer.cs" />
+    <Compile Include="Core\Parser\AbstractCodeParser.cs" />
+    <Compile Include="Core\Parser\Asm2Parser.cs" />
+    <Compile Include="Core\Parser\AsmDocParser.cs" />
+    <Compile Include="Core\Parser\Asm1Parser.cs" />
+    <Compile Include="Core\Parser\IParser.cs" />
+    <Compile Include="Core\Parser\DefinitionContainer.cs" />
+    <Compile Include="Core\ITokenizerResult.cs" />
+    <Compile Include="Core\Parser\ErrorMessages.cs" />
+    <Compile Include="Core\Parser\ParserResult.cs" />
+    <Compile Include="Core\RescanReason.cs" />
+    <Compile Include="Core\TokenizerResult.cs" />
+    <Compile Include="Core\Tokens\AnalysisToken.cs" />
+    <Compile Include="Core\Tokens\DefinitionToken.cs" />
+    <Compile Include="Core\Tokens\ErrorToken.cs" />
+    <Compile Include="Core\Tokens\IncludeToken.cs" />
+    <Compile Include="Core\Tokens\ReferenceToken.cs" />
+    <Compile Include="Core\Tokens\TokenSpan.cs" />
+    <Compile Include="Core\Tokens\TokenType.cs" />
+    <Compile Include="Core\Tokens\TrackingToken.cs" />
+    <Compile Include="Core\Tokens\VariableToken.cs" />
+    <Compile Include="Core\InvisibleDocument.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
+    <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
     <Compile Include="FunctionList\Commands\ClearSearchFieldCommand.cs" />
     <Compile Include="FunctionList\Commands\SelectItemCommand.cs" />
-    <Compile Include="FunctionList\FunctionListEventFactory.cs" />
+    <Compile Include="FunctionList\Commands\ShowHideLineNumberCommand.cs" />
     <Compile Include="FunctionList\FunctionListItem.cs" />
+    <Compile Include="FunctionList\FunctionListProvider.cs" />
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
     <Compile Include="Helpers\Error.cs" />
-    <Compile Include="Helpers\ParserResultExtension.cs" />
+    <Compile Include="Helpers\NotifyPropertyChanged.cs" />
+    <Compile Include="Helpers\AnalysisResultExtension.cs" />
+    <Compile Include="Helpers\ServiceProviderExtension.cs" />
     <Compile Include="Helpers\SnapshotPointExtension.cs" />
+    <Compile Include="Helpers\TaskExtension.cs" />
     <Compile Include="Helpers\TextSnapshotExtension.cs" />
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="IntelliSense\Completion\ItemManager.cs" />
     <Compile Include="IntelliSense\Completion\ItemManagerProvider.cs" />
-    <Compile Include="IntelliSense\Completion\Providers\CompletionProvider.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\CompletionItem.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\RadCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\FunctionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\ScopedCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />
@@ -90,56 +142,36 @@
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
-    <Compile Include="IntelliSense\Navigation\NavigationList\DefinitionToken.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationList\NavigationList.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListCommand.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListControl.xaml.cs">
       <DependentUpon>NavigationListControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListItem.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListNode.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
+    <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
-    <Compile Include="Options\InstructionListManager.cs" />
+    <Compile Include="Options\Instructions\InstructionListLoader.cs" />
+    <Compile Include="Options\Instructions\Instruction.cs" />
+    <Compile Include="Options\Instructions\InstructionListManager.cs" />
+    <Compile Include="Options\Instructions\InstructionSet.cs" />
+    <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
     <Compile Include="Package.cs" />
-    <Compile Include="Parser\Blocks\Block.cs" />
-    <Compile Include="Parser\Blocks\FunctionBlock.cs" />
-    <Compile Include="Parser\DocumentAnalysisProvider.cs" />
-    <Compile Include="Parser\DocumentFactory.cs" />
-    <Compile Include="Parser\DocumentInfo.cs" />
-    <Compile Include="Parser\Helper\BitHelper.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs" />
-    <Compile Include="Parser\Blocks\TrackingBlock.cs" />
-    <Compile Include="Parser\DocumentAnalysis.cs" />
-    <Compile Include="Parser\Lexer.cs" />
-    <Compile Include="Parser\Parser.cs" />
-    <Compile Include="Parser\Helper\SortedSet.cs" />
-    <Compile Include="Parser\Helper\SortedSetHelper.cs" />
-    <Compile Include="Parser\RadAsm2\Asm2Parser.cs" />
-    <Compile Include="Parser\RadAsm2\Asm2Lexer.cs" />
-    <Compile Include="Parser\RadAsmDoc\AsmDocLexer.cs" />
-    <Compile Include="Parser\RadAsmDoc\AsmDocParser.cs" />
-    <Compile Include="Parser\RadAsm\AsmLexer.cs" />
-    <Compile Include="Parser\RadAsm\AsmParser.cs" />
-    <Compile Include="Parser\Tokens\AnalysisToken.cs" />
-    <Compile Include="Parser\Tokens\ReferenceToken.cs" />
-    <Compile Include="Parser\Tokens\TokenSpan.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSourceProvider.cs" />
     <Compile Include="IntelliSense\Peek\PeekResultSource.cs" />
-    <Compile Include="Parser\Tokens\TokenType.cs" />
-    <Compile Include="Parser\Tokens\TrackingToken.cs" />
-    <Compile Include="Parser\Tokens\VariableToken.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="FunctionList\FunctionList.cs" />
+    <Compile Include="FunctionList\FunctionListWindow.cs" />
     <Compile Include="FunctionList\Commands\FunctionListCommand.cs" />
     <Compile Include="FunctionList\FunctionListControl.xaml.cs">
       <DependentUpon>FunctionListControl.xaml</DependentUpon>
@@ -149,6 +181,8 @@
     <Compile Include="RadeonServiceProvider.cs" />
     <Compile Include="SyntaxHighlighter\BraceMatchingHighlighter\BraceHighlighter.cs" />
     <Compile Include="SyntaxHighlighter\BraceMatchingHighlighter\BraceHighlighterProvider.cs" />
+    <Compile Include="SyntaxHighlighter\ErrorHighlighter\SyntaxErrorHighlighterTaggerProvider.cs" />
+    <Compile Include="SyntaxHighlighter\ErrorHighlighter\SyntaxErrorHighlighterTagger.cs" />
     <Compile Include="SyntaxHighlighter\ThemeColorManager.cs" />
     <Compile Include="SyntaxHighlighter\Classifier.cs" />
     <Compile Include="SyntaxHighlighter\ClassifierClassificationDefinition.cs" />
@@ -251,9 +285,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
       <Version>16.4.45</Version>
-    </PackageReference>
-    <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.2</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
