@@ -327,7 +327,6 @@ namespace VSRAD.PackageTests.Server
         }
 
         #region ReadDebugDataStep
-
         [Fact]
         public async Task ReadDebugDataRemoteTestAsync()
         {
@@ -410,7 +409,6 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("Valid watches file (remote/watches) was not modified.", result.StepResults[0].Warning);
         }
-
         #endregion
 
         [Fact]

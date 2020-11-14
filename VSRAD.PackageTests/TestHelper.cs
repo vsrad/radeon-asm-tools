@@ -35,25 +35,6 @@ namespace VSRAD.PackageTests
             sta.Join();
         }
 
-        public static Mock<IProject> MakeProjectWithProfile(Dictionary<string, string> macros = null, string projectRoot = "", Package.Options.ProfileOptions profile = null, string remoteWorkDir = "")
-        {
-            var mock = new Mock<IProject>(MockBehavior.Strict);
-            var options = new ProjectOptions();
-            options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", profile ?? new ProfileOptions() } }, activeProfile: "Default");
-            mock.Setup((p) => p.Options).Returns(options);
-            mock.Setup((m) => m.RootPath).Returns(projectRoot);
-
-            var evaluator = new Mock<IMacroEvaluator>();
-            if (macros != null)
-                foreach (var macro in macros)
-                    evaluator.Setup((e) => e.GetMacroValueAsync(macro.Key)).Returns(Task.FromResult<Result<string>>(macro.Value));
-            evaluator.Setup((e) => e.EvaluateAsync(It.IsAny<string>())).Returns<string>((val) => Task.FromResult<Result<string>>(val));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult<Result<string>>(remoteWorkDir));
-
-            mock.Setup((p) => p.GetMacroEvaluatorAsync(It.IsAny<MacroEvaluatorTransientValues>())).Returns(Task.FromResult(evaluator.Object));
-            return mock;
-        }
-
         public static T MakeWithReadOnlyProps<T>(params (string prop, object value)[] properties) where T : new()
         {
             var obj = new T();
