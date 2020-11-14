@@ -60,6 +60,9 @@ namespace VSRAD.Package.Options
 
     public sealed class MenuCommandProfileOptions : DefaultNotifyPropertyChanged
     {
+        private string _debugAction;
+        public string DebugAction { get => _debugAction; set => SetField(ref _debugAction, value ?? ""); }
+
         private string _profileAction;
         public string ProfileAction { get => _profileAction; set => SetField(ref _profileAction, value ?? ""); }
 
@@ -148,8 +151,11 @@ namespace VSRAD.Package.Options
             var deployDirResult = await evaluator.EvaluateAsync(DeployDirectory);
             if (!deployDirResult.TryGetResult(out var evaluatedDeployDir, out var error))
                 return error;
-            var envResult = await EvaluateActionEnvironmentAsync(evaluator);
-            if (!envResult.TryGetResult(out var evaluatedEnv, out error))
+            var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
+            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out error))
+                return error;
+            var remoteDirResult = await evaluator.EvaluateAsync(RemoteWorkDir);
+            if (!remoteDirResult.TryGetResult(out var evaluatedRemoteDir, out error))
                 return error;
 
             return new GeneralProfileOptions
@@ -159,22 +165,10 @@ namespace VSRAD.Package.Options
                 Port = Port,
                 CopySources = CopySources,
                 DeployDirectory = evaluatedDeployDir,
-                LocalWorkDir = evaluatedEnv.LocalWorkDir,
-                RemoteWorkDir = evaluatedEnv.RemoteWorkDir,
+                LocalWorkDir = evaluatedLocalDir,
+                RemoteWorkDir = evaluatedRemoteDir,
                 AdditionalSources = AdditionalSources
             };
-        }
-
-        public async Task<Result<ActionEnvironment>> EvaluateActionEnvironmentAsync(IMacroEvaluator evaluator)
-        {
-            var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
-            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out var error))
-                return error;
-            var remoteDirResult = await evaluator.EvaluateAsync(RemoteWorkDir);
-            if (!remoteDirResult.TryGetResult(out var evaluatedRemoteDir, out error))
-                return error;
-
-            return new ActionEnvironment(evaluatedLocalDir, evaluatedRemoteDir);
         }
     }
 
@@ -251,11 +245,18 @@ namespace VSRAD.Package.Options
     {
         public string LocalWorkDir { get; }
         public string RemoteWorkDir { get; }
+        public ReadOnlyCollection<string> Watches { get; }
 
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir)
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir) :
+            this(localWorkDir, remoteWorkDir, new ReadOnlyCollection<string>(Array.Empty<string>()))
+        {
+        }
+
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir, ReadOnlyCollection<string> watches)
         {
             LocalWorkDir = localWorkDir;
             RemoteWorkDir = remoteWorkDir;
+            Watches = watches;
         }
 
         public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;

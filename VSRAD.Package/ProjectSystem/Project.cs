@@ -1,16 +1,11 @@
 ﻿using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
-using Microsoft.VisualStudio.Threading;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Threading.Tasks;
 using VSRAD.Package.BuildTools;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.Macros;
-using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -23,10 +18,9 @@ namespace VSRAD.Package.ProjectSystem
         event ProjectUnloaded Unloaded;
 
         ProjectOptions Options { get; }
+        UnconfiguredProject UnconfiguredProject { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
         IProjectProperties GetProjectProperties();
-        Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients);
-        MacroEvaluatorTransientValues GetMacroTransients();
         void SaveOptions();
     }
 
@@ -38,13 +32,11 @@ namespace VSRAD.Package.ProjectSystem
         public event ProjectUnloaded Unloaded;
 
         public ProjectOptions Options { get; private set; }
-
+        public UnconfiguredProject UnconfiguredProject { get; }
         public string RootPath { get; }
 
         private readonly string _optionsFilePath;
         private readonly string _legacyOptionsFilePath;
-
-        private readonly UnconfiguredProject _unconfiguredProject;
 
         [ImportingConstructor]
         public Project(UnconfiguredProject unconfiguredProject)
@@ -52,7 +44,7 @@ namespace VSRAD.Package.ProjectSystem
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
             _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
             _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
-            _unconfiguredProject = unconfiguredProject;
+            UnconfiguredProject = unconfiguredProject;
         }
 
         public void Load()
@@ -68,9 +60,8 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
 
-            _unconfiguredProject.Services.ExportProvider.GetExportedValue<DebuggerIntegration>();
-            _unconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
-            _unconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
+            UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
+            UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
             Loaded?.Invoke(Options);
         }
@@ -83,42 +74,8 @@ namespace VSRAD.Package.ProjectSystem
 
         public IProjectProperties GetProjectProperties()
         {
-            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            var configuredProject = UnconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
             return configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
         }
-
-        #region MacroEvaluator
-        private IActiveCodeEditor _codeEditor;
-        private ICommunicationChannel _communicationChannel;
-        private IBreakpointTracker _breakpointTracker;
-
-        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients)
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-            if (transients == null)
-                transients = GetMacroTransients();
-            if (_communicationChannel == null)
-                _communicationChannel = _unconfiguredProject.Services.ExportProvider.GetExportedValue<ICommunicationChannel>();
-
-            var projectProperties = GetProjectProperties();
-            var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(
-                _communicationChannel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
-            return new MacroEvaluator(projectProperties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
-        }
-
-        public MacroEvaluatorTransientValues GetMacroTransients()
-        {
-            if (_codeEditor == null)
-                _codeEditor = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IActiveCodeEditor>();
-            if (_breakpointTracker == null)
-                _breakpointTracker = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IBreakpointTracker>();
-
-            var (file, breakLines) = _breakpointTracker.GetBreakTarget();
-            var sourceLine = _codeEditor.GetCurrentLine();
-            var watches = Options.DebuggerOptions.GetWatchSnapshot();
-            return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
-        }
-        #endregion
     }
 }

@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
 
-        private void EnterBreak(BreakState breakState)
+        private void EnterBreak(object sender, BreakState breakState)
         {
             _breakState = breakState;
             WatchesValid = breakState != null;

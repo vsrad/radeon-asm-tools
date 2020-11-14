@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -191,7 +190,7 @@ namespace VSRAD.Package.Server
 
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
-            ReadOnlyCollection<string> watches = null;
+            var watches = _environment.Watches;
             string statusString = null;
 
             if (!string.IsNullOrEmpty(step.WatchesFile.Path))

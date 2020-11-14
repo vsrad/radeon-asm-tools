@@ -2,42 +2,30 @@
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
-using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
 {
-    public delegate void DebugBreakEntered(BreakState breakState);
-
     [Export]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class DebuggerIntegration : IEngineIntegration
     {
-        public event DebugBreakEntered BreakEntered;
-
+        public event EventHandler<BreakState> BreakEntered;
         public event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
 
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
         private readonly IActiveCodeEditor _codeEditor;
-        private readonly IBreakpointTracker _breakpointTracker;
 
         public bool DebugInProgress { get; private set; } = false;
 
         [ImportingConstructor]
-        public DebuggerIntegration(
-            IProject project,
-            IActionLauncher actionLauncher,
-            IActiveCodeEditor codeEditor,
-            ICommunicationChannel channel,
-            IActionLogger actionLogger,
-            IBreakpointTracker breakpointTracker)
+        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActiveCodeEditor codeEditor)
         {
             _project = project;
             _actionLauncher = actionLauncher;
             _codeEditor = codeEditor;
-            _breakpointTracker = breakpointTracker;
         }
 
         public IEngineIntegration RegisterEngine()
@@ -56,7 +44,7 @@ namespace VSRAD.Package.ProjectSystem
             ExecutionCompleted = null;
         }
 
-        internal bool TryCreateDebugSession()
+        public bool TryCreateDebugSession()
         {
             if (!_project.Options.HasProfiles)
             {
@@ -70,27 +58,26 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
+        public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients)
+        {
+            RaiseExecutionCompleted(transients?.ActiveSourceFullPath ?? "", transients?.BreakLines ?? new[] { 0u }, isStepping: false, runResult?.BreakState);
+        }
+
         void IEngineIntegration.Execute(bool step)
         {
-            try
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
             {
-                var (file, breakLines) = _breakpointTracker.MoveToNextBreakTarget(step);
-                var line = _codeEditor.GetCurrentLine();
-                var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
-                {
-                    var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
-                    var result = await _actionLauncher.LaunchActionByNameAsync(ActionProfileOptions.BuiltinActionDebug, transients);
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                    RaiseExecutionCompleted(file, breakLines, step, result?.BreakState);
-                },
-                exceptionCallbackOnMainThread: () => RaiseExecutionCompleted(file, breakLines, step, null));
-            }
-            catch (Exception e)
-            {
-                Errors.ShowException(e);
-                RaiseExecutionCompleted("", new[] { 0u }, step, null);
-            }
+                var result = await _actionLauncher.LaunchActionByNameAsync(
+                    _project.Options.Profile.MenuCommands.DebugAction,
+                    moveToNextDebugTarget: true,
+                    isDebugSteppingEnabled: step);
+
+                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                if (result.Error is Error e)
+                    Errors.Show(e);
+                NotifyDebugActionExecuted(result.RunResult, result.Transients);
+            },
+            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null));
         }
 
         void IEngineIntegration.CauseBreak()

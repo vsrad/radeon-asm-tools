@@ -15,14 +15,16 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
+        private readonly DebuggerIntegration _debuggerIntegration;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher)
+        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, DebuggerIntegration debuggerIntegration)
         {
             _project = project;
             _actionLauncher = actionLauncher;
+            _debuggerIntegration = debuggerIntegration;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
@@ -50,11 +52,23 @@ namespace VSRAD.Package.Commands
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            var actionResult = GetActionNameByCommandId(commandId);
-            if (actionResult.TryGetResult(out var actionName, out var error))
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => _actionLauncher.LaunchActionByNameAsync(actionName, null));
+            if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out var error))
+            {
+                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+                {
+                    var isDebugAction = actionName == SelectedProfile.MenuCommands.DebugAction;
+                    var result = await _actionLauncher.LaunchActionByNameAsync(actionName, moveToNextDebugTarget: isDebugAction);
+                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                    if (result.Error is Error e)
+                        Errors.Show(e);
+                    if (_actionLauncher.IsDebugAction(SelectedProfile.Actions.First(a => a.Name == actionName)))
+                        _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);
+                });
+            }
             else
+            {
                 Errors.ShowWarning(error.Message);
+            }
         }
 
         private Result<string> GetActionNameByCommandId(uint commandId)

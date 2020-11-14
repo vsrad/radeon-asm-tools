@@ -99,11 +99,21 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
         }
 
+        private IActiveCodeEditor _codeEditor;
+        private IBreakpointTracker _breakpointTracker;
+
         private MacroEvaluatorTransientValues GetMacroTransients()
         {
+            if (_codeEditor == null)
+                _codeEditor = _project.UnconfiguredProject.Services.ExportProvider.GetExportedValue<IActiveCodeEditor>();
+            if (_breakpointTracker == null)
+                _breakpointTracker = _project.UnconfiguredProject.Services.ExportProvider.GetExportedValue<IBreakpointTracker>();
             try
             {
-                return _project.GetMacroTransients();
+                var (file, breakLines) = _breakpointTracker.GetBreakTarget();
+                var sourceLine = _codeEditor.GetCurrentLine();
+                var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
+                return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
             }
             catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
             {
