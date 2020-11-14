@@ -17,6 +17,7 @@ using static VSRAD.BuildTools.IPCBuildResult;
 
 namespace VSRAD.Package.BuildTools
 {
+#if false
     [Collection("Sequential")]
     public class BuildToolsServerTest
     {
@@ -164,4 +165,5 @@ namespace VSRAD.Package.BuildTools
             return message;
         }
     }
+#endif
 }

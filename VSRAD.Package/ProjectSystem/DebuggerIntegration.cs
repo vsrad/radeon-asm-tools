@@ -104,9 +104,9 @@ namespace VSRAD.Package.ProjectSystem
 
         private void RaiseExecutionCompleted(string file, uint[] lines, bool isStepping, BreakState breakState)
         {
-            var args = new ExecutionCompletedEventArgs(file, lines, isStepping, isSuccessful: breakState != null);
-            ExecutionCompleted(this, args);
-            BreakEntered(breakState);
+            var args = new ExecutionCompletedEventArgs(file, lines, isStepping);
+            ExecutionCompleted?.Invoke(this, args);
+            BreakEntered(this, breakState);
         }
     }
 }

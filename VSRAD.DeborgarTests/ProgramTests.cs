@@ -22,7 +22,7 @@ namespace VSRAD.DeborgarTests
 
             integration.Setup((i) => i.Execute(false)).Callback(() =>
                 integration.Raise((i) => i.ExecutionCompleted += null, null,
-                new ExecutionCompletedEventArgs("h.s", new[] { 7u }, isStepping: false, true)));
+                new ExecutionCompletedEventArgs("h.s", new[] { 7u }, isStepping: false)));
 
             program.ExecuteOnThread(null);
             integration.Verify((i) => i.Execute(false), Times.Once);
@@ -38,7 +38,7 @@ namespace VSRAD.DeborgarTests
 
             integration.Setup((i) => i.Execute(false)).Callback(() =>
                 integration.Raise((i) => i.ExecutionCompleted += null, null,
-                new ExecutionCompletedEventArgs("h.s", new[] { 7u }, isStepping: true, true)));
+                new ExecutionCompletedEventArgs("h.s", new[] { 7u }, isStepping: true)));
 
             program.ExecuteOnThread(null);
             integration.Verify((i) => i.Execute(false), Times.Once);
