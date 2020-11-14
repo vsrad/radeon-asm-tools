@@ -34,7 +34,7 @@ namespace VSRAD.Package.ProjectSystem
         public BreakpointTracker(IProject project, IActiveCodeEditor codeEditor, SVsServiceProvider serviceProvider)
         {
             _codeEditor = codeEditor;
-            project.Loaded += (options) =>
+            project.RunWhenLoaded((options) =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -42,7 +42,7 @@ namespace VSRAD.Package.ProjectSystem
                 Assumes.Present(_dte);
 
                 _projectOptions = options;
-            };
+            });
         }
 
         public void RunToLine(string file, uint line)

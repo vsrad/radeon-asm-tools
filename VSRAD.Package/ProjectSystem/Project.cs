@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -14,12 +16,13 @@ namespace VSRAD.Package.ProjectSystem
 
     public interface IProject
     {
-        event ProjectLoaded Loaded;
         event ProjectUnloaded Unloaded;
 
         ProjectOptions Options { get; }
         UnconfiguredProject UnconfiguredProject { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
+
+        void RunWhenLoaded(Action<ProjectOptions> callback);
         IProjectProperties GetProjectProperties();
         void SaveOptions();
     }
@@ -28,7 +31,6 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class Project : IProject
     {
-        public event ProjectLoaded Loaded;
         public event ProjectUnloaded Unloaded;
 
         public ProjectOptions Options { get; private set; }
@@ -38,6 +40,9 @@ namespace VSRAD.Package.ProjectSystem
         private readonly string _optionsFilePath;
         private readonly string _legacyOptionsFilePath;
 
+        private bool _loaded = false;
+        private readonly List<Action<ProjectOptions>> _onLoadCallbacks = new List<Action<ProjectOptions>>();
+
         [ImportingConstructor]
         public Project(UnconfiguredProject unconfiguredProject)
         {
@@ -45,6 +50,14 @@ namespace VSRAD.Package.ProjectSystem
             _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
             _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             UnconfiguredProject = unconfiguredProject;
+        }
+
+        public void RunWhenLoaded(Action<ProjectOptions> callback)
+        {
+            if (_loaded)
+                callback(Options);
+            else
+                _onLoadCallbacks.Add(callback);
         }
 
         public void Load()
@@ -63,7 +76,10 @@ namespace VSRAD.Package.ProjectSystem
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
-            Loaded?.Invoke(Options);
+            _loaded = true;
+            foreach (var callback in _onLoadCallbacks)
+                callback(Options);
+            _onLoadCallbacks.Clear();
         }
 
         private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => SaveOptions();

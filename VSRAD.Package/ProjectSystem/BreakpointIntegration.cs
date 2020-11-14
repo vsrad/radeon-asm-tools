@@ -27,7 +27,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             _serviceProvider = serviceProvider;
             _project = project;
-            _project.Loaded += Initialize;
+            _project.RunWhenLoaded(Initialize);
             _project.Unloaded += () => _pollCts?.Cancel();
         }
 
