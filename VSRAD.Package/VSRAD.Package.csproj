@@ -201,6 +201,7 @@
       <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\Profiles\LegacyProfileImporter.cs" />
+    <Compile Include="ProjectSystem\Profiles\LegacyProfileOptionsMigrator.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />

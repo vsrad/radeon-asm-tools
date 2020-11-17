@@ -8,7 +8,11 @@ using VSRAD.Package.ProjectSystem.Macros;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public sealed class LegacyProfileImporter
+    /// <summary>
+    /// Extracts <c>ProjectOptions</c> from the legacy configuration format used before actions were introduced.
+    /// Hardcoded options for Preprocessor/Disassembler/Profiler/Build are converted to actions.
+    /// </summary>
+    public static class LegacyProfileImporter
     {
         public static ProjectOptions ReadProjectOptions(JObject conf)
         {
