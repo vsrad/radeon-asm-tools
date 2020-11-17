@@ -32,8 +32,6 @@ namespace VSRAD.Package.Options
     {
         public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
 
-        public DebuggerProfileOptions Debugger { get; } = new DebuggerProfileOptions();
-
         [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
         public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
 
@@ -169,55 +167,6 @@ namespace VSRAD.Package.Options
                 RemoteWorkDir = evaluatedRemoteDir,
                 AdditionalSources = AdditionalSources
             };
-        }
-    }
-
-    public sealed class DebuggerProfileOptions
-    {
-        [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
-        public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
-
-        public BuiltinActionFile OutputFile { get; }
-        public BuiltinActionFile WatchesFile { get; }
-        public BuiltinActionFile StatusFile { get; }
-
-        public bool BinaryOutput { get; set; }
-        public int OutputOffset { get; set; }
-
-        public async Task<Result<DebuggerProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
-        {
-            var outputResult = await OutputFile.EvaluateAsync(evaluator);
-            if (!outputResult.TryGetResult(out var outputFile, out var error))
-                return error;
-            var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
-            if (!watchesResult.TryGetResult(out var watchesFile, out error))
-                return error;
-            var statusResult = await StatusFile.EvaluateAsync(evaluator);
-            if (!statusResult.TryGetResult(out var statusFile, out error))
-                return error;
-
-            var evaluated = new DebuggerProfileOptions(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
-                outputFile: outputFile, watchesFile: watchesFile, statusFile: statusFile);
-
-            foreach (var step in Steps)
-            {
-                var evalResult = await step.EvaluateAsync(evaluator, profile, ActionProfileOptions.BuiltinActionDebug);
-                if (evalResult.TryGetResult(out var evaluatedStep, out error))
-                    evaluated.Steps.Add(evaluatedStep);
-                else
-                    return error;
-            }
-
-            return evaluated;
-        }
-
-        public DebuggerProfileOptions(bool binaryOutput = true, int outputOffset = 0, BuiltinActionFile outputFile = null, BuiltinActionFile watchesFile = null, BuiltinActionFile statusFile = null)
-        {
-            BinaryOutput = binaryOutput;
-            OutputOffset = outputOffset;
-            OutputFile = outputFile ?? new BuiltinActionFile();
-            WatchesFile = watchesFile ?? new BuiltinActionFile();
-            StatusFile = statusFile ?? new BuiltinActionFile();
         }
     }
 

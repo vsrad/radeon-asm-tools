@@ -62,21 +62,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
             Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
-            Assert.True(profile.Debugger.BinaryOutput);
-            Assert.Equal(4, profile.Debugger.OutputOffset);
-            Assert.Equal(StepEnvironment.Remote, profile.Debugger.OutputFile.Location);
-            Assert.Equal("$(RadDebugDataOutputPath)", profile.Debugger.OutputFile.Path);
-            Assert.True(profile.Debugger.OutputFile.CheckTimestamp);
+            var action = profile.Actions[0];
 
-            Assert.Equal(StepEnvironment.Remote, profile.Debugger.WatchesFile.Location);
-            Assert.Equal("valid_watches", profile.Debugger.WatchesFile.Path);
-            Assert.True(profile.Debugger.WatchesFile.CheckTimestamp);
-
-            Assert.Equal(StepEnvironment.Remote, profile.Debugger.StatusFile.Location);
-            Assert.Equal("status", profile.Debugger.StatusFile.Path);
-            Assert.True(profile.Debugger.StatusFile.CheckTimestamp);
-
-            Assert.Single(profile.Debugger.Steps);
+            Assert.Equal("Debug", action.Name);
+            Assert.Equal(2, action.Steps.Count);
             Assert.Equal(new ExecuteStep
             {
                 Environment = StepEnvironment.Remote,
@@ -86,7 +75,22 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 RunAsAdmin = false,
                 WaitForCompletion = true,
                 TimeoutSecs = 10
-            }, profile.Debugger.Steps[0]);
+            }, action.Steps[0]);
+            var readDebugData = (ReadDebugDataStep)action.Steps[1];
+            Assert.True(readDebugData.BinaryOutput);
+            Assert.Equal(4, readDebugData.OutputOffset);
+
+            Assert.Equal(StepEnvironment.Remote, readDebugData.OutputFile.Location);
+            Assert.Equal("$(RadDebugDataOutputPath)", readDebugData.OutputFile.Path);
+            Assert.True(readDebugData.OutputFile.CheckTimestamp);
+
+            Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
+            Assert.Equal("valid_watches", readDebugData.WatchesFile.Path);
+            Assert.True(readDebugData.WatchesFile.CheckTimestamp);
+
+            Assert.Equal(StepEnvironment.Remote, readDebugData.StatusFile.Location);
+            Assert.Equal("status", readDebugData.StatusFile.Path);
+            Assert.True(readDebugData.StatusFile.CheckTimestamp);
         }
 
         [Fact]
@@ -96,7 +100,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
             Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
-            var action = profile.Actions[0];
+            var action = profile.Actions[1];
 
             Assert.Equal("Preprocess", action.Name);
             Assert.Equal(new ExecuteStep
@@ -128,7 +132,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
             Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
-            var action = profile.Actions[1];
+            var action = profile.Actions[2];
 
             Assert.Equal("Disassemble", action.Name);
             Assert.Equal(new ExecuteStep
@@ -160,7 +164,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
             Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
-            var action = profile.Actions[2];
+            var action = profile.Actions[3];
 
             Assert.Equal("Profile", action.Name);
             Assert.Equal(new ExecuteStep
@@ -195,7 +199,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var imported = LegacyProfileImporter.ReadProjectOptions(projectOptions);
             Assert.True(imported.Profiles.TryGetValue("h", out var profile));
 
-            var action = profile.Actions[3];
+            var action = profile.Actions[4];
 
             Assert.Equal("Build", action.Name);
             Assert.Equal(new RunActionStep { Name = "Preprocess" }, action.Steps[0]);

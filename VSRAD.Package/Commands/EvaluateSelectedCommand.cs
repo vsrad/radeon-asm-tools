@@ -89,10 +89,5 @@ namespace VSRAD.Package.Commands
             }
 #endif
         }
-
-        private Task<uint[]> RunAsync(DebuggerProfileOptions options)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

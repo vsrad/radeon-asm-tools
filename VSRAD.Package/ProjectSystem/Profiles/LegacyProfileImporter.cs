@@ -38,7 +38,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var profile = new ProfileOptions();
 
             ReadGeneralOptions(profile.General, (JObject)conf["General"]);
-            ReadDebuggerOptions(profile.Debugger, (JObject)conf["Debugger"]);
+
+            profile.Actions.Add(ReadDebugAction((JObject)conf["Debugger"]));
 
             if (ReadPreprocessDisassembleAction("Preprocess", (JObject)conf["Preprocessor"]) is ActionProfileOptions pp)
                 profile.Actions.Add(pp);
@@ -62,24 +63,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             opts.AdditionalSources = (string)conf["AdditionalSources"];
         }
 
-        private static void ReadDebuggerOptions(DebuggerProfileOptions opts, JObject conf)
+        private static ActionProfileOptions ReadDebugAction(JObject conf)
         {
-            opts.BinaryOutput = (bool)conf["BinaryOutput"];
-            opts.OutputOffset = (int)conf["OutputOffset"];
-
-            opts.OutputFile.Location = StepEnvironment.Remote;
-            opts.OutputFile.CheckTimestamp = true;
-            opts.OutputFile.Path = (string)conf["OutputPath"];
-
-            opts.WatchesFile.Location = StepEnvironment.Remote;
-            opts.WatchesFile.CheckTimestamp = true;
-            opts.WatchesFile.Path = (string)conf["ValidWatchesFilePath"];
-
-            opts.StatusFile.Location = StepEnvironment.Remote;
-            opts.StatusFile.CheckTimestamp = true;
-            opts.StatusFile.Path = (string)conf["StatusStringFilePath"];
-
-            opts.Steps.Add(new ExecuteStep
+            var action = new ActionProfileOptions { Name = "Debug" };
+            action.Steps.Add(new ExecuteStep
             {
                 Environment = StepEnvironment.Remote,
                 Executable = (string)conf["Executable"],
@@ -89,6 +76,27 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 WaitForCompletion = true,
                 TimeoutSecs = (int)conf["TimeoutSecs"]
             });
+
+            var readDebugData = new ReadDebugDataStep
+            {
+                BinaryOutput = (bool)conf["BinaryOutput"],
+                OutputOffset = (int)conf["OutputOffset"]
+            };
+
+            readDebugData.OutputFile.Location = StepEnvironment.Remote;
+            readDebugData.OutputFile.CheckTimestamp = true;
+            readDebugData.OutputFile.Path = (string)conf["OutputPath"];
+
+            readDebugData.WatchesFile.Location = StepEnvironment.Remote;
+            readDebugData.WatchesFile.CheckTimestamp = true;
+            readDebugData.WatchesFile.Path = (string)conf["ValidWatchesFilePath"];
+
+            readDebugData.StatusFile.Location = StepEnvironment.Remote;
+            readDebugData.StatusFile.CheckTimestamp = true;
+            readDebugData.StatusFile.Path = (string)conf["StatusStringFilePath"];
+
+            action.Steps.Add(readDebugData);
+            return action;
         }
 
         private static ActionProfileOptions ReadPreprocessDisassembleAction(string name, JObject conf)
@@ -225,13 +233,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             switch (macroName)
             {
                 case RadMacros.DebuggerExecutable:
-                    return ExchangeValueWithMacro(profile.Debugger.Steps[0], nameof(ExecuteStep.Executable), RadMacros.DebuggerExecutable);
+                    return WithAction("Debug", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Executable), RadMacros.DebuggerExecutable));
                 case RadMacros.DebuggerArguments:
-                    return ExchangeValueWithMacro(profile.Debugger.Steps[0], nameof(ExecuteStep.Arguments), RadMacros.DebuggerArguments);
+                    return WithAction("Debug", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Arguments), RadMacros.DebuggerArguments));
                 case RadMacros.DebuggerWorkingDirectory:
-                    return ExchangeValueWithMacro(profile.Debugger.Steps[0], nameof(ExecuteStep.WorkingDirectory), RadMacros.DebuggerWorkingDirectory);
+                    return WithAction("Debug", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.WorkingDirectory), RadMacros.DebuggerWorkingDirectory));
                 case RadMacros.DebuggerOutputPath:
-                    return ExchangeValueWithMacro(profile.Debugger.OutputFile, nameof(BuiltinActionFile.Path), RadMacros.DebuggerOutputPath);
+                    return WithAction("Debug", a => ExchangeValueWithMacro(((ReadDebugDataStep)a.Steps[1]).OutputFile, nameof(BuiltinActionFile.Path), RadMacros.DebuggerOutputPath));
 
                 case RadMacros.PreprocessorExecutable:
                     return WithAction("Preprocess", a => ExchangeValueWithMacro(a.Steps[0], nameof(ExecuteStep.Executable), RadMacros.PreprocessorExecutable));

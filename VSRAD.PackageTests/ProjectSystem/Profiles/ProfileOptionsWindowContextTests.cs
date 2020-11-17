@@ -24,6 +24,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             profiles["kana"].General.RemoteMachine = "money";
             profiles["asa"].General.RemoteMachine = "setting";
 
+            profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "Debug" });
+            profiles["asa"].Actions.Add(new ActionProfileOptions { Name = "Debug" });
+
             var options = new ProjectOptions();
             options.SetProfiles(profiles, activeProfile: "kana");
 
@@ -33,19 +36,11 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             return projectMock.Object;
         }
 
-        private static T GetPage<T>(ProfileOptionsWindowContext context)
-        {
-            foreach (var page in context.Pages)
-            {
-                if (page is T requestedPage)
-                    return requestedPage;
-                if (page is ProfileOptionsActionsPage actions)
-                    foreach (var action in actions.Pages)
-                        if (action is T requestedAction)
-                            return requestedAction;
-            }
-            return default;
-        }
+        private static T GetPage<T>(ProfileOptionsWindowContext context) =>
+            (T)context.Pages.FirstOrDefault(p => p is T);
+
+        private static ActionProfileOptions GetAction(ProfileOptionsWindowContext context, string name) =>
+            context.ActionsPage.Pages.First(a => a.Name == name);
 
         private static ProfileOptions GetDirtyProfile(ProfileOptionsWindowContext context, string profileName) =>
             context.DirtyProfiles.First(p => p.General.ProfileName == profileName);
@@ -56,15 +51,15 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var project = CreateTestProject();
             project.Options.ActiveProfile = "kana";
             var context = new ProfileOptionsWindowContext(project, null, null);
-            GetPage<DebuggerProfileOptions>(context).Steps.Add(new ExecuteStep { Executable = "bun" });
-            Assert.Empty(project.Options.Profile.Debugger.Steps);
+            GetAction(context, "Debug").Steps.Add(new ExecuteStep { Executable = "bun" });
+            Assert.Empty(project.Options.Profile.Actions[0].Steps);
             context.SaveChanges();
-            Assert.Equal(project.Options.Profile.Debugger.Steps[0], new ExecuteStep { Executable = "bun" });
+            Assert.Equal(project.Options.Profile.Actions[0].Steps[0], new ExecuteStep { Executable = "bun" });
 
-            ((ExecuteStep)GetPage<DebuggerProfileOptions>(context).Steps[0]).Arguments = "--stuffed";
-            Assert.Equal("", ((ExecuteStep)project.Options.Profile.Debugger.Steps[0]).Arguments);
+            ((ExecuteStep)GetAction(context, "Debug").Steps[0]).Arguments = "--stuffed";
+            Assert.Equal("", ((ExecuteStep)project.Options.Profile.Actions[0].Steps[0]).Arguments);
             context.SaveChanges();
-            Assert.Equal("--stuffed", ((ExecuteStep)project.Options.Profile.Debugger.Steps[0]).Arguments);
+            Assert.Equal("--stuffed", ((ExecuteStep)project.Options.Profile.Actions[0].Steps[0]).Arguments);
         }
 
         [Fact]
@@ -73,17 +68,17 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var project = CreateTestProject();
             var context = new ProfileOptionsWindowContext(project, null, null);
 
-            var actionsPage = GetPage<ProfileOptionsActionsPage>(context);
-            Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
+            var actionsPage = context.ActionsPage;
+            Assert.Single(actionsPage.Pages, GetAction(context, "Debug"));
 
             context.AddAction();
             Assert.Collection(actionsPage.Pages,
-                (page1) => Assert.True(page1 == GetPage<DebuggerProfileOptions>(context)),
-                (page2) => Assert.True(page2 is ActionProfileOptions opts && opts.Name == "New Action"));
+                (page1) => Assert.Equal("Debug", page1.Name),
+                (page2) => Assert.Equal("New Action", page2.Name));
 
-            var action = GetPage<ProfileOptionsActionsPage>(context).Pages[1];
-            context.RemoveAction((ActionProfileOptions)action);
-            Assert.Single(actionsPage.Pages, GetPage<DebuggerProfileOptions>(context));
+            var action = context.ActionsPage.Pages[1];
+            context.RemoveAction(action);
+            Assert.Single(actionsPage.Pages, GetAction(context, "Debug"));
         }
 
         [Fact]
@@ -230,7 +225,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             // a crude emulation of WPF control behavior when resetting dirty profiles on save
             context.DirtyProfiles.CollectionChanged += (s, e) => { if (e.Action == NotifyCollectionChangedAction.Reset) context.SelectedPage = null; };
 
-            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Pages.First(a => a is ActionProfileOptions ao && ao.Name == "kana-action");
+            context.SelectedPage = GetAction(context, "kana-action");
             context.SaveChanges();
 
             Assert.IsType<ActionProfileOptions>(context.SelectedPage);
@@ -242,12 +237,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         {
             var project = CreateTestProject();
             project.Options.Profiles["kana"].Macros.Add(new MacroItem("kana-profile-macro", "h", userDefined: true));
-            project.Options.Profiles["kana"].Debugger.OutputFile.Path = "kana-output-path";
+            project.Options.Profiles["kana"].Actions[0].Steps.Add(new OpenInEditorStep { Path = "kana-open-path" });
             project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
-            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
             project.Options.Profiles["asa"].Macros.Add(new MacroItem("asa-profile-macro", "h", userDefined: true));
-            project.Options.Profiles["asa"].Debugger.OutputFile.Path = "asa-output-path";
-            project.Options.Profiles["asa"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
+            project.Options.Profiles["asa"].Actions[0].Steps.Add(new OpenInEditorStep { Path = "asa-open-path" });
 
             var context = new ProfileOptionsWindowContext(project, null, null) { SelectedPage = null };
             // a crude emulation of WPF control behavior when clearing the collection
@@ -270,25 +263,15 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             lastMacro = ((ProfileOptionsMacrosPage)context.SelectedPage).Macros.Last();
             Assert.Equal("asa-profile-macro", lastMacro.Name);
 
-            // Debug
+            // Debug (shared action)
 
             context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.SelectedPage = GetPage<DebuggerProfileOptions>(context);
-            Assert.Equal("kana-output-path", ((DebuggerProfileOptions)context.SelectedPage).OutputFile.Path);
-
-            context.SelectedProfile = GetDirtyProfile(context, "asa");
-            Assert.IsType<DebuggerProfileOptions>(context.SelectedPage);
-            Assert.Equal("asa-output-path", ((DebuggerProfileOptions)context.SelectedPage).OutputFile.Path);
-
-            // Shared action
-
-            context.SelectedProfile = GetDirtyProfile(context, "kana");
-            context.SelectedPage = GetPage<ProfileOptionsActionsPage>(context).Pages.First(a => a is ActionProfileOptions ao && ao.Name == "shared-action");
-            Assert.Equal("shared-action", ((ActionProfileOptions)context.SelectedPage).Name);
+            context.SelectedPage = GetAction(context, "Debug");
+            Assert.Equal("kana-open-path", (((ActionProfileOptions)context.SelectedPage).Steps[0] as OpenInEditorStep).Path);
 
             context.SelectedProfile = GetDirtyProfile(context, "asa");
             Assert.IsType<ActionProfileOptions>(context.SelectedPage);
-            Assert.Equal("shared-action", ((ActionProfileOptions)context.SelectedPage).Name);
+            Assert.Equal("asa-open-path", (((ActionProfileOptions)context.SelectedPage).Steps[0] as OpenInEditorStep).Path);
 
             // Non-shared action
 
@@ -304,28 +287,27 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void RenamingActionsSynchronizesNameUsagesSteps()
         {
             var project = CreateTestProject();
-            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "shared-action" });
             project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "kana-action" });
-            project.Options.Profiles["kana"].Actions[1].Steps.Add(new RunActionStep { Name = "shared-action" });
-            project.Options.Profiles["kana"].Debugger.Steps.Add(new RunActionStep { Name = "shared-action" });
-            project.Options.Profiles["kana"].MenuCommands.ProfileAction = "shared-action";
-            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = "shared-action";
-            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = "shared-action";
+            project.Options.Profiles["kana"].Actions[1].Steps.Add(new RunActionStep { Name = "Debug" });
+            project.Options.Profiles["kana"].MenuCommands.DebugAction = "Debug";
+            project.Options.Profiles["kana"].MenuCommands.ProfileAction = "Debug";
+            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = "Debug";
+            project.Options.Profiles["kana"].MenuCommands.DisassembleAction = "Debug";
 
             var context = new ProfileOptionsWindowContext(project, null, null);
-            GetDirtyProfile(context, "kana").Actions[0].Name = "renamed-shared-action";
+            GetDirtyProfile(context, "kana").Actions[0].Name = "renamed-debug";
 
-            Assert.Equal("renamed-shared-action", ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name);
-            Assert.Equal("renamed-shared-action", ((RunActionStep)GetDirtyProfile(context, "kana").Actions[1].Steps[0]).Name);
-            Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
-            Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
-            Assert.Equal("renamed-shared-action", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+            Assert.Equal("renamed-debug", ((RunActionStep)GetDirtyProfile(context, "kana").Actions[1].Steps[0]).Name);
+            Assert.Equal("renamed-debug", GetDirtyProfile(context, "kana").MenuCommands.DebugAction);
+            Assert.Equal("renamed-debug", GetDirtyProfile(context, "kana").MenuCommands.ProfileAction);
+            Assert.Equal("renamed-debug", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
+            Assert.Equal("renamed-debug", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
 
             /* Syncs actions added to dirty profile */
             GetDirtyProfile(context, "kana").Actions.Add(new ActionProfileOptions { Name = "h" });
-            ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name = "h";
+            ((RunActionStep)GetDirtyProfile(context, "kana").Actions[1].Steps[0]).Name = "h";
             GetDirtyProfile(context, "kana").Actions.Last().Name = "hh";
-            Assert.Equal("hh", ((RunActionStep)GetDirtyProfile(context, "kana").Debugger.Steps[0]).Name);
+            Assert.Equal("hh", ((RunActionStep)GetDirtyProfile(context, "kana").Actions[1].Steps[0]).Name);
         }
 
         [Fact]
@@ -342,7 +324,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.DisassembleAction);
             Assert.Equal("valid-action", GetDirtyProfile(context, "kana").MenuCommands.PreprocessAction);
 
-            GetDirtyProfile(context, "kana").Actions.RemoveAt(0);
+            GetDirtyProfile(context, "kana").Actions.RemoveAt(1);
             Assert.Equal("", GetDirtyProfile(context, "kana").MenuCommands.PreprocessAction);
         }
 
