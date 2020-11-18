@@ -113,7 +113,7 @@ namespace VSRAD.PackageTests.Server
 
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal($"The target path in copy file step of action HTMT contains illegal characters.\n\nTarget path: \"{file}\"\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+            Assert.Equal($"Local path contains illegal characters: \"{file}\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
 
             file = Path.Combine(Path.GetTempPath(), "raw*o*");
             file += "=>_<=";
@@ -122,7 +122,7 @@ namespace VSRAD.PackageTests.Server
 
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal($"The target path in copy file step of action HTMT contains illegal characters.\n\nTarget path: \"{file}\"\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+            Assert.Equal($"Local path contains illegal characters: \"{file}\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
         }
 
         [Fact]
@@ -172,7 +172,7 @@ namespace VSRAD.PackageTests.Server
             steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = illegalPath, TargetPath = "" } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal($"The source path in copy file step of action HTMT contains illegal characters.\n\nSource path: \"{illegalPath}\"\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+            Assert.Equal($"Local path contains illegal characters: \"{illegalPath}\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
         }
         #endregion
 

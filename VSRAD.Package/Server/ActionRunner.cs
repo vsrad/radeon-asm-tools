@@ -74,24 +74,8 @@ namespace VSRAD.Package.Server
         {
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                byte[] data;
-                try
-                {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-                    data = File.ReadAllBytes(localPath);
-                }
-                catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
-                {
-                    return new StepResult(false, $"File {step.SourcePath} is not found on the local machine", "");
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return new StepResult(false, $"Access to path {step.SourcePath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"The source path in copy file step of action {actionName} contains illegal characters.\n\nSource path: \"{step.SourcePath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
-                }
+                if (!ReadLocalFile(step.SourcePath, out var data, out var error))
+                    return new StepResult(false, error, "");
                 var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
                 if (response.Status == PutFileStatus.PermissionDenied)
@@ -120,7 +104,7 @@ namespace VSRAD.Package.Server
                 }
                 catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
                 {
-                    return new StepResult(false, $"The target path in copy file step of action {actionName} contains illegal characters.\n\nTarget path: \"{step.TargetPath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
+                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
             }
 
@@ -239,16 +223,45 @@ namespace VSRAD.Package.Server
                     new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
 
                 if (response.Status == FetchStatus.FileNotFound)
-                    return new Error($"{type} file ({path}) could not be found.", title: $"{type} file is missing");
+                    return new Error($"{type} file ({path}) could not be found.");
                 if (checkTimestamp && response.Timestamp == initTimestamp)
-                    return new Error($"{type} file ({path}) was not modified.", title: "Data may be stale");
+                    return new Error($"{type} file ({path}) was not modified.");
 
                 return response.Data;
             }
             else
             {
-                throw new NotImplementedException();
+                if (checkTimestamp && GetLocalFileTimestamp(path) == initTimestamp)
+                    return new Error($"{type} file ({path}) was not modified.");
+                if (!ReadLocalFile(path, out var data, out var error))
+                    return new Error($"{type} file could not be opened. {error}");
+                return data;
             }
+        }
+
+        private bool ReadLocalFile(string path, out byte[] data, out string error)
+        {
+            try
+            {
+                var localPath = Path.Combine(_environment.LocalWorkDir, path);
+                data = File.ReadAllBytes(localPath);
+                error = "";
+                return true;
+            }
+            catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
+            {
+                error = $"File {path} is not found on the local machine";
+            }
+            catch (UnauthorizedAccessException)
+            {
+                error = $"Access to path {path} on the local machine is denied";
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+            }
+            data = null;
+            return false;
         }
 
         private async Task<Result<(DateTime timestamp, int byteCount)>> ReadDebugOutputMetadataAsync(string path, bool isRemote, bool checkTimestamp, bool binaryOutput)
