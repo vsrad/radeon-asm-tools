@@ -20,6 +20,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private SortState SortState;
         private bool Autoscroll;
+        private TypeFilterState TypeFilterState = TypeFilterState.FL;
 
         private readonly OleMenuCommandService _commandService;
         private bool hideLineNumber;
@@ -40,6 +41,7 @@ namespace VSRAD.Syntax.FunctionList
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
             optionsProvider.OptionsUpdated += OptionsUpdated;
             Instance = this;
+            typeFilter.Content = TypeFilterState.ToString();
         }
 
         private void OptionsUpdated(OptionsProvider sender)
@@ -71,7 +73,7 @@ namespace VSRAD.Syntax.FunctionList
         public async Task UpdateListAsync(List<FunctionListItem> newTokens, CancellationToken cancellationToken)
         {
             items = newTokens;
-            var filteredTokens = Helper.SortAndFilter(items, SortState, searchText);
+            var filteredTokens = Helper.FilterAndSort(items, SortState, TypeFilterState, searchText);
             if (cancellationToken.IsCancellationRequested) return;
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
@@ -115,7 +117,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void SortAndReloadFunctionList()
         {
-            var filteredTokens = Helper.SortAndFilter(items, SortState, searchText);
+            var filteredTokens = Helper.FilterAndSort(items, SortState, TypeFilterState, searchText);
             ReloadFunctionList(filteredTokens);
         }
 
@@ -204,9 +206,29 @@ namespace VSRAD.Syntax.FunctionList
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
             searchText = Search.Text;
-            var filteredTokens = Helper.Filter(items, searchText);
+            var filteredTokens = Helper.FilterText(items, searchText);
             ReloadFunctionList(filteredTokens);
         }
+
+        private void TypeFilter_Click(object sender, RoutedEventArgs e)
+        {
+            switch (TypeFilterState)
+            {
+                case TypeFilterState.FL: TypeFilterState = TypeFilterState.F; break;
+                case TypeFilterState.F: TypeFilterState = TypeFilterState.L; break;
+                case TypeFilterState.L: TypeFilterState = TypeFilterState.FL; break;
+            }
+
+            typeFilter.Content = TypeFilterState.ToString();
+            SortAndReloadFunctionList();
+        }
         #endregion
+    }
+
+    public enum TypeFilterState
+    {
+        FL = 1, // functions and labels
+        F = 2, // only functions
+        L = 3, // only labels
     }
 }

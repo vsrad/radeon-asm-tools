@@ -16,18 +16,30 @@ namespace VSRAD.Syntax.FunctionList
         }
         static int CompareByNameDesc(FunctionListItem a, FunctionListItem b) => -CompareByName(a, b);
 
-        public static IEnumerable<FunctionListItem> SortAndFilter(List<FunctionListItem> items, SortState sortState, string filterText)
+        public static IList<FunctionListItem> FilterAndSort(IEnumerable<FunctionListItem> items, SortState sortState, TypeFilterState filterType, string filterText)
         {
-            Sort(sortState, items);
-            return Filter(items, filterText);
+            items = FilterText(items, filterText);
+            items = FilterType(items, filterType);
+
+            var filteredValues = items.AsParallel().ToList();
+            Sort(filteredValues, sortState);
+            return filteredValues;
         }
 
-        public static IEnumerable<FunctionListItem> Filter(List<FunctionListItem> items, string filterText) =>
-            string.IsNullOrEmpty(filterText) 
-                ? items 
-                : items.Where(t => t.Text.Contains(filterText));
+        public static IEnumerable<FunctionListItem> FilterText(IEnumerable<FunctionListItem> items, string filterText) =>
+            items.Where(t => t.Text.Contains(filterText));
 
-        public static void Sort(SortState sortState, List<FunctionListItem> items)
+        public static IEnumerable<FunctionListItem> FilterType(IEnumerable<FunctionListItem> items, TypeFilterState filterType)
+        {
+            switch (filterType)
+            {
+                case TypeFilterState.F: return items.Where(t => t.Type == FunctionListItemType.Function);
+                case TypeFilterState.L: return items.Where(t => t.Type == FunctionListItemType.Label);
+                default: return items;
+            }
+        }
+
+        public static void Sort(List<FunctionListItem> items, SortState sortState)
         {
             Func<FunctionListItem, FunctionListItem, int> comparison;
             switch (sortState)

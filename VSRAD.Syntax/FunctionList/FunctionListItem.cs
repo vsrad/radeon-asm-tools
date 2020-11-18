@@ -6,7 +6,7 @@ namespace VSRAD.Syntax.FunctionList
 {
     public class FunctionListItem : DefaultNotifyPropertyChanged
     {
-        public RadAsmTokenType Type { get; }
+        public FunctionListItemType Type { get; }
         public string Text { get; }
         public int LineNumber { get; }
 
@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.FunctionList
 
         public FunctionListItem(NavigationToken navigationToken)
         {
-            Type = navigationToken.Type;
+            Type = GetType(navigationToken.Type);
             Text = navigationToken.GetText();
             LineNumber = navigationToken.Line + 1;
             _isCurrentWorkingItem = false;
@@ -29,5 +29,16 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         public void Navigate() => _navigationToken.Navigate();
+
+        private static FunctionListItemType GetType(RadAsmTokenType tokenType) =>
+            tokenType == RadAsmTokenType.FunctionName ? FunctionListItemType.Function
+                : tokenType == RadAsmTokenType.Label ? FunctionListItemType.Label
+                    : throw new System.ArgumentException("Incorrect token type");
+    }
+
+    public enum FunctionListItemType
+    {
+        Function,
+        Label,
     }
 }

@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
-             xmlns:tokentype="clr-namespace:VSRAD.Syntax.Core.Tokens"
+             xmlns:local="clr-namespace:VSRAD.Syntax.FunctionList"
              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
              d:DesignHeight="300" d:DesignWidth="300"
@@ -18,13 +18,19 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBox Grid.Row="0" 
-                 x:Name="Search" 
-                 TextChanged="Search_TextChanged"
-                 PreviewKeyDown="Search_KeyDown"
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="8*"/>
+                <ColumnDefinition Width="2*" MaxWidth="50"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0" x:Name="Search" TextChanged="Search_TextChanged" PreviewKeyDown="Search_KeyDown"
                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
-        </TextBox>
+            </TextBox>
+
+            <Button Grid.Column="1" x:Name="typeFilter" Click="TypeFilter_Click"/>
+        </Grid>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -109,7 +115,7 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=Type}" Value="{x:Static tokentype:RadAsmTokenType.Label}">
+                <DataTrigger Binding="{Binding Path=Type}" Value="{x:Static local:FunctionListItemType.Label}">
                     <Setter Property="Foreground" Value="DarkGoldenrod" />
                 </DataTrigger>
 
