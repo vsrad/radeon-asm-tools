@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer.Wavemap;
-using VSRAD.Package.Options;
 
 namespace VSRAD.Package.Server
 {
@@ -93,9 +92,7 @@ namespace VSRAD.Package.Server
         public int GroupIndex { get; private set; }
         public int GroupSize { get; private set; }
 
-        private readonly OutputFile _outputFile;
-        private readonly DateTime _outputFileTimestamp;
-        private readonly int _outputOffset;
+        private readonly BreakStateOutputFile _outputFile;
         private readonly int _laneDataSize; // in dwords
         private readonly int _waveDataSize;
 
@@ -103,19 +100,30 @@ namespace VSRAD.Package.Server
         private const int _wavefrontSize = 64;
         private readonly BitArray _fetchedDataWaves; // 1 bit per wavefront data
 
-        public BreakStateData(ReadOnlyCollection<string> watches, OutputFile file, DateTime fileTimestamp, int outputByteCount, int outputOffset)
+        public BreakStateData(ReadOnlyCollection<string> watches, BreakStateOutputFile file, byte[] localData = null)
         {
             Watches = watches;
             _outputFile = file;
-            _outputFileTimestamp = fileTimestamp;
-            _outputOffset = outputOffset;
             _laneDataSize = 1 /* system */ + watches.Count;
             _waveDataSize = _laneDataSize * _wavefrontSize;
 
-            var outputDwordCount = outputByteCount / 4;
+            var outputDwordCount = file.ByteCount / 4;
             var outputWaveCount = outputDwordCount / _waveDataSize;
+
             _data = new uint[outputDwordCount];
-            _fetchedDataWaves = new BitArray(outputWaveCount);
+
+            if (localData != null)
+            {
+                if (file.ByteCount != localData.Length)
+                    throw new ArgumentException($"{nameof(localData)}.Length should be equal to ${nameof(file)}.ByteCount");
+
+                Buffer.BlockCopy(localData, 0, _data, 0, localData.Length);
+                _fetchedDataWaves = new BitArray(outputWaveCount, true);
+            }
+            else
+            {
+                _fetchedDataWaves = new BitArray(outputWaveCount, false);
+            }
         }
 
         public int GetGroupCount(int groupSize, int nGroups)
@@ -186,7 +194,7 @@ namespace VSRAD.Package.Server
                     BinaryOutput = _outputFile.BinaryOutput,
                     ByteOffset = requestedByteOffset,
                     ByteCount = requestedByteCount,
-                    OutputOffset = _outputOffset
+                    OutputOffset = _outputFile.Offset
                 }).ConfigureAwait(false);
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
@@ -196,7 +204,7 @@ namespace VSRAD.Package.Server
             var fetchedWaveCount = response.Data.Length / _waveDataSize / 4;
             MarkFilePartAsFetched(waveOffset, fetchedWaveCount);
 
-            if (response.Timestamp != _outputFileTimestamp)
+            if (response.Timestamp != _outputFile.Timestamp)
                 return "Output file has changed since the last debugger execution.";
 
             if (response.Data.Length < requestedByteCount)

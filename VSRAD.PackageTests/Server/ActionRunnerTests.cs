@@ -409,6 +409,105 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("Valid watches file (remote/watches) was not modified.", result.StepResults[0].Warning);
         }
+
+        [Fact]
+        public async Task ReadDebugDataLocalTestAsync()
+        {
+            var outputFile = Path.GetTempFileName();
+            var watchesFile = Path.GetTempFileName();
+            var statusFile = Path.GetTempFileName();
+
+            File.WriteAllText(watchesFile, "jill\r\njulianne");
+            File.WriteAllText(statusFile, @"
+grid size (64, 0, 0)
+group size (64, 0, 0)
+wave size 64");
+            var output = new uint[192];
+            for (int lane = 0; lane < 64; ++lane)
+            {
+                output[lane * 3 + 0] = 1;          // system = const
+                output[lane * 3 + 1] = 777;        // first watch = const
+                output[lane * 3 + 2] = (uint)lane; // second watch = lane
+            }
+            byte[] outputBytes = new byte[output.Length * sizeof(int)];
+            Buffer.BlockCopy(output, 0, outputBytes, 0, outputBytes.Length);
+            File.WriteAllBytes(outputFile, outputBytes);
+
+            var steps = new List<IActionStep>
+            {
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFile, CheckTimestamp = false },
+                    statusFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = statusFile, CheckTimestamp = false },
+                    binaryOutput: true, outputOffset: 0)
+            };
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""));
+            var result = await runner.RunAsync("Debug", steps);
+
+            Assert.True(result.Successful);
+            Assert.NotNull(result.BreakState);
+            Assert.Collection(result.BreakState.Data.Watches,
+                (first) => Assert.Equal("jill", first),
+                (second) => Assert.Equal("julianne", second));
+            Assert.Equal<uint>(1, result.BreakState.DispatchParameters.DimX);
+            Assert.Equal<uint>(64, result.BreakState.DispatchParameters.GroupSize);
+            Assert.Equal<uint>(64, result.BreakState.DispatchParameters.WaveSize);
+
+            var secondWatch = result.BreakState.Data.GetWatch("julianne");
+            for (int i = 0; i < 64; ++i)
+                Assert.Equal(i, (int)secondWatch[i]);
+        }
+
+        [Fact]
+        public async Task ReadDebugDataLocalErrorTestAsync()
+        {
+            var outputFile = Path.GetTempFileName();
+            var fileName = Path.GetFileName(outputFile);
+
+            var steps = new List<IActionStep>
+            {
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = fileName, CheckTimestamp = true },
+                    watchesFile: new BuiltinActionFile(),
+                    statusFile: new BuiltinActionFile(),
+                    binaryOutput: true, outputOffset: 0)
+            };
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""));
+
+            /* File not changed (GetTempFileName creates an empty file) */
+
+            var result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal($"Output file ({fileName}) was not modified. Data may be stale.", result.StepResults[0].Warning);
+
+            /* Access denied */
+
+            var acl = File.GetAccessControl(outputFile);
+            acl.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User, FileSystemRights.Read, AccessControlType.Deny));
+            File.SetAccessControl(outputFile, acl);
+
+            ((ReadDebugDataStep)steps[0]).OutputFile.CheckTimestamp = false;
+            result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal($"Output file could not be opened. Access to path {fileName} on the local machine is denied", result.StepResults[0].Warning);
+
+            /* File not found */
+
+            File.Delete(outputFile);
+            result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal($"Output file could not be opened. File {fileName} is not found on the local machine", result.StepResults[0].Warning);
+
+            /* Invalid path */
+
+            ((ReadDebugDataStep)steps[0]).OutputFile.Path += "<>";
+            result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{fileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+        }
+
         #endregion
 
         [Fact]

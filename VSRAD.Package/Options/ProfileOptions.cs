@@ -214,25 +214,4 @@ namespace VSRAD.Package.Options
         public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
         public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
     }
-
-    public readonly struct OutputFile : IEquatable<OutputFile>
-    {
-        public string Directory { get; }
-        public string File { get; }
-        public bool BinaryOutput { get; }
-        public string[] Path => new[] { Directory, File };
-
-        public OutputFile(string directory = "", string file = "", bool binaryOutput = true)
-        {
-            Directory = directory;
-            File = file;
-            BinaryOutput = binaryOutput;
-        }
-
-        public bool Equals(OutputFile o) => Directory == o.Directory && File == o.File && BinaryOutput == o.BinaryOutput;
-        public override bool Equals(object o) => o is OutputFile f && Equals(f);
-        public override int GetHashCode() => (Directory, File, BinaryOutput).GetHashCode();
-        public static bool operator ==(OutputFile left, OutputFile right) => left.Equals(right);
-        public static bool operator !=(OutputFile left, OutputFile right) => !(left == right);
-    }
 }

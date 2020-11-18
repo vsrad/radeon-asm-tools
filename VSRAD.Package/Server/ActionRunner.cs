@@ -198,16 +198,39 @@ namespace VSRAD.Package.Server
                 statusString = Regex.Replace(statusString, @"[^\r]\n", "\r\n");
             }
             {
-                var result = await ReadDebugOutputMetadataAsync(step.OutputFile.Path, step.OutputFile.IsRemote(), step.OutputFile.CheckTimestamp, step.BinaryOutput);
-                if (!result.TryGetResult(out var metadata, out var error))
-                    return (new StepResult(false, error.Message, ""), null);
+                var path = step.OutputFile.Path;
+                var initOutputTimestamp = GetInitialFileTimestamp(path);
 
-                // TODO: refactor OutputFile away
-                var output = new OutputFile(directory: _environment.RemoteWorkDir, file: step.OutputFile.Path, step.BinaryOutput);
-                var data = new BreakStateData(watches, output, metadata.timestamp, metadata.byteCount, step.OutputOffset);
+                BreakStateOutputFile outputFile;
+                byte[] localOutputData = null;
+                if (step.OutputFile.IsRemote())
+                {
+                    var fullPath = new[] { _environment.RemoteWorkDir, path };
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
+
+                    if (response.Status == FetchStatus.FileNotFound)
+                        return (new StepResult(false, $"Output file ({path}) could not be found.", ""), null);
+                    if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
+                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, response.ByteCount);
+                }
+                else
+                {
+                    var fullPath = new[] { _environment.LocalWorkDir, path };
+                    var timestamp = GetLocalFileTimestamp(path);
+                    if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
+                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+                    if (!ReadLocalFile(path, out localOutputData, out var readError))
+                        return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
+
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, timestamp, localOutputData.Length);
+                }
+
+                var data = new BreakStateData(watches, outputFile, localOutputData);
 
                 var dispatchParamsResult = BreakStateDispatchParameters.Parse(statusString);
-                if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out error))
+                if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out var error))
                     return (new StepResult(false, error.Message, ""), null);
 
                 return (new StepResult(true, "", ""), new BreakState(data, dispatchParams));
@@ -264,27 +287,6 @@ namespace VSRAD.Package.Server
             return false;
         }
 
-        private async Task<Result<(DateTime timestamp, int byteCount)>> ReadDebugOutputMetadataAsync(string path, bool isRemote, bool checkTimestamp, bool binaryOutput)
-        {
-            var initTimestamp = GetInitialFileTimestamp(path);
-            if (isRemote)
-            {
-                var response = await _channel.SendWithReplyAsync<MetadataFetched>(
-                    new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, path }, BinaryOutput = binaryOutput });
-
-                if (response.Status == FetchStatus.FileNotFound)
-                    return new Error($"Output file ({path}) could not be found.", title: "Output file is missing");
-                if (checkTimestamp && response.Timestamp == initTimestamp)
-                    return new Error($"Output file ({path}) was not modified.", title: "Data may be stale");
-
-                return (response.Timestamp, response.ByteCount);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-        }
-
         private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps)
         {
             foreach (var step in steps)
@@ -316,9 +318,15 @@ namespace VSRAD.Package.Server
 
         private DateTime GetLocalFileTimestamp(string file)
         {
-            var localPath = Path.Combine(_environment.LocalWorkDir, file);
-            try { return File.GetLastWriteTime(localPath); }
-            catch { return default; }
+            try
+            {
+                var localPath = Path.Combine(_environment.LocalWorkDir, file);
+                return File.GetLastWriteTime(localPath);
+            }
+            catch
+            {
+                return default;
+            }
         }
     }
 }

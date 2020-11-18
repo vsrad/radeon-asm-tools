@@ -221,6 +221,7 @@
     <Compile Include="Server\ActionRunResult.cs" />
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
+    <Compile Include="Server\BreakStateOutputFile.cs" />
     <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
       <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
     </Compile>
