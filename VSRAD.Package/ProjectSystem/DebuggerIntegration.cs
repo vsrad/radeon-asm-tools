@@ -40,8 +40,6 @@ namespace VSRAD.Package.ProjectSystem
         public void DeregisterEngine()
         {
             DebugInProgress = false;
-            // unsubscribe event listeners on the debug engine (VSRAD.Deborgar) side, otherwise we'd get ghost debug sessions
-            ExecutionCompleted = null;
         }
 
         public bool TryCreateDebugSession()

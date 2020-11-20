@@ -58,5 +58,6 @@ namespace VSRAD.Package
         public const string FontAndColorDefaultsServiceId = "D1BE46F4-0DA5-4A69-9DA7-2460DA3025E2";
 
         public const string ToolbarIconStripResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/DebugVisualizerWindowCommand.png";
+        public const string CurrentStatementIconResourcePackUri = "pack://application:,,,/RadeonAsmDebugger;component/Resources/CurrentStatement.png";
     };
 }

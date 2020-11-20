@@ -31,6 +31,13 @@ namespace VSRAD.Deborgar
             _callbacks = callbacks;
         }
 
+        public int Terminate()
+        {
+            _process.Terminate();
+            _engineIntegration.ExecutionCompleted -= ExecutionCompleted;
+            return VSConstants.S_OK;
+        }
+
         private void ExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
         {
             _breakFrame = new StackFrame(e.File, new SourceFileLineContext(e.File, e.Lines));
@@ -66,12 +73,6 @@ namespace VSRAD.Deborgar
         public int CauseBreak()
         {
             _engineIntegration.CauseBreak();
-            return VSConstants.S_OK;
-        }
-
-        public int Terminate()
-        {
-            _process.Terminate();
             return VSConstants.S_OK;
         }
 

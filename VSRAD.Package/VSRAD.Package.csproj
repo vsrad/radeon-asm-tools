@@ -186,6 +186,8 @@
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\BreakpointTracker.cs" />
+    <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphFactory.cs" />
+    <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphTagger.cs" />
     <Compile Include="ProjectSystem\ErrorListManager.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditContext.cs" />
     <Compile Include="ProjectSystem\Macros\MacroListEditor.xaml.cs">
@@ -319,6 +321,7 @@
     <None Include="Key.snk" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Resources\CurrentStatement.png" />
     <Content Include="VSRAD.Package.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VSRAD.Package.vsct</LastGenOutput>

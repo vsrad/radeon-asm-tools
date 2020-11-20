@@ -8,6 +8,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using VSRAD.Package.BuildTools;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem.EditorExtensions;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -75,6 +76,8 @@ namespace VSRAD.Package.ProjectSystem
 
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
+
+            BreakLineGlyphTaggerProvider.Initialize(this);
 
             _loaded = true;
             foreach (var callback in _onLoadCallbacks)
