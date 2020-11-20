@@ -61,7 +61,7 @@ namespace VSRAD.Package.ProjectSystem
             RaiseExecutionCompleted(transients?.ActiveSourceFullPath ?? "", transients?.BreakLines ?? new[] { 0u }, isStepping: false, runResult?.BreakState);
         }
 
-        void IEngineIntegration.Execute(bool step)
+        public void Execute(bool step)
         {
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
             {
