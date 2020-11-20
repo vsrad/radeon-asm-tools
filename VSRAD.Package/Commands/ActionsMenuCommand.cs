@@ -61,7 +61,8 @@ namespace VSRAD.Package.Commands
                     await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                     if (result.Error is Error e)
                         Errors.Show(e);
-                    if (_actionLauncher.IsDebugAction(SelectedProfile.Actions.First(a => a.Name == actionName)))
+                    if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
+                        && _actionLauncher.IsDebugAction(action))
                         _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);
                 });
             }
@@ -84,6 +85,8 @@ namespace VSRAD.Package.Commands
                     return SelectedProfile.MenuCommands.DisassembleAction;
                 case Constants.PreprocessCommandId:
                     return SelectedProfile.MenuCommands.PreprocessAction;
+                case Constants.DebugActionCommandId:
+                    return SelectedProfile.MenuCommands.DebugAction;
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;
                     if (index >= SelectedProfile.Actions.Count)

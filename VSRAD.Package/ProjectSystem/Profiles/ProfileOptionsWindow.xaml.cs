@@ -14,6 +14,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public BitmapSource ProfileToolbarIcon { get; }
         public BitmapSource DisassembleToolbarIcon { get; }
         public BitmapSource PreprocessToolbarIcon { get; }
+        public BitmapSource DebugToolbarIcon { get; }
 
         public ProfileOptionsWindow(IToolWindowIntegration integration)
         {
@@ -25,6 +26,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             ProfileToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(0, 0, 16, 16));
             DisassembleToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(16 * 3, 0, 16, 16));
             PreprocessToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(16 * 4, 0, 16, 16));
+            DebugToolbarIcon = new CroppedBitmap(toolbarIconStrip, new Int32Rect(16 * 5, 0, 16, 16));
         }
 
         private void CreateNewProfile(object sender, RoutedEventArgs e) =>

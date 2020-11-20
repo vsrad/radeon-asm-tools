@@ -29,6 +29,7 @@ namespace VSRAD.Package
         public const int ProfileCommandId = 0x10;
         public const int DisassembleCommandId = 0x11;
         public const int PreprocessCommandId = 0x12;
+        public const int DebugActionCommandId = 0x13;
         public const int EvaluateSelectedCommandId = 0x0100;
         public const int AddArrayToWatchesIndexCount = 16;
         public const int AddArrayToWatchesFromHeaderId = 0x1031;

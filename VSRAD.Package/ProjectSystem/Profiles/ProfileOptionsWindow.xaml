@@ -203,6 +203,7 @@
                             <RowDefinition Height="26"/>
                             <RowDefinition Height="26"/>
                             <RowDefinition Height="26"/>
+                            <RowDefinition Height="26"/>
                         </Grid.RowDefinitions>
                         <Border Background="White" Width="20" Height="20" Grid.Row="0">
                             <Image Source="{Binding ProfileToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -227,6 +228,14 @@
                         <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
                                   SelectedItem="{Binding PreprocessAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
                                   Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="2"/>
+
+                        <Border Background="White" Width="20" Height="20" Grid.Row="3">
+                            <Image Source="{Binding DebugToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Debug&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="1"/>
+                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
+                                  SelectedItem="{Binding DebugAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
+                                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="2"/>
                     </Grid>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
