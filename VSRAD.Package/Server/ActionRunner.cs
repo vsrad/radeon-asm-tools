@@ -223,6 +223,8 @@ namespace VSRAD.Package.Server
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
                     if (!ReadLocalFile(path, out localOutputData, out var readError))
                         return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
+                    if (!step.BinaryOutput)
+                        localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, timestamp, localOutputData.Length);
                 }

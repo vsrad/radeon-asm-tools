@@ -118,6 +118,9 @@
     <Compile Include="..\VSRAD.DebugServer\ObservableProcess.cs">
       <Link>Server\IPC\ObservableProcess.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\TextDebuggerOutputParser.cs">
+      <Link>Server\TextDebuggerOutputParser.cs</Link>
+    </Compile>
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
     <Compile Include="BuildTools\Errors\Parser.cs" />

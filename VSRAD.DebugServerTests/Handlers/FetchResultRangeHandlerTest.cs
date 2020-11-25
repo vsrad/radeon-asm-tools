@@ -125,7 +125,7 @@ namespace VSRAD.DebugServerTests.Handlers
         }
 
         [Fact]
-        public async void FetchAllFileTestAsync()
+        public async void FetchAllFileBinaryTestAsync()
         {
             var tmpFile = Path.GetTempFileName();
             var data = Encoding.UTF8.GetBytes("Real Data Here");
@@ -141,6 +141,34 @@ namespace VSRAD.DebugServerTests.Handlers
                 });
             Assert.Equal(FetchStatus.Successful, response.Status);
             Assert.Equal(data, response.Data);
+        }
+
+        [Fact]
+        public async void FetchAllFileTextTestAsync()
+        {
+            var tmpFile = Path.GetTempFileName();
+            var data = new[] { "Metadata", "0x313", "0x42", "0x69", "0x1", "0x0" };
+            await File.WriteAllLinesAsync(tmpFile, data);
+            var byteData = new byte[20]
+            {
+                19, 3, 0, 0,    // 0x313
+                66, 0, 0, 0,    // 0x42
+                105, 0, 0, 0,   // 0x69
+                1, 0, 0, 0,     // 0x1
+                0, 0, 0, 0      // 0x0
+            };
+
+            var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
+                new FetchResultRange
+                {
+                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    ByteOffset = 0,
+                    ByteCount = 0,
+                    OutputOffset = 1,
+                    BinaryOutput = false
+                }); ;
+            Assert.Equal(FetchStatus.Successful, response.Status);
+            Assert.Equal(byteData, response.Data);
         }
 
         [Fact]

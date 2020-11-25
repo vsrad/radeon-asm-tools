@@ -115,7 +115,7 @@ namespace VSRAD.Package.Server
             if (localData != null)
             {
                 if (file.ByteCount != localData.Length)
-                    throw new ArgumentException($"{nameof(localData)}.Length should be equal to ${nameof(file)}.ByteCount");
+                    throw new ArgumentException($"{nameof(localData)}.Length should be equal to {nameof(file)}.ByteCount");
 
                 Buffer.BlockCopy(localData, 0, _data, 0, localData.Length);
                 _fetchedDataWaves = new BitArray(outputWaveCount, true);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Security.AccessControl;
 using System.Security.Principal;
@@ -506,6 +507,35 @@ wave size 64");
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{fileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+        }
+
+        [Fact]
+        public async Task ReadDebugDataLocalTextOutputTestAsync()
+        {
+            var outputFile = Path.GetTempFileName();
+            File.WriteAllText(outputFile, @"SKIPPED LINE
+0x6173616b
+0x7573616d
+0x69646f72
+0x69333133
+");
+
+            var steps = new List<IActionStep>
+            {
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
+                    watchesFile: new BuiltinActionFile(), statusFile: new BuiltinActionFile(), binaryOutput: false, outputOffset: 1)
+            };
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })));
+            var result = await runner.RunAsync("Debug", steps);
+
+            Assert.True(result.Successful);
+            var system = result.BreakState.Data.GetSystem();
+            Assert.Equal(0x6173616b, (int)system[0]);
+            Assert.Equal(0x69646f72, (int)system[1]);
+            var constWatch = result.BreakState.Data.GetWatch("const");
+            Assert.Equal(0x7573616d, (int)constWatch[0]);
+            Assert.Equal(0x69333133, (int)constWatch[1]);
         }
 
         #endregion
