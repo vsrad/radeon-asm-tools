@@ -13,9 +13,16 @@ namespace VSRAD.Package.Utils
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => (int)value == 0;
     }
 
-    public class WpfBoolToVisibilityConverter : WpfBoolToValueConverter<Visibility> { }
+    public sealed class WpfInverseBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => !(bool)value;
 
-    public class WpfBoolToStringConverter : WpfBoolToValueConverter<string> { }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => !(bool)value;
+    }
+
+    public sealed class WpfBoolToVisibilityConverter : WpfBoolToValueConverter<Visibility> { }
+
+    public sealed class WpfBoolToStringConverter : WpfBoolToValueConverter<string> { }
 
     public class WpfBoolToValueConverter<T> : IValueConverter
     {

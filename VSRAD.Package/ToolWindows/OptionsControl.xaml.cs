@@ -19,7 +19,11 @@ namespace VSRAD.Package.ToolWindows
             public ProjectOptions Options { get; }
             public IReadOnlyList<string> ProfileNames => Options.Profiles.Keys.ToList();
 
-            public string ConnectionInfo => _channel.ConnectionOptions.ToString();
+            public string ConnectionInfo =>
+                Options.Profile?.General?.RunActionsLocally == true ? "Local" : _channel.ConnectionOptions.ToString();
+
+            public Visibility DisconnectButtonVisible =>
+                Options.Profile?.General?.RunActionsLocally == true ? Visibility.Hidden : Visibility.Visible;
 
             public string DisconnectLabel
             {
@@ -34,10 +38,19 @@ namespace VSRAD.Package.ToolWindows
             public Context(ProjectOptions options, ICommunicationChannel channel)
             {
                 Options = options;
-                Options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(Options.Profiles)) RaisePropertyChanged(nameof(ProfileNames)); };
+                Options.PropertyChanged += OptionsChanged;
                 _channel = channel;
                 _channel.ConnectionStateChanged += ConnectionStateChanged;
                 DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
+            }
+
+            private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == nameof(Options.Profiles))
+                {
+                    RaisePropertyChanged(nameof(ProfileNames));
+                    RaisePropertyChanged(nameof(DisconnectButtonVisible));
+                }
             }
 
             private void ConnectionStateChanged()
