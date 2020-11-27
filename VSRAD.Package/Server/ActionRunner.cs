@@ -44,7 +44,7 @@ namespace VSRAD.Package.Server
                 switch (steps[i])
                 {
                     case CopyFileStep copyFile:
-                        result = await DoCopyFileAsync(copyFile, actionName);
+                        result = await DoCopyFileAsync(copyFile);
                         break;
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute);
@@ -70,13 +70,32 @@ namespace VSRAD.Package.Server
             return runStats;
         }
 
-        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step, string actionName)
+        private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
+            byte[] sourceContents;
+            /* Read source file */
+            var initTimestamp = GetInitialFileTimestamp(step.SourcePath);
+            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            {
+                var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
+                if (step.CheckTimestamp && initTimestamp == response.Timestamp)
+                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                sourceContents = response.Data;
+            }
+            else
+            {
+                if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
+                    return new StepResult(false, error, "");
+                if (step.CheckTimestamp && initTimestamp == GetLocalFileTimestamp(step.SourcePath))
+                    return new StepResult(false, $"File is not changed at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+            }
+            /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                if (!ReadLocalFile(step.SourcePath, out var data, out var error))
-                    return new StepResult(false, error, "");
-                var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                var command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
                 if (response.Status == PutFileStatus.PermissionDenied)
                     return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
@@ -85,18 +104,11 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
-                if (response.Status == FetchStatus.FileNotFound)
-                    return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
-                if (step.CheckTimestamp && GetInitialFileTimestamp(step.SourcePath) == response.Timestamp)
-                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}", "");
-
                 try
                 {
                     var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                     Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                    File.WriteAllBytes(localPath, response.Data);
+                    File.WriteAllBytes(localPath, sourceContents);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -295,11 +307,11 @@ namespace VSRAD.Package.Server
             {
                 if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
                 {
-                    if (copyFile.Direction == FileCopyDirection.LocalToRemote)
-                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
-                    else
+                    if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                             new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
+                    else
+                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
                 }
                 else if (step is ReadDebugDataStep readDebugData)
                 {

@@ -33,7 +33,7 @@ namespace VSRAD.Package.Options
     [JsonConverter(typeof(StringEnumConverter))]
     public enum FileCopyDirection
     {
-        RemoteToLocal, LocalToRemote
+        RemoteToLocal, LocalToRemote, LocalToLocal
     }
 
     public static class ActionExtensions
@@ -64,7 +64,10 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
                 return "Copy File";
 
-            var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote" : "from Remote";
+            var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote"
+                    : Direction == FileCopyDirection.RemoteToLocal ? "from Remote"
+                    : "Local";
+
             return $"Copy {dir} {SourcePath} -> {TargetPath}";
         }
 
