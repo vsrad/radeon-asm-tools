@@ -98,9 +98,11 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrWhiteSpace(evaluatedTargetPath))
                 return EvaluationError(sourceAction, "Copy File", $"The specified target path (\"{TargetPath}\") evaluates to an empty string");
 
+            var direction = profile.General.RunActionsLocally ? FileCopyDirection.LocalToLocal : Direction;
+
             return new CopyFileStep
             {
-                Direction = Direction,
+                Direction = direction,
                 CheckTimestamp = CheckTimestamp,
                 SourcePath = evaluatedSourcePath,
                 TargetPath = evaluatedTargetPath
@@ -170,9 +172,11 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrWhiteSpace(evaluatedExecutable))
                 return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
 
+            var environment = profile.General.RunActionsLocally ? StepEnvironment.Local : Environment;
+
             return new ExecuteStep
             {
-                Environment = Environment,
+                Environment = environment,
                 Executable = evaluatedExecutable,
                 Arguments = evaluatedArguments,
                 WorkingDirectory = evaluatedWorkdir,
@@ -343,6 +347,13 @@ namespace VSRAD.Package.Options
             var statusResult = await StatusFile.EvaluateAsync(evaluator);
             if (!statusResult.TryGetResult(out var statusFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+
+            if (profile.General.RunActionsLocally)
+            {
+                outputFile.Location = StepEnvironment.Local;
+                watchesFile.Location = StepEnvironment.Local;
+                statusFile.Location = StepEnvironment.Local;
+            }
 
             return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
                 outputFile: outputFile, watchesFile: watchesFile, statusFile: statusFile);
