@@ -279,7 +279,8 @@
                             </TextBox>
                             <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2" ActionName="{Binding Name}"
                                                 AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
-                                                MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
+                                                MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                CurrentProfile="{Binding DataContext.SelectedProfile, ElementName=Root}" />
                         </Grid>
                     </ScrollViewer>
                 </DataTemplate>

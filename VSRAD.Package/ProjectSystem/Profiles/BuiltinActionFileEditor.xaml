@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:opts="clr-namespace:VSRAD.Package.Options"
+             xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="800">
@@ -21,6 +22,8 @@
                 <x:Type TypeName="opts:StepEnvironment"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
+        <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
+        <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenFalseConverter" TrueValue="Collapsed" FalseValue="Visible" />
     </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -36,7 +39,11 @@
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
         <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
-                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
+                  Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
+        <Label Content="Local"
+               Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+               VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
 
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
