@@ -83,6 +83,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         {
             get
             {
+                if (_dirtyProfile.General.RunActionsLocally)
+                    return null;
                 if (_remoteEnv == null)
                     _remoteEnv = new AsyncLazy<IReadOnlyDictionary<string, string>>(async () =>
                     {

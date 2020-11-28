@@ -203,9 +203,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
                         macroValue = Environment.GetEnvironmentVariable(macroName);
                         break;
                     case "ENVR":
-                        var remoteEnv = await _remoteEnvironment.GetValueAsync();
-                        if (!remoteEnv.TryGetValue(macroName, out macroValue))
-                            macroValue = "";
+                        if (_remoteEnvironment == null)
+                        {
+                            macroValue = Environment.GetEnvironmentVariable(macroName);
+                        }
+                        else
+                        {
+                            var remoteEnv = await _remoteEnvironment.GetValueAsync();
+                            if (!remoteEnv.TryGetValue(macroName, out macroValue))
+                                macroValue = "";
+                        }
                         break;
                     default:
                         var evalResult = await GetMacroValueAsync(macroName, evaluationChain);

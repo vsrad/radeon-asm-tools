@@ -101,7 +101,10 @@ namespace VSRAD.Package.ProjectSystem
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 var projectProperties = _project.GetProjectProperties();
-                var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
+                var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
+                    ? null
+                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
+
                 var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
 
                 var generalResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);

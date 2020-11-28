@@ -85,6 +85,22 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         }
 
         [Fact]
+        public async Task NullRemoteEnvironmentTreatedAsLocalTestAsync()
+        {
+            var props = new Mock<IProjectProperties>();
+            var localPath = Environment.GetEnvironmentVariable("PATH");
+
+            var evaluator = new MacroEvaluator(props.Object, _emptyTransients, remoteEnvironment: null, new DebuggerOptions(), new ProfileOptions());
+            var result = await evaluator.EvaluateAsync("Local: $ENV(PATH), Remote: $ENVR(PATH)");
+            Assert.True(result.TryGetResult(out var evaluated, out _));
+            Assert.Equal($"Local: {localPath}, Remote: {localPath}", evaluated);
+
+            result = await evaluator.EvaluateAsync("Local: $ENV(HOPEFULLY_NON_EXISTENT_VAR), Remote: $ENVR(HOPEFULLY_NON_EXISTENT_VAR)");
+            Assert.True(result.TryGetResult(out evaluated, out _));
+            Assert.Equal("Local: , Remote: ", evaluated);
+        }
+
+        [Fact]
         public async Task EmptyMacroNameTestAsync()
         {
             var props = new Mock<IProjectProperties>(MockBehavior.Strict); // fails the test if called
