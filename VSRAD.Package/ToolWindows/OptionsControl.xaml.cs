@@ -49,7 +49,7 @@ namespace VSRAD.Package.ToolWindows
                 if (e.PropertyName == nameof(Options.Profiles))
                 {
                     RaisePropertyChanged(nameof(ProfileNames));
-                    RaisePropertyChanged(nameof(DisconnectButtonVisible));
+                    ConnectionStateChanged();
                 }
             }
 
@@ -57,6 +57,7 @@ namespace VSRAD.Package.ToolWindows
             {
                 RaisePropertyChanged(nameof(ConnectionInfo));
                 RaisePropertyChanged(nameof(DisconnectLabel));
+                RaisePropertyChanged(nameof(DisconnectButtonVisible));
                 ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;
             }
         }

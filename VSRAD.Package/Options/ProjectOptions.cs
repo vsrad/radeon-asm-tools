@@ -58,6 +58,12 @@ namespace VSRAD.Package.Options
             RaisePropertyChanged(nameof(Profiles));
             RaisePropertyChanged(nameof(HasProfiles));
         }
+
+        public void UpdateActiveProfile(ProfileOptions newProfile)
+        {
+            ((Dictionary<string, ProfileOptions>)Profiles)[ActiveProfile] = newProfile;
+            RaisePropertyChanged(nameof(Profiles));
+        }
         #endregion
 
         #region Read/Write
