@@ -129,6 +129,28 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal(expectedItems, deployedItems);
         }
 
+        [Fact]
+        public async Task SkipsDeployInLocalhostModeTestAsync()
+        {
+            var channel = new MockCommunicationChannel();
+
+            var sourceManager = new Mock<IProjectSourceManager>();
+            sourceManager
+                .Setup(m => m.ListProjectFilesAsync())
+                .ReturnsAsync(MakeSources("source.txt", "Include/include.txt"));
+
+            var (project, general, syncer) = MakeProjectWithSyncer((opts) =>
+            {
+                opts.General.DeployDirectory = _deployDirectory;
+                opts.General.CopySources = true;
+                opts.General.RunActionsLocally = true;
+            }, channel.Object, sourceManager.Object);
+            project.Setup((p) => p.SaveOptions()).Verifiable();
+
+            await syncer.SynchronizeRemoteAsync(general);
+            Assert.True(channel.AllInteractionsHandled);
+        }
+
         private static (Mock<IProject>, GeneralProfileOptions, FileSynchronizationManager) MakeProjectWithSyncer(Action<ProfileOptions> setupProfile, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
         {
             TestHelper.InitializePackageTaskFactory();

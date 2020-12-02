@@ -163,6 +163,7 @@
                             <Label Content="Copy Sources to Remote:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
                                       IsChecked="{Binding CopySources, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
                                       ToolTip="Toggle remote deployment"/>
 
                             <Label Content="Deploy Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>

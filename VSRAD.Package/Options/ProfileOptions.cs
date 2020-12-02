@@ -165,6 +165,7 @@ namespace VSRAD.Package.Options
                 RemoteMachine = RemoteMachine,
                 Port = Port,
                 CopySources = CopySources,
+                RunActionsLocally = RunActionsLocally,
                 DeployDirectory = evaluatedDeployDir,
                 LocalWorkDir = evaluatedLocalDir,
                 RemoteWorkDir = evaluatedRemoteDir,
