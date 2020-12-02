@@ -235,6 +235,7 @@
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
+    <Compile Include="Utils\MruCollection.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\VsEditor.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
