@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 
@@ -11,6 +15,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly Canvas _canvas;
         private readonly List<List<Rectangle>> _rectangles = new List<List<Rectangle>> { new List<Rectangle>(), new List<Rectangle>() };
         private WavemapView _view;
+        private BitmapWrapper _bitmapWrapper;
 
         public int Height => _view.WavesPerGroup == 0 ? 0 : _view.WavesPerGroup * (_rectangleSize - 1) + 2;
         public int Width => _view.WavesPerGroup == 0 ? 0 : _view.GroupCount * (_rectangleSize - 1) + 2;
@@ -26,6 +31,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _canvas = canvas;
             _rectangleSize = rectangleSize;
+            _bitmapWrapper = new BitmapWrapper();
         }
 
         private void SetRectangleSize(int size)
@@ -47,12 +53,16 @@ namespace VSRAD.Package.DebugVisualizer
         public void SetData(WavemapView view)
         {
             _view = view;
+            var img = new Image();
+            img.Source = _bitmapWrapper.GetImageFromWavemapView(view);
+            _canvas.Children.Add(img);
 
             /*
              * if waves per group is 0
              * we just want to hide wavemap
              * table without any reshaping
              */
+            /*
             if (view.WavesPerGroup == 0)
             {
                 foreach (var row in _rectangles)
@@ -103,7 +113,8 @@ namespace VSRAD.Package.DebugVisualizer
             for (int i = 0; i < view.GroupCount; ++i)
                 for (int j = 0; j < view.WavesPerGroup; ++j)
                     UpdateWaveRectangle(j, i);
-            _canvas.InvalidateVisual();
+            //_canvas.InvalidateVisual();
+            */
         }
 
         private Rectangle InitiateWaveRectangle(int row, int column)
