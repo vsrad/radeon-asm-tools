@@ -122,7 +122,7 @@
                 <RowDefinition>
                     <RowDefinition.Style>
                         <Style TargetType="RowDefinition">
-                            <Setter Property="Height" Value="Auto" />
+                            <Setter Property="Height" Value="60" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemapField}" Value="False">
                                     <Setter Property="Height" Value="0" />
@@ -152,7 +152,7 @@
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="3" Grid.Column="1" MaxHeight="60">
-                <Canvas x:Name="WavemapCanvas" Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" VerticalAlignment="Stretch" HorizontalAlignment="Left"/>
+                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </ScrollViewer>
         </Grid>
     </StackPanel>

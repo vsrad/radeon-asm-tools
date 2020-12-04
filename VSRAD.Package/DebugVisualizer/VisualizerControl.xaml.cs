@@ -26,7 +26,7 @@ namespace VSRAD.Package.DebugVisualizer
             DataContext = _context;
             InitializeComponent();
 
-            _wavemap = new WavemapCanvas(HeaderHost.WavemapCanvas, _context.Options.VisualizerOptions.WavemapElementSize);
+            _wavemap = new WavemapCanvas(HeaderHost.WavemapImage, _context.Options.VisualizerOptions.WavemapElementSize);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
@@ -57,9 +57,9 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
             {
-                _wavemap.RectangleSize = _context.Options.VisualizerOptions.WavemapElementSize;
-                _context.CanvasWidth = _wavemap.Width;
-                _context.CanvasHeight = _wavemap.Height;
+                //_wavemap.RectangleSize = _context.Options.VisualizerOptions.WavemapElementSize;
+                //_context.CanvasWidth = _wavemap.Width;
+                //_context.CanvasHeight = _wavemap.Height;
             }
         }
 
@@ -103,8 +103,8 @@ namespace VSRAD.Package.DebugVisualizer
             RefreshDataStyling();
 
             _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
-            _context.CanvasWidth = _wavemap.Width;
-            _context.CanvasHeight = _wavemap.Height;
+            //_context.CanvasWidth = _wavemap.Width;
+            //_context.CanvasHeight = _wavemap.Height;
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
