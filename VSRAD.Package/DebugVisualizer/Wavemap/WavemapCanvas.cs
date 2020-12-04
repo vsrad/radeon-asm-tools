@@ -41,6 +41,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void SetData(WavemapView view)
         {
+            if (view.WavesPerGroup == 0)
+            {
+                _img.Source = null;
+                return;
+            }
+
             _view = view;
             _img.Source = _bitmapWrapper.GetImageFromWavemapView(view);
         }
