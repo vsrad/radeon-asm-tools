@@ -55,14 +55,14 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         public BitmapImage GetImageFromWavemapView(WavemapView view)
         {
-            var pixelCount = view.GroupCount * view.WavesPerGroup * _rSize * _rSize;
+            var pixelCount = view.GroupCount * view.WavesPerGroup * (_rSize + 1) * (_rSize + 1);
             //var pixelCount = 4;
             var byteCount = pixelCount * 4; //+ /*padding*/ pixelCount;
             var imageData = new byte[byteCount + 54];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(54 + byteCount);
-            var widthBytes = BitConverter.GetBytes(view.GroupCount * _rSize);
-            var heightBytes = BitConverter.GetBytes(view.WavesPerGroup * _rSize);
+            var widthBytes = BitConverter.GetBytes(view.GroupCount * _rSize + 1);
+            var heightBytes = BitConverter.GetBytes(view.WavesPerGroup * _rSize + 1);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
             for (int i = 0; i < 4; i++)
             {
@@ -71,7 +71,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = view.GroupCount * _rSize * 4;
+            var byteWidth = view.GroupCount * _rSize * 4 + 4;
 
             for (int i = 0; i < byteCount - 3; i += 4)
             {
@@ -79,6 +79,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 if ((row % _rSize) == 0) continue;
                 int col = i % byteWidth;
                 if ((col % _rSize) == 0) continue;
+
+                var flatIdx = i + 54 + byteWidth; // header and first separator
 
                 imageData[i+54] = 0; // B
                 imageData[i+55] = 0; // G
