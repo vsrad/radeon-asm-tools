@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
@@ -56,8 +57,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public BitmapImage GetImageFromWavemapView(WavemapView view)
         {
             var pixelCount = view.GroupCount * view.WavesPerGroup * (_rSize + 1) * (_rSize + 1);
-            //var pixelCount = 4;
-            var byteCount = pixelCount * 4; //+ /*padding*/ pixelCount;
+            var byteCount = pixelCount * 4;
             var imageData = new byte[byteCount + 54];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(54 + byteCount);
@@ -71,21 +71,25 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = view.GroupCount * _rSize * 4 + 4;
+            var byteWidth = view.GroupCount * _rSize * 4 + 4;   // +4 for right border
 
             for (int i = 0; i < byteCount - 3; i += 4)
             {
                 int row = i / byteWidth;
-                if ((row % _rSize) == 0) continue;
+                if ((row % _rSize) == 0 || row / _rSize >= view.WavesPerGroup) continue;
                 int col = i % byteWidth;
                 if ((col % _rSize) == 0) continue;
 
-                var flatIdx = i + 54 + byteWidth; // header and first separator
+                var viewRow = view.WavesPerGroup - 1 - row / _rSize;
+                var viewCol = col / _rSize / 4;
+                var waveInfo = view[viewRow, viewCol];
 
-                imageData[i+54] = 0; // B
-                imageData[i+55] = 0; // G
-                imageData[i+56] = 255; // R
-                imageData[i+57] = 255; // Alpha
+                var flatIdx = i + 54;   // header offset
+
+                imageData[flatIdx+0] = waveInfo.BreakColor[0]; // B
+                imageData[flatIdx+1] = waveInfo.BreakColor[1]; // G
+                imageData[flatIdx+2] = waveInfo.BreakColor[2]; // R
+                imageData[flatIdx+3] = waveInfo.BreakColor[3]; // Alpha
             }
             return LoadImage(imageData);
         }

@@ -7,7 +7,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 #pragma warning disable CA1815 // the comparing of this structs is not a case, so disable warning that tells us to implement Equals()
     public struct WaveInfo
     {
-        public Brush BreakColor;
+        public byte[] BreakColor;
         public uint BreakLine;
         public int GroupIdx;
         public int WaveIdx;
@@ -17,17 +17,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
     class BreakpointColorManager
     {
-        private readonly Dictionary<uint, Brush> _breakpointColorMapping = new Dictionary<uint, Brush>();
-        private readonly Brush[] _colors = new Brush[] { Brushes.Red, Brushes.Blue, Brushes.Green, Brushes.Yellow, Brushes.Cyan };
-        private uint _currentColorIndex;
+        private readonly Dictionary<uint, byte[]> _breakpointColorMapping = new Dictionary<uint, byte[]>();
+        private readonly List<byte[]> _colors = new List<byte[]> { new byte[] { 0, 0, 255, 255 }, new byte[] { 255, 0, 0, 255 }, new byte[] { 0, 255, 0, 255 }, new byte[] { 0, 255, 255, 255 }, new byte[] { 255, 255, 0, 255 } };
+        private int _currentColorIndex;
 
-        private Brush GetNextColor()
+        private byte[] GetNextColor()
         {
-            if (_currentColorIndex == _colors.Length) _currentColorIndex = 0;
+            if (_currentColorIndex == _colors.Count) _currentColorIndex = 0;
             return _colors[_currentColorIndex++];
         }
 
-        public Brush GetColorForBreakpoint(uint breakLine)
+        public byte[] GetColorForBreakpoint(uint breakLine)
         {
             if (_breakpointColorMapping.TryGetValue(breakLine, out var color))
             {
@@ -79,7 +79,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             if (!IsValidWave(row, column))
                 return new WaveInfo
                 {
-                    BreakColor = Brushes.Gray,
+                    BreakColor = new byte[] { 128, 128, 128, 255 },
                     BreakLine = 0,
                     GroupIdx = 0,
                     WaveIdx = 0,
