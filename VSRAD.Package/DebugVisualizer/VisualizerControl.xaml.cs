@@ -103,8 +103,8 @@ namespace VSRAD.Package.DebugVisualizer
             RefreshDataStyling();
 
             _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
-            //_context.CanvasWidth = _wavemap.Width;
-            //_context.CanvasHeight = _wavemap.Height;
+            _context.CanvasWidth = _wavemap.Width;
+            _context.CanvasHeight = _wavemap.Height;
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);

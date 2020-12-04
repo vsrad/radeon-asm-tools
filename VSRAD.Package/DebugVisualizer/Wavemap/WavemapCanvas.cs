@@ -55,6 +55,7 @@ namespace VSRAD.Package.DebugVisualizer
             _view = view;
             var img = new Image();
             img.Source = _bitmapWrapper.GetImageFromWavemapView(view);
+            _canvas.Children.Clear();
             _canvas.Children.Add(img);
 
             /*

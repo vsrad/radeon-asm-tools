@@ -19,7 +19,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      * 0xW  0x00 0x00 0x00  -- Width in pixels
      * 0xH  0x00 0x00 0x00  -- Height in pixels
      * 0x01 0x00            -- Number of color planes
-     * 0x18 0x00            -- Bits per pixel (24 for RGB)
+     * 0x20 0x00            -- Bits per pixel (24 for RGB)
      * 0x00 0x00 0x00 0x00  -- BI_RGB, no pixel array compression used
      * 0xDS 0x00 0x00 0x00  -- Data size (pixels * 8)
      * 0x13 0x0b 0x00 0x00  -- horizontal DPI
@@ -31,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     class BitmapWrapper
     {
         // initialize data with empty header
-        private List<byte> _data = new List<byte>
+        private List<byte> _header = new List<byte>
         {
             0x42, 0x4d,
             0x36, 0x00, 0x00, 0x00, // VARIABLE: size of file, add data size. Offset 2
@@ -42,7 +42,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             0x00, 0x00, 0x00, 0x00, // VARIABLE: width in pixels. Offset 18
             0x00, 0x00, 0x00, 0x00, // VARIABLE: height in pixels. Offset 22
             0x01, 0x00,
-            0x18, 0x00,
+            0x20, 0x00,
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, // VARIABLE: data size. Offset 34
             0x13, 0x0b, 0x00, 0x00,
@@ -51,25 +51,41 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             0x00, 0x00, 0x00, 0x00
         };
 
+        private int _rSize = 7;
+
         public BitmapImage GetImageFromWavemapView(WavemapView view)
         {
-            var pixelCount = view.GroupCount * view.WavesPerGroup * 6 * 6;
+            var pixelCount = view.GroupCount * view.WavesPerGroup * _rSize * _rSize;
             //var pixelCount = 4;
-            var byteCount = pixelCount * 3 + /*padding*/ pixelCount;
-            var imageData = new byte[byteCount];
+            var byteCount = pixelCount * 4; //+ /*padding*/ pixelCount;
+            var imageData = new byte[byteCount + 54];
+            _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(54 + byteCount);
-            var widthBytes = BitConverter.GetBytes(view.GroupCount * 6);
-            var heightBytes = BitConverter.GetBytes(view.WavesPerGroup * 6);
+            var widthBytes = BitConverter.GetBytes(view.GroupCount * _rSize);
+            var heightBytes = BitConverter.GetBytes(view.WavesPerGroup * _rSize);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
             for (int i = 0; i < 4; i++)
             {
-                _data[2 + i] = fileSizeBytes[i];
-                _data[18 + i] = widthBytes[i];
-                _data[22 + i] = heightBytes[i];
-                _data[34 + i] = dataSizeBytes[i];
+                imageData[2 + i] = fileSizeBytes[i];
+                imageData[18 + i] = widthBytes[i];
+                imageData[22 + i] = heightBytes[i];
+                imageData[34 + i] = dataSizeBytes[i];
             }
-            _data.AddRange(imageData);
-            return LoadImage(_data.ToArray());
+            var byteWidth = view.GroupCount * _rSize * 4;
+
+            for (int i = 0; i < byteCount - 3; i += 4)
+            {
+                int row = i / byteWidth;
+                if ((row % _rSize) == 0) continue;
+                int col = i % byteWidth;
+                if ((col % _rSize) == 0) continue;
+
+                imageData[i+54] = 0; // B
+                imageData[i+55] = 0; // G
+                imageData[i+56] = 255; // R
+                imageData[i+57] = 255; // Alpha
+            }
+            return LoadImage(imageData);
         }
 
         private static BitmapImage LoadImage(byte[] imageData)
