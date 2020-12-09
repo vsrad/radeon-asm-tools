@@ -136,7 +136,7 @@
             <Label Grid.Row="0" Grid.Column="0" Content="Columns:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <Label Grid.Row="1" Grid.Column="0" Content="App args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <Label Grid.Row="2" Grid.Column="0" Content="Break args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <Label Grid.Row="3" Grid.Column="0" Content="Wavemap:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <!--<Label Grid.Row="3" Grid.Column="0" Content="Wavemap:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>-->
             <TextBox Text="{Binding Options.VisualizerColumnStyling.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
                      Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
@@ -152,9 +152,9 @@
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="3" Grid.Column="1" MaxHeight="60">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" MaxHeight="60">
                 <!--<Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>-->
-                <wavemap:WavemapImageHost x:Name="WavemapImage"/>
+                <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </ScrollViewer>
         </Grid>
     </StackPanel>

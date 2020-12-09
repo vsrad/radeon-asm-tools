@@ -14,7 +14,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public void Setup()
         {
             var box = new PictureBox();
-            box.SizeMode = PictureBoxSizeMode.StretchImage;
+            box.SizeMode = PictureBoxSizeMode.Normal;
             Child = box;
         }
     }

@@ -41,6 +41,8 @@ namespace VSRAD.Package.DebugVisualizer
             }
 
             _box.Image = _bitmapWrapper.GetImageFromWavemapView(view);
+            _box.Size = _box.Image.Size;
+            _box.Refresh();
         }
     }
 }
