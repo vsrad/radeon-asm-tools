@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:wavemap="clr-namespace:VSRAD.Package.DebugVisualizer.Wavemap"
              mc:Ignorable="d"
              d:DesignHeight="140" d:DesignWidth="720">
     <UserControl.ContextMenu>
@@ -152,7 +153,8 @@
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="3" Grid.Column="1" MaxHeight="60">
-                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                <!--<Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>-->
+                <wavemap:WavemapImageHost x:Name="WavemapImage"/>
             </ScrollViewer>
         </Grid>
     </StackPanel>

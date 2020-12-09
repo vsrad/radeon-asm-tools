@@ -26,7 +26,8 @@ namespace VSRAD.Package.DebugVisualizer
             DataContext = _context;
             InitializeComponent();
 
-            _wavemap = new WavemapCanvas(HeaderHost.WavemapImage, _context.Options.VisualizerOptions.WavemapElementSize);
+            HeaderHost.WavemapImage.Setup();
+            _wavemap = new WavemapCanvas((System.Windows.Forms.PictureBox)HeaderHost.WavemapImage.Child, _context.Options.VisualizerOptions.WavemapElementSize);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;

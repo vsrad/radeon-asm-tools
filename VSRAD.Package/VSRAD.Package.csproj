@@ -176,6 +176,7 @@
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="DebugVisualizer\Wavemap\BitmapWrapper.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapCanvas.cs" />
+    <Compile Include="DebugVisualizer\Wavemap\WavemapImageHost.cs" />
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />

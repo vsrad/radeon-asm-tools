@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -54,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private int _rSize = 7;
 
-        public BitmapImage GetImageFromWavemapView(WavemapView view)
+        public Bitmap GetImageFromWavemapView(WavemapView view)
         {
             var pixelCount = view.GroupCount * view.WavesPerGroup * (_rSize + 1) * (_rSize + 1);
             var byteCount = pixelCount * 4;
@@ -94,7 +95,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             return LoadImage(imageData);
         }
 
-        private static BitmapImage LoadImage(byte[] imageData)
+        private static Bitmap LoadImage(byte[] imageData)
         {
             if (imageData == null || imageData.Length == 0) return null;
             var image = new BitmapImage();
@@ -109,7 +110,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 image.EndInit();
             }
             image.Freeze();
-            return image;
+
+            using (MemoryStream outStream = new MemoryStream())
+            {
+                BitmapEncoder enc = new BmpBitmapEncoder();
+                enc.Frames.Add(BitmapFrame.Create(image));
+                enc.Save(outStream);
+                System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(outStream);
+
+                return new Bitmap(bitmap);
+            }
         }
     }
 }

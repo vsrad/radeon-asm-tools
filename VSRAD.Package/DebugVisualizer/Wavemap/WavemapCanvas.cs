@@ -1,24 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using System.Windows.Forms;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     class WavemapCanvas
     {
-        private readonly List<List<Rectangle>> _rectangles = new List<List<Rectangle>> { new List<Rectangle>(), new List<Rectangle>() };
-        private WavemapView _view;
         private BitmapWrapper _bitmapWrapper;
-        private Image _img;
+        private PictureBox _box;
 
-        public int Height => (int)Math.Ceiling(_img.ActualHeight);
-        public int Width => (int)Math.Ceiling(_img.ActualWidth);
+        public int Height => _box.Height;
+        public int Width => _box.Width;
 
         private int _rectangleSize;
         public int RectangleSize
@@ -27,9 +20,9 @@ namespace VSRAD.Package.DebugVisualizer
             set => SetRectangleSize(value);
         }
 
-        public WavemapCanvas(Image image, int rectangleSize)
+        public WavemapCanvas(PictureBox box, int rectangleSize)
         {
-            _img = image;
+            _box = box;
             _rectangleSize = 7; // const for now
             _bitmapWrapper = new BitmapWrapper();
         }
@@ -43,12 +36,11 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (view.WavesPerGroup == 0)
             {
-                _img.Source = null;
+                _box.Image = null;
                 return;
             }
 
-            _view = view;
-            _img.Source = _bitmapWrapper.GetImageFromWavemapView(view);
+            _box.Image = _bitmapWrapper.GetImageFromWavemapView(view);
         }
     }
 }
