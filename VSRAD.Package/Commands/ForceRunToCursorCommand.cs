@@ -13,12 +13,14 @@ namespace VSRAD.Package.Commands
     {
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IBreakpointTracker _breakpointTracker;
+        private readonly DebuggerIntegration _debuggerIntegration;
 
         [ImportingConstructor]
-        public ForceRunToCursorCommand(IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker)
+        public ForceRunToCursorCommand(IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker, DebuggerIntegration debuggerIntegration)
         {
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
+            _debuggerIntegration = debuggerIntegration;
         }
 
         public Guid CommandSet => Constants.ForceRunToCursorCommandSet;
@@ -37,7 +39,8 @@ namespace VSRAD.Package.Commands
             {
                 var currentFile = _codeEditor.GetAbsoluteSourcePath();
                 var currentLine = _codeEditor.GetCurrentLine();
-                _breakpointTracker.RunToLine(currentFile, currentLine);
+                _breakpointTracker.SetRunToLine(currentFile, currentLine);
+                _debuggerIntegration.Execute(step: false);
             }
         }
     }

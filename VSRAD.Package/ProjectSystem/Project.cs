@@ -1,16 +1,14 @@
 ﻿using Microsoft.VisualStudio.Composition;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
-using Microsoft.VisualStudio.Threading;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Threading.Tasks;
 using VSRAD.Package.BuildTools;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.Macros;
-using VSRAD.Package.Server;
+using VSRAD.Package.ProjectSystem.EditorExtensions;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -19,15 +17,14 @@ namespace VSRAD.Package.ProjectSystem
 
     public interface IProject
     {
-        event ProjectLoaded Loaded;
         event ProjectUnloaded Unloaded;
 
         ProjectOptions Options { get; }
+        UnconfiguredProject UnconfiguredProject { get; }
         string RootPath { get; } // TODO: Replace all usages with IProjectSourceManager.ProjectRoot
+
+        void RunWhenLoaded(Action<ProjectOptions> callback);
         IProjectProperties GetProjectProperties();
-        Task<IMacroEvaluator> GetMacroEvaluatorAsync();
-        Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients);
-        MacroEvaluatorTransientValues GetMacroTransients();
         void SaveOptions();
     }
 
@@ -35,17 +32,17 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class Project : IProject
     {
-        public event ProjectLoaded Loaded;
         public event ProjectUnloaded Unloaded;
 
         public ProjectOptions Options { get; private set; }
-
+        public UnconfiguredProject UnconfiguredProject { get; }
         public string RootPath { get; }
 
         private readonly string _optionsFilePath;
         private readonly string _legacyOptionsFilePath;
 
-        private readonly UnconfiguredProject _unconfiguredProject;
+        private bool _loaded = false;
+        private readonly List<Action<ProjectOptions>> _onLoadCallbacks = new List<Action<ProjectOptions>>();
 
         [ImportingConstructor]
         public Project(UnconfiguredProject unconfiguredProject)
@@ -53,7 +50,15 @@ namespace VSRAD.Package.ProjectSystem
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
             _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
             _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
-            _unconfiguredProject = unconfiguredProject;
+            UnconfiguredProject = unconfiguredProject;
+        }
+
+        public void RunWhenLoaded(Action<ProjectOptions> callback)
+        {
+            if (_loaded)
+                callback(Options);
+            else
+                _onLoadCallbacks.Add(callback);
         }
 
         public void Load()
@@ -69,11 +74,15 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
 
-            _unconfiguredProject.Services.ExportProvider.GetExportedValue<DebuggerIntegration>();
-            _unconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
-            _unconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
+            UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
+            UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
-            Loaded?.Invoke(Options);
+            BreakLineGlyphTaggerProvider.Initialize(this);
+
+            _loaded = true;
+            foreach (var callback in _onLoadCallbacks)
+                callback(Options);
+            _onLoadCallbacks.Clear();
         }
 
         private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => SaveOptions();
@@ -84,46 +93,8 @@ namespace VSRAD.Package.ProjectSystem
 
         public IProjectProperties GetProjectProperties()
         {
-            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            var configuredProject = UnconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
             return configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
         }
-
-        #region MacroEvaluator
-        private IActiveCodeEditor _codeEditor;
-        private ICommunicationChannel _communicationChannel;
-        private IBreakpointTracker _breakpointTracker;
-
-        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync()
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            return await GetMacroEvaluatorAsync(GetMacroTransients());
-        }
-
-        public async Task<IMacroEvaluator> GetMacroEvaluatorAsync(MacroEvaluatorTransientValues transients)
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-
-            if (_communicationChannel == null)
-                _communicationChannel = _unconfiguredProject.Services.ExportProvider.GetExportedValue<ICommunicationChannel>();
-
-            var projectProperties = GetProjectProperties();
-            var remoteEnvironment = new AsyncLazy<IReadOnlyDictionary<string, string>>(
-                _communicationChannel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
-            return new MacroEvaluator(projectProperties, transients, remoteEnvironment, Options.DebuggerOptions, Options.Profile);
-        }
-
-        public MacroEvaluatorTransientValues GetMacroTransients()
-        {
-            if (_codeEditor == null)
-                _codeEditor = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IActiveCodeEditor>();
-            if (_breakpointTracker == null)
-                _breakpointTracker = _unconfiguredProject.Services.ExportProvider.GetExportedValue<IBreakpointTracker>();
-
-            var (file, breakLines) = _breakpointTracker.GetBreakTarget();
-            var sourceLine = _codeEditor.GetCurrentLine();
-            var watches = Options.DebuggerOptions.GetWatchSnapshot();
-            return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
-        }
-        #endregion
     }
 }

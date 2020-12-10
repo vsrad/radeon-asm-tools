@@ -7,13 +7,14 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
+using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.Server
 {
     public interface IFileSynchronizationManager
     {
-        Task SynchronizeRemoteAsync();
+        Task SynchronizeRemoteAsync(GeneralProfileOptions evaluatedProfileOptions);
     }
 
     [Export(typeof(IFileSynchronizationManager))]
@@ -40,29 +41,24 @@ namespace VSRAD.Package.Server
             _channel.ConnectionStateChanged += _fileTracker.Clear;
         }
 
-        public async Task SynchronizeRemoteAsync()
+        public async Task SynchronizeRemoteAsync(GeneralProfileOptions evaluatedProfileOptions)
         {
-            var evaluator = await _project.GetMacroEvaluatorAsync();
-            var optionsResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
-            if (!optionsResult.TryGetResult(out var options, out var error))
-                throw new Exception(error.Message);
-
             var mode = _project.Options.DebuggerOptions.Autosave ? DocumentSaveType.OpenDocuments : DocumentSaveType.None;
 
             await _projectSourceManager.SaveDocumentsAsync(mode);
             _project.SaveOptions();
 
-            if (!options.CopySources)
+            if (!evaluatedProfileOptions.CopySources)
                 return;
-            if (string.IsNullOrWhiteSpace(options.DeployDirectory))
+            if (string.IsNullOrWhiteSpace(evaluatedProfileOptions.DeployDirectory))
                 throw new Exception("The project cannot be deployed: remote directory is not specified. Set it in project properties.");
 
-            var deployItems = await ListDeployItemsAsync(additionalSources: options.AdditionalSources);
+            var deployItems = await ListDeployItemsAsync(additionalSources: evaluatedProfileOptions.AdditionalSources);
             if (!deployItems.Any())
                 return;
 
             var archive = PackDeployItems(deployItems);
-            await _channel.SendAsync(new Deploy { Data = archive, Destination = options.DeployDirectory });
+            await _channel.SendAsync(new Deploy { Data = archive, Destination = evaluatedProfileOptions.DeployDirectory });
 
             foreach (var (path, _, lastWrite) in deployItems)
                 _fileTracker[path] = lastWrite;

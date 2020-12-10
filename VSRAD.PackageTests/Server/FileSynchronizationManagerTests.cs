@@ -8,9 +8,7 @@ using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
-using VSRAD.Package.Utils;
 using Xunit;
 
 namespace VSRAD.PackageTests.Server
@@ -30,7 +28,7 @@ namespace VSRAD.PackageTests.Server
             sourceManager
                 .Setup((m) => m.SaveDocumentsAsync(DocumentSaveType.OpenDocuments))
                 .Returns(Task.CompletedTask).Verifiable();
-            var (project, syncer) = MakeProjectWithSyncer((opts) =>
+            var (project, general, syncer) = MakeProjectWithSyncer((opts) =>
                 {
                     opts.General.DeployDirectory = _deployDirectory;
                     opts.General.CopySources = false;
@@ -38,7 +36,7 @@ namespace VSRAD.PackageTests.Server
                 channel.Object, sourceManager.Object);
             project.Setup((p) => p.SaveOptions()).Verifiable();
 
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
 
             sourceManager.Verify(); // saves project documents
             project.Verify(); // saves project options
@@ -53,7 +51,7 @@ namespace VSRAD.PackageTests.Server
                 .Setup(m => m.ListProjectFilesAsync())
                 .ReturnsAsync(MakeSources("source.txt", "Include/include.txt"));
 
-            var (project, syncer) = MakeProjectWithSyncer((opts) =>
+            var (project, general, syncer) = MakeProjectWithSyncer((opts) =>
                 {
                     opts.General.DeployDirectory = _deployDirectory;
                     opts.General.CopySources = true;
@@ -68,7 +66,7 @@ namespace VSRAD.PackageTests.Server
                 archive = deploy.Data;
             });
 
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
 
             Assert.NotNull(archive);
             var deployedItems = ReadZipItems(archive);
@@ -77,12 +75,12 @@ namespace VSRAD.PackageTests.Server
             // does not redeploy when nothing is changed 
             archive = null;
             channel.ThenExpect<Deploy>((deploy) => archive = deploy.Data);
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
             Assert.Null(archive);
 
             File.SetLastWriteTime($@"{_projectRoot}\source.txt", DateTime.Now);
 
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
             Assert.NotNull(archive);
             deployedItems = ReadZipItems(archive);
             Assert.Equal(new HashSet<string> { "source.txt" }, deployedItems);
@@ -97,7 +95,7 @@ namespace VSRAD.PackageTests.Server
                 .Setup(m => m.ListProjectFilesAsync())
                 .ReturnsAsync(MakeSources("source.txt", "Include/include.txt"));
 
-            var (project, syncer) = MakeProjectWithSyncer((opts) =>
+            var (project, general, syncer) = MakeProjectWithSyncer((opts) =>
                 {
                     opts.General.DeployDirectory = _deployDirectory;
                     opts.General.CopySources = true;
@@ -109,7 +107,7 @@ namespace VSRAD.PackageTests.Server
             byte[] archive = null;
             channel.ThenExpect<Deploy>((deploy) => archive = deploy.Data);
 
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
 
             Assert.NotNull(archive);
             var deployedItems = ReadZipItems(archive);
@@ -119,19 +117,19 @@ namespace VSRAD.PackageTests.Server
             // does not redeploy when nothing is changed
             archive = null;
             channel.ThenExpect<Deploy>((deploy) => archive = deploy.Data);
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
             Assert.Null(archive);
 
             // profile changed
             channel.RaiseConnectionStateChanged();
 
-            await syncer.SynchronizeRemoteAsync();
+            await syncer.SynchronizeRemoteAsync(general);
             Assert.NotNull(archive);
             deployedItems = ReadZipItems(archive);
             Assert.Equal(expectedItems, deployedItems);
         }
 
-        private static (Mock<IProject>, FileSynchronizationManager) MakeProjectWithSyncer(Action<ProfileOptions> setupProfile, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
+        private static (Mock<IProject>, GeneralProfileOptions, FileSynchronizationManager) MakeProjectWithSyncer(Action<ProfileOptions> setupProfile, ICommunicationChannel channel, IProjectSourceManager sourceManager = null)
         {
             TestHelper.InitializePackageTaskFactory();
 
@@ -142,15 +140,9 @@ namespace VSRAD.PackageTests.Server
             project.Setup((p) => p.Options).Returns(options);
             project.Setup((p) => p.RootPath).Returns(_projectRoot);
 
-            var evaluator = new Mock<IMacroEvaluator>(MockBehavior.Strict);
-            evaluator.Setup((e) => e.EvaluateAsync(_deployDirectory)).Returns(Task.FromResult<Result<string>>(_deployDirectory));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.LocalWorkDir + ")")).Returns(Task.FromResult<Result<string>>(""));
-            evaluator.Setup((e) => e.EvaluateAsync("$(" + CleanProfileMacros.RemoteWorkDir + ")")).Returns(Task.FromResult<Result<string>>(""));
-            project.Setup((p) => p.GetMacroEvaluatorAsync()).Returns(Task.FromResult(evaluator.Object));
-
             sourceManager = sourceManager ?? new Mock<IProjectSourceManager>().Object;
             var syncer = new FileSynchronizationManager(channel, project.Object, sourceManager);
-            return (project, syncer);
+            return (project, options.Profile.General, syncer);
         }
 
         private static IEnumerable<(string, string)> MakeSources(params string[] files) =>

@@ -66,8 +66,9 @@ namespace VSRAD.Package.Options
             ProjectOptions options = null;
             try
             {
-                options = JsonConvert.DeserializeObject<ProjectOptions>(File.ReadAllText(path),
-                    new JsonSerializerSettings { DefaultValueHandling = DefaultValueHandling.Populate });
+                var optionsJson = JObject.Parse(File.ReadAllText(path));
+                LegacyProfileOptionsMigrator.ConvertOldOptionsIfPresent(optionsJson);
+                options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
             }
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)

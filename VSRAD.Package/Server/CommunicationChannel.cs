@@ -83,8 +83,8 @@ namespace VSRAD.Package.Server
             _outputWindowWriter = new OutputWindowWriter(provider,
                 Constants.OutputPaneServerGuid, Constants.OutputPaneServerTitle);
             _project = project;
-            _project.Loaded += (options) =>
-                options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); };
+            _project.RunWhenLoaded((options) =>
+                options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
         }
 
         public Task SendAsync(ICommand command) => SendAsync(command, true);

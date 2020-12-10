@@ -12,9 +12,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
-#pragma warning disable CA1815 // Not overriding equals because the struct is only used to pass arguments
-    public readonly struct MacroEvaluatorTransientValues
-#pragma warning restore CA1815
+    public sealed class MacroEvaluatorTransientValues
     {
         public string ActiveSourceFullPath { get; }
         public string ActiveSourceFile { get; }

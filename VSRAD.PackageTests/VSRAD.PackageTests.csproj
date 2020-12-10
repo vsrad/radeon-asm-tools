@@ -72,16 +72,17 @@
     <Compile Include="DebugVisualizer\WavemapTests.cs" />
     <Compile Include="MockCommunicationChannel.cs" />
     <Compile Include="ProjectSystem\ActionLoggerTests.cs" />
+    <Compile Include="ProjectSystem\DebuggerIntegrationTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEvaluatorTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditContextTests.cs" />
     <Compile Include="ProjectSystem\Profiles\LegacyProfileImporterTests.cs" />
+    <Compile Include="ProjectSystem\Profiles\LegacyProfileOptionsMigratorTests.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContextTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Server\ActionMacroEvaluationTests.cs" />
     <Compile Include="Server\ActionRunnerTests.cs" />
     <Compile Include="Server\BreakStateDispatchParametersTests.cs" />
     <Compile Include="Server\BreakStateTests.cs" />
-    <Compile Include="Server\DebugSessionTests.cs" />
     <Compile Include="Server\FileSynchronizationManagerTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />
@@ -93,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
+    <None Include="ProjectSystem\Profiles\Fixtures\DebuggerProfileOptions.conf.json" />
     <None Include="ProjectSystem\Profiles\Fixtures\LegacyProject.user.json" />
   </ItemGroup>
   <ItemGroup>

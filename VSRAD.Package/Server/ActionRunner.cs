@@ -2,8 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
@@ -31,12 +31,11 @@ namespace VSRAD.Package.Server
         public DateTime GetInitialFileTimestamp(string file) =>
             _initialTimestamps.TryGetValue(file, out var timestamp) ? timestamp : default;
 
-        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles, bool continueOnError = true)
+        public async Task<ActionRunResult> RunAsync(string actionName, IReadOnlyList<IActionStep> steps, bool continueOnError = true)
         {
-            var runStats = new ActionRunResult(actionName, steps);
-            runStats.ContinueOnError = continueOnError;
+            var runStats = new ActionRunResult(actionName, steps, continueOnError);
 
-            await FillInitialTimestampsAsync(steps, auxFiles);
+            await FillInitialTimestampsAsync(steps);
             runStats.RecordInitTimestampFetch();
 
             for (int i = 0; i < steps.Count; ++i)
@@ -56,6 +55,9 @@ namespace VSRAD.Package.Server
                     case RunActionStep runAction:
                         result = await DoRunActionAsync(runAction, continueOnError);
                         break;
+                    case ReadDebugDataStep readDebugData:
+                        (result, runStats.BreakState) = await DoReadDebugDataAsync(readDebugData);
+                        break;
                     default:
                         throw new NotImplementedException();
                 }
@@ -72,24 +74,8 @@ namespace VSRAD.Package.Server
         {
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                byte[] data;
-                try
-                {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-                    data = File.ReadAllBytes(localPath);
-                }
-                catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
-                {
-                    return new StepResult(false, $"File {step.SourcePath} is not found on the local machine", "");
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return new StepResult(false, $"Access to path {step.SourcePath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"The source path in copy file step of action {actionName} contains illegal characters.\n\nSource path: \"{step.SourcePath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
-                }
+                if (!ReadLocalFile(step.SourcePath, out var data, out var error))
+                    return new StepResult(false, error, "");
                 var command = new PutFileCommand { Data = data, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
                 if (response.Status == PutFileStatus.PermissionDenied)
@@ -118,7 +104,7 @@ namespace VSRAD.Package.Server
                 }
                 catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
                 {
-                    return new StepResult(false, $"The target path in copy file step of action {actionName} contains illegal characters.\n\nTarget path: \"{step.TargetPath}\"\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
+                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
             }
 
@@ -182,14 +168,129 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
         {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, Enumerable.Empty<BuiltinActionFile>(), continueOnError);
+            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError);
             return new StepResult(subActionResult.Successful, "", "", subActionResult);
         }
 
-        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps, IEnumerable<BuiltinActionFile> auxFiles)
+        private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
-            var remoteCommands = new List<ICommand>();
+            var watches = _environment.Watches;
+            string statusString = null;
 
+            if (!string.IsNullOrEmpty(step.WatchesFile.Path))
+            {
+                var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
+                if (!result.TryGetResult(out var data, out var error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                var watchString = Encoding.UTF8.GetString(data);
+                var watchArray = watchString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                watches = Array.AsReadOnly(watchArray);
+            }
+            if (!string.IsNullOrEmpty(step.StatusFile.Path))
+            {
+                var result = await ReadDebugDataFileAsync("Status string", step.StatusFile.Path, step.StatusFile.IsRemote(), step.StatusFile.CheckTimestamp);
+                if (!result.TryGetResult(out var data, out var error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                statusString = Encoding.UTF8.GetString(data);
+                statusString = Regex.Replace(statusString, @"[^\r]\n", "\r\n");
+            }
+            {
+                var path = step.OutputFile.Path;
+                var initOutputTimestamp = GetInitialFileTimestamp(path);
+
+                BreakStateOutputFile outputFile;
+                byte[] localOutputData = null;
+                if (step.OutputFile.IsRemote())
+                {
+                    var fullPath = new[] { _environment.RemoteWorkDir, path };
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
+
+                    if (response.Status == FetchStatus.FileNotFound)
+                        return (new StepResult(false, $"Output file ({path}) could not be found.", ""), null);
+                    if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
+                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, response.ByteCount);
+                }
+                else
+                {
+                    var fullPath = new[] { _environment.LocalWorkDir, path };
+                    var timestamp = GetLocalFileTimestamp(path);
+                    if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
+                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+                    if (!ReadLocalFile(path, out localOutputData, out var readError))
+                        return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
+                    if (!step.BinaryOutput)
+                        localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
+
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, timestamp, localOutputData.Length);
+                }
+
+                var data = new BreakStateData(watches, outputFile, localOutputData);
+
+                var dispatchParamsResult = BreakStateDispatchParameters.Parse(statusString);
+                if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out var error))
+                    return (new StepResult(false, error.Message, ""), null);
+
+                return (new StepResult(true, "", ""), new BreakState(data, dispatchParams));
+            }
+        }
+
+        private async Task<Result<byte[]>> ReadDebugDataFileAsync(string type, string path, bool isRemote, bool checkTimestamp)
+        {
+            var initTimestamp = GetInitialFileTimestamp(path);
+            if (isRemote)
+            {
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
+                    new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
+
+                if (response.Status == FetchStatus.FileNotFound)
+                    return new Error($"{type} file ({path}) could not be found.");
+                if (checkTimestamp && response.Timestamp == initTimestamp)
+                    return new Error($"{type} file ({path}) was not modified.");
+
+                return response.Data;
+            }
+            else
+            {
+                if (checkTimestamp && GetLocalFileTimestamp(path) == initTimestamp)
+                    return new Error($"{type} file ({path}) was not modified.");
+                if (!ReadLocalFile(path, out var data, out var error))
+                    return new Error($"{type} file could not be opened. {error}");
+                return data;
+            }
+        }
+
+        private bool ReadLocalFile(string path, out byte[] data, out string error)
+        {
+            try
+            {
+                var localPath = Path.Combine(_environment.LocalWorkDir, path);
+                data = File.ReadAllBytes(localPath);
+                error = "";
+                return true;
+            }
+            catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
+            {
+                error = $"File {path} is not found on the local machine";
+            }
+            catch (UnauthorizedAccessException)
+            {
+                error = $"Access to path {path} on the local machine is denied";
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+            }
+            data = null;
+            return false;
+        }
+
+        private async Task FillInitialTimestampsAsync(IReadOnlyList<IActionStep> steps)
+        {
             foreach (var step in steps)
             {
                 if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
@@ -197,37 +298,37 @@ namespace VSRAD.Package.Server
                     if (copyFile.Direction == FileCopyDirection.LocalToRemote)
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
                     else
-                        remoteCommands.Add(new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } });
+                        _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
+                            new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
                 }
-            }
-
-            foreach (var auxFile in auxFiles)
-            {
-                if (!auxFile.CheckTimestamp || string.IsNullOrEmpty(auxFile.Path))
-                    continue;
-                if (auxFile.IsRemote())
-                    remoteCommands.Add(new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, auxFile.Path } });
-                else
-                    _initialTimestamps[auxFile.Path] = GetLocalFileTimestamp(auxFile.Path);
-            }
-
-            if (remoteCommands.Count == 0)
-                return;
-
-            var remoteResponses = await _channel.SendBundleAsync(remoteCommands);
-            for (int i = 0; i < remoteCommands.Count; ++i)
-            {
-                var path = ((FetchMetadata)remoteCommands[i]).FilePath[1];
-                if (remoteResponses[i] is MetadataFetched metadata)
-                    _initialTimestamps[path] = metadata.Timestamp;
+                else if (step is ReadDebugDataStep readDebugData)
+                {
+                    var files = new[] { readDebugData.WatchesFile, readDebugData.StatusFile, readDebugData.OutputFile };
+                    foreach (var file in files)
+                    {
+                        if (!file.CheckTimestamp || string.IsNullOrEmpty(file.Path))
+                            continue;
+                        if (file.IsRemote())
+                            _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
+                                new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, file.Path } })).Timestamp;
+                        else
+                            _initialTimestamps[file.Path] = GetLocalFileTimestamp(file.Path);
+                    }
+                }
             }
         }
 
         private DateTime GetLocalFileTimestamp(string file)
         {
-            var localPath = Path.Combine(_environment.LocalWorkDir, file);
-            try { return File.GetLastWriteTime(localPath); }
-            catch { return default; }
+            try
+            {
+                var localPath = Path.Combine(_environment.LocalWorkDir, file);
+                return File.GetLastWriteTime(localPath);
+            }
+            catch
+            {
+                return default;
+            }
         }
     }
 }

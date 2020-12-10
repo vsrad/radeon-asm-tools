@@ -51,6 +51,7 @@ namespace VSRAD.Package.Commands
 
         public override async Task RunAsync()
         {
+#if false
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var activeWord = _codeEditor.GetActiveWord();
             if (string.IsNullOrWhiteSpace(activeWord))
@@ -86,11 +87,7 @@ namespace VSRAD.Package.Commands
             {
                 await ClearStatusBarAsync();
             }
-        }
-
-        private Task<uint[]> RunAsync(DebuggerProfileOptions options)
-        {
-            throw new NotImplementedException();
+#endif
         }
     }
 }

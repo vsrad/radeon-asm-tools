@@ -14,12 +14,9 @@ namespace VSRAD.PackageTests.Server
         public async Task WatchViewTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var breakStateData = new BreakStateData(
-                watches: new ReadOnlyCollection<string>(new[] { "local_id", "group_id", "group_size" }),
-                file: new Package.Options.OutputFile("/home/kyubey/projects", "madoka", true),
-                fileTimestamp: default,
-                outputByteCount: 4096,
-                outputOffset: 0);
+            var watches = new ReadOnlyCollection<string>(new[] { "local_id", "group_id", "group_size" });
+            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "madoka" }, binaryOutput: true, offset: 0, timestamp: default, byteCount: 4096);
+            var breakStateData = new BreakStateData(watches, file);
 
             var data = new int[1024]; // 2 groups by 2 waves (1 wave = 64 lanes), each containing 1 system dword and 3 watch dwords
             for (int group = 0; group < 2; ++group)
@@ -111,12 +108,9 @@ namespace VSRAD.PackageTests.Server
         public async Task UnevenGroupSizeTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var breakStateData = new BreakStateData(
-                watches: new ReadOnlyCollection<string>(new[] { "const" }),
-                file: new Package.Options.OutputFile("/home/kyubey/projects", "madoka", true),
-                fileTimestamp: default,
-                outputByteCount: 2 * 256 * sizeof(int),
-                outputOffset: 0);
+            var watches = new ReadOnlyCollection<string>(new[] { "const" });
+            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "madoka" }, binaryOutput: true, offset: 0, timestamp: default, byteCount: 2 * 256 * sizeof(int));
+            var breakStateData = new BreakStateData(watches, file);
 
             var data = new int[2 * 256];
             for (int i = 0; i < 256; ++i)
@@ -147,12 +141,9 @@ namespace VSRAD.PackageTests.Server
         public async Task EmptyResultRangeTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var breakStateData = new BreakStateData(
-                watches: new ReadOnlyCollection<string>(new[] { "h" }),
-                file: new Package.Options.OutputFile("/home/kyubey/projects", "log.tar", true),
-                fileTimestamp: default,
-                outputByteCount: 4096,
-                outputOffset: 0);
+            var watches = new ReadOnlyCollection<string>(new[] { "h" });
+            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, byteCount: 4096);
+            var breakStateData = new BreakStateData(watches, file);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>
@@ -169,12 +160,9 @@ namespace VSRAD.PackageTests.Server
         public async Task NGroupViolationProducesAWarningButFetchesResultsTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var breakStateData = new BreakStateData(
-                watches: new ReadOnlyCollection<string>(new[] { "h" }),
-                file: new Package.Options.OutputFile("/home/kyubey/projects", "log.tar", true),
-                fileTimestamp: default,
-                outputByteCount: 4096,
-                outputOffset: 0);
+            var watches = new ReadOnlyCollection<string>(new[] { "h" });
+            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, byteCount: 4096);
+            var breakStateData = new BreakStateData(watches, file);
 
             Assert.Equal(2, breakStateData.GetGroupCount(groupSize: 256, nGroups: 4));
 
@@ -184,6 +172,33 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal("Output file has fewer groups than requested (NGroups = 4, but the file contains only 2)", warning);
         }
 
+        [Fact]
+        public async Task BreakStateWithLocalDataTestAsync()
+        {
+            var data = new int[2 * 256];
+            for (int i = 0; i < 256; ++i)
+            {
+                data[2 * i + 0] = i; // system = global id
+                data[2 * i + 1] = 777; // first watch = const
+            }
+
+            var localData = new byte[2 * 256 * sizeof(int)];
+            Buffer.BlockCopy(data, 0, localData, 0, localData.Length);
+
+            var watches = new ReadOnlyCollection<string>(new[] { "const" });
+            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "madoka" }, binaryOutput: true, offset: 0, timestamp: default, byteCount: 2 * 256 * sizeof(int));
+            var breakStateData = new BreakStateData(watches, file, localData);
+
+            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: 1, groupSize: 65, nGroups: 2);
+            Assert.Null(warning);
+
+            var system = breakStateData.GetSystem();
+            for (var i = 0; i < 65; ++i)
+                Assert.Equal(65 + i, (int)system[i]);
+            var constWatch = breakStateData.GetWatch("const");
+            for (var i = 0; i < 65; ++i)
+                Assert.Equal(777, (int)constWatch[i]);
+        }
 
         [Fact]
         public void SliceWatchViewTest()

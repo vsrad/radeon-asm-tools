@@ -64,11 +64,11 @@ namespace VSRAD.Package.BuildTools
             // Build integration is not implemented for VisualC projects
             if (unconfiguredProject?.Capabilities?.Contains("VisualC") != true)
             {
-                _project.Loaded += (_) =>
-                    {
-                        _serverLoopCts = new CancellationTokenSource();
-                        VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
-                    };
+                _project.RunWhenLoaded((_) =>
+                {
+                    _serverLoopCts = new CancellationTokenSource();
+                    VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
+                });
                 _project.Unloaded += () => _serverLoopCts.Cancel();
             }
 

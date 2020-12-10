@@ -74,9 +74,6 @@
                                 Content="❌" ToolTip="Delete action" Click="DeleteAction" DockPanel.Dock="Right" Height="22" Width="22"/>
                     </DockPanel>
                 </DataTemplate>
-                <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
-                    <Label Content="Debug" />
-                </DataTemplate>
             </local:ExtendedTreeView.Resources>
         </local:ExtendedTreeView>
         <ContentControl DataContext="{Binding}" Grid.Row="0" Grid.Column="1" Grid.RowSpan="3" Margin="4">
@@ -206,6 +203,7 @@
                             <RowDefinition Height="26"/>
                             <RowDefinition Height="26"/>
                             <RowDefinition Height="26"/>
+                            <RowDefinition Height="26"/>
                         </Grid.RowDefinitions>
                         <Border Background="White" Width="20" Height="20" Grid.Row="0">
                             <Image Source="{Binding ProfileToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -230,6 +228,14 @@
                         <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
                                   SelectedItem="{Binding PreprocessAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
                                   Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="2" Grid.Column="2"/>
+
+                        <Border Background="White" Width="20" Height="20" Grid.Row="3">
+                            <Image Source="{Binding DebugToolbarIcon, ElementName=Root}" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <Label Content="&quot;Debug&quot; Button Action:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="1"/>
+                        <ComboBox ItemsSource="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root, Mode=OneWay, Converter={StaticResource ActionNameWithNoneCollectionConverter}}"
+                                  SelectedItem="{Binding DebugAction, Mode=TwoWay, Converter={StaticResource ActionNameWithNoneConverter}}"
+                                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="2"/>
                     </Grid>
                 </DataTemplate>
                 <DataTemplate DataType="{x:Type opts:ActionProfileOptions}">
@@ -263,44 +269,6 @@
                                 </TextBox.Style>
                             </TextBox>
                             <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2" ActionName="{Binding Name}"
-                                                AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
-                                                MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
-                        </Grid>
-                    </ScrollViewer>
-                </DataTemplate>
-                <DataTemplate DataType="{x:Type opts:DebuggerProfileOptions}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="178"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Label Content="Output Mode:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
-                                      ToolTip="{Binding Path=SelectedItem.ToolTip, RelativeSource={RelativeSource Self}}"
-                                      SelectedIndex="{Binding BinaryOutput, Converter={StaticResource BoolToIndexConverter}, Mode=TwoWay}">
-                                <ComboBoxItem Content="Binary" ToolTip="32-bit values are packed into consecutive DWORDs"/>
-                                <ComboBoxItem Content="Text" ToolTip="Each 32-bit value is written on a separate line as a hexadecimal string (0x...)"/>
-                            </ComboBox>
-                            <Label Content="Output Offset:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                            <TextBox Height="22" Width="160" HorizontalAlignment="Left" VerticalContentAlignment="Center" Grid.Row="1" Grid.Column="1"
-                                     Text="{Binding OutputOffset, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"/>
-                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                           Header="Output" Grid.Row="2" Grid.ColumnSpan="2" />
-                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                           Header="Valid Watches" Grid.Row="3" Grid.ColumnSpan="2"/>
-                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                           Header="Status String" Grid.Row="4" Grid.ColumnSpan="2"/>
-                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="5" Grid.ColumnSpan="2"
                                                 AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
                                                 MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"/>
                         </Grid>

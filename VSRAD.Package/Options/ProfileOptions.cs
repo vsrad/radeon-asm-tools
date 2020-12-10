@@ -32,8 +32,6 @@ namespace VSRAD.Package.Options
     {
         public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
 
-        public DebuggerProfileOptions Debugger { get; } = new DebuggerProfileOptions();
-
         [JsonProperty(ItemConverterType = typeof(MacroItemConverter))]
         public ObservableCollection<MacroItem> Macros { get; } = new ObservableCollection<MacroItem>();
 
@@ -60,6 +58,9 @@ namespace VSRAD.Package.Options
 
     public sealed class MenuCommandProfileOptions : DefaultNotifyPropertyChanged
     {
+        private string _debugAction;
+        public string DebugAction { get => _debugAction; set => SetField(ref _debugAction, value ?? ""); }
+
         private string _profileAction;
         public string ProfileAction { get => _profileAction; set => SetField(ref _profileAction, value ?? ""); }
 
@@ -148,8 +149,11 @@ namespace VSRAD.Package.Options
             var deployDirResult = await evaluator.EvaluateAsync(DeployDirectory);
             if (!deployDirResult.TryGetResult(out var evaluatedDeployDir, out var error))
                 return error;
-            var envResult = await EvaluateActionEnvironmentAsync(evaluator);
-            if (!envResult.TryGetResult(out var evaluatedEnv, out error))
+            var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
+            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out error))
+                return error;
+            var remoteDirResult = await evaluator.EvaluateAsync(RemoteWorkDir);
+            if (!remoteDirResult.TryGetResult(out var evaluatedRemoteDir, out error))
                 return error;
 
             return new GeneralProfileOptions
@@ -159,71 +163,10 @@ namespace VSRAD.Package.Options
                 Port = Port,
                 CopySources = CopySources,
                 DeployDirectory = evaluatedDeployDir,
-                LocalWorkDir = evaluatedEnv.LocalWorkDir,
-                RemoteWorkDir = evaluatedEnv.RemoteWorkDir,
+                LocalWorkDir = evaluatedLocalDir,
+                RemoteWorkDir = evaluatedRemoteDir,
                 AdditionalSources = AdditionalSources
             };
-        }
-
-        public async Task<Result<ActionEnvironment>> EvaluateActionEnvironmentAsync(IMacroEvaluator evaluator)
-        {
-            var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
-            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out var error))
-                return error;
-            var remoteDirResult = await evaluator.EvaluateAsync(RemoteWorkDir);
-            if (!remoteDirResult.TryGetResult(out var evaluatedRemoteDir, out error))
-                return error;
-
-            return new ActionEnvironment(evaluatedLocalDir, evaluatedRemoteDir);
-        }
-    }
-
-    public sealed class DebuggerProfileOptions
-    {
-        [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
-        public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
-
-        public BuiltinActionFile OutputFile { get; }
-        public BuiltinActionFile WatchesFile { get; }
-        public BuiltinActionFile StatusFile { get; }
-
-        public bool BinaryOutput { get; set; }
-        public int OutputOffset { get; set; }
-
-        public async Task<Result<DebuggerProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
-        {
-            var outputResult = await OutputFile.EvaluateAsync(evaluator);
-            if (!outputResult.TryGetResult(out var outputFile, out var error))
-                return error;
-            var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
-            if (!watchesResult.TryGetResult(out var watchesFile, out error))
-                return error;
-            var statusResult = await StatusFile.EvaluateAsync(evaluator);
-            if (!statusResult.TryGetResult(out var statusFile, out error))
-                return error;
-
-            var evaluated = new DebuggerProfileOptions(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
-                outputFile: outputFile, watchesFile: watchesFile, statusFile: statusFile);
-
-            foreach (var step in Steps)
-            {
-                var evalResult = await step.EvaluateAsync(evaluator, profile, ActionProfileOptions.BuiltinActionDebug);
-                if (evalResult.TryGetResult(out var evaluatedStep, out error))
-                    evaluated.Steps.Add(evaluatedStep);
-                else
-                    return error;
-            }
-
-            return evaluated;
-        }
-
-        public DebuggerProfileOptions(bool binaryOutput = true, int outputOffset = 0, BuiltinActionFile outputFile = null, BuiltinActionFile watchesFile = null, BuiltinActionFile statusFile = null)
-        {
-            BinaryOutput = binaryOutput;
-            OutputOffset = outputOffset;
-            OutputFile = outputFile ?? new BuiltinActionFile();
-            WatchesFile = watchesFile ?? new BuiltinActionFile();
-            StatusFile = statusFile ?? new BuiltinActionFile();
         }
     }
 
@@ -251,11 +194,18 @@ namespace VSRAD.Package.Options
     {
         public string LocalWorkDir { get; }
         public string RemoteWorkDir { get; }
+        public ReadOnlyCollection<string> Watches { get; }
 
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir)
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir) :
+            this(localWorkDir, remoteWorkDir, new ReadOnlyCollection<string>(Array.Empty<string>()))
+        {
+        }
+
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir, ReadOnlyCollection<string> watches)
         {
             LocalWorkDir = localWorkDir;
             RemoteWorkDir = remoteWorkDir;
+            Watches = watches;
         }
 
         public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;
@@ -263,26 +213,5 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() => (LocalWorkDir, RemoteWorkDir).GetHashCode();
         public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
         public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
-    }
-
-    public readonly struct OutputFile : IEquatable<OutputFile>
-    {
-        public string Directory { get; }
-        public string File { get; }
-        public bool BinaryOutput { get; }
-        public string[] Path => new[] { Directory, File };
-
-        public OutputFile(string directory = "", string file = "", bool binaryOutput = true)
-        {
-            Directory = directory;
-            File = file;
-            BinaryOutput = binaryOutput;
-        }
-
-        public bool Equals(OutputFile o) => Directory == o.Directory && File == o.File && BinaryOutput == o.BinaryOutput;
-        public override bool Equals(object o) => o is OutputFile f && Equals(f);
-        public override int GetHashCode() => (Directory, File, BinaryOutput).GetHashCode();
-        public static bool operator ==(OutputFile left, OutputFile right) => left.Equals(right);
-        public static bool operator !=(OutputFile left, OutputFile right) => !(left == right);
     }
 }

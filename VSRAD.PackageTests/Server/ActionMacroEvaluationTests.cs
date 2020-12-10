@@ -175,5 +175,17 @@ namespace VSRAD.PackageTests.Server
             Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
             Assert.Equal(@"Action ""C"" is misconfigured", error.Message);
         }
+
+        [Fact]
+        public async Task ReadDebugDataEmptyOutputPathTestAsync()
+        {
+            var profile = new ProfileOptions();
+            var a = new ActionProfileOptions { Name = "A" };
+
+            a.Steps.Add(new ReadDebugDataStep());
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
+            Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Read Debug Data step", error.Title);
+            Assert.Equal("Debug data path is not specified", error.Message);
+        }
     }
 }

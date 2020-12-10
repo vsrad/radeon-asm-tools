@@ -1,0 +1,77 @@
+﻿{
+  "ActiveProfile": "Default",
+  "Profiles": {
+    "Default": {
+      "Debugger": {
+        "Steps": [
+          {
+            "Environment": "Remote",
+            "Executable": "debug",
+            "Type": "Execute"
+          }
+        ],
+        "OutputFile": {
+          "Location": "Remote",
+          "Path": "output-file",
+          "CheckTimestamp": false
+        },
+        "WatchesFile": {
+          "Location": "Remote",
+          "Path": "watches-file",
+          "CheckTimestamp": false
+        },
+        "StatusFile": {
+          "Location": "Local",
+          "Path": "status-file",
+          "CheckTimestamp": true
+        },
+        "BinaryOutput": false,
+        "OutputOffset": 1
+      },
+      "Actions": [
+        {
+          "Name": "Debug",
+          "Steps": [
+            {
+              "Path": "Unrelated Action That Should Not Be Replaced",
+              "LineMarker": "",
+              "Type": "OpenInEditor"
+            }
+          ]
+        }
+      ],
+      "MenuCommands": {
+        "ProfileAction": "Debug"
+      }
+    },
+    "Second Profile": {
+      "Debugger": {
+        "Steps": [
+          {
+            "Environment": "Remote",
+            "Executable": "debug",
+            "Type": "Execute"
+          }
+        ],
+        "OutputFile": {
+          "Location": "Remote",
+          "Path": "output-file",
+          "CheckTimestamp": true
+        },
+        "WatchesFile": {
+          "Location": "Remote",
+          "Path": "",
+          "CheckTimestamp": true
+        },
+        "StatusFile": {
+          "Location": "Remote",
+          "Path": "",
+          "CheckTimestamp": true
+        },
+        "BinaryOutput": true,
+        "OutputOffset": 0
+      },
+      "Actions": []
+    }
+  }
+}

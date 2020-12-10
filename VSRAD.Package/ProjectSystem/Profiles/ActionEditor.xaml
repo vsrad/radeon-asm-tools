@@ -6,6 +6,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:opts="clr-namespace:VSRAD.Package.Options"
              xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
+             xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              mc:Ignorable="d" 
@@ -27,6 +28,7 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
+        <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
@@ -54,6 +56,7 @@
                 <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyFileStep}" />
                 <MenuItem Header="Open in Editor" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:OpenInEditorStep}" />
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
+                <MenuItem Header="Read Debug Data" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:ReadDebugDataStep}" />
             </Menu>
         </Popup>
         <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1,1,1,0">
@@ -103,7 +106,7 @@
                 </ListBox.Template>
             </ListView>
         </Border>
-        <Border Margin="0,8,0,0" Height="190" Padding="4" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1">
+        <Border Margin="0,8,0,0" Height="Auto" MinHeight="190" Padding="4" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1">
             <ContentControl x:Name="StepEditor">
                 <Binding Path="SelectedStep">
                     <Binding.TargetNullValue>
@@ -242,6 +245,43 @@
                             <Label Content="Action:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <ComboBox ItemsSource="{Binding DataContext.RunActionNames, ElementName=Root, Mode=OneWay}"
                                       SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                        </Grid>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:ReadDebugDataStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="34"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Output" Grid.Row="0" Grid.ColumnSpan="3" />
+
+                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Watches" Grid.Row="1" Grid.ColumnSpan="3" />
+
+                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           Header="Status" Grid.Row="2" Grid.ColumnSpan="3" />
+
+                            <Label Content="Outuput Type: " VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="1"
+                                        ToolTip="{Binding Path=SelectedItem.ToolTip, RelativeSource={RelativeSource Self}}"
+                                        SelectedIndex="{Binding BinaryOutput, Converter={StaticResource BoolToIndexConverter}, Mode=TwoWay}">
+                                <ComboBoxItem Content="Binary" ToolTip="32-bit values are packed into consecutive DWORDs"/>
+                                <ComboBoxItem Content="Text" ToolTip="Each 32-bit value is written on a separate line as a hexadecimal string (0x...)"/>
+                            </ComboBox>
+                            
+                            <Label Content="Output Offset: " VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <TextBox Text="{Binding OutputOffset, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
+                                     ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"
+                                     Height="22" Width="160" Grid.Row="4" Grid.Column="1"/>
                         </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>

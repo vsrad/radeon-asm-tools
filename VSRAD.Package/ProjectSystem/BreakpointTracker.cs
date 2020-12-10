@@ -15,7 +15,7 @@ namespace VSRAD.Package.ProjectSystem
     {
         (string, uint[]) MoveToNextBreakTarget(bool step);
         (string, uint[]) GetBreakTarget();
-        void RunToLine(string file, uint line);
+        void SetRunToLine(string file, uint line);
     }
 
     [Export(typeof(IBreakpointTracker))]
@@ -34,7 +34,7 @@ namespace VSRAD.Package.ProjectSystem
         public BreakpointTracker(IProject project, IActiveCodeEditor codeEditor, SVsServiceProvider serviceProvider)
         {
             _codeEditor = codeEditor;
-            project.Loaded += (options) =>
+            project.RunWhenLoaded((options) =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -42,17 +42,12 @@ namespace VSRAD.Package.ProjectSystem
                 Assumes.Present(_dte);
 
                 _projectOptions = options;
-            };
+            });
         }
 
-        public void RunToLine(string file, uint line)
+        public void SetRunToLine(string file, uint line)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
             _runToLine = (file, new[] { line });
-
-            // Start debugging (F5)
-            if (_dte.Debugger.CurrentMode != dbgDebugMode.dbgRunMode) // Go() must not be invoked when the debugger is already running (not in break mode)
-                _dte.Debugger.Go();
         }
 
         public (string, uint[]) MoveToNextBreakTarget(bool step)

@@ -60,7 +60,7 @@
 
     <Buttons>
       <!-- Tools menu -->
-	  <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="0" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="4" type="Button">
         <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
         <CommandFlag>DynamicItemStart</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -69,7 +69,7 @@
           <ButtonText>(No actions available)</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetActionsMenu" id="ProfileCommandId" priority="1" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="ProfileCommandId" priority="5" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="profilerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -79,7 +79,7 @@
           <ButtonText>Launch Remote Profiling</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="2" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="6" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="disassemblyIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -89,7 +89,7 @@
           <ButtonText>Disassemble file</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="3" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="7" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="preprocessIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -97,6 +97,16 @@
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Preprocess file</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="DebugActionCommandId" priority="8" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="debugActionIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Debug</ButtonText>
         </Strings>
       </Button>
       <!-- Tool window commands -->
@@ -188,7 +198,8 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon" />
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png"
+              usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, debugActionIcon" />
     </Bitmaps>
 
     <Groups>
@@ -261,6 +272,7 @@
       <IDSymbol name="ProfileCommandId" value="0x10" />
       <IDSymbol name="DisassembleCommandId" value="0x11" />
       <IDSymbol name="PreprocessCommandId" value="0x12" />
+      <IDSymbol name="DebugActionCommandId" value="0x13" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
@@ -305,6 +317,7 @@
       <IDSymbol name="optionsIcon" value="3" />
       <IDSymbol name="disassemblyIcon" value="4" />
       <IDSymbol name="preprocessIcon" value="5" />
+      <IDSymbol name="debugActionIcon" value="6" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

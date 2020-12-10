@@ -23,5 +23,14 @@ namespace VSRAD.Package.Options
 
             return new BuiltinActionFile { Location = Location, Path = evaluatedPath, CheckTimestamp = CheckTimestamp };
         }
+
+        public override bool Equals(object obj) =>
+            obj is BuiltinActionFile file &&
+            Location == file.Location &&
+            Path == file.Path &&
+            CheckTimestamp == file.CheckTimestamp;
+
+        public override int GetHashCode() =>
+            (Location, Path, CheckTimestamp).GetHashCode();
     }
 }

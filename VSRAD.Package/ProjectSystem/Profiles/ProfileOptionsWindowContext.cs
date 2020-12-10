@@ -50,16 +50,16 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
     public sealed class ProfileOptionsActionsPage : DefaultNotifyPropertyChanged
     {
-        public ObservableCollection<object> Pages { get; }
+        public ObservableCollection<ActionProfileOptions> Pages { get; }
 
-        public IEnumerable<string> ActionNames => _profile.Actions.Select(a => a.Name);
+        public IEnumerable<string> ActionNames => Pages.Select(a => a.Name);
 
         private readonly ProfileOptions _profile;
 
         public ProfileOptionsActionsPage(ProfileOptions profile)
         {
             _profile = profile;
-            Pages = new ObservableCollection<object> { profile.Debugger };
+            Pages = profile.Actions;
             SyncPagesWithActionCollection(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, profile.Actions));
             CollectionChangedEventManager.AddHandler(profile.Actions, SyncPagesWithActionCollection);
         }
@@ -69,27 +69,23 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             if (e.Action == NotifyCollectionChangedAction.Add)
             {
                 foreach (ActionProfileOptions action in e.NewItems)
-                {
-                    Pages.Add(action);
                     WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.AddHandler(
                         action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
-                }
             }
             else if (e.Action == NotifyCollectionChangedAction.Remove)
             {
                 foreach (ActionProfileOptions action in e.OldItems)
-                {
-                    Pages.Remove(action);
                     WeakEventManager<ActionProfileOptions, ActionNameChangedEventArgs>.RemoveHandler(
                         action, nameof(ActionProfileOptions.NameChanged), OnActionNameChanged);
-                }
             }
             RaisePropertyChanged(nameof(ActionNames));
-            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.ProfileAction))
+            if (!Pages.Any(a => a.Name == _profile.MenuCommands.DebugAction))
+                _profile.MenuCommands.DebugAction = null;
+            if (!Pages.Any(a => a.Name == _profile.MenuCommands.ProfileAction))
                 _profile.MenuCommands.ProfileAction = null;
-            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.DisassembleAction))
+            if (!Pages.Any(a => a.Name == _profile.MenuCommands.DisassembleAction))
                 _profile.MenuCommands.DisassembleAction = null;
-            if (!_profile.Actions.Any(a => a.Name == _profile.MenuCommands.PreprocessAction))
+            if (!Pages.Any(a => a.Name == _profile.MenuCommands.PreprocessAction))
                 _profile.MenuCommands.PreprocessAction = null;
         }
 
@@ -97,12 +93,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             foreach (var page in Pages)
             {
-                var steps = (page is DebuggerProfileOptions d) ? d.Steps : ((ActionProfileOptions)page).Steps;
-                foreach (var step in steps)
+                foreach (var step in page.Steps)
                     if (step is RunActionStep runAction && runAction.Name == e.OldName)
                         runAction.Name = e.NewName;
             }
             RaisePropertyChanged(nameof(ActionNames));
+            if (_profile.MenuCommands.DebugAction == e.OldName)
+                _profile.MenuCommands.DebugAction = e.NewName;
             if (_profile.MenuCommands.ProfileAction == e.OldName)
                 _profile.MenuCommands.ProfileAction = e.NewName;
             if (_profile.MenuCommands.DisassembleAction == e.OldName)
@@ -205,11 +202,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     return newPages.First(p => p is ProfileOptionsMacrosPage);
                 case MenuCommandProfileOptions _:
                     return newPages.First(p => p is MenuCommandProfileOptions);
-                case DebuggerProfileOptions _:
-                    var actionsPage = (ProfileOptionsActionsPage)newPages.First(p => p is ProfileOptionsActionsPage);
-                    return actionsPage.Pages.First(p => p is DebuggerProfileOptions);
                 case ActionProfileOptions action:
-                    actionsPage = (ProfileOptionsActionsPage)newPages.First(p => p is ProfileOptionsActionsPage);
+                    var actionsPage = (ProfileOptionsActionsPage)newPages.First(p => p is ProfileOptionsActionsPage);
                     return actionsPage.Pages.FirstOrDefault(p => p is ActionProfileOptions a && a.Name == action.Name);
                 default:
                     return null;
