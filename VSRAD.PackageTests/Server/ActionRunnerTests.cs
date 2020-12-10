@@ -362,7 +362,7 @@ namespace VSRAD.PackageTests.Server
                 new ReadDebugDataStep(
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
-                    statusFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
                     binaryOutput: true, outputOffset: 0)
             };
 
@@ -407,7 +407,7 @@ comment 115200") }, (FetchResultRange statusFetch) =>
                 new ReadDebugDataStep(
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/output", CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/watches", CheckTimestamp = true },
-                    statusFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/status", CheckTimestamp = true },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/status", CheckTimestamp = true },
                     binaryOutput: true, outputOffset: 0)
             };
 
@@ -441,10 +441,10 @@ comment 115200") }, (FetchResultRange statusFetch) =>
         {
             var outputFile = Path.GetTempFileName();
             var watchesFile = Path.GetTempFileName();
-            var statusFile = Path.GetTempFileName();
+            var dispatchParamsFile = Path.GetTempFileName();
 
             File.WriteAllText(watchesFile, "jill\r\njulianne");
-            File.WriteAllText(statusFile, @"
+            File.WriteAllText(dispatchParamsFile, @"
 grid size (64, 0, 0)
 group size (64, 0, 0)
 wave size 64");
@@ -464,7 +464,7 @@ wave size 64");
                 new ReadDebugDataStep(
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFile, CheckTimestamp = false },
-                    statusFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = statusFile, CheckTimestamp = false },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
                     binaryOutput: true, outputOffset: 0)
             };
             var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""));
@@ -495,7 +495,7 @@ wave size 64");
                 new ReadDebugDataStep(
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = fileName, CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile(),
-                    statusFile: new BuiltinActionFile(),
+                    dispatchParamsFile: new BuiltinActionFile(),
                     binaryOutput: true, outputOffset: 0)
             };
 
@@ -549,7 +549,7 @@ wave size 64");
             {
                 new ReadDebugDataStep(
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
-                    watchesFile: new BuiltinActionFile(), statusFile: new BuiltinActionFile(), binaryOutput: false, outputOffset: 1)
+                    watchesFile: new BuiltinActionFile(), dispatchParamsFile: new BuiltinActionFile(), binaryOutput: false, outputOffset: 1)
             };
             var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })));
             var result = await runner.RunAsync("Debug", steps);
@@ -574,9 +574,9 @@ wave size 64");
             readDebugData.OutputFile.Location = StepEnvironment.Remote;
             readDebugData.OutputFile.CheckTimestamp = true;
             readDebugData.OutputFile.Path = "/home/parker/audio/master";
-            readDebugData.StatusFile.Location = StepEnvironment.Remote;
-            readDebugData.StatusFile.CheckTimestamp = false;
-            readDebugData.StatusFile.Path = "/home/parker/audio/copy";
+            readDebugData.DispatchParamsFile.Location = StepEnvironment.Remote;
+            readDebugData.DispatchParamsFile.CheckTimestamp = false;
+            readDebugData.DispatchParamsFile.Path = "/home/parker/audio/copy";
             //readDebugData.WatchesFile.Location = StepEnvironment.Local;
             //readDebugData.WatchesFile.CheckTimestamp = true;
             //readDebugData.WatchesFile.Path = "non-existent-local-path";

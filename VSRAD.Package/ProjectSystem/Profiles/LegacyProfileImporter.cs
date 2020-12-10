@@ -91,9 +91,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             readDebugData.WatchesFile.CheckTimestamp = true;
             readDebugData.WatchesFile.Path = (string)conf["ValidWatchesFilePath"];
 
-            readDebugData.StatusFile.Location = StepEnvironment.Remote;
-            readDebugData.StatusFile.CheckTimestamp = true;
-            readDebugData.StatusFile.Path = (string)conf["StatusStringFilePath"];
+            readDebugData.DispatchParamsFile.Location = StepEnvironment.Remote;
+            readDebugData.DispatchParamsFile.CheckTimestamp = true;
+            readDebugData.DispatchParamsFile.Path = (string)conf["StatusStringFilePath"];
 
             action.Steps.Add(readDebugData);
             return action;

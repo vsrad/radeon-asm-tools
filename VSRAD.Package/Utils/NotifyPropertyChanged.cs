@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace VSRAD.Package.Utils
@@ -12,9 +9,11 @@ namespace VSRAD.Package.Utils
         public event PropertyChangedEventHandler PropertyChanged;
 
         /* https://stackoverflow.com/a/1316417 */
-        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null, bool raiseIfEqual = false)
+        protected bool SetField<T>(ref T field, T value, [CallerMemberName] string propertyName = null, bool raiseIfEqual = false, bool ignoreNull = false)
         {
             if (!raiseIfEqual && EqualityComparer<T>.Default.Equals(field, value))
+                return false;
+            if (ignoreNull && value == null)
                 return false;
 
             field = value;

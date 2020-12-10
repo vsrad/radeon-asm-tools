@@ -187,7 +187,7 @@ namespace VSRAD.Package.Server
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
             var watches = _environment.Watches;
-            string statusString = null;
+            string dispatchParamsString = null;
 
             if (!string.IsNullOrEmpty(step.WatchesFile.Path))
             {
@@ -200,14 +200,14 @@ namespace VSRAD.Package.Server
 
                 watches = Array.AsReadOnly(watchArray);
             }
-            if (!string.IsNullOrEmpty(step.StatusFile.Path))
+            if (!string.IsNullOrEmpty(step.DispatchParamsFile.Path))
             {
-                var result = await ReadDebugDataFileAsync("Status string", step.StatusFile.Path, step.StatusFile.IsRemote(), step.StatusFile.CheckTimestamp);
+                var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
                     return (new StepResult(false, error.Message, ""), null);
 
-                statusString = Encoding.UTF8.GetString(data);
-                statusString = Regex.Replace(statusString, @"[^\r]\n", "\r\n");
+                dispatchParamsString = Encoding.UTF8.GetString(data);
+                dispatchParamsString = Regex.Replace(dispatchParamsString, @"[^\r]\n", "\r\n");
             }
             {
                 var path = step.OutputFile.Path;
@@ -243,7 +243,7 @@ namespace VSRAD.Package.Server
 
                 var data = new BreakStateData(watches, outputFile, localOutputData);
 
-                var dispatchParamsResult = BreakStateDispatchParameters.Parse(statusString);
+                var dispatchParamsResult = BreakStateDispatchParameters.Parse(dispatchParamsString);
                 if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out var error))
                     return (new StepResult(false, error.Message, ""), null);
 
@@ -315,7 +315,7 @@ namespace VSRAD.Package.Server
                 }
                 else if (step is ReadDebugDataStep readDebugData)
                 {
-                    var files = new[] { readDebugData.WatchesFile, readDebugData.StatusFile, readDebugData.OutputFile };
+                    var files = new[] { readDebugData.WatchesFile, readDebugData.DispatchParamsFile, readDebugData.OutputFile };
                     foreach (var file in files)
                     {
                         if (!file.CheckTimestamp || string.IsNullOrEmpty(file.Path))
