@@ -152,10 +152,14 @@
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" MaxHeight="60">
-                <!--<Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>-->
-                <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-            </ScrollViewer>
+            <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="60">
+                    <!--<Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>-->
+                    <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                </ScrollViewer>
+                <local:NumberInput Value="{Binding WavemapOffset, UpdateSourceTrigger=PropertyChanged}"
+                                   Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
+            </StackPanel>
         </Grid>
     </StackPanel>
 </UserControl>

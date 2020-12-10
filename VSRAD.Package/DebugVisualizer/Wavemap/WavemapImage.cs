@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -30,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      * 0x00 0x00 0x00 0x00  -- 0 means all colors are important 
      * ------------ DATA ------------
      */
-    class BitmapWrapper
+    class WavemapImage
     {
         // initialize data with empty header
         private List<byte> _header = new List<byte>
@@ -54,15 +55,41 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         };
 
         private int _rSize = 7;
+        private WavemapView _view;
+        private PictureBox _box;
+        private int _offset = 0;
 
-        public Bitmap GetImageFromWavemapView(WavemapView view)
+        public int Offset
         {
-            var pixelCount = view.GroupCount * view.WavesPerGroup * (_rSize + 1) * (_rSize + 1);
+            get => _offset;
+            set
+            {
+                _offset = value;
+                SetData(_view);
+            }
+        }
+
+        public WavemapImage(PictureBox box)
+        {
+            _box = box;
+        }
+
+        public void SetData(WavemapView view)
+        {
+            if (view.WavesPerGroup == 0 || view == null)
+            {
+                _box.Image = null;
+                return;
+            }
+
+            _view = view;
+            var w = 100; //view.GroupCount;
+            var pixelCount = w * view.WavesPerGroup * (_rSize + 1) * (_rSize + 1);
             var byteCount = pixelCount * 4;
             var imageData = new byte[byteCount + 54];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(54 + byteCount);
-            var widthBytes = BitConverter.GetBytes(view.GroupCount * _rSize + 1);
+            var widthBytes = BitConverter.GetBytes(w * _rSize + 1);
             var heightBytes = BitConverter.GetBytes(view.WavesPerGroup * _rSize + 1);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
             for (int i = 0; i < 4; i++)
@@ -72,7 +99,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = view.GroupCount * _rSize * 4 + 4;   // +4 for right border
+            var byteWidth = w * _rSize * 4 + 4;   // +4 for right border
 
             for (int i = 0; i < byteCount - 3; i += 4)
             {
@@ -82,7 +109,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 if ((col % _rSize) == 0) continue;
 
                 var viewRow = view.WavesPerGroup - 1 - row / _rSize;
-                var viewCol = col / _rSize / 4;
+                var viewCol = (col / _rSize / 4) + 100 * _offset;
                 var waveInfo = view[viewRow, viewCol];
 
                 var flatIdx = i + 54;   // header offset
@@ -92,7 +119,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[flatIdx+2] = waveInfo.BreakColor[2]; // R
                 imageData[flatIdx+3] = waveInfo.BreakColor[3]; // Alpha
             }
-            return LoadImage(imageData);
+
+            _box.Image = LoadImage(imageData);
+            _box.Size = _box.Image.Size;
+            _box.Refresh();
         }
 
         private static Bitmap LoadImage(byte[] imageData)

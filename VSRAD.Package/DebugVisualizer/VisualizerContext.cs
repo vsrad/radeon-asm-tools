@@ -42,6 +42,9 @@ namespace VSRAD.Package.DebugVisualizer
         private int _canvasHeight = 10;
         public int CanvasHeight { get => _canvasHeight; set => SetField(ref _canvasHeight, value); }
 
+        private int _wavemapOffset = 0;
+        public int WavemapOffset { get => _wavemapOffset; set => SetField(ref _wavemapOffset, value); }
+
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 

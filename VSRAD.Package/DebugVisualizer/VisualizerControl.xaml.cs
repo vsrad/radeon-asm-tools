@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -13,7 +14,7 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
-        private readonly WavemapCanvas _wavemap;
+        private readonly WavemapImage _wavemap;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
@@ -27,7 +28,7 @@ namespace VSRAD.Package.DebugVisualizer
             InitializeComponent();
 
             HeaderHost.WavemapImage.Setup();
-            _wavemap = new WavemapCanvas((System.Windows.Forms.PictureBox)HeaderHost.WavemapImage.Child, _context.Options.VisualizerOptions.WavemapElementSize);
+            _wavemap = new WavemapImage((System.Windows.Forms.PictureBox)HeaderHost.WavemapImage.Child);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
@@ -93,6 +94,10 @@ namespace VSRAD.Package.DebugVisualizer
                 else
                     GrayOutWatches();
             }
+            else if (e.PropertyName == nameof(VisualizerContext.WavemapOffset))
+            {
+                _wavemap.Offset = _context.WavemapOffset;
+            }
         }
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
@@ -104,8 +109,6 @@ namespace VSRAD.Package.DebugVisualizer
             RefreshDataStyling();
 
             _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
-            _context.CanvasWidth = _wavemap.Width;
-            _context.CanvasHeight = _wavemap.Height;
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
