@@ -57,8 +57,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private int _rSize = 7;
         private WavemapView _view;
         private PictureBox _box;
-        private int _offset = 0;
 
+        private int _offset = 0;
         public int Offset
         {
             get => _offset;
@@ -69,6 +69,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
+        private int _elementsWidthX = 100;
+        private int _elementsWidthY = 8;
+
+
         public WavemapImage(PictureBox box)
         {
             _box = box;
@@ -76,21 +80,20 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         public void SetData(WavemapView view)
         {
-            if (view.WavesPerGroup == 0 || view == null)
+            if (view == null || view.WavesPerGroup == 0)
             {
                 _box.Image = null;
                 return;
             }
 
             _view = view;
-            var w = 100; //view.GroupCount;
-            var pixelCount = w * view.WavesPerGroup * (_rSize + 1) * (_rSize + 1);
+            var pixelCount = _elementsWidthX * _elementsWidthY * (_rSize + 1) * (_rSize + 1);
             var byteCount = pixelCount * 4;
             var imageData = new byte[byteCount + 54];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(54 + byteCount);
-            var widthBytes = BitConverter.GetBytes(w * _rSize + 1);
-            var heightBytes = BitConverter.GetBytes(view.WavesPerGroup * _rSize + 1);
+            var widthBytes = BitConverter.GetBytes(_elementsWidthX * _rSize + 1);
+            var heightBytes = BitConverter.GetBytes(_elementsWidthY * _rSize + 1);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
             for (int i = 0; i < 4; i++)
             {
@@ -99,17 +102,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = w * _rSize * 4 + 4;   // +4 for right border
+            var byteWidth = _elementsWidthX * _rSize * 4 + 4;   // +4 for right border
 
             for (int i = 0; i < byteCount - 3; i += 4)
             {
                 int row = i / byteWidth;
-                if ((row % _rSize) == 0 || row / _rSize >= view.WavesPerGroup) continue;
+                if ((row % _rSize) == 0 || row / _rSize >= _elementsWidthY) continue;
                 int col = i % byteWidth;
                 if ((col % _rSize) == 0) continue;
 
-                var viewRow = view.WavesPerGroup - 1 - row / _rSize;
-                var viewCol = (col / _rSize / 4) + 100 * _offset;
+                var viewRow = _elementsWidthY - 1 - row / _rSize;
+                var viewCol = (col / _rSize / 4) + _elementsWidthX * _offset;
                 var waveInfo = view[viewRow, viewCol];
 
                 var flatIdx = i + 54;   // header offset

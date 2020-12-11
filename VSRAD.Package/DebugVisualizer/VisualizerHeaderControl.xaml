@@ -152,12 +152,10 @@
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MaxHeight="60">
-                    <!--<Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>-->
-                    <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                </ScrollViewer>
-                <wavemap:WavemapOffsetSelector Value="{Binding WavemapOffset, UpdateSourceTrigger=PropertyChanged}"/>
+            <StackPanel Orientation="Horizontal" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left">
+
+                <wavemap:WavemapOffsetSelector Value="{Binding WavemapOffset, UpdateSourceTrigger=PropertyChanged}" Width="80" Height="45" Margin="5,0,10,0" x:Name="WavemapSelector"/>
+                <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
             </StackPanel>
         </Grid>
     </StackPanel>

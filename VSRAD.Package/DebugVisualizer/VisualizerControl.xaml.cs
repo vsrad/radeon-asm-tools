@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
