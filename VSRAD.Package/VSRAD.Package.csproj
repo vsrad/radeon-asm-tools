@@ -176,6 +176,9 @@
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapImageHost.cs" />
+    <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml.cs">
+      <DependentUpon>WavemapOffsetSelector.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />
@@ -399,6 +402,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DebugVisualizer\VisualizerHeaderControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

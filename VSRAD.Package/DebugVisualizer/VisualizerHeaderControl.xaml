@@ -157,8 +157,7 @@
                     <!--<Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>-->
                     <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </ScrollViewer>
-                <local:NumberInput Value="{Binding WavemapOffset, UpdateSourceTrigger=PropertyChanged}"
-                                   Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
+                <wavemap:WavemapOffsetSelector Value="{Binding WavemapOffset, UpdateSourceTrigger=PropertyChanged}"/>
             </StackPanel>
         </Grid>
     </StackPanel>
