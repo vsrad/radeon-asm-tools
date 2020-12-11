@@ -252,10 +252,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        public void ExportProfiles(string file)
+        public Error? ExportProfiles(string file)
         {
-            SaveChanges();
+            if (SaveChanges() is Error e)
+                return e;
+
             ProfileTransferManager.Export((IDictionary<string, ProfileOptions>)_project.Options.Profiles, file);
+            return null;
         }
 
         private void AddProfile(string title, string message, ProfileOptions profile)
@@ -271,7 +274,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        public void SaveChanges()
+        public Error? SaveChanges()
         {
             var profiles = new Dictionary<string, ProfileOptions>();
             for (int i = 0; i < DirtyProfiles.Count; ++i) // not using an enumerator because we may remove elements
@@ -282,6 +285,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 {
                     name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name),
                         existingNames: ProfileNames, initialName: name);
+                    if (string.IsNullOrEmpty(name))
+                        return new Error("Profile options were not saved.");
                     currProfile.General.ProfileName = name;
                 }
                 if (profiles.TryGetValue(name, out var replacedProfile))
@@ -296,6 +301,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 SelectedProfile = DirtyProfiles[0];
             var activeProfile = SelectedProfile?.General?.ProfileName ?? "";
             _project.Options.SetProfiles(profiles, activeProfile);
+            return null;
         }
 
         private void OpenMacroEditor(object sender)
