@@ -1,5 +1,8 @@
-﻿using Microsoft.VisualStudio.OLE.Interop;
+﻿using Microsoft;
+using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -14,11 +17,25 @@ namespace VSRAD.Package.Commands
     public sealed class ProfileDropdownCommand : ICommandHandler
     {
         private readonly IProject _project;
+        private readonly SVsServiceProvider _serviceProvider;
 
         [ImportingConstructor]
-        public ProfileDropdownCommand(IProject project)
+        public ProfileDropdownCommand(IProject project, SVsServiceProvider serviceProvider)
         {
             _project = project;
+            _serviceProvider = serviceProvider;
+            _project.Options.PropertyChanged += ProjectOptionsChanged;
+        }
+
+        private void ProjectOptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (e.PropertyName == nameof(ProjectOptions.ActiveProfile))
+            {
+                var shell = (IVsUIShell)_serviceProvider.GetService(typeof(SVsUIShell));
+                Assumes.Present(shell);
+                shell.UpdateCommandUI(0); // Force VS to refresh dropdown items
+            }
         }
 
         public Guid CommandSet => Constants.ProfileDropdownCommandSet;
@@ -45,6 +62,11 @@ namespace VSRAD.Package.Commands
                 foreach (var profile in _project.Options.Profiles)
                     _project.Options.RecentlyUsedHosts.Add(profile.Value.General.Connection.ToString());
             }
+
+            // Add the current host to the list in case the user switches to a different profile
+            // (if the profile is not changed this is a no-op because the current host is already at the top of the list)
+            _project.Options.RecentlyUsedHosts.Add(_project.Options.Profile.General.Connection.ToString());
+
             var displayItems = _project.Options.RecentlyUsedHosts.Prepend("Local").ToArray();
             Marshal.GetNativeVariantForObject(displayItems, variantOut);
         }
