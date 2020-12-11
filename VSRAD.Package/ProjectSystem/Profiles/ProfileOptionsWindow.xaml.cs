@@ -113,7 +113,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             var dialog = new ProfileNameWindow(dialogLabel, okButton: "OK", cancelButton: "Cancel", initialName, existingNames)
             {
-                Title = dialogTitle
+                Title = dialogTitle,
+                Owner = Application.Current.MainWindow,
+                ShowInTaskbar = false
             };
             dialog.ShowDialog();
             return dialog.DialogResult == true ? dialog.EnteredName : null;
