@@ -48,7 +48,7 @@ namespace VSRAD.Package.ProjectSystem
             _errorListProvider.Tasks.Clear();
 
             var errors = new List<ErrorTask>();
-            var messages = await _buildErrorProcessor.ExtractMessagesAsync(outputs, null);
+            var messages = await _buildErrorProcessor.ExtractMessagesAsync(outputs);
             foreach (var message in messages)
             {
                 var document = string.IsNullOrEmpty(message.SourceFile) // make unclickable error otherwise it will refer to the project root
