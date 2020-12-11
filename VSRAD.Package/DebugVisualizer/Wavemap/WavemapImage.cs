@@ -58,13 +58,24 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private WavemapView _view;
         private PictureBox _box;
 
-        private int _offset = 0;
-        public int Offset
+        private int _xOffset = 0;
+        public int XOffset
         {
-            get => _offset;
+            get => _xOffset;
             set
             {
-                _offset = value;
+                _xOffset = value;
+                SetData(_view);
+            }
+        }
+
+        private int _yOffset = 0;
+        public int YOffset
+        {
+            get => _yOffset;
+            set
+            {
+                _yOffset = value;
                 SetData(_view);
             }
         }
@@ -111,8 +122,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 int col = i % byteWidth;
                 if ((col % _rSize) == 0) continue;
 
-                var viewRow = _elementsWidthY - 1 - row / _rSize;
-                var viewCol = (col / _rSize / 4) + _elementsWidthX * _offset;
+                var viewRow = (_elementsWidthY - 1 - row / _rSize) + _elementsWidthY * _yOffset;
+                var viewCol = (col / _rSize / 4) + _elementsWidthX * _xOffset;
                 var waveInfo = view[viewRow, viewCol];
 
                 var flatIdx = i + 54;   // header offset

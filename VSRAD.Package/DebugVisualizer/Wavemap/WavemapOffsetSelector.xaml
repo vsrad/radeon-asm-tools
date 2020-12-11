@@ -19,9 +19,9 @@
         </Grid.RowDefinitions>
 
         <RepeatButton Grid.Column="0" Grid.RowSpan="2" Grid.Row="0" Content="⯇" Click="XDecrement"/>
-        <RepeatButton Grid.Row="0" Grid.Column="1" Content="▲"/>
-        <RepeatButton Grid.Row="1" Grid.Column="1" Content="▼"/>
+        <RepeatButton Grid.Row="0" Grid.Column="1" Content="▲" Click="YDecrement"/>
+        <RepeatButton Grid.Row="1" Grid.Column="1" Content="▼" Click="YIncrement"/>
         <RepeatButton Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Content="⯈" Click="XIncrement"/>
-        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Grid.Column="0" FontSize="7" VerticalAlignment="Top" HorizontalAlignment="Center">0-100</TextBlock>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Grid.Column="0" FontSize="7" VerticalAlignment="Top" HorizontalAlignment="Center" Text="{Binding Label}"/>
     </Grid>
 </UserControl>

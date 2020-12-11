@@ -92,9 +92,13 @@ namespace VSRAD.Package.DebugVisualizer
                 else
                     GrayOutWatches();
             }
-            else if (e.PropertyName == nameof(VisualizerContext.WavemapOffset))
+            else if (e.PropertyName == nameof(VisualizerContext.WavemapXOffset))
             {
-                _wavemap.Offset = _context.WavemapOffset;
+                _wavemap.XOffset = _context.WavemapXOffset;
+            }
+            else if (e.PropertyName == nameof(VisualizerContext.WavemapYOffset))
+            {
+                _wavemap.YOffset = _context.WavemapYOffset;
             }
         }
 

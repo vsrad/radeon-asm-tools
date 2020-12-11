@@ -21,22 +21,50 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     /// </summary>
     public sealed partial class WavemapOffsetSelector : UserControl, INotifyPropertyChanged
     {
-        public static readonly DependencyProperty ValueProperty =
-            DependencyProperty.Register(nameof(Value), typeof(uint), typeof(WavemapOffsetSelector),
-                new FrameworkPropertyMetadata((uint)0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+        public static readonly DependencyProperty XValueProperty =
+            DependencyProperty.Register(nameof(XValue), typeof(int), typeof(WavemapOffsetSelector),
+                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+
+        public static readonly DependencyProperty YValueProperty =
+            DependencyProperty.Register(nameof(YValue), typeof(int), typeof(WavemapOffsetSelector),
+                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+
+        public static readonly DependencyProperty LabelProperty =
+            DependencyProperty.Register(nameof(Label), typeof(string), typeof(WavemapOffsetSelector),
+                new FrameworkPropertyMetadata("0 - 99 / 0 - 7", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
 
         public event PropertyChangedEventHandler PropertyChanged;
-
-        public uint Value
+        public string Label
         {
-            get => (uint)GetValue(ValueProperty);
+            get => (string)GetValue(LabelProperty);
+            set => SetValue(LabelProperty, value);
+        }
+
+        public int XValue
+        {
+            get => (int)GetValue(XValueProperty);
             set
             {
                 var newValue = value;
                 if (newValue < 0)
                     newValue = 0;
+                SetValue(XValueProperty, newValue);
 
-                SetValue(ValueProperty, newValue);
+                Label = $"{100 * XValue} - {100 * XValue + 99} / {8 * YValue} - {8 * YValue + 7}";
+            }
+        }
+
+        public int YValue
+        {
+            get => (int)GetValue(YValueProperty);
+            set
+            {
+                var newValue = value;
+                if (newValue < 0)
+                    newValue = 0;
+                SetValue(YValueProperty, newValue);
+
+                Label = $"{100 * XValue} - {100 * XValue + 99} / {8 * YValue} - {8 * YValue + 7}";
             }
         }
 
@@ -47,9 +75,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             Root.DataContext = this;
         }
 
-        private void XIncrement(object sender, RoutedEventArgs e) => Value++;
+        private void XIncrement(object sender, RoutedEventArgs e) => XValue++;
+        private void XDecrement(object sender, RoutedEventArgs e) => XValue--;
 
-        private void XDecrement(object sender, RoutedEventArgs e) => Value--;
+        private void YIncrement(object sender, RoutedEventArgs e) => YValue++;
+        private void YDecrement(object sender, RoutedEventArgs e) => YValue--;
 
         private static void DependencyPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
         {
