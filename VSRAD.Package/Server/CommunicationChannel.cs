@@ -27,8 +27,6 @@ namespace VSRAD.Package.Server
 
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
-        Task<IResponse[]> SendBundleAsync(List<ICommand> commands);
-
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
 
         void ForceDisconnect();
@@ -150,15 +148,6 @@ namespace VSRAD.Package.Server
             {
                 _mutex.Release();
             }
-        }
-
-        public async Task<IResponse[]> SendBundleAsync(List<ICommand> commands)
-        {
-            // TODO: send in a single packet (opt)
-            var responses = new IResponse[commands.Count];
-            for (int i = 0; i < commands.Count; ++i)
-                responses[i] = await SendWithReplyAsync<IResponse>(commands[i]);
-            return responses;
         }
 
         public async Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()

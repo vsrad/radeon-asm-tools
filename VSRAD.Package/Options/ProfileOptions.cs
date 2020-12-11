@@ -7,27 +7,6 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
-    // TODO: remove (obsolete)
-    [AttributeUsage(AttributeTargets.Property)]
-    public sealed class MacroAttribute : Attribute
-    {
-        public string MacroName { get; }
-
-        public MacroAttribute(string macroName) => MacroName = macroName;
-    }
-
-    // TODO: remove (obsolete)
-    [AttributeUsage(AttributeTargets.Property)]
-    public sealed class BinaryChoiceAttribute : Attribute
-    {
-        public (string True, string False) Choice { get; }
-
-        public BinaryChoiceAttribute(string trueString, string falseString)
-        {
-            Choice = (trueString, falseString);
-        }
-    }
-
     public sealed class ProfileOptions : ICloneable
     {
         public GeneralProfileOptions General { get; } = new GeneralProfileOptions();
