@@ -33,11 +33,21 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             DependencyProperty.Register(nameof(Label), typeof(string), typeof(WavemapOffsetSelector),
                 new FrameworkPropertyMetadata("0 - 99 / 0 - 7", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
 
+        public static readonly DependencyProperty WaveInfoProperty =
+            DependencyProperty.Register(nameof(WaveInfo), typeof(string), typeof(WavemapOffsetSelector),
+                new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+
         public event PropertyChangedEventHandler PropertyChanged;
         public string Label
         {
             get => (string)GetValue(LabelProperty);
             set => SetValue(LabelProperty, value);
+        }
+
+        public string WaveInfo
+        {
+            get => (string)GetValue(WaveInfoProperty);
+            set => SetValue(WaveInfoProperty, value);
         }
 
         public int XValue

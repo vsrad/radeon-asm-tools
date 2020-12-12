@@ -48,6 +48,9 @@ namespace VSRAD.Package.DebugVisualizer
         private int _wavemapYOffset = 0;
         public int WavemapYOffset { get => _wavemapYOffset; set => SetField(ref _wavemapYOffset, value); }
 
+        private string _currentWaveInfo = "";
+        public string CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
+
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 

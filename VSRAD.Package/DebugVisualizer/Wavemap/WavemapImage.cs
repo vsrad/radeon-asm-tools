@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -57,6 +58,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private int _rSize = 7;
         private WavemapView _view;
         private PictureBox _box;
+        private VisualizerContext _context;
 
         private int _xOffset = 0;
         public int XOffset
@@ -84,9 +86,18 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private int _elementsWidthY = 8;
 
 
-        public WavemapImage(PictureBox box)
+        public WavemapImage(PictureBox box, VisualizerContext context)
         {
             _box = box;
+            _context = context;
+            _box.MouseMove += ShowWaveInfo;
+        }
+
+        private void ShowWaveInfo(object sender, MouseEventArgs e)
+        {
+            var row = e.Y / _rSize;
+            var col = e.X / _rSize;
+            _context.CurrentWaveInfo = $"{row} / {col}";
         }
 
         public void SetData(WavemapView view)
