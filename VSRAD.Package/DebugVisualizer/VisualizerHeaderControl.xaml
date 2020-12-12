@@ -157,7 +157,7 @@
                 <wavemap:WavemapOffsetSelector XValue="{Binding WavemapXOffset, UpdateSourceTrigger=PropertyChanged}"
                                                YValue="{Binding WavemapYOffset, UpdateSourceTrigger=PropertyChanged}"
                                                WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
-                                               Width="80" Height="45" Margin="5,0,10,0" x:Name="WavemapSelector"/>
+                                               Width="80" Height="55" Margin="5,0,10,0" x:Name="WavemapSelector"/>
                 <wavemap:WavemapImageHost x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,5,0,0"/>
             </StackPanel>
         </Grid>

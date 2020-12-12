@@ -95,9 +95,12 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void ShowWaveInfo(object sender, MouseEventArgs e)
         {
-            var row = e.Y / _rSize;
-            var col = e.X / _rSize;
-            _context.CurrentWaveInfo = $"{row} / {col}";
+            var row = (e.Y / _rSize) + _elementsWidthY * _yOffset;
+            var col = (e.X / _rSize) + _elementsWidthX * _xOffset;
+            var waveInfo = _view[row, col];
+            _context.CurrentWaveInfo = waveInfo.IsVisible
+                ? $"G: {col}, W: {row}, L: {waveInfo.BreakLine}"
+                : $"G: {col}, W: {row}, Out of range.";
         }
 
         public void SetData(WavemapView view)
