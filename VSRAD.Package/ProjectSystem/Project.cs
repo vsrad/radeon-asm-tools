@@ -77,8 +77,6 @@ namespace VSRAD.Package.ProjectSystem
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
-            BreakLineGlyphTaggerProvider.Initialize(this);
-
             _loaded = true;
             foreach (var callback in _onLoadCallbacks)
                 callback(Options);

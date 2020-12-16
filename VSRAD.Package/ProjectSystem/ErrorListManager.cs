@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Tagging;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -88,13 +89,14 @@ namespace VSRAD.Package.ProjectSystem
             {
                 if (!_errorTaggerDelegateInitialized)
                 {
-                    var taggers = _unconfiguredProject.Services.ExportProvider.GetExportedValues<IViewTaggerProvider>();
-                    var syntaxTagger = taggers.FirstOrDefault(t => t.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
-                    if (syntaxTagger != null)
+                    var syntaxTaggers = _unconfiguredProject.Services.ExportProvider.GetExports<IViewTaggerProvider, IContentTypeMetadata>()
+                        .Where(e => e.Metadata.ContentTypes.Contains("RadeonAsmSyntax"));
+                    var syntaxErrorTagger = syntaxTaggers.FirstOrDefault(t => t.Value.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider")?.Value;
+                    if (syntaxErrorTagger != null)
                     {
-                        var notifyMethod = syntaxTagger.GetType().GetMethod("ErrorListUpdated");
+                        var notifyMethod = syntaxErrorTagger.GetType().GetMethod("ErrorListUpdated");
                         if (notifyMethod != null)
-                            _notifyErrorTagger = (NotifyErrorTaggerDelegate)Delegate.CreateDelegate(typeof(NotifyErrorTaggerDelegate), syntaxTagger, notifyMethod);
+                            _notifyErrorTagger = (NotifyErrorTaggerDelegate)Delegate.CreateDelegate(typeof(NotifyErrorTaggerDelegate), syntaxErrorTagger, notifyMethod);
                     }
                     _errorTaggerDelegateInitialized = true;
                 }

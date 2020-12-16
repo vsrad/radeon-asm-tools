@@ -1,7 +1,10 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.ComponentModel.Composition;
+using System.Linq;
 using VSRAD.Deborgar;
+using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
@@ -17,6 +20,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
         private readonly IActiveCodeEditor _codeEditor;
+        private readonly BreakLineGlyphTaggerProvider _breakLineTagger;
 
         public bool DebugInProgress { get; private set; } = false;
 
@@ -26,6 +30,11 @@ namespace VSRAD.Package.ProjectSystem
             _project = project;
             _actionLauncher = actionLauncher;
             _codeEditor = codeEditor;
+
+            _breakLineTagger = (BreakLineGlyphTaggerProvider)_project.UnconfiguredProject.Services.ExportProvider
+                .GetExports<IViewTaggerProvider, IAppliesToMetadataView>()
+                .Where(e => e.Metadata.AppliesTo == Constants.RadOrVisualCProjectCapability)
+                .First(e => e.Value.GetType() == typeof(BreakLineGlyphTaggerProvider)).Value;
         }
 
         public IEngineIntegration RegisterEngine()
@@ -91,6 +100,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             var args = new ExecutionCompletedEventArgs(file, lines, isStepping);
             ExecutionCompleted?.Invoke(this, args);
+            _breakLineTagger.OnExecutionCompleted(args);
             BreakEntered(this, breakState);
         }
     }
