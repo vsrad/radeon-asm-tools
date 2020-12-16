@@ -23,7 +23,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      * 0xW  0x00 0x00 0x00  -- Width in pixels
      * 0xH  0x00 0x00 0x00  -- Height in pixels
      * 0x01 0x00            -- Number of color planes
-     * 0x20 0x00            -- Bits per pixel (24 for RGB)
+     * 0x20 0x00            -- Bits per pixel (32 for RGBA)
      * 0x00 0x00 0x00 0x00  -- BI_RGB, no pixel array compression used
      * 0xDS 0x00 0x00 0x00  -- Data size (pixels * 8)
      * 0x13 0x0b 0x00 0x00  -- horizontal DPI
@@ -90,7 +90,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             _box = box;
             _context = context;
-            _box.MouseMove += ShowWaveInfo;
         }
 
         private void ShowWaveInfo(object sender, MouseEventArgs e)
@@ -151,31 +150,18 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _box.Image = LoadImage(imageData);
             _box.Size = _box.Image.Size;
             _box.Refresh();
+
+            _box.MouseMove -= ShowWaveInfo;
+            _box.MouseMove += ShowWaveInfo;
         }
 
         private static Bitmap LoadImage(byte[] imageData)
         {
             if (imageData == null || imageData.Length == 0) return null;
-            var image = new BitmapImage();
-            using (var mem = new MemoryStream(imageData))
-            {
-                mem.Position = 0;
-                image.BeginInit();
-                image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
-                image.CacheOption = BitmapCacheOption.OnLoad;
-                image.UriSource = null;
-                image.StreamSource = mem;
-                image.EndInit();
-            }
-            image.Freeze();
 
-            using (MemoryStream outStream = new MemoryStream())
+            using (MemoryStream outStream = new MemoryStream(imageData))
             {
-                BitmapEncoder enc = new BmpBitmapEncoder();
-                enc.Frames.Add(BitmapFrame.Create(image));
-                enc.Save(outStream);
-                System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(outStream);
-
+                Bitmap bitmap = new Bitmap(outStream);
                 return new Bitmap(bitmap);
             }
         }
