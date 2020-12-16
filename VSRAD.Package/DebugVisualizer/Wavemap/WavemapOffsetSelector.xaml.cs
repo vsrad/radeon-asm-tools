@@ -93,14 +93,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private static void DependencyPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
         {
-            //var numberInput = (NumberInput)dependencyObject;
-            //switch (args.Property.Name)
-            //{
-            //    case nameof(Value): numberInput.Value = (uint)args.NewValue; break;
-            //    case nameof(Step): numberInput.Step = (uint)args.NewValue; break;
-            //    case nameof(Minimum): numberInput.Minimum = (uint)args.NewValue; break;
-            //    case nameof(Maximum): numberInput.Maximum = (uint)args.NewValue; break;
-            //}
+
         }
     }
 }

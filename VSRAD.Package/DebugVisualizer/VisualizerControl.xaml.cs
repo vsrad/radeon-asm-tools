@@ -59,9 +59,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
             {
-                //_wavemap.RectangleSize = _context.Options.VisualizerOptions.WavemapElementSize;
-                //_context.CanvasWidth = _wavemap.Width;
-                //_context.CanvasHeight = _wavemap.Height;
+                // TODO: handle wavemap rectangle size change
             }
         }
 
@@ -87,20 +85,20 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(VisualizerContext.WatchesValid))
+            switch (e.PropertyName)
             {
-                if (_context.WatchesValid)
-                    RefreshDataStyling();
-                else
-                    GrayOutWatches();
-            }
-            else if (e.PropertyName == nameof(VisualizerContext.WavemapXOffset))
-            {
-                _wavemap.XOffset = _context.WavemapXOffset;
-            }
-            else if (e.PropertyName == nameof(VisualizerContext.WavemapYOffset))
-            {
-                _wavemap.YOffset = _context.WavemapYOffset;
+                case nameof(VisualizerContext.WatchesValid):
+                    if (_context.WatchesValid)
+                        RefreshDataStyling();
+                    else
+                        GrayOutWatches();
+                    break;
+                case nameof(VisualizerContext.WavemapXOffset):
+                    _wavemap.XOffset = _context.WavemapXOffset;
+                    break;
+                case nameof(VisualizerContext.WavemapYOffset):
+                    _wavemap.YOffset = _context.WavemapYOffset;
+                    break;
             }
         }
 
