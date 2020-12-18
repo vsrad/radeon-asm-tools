@@ -130,6 +130,7 @@
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
+    <Compile Include="Commands\ProfileDropdownCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
@@ -234,6 +235,7 @@
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
+    <Compile Include="Utils\MruCollection.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\VsEditor.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />

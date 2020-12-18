@@ -28,6 +28,10 @@ namespace VSRAD.Package.Options
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
+        private MruCollection<string> _recentlyUsedHosts = new MruCollection<string>(10);
+        [JsonConverter(typeof(MruCollection<string>.Converter))]
+        public MruCollection<string> RecentlyUsedHosts { get => _recentlyUsedHosts; set { if (value != null) _recentlyUsedHosts = value; } }
+
         public ProjectOptions() { }
 
         public ProjectOptions(DebuggerOptions debugger, VisualizerOptions visualizer, SliceVisualizerOptions slice, VisualizerAppearance appearance, DebugVisualizer.ColumnStylingOptions styling)
@@ -57,6 +61,12 @@ namespace VSRAD.Package.Options
             ActiveProfile = activeProfile;
             RaisePropertyChanged(nameof(Profiles));
             RaisePropertyChanged(nameof(HasProfiles));
+        }
+
+        public void UpdateActiveProfile(ProfileOptions newProfile)
+        {
+            ((Dictionary<string, ProfileOptions>)Profiles)[ActiveProfile] = newProfile;
+            RaisePropertyChanged(nameof(Profiles));
         }
         #endregion
 

@@ -187,5 +187,82 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Read Debug Data step", error.Title);
             Assert.Equal("Debug data path is not specified", error.Message);
         }
+
+        [Fact]
+        public async Task RunActionsLocallyTestAsync()
+        {
+            var profile = new ProfileOptions();
+            profile.General.RunActionsLocally = true;
+
+            var a = new ActionProfileOptions { Name = "A" };
+            a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "lr-copy-source", TargetPath = "lr-copy-target" });
+            a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rl-copy-source", TargetPath = "rl-copy-target" });
+            a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = "ll-copy-source", TargetPath = "ll-copy-target" });
+            a.Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "remote-executable" });
+            a.Steps.Add(new ExecuteStep { Environment = StepEnvironment.Local, Executable = "local-executable" });
+            a.Steps.Add(new ReadDebugDataStep(
+                outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-output", CheckTimestamp = true },
+                watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-watches", CheckTimestamp = false },
+                statusFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
+                binaryOutput: true, outputOffset: 0));
+
+            profile.General.RunActionsLocally = false;
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out var result, out _));
+            {
+                var copyFileLR = (CopyFileStep)result.Steps[0];
+                Assert.Equal(FileCopyDirection.LocalToRemote, copyFileLR.Direction);
+            }
+            {
+                var copyFileRL = (CopyFileStep)result.Steps[1]; /* RemoteToLocal becomes LocalToLocal */
+                Assert.Equal(FileCopyDirection.RemoteToLocal, copyFileRL.Direction);
+            }
+            {
+                var copyFileLL = (CopyFileStep)result.Steps[2]; /* LocalToLocal remains LocalToLocal */
+                Assert.Equal(FileCopyDirection.LocalToLocal, copyFileLL.Direction);
+            }
+            {
+                var executeR = (ExecuteStep)result.Steps[3];
+                Assert.Equal(StepEnvironment.Remote, executeR.Environment);
+            }
+            {
+                var executeL = (ExecuteStep)result.Steps[4];
+                Assert.Equal(StepEnvironment.Local, executeL.Environment);
+            }
+            {
+                var readDebugData = (ReadDebugDataStep)result.Steps[5];
+                Assert.Equal(StepEnvironment.Remote, readDebugData.OutputFile.Location);
+                Assert.Equal(StepEnvironment.Remote, readDebugData.StatusFile.Location);
+                Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
+            }
+
+            profile.General.RunActionsLocally = true;
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out result, out _));
+            {
+                var copyFileLR = (CopyFileStep)result.Steps[0]; /* LocalToRemote becomes LocalToLocal */
+                Assert.Equal(FileCopyDirection.LocalToLocal, copyFileLR.Direction);
+            }
+            {
+                var copyFileRL = (CopyFileStep)result.Steps[1]; /* RemoteToLocal becomes LocalToLocal */
+                Assert.Equal(FileCopyDirection.LocalToLocal, copyFileRL.Direction);
+            }
+            {
+                var copyFileLL = (CopyFileStep)result.Steps[2]; /* LocalToLocal remains LocalToLocal */
+                Assert.Equal(FileCopyDirection.LocalToLocal, copyFileLL.Direction);
+            }
+            {
+                var executeR = (ExecuteStep)result.Steps[3];
+                Assert.Equal(StepEnvironment.Local, executeR.Environment);
+            }
+            {
+                var executeL = (ExecuteStep)result.Steps[4];
+                Assert.Equal(StepEnvironment.Local, executeL.Environment);
+            }
+            {
+                var readDebugData = (ReadDebugDataStep)result.Steps[5];
+                Assert.Equal(StepEnvironment.Local, readDebugData.OutputFile.Location);
+                Assert.Equal(StepEnvironment.Local, readDebugData.StatusFile.Location);
+                Assert.Equal(StepEnvironment.Local, readDebugData.WatchesFile.Location);
+            }
+        }
     }
 }

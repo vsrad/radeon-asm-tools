@@ -29,6 +29,8 @@
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
+        <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
+        <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenFalseConverter" TrueValue="Collapsed" FalseValue="Visible" />
     </UserControl.Resources>
     <StackPanel Orientation="Vertical" x:Name="Root">
         <DockPanel Height="26" Margin="0,4,4,4">
@@ -134,7 +136,11 @@
                             </Grid.RowDefinitions>
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
-                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
+                                      Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
+                            <Label Content="LocalToLocal"
+                                   Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+                                   VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
 
                             <Label Content="Source Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
@@ -181,7 +187,11 @@
                             </Grid.RowDefinitions>
                             <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Environment, Mode=TwoWay}"
-                                        Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                                        Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
+                                      Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
+                            <Label Content="Local"
+                                   Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+                                   VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
 
                             <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding Executable, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
@@ -261,13 +271,19 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
-                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}"
+                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
                                                            Header="Output" Grid.Row="0" Grid.ColumnSpan="3" />
 
-                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}"
+                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
                                                            Header="Watches" Grid.Row="1" Grid.ColumnSpan="3" />
 
-                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}" MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}"
+                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
                                                            Header="Status" Grid.Row="2" Grid.ColumnSpan="3" />
 
                             <Label Content="Outuput Type: " VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>

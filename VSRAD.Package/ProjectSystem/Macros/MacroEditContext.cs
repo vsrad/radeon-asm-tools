@@ -84,9 +84,18 @@ namespace VSRAD.Package.ProjectSystem.Macros
             MacroListView = new ListCollectionView(macroList) { Filter = FilterMacro };
             RaisePropertyChanged(nameof(MacroListView));
             RaisePropertyChanged(nameof(EvaluatedValue));
-            Status = $"Editing {MacroName} (requesting remote environment variables...)";
 
-            var remoteEnvVariables = await remoteEnviornment.GetValueAsync().ConfigureAwait(false);
+            IReadOnlyDictionary<string, string> remoteEnvVariables;
+            if (remoteEnviornment != null)
+            {
+                Status = $"Editing {MacroName} (requesting remote environment variables...)";
+                remoteEnvVariables = await remoteEnviornment.GetValueAsync().ConfigureAwait(false);
+            }
+            else
+            {
+                remoteEnvVariables = new Dictionary<string, string>();
+            }
+
             foreach (var e in remoteEnvVariables)
                 macroList.Add(new KeyValuePair<string, string>("$ENVR(" + e.Key + ")", e.Value));
 

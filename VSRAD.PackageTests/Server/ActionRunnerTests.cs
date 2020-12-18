@@ -71,7 +71,7 @@ namespace VSRAD.PackageTests.Server
             result = await runner.RunAsync("HTMT", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("File is not changed on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
+            Assert.Equal("File is not changed on the remote machine at /home/mizu/machete/key3_49. Disable Check Timestamp in step options to skip the modification date check", result.StepResults[0].Warning);
         }
 
         [Fact]
@@ -150,11 +150,15 @@ namespace VSRAD.PackageTests.Server
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
 
-            var localPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
-            Assert.False(File.Exists(localPath));
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "" } };
-
+            var localPath = Path.GetTempFileName();
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "", CheckTimestamp = true } };
             var result = await runner.RunAsync("HTMT", steps);
+            Assert.False(result.Successful);
+            Assert.Equal($@"File is not changed at {localPath}. Disable Check Timestamp in step options to skip the modification date check", result.StepResults[0].Warning);
+
+            var nonexistentPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
+            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = nonexistentPath, TargetPath = "", CheckTimestamp = true } };
+            result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal(@"File C:\Non\Existent\Path\To\Users\mizu\raw3 is not found on the local machine", result.StepResults[0].Warning);
 
@@ -174,6 +178,27 @@ namespace VSRAD.PackageTests.Server
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal($"Local path contains illegal characters: \"{illegalPath}\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+        }
+
+        [Fact]
+        public async Task CopyLLTestAsync()
+        {
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""));
+
+            var file = Path.GetTempFileName();
+            var target = Path.GetTempFileName();
+            File.WriteAllText(file, "local to local copy test");
+            var steps = new List<IActionStep>
+            {
+                // update file timestamp
+                new ExecuteStep { Environment = StepEnvironment.Local, Executable = "cmd.exe", Arguments = $@"/C ""copy /b {Path.GetFileName(file)} +,,""" },
+                new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = Path.GetFileName(file), TargetPath = Path.GetFileName(target), CheckTimestamp = true }
+            };
+
+            var result = await runner.RunAsync("HTMT", steps);
+            Assert.True(result.Successful);
+
+            Assert.Equal("local to local copy test", File.ReadAllText(target));
         }
         #endregion
 

@@ -123,6 +123,9 @@ namespace VSRAD.Package.Options
         private int _port = 9339;
         public int Port { get => _port; set => SetField(ref _port, value); }
 
+        private bool _runActionsLocally = false;
+        public bool RunActionsLocally { get => _runActionsLocally; set => SetField(ref _runActionsLocally, value); }
+
         private bool _copySources = true;
         public bool CopySources { get => _copySources; set => SetField(ref _copySources, value); }
 
@@ -162,6 +165,7 @@ namespace VSRAD.Package.Options
                 RemoteMachine = RemoteMachine,
                 Port = Port,
                 CopySources = CopySources,
+                RunActionsLocally = RunActionsLocally,
                 DeployDirectory = evaluatedDeployDir,
                 LocalWorkDir = evaluatedLocalDir,
                 RemoteWorkDir = evaluatedRemoteDir,

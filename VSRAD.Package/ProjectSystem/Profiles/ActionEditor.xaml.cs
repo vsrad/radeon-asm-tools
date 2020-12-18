@@ -89,6 +89,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             get => (DirtyProfileMacroEditor)GetValue(MacroEditorProperty); set => SetValue(MacroEditorProperty, value);
         }
+        public ProfileOptions CurrentProfile
+        {
+            get => ((ProfileOptions)GetValue(CurrentProfileProperty)); set => SetValue(CurrentProfileProperty, value);
+        }
 
         public IEnumerable<string> RunActionNames => AllActionNames.Where(n => n != ActionName);
 
@@ -100,6 +104,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             DependencyProperty.Register(nameof(ActionName), typeof(string), typeof(ActionEditor), new PropertyMetadata(null));
         public static readonly DependencyProperty MacroEditorProperty =
             DependencyProperty.Register(nameof(MacroEditor), typeof(DirtyProfileMacroEditor), typeof(ActionEditor), new PropertyMetadata(null));
+        public static readonly DependencyProperty CurrentProfileProperty =
+            DependencyProperty.Register(nameof(CurrentProfile), typeof(ProfileOptions), typeof(ActionEditor), new PropertyMetadata(null));
 
         public event PropertyChangedEventHandler PropertyChanged;
 

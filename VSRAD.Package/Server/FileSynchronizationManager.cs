@@ -48,7 +48,7 @@ namespace VSRAD.Package.Server
             await _projectSourceManager.SaveDocumentsAsync(mode);
             _project.SaveOptions();
 
-            if (!evaluatedProfileOptions.CopySources)
+            if (!evaluatedProfileOptions.CopySources || evaluatedProfileOptions.RunActionsLocally)
                 return;
             if (string.IsNullOrWhiteSpace(evaluatedProfileOptions.DeployDirectory))
                 throw new Exception("The project cannot be deployed: remote directory is not specified. Set it in project properties.");
