@@ -25,21 +25,15 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ErrorListProvider _errorListProvider;
         private readonly IBuildErrorProcessor _buildErrorProcessor;
-        private readonly UnconfiguredProject _unconfiguredProject;
         private readonly IProject _project;
 
         [ImportingConstructor]
-        public ErrorListManager(
-            SVsServiceProvider serviceProvider,
-            IBuildErrorProcessor buildErrorProcessor,
-            IProject project,
-            UnconfiguredProject unconfiguredProject)
+        public ErrorListManager(SVsServiceProvider serviceProvider, IBuildErrorProcessor buildErrorProcessor, IProject project)
         {
             _serviceProvider = serviceProvider;
             _errorListProvider = new ErrorListProvider(_serviceProvider);
             _buildErrorProcessor = buildErrorProcessor;
             _project = project;
-            _unconfiguredProject = unconfiguredProject;
 
             _project.Unloaded += () => _errorListProvider.Tasks.Clear();
         }
@@ -89,9 +83,9 @@ namespace VSRAD.Package.ProjectSystem
             {
                 if (!_errorTaggerDelegateInitialized)
                 {
-                    var syntaxTaggers = _unconfiguredProject.Services.ExportProvider.GetExports<IViewTaggerProvider, IContentTypeMetadata>()
-                        .Where(e => e.Metadata.ContentTypes.Contains("RadeonAsmSyntax"));
-                    var syntaxErrorTagger = syntaxTaggers.FirstOrDefault(t => t.Value.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider")?.Value;
+                    var syntaxErrorTagger = _project.GetExportByMetadataAndType<IViewTaggerProvider, IContentTypeMetadata>(
+                        m => m.ContentTypes.Contains("RadeonAsmSyntax"),
+                        e => e.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
                     if (syntaxErrorTagger != null)
                     {
                         var notifyMethod = syntaxErrorTagger.GetType().GetMethod("ErrorListUpdated");

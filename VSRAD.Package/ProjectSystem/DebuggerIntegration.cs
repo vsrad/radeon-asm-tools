@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.ComponentModel.Composition;
-using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -31,10 +30,12 @@ namespace VSRAD.Package.ProjectSystem
             _actionLauncher = actionLauncher;
             _codeEditor = codeEditor;
 
-            _breakLineTagger = (BreakLineGlyphTaggerProvider)_project.UnconfiguredProject.Services.ExportProvider
-                .GetExports<IViewTaggerProvider, IAppliesToMetadataView>()
-                .Where(e => e.Metadata.AppliesTo == Constants.RadOrVisualCProjectCapability)
-                .First(e => e.Value.GetType() == typeof(BreakLineGlyphTaggerProvider)).Value;
+            // Cannot import BreakLineGlyphTaggerProvider directly because there are
+            // multiple IViewTaggerProvider exports and we don't want to instantiate each one
+            _breakLineTagger = (BreakLineGlyphTaggerProvider)
+                _project.GetExportByMetadataAndType<IViewTaggerProvider, IAppliesToMetadataView>(
+                        m => m.AppliesTo == Constants.RadOrVisualCProjectCapability,
+                        e => e.GetType() == typeof(BreakLineGlyphTaggerProvider));
         }
 
         public IEngineIntegration RegisterEngine()

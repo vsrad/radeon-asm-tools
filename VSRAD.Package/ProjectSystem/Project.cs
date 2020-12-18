@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using VSRAD.Package.BuildTools;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.EditorExtensions;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -25,6 +25,7 @@ namespace VSRAD.Package.ProjectSystem
 
         void RunWhenLoaded(Action<ProjectOptions> callback);
         IProjectProperties GetProjectProperties();
+        TExport GetExportByMetadataAndType<TExport, TMetadata>(Predicate<TMetadata> metadataFilter, Predicate<TExport> exportFilter) where TExport : class;
         void SaveOptions();
     }
 
@@ -93,6 +94,13 @@ namespace VSRAD.Package.ProjectSystem
         {
             var configuredProject = UnconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
             return configuredProject.Services.ProjectPropertiesProvider.GetCommonProperties();
+        }
+
+        public TExport GetExportByMetadataAndType<TExport, TMetadata>(Predicate<TMetadata> metadataFilter, Predicate<TExport> exportFilter) where TExport : class
+        {
+            return UnconfiguredProject.Services.ExportProvider.GetExports<TExport, TMetadata>()
+                .Where(e => metadataFilter(e.Metadata))
+                .FirstOrDefault(e => exportFilter(e.Value))?.Value;
         }
     }
 }

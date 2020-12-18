@@ -24,14 +24,14 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     [ContentType("any")]
     [TagType(typeof(BreakLineGlyphTag))]
-    public sealed class BreakLineGlyphTaggerProvider : IViewTaggerProvider
+    public class BreakLineGlyphTaggerProvider : IViewTaggerProvider
     {
         // Tagger provider can be instantiated before UnconfiguredProject,
         // so we can't use ImportingConstructor to access DebuggerIntegration's
         // ExecutionCompleted event directly.
         internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
 
-        internal void OnExecutionCompleted(ExecutionCompletedEventArgs e) =>
+        public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs e) =>
             DebugExecutionCompleted?.Invoke(this, e);
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
