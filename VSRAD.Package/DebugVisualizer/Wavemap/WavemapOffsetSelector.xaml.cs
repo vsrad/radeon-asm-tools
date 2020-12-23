@@ -19,25 +19,24 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     /// <summary>
     /// Interaction logic for WavemapOffsetSelector.xaml
     /// </summary>
-    public sealed partial class WavemapOffsetSelector : UserControl, INotifyPropertyChanged
+    public sealed partial class WavemapOffsetSelector : UserControl
     {
         public static readonly DependencyProperty XValueProperty =
             DependencyProperty.Register(nameof(XValue), typeof(int), typeof(WavemapOffsetSelector),
-                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         public static readonly DependencyProperty YValueProperty =
             DependencyProperty.Register(nameof(YValue), typeof(int), typeof(WavemapOffsetSelector),
-                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+                new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         public static readonly DependencyProperty LabelProperty =
             DependencyProperty.Register(nameof(Label), typeof(string), typeof(WavemapOffsetSelector),
-                new FrameworkPropertyMetadata("0 - 99 / 0 - 7", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+                new FrameworkPropertyMetadata("0 - 99 / 0 - 7", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         public static readonly DependencyProperty WaveInfoProperty =
             DependencyProperty.Register(nameof(WaveInfo), typeof(string), typeof(WavemapOffsetSelector),
-                new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, DependencyPropertyChanged));
+                new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
-        public event PropertyChangedEventHandler PropertyChanged;
         public string Label
         {
             get => (string)GetValue(LabelProperty);
@@ -90,10 +89,5 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void YIncrement(object sender, RoutedEventArgs e) => YValue++;
         private void YDecrement(object sender, RoutedEventArgs e) => YValue--;
-
-        private static void DependencyPropertyChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
-        {
-
-        }
     }
 }
