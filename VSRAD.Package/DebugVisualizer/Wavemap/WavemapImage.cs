@@ -141,10 +141,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
                 var flatIdx = i + 54;   // header offset
 
-                imageData[flatIdx+0] = waveInfo.BreakColor[0]; // B
-                imageData[flatIdx+1] = waveInfo.BreakColor[1]; // G
-                imageData[flatIdx+2] = waveInfo.BreakColor[2]; // R
-                imageData[flatIdx+3] = waveInfo.BreakColor[3]; // Alpha
+                imageData[flatIdx+0] = waveInfo.BreakColor.B; // B
+                imageData[flatIdx+1] = waveInfo.BreakColor.G; // G
+                imageData[flatIdx+2] = waveInfo.BreakColor.R; // R
+                imageData[flatIdx+3] = waveInfo.BreakColor.A; // Alpha
             }
 
             _box.Image = LoadImage(imageData);

@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Data;
-using System.Windows.Media;
+using System.Drawing;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
 #pragma warning disable CA1815 // the comparing of this structs is not a case, so disable warning that tells us to implement Equals()
     public struct WaveInfo
     {
-        public byte[] BreakColor;
+        public Color BreakColor;
         public uint BreakLine;
         public int GroupIdx;
         public int WaveIdx;
@@ -17,17 +17,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
     class BreakpointColorManager
     {
-        private readonly Dictionary<uint, byte[]> _breakpointColorMapping = new Dictionary<uint, byte[]>();
-        private readonly List<byte[]> _colors = new List<byte[]> { new byte[] { 0, 0, 255, 255 }, new byte[] { 255, 0, 0, 255 }, new byte[] { 0, 255, 0, 255 }, new byte[] { 0, 255, 255, 255 }, new byte[] { 255, 255, 0, 255 } };
+        private readonly Dictionary<uint, Color> _breakpointColorMapping = new Dictionary<uint, Color>();
+        private readonly Color[] _colors = new Color[] { Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Cyan };
         private int _currentColorIndex;
 
-        private byte[] GetNextColor()
+        private Color GetNextColor()
         {
-            if (_currentColorIndex == _colors.Count) _currentColorIndex = 0;
+            if (_currentColorIndex == _colors.Length) _currentColorIndex = 0;
             return _colors[_currentColorIndex++];
         }
 
-        public byte[] GetColorForBreakpoint(uint breakLine)
+        public Color GetColorForBreakpoint(uint breakLine)
         {
             if (_breakpointColorMapping.TryGetValue(breakLine, out var color))
             {
@@ -79,7 +79,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             if (!IsValidWave(row, column))
                 return new WaveInfo
                 {
-                    BreakColor = new byte[] { 128, 128, 128, 255 },
+                    BreakColor = Color.Gray,
                     BreakLine = 0,
                     GroupIdx = 0,
                     WaveIdx = 0,
