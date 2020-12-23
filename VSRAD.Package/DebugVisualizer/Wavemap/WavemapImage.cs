@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -58,7 +58,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private int _rSize = 7;
         private WavemapView _view;
-        private PictureBox _box;
+        private Image _img;
         private VisualizerContext _context;
 
         private int _xOffset = 0;
@@ -87,16 +87,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public static int GridSizeY => 8;
 
 
-        public WavemapImage(PictureBox box, VisualizerContext context)
+        public WavemapImage(Image image, VisualizerContext context)
         {
-            _box = box;
+            _img = image;
             _context = context;
         }
 
-        private void ShowWaveInfo(object sender, MouseEventArgs e)
+        private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            var row = (e.Y / _rSize) + GridSizeY * _yOffset;
-            var col = (e.X / _rSize) + GridSizeX * _xOffset;
+            var p = e.GetPosition(_img);
+            var row = (int)(p.Y / _rSize) + GridSizeY * _yOffset;
+            var col = (int)(p.X / _rSize) + GridSizeX * _xOffset;
             var waveInfo = _view[row, col];
             _context.CurrentWaveInfo = waveInfo.IsVisible
                 ? $"G: {col}, W: {row}, L: {waveInfo.BreakLine}"
@@ -107,7 +108,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             if (view == null || view.WavesPerGroup == 0)
             {
-                _box.Image = null;
+                _img.Source = null;
                 return;
             }
 
@@ -151,27 +152,31 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     imageData[flatIdx + 3] = waveInfo.BreakColor.A; // Alpha
                     flatIdx += 4;
                 }
-
+                
                 i += (_rSize - 2) * 4;
             }
 
-            _box.Image = LoadImage(imageData);
-            _box.Size = _box.Image.Size;
-            _box.Refresh();
+            _img.Source = LoadImage(imageData);
 
-            _box.MouseMove -= ShowWaveInfo;
-            _box.MouseMove += ShowWaveInfo;
+            _img.MouseMove -= ShowWaveInfo;
+            _img.MouseMove += ShowWaveInfo;
         }
 
-        private static Bitmap LoadImage(byte[] imageData)
+        private static BitmapImage LoadImage(byte[] imageData)
         {
             if (imageData == null || imageData.Length == 0) return null;
 
-            using (MemoryStream outStream = new MemoryStream(imageData))
+            var bitmap = new BitmapImage();
+            using (var stream = new MemoryStream(imageData))
             {
-                Bitmap bitmap = new Bitmap(outStream);
-                return new Bitmap(bitmap);
+                
+                bitmap.BeginInit();
+                bitmap.StreamSource = stream;
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.EndInit();
+                bitmap.Freeze();
             }
+            return bitmap;
         }
     }
 }

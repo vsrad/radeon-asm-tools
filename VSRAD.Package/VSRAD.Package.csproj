@@ -175,7 +175,6 @@
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
-    <Compile Include="DebugVisualizer\Wavemap\WavemapImageHost.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml.cs">
       <DependentUpon>WavemapOffsetSelector.xaml</DependentUpon>
     </Compile>
