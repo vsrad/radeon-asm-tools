@@ -6,6 +6,9 @@
              xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer.Wavemap"
              mc:Ignorable="d" 
              d:DesignHeight="45" d:DesignWidth="80">
+    <UserControl.Resources>
+        <ResourceDictionary Source="..\..\ToolWindows\ControlStyle.xaml"/>
+    </UserControl.Resources>
     <Grid x:Name="Root">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
