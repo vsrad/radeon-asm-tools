@@ -59,7 +59,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     newValue = 0;
                 SetValue(XValueProperty, newValue);
 
-                Label = $"{100 * XValue} - {100 * XValue + 99} / {8 * YValue} - {8 * YValue + 7}";
+                Label = $"{WavemapImage.GridSizeX * XValue} - {WavemapImage.GridSizeX * XValue + WavemapImage.GridSizeX - 1}" +
+                    $"/ {WavemapImage.GridSizeY * YValue} - {WavemapImage.GridSizeY * YValue + WavemapImage.GridSizeY - 1}";
             }
         }
 
@@ -73,7 +74,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     newValue = 0;
                 SetValue(YValueProperty, newValue);
 
-                Label = $"{100 * XValue} - {100 * XValue + 99} / {8 * YValue} - {8 * YValue + 7}";
+                Label = $"{WavemapImage.GridSizeX * XValue} - {WavemapImage.GridSizeX * XValue + WavemapImage.GridSizeX - 1}" +
+                    $"/ {WavemapImage.GridSizeY * YValue} - {WavemapImage.GridSizeY * YValue + WavemapImage.GridSizeY - 1}";
             }
         }
 

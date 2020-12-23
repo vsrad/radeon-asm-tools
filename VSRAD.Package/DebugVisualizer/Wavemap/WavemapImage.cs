@@ -55,6 +55,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             0x00, 0x00, 0x00, 0x00
         };
 
+
         private int _rSize = 7;
         private WavemapView _view;
         private PictureBox _box;
@@ -82,8 +83,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-        private int _elementsWidthX = 100;
-        private int _elementsWidthY = 8;
+        public static int GridSizeX => 100;
+        public static int GridSizeY => 8;
 
 
         public WavemapImage(PictureBox box, VisualizerContext context)
@@ -94,8 +95,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void ShowWaveInfo(object sender, MouseEventArgs e)
         {
-            var row = (e.Y / _rSize) + _elementsWidthY * _yOffset;
-            var col = (e.X / _rSize) + _elementsWidthX * _xOffset;
+            var row = (e.Y / _rSize) + GridSizeY * _yOffset;
+            var col = (e.X / _rSize) + GridSizeX * _xOffset;
             var waveInfo = _view[row, col];
             _context.CurrentWaveInfo = waveInfo.IsVisible
                 ? $"G: {col}, W: {row}, L: {waveInfo.BreakLine}"
@@ -111,13 +112,13 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
 
             _view = view;
-            var pixelCount = _elementsWidthX * _elementsWidthY * (_rSize + 1) * (_rSize + 1);
+            var pixelCount = GridSizeX * GridSizeY * (_rSize + 1) * (_rSize + 1);
             var byteCount = pixelCount * 4;
             var imageData = new byte[byteCount + 54];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(54 + byteCount);
-            var widthBytes = BitConverter.GetBytes(_elementsWidthX * _rSize + 1);
-            var heightBytes = BitConverter.GetBytes(_elementsWidthY * _rSize + 1);
+            var widthBytes = BitConverter.GetBytes(GridSizeX * _rSize + 1);
+            var heightBytes = BitConverter.GetBytes(GridSizeY * _rSize + 1);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
             for (int i = 0; i < 4; i++)
             {
@@ -126,17 +127,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = _elementsWidthX * _rSize * 4 + 4;   // +4 for right border
+            var byteWidth = GridSizeX * _rSize * 4 + 4;   // +4 for right border
 
             for (int i = 0; i < byteCount - 3; i += 4)
             {
                 int row = i / byteWidth;
-                if ((row % _rSize) == 0 || row / _rSize >= _elementsWidthY) continue;
+                if ((row % _rSize) == 0 || row / _rSize >= GridSizeY) continue;
                 int col = i % byteWidth;
                 if ((col % _rSize) == 0) continue;
 
-                var viewRow = (_elementsWidthY - 1 - row / _rSize) + _elementsWidthY * _yOffset;
-                var viewCol = (col / _rSize / 4) + _elementsWidthX * _xOffset;
+                var viewRow = (GridSizeY - 1 - row / _rSize) + GridSizeY * _yOffset;
+                var viewCol = (col / _rSize / 4) + GridSizeX * _xOffset;
                 var waveInfo = view[viewRow, viewCol];
 
                 var flatIdx = i + 54;   // header offset
