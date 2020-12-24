@@ -283,17 +283,21 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 var name = currProfile.General.ProfileName;
                 if (profiles.ContainsKey(name))
                 {
-                    name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name),
+                    var newName = _askProfileName(title: "Rename",
+                        message: ProfileNameWindow.NameConflictMessage(name),
                         existingNames: ProfileNames, initialName: name);
-                    if (string.IsNullOrEmpty(name))
+                    if (string.IsNullOrEmpty(newName))
                         return new Error("Profile options were not saved.");
-                    currProfile.General.ProfileName = name;
-                }
-                if (profiles.TryGetValue(name, out var replacedProfile))
-                {
-                    if (SelectedProfile.General.ProfileName == name)
-                        SelectedProfile = currProfile;
-                    DirtyProfiles.Remove(replacedProfile);
+                    currProfile.General.ProfileName = newName;
+                    if (newName == name)
+                    {
+                        var replacedProfile = DirtyProfiles.First(p => p.General.ProfileName == name);
+                        DirtyProfiles.Remove(replacedProfile);
+                        i--; // the index is shifted by 1 after removing the profile
+                        if (SelectedProfile == replacedProfile)
+                            SelectedProfile = currProfile;
+                    }
+                    name = newName;
                 }
                 profiles[name] = (ProfileOptions)currProfile.Clone();
             }

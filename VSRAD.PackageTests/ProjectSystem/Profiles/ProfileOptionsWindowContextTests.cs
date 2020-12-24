@@ -196,6 +196,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void SaveChangesNameConflictIgnoredTest()
         {
             var project = CreateTestProject();
+            // Add a third profile at the end
+            project.Options.SetProfiles(project.Options.Profiles.Append(new KeyValuePair<string, ProfileOptions>("miz", new ProfileOptions())).ToDictionary(p => p.Key, p => p.Value),
+                project.Options.ActiveProfile);
+
             var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
             var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
 
@@ -210,11 +214,13 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             // Selected profile is transparently switched to the replacement
             Assert.Equal(asa, context.SelectedProfile);
-            Assert.Single(context.DirtyProfiles, asa);
+            Assert.Equal(2, context.DirtyProfiles.Count);
+            Assert.Equal(asa, context.DirtyProfiles[0]);
 
-            Assert.Equal(1, project.Options.Profiles.Count);
+            Assert.Equal(2, project.Options.Profiles.Count);
             Assert.True(project.Options.Profiles.TryGetValue("kana", out var renamed));
             Assert.Equal("asa-edited", renamed.General.RemoteMachine);
+            Assert.True(project.Options.Profiles.ContainsKey("miz"));
         }
 
         [Fact]
