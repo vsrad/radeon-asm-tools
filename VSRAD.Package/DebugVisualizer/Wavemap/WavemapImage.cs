@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
-using System.Windows.Forms;
-using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
@@ -152,7 +146,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     imageData[flatIdx + 3] = waveInfo.BreakColor.A; // Alpha
                     flatIdx += 4;
                 }
-                
+
                 i += (_rSize - 2) * 4;
             }
 
@@ -169,7 +163,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             var bitmap = new BitmapImage();
             using (var stream = new MemoryStream(imageData))
             {
-                
+
                 bitmap.BeginInit();
                 bitmap.StreamSource = stream;
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;

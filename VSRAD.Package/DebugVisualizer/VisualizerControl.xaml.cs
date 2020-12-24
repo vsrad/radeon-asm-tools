@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Interop;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
@@ -27,9 +25,8 @@ namespace VSRAD.Package.DebugVisualizer
             DataContext = _context;
             InitializeComponent();
 
-            //HeaderHost.WavemapImage.Setup();
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
-            
+
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
