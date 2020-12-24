@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Shapes;
+using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -13,7 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
-        private readonly WavemapCanvas _wavemap;
+        private readonly WavemapImage _wavemap;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
@@ -26,7 +25,7 @@ namespace VSRAD.Package.DebugVisualizer
             DataContext = _context;
             InitializeComponent();
 
-            _wavemap = new WavemapCanvas(HeaderHost.WavemapCanvas, _context.Options.VisualizerOptions.WavemapElementSize);
+            _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
@@ -57,9 +56,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
             {
-                _wavemap.RectangleSize = _context.Options.VisualizerOptions.WavemapElementSize;
-                _context.CanvasWidth = _wavemap.Width;
-                _context.CanvasHeight = _wavemap.Height;
+                // TODO: handle wavemap rectangle size change
             }
         }
 
@@ -85,12 +82,20 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(VisualizerContext.WatchesValid))
+            switch (e.PropertyName)
             {
-                if (_context.WatchesValid)
-                    RefreshDataStyling();
-                else
-                    GrayOutWatches();
+                case nameof(VisualizerContext.WatchesValid):
+                    if (_context.WatchesValid)
+                        RefreshDataStyling();
+                    else
+                        GrayOutWatches();
+                    break;
+                case nameof(VisualizerContext.WavemapXOffset):
+                    _wavemap.XOffset = _context.WavemapXOffset;
+                    break;
+                case nameof(VisualizerContext.WavemapYOffset):
+                    _wavemap.YOffset = _context.WavemapYOffset;
+                    break;
             }
         }
 
@@ -103,8 +108,6 @@ namespace VSRAD.Package.DebugVisualizer
             RefreshDataStyling();
 
             _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
-            _context.CanvasWidth = _wavemap.Width;
-            _context.CanvasHeight = _wavemap.Height;
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
