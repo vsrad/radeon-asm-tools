@@ -252,10 +252,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        public void ExportProfiles(string file)
+        public Error? ExportProfiles(string file)
         {
-            SaveChanges();
+            if (SaveChanges() is Error e)
+                return e;
+
             ProfileTransferManager.Export((IDictionary<string, ProfileOptions>)_project.Options.Profiles, file);
+            return null;
         }
 
         private void AddProfile(string title, string message, ProfileOptions profile)
@@ -271,7 +274,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             }
         }
 
-        public void SaveChanges()
+        public Error? SaveChanges()
         {
             var profiles = new Dictionary<string, ProfileOptions>();
             for (int i = 0; i < DirtyProfiles.Count; ++i) // not using an enumerator because we may remove elements
@@ -280,15 +283,21 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 var name = currProfile.General.ProfileName;
                 if (profiles.ContainsKey(name))
                 {
-                    name = _askProfileName(title: "Rename", message: ProfileNameWindow.NameConflictMessage(name),
+                    var newName = _askProfileName(title: "Rename",
+                        message: ProfileNameWindow.NameConflictMessage(name),
                         existingNames: ProfileNames, initialName: name);
-                    currProfile.General.ProfileName = name;
-                }
-                if (profiles.TryGetValue(name, out var replacedProfile))
-                {
-                    if (SelectedProfile.General.ProfileName == name)
-                        SelectedProfile = currProfile;
-                    DirtyProfiles.Remove(replacedProfile);
+                    if (string.IsNullOrEmpty(newName))
+                        return new Error("Profile options were not saved.");
+                    currProfile.General.ProfileName = newName;
+                    if (newName == name)
+                    {
+                        var replacedProfile = DirtyProfiles.First(p => p.General.ProfileName == name);
+                        DirtyProfiles.Remove(replacedProfile);
+                        i--; // the index is shifted by 1 after removing the profile
+                        if (SelectedProfile == replacedProfile)
+                            SelectedProfile = currProfile;
+                    }
+                    name = newName;
                 }
                 profiles[name] = (ProfileOptions)currProfile.Clone();
             }
@@ -296,6 +305,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 SelectedProfile = DirtyProfiles[0];
             var activeProfile = SelectedProfile?.General?.ProfileName ?? "";
             _project.Options.SetProfiles(profiles, activeProfile);
+            return null;
         }
 
         private void OpenMacroEditor(object sender)

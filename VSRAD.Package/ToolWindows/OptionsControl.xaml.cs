@@ -77,7 +77,7 @@ namespace VSRAD.Package.ToolWindows
         {
             new ProjectSystem.Profiles.ProfileOptionsWindow(_integration)
             {
-                Owner = Window.GetWindow(Parent),
+                Owner = Application.Current.MainWindow,
                 ShowInTaskbar = false
             }.ShowDialog();
         }

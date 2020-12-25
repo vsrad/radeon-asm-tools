@@ -307,13 +307,13 @@ namespace VSRAD.Package.Options
     public sealed class ReadDebugDataStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private BuiltinActionFile _outputFile;
-        public BuiltinActionFile OutputFile { get => _outputFile; set => SetField(ref _outputFile, value); }
+        public BuiltinActionFile OutputFile { get => _outputFile; set => SetField(ref _outputFile, value, ignoreNull: true); }
 
         private BuiltinActionFile _watchesFile;
-        public BuiltinActionFile WatchesFile { get => _watchesFile; set => SetField(ref _watchesFile, value); }
+        public BuiltinActionFile WatchesFile { get => _watchesFile; set => SetField(ref _watchesFile, value, ignoreNull: true); }
 
-        private BuiltinActionFile _statusFile;
-        public BuiltinActionFile StatusFile { get => _statusFile; set => SetField(ref _statusFile, value); }
+        private BuiltinActionFile _dispatchParamsFile;
+        public BuiltinActionFile DispatchParamsFile { get => _dispatchParamsFile; set => SetField(ref _dispatchParamsFile, value, ignoreNull: true); }
 
         private bool _binaryOutput = true;
         public bool BinaryOutput { get => _binaryOutput; set => SetField(ref _binaryOutput, value); }
@@ -323,11 +323,11 @@ namespace VSRAD.Package.Options
 
         public ReadDebugDataStep() : this(new BuiltinActionFile(), new BuiltinActionFile(), new BuiltinActionFile(), binaryOutput: true, outputOffset: 0) { }
 
-        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile statusFile, bool binaryOutput, int outputOffset)
+        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile dispatchParamsFile, bool binaryOutput, int outputOffset)
         {
             OutputFile = outputFile;
             WatchesFile = watchesFile;
-            StatusFile = statusFile;
+            DispatchParamsFile = dispatchParamsFile;
             BinaryOutput = binaryOutput;
             OutputOffset = outputOffset;
         }
@@ -344,19 +344,19 @@ namespace VSRAD.Package.Options
             if (!watchesResult.TryGetResult(out var watchesFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
 
-            var statusResult = await StatusFile.EvaluateAsync(evaluator);
-            if (!statusResult.TryGetResult(out var statusFile, out error))
+            var dispatchParamsResult = await DispatchParamsFile.EvaluateAsync(evaluator);
+            if (!dispatchParamsResult.TryGetResult(out var dispatchParamsFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
 
             if (profile.General.RunActionsLocally)
             {
                 outputFile.Location = StepEnvironment.Local;
                 watchesFile.Location = StepEnvironment.Local;
-                statusFile.Location = StepEnvironment.Local;
+                dispatchParamsFile.Location = StepEnvironment.Local;
             }
 
             return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
-                outputFile: outputFile, watchesFile: watchesFile, statusFile: statusFile);
+                outputFile: outputFile, watchesFile: watchesFile, dispatchParamsFile: dispatchParamsFile);
         }
 
         public override string ToString()
@@ -374,7 +374,7 @@ namespace VSRAD.Package.Options
             obj is ReadDebugDataStep step &&
             OutputFile.Equals(step.OutputFile) &&
             WatchesFile.Equals(step.WatchesFile) &&
-            StatusFile.Equals(step.StatusFile) &&
+            DispatchParamsFile.Equals(step.DispatchParamsFile) &&
             BinaryOutput == step.BinaryOutput &&
             OutputOffset == step.OutputOffset;
     }

@@ -50,9 +50,6 @@ namespace VSRAD.PackageTests
                     HandleCommand(c, withReply: false);
                     return Task.CompletedTask;
                 });
-            _mock
-                .Setup((c) => c.SendBundleAsync(It.IsAny<List<ICommand>>()))
-                .Returns<List<ICommand>>((c) => Task.FromResult(HandleBundle(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)
@@ -95,16 +92,6 @@ namespace VSRAD.PackageTests
                 _nonReplyInteractions.Dequeue()?.Invoke(command);
                 return null;
             }
-        }
-
-        private IResponse[] HandleBundle(List<ICommand> bundle)
-        {
-            if (_bundledInteractions.Count == 0)
-                throw new Xunit.Sdk.XunitException($"The test method has sent a request bundle when none was expected.");
-
-            var (responses, callback) = _bundledInteractions.Dequeue();
-            callback?.Invoke(bundle);
-            return responses;
         }
     }
 }

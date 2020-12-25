@@ -57,13 +57,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 _context.RemoveSelectedProfile();
         }
 
-        private void ApplyChanges(object sender, RoutedEventArgs e) =>
-            _context.SaveChanges();
+        private void ApplyChanges(object sender, RoutedEventArgs e)
+        {
+            if (_context.SaveChanges() is Error err)
+                Errors.Show(err);
+        }
 
         private void ApplyChangesAndClose(object sender, RoutedEventArgs e)
         {
-            _context.SaveChanges();
-            Close(sender, e);
+            if (_context.SaveChanges() is Error err)
+                Errors.Show(err);
+            else
+                Close(sender, e);
         }
 
         private void Close(object sender, RoutedEventArgs e)
@@ -108,7 +113,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             var dialog = new ProfileNameWindow(dialogLabel, okButton: "OK", cancelButton: "Cancel", initialName, existingNames)
             {
-                Title = dialogTitle
+                Title = dialogTitle,
+                Owner = Application.Current.MainWindow,
+                ShowInTaskbar = false
             };
             dialog.ShowDialog();
             return dialog.DialogResult == true ? dialog.EnteredName : null;

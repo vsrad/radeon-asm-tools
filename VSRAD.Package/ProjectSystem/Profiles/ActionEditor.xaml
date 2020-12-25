@@ -281,10 +281,10 @@
                                                            CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
                                                            Header="Watches" Grid.Row="1" Grid.ColumnSpan="3" />
 
-                            <local:BuiltinActionFileEditor DataContext="{Binding StatusFile}"
+                            <local:BuiltinActionFileEditor DataContext="{Binding DispatchParamsFile}"
                                                            MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
                                                            CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Status" Grid.Row="2" Grid.ColumnSpan="3" />
+                                                           Header="Dispatch Params" Grid.Row="2" Grid.ColumnSpan="3" />
 
                             <Label Content="Outuput Type: " VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="1"

@@ -203,7 +203,7 @@ namespace VSRAD.PackageTests.Server
             a.Steps.Add(new ReadDebugDataStep(
                 outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-output", CheckTimestamp = true },
                 watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-watches", CheckTimestamp = false },
-                statusFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
+                dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
                 binaryOutput: true, outputOffset: 0));
 
             profile.General.RunActionsLocally = false;
@@ -231,7 +231,7 @@ namespace VSRAD.PackageTests.Server
             {
                 var readDebugData = (ReadDebugDataStep)result.Steps[5];
                 Assert.Equal(StepEnvironment.Remote, readDebugData.OutputFile.Location);
-                Assert.Equal(StepEnvironment.Remote, readDebugData.StatusFile.Location);
+                Assert.Equal(StepEnvironment.Remote, readDebugData.DispatchParamsFile.Location);
                 Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
             }
 
@@ -260,7 +260,7 @@ namespace VSRAD.PackageTests.Server
             {
                 var readDebugData = (ReadDebugDataStep)result.Steps[5];
                 Assert.Equal(StepEnvironment.Local, readDebugData.OutputFile.Location);
-                Assert.Equal(StepEnvironment.Local, readDebugData.StatusFile.Location);
+                Assert.Equal(StepEnvironment.Local, readDebugData.DispatchParamsFile.Location);
                 Assert.Equal(StepEnvironment.Local, readDebugData.WatchesFile.Location);
             }
         }

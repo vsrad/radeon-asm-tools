@@ -24,32 +24,20 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     [ContentType("any")]
     [TagType(typeof(BreakLineGlyphTag))]
-    public sealed class BreakLineGlyphTaggerProvider : IViewTaggerProvider
+    public class BreakLineGlyphTaggerProvider : IViewTaggerProvider
     {
-        /// Tagger provider can be instantiated either before or after UnconfiguredProject,
-        /// so we can't use ImportingConstructor _and_ we can't rely on the tagger being available
-        /// when IProject is loaded. This hack shouldn't cause issues as long as there's never more
-        /// than one active instance of IProject, which is guaranteed by SolutionManager.
-        private static DebuggerIntegration _debuggerIntegration;
+        // Tagger provider can be instantiated before UnconfiguredProject,
+        // so we can't use ImportingConstructor to access DebuggerIntegration's
+        // ExecutionCompleted event directly.
+        internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
 
-        public static void Initialize(IProject project)
-        {
-            _debuggerIntegration = project.UnconfiguredProject.Services.ExportProvider.GetExportedValue<DebuggerIntegration>();
-
-            void OnProjectUnloaded()
-            {
-                _debuggerIntegration = null;
-                project.Unloaded -= OnProjectUnloaded;
-            }
-            project.Unloaded += OnProjectUnloaded;
-        }
+        public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs e) =>
+            DebugExecutionCompleted?.Invoke(this, e);
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
         {
-            if (_debuggerIntegration != null
-                && textView.TextBuffer == buffer
-                && buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument document))
-                return buffer.Properties.GetOrCreateSingletonProperty(() => new BreakLineGlyphTagger(buffer, document, _debuggerIntegration) as ITagger<T>);
+            if (buffer != null && buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument document))
+                return buffer.Properties.GetOrCreateSingletonProperty(() => new BreakLineGlyphTagger(buffer, document, this) as ITagger<T>);
             return null;
         }
     }
@@ -63,11 +51,11 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
         private readonly List<TagSpan<BreakLineGlyphTag>> _tagSpans = new List<TagSpan<BreakLineGlyphTag>>();
 
-        public BreakLineGlyphTagger(ITextBuffer buffer, ITextDocument document, DebuggerIntegration debuggerIntegration)
+        public BreakLineGlyphTagger(ITextBuffer buffer, ITextDocument document, BreakLineGlyphTaggerProvider provider)
         {
             _buffer = buffer;
             _document = document;
-            debuggerIntegration.ExecutionCompleted += DebugExecutionCompleted;
+            provider.DebugExecutionCompleted += DebugExecutionCompleted;
         }
 
         private void DebugExecutionCompleted(object sender, ExecutionCompletedEventArgs e)

@@ -32,22 +32,27 @@ namespace VSRAD.Package.DebugVisualizer
         public event EventHandler<GroupIndexChangedEventArgs> IndexChanged;
 
         private uint _x;
-        public uint X { get => _x; set => SetField(ref _x, LimitIndex(value, _dimX)); }
+        public uint X { get => _x; set => SetField(ref _x, value); }
 
         private uint _y;
-        public uint Y { get => _y; set => SetField(ref _y, LimitIndex(value, _dimY)); }
+        public uint Y { get => _y; set => SetField(ref _y, value); }
 
         private uint _z;
-        public uint Z { get => _z; set => SetField(ref _z, LimitIndex(value, _dimZ)); }
+        public uint Z { get => _z; set => SetField(ref _z, value); }
 
         private uint _dimX = 1;
-        public uint DimX { get => _dimX; set { SetField(ref _dimX, value); X = X; } }
+        public uint DimX { get => _dimX; set { SetField(ref _dimX, value); RaisePropertyChanged(nameof(MaximumX)); } }
 
         private uint _dimY = 1;
-        public uint DimY { get => _dimY; set { SetField(ref _dimY, value); Y = Y; } }
+        public uint DimY { get => _dimY; set { SetField(ref _dimY, value); RaisePropertyChanged(nameof(MaximumY)); } }
 
         private uint _dimZ = 1;
-        public uint DimZ { get => _dimZ; set { SetField(ref _dimZ, value); Z = Z; } }
+        public uint DimZ { get => _dimZ; set { SetField(ref _dimZ, value); RaisePropertyChanged(nameof(MaximumZ)); } }
+
+        // OneWay bindings in XAML do not work on these properties for some reason, hence the empty setters
+        public uint MaximumX { get => _projectOptions.VisualizerOptions.NDRange3D ? DimX - 1 : uint.MaxValue; set { } }
+        public uint MaximumY { get => DimY - 1; set { } }
+        public uint MaximumZ { get => DimZ - 1; set { } }
 
         private string _error;
         public bool HasErrors => _error != null;
@@ -62,7 +67,10 @@ namespace VSRAD.Package.DebugVisualizer
             _projectOptions.VisualizerOptions.PropertyChanged += (sender, args) =>
             {
                 if (args.PropertyName == nameof(Options.VisualizerOptions.NDRange3D))
-                    X = 0; // reset group index to clear errors
+                {
+                    RaisePropertyChanged(nameof(MaximumX));
+                    Update();
+                }
             };
 
             _projectOptions.DebuggerOptions.PropertyChanged += (sender, args) =>
@@ -100,9 +108,6 @@ namespace VSRAD.Package.DebugVisualizer
             Update();
         }
 
-        private uint LimitIndex(uint index, uint limit) =>
-            (index < limit || !_projectOptions.VisualizerOptions.NDRange3D) ? index : limit - 1;
-
         public void Update()
         {
             var index = _projectOptions.VisualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
@@ -133,9 +138,14 @@ namespace VSRAD.Package.DebugVisualizer
             field = value;
 
             if (_updateOptions) Update();
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            RaisePropertyChanged(propertyName);
 
             return true;
+        }
+
+        private void RaisePropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

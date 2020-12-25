@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Tagging;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -24,21 +25,15 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ErrorListProvider _errorListProvider;
         private readonly IBuildErrorProcessor _buildErrorProcessor;
-        private readonly UnconfiguredProject _unconfiguredProject;
         private readonly IProject _project;
 
         [ImportingConstructor]
-        public ErrorListManager(
-            SVsServiceProvider serviceProvider,
-            IBuildErrorProcessor buildErrorProcessor,
-            IProject project,
-            UnconfiguredProject unconfiguredProject)
+        public ErrorListManager(SVsServiceProvider serviceProvider, IBuildErrorProcessor buildErrorProcessor, IProject project)
         {
             _serviceProvider = serviceProvider;
             _errorListProvider = new ErrorListProvider(_serviceProvider);
             _buildErrorProcessor = buildErrorProcessor;
             _project = project;
-            _unconfiguredProject = unconfiguredProject;
 
             _project.Unloaded += () => _errorListProvider.Tasks.Clear();
         }
@@ -48,7 +43,7 @@ namespace VSRAD.Package.ProjectSystem
             _errorListProvider.Tasks.Clear();
 
             var errors = new List<ErrorTask>();
-            var messages = await _buildErrorProcessor.ExtractMessagesAsync(outputs, null);
+            var messages = await _buildErrorProcessor.ExtractMessagesAsync(outputs);
             foreach (var message in messages)
             {
                 var document = string.IsNullOrEmpty(message.SourceFile) // make unclickable error otherwise it will refer to the project root
@@ -88,13 +83,14 @@ namespace VSRAD.Package.ProjectSystem
             {
                 if (!_errorTaggerDelegateInitialized)
                 {
-                    var taggers = _unconfiguredProject.Services.ExportProvider.GetExportedValues<IViewTaggerProvider>();
-                    var syntaxTagger = taggers.FirstOrDefault(t => t.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
-                    if (syntaxTagger != null)
+                    var syntaxErrorTagger = _project.GetExportByMetadataAndType<IViewTaggerProvider, IContentTypeMetadata>(
+                        m => m.ContentTypes.Contains("RadeonAsmSyntax"),
+                        e => e.GetType().FullName == "VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter.ErrorHighlighterTaggerProvider");
+                    if (syntaxErrorTagger != null)
                     {
-                        var notifyMethod = syntaxTagger.GetType().GetMethod("ErrorListUpdated");
+                        var notifyMethod = syntaxErrorTagger.GetType().GetMethod("ErrorListUpdated");
                         if (notifyMethod != null)
-                            _notifyErrorTagger = (NotifyErrorTaggerDelegate)Delegate.CreateDelegate(typeof(NotifyErrorTaggerDelegate), syntaxTagger, notifyMethod);
+                            _notifyErrorTagger = (NotifyErrorTaggerDelegate)Delegate.CreateDelegate(typeof(NotifyErrorTaggerDelegate), syntaxErrorTagger, notifyMethod);
                     }
                     _errorTaggerDelegateInitialized = true;
                 }

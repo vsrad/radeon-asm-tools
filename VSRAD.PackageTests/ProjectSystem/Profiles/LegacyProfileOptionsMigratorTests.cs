@@ -33,9 +33,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(StepEnvironment.Remote, step2.WatchesFile.Location);
             Assert.Equal("watches-file", step2.WatchesFile.Path);
             Assert.False(step2.WatchesFile.CheckTimestamp);
-            Assert.Equal(StepEnvironment.Local, step2.StatusFile.Location);
-            Assert.Equal("status-file", step2.StatusFile.Path);
-            Assert.True(step2.StatusFile.CheckTimestamp);
+            Assert.Equal(StepEnvironment.Local, step2.DispatchParamsFile.Location);
+            Assert.Equal("status-file", step2.DispatchParamsFile.Path);
+            Assert.True(step2.DispatchParamsFile.CheckTimestamp);
 
             Assert.Equal("Debug (Old)", converted.Profiles["Default"].MenuCommands.DebugAction);
         }

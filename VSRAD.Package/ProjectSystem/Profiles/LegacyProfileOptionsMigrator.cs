@@ -49,10 +49,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var steps = conf["Steps"].ToObject<List<IActionStep>>(serializer);
             var outputFile = conf["OutputFile"].ToObject<BuiltinActionFile>();
             var watchesFile = conf["WatchesFile"].ToObject<BuiltinActionFile>();
-            var statusFile = conf["StatusFile"].ToObject<BuiltinActionFile>();
+            var dispatchParamsFile = conf["StatusFile"].ToObject<BuiltinActionFile>();
             var binaryOutput = (bool)conf["BinaryOutput"];
             var outputOffset = (int)conf["OutputOffset"];
-            var readDebugData = new ReadDebugDataStep(outputFile, watchesFile, statusFile, binaryOutput, outputOffset);
+            var readDebugData = new ReadDebugDataStep(outputFile, watchesFile, dispatchParamsFile, binaryOutput, outputOffset);
             steps.Add(readDebugData);
             return steps;
         }

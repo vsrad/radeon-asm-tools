@@ -5,8 +5,8 @@ namespace VSRAD.Package.Server
 {
     public sealed class BreakStateDispatchParameters
     {
-        private static readonly Regex _statusRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)(\s+comment (?<comment>.*))?", RegexOptions.Compiled);
-        private const string _exampleStatusContents = @"
+        private static readonly Regex _paramsRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)(\s+comment (?<comment>.*))?", RegexOptions.Compiled);
+        private const string _exampleParamsContent = @"
 grid size (2048, 1, 1)
 group size (512, 1, 1)
 wave size 64
@@ -31,15 +31,15 @@ comment optional comment";
             StatusString = statusString;
         }
 
-        public static Result<BreakStateDispatchParameters> Parse(string statusFileContents)
+        public static Result<BreakStateDispatchParameters> Parse(string contents)
         {
-            if (statusFileContents == null)
+            if (contents == null)
                 return (BreakStateDispatchParameters)null;
 
-            var match = _statusRegex.Match(statusFileContents);
+            var match = _paramsRegex.Match(contents);
 
             if (!match.Success)
-                return new Error("Could not read dispatch parameters from the status file. The following is an example of the expected status file contents:\r\n" + _exampleStatusContents);
+                return new Error("Could not read the dispatch parameters file. The following is an example of the expected file contents:\r\n" + _exampleParamsContent);
 
             var gridX = uint.Parse(match.Groups["gd_x"].Value);
             var gridY = uint.Parse(match.Groups["gd_y"].Value);
@@ -52,24 +52,24 @@ comment optional comment";
             var statusString = match.Groups["comment"].Value;
 
             if (gridX == 0)
-                return new Error("Could not set dispatch parameters from the status file. GridX cannot be zero.");
+                return new Error("Could not read the dispatch parameters file. GridX cannot be zero.");
             if (groupX == 0)
-                return new Error("Could not set dispatch parameters from the status file. GroupX cannot be zero.");
+                return new Error("Could not read the dispatch parameters file. GroupX cannot be zero.");
 
             if (waveSize == 0)
-                return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be zero.");
+                return new Error("Could not read the dispatch parameters file. WaveSize cannot be zero.");
             if (waveSize > groupX)
-                return new Error("Could not set dispatch parameters from the status file. WaveSize cannot be bigger than GroupX.");
+                return new Error("Could not read the dispatch parameters file. WaveSize cannot be bigger than GroupX.");
 
             if (ndRange3D && (groupY == 0 || groupZ == 0))
-                return new Error("Could not set dispatch parameters from the status file. If GridY and GridZ are set, GroupY and GroupZ cannot be zero.");
+                return new Error("Could not read the dispatch parameters file. If GridY and GridZ are set, GroupY and GroupZ cannot be zero.");
 
             if (groupX > gridX)
-                return new Error("Could not set dispatch parameters from the status file. GroupX cannot be bigger than GridX.");
+                return new Error("Could not read the dispatch parameters file. GroupX cannot be bigger than GridX.");
             if (ndRange3D && groupY > gridY)
-                return new Error("Could not set dispatch parameters from the status file. GroupY cannot be bigger than GridY.");
+                return new Error("Could not read the dispatch parameters file. GroupY cannot be bigger than GridY.");
             if (ndRange3D && groupZ > gridZ)
-                return new Error("Could not set dispatch parameters from the status file. GroupZ cannot be bigger than GridZ.");
+                return new Error("Could not read the dispatch parameters file. GroupZ cannot be bigger than GridZ.");
 
             var dimX = gridX / groupX;
             var dimY = ndRange3D ? gridY / groupY : 0;

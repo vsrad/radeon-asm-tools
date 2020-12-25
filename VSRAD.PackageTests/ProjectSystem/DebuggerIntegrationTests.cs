@@ -1,5 +1,7 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text.Tagging;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,7 @@ using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
@@ -29,8 +32,10 @@ namespace VSRAD.PackageTests.ProjectSystem
             var options = new ProjectOptions();
             options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             projectMock.Setup((p) => p.Options).Returns(options);
+            var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>();
+            projectMock.Setup((p) => p.GetExportByMetadataAndType(It.IsAny<Predicate<IAppliesToMetadataView>>(), It.IsAny<Predicate<IViewTaggerProvider>>()))
+                .Returns(breakLineTagger.Object);
             var project = projectMock.Object;
-
             project.Options.Profile.MenuCommands.DebugAction = "Debug";
             project.Options.Profile.General.CopySources = false;
             project.Options.Profile.General.DeployDirectory = "";
@@ -46,7 +51,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             readDebugDataStep.OutputFile.Path = "output-path";
 
             project.Options.Profile.Actions[0].Steps.Add(new ExecuteStep
-                { Executable = "ohmu", Arguments = "-break-line $(RadBreakLine) -source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
+            { Executable = "ohmu", Arguments = "-break-line $(RadBreakLine) -source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
             project.Options.Profile.Actions[0].Steps.Add(readDebugDataStep);
 
             var codeEditor = new Mock<IActiveCodeEditor>();
@@ -95,6 +100,8 @@ namespace VSRAD.PackageTests.ProjectSystem
             Assert.Equal("a", breakState.Data.Watches[0]);
             Assert.Equal("c", breakState.Data.Watches[1]);
             Assert.Equal("tide", breakState.Data.Watches[2]);
+
+            breakLineTagger.Verify(t => t.OnExecutionCompleted(execCompletedEvent));
         }
     }
 }

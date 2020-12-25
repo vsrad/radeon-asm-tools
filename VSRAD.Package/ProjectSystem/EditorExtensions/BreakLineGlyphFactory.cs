@@ -23,20 +23,21 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
     public sealed class BreakLineGlyphFactory : IGlyphFactory
     {
+        private static BitmapImage _glyph;
+        private static BitmapImage Glyph
+        {
+            get
+            {
+                if (_glyph == null)
+                    _glyph = new BitmapImage(new Uri(Constants.CurrentStatementIconResourcePackUri));
+                return _glyph;
+            }
+        }
+
         public UIElement GenerateGlyph(IWpfTextViewLine line, IGlyphTag tag)
         {
-            if (tag is BreakLineGlyphTag breakLineTag)
-            {
-                var img = new BitmapImage(new Uri(Constants.CurrentStatementIconResourcePackUri));
-                return new Image
-                {
-                    Source = img,
-                    Width = 11,
-                    Height = 11,
-                    Margin = new Thickness(1, 2.5, 0, 0),
-                    ToolTip = breakLineTag.ToolTip
-                };
-            }
+            if (tag is BreakLineGlyphTag breakLine)
+                return new Image { Source = Glyph, Width = 11, Height = 11, Margin = new Thickness(1, 2.5, 0, 0), ToolTip = breakLine.ToolTip };
             return null;
         }
     }

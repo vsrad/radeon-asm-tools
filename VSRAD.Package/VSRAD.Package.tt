@@ -24,7 +24,7 @@
         </Strings>
       </Menu>
       <!-- Tools -> RAD Debug -> Actions -->
-      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="0x700" type="Menu">
+      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="10" type="Menu">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
         <Strings>
           <ButtonText>Actions</ButtonText>
@@ -59,6 +59,36 @@
     </Menus>
 
     <Buttons>
+      <!-- Tool window commands -->
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowVisualizerCommandId" priority="1" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Open Visualizer</ButtonText>
+        </Strings>
+      </Button>
+      <!--
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Open Slice Visualizer</ButtonText>
+        </Strings>
+      </Button>
+      -->
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="optionsIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Options</ButtonText>
+        </Strings>
+      </Button>
       <!-- Tools menu -->
       <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="4" type="Button">
         <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
@@ -107,36 +137,6 @@
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Debug</ButtonText>
-        </Strings>
-      </Button>
-      <!-- Tool window commands -->
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowVisualizerCommandId" priority="1" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="visualizerIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Open Visualizer</ButtonText>
-        </Strings>
-      </Button>
-      <!--
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="visualizerIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Open Slice Visualizer</ButtonText>
-        </Strings>
-      </Button>
-      -->
-      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="optionsIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Options</ButtonText>
         </Strings>
       </Button>
       <!-- Editor context menu -->
@@ -238,7 +238,7 @@
     </Groups>
 
     <Combos>
-       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="10" type="DynamicCombo" defaultWidth="120" idCommandList="ProfileTargetMachineDropdownListId">
+       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="120" idCommandList="ProfileTargetMachineDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>IconAndText</CommandFlag>
         <CommandFlag>CommandWellOnly</CommandFlag>

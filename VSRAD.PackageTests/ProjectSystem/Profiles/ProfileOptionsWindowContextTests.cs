@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using VSRAD.Package;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
@@ -177,7 +178,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             nameResolver.Setup(n => n("Rename", "Profile kana already exists. Enter a new name or leave it as is to overwrite the profile:", It.IsAny<IEnumerable<string>>(), "kana"))
                 .Returns("asa-renamed").Verifiable();
 
-            context.SaveChanges();
+            Assert.Null(context.SaveChanges()); // no error
             nameResolver.Verify();
 
             Assert.Equal(2, project.Options.Profiles.Count);
@@ -195,6 +196,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         public void SaveChangesNameConflictIgnoredTest()
         {
             var project = CreateTestProject();
+            // Add a third profile at the end
+            project.Options.SetProfiles(project.Options.Profiles.Append(new KeyValuePair<string, ProfileOptions>("miz", new ProfileOptions())).ToDictionary(p => p.Key, p => p.Value),
+                project.Options.ActiveProfile);
+
             var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
             var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
 
@@ -205,15 +210,38 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             nameResolver.Setup(n => n("Rename", It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), "kana")).Returns("kana");
 
-            context.SaveChanges();
+            Assert.Null(context.SaveChanges()); // no error
 
             // Selected profile is transparently switched to the replacement
             Assert.Equal(asa, context.SelectedProfile);
-            Assert.Single(context.DirtyProfiles, asa);
+            Assert.Equal(2, context.DirtyProfiles.Count);
+            Assert.Equal(asa, context.DirtyProfiles[0]);
 
-            Assert.Equal(1, project.Options.Profiles.Count);
+            Assert.Equal(2, project.Options.Profiles.Count);
             Assert.True(project.Options.Profiles.TryGetValue("kana", out var renamed));
             Assert.Equal("asa-edited", renamed.General.RemoteMachine);
+            Assert.True(project.Options.Profiles.ContainsKey("miz"));
+        }
+
+        [Fact]
+        public void SaveChangesNameConflictResolutionCancelledTest()
+        {
+            var project = CreateTestProject();
+            var nameResolver = new Mock<ProfileOptionsWindowContext.AskProfileNameDelegate>(MockBehavior.Strict);
+            var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
+
+            context.SelectedProfile = GetDirtyProfile(context, "kana");
+            var asa = GetDirtyProfile(context, "asa");
+            asa.General.ProfileName = "kana";
+
+            nameResolver.Setup(n => n("Rename", It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), "kana")).Returns((string)null);
+
+            Assert.Equal("Profile options were not saved.", ((Error)context.SaveChanges()).Message);
+
+            // Profiles are unchanged
+            Assert.Equal(2, project.Options.Profiles.Count);
+            Assert.True(project.Options.Profiles.ContainsKey("kana"));
+            Assert.True(project.Options.Profiles.ContainsKey("asa"));
         }
 
         [Fact]

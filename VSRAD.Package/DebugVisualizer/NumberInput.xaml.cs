@@ -44,9 +44,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         public uint Step { get => (uint)GetValue(StepProperty); set => SetValue(StepProperty, value); }
 
-        public uint Minimum { get => (uint)GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
+        public uint Minimum { get => (uint)GetValue(MinimumProperty); set { SetValue(MinimumProperty, value); Value = Value; } }
 
-        public uint Maximum { get => (uint)GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
+        public uint Maximum { get => (uint)GetValue(MaximumProperty); set { SetValue(MaximumProperty, value); Value = Value; } }
 
         private string _rawValue = "0";
         public string RawValue

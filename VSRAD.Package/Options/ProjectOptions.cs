@@ -67,6 +67,7 @@ namespace VSRAD.Package.Options
         {
             ((Dictionary<string, ProfileOptions>)Profiles)[ActiveProfile] = newProfile;
             RaisePropertyChanged(nameof(Profiles));
+            RaisePropertyChanged(nameof(ActiveProfile));
         }
         #endregion
 

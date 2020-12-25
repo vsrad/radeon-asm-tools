@@ -88,9 +88,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal("valid_watches", readDebugData.WatchesFile.Path);
             Assert.True(readDebugData.WatchesFile.CheckTimestamp);
 
-            Assert.Equal(StepEnvironment.Remote, readDebugData.StatusFile.Location);
-            Assert.Equal("status", readDebugData.StatusFile.Path);
-            Assert.True(readDebugData.StatusFile.CheckTimestamp);
+            Assert.Equal(StepEnvironment.Remote, readDebugData.DispatchParamsFile.Location);
+            Assert.Equal("status", readDebugData.DispatchParamsFile.Path);
+            Assert.True(readDebugData.DispatchParamsFile.CheckTimestamp);
         }
 
         [Fact]
