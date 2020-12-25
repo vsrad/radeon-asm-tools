@@ -47,11 +47,11 @@
                                Width="60" Height="24" />
             <StackPanel Orientation="Horizontal">
                 <Label Content="Group #:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding GroupIndex.X, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.X, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumX, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
-                <local:NumberInput Value="{Binding GroupIndex.Y, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.Y, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumY, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding GroupIndex.Z, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput Value="{Binding GroupIndex.Z, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumZ, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal">
