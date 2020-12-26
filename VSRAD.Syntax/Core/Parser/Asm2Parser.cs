@@ -67,7 +67,7 @@ namespace VSRAD.Syntax.Core.Parser
                             i += 2;
                         }
                     }
-                    else if (token.Type == RadAsm2Lexer.FUNCTION)
+                    else if (token.Type == RadAsm2Lexer.FUNCTION || token.Type == RadAsm2Lexer.SHADER)
                     {
                         if (tokens.Length - i > 2 && tokens[i + 1].Type == RadAsm2Lexer.IDENTIFIER)
                         {

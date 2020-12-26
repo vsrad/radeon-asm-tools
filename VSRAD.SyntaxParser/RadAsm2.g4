@@ -14,6 +14,7 @@ SENDMSG : 'sendmsg' ;
 ASIC    : 'asic' ;
 TYPE    : 'type' ;
 ASSERT  : 'assert' ;
+SHADER  : 'shader' ;
 
 FUNCTION: 'function' ;
 
