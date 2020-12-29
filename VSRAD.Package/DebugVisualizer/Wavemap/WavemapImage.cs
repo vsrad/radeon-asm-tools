@@ -158,7 +158,12 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 var flatIdx = i + _headerSize;   // header offset
 
                 if (row / _rSize >= GridSizeY) continue;
-                if ((row % _rSize) == 0 || (col % _rSize) == 0 || col == 0 || row == lastRow)
+                var viewRow = (GridSizeY - 1 - row / _rSize) + GridSizeY * _yOffset;
+                var viewCol = (col / _rSize / 4) + GridSizeX * _xOffset;
+
+                if ((viewCol % GridSizeX) == 0
+                    && viewCol != GridSizeX * _xOffset
+                    && view[viewRow, viewCol - 1].IsVisible)
                 {
                     imageData[flatIdx + 0] = 0; // B
                     imageData[flatIdx + 1] = 0; // G
@@ -167,9 +172,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     continue;
                 }
 
-                var viewRow = (GridSizeY - 1 - row / _rSize) + GridSizeY * _yOffset;
-                var viewCol = (col / _rSize / 4) + GridSizeX * _xOffset;
                 var waveInfo = view[viewRow, viewCol];
+                if (!waveInfo.IsVisible) continue;
+
+                if ((row % _rSize) == 0 || (col % _rSize) == 0 || row == lastRow)
+                {
+                    imageData[flatIdx + 0] = 0; // B
+                    imageData[flatIdx + 1] = 0; // G
+                    imageData[flatIdx + 2] = 0; // R
+                    imageData[flatIdx + 3] = 255; // Alpha
+                    continue;
+                }
 
                 for (int rwidth = 0; rwidth < _rSize - 1; ++rwidth)
                 {
@@ -179,6 +192,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     imageData[flatIdx + 3] = waveInfo.BreakColor.A; // Alpha
                     flatIdx += 4;
                 }
+
+                imageData[flatIdx + 0] = 127; // B
+                imageData[flatIdx + 1] = 127; // G
+                imageData[flatIdx + 2] = 127; // R
+                imageData[flatIdx + 3] = 255; // Alpha
 
                 i += (_rSize - 2) * 4;
             }
