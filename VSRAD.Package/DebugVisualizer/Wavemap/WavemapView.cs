@@ -79,7 +79,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             if (!IsValidWave(row, column))
                 return new WaveInfo
                 {
-                    BreakColor = Color.Gray,
+                    BreakColor = Color.FromArgb(0, 0, 0, 0),
                     BreakLine = 0,
                     GroupIdx = 0,
                     WaveIdx = 0,
