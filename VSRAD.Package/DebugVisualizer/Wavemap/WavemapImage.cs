@@ -71,6 +71,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00
         };
 
@@ -147,21 +148,28 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = GridSizeX * _rSize * 4 + 4;   // +4 for right border
+            var byteWidth = GridSizeX * _rSize * 4 + 4;   // +4 for left border
+            var lastRow = GridSizeY * _rSize - 1;
 
             for (int i = 0; i < byteCount - 3; i += 4)
             {
                 int row = i / byteWidth;
-                if ((row % _rSize) == 0 || row / _rSize >= GridSizeY) continue;
                 int col = i % byteWidth;
-                if ((col % _rSize) == 0) continue;
+                var flatIdx = i + _headerSize;   // header offset
+
+                if (row / _rSize >= GridSizeY) continue;
+                if ((row % _rSize) == 0 || (col % _rSize) == 0 || col == 0 || row == lastRow)
+                {
+                    imageData[flatIdx + 0] = 0; // B
+                    imageData[flatIdx + 1] = 0; // G
+                    imageData[flatIdx + 2] = 0; // R
+                    imageData[flatIdx + 3] = 255; // Alpha
+                    continue;
+                }
 
                 var viewRow = (GridSizeY - 1 - row / _rSize) + GridSizeY * _yOffset;
                 var viewCol = (col / _rSize / 4) + GridSizeX * _xOffset;
                 var waveInfo = view[viewRow, viewCol];
-
-                var flatIdx = i + _headerSize;   // header offset
-
 
                 for (int rwidth = 0; rwidth < _rSize - 1; ++rwidth)
                 {
