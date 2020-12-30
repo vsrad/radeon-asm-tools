@@ -18,7 +18,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     class BreakpointColorManager
     {
         private readonly Dictionary<uint, Color> _breakpointColorMapping = new Dictionary<uint, Color>();
-        private readonly Color[] _colors = new Color[] { Color.Red, Color.Blue, Color.Green, Color.Yellow, Color.Cyan };
+        private readonly Color[] _colors = new Color[] { Color.FromArgb(181, 137, 0), Color.FromArgb(203, 75, 22), Color.FromArgb(108, 113, 196), Color.FromArgb(42, 161, 152), Color.FromArgb(133, 153, 0) };
         private int _currentColorIndex;
 
         private Color GetNextColor()
