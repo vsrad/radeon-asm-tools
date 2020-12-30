@@ -59,17 +59,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     newValue = 0;
                 SetValue(XValueProperty, newValue);
 
-                var leftX = WavemapImage.GridSizeX * XValue;
-                var rightX = WavemapImage.GridSizeX * XValue + WavemapImage.GridSizeX - 1;
-                var leftY = WavemapImage.GridSizeY * YValue;
-                var rightY = WavemapImage.GridSizeY * YValue + WavemapImage.GridSizeY - 1;
-
-                XIncrementButton.IsEnabled = rightX < _groupCount - 1;
-                YIncrementButton.IsEnabled = rightY < (_context.BreakData.GroupSize / _context.Options.VisualizerOptions.WaveSize) - 1;
-                XDecrementButton.IsEnabled = leftX != 0;
-                YDecrementButton.IsEnabled = leftY != 0;
-
-                Label = $"{leftX} - {rightX} / {leftY} - {rightY}";
+                UpdateGridShape();
             }
         }
 
@@ -83,42 +73,47 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     newValue = 0;
                 SetValue(YValueProperty, newValue);
 
-                var leftX = WavemapImage.GridSizeX * XValue;
-                var rightX = WavemapImage.GridSizeX * XValue + WavemapImage.GridSizeX - 1;
-                var leftY = WavemapImage.GridSizeY * YValue;
-                var rightY = WavemapImage.GridSizeY * YValue + WavemapImage.GridSizeY - 1;
-
-                XIncrementButton.IsEnabled = rightX < _groupCount;
-                YIncrementButton.IsEnabled = rightY < _context.BreakData.GroupSize / _context.Options.VisualizerOptions.WaveSize;
-                XDecrementButton.IsEnabled = leftX != 0;
-                YDecrementButton.IsEnabled = leftY != 0;
-
-                Label = $"{leftX} - {rightX} / {leftY} - {rightY}";
+                UpdateGridShape();
             }
         }
 
         private int _groupCount;
         private VisualizerContext _context;
+        private WavemapImage _image;
 
-        public void Setup(VisualizerContext context)
+        public void Setup(VisualizerContext context, WavemapImage image)
         {
             _context = context;
             _context.GroupFetched += OnGroupFetched;
+
+            _image = image;
+            _image.PropertyChanged += GridSizeChanged;
+        }
+
+        private void GridSizeChanged(object sender, PropertyChangedEventArgs e)
+        {
+            UpdateGridShape();
         }
 
         private void OnGroupFetched(object sender, GroupFetchedEventArgs e)
         {
             _groupCount = _context.BreakData.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.NGroups);
+            UpdateGridShape();
+        }
 
-            var leftX = WavemapImage.GridSizeX * XValue;
-            var rightX = WavemapImage.GridSizeX * XValue + WavemapImage.GridSizeX - 1;
-            var leftY = WavemapImage.GridSizeY * YValue;
-            var rightY = WavemapImage.GridSizeY * YValue + WavemapImage.GridSizeY - 1;
+        private void UpdateGridShape()
+        {
+            var leftX = _image.GridSizeX * XValue;
+            var rightX = _image.GridSizeX * XValue + _image.GridSizeX - 1;
+            var leftY = _image.GridSizeY * YValue;
+            var rightY = _image.GridSizeY * YValue + _image.GridSizeY - 1;
 
             XIncrementButton.IsEnabled = rightX < _groupCount - 1;
             YIncrementButton.IsEnabled = rightY < (_context.BreakData.GroupSize / _context.Options.VisualizerOptions.WaveSize) - 1;
             XDecrementButton.IsEnabled = leftX != 0;
             YDecrementButton.IsEnabled = leftY != 0;
+
+            Label = $"{leftX} - {rightX} / {leftY} - {rightY}";
         }
 
         public WavemapOffsetSelector()

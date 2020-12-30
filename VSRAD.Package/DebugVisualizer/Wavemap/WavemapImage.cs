@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -35,7 +37,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      * 0x00 0x00 0x00 0x00  -- Blue Gamma
      * ------------ DATA ------------
      */
-    class WavemapImage
+    public class WavemapImage : DefaultNotifyPropertyChanged
     {
         // initialize data with empty header
         private List<byte> _header = new List<byte>
@@ -103,8 +105,18 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-        public static int GridSizeX { get; private set; }
-        public static int GridSizeY => 8;
+
+        private int _gridSizeX;
+        public int GridSizeX 
+        {
+            get => _gridSizeX;
+            private set
+            {
+                SetField(ref _gridSizeX, value);
+            }
+        }
+
+        public int GridSizeY => 8;
 
 
         public WavemapImage(Image image, VisualizerContext context)

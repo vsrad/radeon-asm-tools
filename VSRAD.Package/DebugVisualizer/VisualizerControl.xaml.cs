@@ -25,9 +25,8 @@ namespace VSRAD.Package.DebugVisualizer
             DataContext = _context;
             InitializeComponent();
 
-
-            HeaderHost.WavemapSelector.Setup(_context);
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
+            HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
