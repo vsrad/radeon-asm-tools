@@ -103,7 +103,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-        public static int GridSizeX => 100;
+        public static int GridSizeX { get; private set; }
         public static int GridSizeY => 8;
 
 
@@ -111,6 +111,15 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             _img = image;
             _context = context;
+
+            ((Grid)((Grid)_img.Parent).Parent).SizeChanged += RecomputeGridSize;
+        }
+
+        private void RecomputeGridSize(object sender, System.Windows.SizeChangedEventArgs e)
+        {
+            var newGridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 150) / _rSize;
+            if (newGridSizeX != GridSizeX)
+                SetData(_view);
         }
 
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
@@ -131,6 +140,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 _img.Source = null;
                 return;
             }
+
+            GridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 150) / _rSize;
 
             _view = view;
             var pixelCount = GridSizeX * GridSizeY * (_rSize) * (_rSize);
