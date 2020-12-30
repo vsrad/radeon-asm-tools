@@ -23,8 +23,6 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        Task SendAsync(ICommand command);
-
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
@@ -85,52 +83,18 @@ namespace VSRAD.Package.Server
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
         }
 
-        public Task SendAsync(ICommand command) => SendAsync(command, true);
+        public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>
+            SendWithReplyAsync<T>(command, tryReconnect: true);
 
-        private async Task SendAsync(ICommand command, bool tryReconnect)
-        {
-            try
-            {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
-            }
-            catch (ConnectionRefusedException e) when (!tryReconnect)
-            {
-                ForceDisconnect();
-                await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
-                throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
-            }
-
-            try
-            {
-                await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Sent command to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
-            }
-            catch (ObjectDisposedException) // ForceDisconnect has been called within the try block 
-            {
-                throw new OperationCanceledException();
-            }
-            catch (Exception e)
-            {
-                ForceDisconnect();
-                if (tryReconnect)
-                {
-                    await _outputWindowWriter.PrintMessageAsync($"Connection lost, attempting to reconnect...").ConfigureAwait(false);
-                    await SendAsync(command, false);
-                }
-                else
-                {
-                    await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to server").ConfigureAwait(false);
-                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
-                }
-            }
-        }
-
-        public async Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse
+        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect) where T : IResponse
         {
             await _mutex.WaitAsync();
             try
             {
-                await SendAsync(command).ConfigureAwait(false);
+                await EstablishServerConnectionAsync().ConfigureAwait(false);
+                await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
+                await _outputWindowWriter.PrintMessageAsync($"Sent command to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
+
                 var response = await _connection.GetStream().ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
                 await _outputWindowWriter.PrintMessageAsync($"Received response from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
                 return (T)response;
@@ -141,8 +105,18 @@ namespace VSRAD.Package.Server
             }
             catch (Exception e)
             {
-                ForceDisconnect();
-                throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                if (tryReconnect)
+                {
+                    await _outputWindowWriter.PrintMessageAsync($"Connection to {ConnectionOptions} lost, attempting to reconnect...").ConfigureAwait(false);
+                    _mutex.Release();
+                    return await SendWithReplyAsync<T>(command, false);
+                }
+                else
+                {
+                    ForceDisconnect();
+                    await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to {ConnectionOptions}").ConfigureAwait(false);
+                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                }
             }
             finally
             {

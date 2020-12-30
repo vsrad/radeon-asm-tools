@@ -58,9 +58,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             opts.RemoteMachine = (string)conf["RemoteMachine"];
             opts.Port = (int)conf["Port"];
-            opts.CopySources = (bool)conf["CopySources"];
-            opts.DeployDirectory = (string)conf["DeployDirectory"];
-            opts.AdditionalSources = (string)conf["AdditionalSources"];
         }
 
         private static ActionProfileOptions ReadDebugAction(JObject conf)
@@ -186,8 +183,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private static void TransferHardcodedMacros(ProfileOptions profile, JObject conf)
         {
-            profile.Macros.Add(new MacroItem(RadMacros.DeployDirectory, profile.General.DeployDirectory, userDefined: true));
-            profile.General.DeployDirectory = "$(" + RadMacros.DeployDirectory + ")";
             profile.General.RemoteWorkDir = "$(" + RadMacros.DeployDirectory + ")";
             profile.General.LocalWorkDir = CleanProfileMacros.LocalWorkDirValue;
 

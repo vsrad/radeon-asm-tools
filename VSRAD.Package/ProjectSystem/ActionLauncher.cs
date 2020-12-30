@@ -37,7 +37,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
         private readonly ICommunicationChannel _channel;
-        private readonly IFileSynchronizationManager _deployManager;
+        private readonly IProjectSourceManager _projectSources;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IBreakpointTracker _breakpointTracker;
         private readonly SVsServiceProvider _serviceProvider;
@@ -50,7 +50,7 @@ namespace VSRAD.Package.ProjectSystem
             IProject project,
             IActionLogger actionLogger,
             ICommunicationChannel channel,
-            IFileSynchronizationManager deployManager,
+            IProjectSourceManager projectSources,
             IActiveCodeEditor codeEditor,
             IBreakpointTracker breakpointTracker,
             SVsServiceProvider serviceProvider)
@@ -59,7 +59,7 @@ namespace VSRAD.Package.ProjectSystem
             _actionLogger = actionLogger;
             _channel = channel;
             _serviceProvider = serviceProvider;
-            _deployManager = deployManager;
+            _projectSources = projectSources;
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
             _statusBar = new VsStatusBarWriter(serviceProvider);
@@ -114,7 +114,8 @@ namespace VSRAD.Package.ProjectSystem
                 if (!evalResult.TryGetResult(out action, out evalError))
                     return new ActionExecution(evalError);
 
-                await _deployManager.SynchronizeRemoteAsync(general).ConfigureAwait(false);
+                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                _projectSources.SaveProjectState();
 
                 var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches);
                 var runner = new ActionRunner(_channel, _serviceProvider, env);

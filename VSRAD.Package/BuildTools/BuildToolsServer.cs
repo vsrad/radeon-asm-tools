@@ -39,7 +39,7 @@ namespace VSRAD.Package.BuildTools
         private readonly IProject _project;
         private readonly ICommunicationChannel _channel;
         private readonly IOutputWindowManager _outputWindow;
-        private readonly IFileSynchronizationManager _deployManager;
+        private readonly IProjectSourceManager _projectSources;
         private readonly IBuildErrorProcessor _errorProcessor;
         private CancellationTokenSource _serverLoopCts;
         private readonly string _projectName;
@@ -52,14 +52,14 @@ namespace VSRAD.Package.BuildTools
             ICommunicationChannel channel,
             IOutputWindowManager outputWindow,
             IBuildErrorProcessor errorProcessor,
-            IFileSynchronizationManager deployManager,
+            IProjectSourceManager projectSources,
             UnconfiguredProject unconfiguredProject)
         {
             _project = project;
             _channel = channel;
             _outputWindow = outputWindow;
             _errorProcessor = errorProcessor;
-            _deployManager = deployManager;
+            _projectSources = projectSources;
 
             // Build integration is not implemented for VisualC projects
             if (unconfiguredProject?.Capabilities?.Contains("VisualC") != true)
@@ -136,7 +136,8 @@ namespace VSRAD.Package.BuildTools
             if (buildSteps == BuildSteps.Skip)
                 return new IPCBuildResult { Skipped = true };
 
-            await _deployManager.SynchronizeRemoteAsync().ConfigureAwait(false);
+            _projectSources.SaveProjectState();
+
             var executor = new RemoteCommandExecutor("Build", _channel, _outputWindow);
 
             string preprocessedSource = null;

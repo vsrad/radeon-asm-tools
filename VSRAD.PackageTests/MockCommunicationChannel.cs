@@ -33,23 +33,16 @@ namespace VSRAD.PackageTests
             _mock = new Mock<ICommunicationChannel>();
             _mock
                 .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>()))
-                .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c, withReply: true)));
+                .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c)));
             _mock
                 .Setup((c) => c.SendWithReplyAsync<MetadataFetched>(It.IsAny<FetchMetadata>()))
-                .Returns<ICommand>((c) => Task.FromResult((MetadataFetched)HandleCommand(c, withReply: true)));
+                .Returns<ICommand>((c) => Task.FromResult((MetadataFetched)HandleCommand(c)));
             _mock
                 .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<FetchResultRange>()))
-                .Returns<ICommand>((c) => Task.FromResult((ResultRangeFetched)HandleCommand(c, withReply: true)));
+                .Returns<ICommand>((c) => Task.FromResult((ResultRangeFetched)HandleCommand(c)));
             _mock
                 .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>()))
-                .Returns<ICommand>((c) => Task.FromResult((PutFileResponse)HandleCommand(c, withReply: true)));
-            _mock
-                .Setup((c) => c.SendAsync(It.IsAny<ICommand>()))
-                .Returns<ICommand>((c) =>
-                {
-                    HandleCommand(c, withReply: false);
-                    return Task.CompletedTask;
-                });
+                .Returns<ICommand>((c) => Task.FromResult((PutFileResponse)HandleCommand(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)
@@ -71,27 +64,15 @@ namespace VSRAD.PackageTests
             where TCommand : ICommand =>
             _nonReplyInteractions.Enqueue((c) => Assert.IsType<TCommand>(c));
 
-        private IResponse HandleCommand(ICommand command, bool withReply)
+        private IResponse HandleCommand(ICommand command)
         {
-            if (withReply)
+            if (_replyInteractions.Count == 0)
             {
-                if (_replyInteractions.Count == 0)
-                {
-                    throw new Xunit.Sdk.XunitException("The test method has sent a request (and is waiting for a reply) when none was expected.");
-                }
-                var (response, callback) = _replyInteractions.Dequeue();
-                callback?.Invoke(command);
-                return response;
+                throw new Xunit.Sdk.XunitException("The test method has sent a request (and is waiting for a reply) when none was expected.");
             }
-            else
-            {
-                if (_nonReplyInteractions.Count == 0)
-                {
-                    throw new Xunit.Sdk.XunitException("The test method has sent a request (without waiting for a reply) when none was expected.");
-                }
-                _nonReplyInteractions.Dequeue()?.Invoke(command);
-                return null;
-            }
+            var (response, callback) = _replyInteractions.Dequeue();
+            callback?.Invoke(command);
+            return response;
         }
     }
 }

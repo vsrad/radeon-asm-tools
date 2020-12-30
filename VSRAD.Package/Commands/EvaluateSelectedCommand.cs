@@ -23,7 +23,6 @@ namespace VSRAD.Package.Commands
         private readonly IActiveCodeEditor _codeEditor;
         private readonly QuickInfoEvaluateSelectedState _quickInfoState;
 #pragma warning disable IDE0052 // Remove unread private members
-        private readonly IFileSynchronizationManager _deployManager;
         private readonly IOutputWindowManager _outputWindow;
         private readonly ICommunicationChannel _channel;
         private readonly IErrorListManager _errorListManager;
@@ -34,7 +33,6 @@ namespace VSRAD.Package.Commands
             IProject project,
             IActiveCodeEditor codeEditor,
             QuickInfoEvaluateSelectedState state,
-            IFileSynchronizationManager deployManager,
             IOutputWindowManager outputWindow,
             ICommunicationChannel channel,
             SVsServiceProvider serviceProvider,
@@ -43,7 +41,6 @@ namespace VSRAD.Package.Commands
             _project = project;
             _codeEditor = codeEditor;
             _quickInfoState = state;
-            _deployManager = deployManager;
             _outputWindow = outputWindow;
             _channel = channel;
             _errorListManager = errorListManager;

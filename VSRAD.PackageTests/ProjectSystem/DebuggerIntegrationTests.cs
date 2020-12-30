@@ -37,8 +37,6 @@ namespace VSRAD.PackageTests.ProjectSystem
                 .Returns(breakLineTagger.Object);
             var project = projectMock.Object;
             project.Options.Profile.MenuCommands.DebugAction = "Debug";
-            project.Options.Profile.General.CopySources = false;
-            project.Options.Profile.General.DeployDirectory = "";
             project.Options.Profile.General.LocalWorkDir = "local/dir";
             project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
             project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
@@ -63,7 +61,8 @@ namespace VSRAD.PackageTests.ProjectSystem
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
 
             var channel = new MockCommunicationChannel();
-            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, new Mock<IFileSynchronizationManager>().Object,
+            var sourceManager = new Mock<IProjectSourceManager>();
+            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
                 codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
             var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object);
 
@@ -94,6 +93,8 @@ namespace VSRAD.PackageTests.ProjectSystem
             Assert.NotNull(execCompletedEvent);
             Assert.Equal(@"C:\MEHVE\JATO.s", execCompletedEvent.File);
             Assert.Equal(666u, execCompletedEvent.Lines[0]);
+
+            sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
             Assert.NotNull(breakState);
             Assert.Equal(3, breakState.Data.Watches.Count);

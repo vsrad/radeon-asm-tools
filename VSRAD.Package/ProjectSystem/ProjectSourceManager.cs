@@ -23,7 +23,8 @@ namespace VSRAD.Package.ProjectSystem
     public interface IProjectSourceManager
     {
         string ProjectRoot { get; }
-        Task SaveDocumentsAsync(DocumentSaveType type);
+        void SaveProjectState();
+        void SaveDocuments(DocumentSaveType type);
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
     }
 
@@ -31,22 +32,30 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
+        private readonly IProject _project;
         private readonly SVsServiceProvider _serviceProvider;
-        private readonly UnconfiguredProject _unconfiguredProject;
 
         public string ProjectRoot { get; }
 
         [ImportingConstructor]
-        public ProjectSourceManager(SVsServiceProvider serviceProvider, UnconfiguredProject unconfiguredProject)
+        public ProjectSourceManager(IProject project, SVsServiceProvider serviceProvider)
         {
+            _project = project;
             _serviceProvider = serviceProvider;
-            _unconfiguredProject = unconfiguredProject;
-            ProjectRoot = Path.GetDirectoryName(unconfiguredProject.FullPath);
+            ProjectRoot = Path.GetDirectoryName(project.UnconfiguredProject.FullPath);
         }
 
-        public async Task SaveDocumentsAsync(DocumentSaveType type)
+        public void SaveProjectState()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            ThreadHelper.ThrowIfNotOnUIThread();
+            _project.SaveOptions();
+            if (_project.Options.DebuggerOptions.Autosave)
+                SaveDocuments(DocumentSaveType.OpenDocuments);
+        }
+
+        public void SaveDocuments(DocumentSaveType type)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
             var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
             Assumes.Present(dte);
             switch (type)
@@ -84,7 +93,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()
         {
-            var configuredProject = _unconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
+            var configuredProject = _project.UnconfiguredProject.Services.ActiveConfiguredProjectProvider.ActiveConfiguredProject;
             var projectItems = await configuredProject.Services.SourceItems.GetItemsAsync();
 
             var files = new List<(string absolutePath, string relativePath)>();
