@@ -26,10 +26,10 @@
 
         <TextBlock Grid.Row="0" Grid.ColumnSpan="5" Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Center" Text="{Binding WaveInfo}"
                    ToolTip="G: Group index under cursor&#x0a;W: Wave index under cursor&#x0a;L: Break line of wave under cursor"/>
-        <RepeatButton Grid.Column="1" Grid.RowSpan="2" Grid.Row="1" Content="⯇" Width="25" Click="XDecrement"/>
-        <RepeatButton Grid.Row="1" Grid.Column="2" Content="▲" Width="25" Click="YDecrement"/>
-        <RepeatButton Grid.Row="2" Grid.Column="2" Content="▼" Width="25" Click="YIncrement"/>
-        <RepeatButton Grid.Row="1" Grid.Column="3" Grid.RowSpan="2" Content="⯈" Width="25" Click="XIncrement"/>
+        <RepeatButton Grid.Column="1" Grid.RowSpan="2" Grid.Row="1" Content="⯇" Width="25" Click="XDecrement" x:Name="XDecrementButton" IsEnabled="False"/>
+        <RepeatButton Grid.Row="1" Grid.Column="2" Content="▲" Width="25" Click="YDecrement" x:Name="YDecrementButton" IsEnabled="False"/>
+        <RepeatButton Grid.Row="2" Grid.Column="2" Content="▼" Width="25" Click="YIncrement" x:Name="YIncrementButton" IsEnabled="False"/>
+        <RepeatButton Grid.Row="1" Grid.Column="3" Grid.RowSpan="2" Content="⯈" Width="25" Click="XIncrement" x:Name="XIncrementButton" IsEnabled="False"/>
         <TextBlock Grid.Row="3" Grid.ColumnSpan="5" Grid.Column="0" VerticalAlignment="Top" HorizontalAlignment="Center" Text="{Binding Label}"/>
     </Grid>
 </UserControl>
