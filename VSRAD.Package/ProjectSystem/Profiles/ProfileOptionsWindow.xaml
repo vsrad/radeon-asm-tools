@@ -152,22 +152,24 @@
                                      IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
                                      ToolTip="Port on the remote machine the debug server is listening on (when started without arguments, the server listens on port 9339)" />
 
-                            <Label Content="Localhost" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <Label Content="Run on Localhost" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
                                       IsChecked="{Binding RunActionsLocally, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       ToolTip="Run all actions locally, without connecting to the debug server."/>
 
-                            <Label Content="Local Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <Label Content="Default Local Working Dir:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <TextBox Text="{Binding LocalWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"/>
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="LocalWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="Remote Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
-                            <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"/>
+                            <Label Content="Default Remote Working Dir:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
+                                     IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="RemoteWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"
+                                    IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
 
                             <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
                                 <Label Content="Continue action execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" HorizontalContentAlignment="Left"/>

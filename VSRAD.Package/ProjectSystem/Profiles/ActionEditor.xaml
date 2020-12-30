@@ -143,12 +143,14 @@
                                    VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
 
                             <Label Content="Source Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                            <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1"
+                                     ToolTip="Relative paths are resolved against General -> Default Local/Remote Working Dir"/>
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
                                     Tag="SourcePath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Target Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
-                            <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1" />
+                            <TextBox Text="{Binding TargetPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="1"
+                                     ToolTip="Relative paths are resolved against General -> Default Local/Remote Working Dir"/>
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
                                     Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
@@ -204,7 +206,8 @@
                                     Tag="Arguments" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
                             <Label Content="Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                            <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1" />
+                            <TextBox Text="{Binding WorkingDirectory, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
+                                     ToolTip="If not specified, set to General -> Default Local/Remote Working Dir"/>
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="2"
                                     Tag="WorkingDirectory" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
@@ -265,39 +268,40 @@
                                 <ColumnDefinition Width="34"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}"
-                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Output" Grid.Row="0" Grid.ColumnSpan="3" />
 
-                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}"
-                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Watches" Grid.Row="1" Grid.ColumnSpan="3" />
-
-                            <local:BuiltinActionFileEditor DataContext="{Binding DispatchParamsFile}"
-                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Dispatch Params" Grid.Row="2" Grid.ColumnSpan="3" />
-
-                            <Label Content="Outuput Type: " VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                            <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="3" Grid.Column="1"
+                            <Label Content="Output Type:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <ComboBox Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
                                         ToolTip="{Binding Path=SelectedItem.ToolTip, RelativeSource={RelativeSource Self}}"
                                         SelectedIndex="{Binding BinaryOutput, Converter={StaticResource BoolToIndexConverter}, Mode=TwoWay}">
                                 <ComboBoxItem Content="Binary" ToolTip="32-bit values are packed into consecutive DWORDs"/>
                                 <ComboBoxItem Content="Text" ToolTip="Each 32-bit value is written on a separate line as a hexadecimal string (0x...)"/>
                             </ComboBox>
-                            
-                            <Label Content="Output Offset: " VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+
+                            <Label Content="Output Offset:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding OutputOffset, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
                                      ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"
-                                     Height="22" Width="160" Grid.Row="4" Grid.Column="1"/>
+                                     Height="22" Width="160" Grid.Row="1" Grid.Column="1"/>
+
+                            <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}"
+                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
+                                                           Header="Output" Grid.Row="2" Grid.ColumnSpan="3" />
+
+                            <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}"
+                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
+                                                           Header="Watches" Grid.Row="3" Grid.ColumnSpan="3" />
+
+                            <local:BuiltinActionFileEditor DataContext="{Binding DispatchParamsFile}"
+                                                           MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                           CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
+                                                           Header="Dispatch Params" Grid.Row="4" Grid.ColumnSpan="3" />
                         </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>
