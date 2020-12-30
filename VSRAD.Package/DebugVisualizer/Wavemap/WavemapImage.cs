@@ -20,8 +20,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      * 0x20 0x00            -- Bits per pixel (32 for RGBA)
      * 0x03 0x00 0x00 0x00  -- BI_BITFIELDS, no pixel array compression used
      * 0xDS 0x00 0x00 0x00  -- Data size (pixels * 8)
-     * 0x13 0x0b 0x00 0x00  -- horizontal DPI
-     * 0x13 0x0b 0x00 0x00  -- vertical DPI
+     * 0xc4 0x0e 0x00 0x00  -- horizontal DPM, must be set to 96 dpi
+     * 0xc4 0x0e 0x00 0x00  -- vertical DPM, must be set to 96 dpi
      * 0x00 0x00 0x00 0x00  -- Number of colors in the palette
      * 0x00 0x00 0x00 0x00  -- 0 means all colors are important 
      * 0x00 0x00 0xff 0x00  -- Red channel bit mask
@@ -52,8 +52,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             0x20, 0x00,
             0x03, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, // VARIABLE: data size. Offset 34
-            0x13, 0x0b, 0x00, 0x00,
-            0x13, 0x0b, 0x00, 0x00,
+            0xc4, 0x0e, 0x00, 0x00,
+            0xc4, 0x0e, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0xff, 0x00,
@@ -76,7 +76,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         };
 
         private int _headerSize => _header.Count;
-        private int _rSize = 7;
+        private int _rSize = 8;
         private WavemapView _view;
         private Image _img;
         private VisualizerContext _context;
@@ -133,14 +133,15 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
 
             _view = view;
-            var pixelCount = GridSizeX * GridSizeY * (_rSize + 1) * (_rSize + 1);
+            var pixelCount = GridSizeX * GridSizeY * (_rSize) * (_rSize);
             var byteCount = pixelCount * 4;
             var imageData = new byte[byteCount + _headerSize];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(_headerSize + byteCount);
-            var widthBytes = BitConverter.GetBytes(GridSizeX * _rSize + 1);
-            var heightBytes = BitConverter.GetBytes(GridSizeY * _rSize + 1);
+            var widthBytes = BitConverter.GetBytes(GridSizeX * _rSize);
+            var heightBytes = BitConverter.GetBytes(GridSizeY * _rSize);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
+
             for (int i = 0; i < 4; i++)
             {
                 imageData[2 + i] = fileSizeBytes[i];
@@ -148,10 +149,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[22 + i] = heightBytes[i];
                 imageData[34 + i] = dataSizeBytes[i];
             }
-            var byteWidth = GridSizeX * _rSize * 4 + 4;   // +4 for left border
-            var lastRow = GridSizeY * _rSize - 1;
 
-            for (int i = 0; i < byteCount - 3; i += 4)
+            var byteWidth = GridSizeX * _rSize * 4;
+
+            for (int i = 0; i < byteCount - 3; i += _rSize * 4)
             {
                 int row = i / byteWidth;
                 int col = i % byteWidth;
@@ -161,44 +162,33 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 var viewRow = (GridSizeY - 1 - row / _rSize) + GridSizeY * _yOffset;
                 var viewCol = (col / _rSize / 4) + GridSizeX * _xOffset;
 
-                if ((viewCol % GridSizeX) == 0
-                    && viewCol != GridSizeX * _xOffset
-                    && view[viewRow, viewCol - 1].IsVisible)
-                {
-                    imageData[flatIdx + 0] = 0; // B
-                    imageData[flatIdx + 1] = 0; // G
-                    imageData[flatIdx + 2] = 0; // R
-                    imageData[flatIdx + 3] = 255; // Alpha
-                    continue;
-                }
-
                 var waveInfo = view[viewRow, viewCol];
                 if (!waveInfo.IsVisible) continue;
 
-                if ((row % _rSize) == 0 || (col % _rSize) == 0 || row == lastRow)
+                if ((row % _rSize) == 0 || (row % _rSize) == _rSize - 1)
                 {
-                    imageData[flatIdx + 0] = 0; // B
-                    imageData[flatIdx + 1] = 0; // G
-                    imageData[flatIdx + 2] = 0; // R
-                    imageData[flatIdx + 3] = 255; // Alpha
-                    continue;
+                    for (int rwidth = 0; rwidth < _rSize; ++rwidth)
+                    {
+                        imageData[flatIdx + 3] = 255; // Black
+                        flatIdx += 4;
+                    }
                 }
-
-                for (int rwidth = 0; rwidth < _rSize - 1; ++rwidth)
+                else
                 {
-                    imageData[flatIdx + 0] = waveInfo.BreakColor.B; // B
-                    imageData[flatIdx + 1] = waveInfo.BreakColor.G; // G
-                    imageData[flatIdx + 2] = waveInfo.BreakColor.R; // R
-                    imageData[flatIdx + 3] = waveInfo.BreakColor.A; // Alpha
+                    imageData[flatIdx + 3] = 255; // Black
                     flatIdx += 4;
+
+                    for (int rwidth = 1; rwidth < _rSize - 1; ++rwidth)
+                    {
+                        imageData[flatIdx + 0] = waveInfo.BreakColor.B; // B
+                        imageData[flatIdx + 1] = waveInfo.BreakColor.G; // G
+                        imageData[flatIdx + 2] = waveInfo.BreakColor.R; // R
+                        imageData[flatIdx + 3] = waveInfo.BreakColor.A; // Alpha
+                        flatIdx += 4;
+                    }
+
+                    imageData[flatIdx + 3] = 255; // Black
                 }
-
-                imageData[flatIdx + 0] = 127; // B
-                imageData[flatIdx + 1] = 127; // G
-                imageData[flatIdx + 2] = 127; // R
-                imageData[flatIdx + 3] = 255; // Alpha
-
-                i += (_rSize - 2) * 4;
             }
 
             _img.Source = LoadImage(imageData);

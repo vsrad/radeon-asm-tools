@@ -161,7 +161,7 @@
                                                WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
                                                Height="80" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="WavemapSelector"
                                                Grid.Column="0" Grid.Row="0"/>
-                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,5,0,0" Grid.Column="1" Grid.Row="0" Width="701" Height="50" Stretch="Fill"/>
+                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,5,0,0" Grid.Column="1" Grid.Row="0" Stretch="None"/>
             </Grid>
         </Grid>
     </StackPanel>
