@@ -123,7 +123,7 @@
                 <RowDefinition>
                     <RowDefinition.Style>
                         <Style TargetType="RowDefinition">
-                            <Setter Property="Height" Value="84" />
+                            <Setter Property="Height" Value="*" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemapField}" Value="False">
                                     <Setter Property="Height" Value="0" />

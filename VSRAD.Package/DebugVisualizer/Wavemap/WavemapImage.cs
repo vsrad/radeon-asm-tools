@@ -112,11 +112,21 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             get => _gridSizeX;
             private set
             {
-                SetField(ref _gridSizeX, value);
+                if (value >= 8)
+                    SetField(ref _gridSizeX, value);
             }
         }
 
-        public int GridSizeY => 8;
+        private int _gridSizeY;
+        public int GridSizeY
+        {
+            get => _gridSizeY;
+            private set
+            {
+                if (value >= 8 && value <= 16)
+                    SetField(ref _gridSizeY, value);
+            }
+        }
 
 
         public WavemapImage(Image image, VisualizerContext context)
@@ -154,6 +164,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
 
             GridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 150) / _rSize;
+            GridSizeY = view.WavesPerGroup;
 
             _view = view;
             var pixelCount = GridSizeX * GridSizeY * (_rSize) * (_rSize);
