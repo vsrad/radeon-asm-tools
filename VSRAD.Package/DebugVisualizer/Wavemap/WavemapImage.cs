@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
@@ -107,7 +106,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
 
         private int _gridSizeX;
-        public int GridSizeX 
+        public int GridSizeX
         {
             get => _gridSizeX;
             private set
@@ -117,14 +116,24 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
+        private int _firstGroup;
+        public int FirstGroup
+        {
+            get => _firstGroup;
+            set
+            {
+                SetField(ref _firstGroup, value);
+                SetData(_view);
+            }
+        }
+
         private int _gridSizeY;
         public int GridSizeY
         {
             get => _gridSizeY;
             private set
             {
-                if (value >= 8 && value <= 16)
-                    SetField(ref _gridSizeY, value);
+                SetField(ref _gridSizeY, value);
             }
         }
 
@@ -139,7 +148,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void RecomputeGridSize(object sender, System.Windows.SizeChangedEventArgs e)
         {
-            var newGridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 150) / _rSize;
+            var newGridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 75) / _rSize; // 75 for offset selector width
             if (newGridSizeX != GridSizeX)
                 SetData(_view);
         }
@@ -147,12 +156,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
             var p = e.GetPosition(_img);
-            var row = (int)(p.Y / _rSize) + GridSizeY * _yOffset;
-            var col = (int)(p.X / _rSize) + GridSizeX * _xOffset;
+            var row = (int)(p.Y / _rSize);
+            var col = (int)(p.X / _rSize) + FirstGroup;
             var waveInfo = _view[row, col];
-            _context.CurrentWaveInfo = waveInfo.IsVisible
-                ? $"G: {col}, W: {row}, L: {waveInfo.BreakLine}"
-                : $"G: {col}, W: {row}, Out of range.";
+            if (waveInfo.IsVisible)
+                _context.CurrentWaveInfo = $"G: {col}\nW: {row}\nL: {waveInfo.BreakLine}";
         }
 
         public void SetData(WavemapView view)
@@ -163,7 +171,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 return;
             }
 
-            GridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 150) / _rSize;
+            GridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 75) / _rSize; // 75 for offset selector width
             GridSizeY = view.WavesPerGroup;
 
             _view = view;
@@ -193,8 +201,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 var flatIdx = i + _headerSize;   // header offset
 
                 if (row / _rSize >= GridSizeY) continue;
-                var viewRow = (GridSizeY - 1 - row / _rSize) + GridSizeY * _yOffset;
-                var viewCol = (col / _rSize / 4) + GridSizeX * _xOffset;
+                var viewRow = (GridSizeY - 1 - row / _rSize);
+                var viewCol = (col / _rSize / 4) + FirstGroup;
 
                 var waveInfo = view[viewRow, viewCol];
                 if (!waveInfo.IsVisible) continue;
@@ -238,7 +246,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             var bitmap = new BitmapImage();
             using (var stream = new MemoryStream(imageData))
             {
-
                 bitmap.BeginInit();
                 bitmap.StreamSource = stream;
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;

@@ -153,15 +153,14 @@
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
             <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="75"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <wavemap:WavemapOffsetSelector XValue="{Binding WavemapXOffset, UpdateSourceTrigger=PropertyChanged}"
-                                               YValue="{Binding WavemapYOffset, UpdateSourceTrigger=PropertyChanged}"
+                <wavemap:WavemapOffsetSelector 
                                                WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
-                                               Height="80" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="WavemapSelector"
-                                               Grid.Column="0" Grid.Row="0"/>
-                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,5,0,0" Grid.Column="1" Grid.Row="0" Stretch="None"/>
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" x:Name="WavemapSelector"
+                                               Height="80"  Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
+                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,0" Grid.Column="1" Grid.Row="0" Stretch="None"/>
             </Grid>
         </Grid>
     </StackPanel>
