@@ -78,10 +78,20 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         };
 
         private int _headerSize => _header.Count;
-        private int _rSize = 8;
         private WavemapView _view;
         private Image _img;
         private VisualizerContext _context;
+
+        private int _rSize = 0;
+        public int ElementSize
+        {
+            get => _rSize;
+            set
+            {
+                _rSize = value;
+                SetData(_view);
+            }
+        }
 
         private int _xOffset = 0;
         public int XOffset
@@ -143,6 +153,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             _img = image;
             _context = context;
+            _rSize = _context.Options.VisualizerOptions.WavemapElementSize;
 
             ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
         }

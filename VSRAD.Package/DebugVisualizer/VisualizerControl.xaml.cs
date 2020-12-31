@@ -57,7 +57,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
             {
-                // TODO: handle wavemap rectangle size change
+                _wavemap.ElementSize = _context.Options.VisualizerOptions.WavemapElementSize;
             }
         }
 
