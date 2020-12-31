@@ -119,9 +119,6 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Profile Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
@@ -155,42 +152,26 @@
                                      IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
                                      ToolTip="Port on the remote machine the debug server is listening on (when started without arguments, the server listens on port 9339)" />
 
-                            <Label Content="Localhost" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <Label Content="Run on Localhost" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
                                       IsChecked="{Binding RunActionsLocally, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       ToolTip="Run all actions locally, without connecting to the debug server."/>
 
-                            <Label Content="Copy Sources to Remote:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
-                                      IsChecked="{Binding CopySources, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"
-                                      ToolTip="Toggle remote deployment"/>
-
-                            <Label Content="Deploy Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
-                            <TextBox Text="{Binding DeployDirectory}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
-                                     ToolTip="Directory on the remote machine where the project is deployed before starting the debugger"/>
-                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="DeployDirectory"
+                            <Label Content="Default Local Working Dir:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <TextBox Text="{Binding LocalWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"/>
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="LocalWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="Local Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
-                            <TextBox Text="{Binding LocalWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"/>
-                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="2" Tag="LocalWorkDir"
+                            <Label Content="Default Remote Working Dir:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
+                                     IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="2" Tag="RemoteWorkDir"
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"
+                                    IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
 
-                            <Label Content="Remote Working Directory:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="7" Grid.Column="0"/>
-                            <TextBox Text="{Binding RemoteWorkDir}" VerticalContentAlignment="Center" Height="22" Grid.Row="7" Grid.Column="1"/>
-                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="7" Grid.Column="2" Tag="RemoteWorkDir"
-                                    Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
-
-                            <Label Content="Additional Sources:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="8" Grid.Column="0"/>
-                            <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="8" Grid.Column="1"
-                                     Text="{Binding AdditionalSources, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                     ToolTip="Semicolon-separated list of of out-of-project paths to deploy on remote machine" />
-
-                            <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                            <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
                                 <Label Content="Continue action execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" HorizontalContentAlignment="Left"/>
                                 <CheckBox VerticalContentAlignment="Center" Height="22"
                                       IsChecked="{Binding ContinueActionExecOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

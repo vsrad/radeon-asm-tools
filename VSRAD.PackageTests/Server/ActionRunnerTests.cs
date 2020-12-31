@@ -455,8 +455,9 @@ wave size 64");
                 output[lane * 3 + 1] = 777;        // first watch = const
                 output[lane * 3 + 2] = (uint)lane; // second watch = lane
             }
-            byte[] outputBytes = new byte[output.Length * sizeof(int)];
-            Buffer.BlockCopy(output, 0, outputBytes, 0, outputBytes.Length);
+            var outputOffset = 3;
+            byte[] outputBytes = new byte[output.Length * sizeof(int) + outputOffset];
+            Buffer.BlockCopy(output, 0, outputBytes, outputOffset, outputBytes.Length - outputOffset);
             File.WriteAllBytes(outputFile, outputBytes);
 
             var steps = new List<IActionStep>
@@ -465,7 +466,7 @@ wave size 64");
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFile, CheckTimestamp = false },
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
-                    binaryOutput: true, outputOffset: 0)
+                    binaryOutput: true, outputOffset)
             };
             var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""));
             var result = await runner.RunAsync("Debug", steps);

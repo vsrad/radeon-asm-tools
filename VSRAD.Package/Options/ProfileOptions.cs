@@ -105,14 +105,8 @@ namespace VSRAD.Package.Options
         private bool _runActionsLocally = false;
         public bool RunActionsLocally { get => _runActionsLocally; set => SetField(ref _runActionsLocally, value); }
 
-        private bool _copySources = true;
-        public bool CopySources { get => _copySources; set => SetField(ref _copySources, value); }
-
         private bool _continueActionExecOnError = false;
         public bool ContinueActionExecOnError { get => _continueActionExecOnError; set => SetField(ref _continueActionExecOnError, value); }
-
-        private string _deployDirectory = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
-        public string DeployDirectory { get => _deployDirectory; set => SetField(ref _deployDirectory, value); }
 
         private string _localWorkDir = "$(" + CleanProfileMacros.LocalWorkDir + ")";
         public string LocalWorkDir { get => _localWorkDir; set => SetField(ref _localWorkDir, value); }
@@ -120,19 +114,13 @@ namespace VSRAD.Package.Options
         private string _remoteWorkDir = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
 
-        private string _additionalSources = "";
-        public string AdditionalSources { get => _additionalSources; set => SetField(ref _additionalSources, value); }
-
         [JsonIgnore]
         public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
 
         public async Task<Result<GeneralProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator)
         {
-            var deployDirResult = await evaluator.EvaluateAsync(DeployDirectory);
-            if (!deployDirResult.TryGetResult(out var evaluatedDeployDir, out var error))
-                return error;
             var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
-            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out error))
+            if (!localDirResult.TryGetResult(out var evaluatedLocalDir, out var error))
                 return error;
             var remoteDirResult = await evaluator.EvaluateAsync(RemoteWorkDir);
             if (!remoteDirResult.TryGetResult(out var evaluatedRemoteDir, out error))
@@ -143,12 +131,9 @@ namespace VSRAD.Package.Options
                 ProfileName = ProfileName,
                 RemoteMachine = RemoteMachine,
                 Port = Port,
-                CopySources = CopySources,
                 RunActionsLocally = RunActionsLocally,
-                DeployDirectory = evaluatedDeployDir,
                 LocalWorkDir = evaluatedLocalDir,
-                RemoteWorkDir = evaluatedRemoteDir,
-                AdditionalSources = AdditionalSources
+                RemoteWorkDir = evaluatedRemoteDir
             };
         }
     }

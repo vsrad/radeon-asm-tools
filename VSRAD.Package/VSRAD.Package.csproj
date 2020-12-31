@@ -287,7 +287,6 @@
     <Compile Include="Registry\ProvideDebugEngineAttribute.cs" />
     <Compile Include="Registry\ProvideDebugPortSupplierAttribute.cs" />
     <Compile Include="Registry\ProvideFontAndColorsCategoryAttribute.cs" />
-    <Compile Include="Server\FileSynchronizationManager.cs" />
     <Compile Include="ToolWindows\BaseToolWindow.cs" />
     <Compile Include="ToolWindows\OptionsWindow.cs" />
     <Compile Include="ToolWindows\VisualizerWindow.cs" />

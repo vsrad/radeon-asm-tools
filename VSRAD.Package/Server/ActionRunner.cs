@@ -225,7 +225,7 @@ namespace VSRAD.Package.Server
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
 
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, response.ByteCount);
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, response.ByteCount - step.OutputOffset);
                 }
                 else
                 {
@@ -233,12 +233,14 @@ namespace VSRAD.Package.Server
                     var timestamp = GetLocalFileTimestamp(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
-                    if (!ReadLocalFile(path, out localOutputData, out var readError))
+
+                    var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
+                    if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
                         return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, timestamp, localOutputData.Length);
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, localOutputData.Length);
                 }
 
                 var data = new BreakStateData(watches, outputFile, localOutputData);
@@ -276,12 +278,26 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool ReadLocalFile(string path, out byte[] data, out string error)
+        private bool ReadLocalFile(string path, out byte[] data, out string error, int byteOffset = 0)
         {
             try
             {
                 var localPath = Path.Combine(_environment.LocalWorkDir, path);
-                data = File.ReadAllBytes(localPath);
+                using (var stream = new FileStream(localPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
+                {
+                    stream.Seek(byteOffset, SeekOrigin.Begin);
+
+                    var bytesToRead = Math.Max(0, (int)(stream.Length - stream.Position));
+                    data = new byte[bytesToRead];
+
+                    int read = 0, bytesRead = 0;
+                    while (bytesRead != bytesToRead)
+                    {
+                        if ((read = stream.Read(data, 0, bytesToRead - bytesRead)) == 0)
+                            throw new IOException("Output file length does not match stream length");
+                        bytesRead += read;
+                    }
+                }
                 error = "";
                 return true;
             }
