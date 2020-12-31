@@ -10,7 +10,7 @@ namespace VSRAD.Package.Server
         public bool BinaryOutput { get; }
         public int Offset { get; }
         public DateTime Timestamp { get; }
-        public int ByteCount { get; }
+        public int DwordCount { get; }
 
         public BreakStateOutputFile(string[] path, bool binaryOutput, int offset, DateTime timestamp, int byteCount)
         {
@@ -18,7 +18,7 @@ namespace VSRAD.Package.Server
             BinaryOutput = binaryOutput;
             Offset = offset;
             Timestamp = timestamp;
-            ByteCount = byteCount;
+            DwordCount = byteCount / 4;
         }
     }
 }

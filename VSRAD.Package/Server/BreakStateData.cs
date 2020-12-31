@@ -107,17 +107,18 @@ namespace VSRAD.Package.Server
             _laneDataSize = 1 /* system */ + watches.Count;
             _waveDataSize = _laneDataSize * _wavefrontSize;
 
-            var outputDwordCount = file.ByteCount / 4;
-            var outputWaveCount = outputDwordCount / _waveDataSize;
+            var outputWaveCount = file.DwordCount / _waveDataSize;
 
-            _data = new uint[outputDwordCount];
+            _data = new uint[file.DwordCount];
 
             if (localData != null)
             {
-                if (file.ByteCount != localData.Length)
-                    throw new ArgumentException($"{nameof(localData)}.Length should be equal to {nameof(file)}.ByteCount");
+                if (file.Offset != 0)
+                    throw new ArgumentException("Trim the offset before passing output data to BreakStateData");
+                if (file.DwordCount * 4 < localData.Length)
+                    throw new ArgumentException($"{nameof(localData)}.Length should not be less than {nameof(file)}.{nameof(file.DwordCount)} * 4");
 
-                Buffer.BlockCopy(localData, 0, _data, 0, localData.Length);
+                Buffer.BlockCopy(localData, file.Offset, _data, 0, _data.Length * sizeof(uint));
                 _fetchedDataWaves = new BitArray(outputWaveCount, true);
             }
             else
