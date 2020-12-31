@@ -178,10 +178,10 @@
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
-    <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
-    <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml.cs">
-      <DependentUpon>WavemapOffsetSelector.xaml</DependentUpon>
+    <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetInput.xaml.cs">
+      <DependentUpon>WavemapOffsetInput.xaml</DependentUpon>
     </Compile>
+    <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />
@@ -392,6 +392,10 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="DebugVisualizer\NumberInputStyle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -412,9 +416,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml">
-      <SubType>Designer</SubType>
+    <Page Include="DebugVisualizer\Wavemap\WavemapOffsetInput.xaml">
       <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="ProjectSystem\Macros\MacroEditorWindow.xaml">
       <SubType>Designer</SubType>

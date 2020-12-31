@@ -123,7 +123,7 @@
                 <RowDefinition>
                     <RowDefinition.Style>
                         <Style TargetType="RowDefinition">
-                            <Setter Property="Height" Value="84" />
+                            <Setter Property="Height" Value="*" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemapField}" Value="False">
                                     <Setter Property="Height" Value="0" />
@@ -151,17 +151,17 @@
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Left">
+            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <wavemap:WavemapOffsetSelector XValue="{Binding WavemapXOffset, UpdateSourceTrigger=PropertyChanged}"
-                                               YValue="{Binding WavemapYOffset, UpdateSourceTrigger=PropertyChanged}"
-                                               WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
-                                               Height="80" HorizontalAlignment="Center" VerticalAlignment="Center" x:Name="WavemapSelector"
-                                               Grid.Column="0" Grid.Row="0"/>
-                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,5,0,0" Grid.Column="1" Grid.Row="0" Width="701" Height="50" Stretch="Fill"/>
+                <wavemap:WavemapOffsetInput WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
+                                               HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
+                                               Height="84" Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
+                <Border Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" BorderBrush="{x:Null}" Margin="4">
+                    <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0" Stretch="None"/>
+                </Border>
             </Grid>
         </Grid>
     </StackPanel>

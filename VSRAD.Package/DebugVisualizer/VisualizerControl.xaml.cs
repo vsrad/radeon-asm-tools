@@ -26,6 +26,7 @@ namespace VSRAD.Package.DebugVisualizer
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
+            HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
             integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
@@ -56,7 +57,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
             {
-                // TODO: handle wavemap rectangle size change
+                _wavemap.ElementSize = _context.Options.VisualizerOptions.WavemapElementSize;
             }
         }
 
