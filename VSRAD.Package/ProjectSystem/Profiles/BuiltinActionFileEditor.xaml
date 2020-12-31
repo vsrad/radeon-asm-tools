@@ -6,6 +6,7 @@
              xmlns:opts="clr-namespace:VSRAD.Package.Options"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              mc:Ignorable="d"
              d:DesignHeight="200" d:DesignWidth="800">
     <d:DesignerProperties.DesignStyle>
@@ -41,9 +42,13 @@
         <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
                   Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
                   Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
-        <Label Content="Local"
-               Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
-               VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="1"/>
+        <Border Grid.Row="0" Grid.Column="1" BorderBrush="{x:Null}" Height="22"
+                Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}">
+            <TextBlock VerticalAlignment="Center" ToolTip="Overridden by General -> Run on Localhost">
+                <Run>Local </Run>
+                <Run Text="{Binding Location, StringFormat='({0})'}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"/>
+            </TextBlock>
+        </Border>
 
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
