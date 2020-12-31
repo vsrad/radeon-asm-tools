@@ -144,6 +144,25 @@ namespace VSRAD.DebugServerTests.Handlers
         }
 
         [Fact]
+        public async void FetchAllFileBinaryWithOffsetTestAsync()
+        {
+            var tmpFile = Path.GetTempFileName();
+            File.WriteAllBytes(tmpFile, Encoding.UTF8.GetBytes("XXXReal Data Here"));
+
+            var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
+                new FetchResultRange
+                {
+                    FilePath = new[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    OutputOffset = 3,
+                    ByteOffset = 0,
+                    ByteCount = 0,
+                    BinaryOutput = true
+                });
+            Assert.Equal(FetchStatus.Successful, response.Status);
+            Assert.Equal(Encoding.UTF8.GetBytes("Real Data Here"), response.Data);
+        }
+
+        [Fact]
         public async void FetchAllFileTextTestAsync()
         {
             var tmpFile = Path.GetTempFileName();
