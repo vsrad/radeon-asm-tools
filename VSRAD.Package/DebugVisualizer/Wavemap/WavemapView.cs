@@ -18,7 +18,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     class BreakpointColorManager
     {
         private readonly Dictionary<uint, Color> _breakpointColorMapping = new Dictionary<uint, Color>();
-        private readonly Color[] _colors = new Color[] { Color.FromArgb(181, 137, 0), Color.FromArgb(203, 75, 22), Color.FromArgb(108, 113, 196), Color.FromArgb(42, 161, 152), Color.FromArgb(133, 153, 0) };
+        private readonly Color[] _colors = new Color[] { WavemapView.Blue, WavemapView.Red, WavemapView.Green, WavemapView.Violet, WavemapView.Pink };
         private int _currentColorIndex;
 
         private Color GetNextColor()
@@ -44,6 +44,12 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
     public sealed class WavemapView
     {
+        public static readonly Color Blue = Color.FromArgb(69, 115, 167);
+        public static readonly Color Red = Color.FromArgb(172, 69, 70);
+        public static readonly Color Green = Color.FromArgb(137, 166, 76);
+        public static readonly Color Violet = Color.FromArgb(112, 89, 145);
+        public static readonly Color Pink = Color.FromArgb(208, 147, 146);
+
         private readonly int _waveSize;
         private readonly int _laneDataSize;
         public int WavesPerGroup { get; }
