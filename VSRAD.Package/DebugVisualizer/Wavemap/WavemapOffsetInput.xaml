@@ -5,33 +5,41 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              mc:Ignorable="d" 
-             d:DesignHeight="24" d:DesignWidth="200">
+             d:DesignHeight="84" d:DesignWidth="70">
     <UserControl.Resources>
         <ResourceDictionary Source="..\NumberInputStyle.xaml"/>
     </UserControl.Resources>
-    <DockPanel LastChildFill="True" x:Name="Root">
-        <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" KeyboardNavigation.TabNavigation="None">
-            <RepeatButton Click="Increment" Height="12" Width="12" Margin="0" x:Name="IncButton" IsEnabled="False">
-                <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6">
-                    <TextBlock.RenderTransform>
-                        <TransformGroup>
-                            <TranslateTransform Y="0.2" X="0.2"/>
-                        </TransformGroup>
-                    </TextBlock.RenderTransform>
-                </TextBlock>
-            </RepeatButton>
-            <RepeatButton Click="Decrement" Height="12" Width="12" Margin="0" x:Name="DecButton" IsEnabled="False">
-                <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6" RenderTransformOrigin="0.5,0.5">
-                    <TextBlock.RenderTransform>
-                        <TransformGroup>
-                            <RotateTransform Angle="180"/>
-                            <TranslateTransform Y="-2.2" X="0"/>
-                        </TransformGroup>
-                    </TextBlock.RenderTransform>
-                </TextBlock>
-            </RepeatButton>
-        </StackPanel>
-        <TextBlock Text="{Binding RawValue}" VerticalAlignment="Center" Margin="0" Height="24"
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="24"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <DockPanel LastChildFill="True" Grid.Row="0">
+            <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" KeyboardNavigation.TabNavigation="None">
+                <RepeatButton Click="Increment" Height="12" Width="12" Margin="0" x:Name="IncButton" IsEnabled="False">
+                    <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <TranslateTransform Y="0.2" X="0.2"/>
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </RepeatButton>
+                <RepeatButton Click="Decrement" Height="12" Width="12" Margin="0" x:Name="DecButton" IsEnabled="False">
+                    <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6" RenderTransformOrigin="0.5,0.5">
+                        <TextBlock.RenderTransform>
+                            <TransformGroup>
+                                <RotateTransform Angle="180"/>
+                                <TranslateTransform Y="-2.2" X="0"/>
+                            </TransformGroup>
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                </RepeatButton>
+            </StackPanel>
+            <TextBlock Text="{Binding RawValue}" VerticalAlignment="Center" Margin="0,6,0,0" Height="24" Grid.Row="0"
                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-    </DockPanel>
+        </DockPanel>
+        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding WaveInfo}"
+                   ToolTip="G: Group index under cursor&#x0a;W: Wave index under cursor&#x0a;L: Break line of wave under cursor"/>
+    </Grid>
 </UserControl>

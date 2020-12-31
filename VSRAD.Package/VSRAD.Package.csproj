@@ -182,9 +182,6 @@
       <DependentUpon>WavemapOffsetInput.xaml</DependentUpon>
     </Compile>
     <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
-    <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml.cs">
-      <DependentUpon>WavemapOffsetSelector.xaml</DependentUpon>
-    </Compile>
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />
@@ -423,10 +420,6 @@
     <Page Include="DebugVisualizer\Wavemap\WavemapOffsetInput.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="DebugVisualizer\Wavemap\WavemapOffsetSelector.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ProjectSystem\Macros\MacroEditorWindow.xaml">
       <SubType>Designer</SubType>

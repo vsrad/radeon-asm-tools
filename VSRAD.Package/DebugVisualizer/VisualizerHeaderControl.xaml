@@ -156,7 +156,7 @@
                     <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <wavemap:WavemapOffsetSelector WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
+                <wavemap:WavemapOffsetInput WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
                                                HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
                                                Height="84" Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
                 <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,0,0" Grid.Column="1" Grid.Row="0" Stretch="None"/>

@@ -9,6 +9,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
     public sealed partial class WavemapOffsetInput : UserControl, INotifyPropertyChanged
     {
+        public static readonly DependencyProperty WaveInfoProperty =
+            DependencyProperty.Register(nameof(WaveInfo), typeof(string), typeof(WavemapOffsetInput),
+                new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+        public string WaveInfo
+        {
+            get => (string)GetValue(WaveInfoProperty);
+            set => SetValue(WaveInfoProperty, value);
+        }
+
         private VisualizerContext _context;
         private WavemapImage _image;
         private int _groupCount;
