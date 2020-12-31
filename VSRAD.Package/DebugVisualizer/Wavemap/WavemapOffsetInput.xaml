@@ -40,6 +40,7 @@
                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
         </DockPanel>
         <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding WaveInfo}"
-                   ToolTip="G: Group index under cursor&#x0a;W: Wave index under cursor&#x0a;L: Break line of wave under cursor"/>
+                   ToolTip="G: Group index under cursor&#x0a;W: Wave index under cursor&#x0a;L: Break line of wave under cursor"
+                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
     </Grid>
 </UserControl>
