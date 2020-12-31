@@ -32,10 +32,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private void Increment(object sender, RoutedEventArgs e)
         {
             _image.FirstGroup += _image.GridSizeX - _image.FirstGroup % _image.GridSizeX;
-            DecButton.IsEnabled = _image.FirstGroup != 0;
-            IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _groupCount;
-            _rawValue = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
         }
 
         private void Decrement(object sender, RoutedEventArgs e)
@@ -43,10 +39,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             var stepRem = _image.FirstGroup % _image.GridSizeX;
             var dec = stepRem == 0 ? _image.GridSizeX : stepRem;
             _image.FirstGroup = (_image.FirstGroup > dec) ? _image.FirstGroup - dec : 0;
-            DecButton.IsEnabled = _image.FirstGroup != 0;
-            IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _groupCount;
-            _rawValue = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
         }
 
         public void Setup(VisualizerContext context, WavemapImage image)
