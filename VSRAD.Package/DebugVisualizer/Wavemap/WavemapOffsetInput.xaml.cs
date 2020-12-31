@@ -15,7 +15,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private string _rawValue = "";
+        private string _rawValue = "No data";
         public string RawValue
         {
             get => _rawValue;
