@@ -396,6 +396,10 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="DebugVisualizer\NumberInputStyle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
