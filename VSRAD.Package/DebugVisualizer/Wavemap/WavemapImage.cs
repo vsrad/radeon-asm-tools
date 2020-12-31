@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using VSRAD.Package.Utils;
@@ -143,12 +144,12 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _img = image;
             _context = context;
 
-            ((Grid)((Grid)_img.Parent).Parent).SizeChanged += RecomputeGridSize;
+            ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
         }
 
-        private void RecomputeGridSize(object sender, System.Windows.SizeChangedEventArgs e)
+        private void RecomputeGridSize(object sender, SizeChangedEventArgs e)
         {
-            var newGridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 75) / _rSize; // 75 for offset selector width
+            var newGridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / _rSize;
             if (newGridSizeX != GridSizeX)
                 SetData(_view);
         }
@@ -171,7 +172,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 return;
             }
 
-            GridSizeX = ((int)Math.Round(((Grid)((Grid)_img.Parent).Parent).ActualWidth) - 75) / _rSize; // 75 for offset selector width
+            GridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / _rSize;
             GridSizeY = view.WavesPerGroup;
 
             _view = view;
