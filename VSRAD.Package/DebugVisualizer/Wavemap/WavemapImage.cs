@@ -186,7 +186,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         public void SetData(WavemapView view)
         {
-            if (view == null || view.WavesPerGroup == 0)
+            var imageContainer = (FrameworkElement)_img.Parent;
+            if (view == null || view.WavesPerGroup == 0 || imageContainer.ActualHeight == 0)
             {
                 _img.Source = null;
                 return;
@@ -196,7 +197,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             view.CheckLanes = _context.Options.VisualizerOptions.MaskLanes;
             view.CheckMagicNumber = _context.Options.VisualizerOptions.CheckMagicNumber;
 
-            GridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / _rSize;
+            GridSizeX = (int)imageContainer.ActualWidth / _rSize;
             GridSizeY = view.WavesPerGroup;
 
             _view = view;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -21,15 +18,14 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private VisualizerContext _context;
         private WavemapImage _image;
-        private int _groupCount;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private string _rawValue = "No data";
-        public string RawValue
+        private string _offsetLabel = "No data";
+        public string OffsetLabel
         {
-            get => _rawValue;
-            set => _rawValue = value;
+            get => _offsetLabel;
+            set { _offsetLabel = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OffsetLabel))); }
         }
 
         public WavemapOffsetInput()
@@ -54,27 +50,27 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public void Setup(VisualizerContext context, WavemapImage image)
         {
             _context = context;
-            _context.GroupFetched += OnGroupFetched;
+            _context.GroupFetched += (s, e) => UpdateControls();
 
             _image = image;
-            _image.PropertyChanged += GridSizeChanged;
+            _image.PropertyChanged += (s, e) => UpdateControls();
         }
 
-        private void OnGroupFetched(object sender, GroupFetchedEventArgs e)
+        private void UpdateControls()
         {
-            _groupCount = _context.BreakData.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.NGroups);
-            DecButton.IsEnabled = _image.FirstGroup != 0;
-            IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _groupCount;
-            _rawValue = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
-        }
-
-        private void GridSizeChanged(object sender, PropertyChangedEventArgs e)
-        {
-            _rawValue = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
-            DecButton.IsEnabled = _image.FirstGroup != 0;
-            IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _groupCount;
+            var groupCount = _context.BreakData?.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
+            if (groupCount > 0 && _image.GridSizeX > 0)
+            {
+                DecButton.IsEnabled = _image.FirstGroup != 0;
+                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
+                OffsetLabel = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
+            }
+            else
+            {
+                DecButton.IsEnabled = false;
+                IncButton.IsEnabled = false;
+                OffsetLabel = "No data";
+            }
         }
     }
 }
