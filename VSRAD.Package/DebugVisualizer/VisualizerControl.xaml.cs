@@ -91,12 +91,6 @@ namespace VSRAD.Package.DebugVisualizer
                     else
                         GrayOutWatches();
                     break;
-                case nameof(VisualizerContext.WavemapXOffset):
-                    _wavemap.XOffset = _context.WavemapXOffset;
-                    break;
-                case nameof(VisualizerContext.WavemapYOffset):
-                    _wavemap.YOffset = _context.WavemapYOffset;
-                    break;
             }
         }
 

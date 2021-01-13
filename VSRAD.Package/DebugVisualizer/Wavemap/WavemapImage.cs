@@ -93,27 +93,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-        private int _xOffset = 0;
-        public int XOffset
-        {
-            get => _xOffset;
-            set
-            {
-                _xOffset = value;
-                SetData(_view);
-            }
-        }
-
-        private int _yOffset = 0;
-        public int YOffset
-        {
-            get => _yOffset;
-            set
-            {
-                _yOffset = value;
-                SetData(_view);
-            }
-        }
 
 
         private int _gridSizeX;

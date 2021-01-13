@@ -42,12 +42,6 @@ namespace VSRAD.Package.DebugVisualizer
         private int _canvasHeight = 10;
         public int CanvasHeight { get => _canvasHeight; set => SetField(ref _canvasHeight, value); }
 
-        private int _wavemapXOffset = 0;
-        public int WavemapXOffset { get => _wavemapXOffset; set => SetField(ref _wavemapXOffset, value); }
-
-        private int _wavemapYOffset = 0;
-        public int WavemapYOffset { get => _wavemapYOffset; set => SetField(ref _wavemapYOffset, value); }
-
         private string _currentWaveInfo = "";
         public string CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
 
