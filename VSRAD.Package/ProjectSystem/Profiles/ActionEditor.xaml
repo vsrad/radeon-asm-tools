@@ -135,16 +135,13 @@
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
-                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
-                                      Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
-                            <Border Grid.Row="0" Grid.Column="1" BorderBrush="{x:Null}" Height="22"
-                                    Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}">
-                                <TextBlock VerticalAlignment="Center" ToolTip="Overridden by General -> Run on Localhost">
-                                    <Run>LocalToLocal </Run>
-                                    <Run Text="{Binding Direction, StringFormat='({0})'}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"/>
-                                </TextBlock>
-                            </Border>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
+                                <ComboBox ItemsSource="{Binding Source={StaticResource FileCopyDirections}}" SelectedItem="{Binding Direction, Mode=TwoWay}"
+                                          Height="22" Width="160" HorizontalAlignment="Left"/>
+                                <TextBlock Margin="4,0" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"
+                                           Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+                                           Text="Forced to LocalToLocal" ToolTip="Overridden by General -> Run on Localhost"/>
+                            </StackPanel>
 
                             <Label Content="Source Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding SourcePath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1"
@@ -192,16 +189,13 @@
                                 <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-                            <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Environment, Mode=TwoWay}"
-                                      Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
-                                      Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
-                            <Border Grid.Row="0" Grid.Column="1" BorderBrush="{x:Null}" Height="22"
-                                    Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}">
-                                <TextBlock VerticalAlignment="Center" ToolTip="Overridden by General -> Run on Localhost">
-                                    <Run>Local </Run>
-                                    <Run Text="{Binding Environment, StringFormat='({0})'}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"/>
-                                </TextBlock>
-                            </Border>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
+                                <ComboBox ItemsSource="{Binding Source={StaticResource StepEnvironments}}" SelectedItem="{Binding Environment, Mode=TwoWay}"
+                                          Height="22" Width="160" HorizontalAlignment="Left"/>
+                                <TextBlock Margin="4,0" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"
+                                           Visibility="{Binding DataContext.CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+                                           Text="Forced to Local" ToolTip="Overridden by General -> Run on Localhost"/>
+                            </StackPanel>
 
                             <Label Content="Executable:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
                             <TextBox Text="{Binding Executable, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
