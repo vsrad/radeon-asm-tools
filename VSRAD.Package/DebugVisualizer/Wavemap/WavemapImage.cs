@@ -148,14 +148,23 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-
         public WavemapImage(Image image, VisualizerContext context)
         {
             _img = image;
             _context = context;
             _rSize = _context.Options.VisualizerOptions.WavemapElementSize;
 
+            _context.Options.VisualizerOptions.PropertyChanged += UpdateWavemapImage;
+
             ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
+        }
+
+        private void UpdateWavemapImage(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Options.VisualizerOptions.MaskLanes) ||
+                e.PropertyName == nameof(Options.VisualizerOptions.CheckMagicNumber) ||
+                e.PropertyName == nameof(Options.VisualizerOptions.MagicNumber))
+                SetData(_view);
         }
 
         private void RecomputeGridSize(object sender, SizeChangedEventArgs e)
@@ -182,6 +191,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 _img.Source = null;
                 return;
             }
+
+            view.MagicNumber = (uint)_context.Options.VisualizerOptions.MagicNumber;
+            view.CheckLanes = _context.Options.VisualizerOptions.MaskLanes;
+            view.CheckMagicNumber = _context.Options.VisualizerOptions.CheckMagicNumber;
 
             GridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / _rSize;
             GridSizeY = view.WavesPerGroup;

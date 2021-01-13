@@ -55,6 +55,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public int WavesPerGroup { get; }
         public int GroupCount { get; }
 
+        public bool CheckLanes = false;
+        public bool CheckMagicNumber = false;
+        public uint MagicNumber = 0;
+
         private readonly uint[] _data;
 
         private readonly BreakpointColorManager _colorManager;
@@ -78,7 +82,28 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private bool IsValidWave(int row, int column) =>
             GetWaveFlatIndex(row, column) * _waveSize * _laneDataSize + _laneDataSize < _data.Length && row < WavesPerGroup;
 
+        private bool HasIncativeLanes(int flatWaveIndex)
+        {
+            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize + (_laneDataSize * 8); // exec mask is in lanes #8 and #9 of system watch
+
+            return _data[execMaskOffset] != 0xfffffff && _data[execMaskOffset + _laneDataSize] != 0xffffffff;
+        }
+
+        private bool MagicNumberSet(int flatWaveIndex)
+        {
+            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize; // exec mask is in lane #0 of system watch
+
+            return _data[execMaskOffset] == MagicNumber;
+        }
+
         private int GetWaveFlatIndex(int row, int column) => column * WavesPerGroup + row;
+
+        private Color GetBreakColor(int flatWaveIndex, uint breakLine)
+        {
+            if (CheckMagicNumber && !MagicNumberSet(flatWaveIndex)) return Color.Gray;
+            if (CheckLanes && HasIncativeLanes(flatWaveIndex)) return Color.LightGray;
+            return _colorManager.GetColorForBreakpoint(breakLine);
+        }
 
         private WaveInfo GetWaveInfoByRowAndColumn(int row, int column)
         {
@@ -98,7 +123,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
             return new WaveInfo
             {
-                BreakColor = _colorManager.GetColorForBreakpoint(breakLine),
+                BreakColor = GetBreakColor(flatIndex, breakLine),
                 BreakLine = breakLine,
                 GroupIdx = column,
                 WaveIdx = row,
