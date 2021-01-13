@@ -50,9 +50,13 @@ namespace VSRAD.Package.Options
         [DefaultValue(true)]
         public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
 
-        private bool _showWavemapField;
+        private bool _showWaveSizeField;
+        [DefaultValue(false)]
+        public bool ShowWaveSizeField { get => _showWaveSizeField; set => SetField(ref _showWaveSizeField, value); }
+
+        private bool _showWavemap;
         [DefaultValue(true)]
-        public bool ShowWavemapField { get => _showWavemapField; set => SetField(ref _showWavemapField, value); }
+        public bool ShowWavemap { get => _showWavemap; set => SetField(ref _showWavemap, value); }
     }
 
     public sealed class MagicNumberConverter : JsonConverter
