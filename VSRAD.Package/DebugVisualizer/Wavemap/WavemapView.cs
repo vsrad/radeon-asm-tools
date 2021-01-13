@@ -75,25 +75,23 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private uint GetBreakpointLine(int waveIndex)
         {
-            var breakIndex = waveIndex * _waveSize * _laneDataSize + _laneDataSize; // break line is in the first lane of system watch
+            var breakIndex = waveIndex * _waveSize * _laneDataSize + _laneDataSize; // break line is in the lane #1 of system watch
             return _data[breakIndex];
         }
 
         private bool IsValidWave(int row, int column) =>
             GetWaveFlatIndex(row, column) * _waveSize * _laneDataSize + _laneDataSize < _data.Length && row < WavesPerGroup;
 
-        private bool HasIncativeLanes(int flatWaveIndex)
+        private bool HasInactiveLanes(int flatWaveIndex)
         {
-            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize + (_laneDataSize * 8); // exec mask is in lanes #8 and #9 of system watch
-
+            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize + (_laneDataSize * 8); // exec mask is in the lanes #8 and #9 of system watch
             return _data[execMaskOffset] != 0xfffffff && _data[execMaskOffset + _laneDataSize] != 0xffffffff;
         }
 
         private bool MagicNumberSet(int flatWaveIndex)
         {
-            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize; // exec mask is in lane #0 of system watch
-
-            return _data[execMaskOffset] == MagicNumber;
+            var magicNumberOffset = flatWaveIndex * _waveSize * _laneDataSize; // magic number is in the lane #0 of system watch
+            return _data[magicNumberOffset] == MagicNumber;
         }
 
         private int GetWaveFlatIndex(int row, int column) => column * WavesPerGroup + row;
@@ -101,7 +99,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private Color GetBreakColor(int flatWaveIndex, uint breakLine)
         {
             if (CheckMagicNumber && !MagicNumberSet(flatWaveIndex)) return Color.Gray;
-            if (CheckLanes && HasIncativeLanes(flatWaveIndex)) return Color.LightGray;
+            if (CheckLanes && HasInactiveLanes(flatWaveIndex)) return Color.LightGray;
             return _colorManager.GetColorForBreakpoint(breakLine);
         }
 

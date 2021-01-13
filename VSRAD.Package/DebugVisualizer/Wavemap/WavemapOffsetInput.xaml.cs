@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -50,13 +51,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public void Setup(VisualizerContext context, WavemapImage image)
         {
             _context = context;
-            _context.GroupFetched += (s, e) => UpdateControls();
-
             _image = image;
-            _image.PropertyChanged += (s, e) => UpdateControls();
+            _image.Updated += UpdateControls;
         }
 
-        private void UpdateControls()
+        private void UpdateControls(object sender, EventArgs e)
         {
             var groupCount = _context.BreakData?.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
             if (groupCount > 0 && _image.GridSizeX > 0)

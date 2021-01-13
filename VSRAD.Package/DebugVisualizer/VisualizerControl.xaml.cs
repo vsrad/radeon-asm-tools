@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
-using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -18,8 +17,6 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
-            _context.Options.DebuggerOptions.PropertyChanged += DebuggerOptionChanged;
-            _context.Options.VisualizerOptions.PropertyChanged += HandleWavemapElementSize;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
             DataContext = _context;
@@ -53,23 +50,9 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
-        private void HandleWavemapElementSize(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(VisualizerOptions.WavemapElementSize))
-            {
-                _wavemap.ElementSize = _context.Options.VisualizerOptions.WavemapElementSize;
-            }
-        }
-
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
         {
-            e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemapField;
-        }
-
-        private void DebuggerOptionChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(VisualizerContext.Options.DebuggerOptions.GroupSize))
-                RefreshDataStyling();
+            e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemap;
         }
 
         public void WindowFocusChanged(bool hasFocus) =>
@@ -102,7 +85,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ApplyWatchStyling();
             RefreshDataStyling();
 
-            _wavemap.SetData(_context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize));
+            _wavemap.View = _context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize);
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
@@ -137,6 +120,7 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerAppearance.ScalingMode):
                     _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
+                case nameof(Options.DebuggerOptions.GroupSize):
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.LaneGrouping):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
@@ -145,6 +129,10 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
                     RefreshDataStyling();
+                    break;
+                case nameof(Options.VisualizerOptions.WaveSize):
+                    RefreshDataStyling();
+                    _wavemap.View = _context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize);
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_context.Options.VisualizerOptions.CheckMagicNumber)

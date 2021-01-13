@@ -4,7 +4,6 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -37,10 +36,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      * 0x00 0x00 0x00 0x00  -- Blue Gamma
      * ------------ DATA ------------
      */
-    public class WavemapImage : DefaultNotifyPropertyChanged
+    public sealed class WavemapImage
     {
         // initialize data with empty header
-        private List<byte> _header = new List<byte>
+        private readonly List<byte> _header = new List<byte>
         {
             0x42, 0x4d,
             0x36, 0x00, 0x00, 0x00, // VARIABLE: size of file, add data size. Offset 2
@@ -78,115 +77,100 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         };
 
         private int _headerSize => _header.Count;
+        private readonly Image _img;
+        private readonly VisualizerContext _context;
+
         private WavemapView _view;
-        private Image _img;
-        private VisualizerContext _context;
-
-        private int _rSize = 0;
-        public int ElementSize
+        public WavemapView View
         {
-            get => _rSize;
-            set
-            {
-                _rSize = value;
-                SetData(_view);
-            }
+            get => _view;
+            set { _view = value; DrawImage(); }
         }
-
-
 
         private int _gridSizeX;
         public int GridSizeX
         {
             get => _gridSizeX;
-            private set
-            {
-                if (value >= 8)
-                    SetField(ref _gridSizeX, value);
-            }
+            private set { if (value >= 8) _gridSizeX = value; }
         }
+
+        public int GridSizeY { get; private set; }
 
         private int _firstGroup;
         public int FirstGroup
         {
             get => _firstGroup;
-            set
-            {
-                SetField(ref _firstGroup, value);
-                SetData(_view);
-            }
+            set { _firstGroup = value; DrawImage(); }
         }
 
-        private int _gridSizeY;
-        public int GridSizeY
-        {
-            get => _gridSizeY;
-            private set
-            {
-                SetField(ref _gridSizeY, value);
-            }
-        }
+        public event EventHandler Updated;
 
         public WavemapImage(Image image, VisualizerContext context)
         {
             _img = image;
             _context = context;
-            _rSize = _context.Options.VisualizerOptions.WavemapElementSize;
-
-            _context.Options.VisualizerOptions.PropertyChanged += UpdateWavemapImage;
+            _context.Options.VisualizerOptions.PropertyChanged += PropertyChanged;
 
             ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
         }
 
-        private void UpdateWavemapImage(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(Options.VisualizerOptions.MaskLanes) ||
-                e.PropertyName == nameof(Options.VisualizerOptions.CheckMagicNumber) ||
-                e.PropertyName == nameof(Options.VisualizerOptions.MagicNumber))
-                SetData(_view);
+            switch (e.PropertyName)
+            {
+                case nameof(Options.VisualizerOptions.MaskLanes):
+                case nameof(Options.VisualizerOptions.CheckMagicNumber):
+                case nameof(Options.VisualizerOptions.MagicNumber):
+                case nameof(Options.VisualizerOptions.WavemapElementSize):
+                    DrawImage();
+                    break;
+            }
         }
 
         private void RecomputeGridSize(object sender, SizeChangedEventArgs e)
         {
-            var newGridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / _rSize;
+            var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
+            var newGridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / rSize;
             if (newGridSizeX != GridSizeX)
-                SetData(_view);
+                DrawImage();
         }
 
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
             var p = e.GetPosition(_img);
-            var row = (int)(p.Y / _rSize);
-            var col = (int)(p.X / _rSize) + FirstGroup;
+            var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
+            var row = (int)(p.Y / rSize);
+            var col = (int)(p.X / rSize) + FirstGroup;
             var waveInfo = _view[row, col];
             if (waveInfo.IsVisible)
                 _context.CurrentWaveInfo = $"G: {col}\nW: {row}\nL: {waveInfo.BreakLine}";
         }
 
-        public void SetData(WavemapView view)
+        private void DrawImage()
         {
             var imageContainer = (FrameworkElement)_img.Parent;
-            if (view == null || view.WavesPerGroup == 0 || imageContainer.ActualHeight == 0)
+            if (_view == null || _view.WavesPerGroup == 0 || imageContainer.ActualHeight == 0)
             {
                 _img.Source = null;
+                Updated?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
-            view.MagicNumber = (uint)_context.Options.VisualizerOptions.MagicNumber;
-            view.CheckLanes = _context.Options.VisualizerOptions.MaskLanes;
-            view.CheckMagicNumber = _context.Options.VisualizerOptions.CheckMagicNumber;
+            _view.MagicNumber = (uint)_context.Options.VisualizerOptions.MagicNumber;
+            _view.CheckLanes = _context.Options.VisualizerOptions.MaskLanes;
+            _view.CheckMagicNumber = _context.Options.VisualizerOptions.CheckMagicNumber;
 
-            GridSizeX = (int)imageContainer.ActualWidth / _rSize;
-            GridSizeY = view.WavesPerGroup;
+            var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
+            GridSizeX = (int)imageContainer.ActualWidth / rSize;
+            GridSizeY = _view.WavesPerGroup;
 
-            _view = view;
-            var pixelCount = GridSizeX * GridSizeY * (_rSize) * (_rSize);
+            var pixelCount = GridSizeX * GridSizeY * rSize * rSize;
             var byteCount = pixelCount * 4;
             var imageData = new byte[byteCount + _headerSize];
             _header.CopyTo(imageData, 0);
             var fileSizeBytes = BitConverter.GetBytes(_headerSize + byteCount);
-            var widthBytes = BitConverter.GetBytes(GridSizeX * _rSize);
-            var heightBytes = BitConverter.GetBytes(GridSizeY * _rSize);
+            var widthBytes = BitConverter.GetBytes(GridSizeX * rSize);
+            var heightBytes = BitConverter.GetBytes(GridSizeY * rSize);
             var dataSizeBytes = BitConverter.GetBytes(byteCount);
 
             for (int i = 0; i < 4; i++)
@@ -197,24 +181,24 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 imageData[34 + i] = dataSizeBytes[i];
             }
 
-            var byteWidth = GridSizeX * _rSize * 4;
+            var byteWidth = GridSizeX * rSize * 4;
 
-            for (int i = 0; i < byteCount - 3; i += _rSize * 4)
+            for (int i = 0; i < byteCount - 3; i += rSize * 4)
             {
                 int row = i / byteWidth;
                 int col = i % byteWidth;
                 var flatIdx = i + _headerSize;   // header offset
 
-                if (row / _rSize >= GridSizeY) continue;
-                var viewRow = (GridSizeY - 1 - row / _rSize);
-                var viewCol = (col / _rSize / 4) + FirstGroup;
+                if (row / rSize >= GridSizeY) continue;
+                var viewRow = (GridSizeY - 1 - row / rSize);
+                var viewCol = (col / rSize / 4) + FirstGroup;
 
-                var waveInfo = view[viewRow, viewCol];
+                var waveInfo = _view[viewRow, viewCol];
                 if (!waveInfo.IsVisible) continue;
 
-                if ((row % _rSize) == 0 || (row % _rSize) == _rSize - 1)
+                if ((row % rSize) == 0 || (row % rSize) == rSize - 1)
                 {
-                    for (int rwidth = 0; rwidth < _rSize; ++rwidth)
+                    for (int rwidth = 0; rwidth < rSize; ++rwidth)
                     {
                         imageData[flatIdx + 3] = 255; // Black
                         flatIdx += 4;
@@ -225,7 +209,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     imageData[flatIdx + 3] = 255; // Black
                     flatIdx += 4;
 
-                    for (int rwidth = 1; rwidth < _rSize - 1; ++rwidth)
+                    for (int rwidth = 1; rwidth < rSize - 1; ++rwidth)
                     {
                         imageData[flatIdx + 0] = waveInfo.BreakColor.B; // B
                         imageData[flatIdx + 1] = waveInfo.BreakColor.G; // G
@@ -242,6 +226,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
             _img.MouseMove -= ShowWaveInfo;
             _img.MouseMove += ShowWaveInfo;
+
+            Updated?.Invoke(this, EventArgs.Empty);
         }
 
         private static BitmapImage LoadImage(byte[] imageData)
