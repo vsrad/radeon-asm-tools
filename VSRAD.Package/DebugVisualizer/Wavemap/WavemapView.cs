@@ -68,7 +68,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _data = data;
             _waveSize = waveSize;
             _laneDataSize = laneDataSize;
-            WavesPerGroup = groupSize / waveSize;
+            WavesPerGroup = (groupSize + waveSize - 1) / waveSize;
             GroupCount = groupCount;
             _colorManager = new BreakpointColorManager();
         }
@@ -79,8 +79,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             return _data[breakIndex];
         }
 
-        private bool IsValidWave(int row, int column) =>
-            GetWaveFlatIndex(row, column) * _waveSize * _laneDataSize + _laneDataSize < _data.Length && row < WavesPerGroup;
+        private bool IsValidWave(int row, int column) => row < WavesPerGroup && column < GroupCount;
 
         private bool HasInactiveLanes(int flatWaveIndex)
         {
