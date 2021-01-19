@@ -63,7 +63,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 e.PropertyName == nameof(VisualizerContext.CurrentWaveIndex) ||
                 e.PropertyName == nameof(VisualizerContext.CurrentWavePartialMask) ||
                 e.PropertyName == nameof(VisualizerContext.CurrentWaveBreakNotRiched))
-                WaveInfo = $"G: {_context.CurrentWaveGroupIndex}\nW: {_context.CurrentWaveIndex}\nL: {_context.CurrentWaveBreakLine}";
+            {
+                var waveInfo = $"G: {_context.CurrentWaveGroupIndex}\nW: {_context.CurrentWaveIndex}";
+                if (_context.CurrentWavePartialMask) waveInfo += " (E)";
+                waveInfo += "\n";
+                waveInfo += _context.CurrentWaveBreakNotRiched
+                    ? "no brk"
+                    : $"{_context.CurrentWaveBreakLine}";
+
+                WaveInfo = waveInfo;
+            }
         }
 
         private void UpdateControls(object sender, EventArgs e)
