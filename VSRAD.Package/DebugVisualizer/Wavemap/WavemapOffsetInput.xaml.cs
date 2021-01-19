@@ -48,27 +48,24 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void UpdateTooltipAndWaveInfo(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(VisualizerContext.CurrentWaveBreakLine) ||
-                e.PropertyName == nameof(VisualizerContext.CurrentWaveGroupIndex) ||
-                e.PropertyName == nameof(VisualizerContext.CurrentWaveIndex) ||
-                e.PropertyName == nameof(VisualizerContext.CurrentWavePartialMask) ||
-                e.PropertyName == nameof(VisualizerContext.CurrentWaveBreakNotRiched))
+            if (e.PropertyName == nameof(VisualizerContext.CurrentWaveInfo))
             {
-                var waveInfo = $"G: {_context.CurrentWaveGroupIndex}\nW: {_context.CurrentWaveIndex}";
-                if (_context.CurrentWavePartialMask && !_context.CurrentWaveBreakNotRiched) waveInfo += " (E)";
-                waveInfo += "\n";
-                waveInfo += _context.CurrentWaveBreakNotRiched
+                var waveInfo = _context.CurrentWaveInfo;
+                var waveInfoText = $"G: {waveInfo.GroupIdx}\nW: {waveInfo.WaveIdx}";
+                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) waveInfoText += " (E)";
+                waveInfoText += "\n";
+                waveInfoText += waveInfo.BreakNotReached
                     ? "no brk"
-                    : $"L: {_context.CurrentWaveBreakLine}";
+                    : $"L: {waveInfo.BreakLine}";
 
-                var tooltip = $"Group: {_context.CurrentWaveGroupIndex}\nWave: {_context.CurrentWaveIndex}";
-                if (_context.CurrentWavePartialMask && !_context.CurrentWaveBreakNotRiched) tooltip += " (partial mask)";
+                var tooltip = $"Group: {waveInfo.GroupIdx}\nWave: {waveInfo.WaveIdx}";
+                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) tooltip += " (partial mask)";
                 tooltip += "\n";
-                tooltip += _context.CurrentWaveBreakNotRiched
+                tooltip += waveInfo.BreakNotReached
                     ? "Brk point not reached"
-                    : $"Line: {_context.CurrentWaveBreakLine}";
+                    : $"Line: {waveInfo.BreakLine}";
 
-                WaveInfoTextBlock.Text = waveInfo;
+                WaveInfoTextBlock.Text = waveInfoText;
                 WaveInfoTextBlock.ToolTip = tooltip;
             }
         }
