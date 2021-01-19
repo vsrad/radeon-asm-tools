@@ -7,16 +7,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
     public sealed partial class WavemapOffsetInput : UserControl, INotifyPropertyChanged
     {
-        public static readonly DependencyProperty WaveInfoProperty =
-            DependencyProperty.Register(nameof(WaveInfo), typeof(string), typeof(WavemapOffsetInput),
-                new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
-
-        public string WaveInfo
-        {
-            get => (string)GetValue(WaveInfoProperty);
-            set => SetValue(WaveInfoProperty, value);
-        }
-
         private VisualizerContext _context;
         private WavemapImage _image;
 
@@ -65,13 +55,21 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 e.PropertyName == nameof(VisualizerContext.CurrentWaveBreakNotRiched))
             {
                 var waveInfo = $"G: {_context.CurrentWaveGroupIndex}\nW: {_context.CurrentWaveIndex}";
-                if (_context.CurrentWavePartialMask) waveInfo += " (E)";
+                if (_context.CurrentWavePartialMask && !_context.CurrentWaveBreakNotRiched) waveInfo += " (E)";
                 waveInfo += "\n";
                 waveInfo += _context.CurrentWaveBreakNotRiched
                     ? "no brk"
-                    : $"{_context.CurrentWaveBreakLine}";
+                    : $"L: {_context.CurrentWaveBreakLine}";
 
-                WaveInfo = waveInfo;
+                var tooltip = $"Group: {_context.CurrentWaveGroupIndex}\nWave: {_context.CurrentWaveIndex}";
+                if (_context.CurrentWavePartialMask && !_context.CurrentWaveBreakNotRiched) tooltip += " (partial mask)";
+                tooltip += "\n";
+                tooltip += _context.CurrentWaveBreakNotRiched
+                    ? "Brk point not reached"
+                    : $"Line: {_context.CurrentWaveBreakLine}";
+
+                WaveInfoTextBlock.Text = waveInfo;
+                WaveInfoTextBlock.ToolTip = tooltip;
             }
         }
 

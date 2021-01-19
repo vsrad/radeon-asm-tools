@@ -39,7 +39,7 @@
             <TextBlock Text="{Binding OffsetLabel}" VerticalAlignment="Center" Margin="0,6,0,0" Height="24" Grid.Row="0"
                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
         </DockPanel>
-        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left" Text="{Binding WaveInfo}"
+        <TextBlock Grid.Row="1" VerticalAlignment="Top" HorizontalAlignment="Left" x:Name="WaveInfoTextBlock"
                    ToolTip="G: Group index under cursor&#x0a;W: Wave index under cursor&#x0a;L: Break line of wave under cursor"
                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
     </Grid>

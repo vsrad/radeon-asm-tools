@@ -42,9 +42,6 @@ namespace VSRAD.Package.DebugVisualizer
         private int _canvasHeight = 10;
         public int CanvasHeight { get => _canvasHeight; set => SetField(ref _canvasHeight, value); }
 
-        private string _currentWaveInfo = "";
-        public string CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
-
         private int _currentWaveGroupIndex = 0;
         public int CurrentWaveGroupIndex { get => _currentWaveGroupIndex; set => SetField(ref _currentWaveGroupIndex, value); }
 
