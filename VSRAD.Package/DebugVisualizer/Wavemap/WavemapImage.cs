@@ -149,7 +149,14 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
             if (GetWaveAtMousePos(e.GetPosition(_img)) is WaveInfo wave && wave.IsVisible)
-                _context.CurrentWaveInfo = $"G: {wave.GroupIdx}\nW: {wave.WaveIdx}\nL: {wave.BreakLine}";
+            {
+                //_context.CurrentWaveInfo = $"G: {wave.GroupIdx}\nW: {wave.WaveIdx}\nL: {wave.BreakLine}";
+                _context.CurrentWaveGroupIndex = (int)wave.GroupIdx;
+                _context.CurrentWaveIndex = (int)wave.WaveIdx;
+                _context.CurrentWaveBreakLine = (int)wave.BreakLine;
+                _context.CurrentWavePartialMask = wave.PartialMask;
+                _context.CurrentWaveBreakNotRiched = wave.BreakNotRiched;
+            }
         }
 
         private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)

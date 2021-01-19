@@ -45,6 +45,22 @@ namespace VSRAD.Package.DebugVisualizer
         private string _currentWaveInfo = "";
         public string CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
 
+        private int _currentWaveGroupIndex = 0;
+        public int CurrentWaveGroupIndex { get => _currentWaveGroupIndex; set => SetField(ref _currentWaveGroupIndex, value); }
+
+        private int _currentWaveIndex = 0;
+        public int CurrentWaveIndex { get => _currentWaveIndex; set => SetField(ref _currentWaveIndex, value); }
+
+        private int _currentWaveBreakLine = 0;
+        public int CurrentWaveBreakLine { get => _currentWaveBreakLine; set => SetField(ref _currentWaveBreakLine, value); }
+
+        private bool _currentWavePartialMask = false;
+        public bool CurrentWavePartialMask { get => _currentWavePartialMask; set => SetField(ref _currentWavePartialMask, value); }
+
+        private bool _currentWaveBreakNotRiched = false;
+        public bool CurrentWaveBreakNotRiched { get => _currentWaveBreakNotRiched; set => SetField(ref _currentWaveBreakNotRiched, value); }
+
+
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 

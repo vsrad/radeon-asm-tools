@@ -51,8 +51,19 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public void Setup(VisualizerContext context, WavemapImage image)
         {
             _context = context;
+            _context.PropertyChanged += UpdateTooltipAndWaveInfo;
             _image = image;
             _image.Updated += UpdateControls;
+        }
+
+        private void UpdateTooltipAndWaveInfo(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(VisualizerContext.CurrentWaveBreakLine) ||
+                e.PropertyName == nameof(VisualizerContext.CurrentWaveGroupIndex) ||
+                e.PropertyName == nameof(VisualizerContext.CurrentWaveIndex) ||
+                e.PropertyName == nameof(VisualizerContext.CurrentWavePartialMask) ||
+                e.PropertyName == nameof(VisualizerContext.CurrentWaveBreakNotRiched))
+                WaveInfo = $"G: {_context.CurrentWaveGroupIndex}\nW: {_context.CurrentWaveIndex}\nL: {_context.CurrentWaveBreakLine}";
         }
 
         private void UpdateControls(object sender, EventArgs e)

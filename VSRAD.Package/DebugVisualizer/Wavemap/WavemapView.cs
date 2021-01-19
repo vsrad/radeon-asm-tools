@@ -12,6 +12,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public uint GroupIdx;
         public uint WaveIdx;
         public bool IsVisible;
+        public bool PartialMask;
+        public bool BreakNotRiched;
     }
 #pragma warning restore CA1815
 
@@ -111,7 +113,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     BreakLine = 0,
                     GroupIdx = 0,
                     WaveIdx = 0,
-                    IsVisible = false
+                    IsVisible = false,
+                    PartialMask = false,
+                    BreakNotRiched = false
                 };
 
 
@@ -124,7 +128,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 BreakLine = breakLine,
                 GroupIdx = (uint)column,
                 WaveIdx = (uint)row,
-                IsVisible = true
+                IsVisible = true,
+                PartialMask = CheckLanes && HasInactiveLanes(flatIndex),
+                BreakNotRiched = CheckMagicNumber && !MagicNumberSet(flatIndex)
             };
         }
 
