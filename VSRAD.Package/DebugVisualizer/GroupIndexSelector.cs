@@ -108,6 +108,25 @@ namespace VSRAD.Package.DebugVisualizer
             Update();
         }
 
+        public void GoToGroup(uint groupIdx)
+        {
+            if (_projectOptions.VisualizerOptions.NDRange3D)
+            {
+                _updateOptions = false;
+                X = groupIdx % DimX;
+                groupIdx /= DimX;
+                Y = groupIdx % DimY;
+                groupIdx /= DimY;
+                Z = groupIdx;
+                _updateOptions = true;
+                Update();
+            }
+            else
+            {
+                X = groupIdx;
+            }
+        }
+
         public void Update()
         {
             var index = _projectOptions.VisualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;

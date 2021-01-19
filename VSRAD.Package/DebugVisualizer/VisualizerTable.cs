@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Windows.Media;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
 
@@ -17,7 +16,7 @@ namespace VSRAD.Package.DebugVisualizer
         public delegate uint GetGroupSize();
         public delegate ReadOnlyCollection<string> GetValidWatches();
 
-        private GetValidWatches _getValidWatches;
+        private readonly GetValidWatches _getValidWatches;
 
         public event ChangeWatchState WatchStateChanged;
 
@@ -95,6 +94,14 @@ namespace VSRAD.Package.DebugVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
+        }
+
+        public void GoToWave(uint waveIdx, uint waveSize)
+        {
+            var firstCol = waveIdx * waveSize;
+            var lastCol = (waveIdx + 1) * waveSize - 1;
+            if (!_selectionController.SelectAllColumnsInRange((int)firstCol + DataColumnOffset, (int)lastCol + DataColumnOffset))
+                Errors.ShowWarning($"All columns of the target wave ({firstCol}-{lastCol}) are hidden.");
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;

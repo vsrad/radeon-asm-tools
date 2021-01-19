@@ -103,11 +103,22 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             set { _firstGroup = value; DrawImage(); }
         }
 
+        public sealed class NagivationEventArgs : EventArgs
+        {
+            public uint GroupIdx { get; set; }
+            public uint? WaveIdx { get; set; }
+        }
+
+        public event EventHandler<NagivationEventArgs> NavigationRequested;
+
         public event EventHandler Updated;
 
         public WavemapImage(Image image, VisualizerContext context)
         {
             _img = image;
+            _img.MouseMove += ShowWaveInfo;
+            _img.MouseRightButtonUp += ShowWaveMenu;
+
             _context = context;
             _context.Options.VisualizerOptions.PropertyChanged += PropertyChanged;
 
@@ -137,13 +148,34 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            var p = e.GetPosition(_img);
+            if (GetWaveAtMousePos(e.GetPosition(_img)) is WaveInfo wave && wave.IsVisible)
+                _context.CurrentWaveInfo = $"G: {wave.GroupIdx}\nW: {wave.WaveIdx}\nL: {wave.BreakLine}";
+        }
+
+        private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (GetWaveAtMousePos(e.GetPosition(_img)) is WaveInfo wave && wave.IsVisible)
+            {
+                var menu = new ContextMenu { PlacementTarget = _img };
+                var goToGroup = new MenuItem { Header = $"Go to Group #{wave.GroupIdx}" };
+                goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIdx = wave.GroupIdx });
+                menu.Items.Add(goToGroup);
+                var goToWave = new MenuItem { Header = $"Go to Wave #{wave.WaveIdx} of Group #{wave.GroupIdx}" };
+                goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIdx = wave.GroupIdx, WaveIdx = wave.WaveIdx });
+                menu.Items.Add(goToWave);
+                menu.IsOpen = true;
+            }
+        }
+
+        private WaveInfo? GetWaveAtMousePos(Point p)
+        {
+            if (_view == null)
+                return null;
+
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
             var row = (int)(p.Y / rSize);
             var col = (int)(p.X / rSize) + FirstGroup;
-            var waveInfo = _view[row, col];
-            if (waveInfo.IsVisible)
-                _context.CurrentWaveInfo = $"G: {col}\nW: {row}\nL: {waveInfo.BreakLine}";
+            return _view[row, col];
         }
 
         private void DrawImage()
@@ -223,10 +255,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
 
             _img.Source = LoadImage(imageData);
-
-            _img.MouseMove -= ShowWaveInfo;
-            _img.MouseMove += ShowWaveInfo;
-
             Updated?.Invoke(this, EventArgs.Empty);
         }
 

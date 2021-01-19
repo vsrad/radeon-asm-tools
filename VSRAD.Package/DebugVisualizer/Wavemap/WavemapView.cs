@@ -9,8 +9,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     {
         public Color BreakColor;
         public uint BreakLine;
-        public int GroupIdx;
-        public int WaveIdx;
+        public uint GroupIdx;
+        public uint WaveIdx;
         public bool IsVisible;
     }
 #pragma warning restore CA1815
@@ -122,8 +122,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             {
                 BreakColor = GetBreakColor(flatIndex, breakLine),
                 BreakLine = breakLine,
-                GroupIdx = column,
-                WaveIdx = row,
+                GroupIdx = (uint)column,
+                WaveIdx = (uint)row,
                 IsVisible = true
             };
         }

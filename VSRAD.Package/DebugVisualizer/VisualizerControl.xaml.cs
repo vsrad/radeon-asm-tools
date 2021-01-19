@@ -23,6 +23,7 @@ namespace VSRAD.Package.DebugVisualizer
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
+            _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
             integration.AddWatch += AddWatch;
@@ -48,6 +49,13 @@ namespace VSRAD.Package.DebugVisualizer
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
+        }
+
+        private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
+        {
+            _context.GroupIndex.GoToGroup(e.GroupIdx);
+            if (e.WaveIdx is uint waveIdx)
+                _table.GoToWave(waveIdx, _context.Options.VisualizerOptions.WaveSize);
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
