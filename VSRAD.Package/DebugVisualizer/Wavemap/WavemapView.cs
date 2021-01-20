@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Data;
 using System.Drawing;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
@@ -57,7 +56,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public int WavesPerGroup { get; }
         public int GroupCount { get; }
 
-        public bool CheckLanes = false;
+        public bool CheckInactiveLanes = false;
         public bool CheckMagicNumber = false;
         public uint MagicNumber = 0;
 
@@ -75,18 +74,21 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _colorManager = new BreakpointColorManager();
         }
 
-        private uint GetBreakpointLine(int waveIndex)
+        private uint? GetBreakpointLine(int waveIndex)
         {
             var breakIndex = waveIndex * _waveSize * _laneDataSize + _laneDataSize; // break line is in the lane #1 of system watch
+            if (breakIndex >= _data.Length) // last wave, last group, wave size == 1
+                return null;
             return _data[breakIndex];
         }
 
-        private bool IsValidWave(int row, int column) => row < WavesPerGroup && column < GroupCount;
+        private bool IsValidWave(int waveIdx, int groupIdx) => waveIdx < WavesPerGroup && groupIdx < GroupCount;
 
         private bool HasInactiveLanes(int flatWaveIndex)
         {
-            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize + (_laneDataSize * 8); // exec mask is in the lanes #8 and #9 of system watch
-            return _data[execMaskOffset] != 0xfffffff && _data[execMaskOffset + _laneDataSize] != 0xffffffff;
+            var execLoOffset = flatWaveIndex * _waveSize * _laneDataSize + (_laneDataSize * 8); // exec mask is in the lanes #8 and #9 of system watch
+            var execHiOffset = execLoOffset + _laneDataSize;
+            return _waveSize >= 10 && (_data[execLoOffset] != 0xffffffff || _data[execHiOffset] != 0xffffffff);
         }
 
         private bool MagicNumberSet(int flatWaveIndex)
@@ -95,48 +97,40 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             return _data[magicNumberOffset] == MagicNumber;
         }
 
-        private int GetWaveFlatIndex(int row, int column) => column * WavesPerGroup + row;
-
-        private Color GetBreakColor(int flatWaveIndex, uint breakLine)
+        public WaveInfo this[int waveIdx, int groupIdx]
         {
-            if (CheckMagicNumber && !MagicNumberSet(flatWaveIndex)) return Color.Gray;
-            if (CheckLanes && HasInactiveLanes(flatWaveIndex)) return Color.LightGray;
-            return _colorManager.GetColorForBreakpoint(breakLine);
-        }
-
-        private WaveInfo GetWaveInfoByRowAndColumn(int row, int column)
-        {
-            if (!IsValidWave(row, column))
-                return new WaveInfo
-                {
-                    BreakColor = Color.FromArgb(0, 0, 0, 0),
-                    BreakLine = 0,
-                    GroupIdx = 0,
-                    WaveIdx = 0,
-                    IsVisible = false,
-                    PartialMask = false,
-                    BreakNotReached = false
-                };
-
-
-            var flatIndex = GetWaveFlatIndex(row, column);
-            var breakLine = GetBreakpointLine(flatIndex);
-
-            return new WaveInfo
+            get
             {
-                BreakColor = GetBreakColor(flatIndex, breakLine),
-                BreakLine = breakLine,
-                GroupIdx = (uint)column,
-                WaveIdx = (uint)row,
-                IsVisible = true,
-                PartialMask = CheckLanes && HasInactiveLanes(flatIndex),
-                BreakNotReached = CheckMagicNumber && !MagicNumberSet(flatIndex)
-            };
-        }
+                var flatIndex = groupIdx * WavesPerGroup + waveIdx;
+                if (IsValidWave(waveIdx, groupIdx) && GetBreakpointLine(flatIndex) is uint breakLine)
+                {
+                    var breakNotReached = CheckMagicNumber && !MagicNumberSet(flatIndex);
+                    var partialMask = CheckInactiveLanes && HasInactiveLanes(flatIndex);
 
-        public WaveInfo this[int row, int column]
-        {
-            get => GetWaveInfoByRowAndColumn(row, column);
+                    Color breakColor;
+                    if (breakNotReached)
+                        breakColor = Color.Gray;
+                    else if (partialMask)
+                        breakColor = Color.LightGray;
+                    else
+                        breakColor = _colorManager.GetColorForBreakpoint(breakLine);
+
+                    return new WaveInfo
+                    {
+                        BreakColor = breakColor,
+                        BreakLine = breakLine,
+                        GroupIdx = (uint)groupIdx,
+                        WaveIdx = (uint)waveIdx,
+                        IsVisible = true,
+                        PartialMask = partialMask,
+                        BreakNotReached = breakNotReached
+                    };
+                }
+                else
+                {
+                    return default;
+                }
+            }
         }
     }
 }

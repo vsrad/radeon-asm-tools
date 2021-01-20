@@ -138,7 +138,7 @@ namespace VSRAD.Package.DebugVisualizer
                     break;
                 case nameof(Options.VisualizerOptions.WaveSize):
                     RefreshDataStyling();
-                    _wavemap.View = _context.BreakData.GetWavemapView();
+                    _wavemap.View = _context.BreakData?.GetWavemapView();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_context.Options.VisualizerOptions.CheckMagicNumber)

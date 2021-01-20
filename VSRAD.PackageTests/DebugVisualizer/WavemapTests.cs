@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using VSRAD.Package.DebugVisualizer.Wavemap;
+﻿using VSRAD.Package.DebugVisualizer.Wavemap;
 using Xunit;
 
 namespace VSRAD.PackageTests.DebugVisualizer
@@ -91,6 +90,39 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (int i = 0; i < 20; ++i)
                 for (int j = 0; j < 5; ++j)
                     Assert.Equal(i < 10 && j < 2, wavemapView[j, i].IsVisible);
+        }
+
+        [Fact]
+        public void WaveSizeSmallerThanBreakLineOffsetTest()
+        {
+            var view = new WavemapView(new uint[68], waveSize: 1, laneDataSize: 1, groupSize: 17, groupCount: 4);
+
+            // When accessing the last wave of the last group, the break line (lane #1) is out of range with wave size = 1
+            var lastWave = view[16, 3];
+            // The wave is invisible because we cannot get the break line 
+            Assert.False(lastWave.IsVisible);
+        }
+
+        [Theory]
+        [InlineData(8), InlineData(9)]
+        public void WaveSizeSmallerThanExecMaskOffsetTest(int waveSize)
+        {
+            var wavesPerGroup = 2;
+            var groupCount = 2;
+
+            var data = new uint[waveSize * wavesPerGroup * groupCount];
+            for (int i = 0; i < waveSize * wavesPerGroup * groupCount; ++i)
+                data[i] = ~0u;
+
+            var view = new WavemapView(data, waveSize: waveSize, laneDataSize: 1, groupSize: waveSize * wavesPerGroup, groupCount: groupCount)
+            {
+                CheckInactiveLanes = true
+            };
+
+            // When accessing the last wave of the last group, the exec mask (lanes #8-9) is out of range with wave size < 9
+            var lastWave = view[wavesPerGroup - 1, groupCount - 1];
+            Assert.True(lastWave.IsVisible);
+            Assert.False(lastWave.PartialMask); // exec mask is not checked
         }
     }
 }

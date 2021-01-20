@@ -189,7 +189,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
 
             _view.MagicNumber = (uint)_context.Options.VisualizerOptions.MagicNumber;
-            _view.CheckLanes = _context.Options.VisualizerOptions.MaskLanes;
+            _view.CheckInactiveLanes = _context.Options.VisualizerOptions.MaskLanes;
             _view.CheckMagicNumber = _context.Options.VisualizerOptions.CheckMagicNumber;
 
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
