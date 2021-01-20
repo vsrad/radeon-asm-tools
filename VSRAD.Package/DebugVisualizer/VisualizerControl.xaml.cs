@@ -77,9 +77,7 @@ namespace VSRAD.Package.DebugVisualizer
             switch (e.PropertyName)
             {
                 case nameof(VisualizerContext.WatchesValid):
-                    if (_context.WatchesValid)
-                        RefreshDataStyling();
-                    else
+                    if (!_context.WatchesValid)
                         GrayOutWatches();
                     break;
             }
