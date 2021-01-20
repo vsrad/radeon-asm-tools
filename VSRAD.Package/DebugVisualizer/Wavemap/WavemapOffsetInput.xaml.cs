@@ -78,7 +78,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             {
                 DecButton.IsEnabled = _image.FirstGroup != 0;
                 IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
-                OffsetLabel = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
+
+                if (_image.FirstGroup < groupCount)
+                {
+                    var lastDisplayedGroup = Math.Min(groupCount, _image.FirstGroup + _image.GridSizeX) - 1;
+                    OffsetLabel = $"{_image.FirstGroup} - {lastDisplayedGroup}";
+                }
+                else
+                {
+                    OffsetLabel = $"{_image.FirstGroup} - {_image.FirstGroup}";
+                }
             }
             else
             {
