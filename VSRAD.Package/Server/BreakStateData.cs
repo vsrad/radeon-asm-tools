@@ -122,10 +122,7 @@ namespace VSRAD.Package.Server
             {
                 if (file.Offset != 0)
                     throw new ArgumentException("Trim the offset before passing output data to BreakStateData");
-                if (file.DwordCount * 4 < localData.Length)
-                    throw new ArgumentException($"{nameof(localData)}.Length should not be less than {nameof(file)}.{nameof(file.DwordCount)} * 4");
-
-                Buffer.BlockCopy(localData, file.Offset, _data, 0, _data.Length * sizeof(uint));
+                Buffer.BlockCopy(localData, file.Offset, _data, 0, file.DwordCount * 4);
             }
         }
 

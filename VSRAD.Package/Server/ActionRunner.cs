@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
@@ -187,7 +186,7 @@ namespace VSRAD.Package.Server
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
             var watches = _environment.Watches;
-            string dispatchParamsString = null;
+            BreakStateDispatchParameters dispatchParams = null;
 
             if (!string.IsNullOrEmpty(step.WatchesFile.Path))
             {
@@ -206,15 +205,41 @@ namespace VSRAD.Package.Server
                 if (!result.TryGetResult(out var data, out var error))
                     return (new StepResult(false, error.Message, ""), null);
 
-                dispatchParamsString = Encoding.UTF8.GetString(data);
-                dispatchParamsString = Regex.Replace(dispatchParamsString, @"[^\r]\n", "\r\n");
+                var paramsString = Encoding.UTF8.GetString(data);
+                var dispatchParamsResult = BreakStateDispatchParameters.Parse(paramsString);
+                if (!dispatchParamsResult.TryGetResult(out dispatchParams, out error))
+                    return (new StepResult(false, error.Message, ""), null);
             }
             {
                 var path = step.OutputFile.Path;
                 var initOutputTimestamp = GetInitialFileTimestamp(path);
 
+                int GetOutputDwordCount(int fileByteCount, out string warning)
+                {
+                    warning = "";
+                    var fileDwordCount = fileByteCount / 4;
+                    if (dispatchParams == null)
+                        return fileDwordCount;
+
+                    var laneDataSize = 1 /* system watch */ + watches.Count;
+                    var totalLaneCount = dispatchParams.GridSizeX * dispatchParams.GridSizeY * dispatchParams.GridSizeZ;
+                    var dispatchDwordCount = (int)totalLaneCount * laneDataSize;
+
+                    if (fileDwordCount < dispatchDwordCount)
+                    {
+                        warning = $"Output file ({path}) is smaller than expected.\r\n\r\n" +
+                            $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
+                            $"which corresponds to {totalLaneCount} lanes. With {laneDataSize} DWORDs per lane, the output file is expected to contain at least " +
+                            $"{dispatchDwordCount} DWORDs, but the actual contents are limited to {fileDwordCount} DWORDs.";
+                    }
+
+                    return Math.Min(dispatchDwordCount, fileDwordCount);
+                }
+
                 BreakStateOutputFile outputFile;
                 byte[] localOutputData = null;
+                string stepWarning;
+
                 if (step.OutputFile.IsRemote())
                 {
                     var fullPath = new[] { _environment.RemoteWorkDir, path };
@@ -225,7 +250,8 @@ namespace VSRAD.Package.Server
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
 
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, response.ByteCount - step.OutputOffset);
+                    var dataDwordCount = GetOutputDwordCount(response.ByteCount - step.OutputOffset, out stepWarning);
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
                 }
                 else
                 {
@@ -240,16 +266,12 @@ namespace VSRAD.Package.Server
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, localOutputData.Length);
+                    var dataDwordCount = GetOutputDwordCount(localOutputData.Length, out stepWarning);
+                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
 
                 var data = new BreakStateData(watches, outputFile, localOutputData);
-
-                var dispatchParamsResult = BreakStateDispatchParameters.Parse(dispatchParamsString);
-                if (!dispatchParamsResult.TryGetResult(out var dispatchParams, out var error))
-                    return (new StepResult(false, error.Message, ""), null);
-
-                return (new StepResult(true, "", ""), new BreakState(data, dispatchParams));
+                return (new StepResult(true, stepWarning, ""), new BreakState(data, dispatchParams));
             }
         }
 

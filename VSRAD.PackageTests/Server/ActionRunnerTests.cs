@@ -393,7 +393,7 @@ comment 115200") }, (FetchResultRange statusFetch) =>
                 (second) => Assert.Equal("julianne", second));
             Assert.NotNull(result.BreakState.DispatchParameters);
             Assert.Equal<uint>(8192 / 512, result.BreakState.DispatchParameters.DimX);
-            Assert.Equal<uint>(512, result.BreakState.DispatchParameters.GroupSize);
+            Assert.Equal<uint>(512, result.BreakState.DispatchParameters.GroupSizeX);
             Assert.Equal<uint>(32, result.BreakState.DispatchParameters.WaveSize);
             Assert.False(result.BreakState.DispatchParameters.NDRange3D);
             Assert.Equal("115200", result.BreakState.DispatchParameters.StatusString);
@@ -436,24 +436,26 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             Assert.Equal("Valid watches file (remote/watches) was not modified.", result.StepResults[0].Warning);
         }
 
-        [Fact]
-        public async Task ReadDebugDataLocalTestAsync()
+        [Theory]
+        [InlineData("grid_size (128, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", "")] /* file size (384*4 bytes) matches grid size, no warning shown */
+        [InlineData("grid_size (64, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", "")] /* file size exceeds grid size, no warning shown */
+        [InlineData("grid_size (256, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", /* grid size exceeds file size, "output file is smaller than expected" warning shown */
+            "Output file ({outputFile}) is smaller than expected.\r\n\r\nGrid size as specified in the dispatch parameters file is (256, 1, 1), which corresponds to 256 lanes. " +
+            "With 3 DWORDs per lane, the output file is expected to contain at least 768 DWORDs, but the actual contents are limited to 384 DWORDs.")]
+        public async Task ReadDebugDataLocalWarningsTestAsync(string dispatchParams, string expectedWarning)
         {
             var outputFile = Path.GetTempFileName();
             var watchesFile = Path.GetTempFileName();
             var dispatchParamsFile = Path.GetTempFileName();
 
             File.WriteAllText(watchesFile, "jill\r\njulianne");
-            File.WriteAllText(dispatchParamsFile, @"
-grid_size (64, 0, 0)
-group_size (64, 0, 0)
-wave_size 64");
-            var output = new uint[192];
-            for (int lane = 0; lane < 64; ++lane)
+            File.WriteAllText(dispatchParamsFile, dispatchParams);
+            var output = new uint[384];
+            for (int witem = 0; witem < 128; ++witem)
             {
-                output[lane * 3 + 0] = 1;          // system = const
-                output[lane * 3 + 1] = 777;        // first watch = const
-                output[lane * 3 + 2] = (uint)lane; // second watch = lane
+                output[witem * 3 + 0] = 1;                // system = const
+                output[witem * 3 + 1] = 777;              // first watch = const
+                output[witem * 3 + 2] = (uint)witem % 64; // second watch = lane
             }
             var outputOffset = 3;
             byte[] outputBytes = new byte[output.Length * sizeof(int) + outputOffset];
@@ -472,18 +474,54 @@ wave_size 64");
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
+            Assert.Equal(expectedWarning.Replace("{outputFile}", outputFile), result.StepResults[0].Warning);
             Assert.NotNull(result.BreakState);
             Assert.Collection(result.BreakState.Data.Watches,
                 (first) => Assert.Equal("jill", first),
                 (second) => Assert.Equal("julianne", second));
-            Assert.Equal<uint>(1, result.BreakState.DispatchParameters.DimX);
-            Assert.Equal<uint>(64, result.BreakState.DispatchParameters.GroupSize);
+            Assert.Equal<uint>(64, result.BreakState.DispatchParameters.GroupSizeX);
             Assert.Equal<uint>(64, result.BreakState.DispatchParameters.WaveSize);
 
             await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 64, waveSize: 64, nGroups: 0);
             var secondWatch = result.BreakState.Data.GetWatch("julianne");
             for (int i = 0; i < 64; ++i)
                 Assert.Equal(i, (int)secondWatch[i]);
+        }
+
+        [Theory]
+        [InlineData("grid_size (4, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", "")] /* file size matches grid size, no warning shown */
+        [InlineData("grid_size (2, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", "")] /* file size exceeds grid size, no warning shown */
+        [InlineData("grid_size (8, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", /* grid size exceeds file size, "output file is smaller than expected" warning shown */
+            "Output file ({outputFile}) is smaller than expected.\r\n\r\nGrid size as specified in the dispatch parameters file is (8, 1, 1), which corresponds to 8 lanes. " +
+            "With 2 DWORDs per lane, the output file is expected to contain at least 16 DWORDs, but the actual contents are limited to 8 DWORDs.")]
+        public async Task ReadDebugDataLocalTextOutputWarningsTestAsync(string dispatchParams, string expectedWarning)
+        {
+            var outputFile = Path.GetTempFileName();
+            var dispatchParamsFile = Path.GetTempFileName();
+            File.WriteAllLines(outputFile, new[] { "SKIPPED LINE", "0x6173616b", "0x7573616d", "0x69646f72", "0x69333133", "0x0", "0x0", "0x0", "0x0" });
+            File.WriteAllText(dispatchParamsFile, dispatchParams);
+
+            var steps = new List<IActionStep>
+            {
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
+                    watchesFile: new BuiltinActionFile(),
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
+                    binaryOutput: false, outputOffset: 1)
+            };
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })));
+            var result = await runner.RunAsync("Debug", steps);
+
+            Assert.True(result.Successful);
+            Assert.Equal(expectedWarning.Replace("{outputFile}", outputFile), result.StepResults[0].Warning);
+
+            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 2, waveSize: 2, nGroups: 0);
+            var system = result.BreakState.Data.GetSystem();
+            Assert.Equal(0x6173616b, (int)system[0]);
+            Assert.Equal(0x69646f72, (int)system[1]);
+            var constWatch = result.BreakState.Data.GetWatch("const");
+            Assert.Equal(0x7573616d, (int)constWatch[0]);
+            Assert.Equal(0x69333133, (int)constWatch[1]);
         }
 
         [Fact]
@@ -535,38 +573,6 @@ wave_size 64");
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{fileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
         }
-
-        [Fact]
-        public async Task ReadDebugDataLocalTextOutputTestAsync()
-        {
-            var outputFile = Path.GetTempFileName();
-            File.WriteAllText(outputFile, @"SKIPPED LINE
-0x6173616b
-0x7573616d
-0x69646f72
-0x69333133
-");
-
-            var steps = new List<IActionStep>
-            {
-                new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
-                    watchesFile: new BuiltinActionFile(), dispatchParamsFile: new BuiltinActionFile(), binaryOutput: false, outputOffset: 1)
-            };
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })));
-            var result = await runner.RunAsync("Debug", steps);
-
-            Assert.True(result.Successful);
-
-            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 4, waveSize: 4, nGroups: 0);
-            var system = result.BreakState.Data.GetSystem();
-            Assert.Equal(0x6173616b, (int)system[0]);
-            Assert.Equal(0x69646f72, (int)system[1]);
-            var constWatch = result.BreakState.Data.GetWatch("const");
-            Assert.Equal(0x7573616d, (int)constWatch[0]);
-            Assert.Equal(0x69333133, (int)constWatch[1]);
-        }
-
         #endregion
 
         [Fact]
@@ -578,12 +584,9 @@ wave_size 64");
             readDebugData.OutputFile.Location = StepEnvironment.Remote;
             readDebugData.OutputFile.CheckTimestamp = true;
             readDebugData.OutputFile.Path = "/home/parker/audio/master";
-            readDebugData.DispatchParamsFile.Location = StepEnvironment.Remote;
-            readDebugData.DispatchParamsFile.CheckTimestamp = false;
-            readDebugData.DispatchParamsFile.Path = "/home/parker/audio/copy";
-            //readDebugData.WatchesFile.Location = StepEnvironment.Local;
-            //readDebugData.WatchesFile.CheckTimestamp = true;
-            //readDebugData.WatchesFile.Path = "non-existent-local-path";
+            readDebugData.WatchesFile.Location = StepEnvironment.Remote;
+            readDebugData.WatchesFile.CheckTimestamp = false;
+            readDebugData.WatchesFile.Path = "/home/parker/audio/copy";
             var steps = new List<IActionStep>
             {
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
