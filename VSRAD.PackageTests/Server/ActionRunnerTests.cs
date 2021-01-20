@@ -375,9 +375,9 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("jill\njulianne") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "watches" }, watchesFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"
-grid size (8192, 0, 0)
-group size (512, 0, 0)
-wave size 32
+grid_size (8192, 0, 0)
+group_size (512, 0, 0)
+wave_size 32
 comment 115200") }, (FetchResultRange statusFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "status" }, statusFetch.FilePath));
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now }, (FetchMetadata outputMetaFetch) =>
@@ -445,9 +445,9 @@ comment 115200") }, (FetchResultRange statusFetch) =>
 
             File.WriteAllText(watchesFile, "jill\r\njulianne");
             File.WriteAllText(dispatchParamsFile, @"
-grid size (64, 0, 0)
-group size (64, 0, 0)
-wave size 64");
+grid_size (64, 0, 0)
+group_size (64, 0, 0)
+wave_size 64");
             var output = new uint[192];
             for (int lane = 0; lane < 64; ++lane)
             {

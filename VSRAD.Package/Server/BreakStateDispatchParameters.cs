@@ -5,11 +5,11 @@ namespace VSRAD.Package.Server
 {
     public sealed class BreakStateDispatchParameters
     {
-        private static readonly Regex _paramsRegex = new Regex(@"grid size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave size (?<wv>\d+)(\s+comment (?<comment>.*))?", RegexOptions.Compiled);
+        private static readonly Regex _paramsRegex = new Regex(@"grid_size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group_size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave_size (?<wv>\d+)(\s+comment (?<comment>.*))?", RegexOptions.Compiled);
         private const string _exampleParamsContent = @"
-grid size (2048, 1, 1)
-group size (512, 1, 1)
-wave size 64
+grid_size (2048, 1, 1)
+group_size (512, 1, 1)
+wave_size 64
 comment optional comment";
 
         public uint WaveSize { get; }
@@ -61,19 +61,21 @@ comment optional comment";
             if (waveSize > groupX)
                 return new Error("Could not read the dispatch parameters file. WaveSize cannot be bigger than GroupX.");
 
-            if (ndRange3D && (groupY == 0 || groupZ == 0))
-                return new Error("Could not read the dispatch parameters file. If GridY and GridZ are set, GroupY and GroupZ cannot be zero.");
+            if (gridY > 1 && groupY == 0)
+                return new Error("Could not read the dispatch parameters file. If GridY is greater than one, GroupY cannot be zero.");
+            if (gridZ > 1 && groupZ == 0)
+                return new Error("Could not read the dispatch parameters file. If GridZ is greater than one, GroupZ cannot be zero.");
 
             if (groupX > gridX)
                 return new Error("Could not read the dispatch parameters file. GroupX cannot be bigger than GridX.");
-            if (ndRange3D && groupY > gridY)
+            if (groupY > gridY)
                 return new Error("Could not read the dispatch parameters file. GroupY cannot be bigger than GridY.");
-            if (ndRange3D && groupZ > gridZ)
+            if (groupZ > gridZ)
                 return new Error("Could not read the dispatch parameters file. GroupZ cannot be bigger than GridZ.");
 
             var dimX = gridX / groupX;
-            var dimY = ndRange3D ? gridY / groupY : 0;
-            var dimZ = ndRange3D ? gridZ / groupZ : 0;
+            var dimY = gridY > 1 ? gridY / groupY : 0;
+            var dimZ = gridZ > 1 ? gridZ / groupZ : 0;
 
             return new BreakStateDispatchParameters(waveSize, dimX, dimY, dimZ, groupSize: groupX, ndRange3D, statusString);
         }
