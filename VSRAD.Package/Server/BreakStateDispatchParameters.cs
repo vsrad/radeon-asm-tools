@@ -48,7 +48,7 @@ comment optional comment";
             var groupY = uint.Parse(match.Groups["gp_y"].Value);
             var groupZ = uint.Parse(match.Groups["gp_z"].Value);
             var waveSize = uint.Parse(match.Groups["wv"].Value);
-            var ndRange3D = gridY != 0 && gridZ != 0;
+            var ndRange3D = gridY > 1 || gridZ > 1;
             var statusString = match.Groups["comment"].Value;
 
             if (gridX == 0)

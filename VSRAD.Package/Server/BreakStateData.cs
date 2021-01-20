@@ -93,7 +93,15 @@ namespace VSRAD.Package.Server
         public int GroupSize { get; private set; }
         public int WaveSize { get; private set; }
 
-        public int PaddedGroupSize => ((GroupSize + WaveSize - 1) / WaveSize) * WaveSize; // rounded up to a multiple of wave size
+        private int? RealGroupSize
+        {
+            get
+            {
+                if (GroupSize > 0 && WaveSize > 0)
+                    return ((GroupSize + WaveSize - 1) / WaveSize) * WaveSize; // rounded up to a multiple of wave size
+                return null;
+            }
+        }
 
         private readonly BreakStateOutputFile _outputFile;
         private readonly int _laneDataSize; // in dwords
@@ -133,8 +141,12 @@ namespace VSRAD.Package.Server
 
         public WatchView GetSystem()
         {
-            var groupOffset = GroupIndex * PaddedGroupSize * _laneDataSize;
-            return new WatchView(_data, groupOffset, laneDataOffset: 0, _laneDataSize);
+            if (RealGroupSize is int groupSize)
+            {
+                var groupOffset = GroupIndex * groupSize * _laneDataSize;
+                return new WatchView(_data, groupOffset, laneDataOffset: 0, _laneDataSize);
+            }
+            return null;
         }
 
         public WatchView GetWatch(string watch)
@@ -143,8 +155,12 @@ namespace VSRAD.Package.Server
             if (watchIndex == -1)
                 return null;
 
-            var groupOffset = GroupIndex * PaddedGroupSize * _laneDataSize;
-            return new WatchView(_data, groupOffset, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
+            if (RealGroupSize is int groupSize)
+            {
+                var groupOffset = GroupIndex * groupSize * _laneDataSize;
+                return new WatchView(_data, groupOffset, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
+            }
+            return null;
         }
 
         public SliceWatchView GetSliceWatch(string watch, int groupsInRow, int nGroups)
@@ -164,7 +180,12 @@ namespace VSRAD.Package.Server
             return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize);
         }
 
-        public WavemapView GetWavemapView() => new WavemapView(_data, WaveSize, _laneDataSize, GroupSize, GetGroupCount(GroupSize, WaveSize, 0));
+        public WavemapView GetWavemapView()
+        {
+            if (GroupSize > 0 && WaveSize > 0)
+                return new WavemapView(_data, WaveSize, _laneDataSize, GroupSize, GetGroupCount(GroupSize, WaveSize, 0));
+            return null;
+        }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int waveSize, int nGroups, bool fetchWholeFile = false)
         {
