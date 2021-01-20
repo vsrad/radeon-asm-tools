@@ -9,9 +9,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
     {
         public Color BreakColor;
         public uint BreakLine;
-        public int GroupIdx;
-        public int WaveIdx;
+        public uint GroupIdx;
+        public uint WaveIdx;
         public bool IsVisible;
+        public bool PartialMask;
+        public bool BreakNotReached;
     }
 #pragma warning restore CA1815
 
@@ -55,6 +57,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public int WavesPerGroup { get; }
         public int GroupCount { get; }
 
+        public bool CheckLanes = false;
+        public bool CheckMagicNumber = false;
+        public uint MagicNumber = 0;
+
         private readonly uint[] _data;
 
         private readonly BreakpointColorManager _colorManager;
@@ -64,21 +70,39 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _data = data;
             _waveSize = waveSize;
             _laneDataSize = laneDataSize;
-            WavesPerGroup = groupSize / waveSize;
+            WavesPerGroup = (groupSize + waveSize - 1) / waveSize;
             GroupCount = groupCount;
             _colorManager = new BreakpointColorManager();
         }
 
         private uint GetBreakpointLine(int waveIndex)
         {
-            var breakIndex = waveIndex * _waveSize * _laneDataSize + _laneDataSize; // break line is in the first lane of system watch
+            var breakIndex = waveIndex * _waveSize * _laneDataSize + _laneDataSize; // break line is in the lane #1 of system watch
             return _data[breakIndex];
         }
 
-        private bool IsValidWave(int row, int column) =>
-            GetWaveFlatIndex(row, column) * _waveSize * _laneDataSize + _laneDataSize < _data.Length && row < WavesPerGroup;
+        private bool IsValidWave(int row, int column) => row < WavesPerGroup && column < GroupCount;
+
+        private bool HasInactiveLanes(int flatWaveIndex)
+        {
+            var execMaskOffset = flatWaveIndex * _waveSize * _laneDataSize + (_laneDataSize * 8); // exec mask is in the lanes #8 and #9 of system watch
+            return _data[execMaskOffset] != 0xfffffff && _data[execMaskOffset + _laneDataSize] != 0xffffffff;
+        }
+
+        private bool MagicNumberSet(int flatWaveIndex)
+        {
+            var magicNumberOffset = flatWaveIndex * _waveSize * _laneDataSize; // magic number is in the lane #0 of system watch
+            return _data[magicNumberOffset] == MagicNumber;
+        }
 
         private int GetWaveFlatIndex(int row, int column) => column * WavesPerGroup + row;
+
+        private Color GetBreakColor(int flatWaveIndex, uint breakLine)
+        {
+            if (CheckMagicNumber && !MagicNumberSet(flatWaveIndex)) return Color.Gray;
+            if (CheckLanes && HasInactiveLanes(flatWaveIndex)) return Color.LightGray;
+            return _colorManager.GetColorForBreakpoint(breakLine);
+        }
 
         private WaveInfo GetWaveInfoByRowAndColumn(int row, int column)
         {
@@ -89,7 +113,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     BreakLine = 0,
                     GroupIdx = 0,
                     WaveIdx = 0,
-                    IsVisible = false
+                    IsVisible = false,
+                    PartialMask = false,
+                    BreakNotReached = false
                 };
 
 
@@ -98,11 +124,13 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
             return new WaveInfo
             {
-                BreakColor = _colorManager.GetColorForBreakpoint(breakLine),
+                BreakColor = GetBreakColor(flatIndex, breakLine),
                 BreakLine = breakLine,
-                GroupIdx = column,
-                WaveIdx = row,
-                IsVisible = true
+                GroupIdx = (uint)column,
+                WaveIdx = (uint)row,
+                IsVisible = true,
+                PartialMask = CheckLanes && HasInactiveLanes(flatIndex),
+                BreakNotReached = CheckMagicNumber && !MagicNumberSet(flatIndex)
             };
         }
 

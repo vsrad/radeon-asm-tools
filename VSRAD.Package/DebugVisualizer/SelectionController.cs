@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Windows.Input;
 
@@ -26,6 +27,30 @@ namespace VSRAD.Package.DebugVisualizer
                 return GetSelectedRows();
             else
                 return new[] { _table.Rows[clickedRowIndex] };
+        }
+
+        public bool SelectAllColumnsInRange(int fromIndex, int toIndex)
+        {
+            toIndex = Math.Min(toIndex, _table.Columns.Count - 1);
+
+            bool anySelected = false;
+
+            _table.ClearSelection();
+            for (int i = fromIndex; i <= toIndex; ++i)
+            {
+                if (_table.Columns[i].Visible)
+                {
+                    if (!anySelected)
+                        _table.FirstDisplayedScrollingColumnIndex = i;
+
+                    anySelected = true;
+                    foreach (DataGridViewRow row in _table.Rows)
+                        if (row.Index >= 0 && row.Index != _table.RowCount - 1)
+                            row.Cells[i].Selected = true;
+                }
+            }
+
+            return anySelected;
         }
 
         // We want to select a column when the column header is clicked, and a row when the row header is clicked.

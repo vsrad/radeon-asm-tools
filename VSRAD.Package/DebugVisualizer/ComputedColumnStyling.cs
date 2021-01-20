@@ -45,15 +45,16 @@ namespace VSRAD.Package.DebugVisualizer
             var wfrontSize = Math.Min(options.WaveSize, GroupSize);
             for (int wfrontOffset = 0; wfrontOffset < GroupSize; wfrontOffset += (int)wfrontSize)
             {
+                var lastLaneId = Math.Min(wfrontOffset + wfrontSize, GroupSize) - 1; // handle incomplete groups (group size % wave size != 0)
                 if (options.CheckMagicNumber && system[wfrontOffset] != options.MagicNumber)
                 {
-                    for (int laneId = 0; laneId < wfrontSize; ++laneId)
+                    for (int laneId = 0; wfrontOffset + laneId <= lastLaneId; ++laneId)
                         _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
                 }
-                else if (options.MaskLanes)
+                else if (options.MaskLanes && wfrontSize <= 64 && wfrontOffset + 9 <= lastLaneId)
                 {
                     var execMask = new BitArray(new[] { (int)system[wfrontOffset + 8], (int)system[wfrontOffset + 9] });
-                    for (int laneId = 0; laneId < wfrontSize; ++laneId)
+                    for (int laneId = 0; wfrontOffset + laneId <= lastLaneId; ++laneId)
                         if (!execMask[laneId])
                             _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
                 }

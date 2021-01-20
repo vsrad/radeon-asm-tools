@@ -64,25 +64,24 @@ namespace VSRAD.Package.DebugVisualizer
         public GroupIndexSelector(Options.ProjectOptions options)
         {
             _projectOptions = options;
-            _projectOptions.VisualizerOptions.PropertyChanged += (sender, args) =>
-            {
-                if (args.PropertyName == nameof(Options.VisualizerOptions.NDRange3D))
-                {
-                    RaisePropertyChanged(nameof(MaximumX));
-                    Update();
-                }
-            };
+            _projectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
+            _projectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
+        }
 
-            _projectOptions.DebuggerOptions.PropertyChanged += (sender, args) =>
+        private void OptionsChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
             {
-                switch (args.PropertyName)
-                {
-                    case nameof(Options.DebuggerOptions.GroupSize):
-                    case nameof(Options.DebuggerOptions.NGroups):
-                        if (_updateOptions) Update();
-                        break;
-                }
-            };
+                case nameof(Options.VisualizerOptions.NDRange3D):
+                    RaisePropertyChanged(nameof(MaximumX));
+                    if (_updateOptions) Update();
+                    break;
+                case nameof(Options.VisualizerOptions.WaveSize):
+                case nameof(Options.DebuggerOptions.GroupSize):
+                case nameof(Options.DebuggerOptions.NGroups):
+                    if (_updateOptions) Update();
+                    break;
+            }
         }
 
         public void UpdateOnBreak(BreakState breakState)
@@ -106,6 +105,25 @@ namespace VSRAD.Package.DebugVisualizer
                 _updateOptions = true;
             }
             Update();
+        }
+
+        public void GoToGroup(uint groupIdx)
+        {
+            if (_projectOptions.VisualizerOptions.NDRange3D)
+            {
+                _updateOptions = false;
+                X = groupIdx % DimX;
+                groupIdx /= DimX;
+                Y = groupIdx % DimY;
+                groupIdx /= DimY;
+                Z = groupIdx;
+                _updateOptions = true;
+                Update();
+            }
+            else
+            {
+                X = groupIdx;
+            }
         }
 
         public void Update()

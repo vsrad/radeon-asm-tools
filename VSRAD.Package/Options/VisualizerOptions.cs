@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.Utilities;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.ComponentModel;
@@ -23,7 +22,7 @@ namespace VSRAD.Package.Options
         public bool VerticalSplit { get => _verticalSplit; set => SetField(ref _verticalSplit, value); }
 
         private uint _laneGrouping = 0;
-        public uint LaneGrouping { get =>  _laneGrouping; set => SetField(ref _laneGrouping, value); }
+        public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
         private uint _waveSize = 64;
         public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }  // < 1 causes VS hang
@@ -34,9 +33,9 @@ namespace VSRAD.Package.Options
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
 
-        private int _magicNumber = 0x7777777; // Default value, do not change
+        private uint _magicNumber = 0x7777777; // Default value, do not change
         [JsonConverter(typeof(MagicNumberConverter))]
-        public int MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
+        public uint MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
 
         private bool _showColumnsField;
         [DefaultValue(true)]
@@ -50,9 +49,13 @@ namespace VSRAD.Package.Options
         [DefaultValue(true)]
         public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
 
-        private bool _showWavemapField;
+        private bool _showWaveSizeField;
+        [DefaultValue(false)]
+        public bool ShowWaveSizeField { get => _showWaveSizeField; set => SetField(ref _showWaveSizeField, value); }
+
+        private bool _showWavemap;
         [DefaultValue(true)]
-        public bool ShowWavemapField { get => _showWavemapField; set => SetField(ref _showWavemapField, value); }
+        public bool ShowWavemap { get => _showWavemap; set => SetField(ref _showWavemap, value); }
     }
 
     public sealed class MagicNumberConverter : JsonConverter
@@ -60,19 +63,26 @@ namespace VSRAD.Package.Options
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             if (reader.TokenType == JsonToken.String)
+            {
                 if (((string)reader.Value).StartsWith("0x", StringComparison.Ordinal))
-                    return int.Parse(((string)reader.Value).Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                {
+                    if (uint.TryParse(((string)reader.Value).Substring(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var parsed))
+                        return parsed;
+                }
                 else
-                    return int.Parse((string)reader.Value);
-            else
-                return existingValue;
+                {
+                    if (uint.TryParse((string)reader.Value, out var parsed))
+                        return parsed;
+                }
+            }
+            return existingValue;
         }
 
         public override bool CanConvert(Type objectType) => objectType == typeof(int);
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var hexValue = $"0x{((int)value).ToString("x")}";
+            var hexValue = $"0x{(uint)value:x}";
             var token = JToken.FromObject(hexValue);
             token.WriteTo(writer);
         }

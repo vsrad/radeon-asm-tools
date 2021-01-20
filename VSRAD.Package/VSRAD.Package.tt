@@ -240,11 +240,11 @@
     <Combos>
        <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="120" idCommandList="ProfileTargetMachineDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <CommandFlag>IconAndText</CommandFlag>
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
+          <ButtonText>Target Host</ButtonText>
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
       </Combo>

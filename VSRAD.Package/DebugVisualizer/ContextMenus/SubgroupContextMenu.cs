@@ -30,8 +30,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             if (hit.RowIndex != -1 || hit.ColumnIndex < 0)
                 return false;
             _clickedColumnIndex = hit.ColumnIndex;
-            _menu.MenuItems[12].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
-            _menu.MenuItems[16].Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
+            _menu.MenuItems.Cast<MenuItem>().First(m => m.Text == "Hide This").Enabled = hit.ColumnIndex >= VisualizerTable.DataColumnOffset;
             _menu.Show(_table, new Point(e.X, e.Y));
             return true;
         }
@@ -41,7 +40,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             var keepFirst = CreatePartialSubgroupMenu(minSubgroupSize: 1, maxSubgroupSize: 512, displayLast: false);
             var keepLast = CreatePartialSubgroupMenu(minSubgroupSize: 1, maxSubgroupSize: 512, displayLast: true);
 
-            var showAll = new MenuItem("All Columns", (s, e) => SetColumnSelector($"0-{_getGroupSize() - 1}"));
+            var showAll = new MenuItem("Show All Columns", (s, e) => SetColumnSelector($"0-{_getGroupSize() - 1}"));
 
             var fgColor = new MenuItem("Font Color", new[]
             {
@@ -58,7 +57,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 new MenuItem("None", (s, e) => SetBackgroundColor(DataHighlightColor.None))
             });
 
-            var fitWidth = new MenuItem("Fit Width", (s, e) =>
+            var fitWidth = new MenuItem("Autofit Width", (s, e) =>
                 _state.FitWidth(_clickedColumnIndex));
 
             var hideThis = new MenuItem("Hide This", HideColumns);

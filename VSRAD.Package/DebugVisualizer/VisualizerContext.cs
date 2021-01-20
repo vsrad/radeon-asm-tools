@@ -42,14 +42,8 @@ namespace VSRAD.Package.DebugVisualizer
         private int _canvasHeight = 10;
         public int CanvasHeight { get => _canvasHeight; set => SetField(ref _canvasHeight, value); }
 
-        private int _wavemapXOffset = 0;
-        public int WavemapXOffset { get => _wavemapXOffset; set => SetField(ref _wavemapXOffset, value); }
-
-        private int _wavemapYOffset = 0;
-        public int WavemapYOffset { get => _wavemapYOffset; set => SetField(ref _wavemapYOffset, value); }
-
-        private string _currentWaveInfo = "";
-        public string CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
+        private Wavemap.WaveInfo _currentWaveInfo;
+        public Wavemap.WaveInfo CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
 
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
@@ -83,7 +77,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (_breakState == null)
                 return;
 
-            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.NGroups);
+            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
             WatchesValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
             if (!WatchesValid)
                 return;
@@ -101,7 +95,7 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndexEditable = false;
 
             var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
-                (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
+                (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
 
             GroupFetched(this, new GroupFetchedEventArgs(warning));
 

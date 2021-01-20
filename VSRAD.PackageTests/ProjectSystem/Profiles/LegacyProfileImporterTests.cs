@@ -25,7 +25,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 w3 => Assert.Equal(new Watch("v2", VariableType.Float, false), w3));
 
             Assert.Equal(15u, imported.DebuggerOptions.Counter);
-            Assert.Equal(6, imported.VisualizerOptions.MagicNumber);
+            Assert.Equal(6u, imported.VisualizerOptions.MagicNumber);
             Assert.Equal("0-1023", imported.VisualizerColumnStyling.VisibleColumns);
             Assert.Equal("h", imported.ActiveProfile);
         }

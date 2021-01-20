@@ -73,9 +73,9 @@
       <Combo guid="guidInstructionSetSelectorCmdSet" id="cmdidInstructionSetDropDownCombo" priority="0x001" type="DropDownCombo" defaultWidth="55" idCommandList="cmdidInstructionSetDropDownComboGetList">
         <Parent guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorGroup"/>
         <Strings>
-          <MenuText>Instruction set: </MenuText>
-          <ButtonText></ButtonText>
-          <ToolTipText>Instruction set</ToolTipText>
+          <MenuText>Instruction Set: </MenuText>
+          <ButtonText>Instruction Set</ButtonText>
+          <ToolTipText>Instruction Set</ToolTipText>
           <CanonicalName>InstructionSetCombo</CanonicalName>
           <LocCanonicalName>InstructionSetCombo</LocCanonicalName>
           <CommandName>InstructionSetCombo</CommandName>
@@ -85,9 +85,9 @@
       <Combo guid="guidInstructionSetSelectorCmdSet" id="cmdidInstructionSetDropDownCombo" priority="0x1000" type="DropDownCombo" defaultWidth="55" idCommandList="cmdidInstructionSetDropDownComboGetList">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
         <Strings>
-          <MenuText>Instruction set: </MenuText>
-          <ButtonText></ButtonText>
-          <ToolTipText>Instruction set</ToolTipText>
+          <MenuText>Instruction Set: </MenuText>
+          <ButtonText>Instruction Set</ButtonText>
+          <ToolTipText>Instruction Set</ToolTipText>
           <CanonicalName>InstructionSetCombo</CanonicalName>
           <LocCanonicalName>InstructionSetCombo</LocCanonicalName>
           <CommandName>InstructionSetCombo</CommandName>

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,27 +7,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
     public sealed partial class WavemapOffsetInput : UserControl, INotifyPropertyChanged
     {
-        public static readonly DependencyProperty WaveInfoProperty =
-            DependencyProperty.Register(nameof(WaveInfo), typeof(string), typeof(WavemapOffsetInput),
-                new FrameworkPropertyMetadata("", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
-
-        public string WaveInfo
-        {
-            get => (string)GetValue(WaveInfoProperty);
-            set => SetValue(WaveInfoProperty, value);
-        }
-
         private VisualizerContext _context;
         private WavemapImage _image;
-        private int _groupCount;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private string _rawValue = "No data";
-        public string RawValue
+        private string _offsetLabel = "No data";
+        public string OffsetLabel
         {
-            get => _rawValue;
-            set => _rawValue = value;
+            get => _offsetLabel;
+            set { _offsetLabel = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OffsetLabel))); }
         }
 
         public WavemapOffsetInput()
@@ -54,27 +41,51 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public void Setup(VisualizerContext context, WavemapImage image)
         {
             _context = context;
-            _context.GroupFetched += OnGroupFetched;
-
+            _context.PropertyChanged += UpdateTooltipAndWaveInfo;
             _image = image;
-            _image.PropertyChanged += GridSizeChanged;
+            _image.Updated += UpdateControls;
         }
 
-        private void OnGroupFetched(object sender, GroupFetchedEventArgs e)
+        private void UpdateTooltipAndWaveInfo(object sender, PropertyChangedEventArgs e)
         {
-            _groupCount = _context.BreakData.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.NGroups);
-            DecButton.IsEnabled = _image.FirstGroup != 0;
-            IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _groupCount;
-            _rawValue = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
+            if (e.PropertyName == nameof(VisualizerContext.CurrentWaveInfo))
+            {
+                var waveInfo = _context.CurrentWaveInfo;
+                var waveInfoText = $"G: {waveInfo.GroupIdx}\nW: {waveInfo.WaveIdx}";
+                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) waveInfoText += " (E)";
+                waveInfoText += "\n";
+                waveInfoText += waveInfo.BreakNotReached
+                    ? "no brk"
+                    : $"L: {waveInfo.BreakLine}";
+
+                var tooltip = $"Group: {waveInfo.GroupIdx}\nWave: {waveInfo.WaveIdx}";
+                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) tooltip += " (partial mask)";
+                tooltip += "\n";
+                tooltip += waveInfo.BreakNotReached
+                    ? "Brk point not reached"
+                    : $"Line: {waveInfo.BreakLine}";
+
+                WaveInfoTextBlock.Text = waveInfoText;
+                WaveInfoTextBlock.ToolTip = tooltip;
+            }
         }
 
-        private void GridSizeChanged(object sender, PropertyChangedEventArgs e)
+        private void UpdateControls(object sender, EventArgs e)
         {
-            _rawValue = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RawValue)));
-            DecButton.IsEnabled = _image.FirstGroup != 0;
-            IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _groupCount;
+            var groupCount = _context.BreakData?.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize,
+                (int)_context.Options.VisualizerOptions.WaveSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
+            if (groupCount > 0 && _image.GridSizeX > 0)
+            {
+                DecButton.IsEnabled = _image.FirstGroup != 0;
+                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
+                OffsetLabel = $"{_image.FirstGroup} - {_image.FirstGroup + _image.GridSizeX - 1}";
+            }
+            else
+            {
+                DecButton.IsEnabled = false;
+                IncButton.IsEnabled = false;
+                OffsetLabel = "No data";
+            }
         }
     }
 }

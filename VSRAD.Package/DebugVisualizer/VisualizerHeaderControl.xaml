@@ -16,7 +16,8 @@
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="App args" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="Break args" IsChecked="{Binding Options.VisualizerOptions.ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="Wavemap" IsChecked="{Binding Options.VisualizerOptions.ShowWavemapField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Wave size" IsChecked="{Binding Options.VisualizerOptions.ShowWaveSizeField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Wavemap" IsChecked="{Binding Options.VisualizerOptions.ShowWavemap, Mode=TwoWay}" IsCheckable="True"/>
         </ContextMenu>
     </UserControl.ContextMenu>
     <UserControl.Resources>
@@ -66,8 +67,13 @@
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <Label Content="Group size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding Options.DebuggerOptions.GroupSize, UpdateSourceTrigger=PropertyChanged}"
+                <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.DebuggerOptions.GroupSize, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="1" Step="64" Width="38" Height="24"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ShowWaveSizeField, Converter={StaticResource BoolToVisibility}}">
+                <Label Content="Wave size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.VisualizerOptions.WaveSize, UpdateSourceTrigger=PropertyChanged}"
+                                   Minimum="1" Step="32" Width="38" Height="24"/>
             </StackPanel>
             <!--
             <StackPanel Orientation="Horizontal">
@@ -125,7 +131,7 @@
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="*" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemapField}" Value="False">
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowWavemap}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -156,7 +162,7 @@
                     <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <wavemap:WavemapOffsetInput WaveInfo="{Binding CurrentWaveInfo, UpdateSourceTrigger=PropertyChanged}"
+                <wavemap:WavemapOffsetInput
                                                HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
                                                Height="84" Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
                 <Border Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" BorderBrush="{x:Null}" Margin="4">

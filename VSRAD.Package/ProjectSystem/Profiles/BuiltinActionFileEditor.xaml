@@ -39,16 +39,13 @@
         </Grid.RowDefinitions>
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Location"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
-        <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
-                  Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"
-                  Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenFalseConverter}}"/>
-        <Border Grid.Row="0" Grid.Column="1" BorderBrush="{x:Null}" Height="22"
-                Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}">
-            <TextBlock VerticalAlignment="Center" ToolTip="Overridden by General -> Run on Localhost">
-                <Run>Local </Run>
-                <Run Text="{Binding Location, StringFormat='({0})'}" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"/>
-            </TextBlock>
-        </Border>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
+            <ComboBox ItemsSource="{Binding Source={StaticResource LocationTypes}}" SelectedItem="{Binding Location, Mode=TwoWay}"
+                      Height="22" Width="160" HorizontalAlignment="Left"/>
+            <TextBlock Margin="4,0" VerticalAlignment="Center" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarTextInactiveKey}}"
+                       Visibility="{Binding CurrentProfile.General.RunActionsLocally, ElementName=Root, Converter={StaticResource VisibleWhenTrueConverter}}"
+                       Text="Forced to Local" ToolTip="Overridden by General -> Run on Localhost"/>
+        </StackPanel>
 
         <Label Content="{Binding Header, ElementName=Root}" ContentStringFormat="{}{0} File Path"
                VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
