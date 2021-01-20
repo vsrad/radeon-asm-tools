@@ -480,6 +480,7 @@ wave size 64");
             Assert.Equal<uint>(64, result.BreakState.DispatchParameters.GroupSize);
             Assert.Equal<uint>(64, result.BreakState.DispatchParameters.WaveSize);
 
+            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 64, waveSize: 64, nGroups: 0);
             var secondWatch = result.BreakState.Data.GetWatch("julianne");
             for (int i = 0; i < 64; ++i)
                 Assert.Equal(i, (int)secondWatch[i]);
@@ -556,6 +557,8 @@ wave size 64");
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
+
+            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 4, waveSize: 4, nGroups: 0);
             var system = result.BreakState.Data.GetSystem();
             Assert.Equal(0x6173616b, (int)system[0]);
             Assert.Equal(0x69646f72, (int)system[1]);

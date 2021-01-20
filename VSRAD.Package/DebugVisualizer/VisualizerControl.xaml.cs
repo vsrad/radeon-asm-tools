@@ -93,7 +93,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.ApplyWatchStyling();
             RefreshDataStyling();
 
-            _wavemap.View = _context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize);
+            _wavemap.View = _context.BreakData.GetWavemapView();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
@@ -140,7 +140,7 @@ namespace VSRAD.Package.DebugVisualizer
                     break;
                 case nameof(Options.VisualizerOptions.WaveSize):
                     RefreshDataStyling();
-                    _wavemap.View = _context.BreakData.GetWavemapView((int)_context.Options.VisualizerOptions.WaveSize);
+                    _wavemap.View = _context.BreakData.GetWavemapView();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_context.Options.VisualizerOptions.CheckMagicNumber)

@@ -77,7 +77,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (_breakState == null)
                 return;
 
-            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.NGroups);
+            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
             WatchesValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
             if (!WatchesValid)
                 return;
@@ -95,7 +95,7 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndexEditable = false;
 
             var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
-                (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
+                (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
 
             GroupFetched(this, new GroupFetchedEventArgs(warning));
 
