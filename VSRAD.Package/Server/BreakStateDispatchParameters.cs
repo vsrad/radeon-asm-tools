@@ -7,11 +7,6 @@ namespace VSRAD.Package.Server
     public sealed class BreakStateDispatchParameters
     {
         private static readonly Regex _paramsRegex = new Regex(@"grid_size \((?<gd_x>\d+), (?<gd_y>\d+), (?<gd_z>\d+)\)\s+group_size \((?<gp_x>\d+), (?<gp_y>\d+), (?<gp_z>\d+)\)\s+wave_size (?<wv>\d+)(\s+comment (?<comment>.*))?", RegexOptions.Compiled);
-        private const string _exampleParamsContent = @"
-grid_size (2048, 1, 1)
-group_size (512, 1, 1)
-wave_size 64
-comment optional comment";
 
         public uint WaveSize { get; }
         public uint GridSizeX { get; }
@@ -50,7 +45,18 @@ comment optional comment";
             var match = _paramsRegex.Match(contents);
 
             if (!match.Success)
-                return new Error("Could not read the dispatch parameters file. The following is an example of the expected file contents:\r\n" + _exampleParamsContent);
+                return new Error($@"Could not read the dispatch parameters file.
+
+The following is an example of the expected file contents:
+
+grid_size (2048, 1, 1)
+group_size (512, 1, 1)
+wave_size 64
+comment optional comment
+
+While the actual contents are:
+
+{contents}");
 
             var gridX = uint.Parse(match.Groups["gd_x"].Value);
             var gridY = uint.Parse(match.Groups["gd_y"].Value);

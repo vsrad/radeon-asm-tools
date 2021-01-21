@@ -87,6 +87,15 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (e.Warning != null)
                 Errors.ShowWarning(e.Warning);
+            if (e.DispatchParameters == null && !_context.Options.VisualizerOptions.ManualMode)
+                Errors.ShowWarning(@"Automatic grid size selection is enabled, but dispatch parameters are unavailable for this run.
+
+To enable dispatch parameters extraction:
+1. Go to Tools -> RAD Debug -> Options and open profile editor.
+2. Select your current debug action and navigate to the Read Debug Data step.
+3. Enter the path to the dispatch parameters file.
+
+To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual grid size"".");
 
             _table.ApplyWatchStyling();
             RefreshDataStyling();

@@ -146,18 +146,26 @@ comment status string");
         [Fact]
         public void InvalidFormatTest()
         {
-            var result = BreakStateDispatchParameters.Parse(@"
-global_size (8192, 0, 0)
+            var result = BreakStateDispatchParameters.Parse(
+@"global_size (8192, 0, 0)
 local_size (512, 0, 0)
 warp_size 32");
             Assert.False(result.TryGetResult(out _, out var error));
             Assert.Equal(
-@"Could not read the dispatch parameters file. The following is an example of the expected file contents:
+@"Could not read the dispatch parameters file.
+
+The following is an example of the expected file contents:
 
 grid_size (2048, 1, 1)
 group_size (512, 1, 1)
 wave_size 64
-comment optional comment", error.Message);
+comment optional comment
+
+While the actual contents are:
+
+global_size (8192, 0, 0)
+local_size (512, 0, 0)
+warp_size 32", error.Message);
         }
     }
 }

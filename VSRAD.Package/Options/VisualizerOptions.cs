@@ -37,6 +37,10 @@ namespace VSRAD.Package.Options
         [JsonConverter(typeof(MagicNumberConverter))]
         public uint MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
 
+        private bool _manualMode;
+        [DefaultValue(false)]
+        public bool ManualMode { get => _manualMode; set => SetField(ref _manualMode, value); }
+
         private bool _showColumnsField;
         [DefaultValue(true)]
         public bool ShowColumnsField { get => _showColumnsField; set => SetField(ref _showColumnsField, value); }
@@ -48,10 +52,6 @@ namespace VSRAD.Package.Options
         private bool _showBreakArgsField;
         [DefaultValue(true)]
         public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
-
-        private bool _showWaveSizeField;
-        [DefaultValue(false)]
-        public bool ShowWaveSizeField { get => _showWaveSizeField; set => SetField(ref _showWaveSizeField, value); }
 
         private bool _showWavemap;
         [DefaultValue(true)]

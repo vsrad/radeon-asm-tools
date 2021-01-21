@@ -7,17 +7,19 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public class GroupFetchingEventArgs : EventArgs
+    public sealed class GroupFetchingEventArgs : EventArgs
     {
         public bool FetchWholeFile { get; set; }
     }
 
-    public class GroupFetchedEventArgs : EventArgs
+    public sealed class GroupFetchedEventArgs : EventArgs
     {
+        public BreakStateDispatchParameters DispatchParameters { get; }
         public string Warning { get; }
 
-        public GroupFetchedEventArgs(string warning)
+        public GroupFetchedEventArgs(BreakStateDispatchParameters dispatchParameters, string warning)
         {
+            DispatchParameters = dispatchParameters;
             Warning = warning;
         }
     }
@@ -97,7 +99,7 @@ namespace VSRAD.Package.DebugVisualizer
             var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
                 (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
 
-            GroupFetched(this, new GroupFetchedEventArgs(warning));
+            GroupFetched(this, new GroupFetchedEventArgs(_breakState.DispatchParameters, warning));
 
             var status = new StringBuilder();
             status.AppendFormat("{0} groups, last run at {1}", e.DataGroupCount, _breakState.ExecutedAt.ToString("HH:mm:ss"));
