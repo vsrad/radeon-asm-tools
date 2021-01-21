@@ -102,7 +102,8 @@ namespace VSRAD.Package.DebugVisualizer
             GroupFetched(this, new GroupFetchedEventArgs(_breakState.DispatchParameters, warning));
 
             var status = new StringBuilder();
-            status.AppendFormat("{0} groups, last run at {1}", e.DataGroupCount, _breakState.ExecutedAt.ToString("HH:mm:ss"));
+            status.AppendFormat("{0} groups, wave size: {1}, last run at: {2}",
+                e.DataGroupCount, Options.VisualizerOptions.WaveSize, _breakState.ExecutedAt.ToString("HH:mm:ss"));
             if (_breakState.DispatchParameters?.StatusString is string statusStr && statusStr.Length != 0)
             {
                 status.Append(", status: ");
