@@ -441,7 +441,7 @@ comment 115200") }, (FetchResultRange statusFetch) =>
         [InlineData("grid_size (64, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", "")] /* file size exceeds grid size, no warning shown */
         [InlineData("grid_size (256, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", /* grid size exceeds file size, "output file is smaller than expected" warning shown */
             "Output file ({outputFile}) is smaller than expected.\r\n\r\nGrid size as specified in the dispatch parameters file is (256, 1, 1), which corresponds to 256 lanes. " +
-            "With 3 DWORDs per lane, the output file is expected to contain at least 768 DWORDs, but the actual contents are limited to 384 DWORDs.")]
+            "With 3 DWORDs per lane, the output file is expected to contain at least 768 DWORDs, but it only contains 384 DWORDs.")]
         public async Task ReadDebugDataLocalWarningsTestAsync(string dispatchParams, string expectedWarning)
         {
             var outputFile = Path.GetTempFileName();
@@ -493,7 +493,7 @@ comment 115200") }, (FetchResultRange statusFetch) =>
         [InlineData("grid_size (2, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", "")] /* file size exceeds grid size, no warning shown */
         [InlineData("grid_size (8, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", /* grid size exceeds file size, "output file is smaller than expected" warning shown */
             "Output file ({outputFile}) is smaller than expected.\r\n\r\nGrid size as specified in the dispatch parameters file is (8, 1, 1), which corresponds to 8 lanes. " +
-            "With 2 DWORDs per lane, the output file is expected to contain at least 16 DWORDs, but the actual contents are limited to 8 DWORDs.")]
+            "With 2 DWORDs per lane, the output file is expected to contain at least 16 DWORDs, but it only contains 8 DWORDs.")]
         public async Task ReadDebugDataLocalTextOutputWarningsTestAsync(string dispatchParams, string expectedWarning)
         {
             var outputFile = Path.GetTempFileName();

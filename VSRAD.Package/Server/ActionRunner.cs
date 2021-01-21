@@ -230,7 +230,7 @@ namespace VSRAD.Package.Server
                         warning = $"Output file ({path}) is smaller than expected.\r\n\r\n" +
                             $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
                             $"which corresponds to {totalLaneCount} lanes. With {laneDataSize} DWORDs per lane, the output file is expected to contain at least " +
-                            $"{dispatchDwordCount} DWORDs, but the actual contents are limited to {fileDwordCount} DWORDs.";
+                            $"{dispatchDwordCount} DWORDs, but it only contains {fileDwordCount} DWORDs.";
                     }
 
                     return Math.Min(dispatchDwordCount, fileDwordCount);

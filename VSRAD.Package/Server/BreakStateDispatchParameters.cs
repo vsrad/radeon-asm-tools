@@ -75,7 +75,7 @@ While the actual contents are:
             if (waveSize == 0)
                 return new Error("Could not read the dispatch parameters file. WaveSize cannot be zero.");
             if (waveSize > groupX)
-                return new Error("Could not read the dispatch parameters file. WaveSize cannot be bigger than GroupX.");
+                return new Error("Could not read the dispatch parameters file. WaveSize cannot be larger than GroupX.");
 
             if (gridY > 1 && groupY == 0)
                 return new Error("Could not read the dispatch parameters file. If GridY is greater than one, GroupY cannot be zero.");
@@ -83,11 +83,11 @@ While the actual contents are:
                 return new Error("Could not read the dispatch parameters file. If GridZ is greater than one, GroupZ cannot be zero.");
 
             if (groupX > gridX)
-                return new Error("Could not read the dispatch parameters file. GroupX cannot be bigger than GridX.");
+                return new Error("Could not read the dispatch parameters file. GroupX cannot be larger than GridX.");
             if (groupY > gridY)
-                return new Error("Could not read the dispatch parameters file. GroupY cannot be bigger than GridY.");
+                return new Error("Could not read the dispatch parameters file. GroupY cannot be larger than GridY.");
             if (groupZ > gridZ)
-                return new Error("Could not read the dispatch parameters file. GroupZ cannot be bigger than GridZ.");
+                return new Error("Could not read the dispatch parameters file. GroupZ cannot be larger than GridZ.");
 
             return new BreakStateDispatchParameters(waveSize, gridX, gridY, gridZ, groupX, groupY, groupZ, statusString);
         }

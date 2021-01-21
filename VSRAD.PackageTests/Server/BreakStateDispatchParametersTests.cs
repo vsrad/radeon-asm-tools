@@ -81,21 +81,21 @@ grid_size (128, 0, 0)
 group_size (512, 0, 0)
 wave_size 64
 comment -").TryGetResult(out _, out error));
-            Assert.Equal("Could not read the dispatch parameters file. GroupX cannot be bigger than GridX.", error.Message);
+            Assert.Equal("Could not read the dispatch parameters file. GroupX cannot be larger than GridX.", error.Message);
 
             Assert.False(BreakStateDispatchParameters.Parse(@"
 grid_size (512, 128, 1)
 group_size (512, 512, 1)
 wave_size 64
 comment -").TryGetResult(out _, out error));
-            Assert.Equal("Could not read the dispatch parameters file. GroupY cannot be bigger than GridY.", error.Message);
+            Assert.Equal("Could not read the dispatch parameters file. GroupY cannot be larger than GridY.", error.Message);
 
             Assert.False(BreakStateDispatchParameters.Parse(@"
 grid_size (512, 512, 1)
 group_size (512, 512, 128)
 wave_size 64
 comment -").TryGetResult(out _, out error));
-            Assert.Equal("Could not read the dispatch parameters file. GroupZ cannot be bigger than GridZ.", error.Message);
+            Assert.Equal("Could not read the dispatch parameters file. GroupZ cannot be larger than GridZ.", error.Message);
         }
 
         [Fact]
@@ -113,7 +113,7 @@ grid_size (128, 0, 0)
 group_size (32, 0, 0)
 wave_size 64
 comment -").TryGetResult(out _, out error));
-            Assert.Equal("Could not read the dispatch parameters file. WaveSize cannot be bigger than GroupX.", error.Message);
+            Assert.Equal("Could not read the dispatch parameters file. WaveSize cannot be larger than GroupX.", error.Message);
         }
 
         [Fact]
