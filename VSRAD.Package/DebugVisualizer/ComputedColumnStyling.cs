@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Windows.Documents;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -18,14 +16,16 @@ namespace VSRAD.Package.DebugVisualizer
 
     public sealed class ComputedColumnStyling
     {
-        public uint GroupSize { get; private set; }
-
         private ColumnStates[] _columnState = new ColumnStates[512];
         public ColumnStates[] ColumnState { get => _columnState; }
 
-        public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, Server.WatchView system)
+        private uint _groupSize;
+        private uint _waveSize;
+
+        public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, uint waveSize, Server.WatchView system)
         {
-            GroupSize = groupSize;
+            _groupSize = groupSize;
+            _waveSize = waveSize;
 
             Array.Resize(ref _columnState, (int)groupSize);
             Array.Clear(_columnState, 0, _columnState.Length);
@@ -42,21 +42,20 @@ namespace VSRAD.Package.DebugVisualizer
             if (system == null)
                 return;
 
-            var wfrontSize = Math.Min(options.WaveSize, GroupSize);
-            for (int wfrontOffset = 0; wfrontOffset < GroupSize; wfrontOffset += (int)wfrontSize)
+            for (int waveOffset = 0; waveOffset < system.LastIndexInGroup; waveOffset += (int)_waveSize)
             {
-                var lastLaneId = Math.Min(wfrontOffset + wfrontSize, GroupSize) - 1; // handle incomplete groups (group size % wave size != 0)
-                if (options.CheckMagicNumber && system[wfrontOffset] != options.MagicNumber)
+                var lastLaneId = Math.Min(waveOffset + _waveSize - 1, system.LastIndexInGroup);
+                if (options.CheckMagicNumber && system[waveOffset] != options.MagicNumber)
                 {
-                    for (int laneId = 0; wfrontOffset + laneId <= lastLaneId; ++laneId)
-                        _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
+                    for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)
+                        _columnState[waveOffset + laneId] |= ColumnStates.Inactive;
                 }
-                else if (options.MaskLanes && wfrontSize <= 64 && wfrontOffset + 9 <= lastLaneId)
+                else if (options.MaskLanes && _waveSize <= 64 && waveOffset + 9 <= lastLaneId)
                 {
-                    var execMask = new BitArray(new[] { (int)system[wfrontOffset + 8], (int)system[wfrontOffset + 9] });
-                    for (int laneId = 0; wfrontOffset + laneId <= lastLaneId; ++laneId)
+                    var execMask = new BitArray(new[] { (int)system[waveOffset + 8], (int)system[waveOffset + 9] });
+                    for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)
                         if (!execMask[laneId])
-                            _columnState[wfrontOffset + laneId] |= ColumnStates.Inactive;
+                            _columnState[waveOffset + laneId] |= ColumnStates.Inactive;
                 }
             }
         }
@@ -64,11 +63,11 @@ namespace VSRAD.Package.DebugVisualizer
         private void ComputeLaneGrouping(VisualizerOptions options)
         {
             var laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
-            if (laneGrouping == 0 || laneGrouping > GroupSize)
+            if (laneGrouping == 0 || laneGrouping > _groupSize)
                 return;
-            for (uint start = 0; start < GroupSize - laneGrouping; start += laneGrouping)
+            for (uint start = 0; start < _groupSize - laneGrouping; start += laneGrouping)
             {
-                for (int lastVisibleInGroup = (int)Math.Min(start + laneGrouping - 1, GroupSize - 1);
+                for (int lastVisibleInGroup = (int)Math.Min(start + laneGrouping - 1, _groupSize - 1);
                     lastVisibleInGroup >= start; lastVisibleInGroup--)
                 {
                     if ((_columnState[lastVisibleInGroup] & ColumnStates.Visible) != 0)
@@ -82,7 +81,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void ComputeHiddenColumnSeparators()
         {
-            for (int i = 0; i < GroupSize - 1; i++)
+            for (int i = 0; i < _groupSize - 1; i++)
                 if ((_columnState[i] & ColumnStates.Visible) != 0 && (_columnState[i + 1] & ColumnStates.Visible) == 0)
                     _columnState[i] |= ColumnStates.HasHiddenColumnSeparator;
         }

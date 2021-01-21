@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Utils;
@@ -44,7 +45,12 @@ namespace VSRAD.Package.Options
         public bool SingleActiveBreakpoint { get => _singleActiveBreakpoint; set => SetField(ref _singleActiveBreakpoint, value); }
 
         private uint _groupSize = 512;
-        public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, value == 0 ? 512 : value); }
+        [DefaultValue(512)]
+        public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, Math.Max(value, 1)); }
+
+        private uint _waveSize = 64;
+        [DefaultValue(64)]
+        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }
 
         private BreakMode _breakMode;
         public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }

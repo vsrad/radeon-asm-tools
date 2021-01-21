@@ -79,7 +79,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (_breakState == null)
                 return;
 
-            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
+            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
             WatchesValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
             if (!WatchesValid)
                 return;
@@ -97,13 +97,13 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndexEditable = false;
 
             var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
-                (int)Options.VisualizerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
+                (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
 
             GroupFetched(this, new GroupFetchedEventArgs(_breakState.DispatchParameters, warning));
 
             var status = new StringBuilder();
             status.AppendFormat("{0} groups, wave size: {1}, last run at: {2}",
-                e.DataGroupCount, Options.VisualizerOptions.WaveSize, _breakState.ExecutedAt.ToString("HH:mm:ss"));
+                e.DataGroupCount, Options.DebuggerOptions.WaveSize, _breakState.ExecutedAt.ToString("HH:mm:ss"));
             if (_breakState.DispatchParameters?.StatusString is string statusStr && statusStr.Length != 0)
             {
                 status.Append(", status: ");

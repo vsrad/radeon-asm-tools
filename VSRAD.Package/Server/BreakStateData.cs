@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer.Wavemap;
@@ -21,24 +22,27 @@ namespace VSRAD.Package.Server
 
         private readonly uint[] _data;
 
-        public WatchView(uint[] data, int groupOffset, int laneDataOffset, int laneDataSize)
+        public int LastIndexInGroup { get; }
+
+        public WatchView(uint[] data, int groupIndex, int displayGroupSize, int dataGroupSize, int laneDataOffset, int laneDataSize)
         {
             _data = data;
+            var groupOffset = groupIndex * dataGroupSize * laneDataSize;
             _startOffset = groupOffset + laneDataOffset;
             _laneDataSize = laneDataSize;
-        }
 
-        // For tests
-        public WatchView(uint[] flatWatchData)
-        {
-            _data = flatWatchData;
-            _laneDataSize = 1;
+            // Handle cases when some of the items in the last group are for some reason out of the bounds of data
+            var itemsInGroup = (_data.Length - groupOffset) / laneDataSize;
+            LastIndexInGroup = Math.Min(displayGroupSize, itemsInGroup) - 1;
         }
 
         public uint this[int index]
         {
             get
             {
+                if (index > LastIndexInGroup)
+                    throw new KeyNotFoundException($"Item #{index} in group requested, but the last valid index in the watch view is {LastIndexInGroup}.");
+
                 var dwordIdx = _startOffset + index * _laneDataSize;
                 return _data[dwordIdx];
             }
@@ -93,12 +97,14 @@ namespace VSRAD.Package.Server
         public int GroupSize { get; private set; }
         public int WaveSize { get; private set; }
 
-        private int? RealGroupSize
+        // Data group size may be different from display group size (as entered in visualizer window),
+        // because it is always a multiple of wave size (rounded up)
+        private int? DataGroupSize
         {
             get
             {
                 if (GroupSize > 0 && WaveSize > 0)
-                    return ((GroupSize + WaveSize - 1) / WaveSize) * WaveSize; // rounded up to a multiple of wave size
+                    return ((GroupSize + WaveSize - 1) / WaveSize) * WaveSize;
                 return null;
             }
         }
@@ -138,25 +144,16 @@ namespace VSRAD.Package.Server
 
         public WatchView GetSystem()
         {
-            if (RealGroupSize is int groupSize)
-            {
-                var groupOffset = GroupIndex * groupSize * _laneDataSize;
-                return new WatchView(_data, groupOffset, laneDataOffset: 0, _laneDataSize);
-            }
+            if (DataGroupSize is int dataGroupSize)
+                return new WatchView(_data, GroupIndex, GroupSize, dataGroupSize, laneDataOffset: 0, _laneDataSize);
             return null;
         }
 
         public WatchView GetWatch(string watch)
         {
             var watchIndex = Watches.IndexOf(watch);
-            if (watchIndex == -1)
-                return null;
-
-            if (RealGroupSize is int groupSize)
-            {
-                var groupOffset = GroupIndex * groupSize * _laneDataSize;
-                return new WatchView(_data, groupOffset, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
-            }
+            if (watchIndex != -1 && DataGroupSize is int dataGroupSize)
+                return new WatchView(_data, GroupIndex, GroupSize, dataGroupSize, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
             return null;
         }
 

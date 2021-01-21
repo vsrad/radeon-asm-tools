@@ -352,14 +352,15 @@ namespace VSRAD.Package.DebugVisualizer
                 base.OnColumnDividerWidthChanged(e);
         }
 
-        public void ApplyDataStyling(ProjectOptions options, uint groupSize, Server.WatchView system)
+        public void ApplyDataStyling(ProjectOptions options, Server.WatchView system)
         {
             ((Control)this).SuspendDrawing();
             _disableColumnWidthChangeHandler = true;
 
-            CreateMissingDataColumns((int)groupSize);
+            CreateMissingDataColumns((int)options.DebuggerOptions.GroupSize);
 
-            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling, groupSize, system);
+            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling,
+                options.DebuggerOptions.GroupSize, options.DebuggerOptions.WaveSize, system);
 
             ApplyFontAndColorInfo();
 

@@ -73,7 +73,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private void UpdateControls(object sender, EventArgs e)
         {
             var groupCount = _context.BreakData?.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize,
-                (int)_context.Options.VisualizerOptions.WaveSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
+                (int)_context.Options.DebuggerOptions.WaveSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
             if (groupCount > 0 && _image.GridSizeX > 0)
             {
                 DecButton.IsEnabled = _image.FirstGroup != 0;

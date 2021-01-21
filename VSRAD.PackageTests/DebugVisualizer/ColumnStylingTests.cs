@@ -28,7 +28,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var columns = GenerateTestColumns();
 
             var computedStyling = new ComputedColumnStyling();
-            computedStyling.Recompute(new VisualizerOptions(), options, groupSize: 32, system: null);
+            computedStyling.Recompute(new VisualizerOptions(), options, groupSize: 32, waveSize: 32, system: null);
 
             new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
 
@@ -57,7 +57,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var computedStyling = new ComputedColumnStyling();
             var options = new ColumnStylingOptions { BackgroundColors = null, ForegroundColors = "" };
 
-            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, system: null);
+            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, waveSize: 8, system: null);
             new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
             for (int i = 0; i < 8; ++i)
             {
@@ -67,7 +67,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
 
             columns = GenerateTestColumns();
             options = new ColumnStylingOptions { BackgroundColors = null, ForegroundColors = "rgbJKFJ" + new string(' ', 512 - "rgbJKFJ".Length) };
-            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, system: null);
+            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, waveSize: 8, system: null);
             new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
 
             for (int i = 0; i < 8; ++i)
@@ -88,7 +88,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
 
             options = new ColumnStylingOptions { BackgroundColors = bgString, ForegroundColors = fgString };
 
-            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, system: null);
+            computedStyling.Recompute(visualizerOptions, options, groupSize: 8, waveSize: 8, system: null);
             new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
 
             for (int i = 0; i < 8; ++i)
@@ -114,7 +114,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var columns = GenerateTestColumns();
 
             var computedStyling = new ComputedColumnStyling();
-            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, options, groupSize: 32, system: null);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, options, groupSize: 32, waveSize: 32, system: null);
             new ColumnStyling(appearance, options, computedStyling, MakeColorState()).Apply(columns);
 
             // 2 3 | 4 5 6 || 8 9 || 11 | 12 || 14 15 | 16
@@ -137,15 +137,15 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.Equal(laneSep, columns[15].DividerWidth);
 
             options.VisibleColumns = "0-511";
-            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 3 }, options, groupSize: 512, system: null);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 3 }, options, groupSize: 512, waveSize: 32, system: null);
             new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
             // no assertions here, this is just to trigger an index out of bounds if we're not careful with grouping
 
-            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 1 }, options, groupSize: 512, system: null);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 1 }, options, groupSize: 512, waveSize: 32, system: null);
             new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
             Assert.NotEqual(0, columns[0].DividerWidth); // 0 should be separated
 
-            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 0 }, options, groupSize: 512, system: null);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 0 }, options, groupSize: 512, waveSize: 32, system: null);
             new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
             for (int i = 0; i < 256; i++)
                 Assert.Equal(0, columns[i].DividerWidth);
@@ -160,7 +160,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             options.VisibleColumns = "0,111111111111111111111,34-111111111111111111111,111111111111111111111-34,1-2";
 
             var computedStyling = new ComputedColumnStyling();
-            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 1 }, options, groupSize: 512, system: null);
+            computedStyling.Recompute(new VisualizerOptions { LaneGrouping = 1 }, options, groupSize: 512, waveSize: 32, system: null);
             new ColumnStyling(new VisualizerAppearance(), options, computedStyling, MakeColorState()).Apply(columns);
 
             Assert.True(columns[0].Visible);

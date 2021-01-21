@@ -55,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _context.GroupIndex.GoToGroup(e.GroupIdx);
             if (e.WaveIdx is uint waveIdx)
-                _table.GoToWave(waveIdx, _context.Options.VisualizerOptions.WaveSize);
+                _table.GoToWave(waveIdx, _context.Options.DebuggerOptions.WaveSize);
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
@@ -67,7 +67,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_context.Options, _context.Options.DebuggerOptions.GroupSize, _context.BreakData?.GetSystem());
+            _table.ApplyDataStyling(_context.Options, _context.BreakData?.GetSystem());
 
         private void GrayOutWatches() =>
             _table.GrayOutRows();
@@ -145,7 +145,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
                     RefreshDataStyling();
                     break;
-                case nameof(Options.VisualizerOptions.WaveSize):
+                case nameof(Options.DebuggerOptions.WaveSize):
                     RefreshDataStyling();
                     _wavemap.View = _context.BreakData?.GetWavemapView();
                     break;

@@ -76,7 +76,7 @@ namespace VSRAD.Package.DebugVisualizer
                     RaisePropertyChanged(nameof(MaximumX));
                     if (_updateOptions) Update();
                     break;
-                case nameof(Options.VisualizerOptions.WaveSize):
+                case nameof(Options.DebuggerOptions.WaveSize):
                 case nameof(Options.DebuggerOptions.GroupSize):
                 case nameof(Options.DebuggerOptions.NGroups):
                     if (_updateOptions) Update();
@@ -91,7 +91,7 @@ namespace VSRAD.Package.DebugVisualizer
                 _updateOptions = false;
 
                 _projectOptions.VisualizerOptions.NDRange3D = dispatchParams.NDRange3D;
-                _projectOptions.VisualizerOptions.WaveSize = dispatchParams.WaveSize;
+                _projectOptions.DebuggerOptions.WaveSize = dispatchParams.WaveSize;
 
                 DimX = dispatchParams.DimX;
                 DimY = dispatchParams.DimY;

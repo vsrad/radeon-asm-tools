@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.Server;
@@ -8,6 +11,18 @@ namespace VSRAD.PackageTests.DebugVisualizer
 {
     public class ComputedColumnStylingTests
     {
+        private WatchView GetSystemView(uint[] system, int groupSize, int waveSize, int groupIndex = 0)
+        {
+            byte[] systemBytes = new byte[system.Length * 4];
+            Buffer.BlockCopy(system, 0, systemBytes, 0, systemBytes.Length);
+            var data = new BreakStateData(new ReadOnlyCollection<string>(new List<string>()),
+                new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), systemBytes);
+            _ = data.ChangeGroupWithWarningsAsync(null, groupIndex: groupIndex, groupSize: groupSize, waveSize: waveSize, nGroups: 0).Result;
+            var view = data.GetSystem();
+            Assert.NotNull(view);
+            return view;
+        }
+
         [Fact]
         public void LaneMaskingTest()
         {
@@ -26,7 +41,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[9] = (uint)tmp[0];
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 64, system: new WatchView(system));
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(),
+                groupSize: 64, waveSize: 64, system: GetSystemView(system, groupSize: 64, waveSize: 64));
 
             for (int i = 0; i < 5; i++)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
@@ -40,7 +56,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (int i = 46; i < 64; i++)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
 
-            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new ColumnStylingOptions(), groupSize: 64, system: new WatchView(system));
+            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new ColumnStylingOptions(),
+                groupSize: 64, waveSize: 64, system: GetSystemView(system, groupSize: 64, waveSize: 64));
 
             for (int i = 0; i < 64; i++)
                 Assert.False((styling.ColumnState[45] & ColumnStates.Inactive) != 0);
@@ -51,11 +68,12 @@ namespace VSRAD.PackageTests.DebugVisualizer
         [InlineData(9)] // wave size is too small
         [InlineData(65)] // wave size is too large
         [InlineData(128)] // wave size is too large
-        public void LaneMaskingInvalidWaveSizeTest(uint waveSize)
+        public void LaneMaskingInvalidWaveSizeTest(int waveSize)
         {
             var system = new uint[waveSize];
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false, WaveSize = waveSize }, new ColumnStylingOptions(), groupSize: waveSize, system: new WatchView(system));
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(),
+                groupSize: (uint)waveSize, waveSize: (uint)waveSize, system: GetSystemView(system, groupSize: waveSize, waveSize: waveSize));
 
             for (int i = 0; i < waveSize; ++i)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) == 0); // lane masking does not apply, all columns are active
@@ -68,7 +86,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[8] = 0b11_0111_0111;
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false, WaveSize = 10 }, new ColumnStylingOptions(), groupSize: 12, system: new WatchView(system));
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(),
+                groupSize: 12, waveSize: 10, system: GetSystemView(system, groupSize: 12, waveSize: 10));
 
             Assert.True((styling.ColumnState[0] & ColumnStates.Inactive) == 0); // 1 = active
             Assert.True((styling.ColumnState[1] & ColumnStates.Inactive) == 0); // 1 = active
@@ -84,12 +103,28 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.True((styling.ColumnState[11] & ColumnStates.Inactive) == 0); // active (wave offset + 8 is out of bounds, masking does not apply)
         }
 
+        [Theory]
+        [InlineData(12, 24, 12, 0)] // group size exceeds data size
+        [InlineData(36, 24, 12, 1)] // some of the items in the last group are out of bounds
+        [InlineData(60, 24, 10, 1)] // display group size is 24, data group size is 30 (check that we don't exceed the bounds of ColumnState[])
+        public void LaneMaskingOutputSizeNotDivisibleByGroupSizeTest(int dataSize, int groupSize, int waveSize, int groupIndex)
+        {
+            var system = new uint[dataSize];
+
+            var styling = new ComputedColumnStyling();
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = true, MagicNumber = 0 }, new ColumnStylingOptions(),
+                groupSize: (uint)groupSize, waveSize: (uint)waveSize, system: GetSystemView(system, groupSize: groupSize, waveSize: waveSize, groupIndex: groupIndex));
+
+            for (int i = 0; i < 12; ++i)
+                Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0); // all lanes are inactive (exec mask = 0)
+        }
+
         [Fact]
         public void LaneGroupingTinyGroupTest()
         {
             // No assertions, this test simply hangs if we don't handle groupSize < laneGrouping in the code
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, new ColumnStylingOptions(), groupSize: 3, system: null);
+            styling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, new ColumnStylingOptions(), groupSize: 3, waveSize: 3, system: null);
         }
 
         [Fact]
@@ -102,7 +137,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
 
             var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
             var styling = new ComputedColumnStyling();
-            styling.Recompute(visualizerOptions, new ColumnStylingOptions(), groupSize: 256, system: new WatchView(system));
+            styling.Recompute(visualizerOptions, new ColumnStylingOptions(),
+                groupSize: 256, waveSize: 64, system: GetSystemView(system, groupSize: 256, waveSize: 64));
 
             for (int i = 0; i < 63; i++)
                 Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
@@ -124,9 +160,10 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[96] = 0x5;
             system[128] = 0x5;
 
-            var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7, WaveSize = 32 };
+            var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
             var styling = new ComputedColumnStyling();
-            styling.Recompute(visualizerOptions, new ColumnStylingOptions(), groupSize: 144, system: new WatchView(system));
+            styling.Recompute(visualizerOptions, new ColumnStylingOptions(),
+                groupSize: 144, waveSize: 32, system: GetSystemView(system, groupSize: 144, waveSize: 32));
 
             for (int i = 0; i < 32; i++)
                 Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);

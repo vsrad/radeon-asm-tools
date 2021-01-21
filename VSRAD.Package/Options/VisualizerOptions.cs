@@ -21,13 +21,11 @@ namespace VSRAD.Package.Options
         private bool _verticalSplit = true;
         public bool VerticalSplit { get => _verticalSplit; set => SetField(ref _verticalSplit, value); }
 
-        private uint _laneGrouping = 0;
+        private uint _laneGrouping;
         public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
-        private uint _waveSize = 64;
-        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }  // < 1 causes VS hang
-
         private int _wavemapElementSize = 8;
+        [DefaultValue(8)]
         public int WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
 
         private bool _checkMagicNumber = true;
