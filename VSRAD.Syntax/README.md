@@ -97,6 +97,14 @@ The instruction documentation is stored in files with `.radasm1` or `.radasm2` e
 
 ![Syntax instruction example](docs/instruction-example.gif)
 
+### Instruction set selector
+* The user can choose instructions set to highlight the instruction.
+* If the instruction belongs to another set, then it will be highlighted as an error.
+* The instruction set drop-down menu can be found at
+  > `View -> Toolbars -> Instruction Set`
+
+![Instruction set selector example](docs/instruction-set-selector.gif)
+
 ### Other features
 * Comment/Uncomment block
 * Indent guide lines for block scopes
