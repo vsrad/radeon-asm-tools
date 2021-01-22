@@ -14,7 +14,7 @@
             <RowDefinition Height="24"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <DockPanel LastChildFill="True" Grid.Row="0">
+        <DockPanel LastChildFill="True" Grid.Row="0" x:Name="OffsetSelector">
             <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center" KeyboardNavigation.TabNavigation="None">
                 <RepeatButton Click="Increment" Height="12" Width="12" Margin="0" x:Name="IncButton" IsEnabled="False">
                     <TextBlock Text="^" FontSize="8" LineStackingStrategy="BlockLineHeight" LineHeight="8" TextAlignment="Center" Width="6" Height="6">

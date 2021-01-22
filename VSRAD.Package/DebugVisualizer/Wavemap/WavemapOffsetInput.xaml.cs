@@ -79,6 +79,11 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 DecButton.IsEnabled = _image.FirstGroup != 0;
                 IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
 
+                if (_image.FirstGroup == 0 && !IncButton.IsEnabled)
+                    OffsetSelector.Visibility = Visibility.Collapsed;
+                else
+                    OffsetSelector.Visibility = Visibility.Visible;
+
                 if (_image.FirstGroup < groupCount)
                 {
                     var lastDisplayedGroup = Math.Min(groupCount, _image.FirstGroup + _image.GridSizeX) - 1;
