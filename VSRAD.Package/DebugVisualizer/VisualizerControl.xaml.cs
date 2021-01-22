@@ -95,7 +95,7 @@ To enable dispatch parameters extraction:
 2. Select your current debug action and navigate to the Read Debug Data step.
 3. Enter the path to the dispatch parameters file.
 
-To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual grid size"".");
+To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual override dispatch"".");
 
             _table.ApplyWatchStyling();
             RefreshDataStyling();

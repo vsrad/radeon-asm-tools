@@ -59,7 +59,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     : $"L: {waveInfo.BreakLine}";
 
                 var tooltip = $"Group: {waveInfo.GroupIdx}\nWave: {waveInfo.WaveIdx}";
-                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) tooltip += " (partial mask)";
+                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) tooltip += " (partial EXEC mask)";
                 tooltip += "\n";
                 tooltip += waveInfo.BreakNotReached
                     ? "Brk point not reached"

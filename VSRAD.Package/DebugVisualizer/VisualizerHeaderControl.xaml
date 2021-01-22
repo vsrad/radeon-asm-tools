@@ -11,7 +11,7 @@
     <UserControl.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Show hidden system variable" IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="Manual grid size" IsChecked="{Binding Options.VisualizerOptions.ManualMode, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="Manual override dispatch" IsChecked="{Binding Options.VisualizerOptions.ManualMode, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="3D NDRange" IsChecked="{Binding Options.VisualizerOptions.NDRange3D, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem IsEnabled="False" Header="Show:"/>
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
