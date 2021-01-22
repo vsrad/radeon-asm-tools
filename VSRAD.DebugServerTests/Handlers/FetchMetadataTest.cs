@@ -40,15 +40,8 @@ namespace VSRAD.DebugServerTests.Handlers
         public async void FetchMetadataTextTestAsync()
         {
             var tmpFile = Path.GetTempFileName();
-            await File.WriteAllLinesAsync(tmpFile, new string[] {
-                "Metadata",
-                "0x00000000",
-                "0x00000001",
-                "0x00000002",
-                "   ",
-                ""
-            });
 
+            await File.WriteAllLinesAsync(tmpFile, new[] { "Metadata", "0x00000000", "0x00000001", "0x00000002", "   ", "" });
             var response = await Helper.DispatchCommandAsync<FetchMetadata, MetadataFetched>(
                 new FetchMetadata
                 {
@@ -56,7 +49,17 @@ namespace VSRAD.DebugServerTests.Handlers
                     BinaryOutput = false
                 });
             Assert.Equal(FetchStatus.Successful, response.Status);
-            Assert.Equal(12, response.ByteCount);
+            Assert.Equal(16, response.ByteCount);
+
+            await File.WriteAllLinesAsync(tmpFile, new[] { "0x0", "0x1" });
+            response = await Helper.DispatchCommandAsync<FetchMetadata, MetadataFetched>(
+                new FetchMetadata
+                {
+                    FilePath = new[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
+                    BinaryOutput = false
+                });
+            Assert.Equal(FetchStatus.Successful, response.Status);
+            Assert.Equal(8, response.ByteCount);
         }
     }
 }

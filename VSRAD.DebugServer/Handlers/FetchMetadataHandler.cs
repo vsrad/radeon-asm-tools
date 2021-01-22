@@ -39,7 +39,12 @@ namespace VSRAD.DebugServer.Handlers
             }
             else
             {
-                int dwordCount = File.ReadLines(filePath).Count(s => !string.IsNullOrWhiteSpace(s)) - 1 /* skip metadata line */;
+                using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan);
+                using var reader = new StreamReader(stream);
+
+                int dwordCount = 0;
+                while (!string.IsNullOrWhiteSpace(reader.ReadLine()))
+                    dwordCount++;
                 return dwordCount * 4;
             }
         }

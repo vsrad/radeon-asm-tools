@@ -400,6 +400,53 @@ comment 115200") }, (FetchResultRange statusFetch) =>
         }
 
         [Fact]
+        public async Task ReadDebugDataRemoteTextOutputWarningsTestAsync()
+        {
+            var steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "va11" },
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = true },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
+                    binaryOutput: false, outputOffset: 1)
+            };
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"));
+
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
+            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("jill\njulianne\nstingray") });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"
+grid_size (16384, 0, 0)
+group_size (256, 0, 0)
+wave_size 64") });
+            // Note that the file is missing the output offset line (it contains 262144/4 = 65536 values, which, with the offset subtracted, is only 65535 values.
+            // This may cause an out of range error in ChangeGroupWithWarningsAsync
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 262144 }, (FetchMetadata outputMetaFetch) =>
+                Assert.False(outputMetaFetch.BinaryOutput));
+
+            var result = await runner.RunAsync("Debug", steps);
+
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = new byte[262140] }, (FetchResultRange outputFetch) =>
+            {
+                Assert.Equal(0, outputFetch.ByteOffset);
+                Assert.Equal(262140, outputFetch.ByteCount);
+                Assert.False(outputFetch.BinaryOutput);
+                Assert.Equal(1, outputFetch.OutputOffset);
+            });
+            _ = await result.BreakState.Data.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 256, waveSize: 64, nGroups: 0, fetchWholeFile: true);
+
+            Assert.True(result.Successful);
+            Assert.True(channel.AllInteractionsHandled);
+            Assert.Equal(@"Output file (output) is smaller than expected.
+
+Grid size as specified in the dispatch parameters file is (16384, 1, 1), which corresponds to 16384 lanes. With 4 DWORDs per lane, the output file is expected to contain at least 65536 DWORDs, but it only contains 65535 DWORDs.",
+            result.StepResults[1].Warning);
+        }
+
+        [Fact]
         public async Task ReadDebugDataRemoteErrorTestAsync()
         {
             var steps = new List<IActionStep>

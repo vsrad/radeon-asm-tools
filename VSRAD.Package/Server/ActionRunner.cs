@@ -250,7 +250,9 @@ namespace VSRAD.Package.Server
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
 
-                    var dataDwordCount = GetOutputDwordCount(response.ByteCount - step.OutputOffset, out stepWarning);
+                    var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
+                    var dataByteCount = Math.Max(0, response.ByteCount - offset);
+                    var dataDwordCount = GetOutputDwordCount(dataByteCount, out stepWarning);
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
                 }
                 else

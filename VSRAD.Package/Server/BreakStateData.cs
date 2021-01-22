@@ -208,7 +208,7 @@ namespace VSRAD.Package.Server
 
             var waveDataSize = _laneDataSize * WaveSize;
             var requestedByteOffset = waveOffset * waveDataSize * 4;
-            var requestedByteCount = waveCount * waveDataSize * 4;
+            var requestedByteCount = Math.Min(waveCount * waveDataSize, _outputFile.DwordCount) * 4;
 
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
