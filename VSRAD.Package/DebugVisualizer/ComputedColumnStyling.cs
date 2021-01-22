@@ -42,9 +42,10 @@ namespace VSRAD.Package.DebugVisualizer
             if (system == null)
                 return;
 
+            var lastItemId = Math.Min(_groupSize - 1, system.LastIndexInGroup);
             for (int waveOffset = 0; waveOffset < system.LastIndexInGroup; waveOffset += (int)_waveSize)
             {
-                var lastLaneId = Math.Min(waveOffset + _waveSize - 1, system.LastIndexInGroup);
+                var lastLaneId = Math.Min(waveOffset + _waveSize - 1, lastItemId);
                 if (options.CheckMagicNumber && system[waveOffset] != options.MagicNumber)
                 {
                     for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)

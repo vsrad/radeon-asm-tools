@@ -53,8 +53,9 @@
                 <local:NumberInput Value="{Binding GroupIndex.Z, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumZ, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.NDRange3D, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Groups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
+                <Label Content="Groups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                       Visibility="{Binding Options.VisualizerOptions.NDRange3D, Converter={StaticResource BoolToVisibility}}"/>
                 <local:NumberInput Value="{Binding GroupIndex.DimX, UpdateSourceTrigger=PropertyChanged}"
                                    Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
                 <local:NumberInput Value="{Binding GroupIndex.DimY, UpdateSourceTrigger=PropertyChanged}"
