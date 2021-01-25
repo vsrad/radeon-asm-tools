@@ -24,7 +24,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
-        private IAnalysisResult loadedResult;
+        private IAnalysisResult lastResult;
 
         private static FunctionListControl FunctionListControl => FunctionListControl.Instance;
 
@@ -58,7 +58,7 @@ namespace VSRAD.Syntax.FunctionList
 
             if (TryGetDocument(point.Snapshot.TextBuffer, out var document))
             {
-                ThreadHelper.JoinableTaskFactory.RunAsync(async () => 
+                ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
                 {
                     var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
                     var functionBlock = analysisResult.TryGetFunctionBlock(point);
@@ -100,9 +100,10 @@ namespace VSRAD.Syntax.FunctionList
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
             if (FunctionListControl == null) return;
+
             if (activeDocument == null)
             {
-                FunctionListControl.ClearList();
+                ClearFunctionList();
             }
             else
             {
@@ -110,11 +111,17 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
+        private void ClearFunctionList()
+        {
+            FunctionListControl.ClearList();
+            lastResult = null;
+        }
+
         private void UpdateFunctionList(IDocument document)
         {
             var analysisResult = document.DocumentAnalysis.CurrentResult;
 
-            if (FunctionListControl == null || analysisResult == null) return;
+            if (analysisResult == null) return;
             UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
@@ -126,9 +133,8 @@ namespace VSRAD.Syntax.FunctionList
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            if (FunctionListControl == null || analysisResult == loadedResult) return;
-            loadedResult = analysisResult;
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(document, loadedResult, cancellationToken));
+            lastResult = analysisResult;
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(document, lastResult, cancellationToken));
         }
 
         private async Task UpdateFunctionListAsync(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
