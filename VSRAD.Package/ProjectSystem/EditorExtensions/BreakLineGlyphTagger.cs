@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
@@ -7,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.EditorExtensions
 {
@@ -31,8 +33,26 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         // ExecutionCompleted event directly.
         internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
 
-        public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs e) =>
-            DebugExecutionCompleted?.Invoke(this, e);
+        public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs execCompleted)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            try
+            {
+                VsEditor.NavigateToFileAndLine(ServiceProvider.GlobalProvider, execCompleted.File, execCompleted.Lines[0]);
+
+                // Clear VS debugger break markers because they may be stale (clicking Debug in our toolbar does not update them, for instance)
+                var vsDebuggerBreakLineMarkers = VsEditor.GetLineMarkersOfTypeInActiveView(ServiceProvider.GlobalProvider, 63);
+                foreach (var m in vsDebuggerBreakLineMarkers)
+                    m.Invalidate();
+
+                // Draw our own markers
+                DebugExecutionCompleted?.Invoke(this, execCompleted);
+            }
+            catch (Exception e)
+            {
+                Errors.ShowCritical($"An error occurred while showing the current breakpoint location: {e.Message}\r\n\r\n{e.StackTrace}");
+            }
+        }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
         {
