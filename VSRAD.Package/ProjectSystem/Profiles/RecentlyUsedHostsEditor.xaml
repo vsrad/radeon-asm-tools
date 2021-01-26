@@ -1,0 +1,54 @@
+﻿<Window x:Class="VSRAD.Package.ProjectSystem.Profiles.RecentlyUsedHostsEditor"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+        Title="Target Hosts Editor" Height="450" Width="300" MinHeight="150" MinWidth="200"
+        WindowStartupLocation="CenterScreen"
+        x:Name="Root" mc:Ignorable="d"
+        Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+        Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
+    <Window.Resources>
+        <ResourceDictionary Source="../../ToolWindows/ControlStyle.xaml"/>
+    </Window.Resources>
+    <DockPanel Margin="4">
+        <StackPanel Margin="4" Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
+            <Button Content="OK" Click="HandleOK" Width="61" Height="22" />
+            <Button Content="Cancel" IsCancel="True" Click="HandleCancel" Width="61" Height="22" Margin="4,0,0,0" />
+        </StackPanel>
+        <DataGrid x:Name="HostGrid" ItemsSource="{Binding Hosts, ElementName=Root}" Margin="4" GridLinesVisibility="None" Focusable="True"
+                  RowEditEnding="ValidateHostAfterEdit" PreviewKeyDown="HandleDeleteKey"
+                  AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False"
+                  HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="24">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Host" Binding="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="{x:Type TextBox}">
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="3,0" />
+                            <Setter Property="Height" Value="22" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
+                <DataGridTemplateColumn Width="36" MinWidth="36" MaxWidth="36">
+                    <DataGridTemplateColumn.Header>
+                        <Button Grid.Column="1" Content="➕" ToolTip="Add host" Width="22" Height="22" HorizontalAlignment="Center" Click="AddHost" />
+                    </DataGridTemplateColumn.Header>
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="❌" ToolTip="Delete host" Width="22" Height="22" HorizontalAlignment="Center"
+                                    Command="{Binding DeleteHostCommand, ElementName=Root}" CommandParameter="{Binding}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

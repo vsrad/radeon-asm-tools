@@ -5,10 +5,13 @@ using System.Collections.Generic;
 
 namespace VSRAD.Package.Utils
 {
-    public sealed class MruCollection<T> : IReadOnlyCollection<T>
+    public sealed class MruCollection<T> : IReadOnlyCollection<T>, ICollection<T>
     {
         public int Count => _list.Count;
         public int MaxCount { get; }
+        public bool IsReadOnly => false;
+
+        public T this[int index] { get => _list[index]; }
 
         private readonly List<T> _list;
 
@@ -38,6 +41,16 @@ namespace VSRAD.Package.Utils
         public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable)_list).GetEnumerator();
+
+        public void AddRange(IEnumerable<T> collection) => _list.AddRange(collection);
+
+        public void Clear() => _list.Clear();
+
+        public bool Contains(T item) => _list.Contains(item);
+
+        public void CopyTo(T[] array, int arrayIndex) => _list.CopyTo(array, arrayIndex);
+
+        public bool Remove(T item) => _list.Remove(item);
 
         public sealed class Converter : JsonConverter
         {
