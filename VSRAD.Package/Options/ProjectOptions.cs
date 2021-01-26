@@ -28,9 +28,9 @@ namespace VSRAD.Package.Options
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
-        private MruCollection<string> _recentlyUsedHosts = new MruCollection<string>(10);
         [JsonConverter(typeof(MruCollection<string>.Converter))]
-        public MruCollection<string> RecentlyUsedHosts { get => _recentlyUsedHosts; set { if (value != null) _recentlyUsedHosts = value; } }
+        public MruCollection<string> RecentlyUsedHosts { get; } =
+            new MruCollection<string>();
 
         public ProjectOptions() { }
 

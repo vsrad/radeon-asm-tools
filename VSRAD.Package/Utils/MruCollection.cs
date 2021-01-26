@@ -8,34 +8,19 @@ namespace VSRAD.Package.Utils
     public sealed class MruCollection<T> : IReadOnlyCollection<T>, ICollection<T>
     {
         public int Count => _list.Count;
-        public int MaxCount { get; }
         public bool IsReadOnly => false;
 
         public T this[int index] { get => _list[index]; }
 
-        private readonly List<T> _list;
-
-        public MruCollection(int maxCount)
-        {
-            MaxCount = maxCount;
-            _list = new List<T>(maxCount);
-        }
+        private readonly List<T> _list = new List<T>();
 
         public void Add(T item)
         {
+            // Put the item at the start of the list
             if (_list.Contains(item))
-            {
-                /* Put the item at the start of the list */
                 _list.Remove(item);
-                _list.Insert(0, item);
-            }
-            else
-            {
-                if (_list.Count == MaxCount)
-                    _list.RemoveAt(MaxCount - 1);
 
-                _list.Insert(0, item);
-            }
+            _list.Insert(0, item);
         }
 
         public IEnumerator<T> GetEnumerator() => _list.GetEnumerator();
@@ -59,9 +44,7 @@ namespace VSRAD.Package.Utils
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
                 var items = serializer.Deserialize<List<T>>(reader);
-                items.Reverse();
-                foreach (var item in items)
-                    ((MruCollection<T>)existingValue).Add(item);
+                ((MruCollection<T>)existingValue).AddRange(items);
                 return existingValue;
             }
 
