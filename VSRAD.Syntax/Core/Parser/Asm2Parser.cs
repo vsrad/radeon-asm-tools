@@ -28,7 +28,7 @@ namespace VSRAD.Syntax.Core.Parser
                 .WithCancellation(cancellation)
                 .ToArray();
 
-            var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
+            _referenceCandidates.Clear();
             _definitionContainer.Clear();
             var blocks = new List<IBlock>();
             var errors = new List<IErrorToken>();
@@ -36,13 +36,30 @@ namespace VSRAD.Syntax.Core.Parser
             var parserState = ParserState.SearchInScope;
             var parenthCnt = 0;
             var searchInCondition = false;
+            var preprocessBlock = false;
 
             blocks.Add(currentBlock);
             for (int i = 0; i < tokens.Length; i++)
             {
                 var token = tokens[i];
 
-                if (parserState == ParserState.SearchInScope)
+                if (token.Type == RadAsm2Lexer.PP_ELSE || token.Type == RadAsm2Lexer.PP_ELSIF || token.Type == RadAsm2Lexer.PP_ELIF)
+                {
+                    preprocessBlock = true;
+                }
+                else if (token.Type == RadAsm2Lexer.PP_ENDIF)
+                {
+                    preprocessBlock = false;
+                }
+
+                if (preprocessBlock)
+                {
+                    if (token.Type == RadAsm2Lexer.IDENTIFIER)
+                        TryAddInstruction(token.GetText(version), token, currentBlock, version);
+
+                    continue;
+                }
+                else if (parserState == ParserState.SearchInScope)
                 {
                     if (token.Type == RadAsm2Lexer.BLOCK_COMMENT)
                     {
@@ -150,13 +167,10 @@ namespace VSRAD.Syntax.Core.Parser
                     else if (token.Type == RadAsm2Lexer.IDENTIFIER)
                     {
                         var tokenText = token.GetText(version);
-                        if (Instructions.Contains(tokenText))
+                        if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
+                            !TryAddReference(tokenText, token, currentBlock, version, cancellation))
                         {
-                            currentBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
-                        }
-                        else if (!TryAddReference(tokenText, token, currentBlock, version, cancellation))
-                        {
-                            referenceCandidates.AddLast((tokenText, token, currentBlock));
+                            _referenceCandidates.AddLast((tokenText, token, currentBlock));
                         }
                     }
                     else if (token.Type == RadAsm2Lexer.PP_INCLUDE)
@@ -191,7 +205,7 @@ namespace VSRAD.Syntax.Core.Parser
                 }
             }
 
-            foreach (var (text, trackingToken, block) in referenceCandidates)
+            foreach (var (text, trackingToken, block) in _referenceCandidates)
             {
                 if (!TryAddReference(text, trackingToken, block, version, cancellation) && OtherInstructions.Contains(text))
                     errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
