@@ -7,8 +7,10 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ProjectSystem.Profiles;
 
 namespace VSRAD.Package.Commands
 {
@@ -52,58 +54,68 @@ namespace VSRAD.Package.Commands
             if (commandId == Constants.ProfileTargetMachineDropdownId && variantOut != IntPtr.Zero)
                 GetCurrentTargetMachine(variantOut);
             if (commandId == Constants.ProfileTargetMachineDropdownId && variantIn != IntPtr.Zero)
-                SetNewTargetMachine(variantIn);
+            {
+                var selected = (string)Marshal.GetObjectForNativeVariant(variantIn);
+                if (selected == "Edit...")
+                    OpenHostsEditor();
+                else
+                    SetNewTargetMachine(selected);
+            }
         }
 
         private void ListTargetMachines(IntPtr variantOut)
         {
-            if (_project.Options.RecentlyUsedHosts.Count == 0)
-            {
-                foreach (var profile in _project.Options.Profiles)
-                    _project.Options.RecentlyUsedHosts.Add(profile.Value.General.Connection.ToString());
-            }
-
-            // Add the current host to the list in case the user switches to a different profile
-            // (if the profile is not changed this is a no-op because the current host is already at the top of the list)
-            _project.Options.RecentlyUsedHosts.Add(_project.Options.Profile.General.Connection.ToString());
-
-            var displayItems = _project.Options.RecentlyUsedHosts.Prepend("Local").ToArray();
+            var displayItems = _project.Options.TargetHosts.Prepend("Local").Append("Edit...").ToArray();
             Marshal.GetNativeVariantForObject(displayItems, variantOut);
         }
 
         private void GetCurrentTargetMachine(IntPtr variantOut)
         {
-            var currentHost = _project.Options.Profile.General.RunActionsLocally ? "Local" : _project.Options.Profile.General.Connection.ToString();
+            string currentHost;
+            if (_project.Options.Profile.General.RunActionsLocally)
+            {
+                currentHost = "Local";
+            }
+            else
+            {
+                currentHost = _project.Options.Profile.General.Connection.ToString();
+                // Display current host at the top of the list
+                _project.Options.TargetHosts.Add(currentHost);
+            }
             Marshal.GetNativeVariantForObject(currentHost, variantOut);
         }
 
-        private void SetNewTargetMachine(IntPtr variantIn)
+        private void SetNewTargetMachine(string selected)
         {
             var updatedProfile = (ProfileOptions)_project.Options.Profile.Clone();
 
-            var selected = (string)Marshal.GetObjectForNativeVariant(variantIn);
             if (selected == "Local")
             {
                 updatedProfile.General.RunActionsLocally = true;
             }
             else
             {
-                var hostPort = selected.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-                if (hostPort.Length == 0)
+                if (!RecentlyUsedHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
                     return;
 
-                string host = hostPort[0];
-                if (hostPort.Length < 2 || !int.TryParse(hostPort[1], out var port))
-                    port = 9339;
+                _project.Options.TargetHosts.Add(formattedHost);
 
-                _project.Options.RecentlyUsedHosts.Add($"{host}:{port}");
-
-                updatedProfile.General.RemoteMachine = host;
+                updatedProfile.General.RemoteMachine = hostname;
                 updatedProfile.General.Port = port;
                 updatedProfile.General.RunActionsLocally = false;
             }
 
             _project.Options.UpdateActiveProfile(updatedProfile);
+        }
+
+        private void OpenHostsEditor()
+        {
+            var editor = new RecentlyUsedHostsEditor(_project)
+            {
+                Owner = Application.Current.MainWindow,
+                ShowInTaskbar = false
+            };
+            editor.ShowDialog();
         }
     }
 }
