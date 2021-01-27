@@ -60,6 +60,7 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.ASSERT, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.FUNCTION, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.SHADER, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.RETURN, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.IF, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.ELSIF, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.ELSE, RadAsmTokenType.Keyword },
