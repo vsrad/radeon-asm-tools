@@ -65,17 +65,17 @@ namespace VSRAD.Package.Commands
 
         private void ListTargetMachines(IntPtr variantOut)
         {
-            if (_project.Options.RecentlyUsedHosts.Count == 0)
+            if (_project.Options.TargetHosts.Count == 0)
             {
                 foreach (var profile in _project.Options.Profiles)
-                    _project.Options.RecentlyUsedHosts.Add(profile.Value.General.Connection.ToString());
+                    _project.Options.TargetHosts.Add(profile.Value.General.Connection.ToString());
             }
 
             // Add the current host to the list in case the user switches to a different profile
             // (if the profile is not changed this is a no-op because the current host is already at the top of the list)
-            _project.Options.RecentlyUsedHosts.Add(_project.Options.Profile.General.Connection.ToString());
+            _project.Options.TargetHosts.Add(_project.Options.Profile.General.Connection.ToString());
 
-            var displayItems = _project.Options.RecentlyUsedHosts.Prepend("Local").Append("Edit...").ToArray();
+            var displayItems = _project.Options.TargetHosts.Prepend("Local").Append("Edit...").ToArray();
             Marshal.GetNativeVariantForObject(displayItems, variantOut);
         }
 
@@ -98,7 +98,7 @@ namespace VSRAD.Package.Commands
                 if (!RecentlyUsedHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
                     return;
 
-                _project.Options.RecentlyUsedHosts.Add(formattedHost);
+                _project.Options.TargetHosts.Add(formattedHost);
 
                 updatedProfile.General.RemoteMachine = hostname;
                 updatedProfile.General.Port = port;

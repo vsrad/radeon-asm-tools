@@ -29,7 +29,7 @@ namespace VSRAD.Package.Options
             new DebugVisualizer.ColumnStylingOptions();
 
         [JsonConverter(typeof(MruCollection<string>.Converter))]
-        public MruCollection<string> RecentlyUsedHosts { get; } =
+        public MruCollection<string> TargetHosts { get; } =
             new MruCollection<string>();
 
         public ProjectOptions() { }

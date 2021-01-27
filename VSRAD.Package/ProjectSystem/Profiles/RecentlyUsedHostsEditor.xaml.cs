@@ -44,7 +44,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public RecentlyUsedHostsEditor(IProject project)
         {
             _project = project;
-            Hosts = new ObservableCollection<HostItem>(project.Options.RecentlyUsedHosts.Select(h => new HostItem { Host = h }));
+            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts.Select(h => new HostItem { Host = h }));
             DeleteHostCommand = new WpfDelegateCommand(DeleteHost);
 
             InitializeComponent();
@@ -75,8 +75,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void SaveChanges()
         {
-            _project.Options.RecentlyUsedHosts.Clear();
-            _project.Options.RecentlyUsedHosts.AddRange(Hosts.Select(h => h.Host));
+            _project.Options.TargetHosts.Clear();
+            _project.Options.TargetHosts.AddRange(Hosts.Select(h => h.Host));
             _project.SaveOptions();
         }
 
@@ -134,12 +134,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private bool HasChanges()
         {
-            if (Hosts.Count != _project.Options.RecentlyUsedHosts.Count)
+            if (Hosts.Count != _project.Options.TargetHosts.Count)
                 return true;
 
             for (int i = 0; i < Hosts.Count; ++i)
             {
-                if (Hosts[i].Host != _project.Options.RecentlyUsedHosts[i])
+                if (Hosts[i].Host != _project.Options.TargetHosts[i])
                     return true;
             }
 
