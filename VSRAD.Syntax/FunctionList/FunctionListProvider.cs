@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
@@ -12,7 +13,6 @@ using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -24,9 +24,10 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
-        private IAnalysisResult lastResult;
+        private KeyValuePair<IDocument, IAnalysisResult>? lastResult;
 
-        private static FunctionListControl FunctionListControl => FunctionListControl.Instance;
+        private static FunctionListProvider _instance;
+        private static FunctionListControl _functionListControl;
 
         [ImportingConstructor]
         public FunctionListProvider(RadeonServiceProvider serviceProvider, IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
@@ -38,6 +39,7 @@ namespace VSRAD.Syntax.FunctionList
             _documentFactory.DocumentCreated += DocumentCreated;
             _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
+            _instance = this;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
@@ -54,7 +56,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void CaretPositionChanged(SnapshotPoint point)
         {
-            if (FunctionListControl == null) return;
+            if (_functionListControl == null) return;
 
             if (TryGetDocument(point.Snapshot.TextBuffer, out var document))
             {
@@ -65,11 +67,11 @@ namespace VSRAD.Syntax.FunctionList
 
                     if (functionBlock != null)
                     {
-                        FunctionListControl.HighlightItemAtLine(functionBlock.Name.Span.Start.GetContainingLine().LineNumber + 1);
+                        _functionListControl.HighlightItemAtLine(functionBlock.Name.Span.Start.GetContainingLine().LineNumber + 1);
                     }
                     else
                     {
-                        FunctionListControl.ClearHighlightItem();
+                        _functionListControl.ClearHighlightItem();
                     }
                 });
             }
@@ -99,7 +101,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
-            if (FunctionListControl == null) return;
+            if (_functionListControl == null) return;
 
             if (activeDocument == null)
             {
@@ -113,7 +115,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ClearFunctionList()
         {
-            FunctionListControl.ClearList();
+            _functionListControl.ClearList();
             lastResult = null;
         }
 
@@ -121,7 +123,7 @@ namespace VSRAD.Syntax.FunctionList
         {
             var analysisResult = document.DocumentAnalysis.CurrentResult;
 
-            if (analysisResult == null) return;
+            if (analysisResult == null || analysisResult == lastResult?.Value) return;
             UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
@@ -133,21 +135,39 @@ namespace VSRAD.Syntax.FunctionList
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            lastResult = analysisResult;
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateFunctionListAsync(document, lastResult, cancellationToken));
+            lastResult = new KeyValuePair<IDocument, IAnalysisResult>(document, analysisResult);
+
+            // if document analyzed before Function List view initialization
+            if (_functionListControl == null) return;
+
+            ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
+            {
+                var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
+                    .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
+                    .Select(t => _navigationTokenService.Value.CreateToken(t, document))
+                    .Select(t => new FunctionListItem(t))
+                    .AsParallel()
+                    .WithCancellation(cancellationToken)
+                    .ToList();
+
+                await _functionListControl.UpdateListAsync(tokens, cancellationToken);
+            });
         }
 
-        private async Task UpdateFunctionListAsync(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void SetLastResultFunctionList(CancellationToken cancellationToken)
         {
-            var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
-                .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
-                .Select(t => _navigationTokenService.Value.CreateToken(t, document))
-                .Select(t => new FunctionListItem(t))
-                .AsParallel()
-                .WithCancellation(cancellationToken)
-                .ToList();
+            if (lastResult.HasValue)
+            {
+                var document = lastResult.Value.Key;
+                var analysisResult = lastResult.Value.Value;
+                UpdateFunctionList(document, analysisResult, cancellationToken);
+            }
+        }
 
-            await FunctionListControl.UpdateListAsync(tokens, cancellationToken);
+        public static void FunctionListWindowCreated(FunctionListControl functionListControl)
+        {
+            _functionListControl = functionListControl;
+            _instance?.SetLastResultFunctionList(CancellationToken.None);
         }
         #endregion
     }

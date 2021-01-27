@@ -16,7 +16,6 @@ namespace VSRAD.Syntax.FunctionList
 {
     public partial class FunctionListControl : UserControl
     {
-        public static FunctionListControl Instance { get; private set; }
 
         private SortState SortState;
         private bool Autoscroll;
@@ -40,7 +39,6 @@ namespace VSRAD.Syntax.FunctionList
             InitializeComponent();
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
             optionsProvider.OptionsUpdated += OptionsUpdated;
-            Instance = this;
             typeFilter.Content = TypeFilterState.ToString();
         }
 

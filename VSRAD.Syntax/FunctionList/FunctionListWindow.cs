@@ -24,5 +24,11 @@ namespace VSRAD.Syntax.FunctionList
             FunctionListControl = new FunctionListControl(optionsEventProvider, commandService);
             Content = FunctionListControl;
         }
+
+        protected override void OnCreate()
+        {
+            base.OnCreate();
+            FunctionListProvider.FunctionListWindowCreated(FunctionListControl);
+        }
     }
 }
