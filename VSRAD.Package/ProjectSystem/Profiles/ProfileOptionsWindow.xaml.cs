@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using Microsoft.VisualStudio.PlatformUI;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -7,7 +8,7 @@ using VSRAD.Package.Options;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public partial class ProfileOptionsWindow : Window
+    public sealed partial class ProfileOptionsWindow : DialogWindow
     {
         private readonly ProfileOptionsWindowContext _context;
 

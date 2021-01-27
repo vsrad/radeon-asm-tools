@@ -73,14 +73,8 @@ namespace VSRAD.Package.ToolWindows
             InitializeComponent();
         }
 
-        private void EditProfiles(object sender, RoutedEventArgs e)
-        {
-            new ProjectSystem.Profiles.ProfileOptionsWindow(_integration)
-            {
-                Owner = Application.Current.MainWindow,
-                ShowInTaskbar = false
-            }.ShowDialog();
-        }
+        private void EditProfiles(object sender, RoutedEventArgs e) =>
+            new ProjectSystem.Profiles.ProfileOptionsWindow(_integration) { ShowInTaskbar = false }.ShowModal();
 
         private void AlignmentButtonClick(object sender, RoutedEventArgs e)
         {

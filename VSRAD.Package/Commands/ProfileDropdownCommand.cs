@@ -108,14 +108,7 @@ namespace VSRAD.Package.Commands
             _project.Options.UpdateActiveProfile(updatedProfile);
         }
 
-        private void OpenHostsEditor()
-        {
-            var editor = new RecentlyUsedHostsEditor(_project)
-            {
-                Owner = Application.Current.MainWindow,
-                ShowInTaskbar = false
-            };
-            editor.ShowDialog();
-        }
+        private void OpenHostsEditor() =>
+            new RecentlyUsedHostsEditor(_project) { ShowInTaskbar = false }.ShowModal();
     }
 }

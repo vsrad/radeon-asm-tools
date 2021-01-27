@@ -1,20 +1,19 @@
-﻿<Window x:Class="VSRAD.Package.ProjectSystem.Profiles.ProfileOptionsWindow"
-        x:Name="Root"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
-        xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
-        xmlns:macros="clr-namespace:VSRAD.Package.ProjectSystem.Macros"
-        xmlns:opts="clr-namespace:VSRAD.Package.Options"
-        xmlns:utils="clr-namespace:VSRAD.Package.Utils"
-        mc:Ignorable="d"
-        Title="Profiles" Height="450" Width="820" MinHeight="450" MinWidth="820"
-        WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-        Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
-    <Window.Resources>
+﻿<platformui:DialogWindow xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+                         xmlns:platformui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+                         xmlns:local="clr-namespace:VSRAD.Package.ProjectSystem.Profiles"
+                         xmlns:macros="clr-namespace:VSRAD.Package.ProjectSystem.Macros"
+                         xmlns:opts="clr-namespace:VSRAD.Package.Options"
+                         xmlns:utils="clr-namespace:VSRAD.Package.Utils"
+                         x:Class="VSRAD.Package.ProjectSystem.Profiles.ProfileOptionsWindow"
+                         x:Name="Root" mc:Ignorable="d"
+                         Title="Profiles" Height="450" Width="820" MinHeight="450" MinWidth="820"
+                         Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                         Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
+    <platformui:DialogWindow.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../../ToolWindows/ControlStyle.xaml"/>
@@ -24,7 +23,7 @@
             <local:ActionNameWithNoneDisplayConverter x:Key="ActionNameWithNoneConverter"/>
             <local:ActionNameWithNoneCollectionConverter x:Key="ActionNameWithNoneCollectionConverter"/>
         </ResourceDictionary>
-    </Window.Resources>
+    </platformui:DialogWindow.Resources>
     <Grid Margin="4">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="238"/>
@@ -274,4 +273,4 @@
             <Button Content="Cancel" Click="Close" Margin="4,0,0,0" Width="61" Height="22"/>
         </StackPanel>
     </Grid>
-</Window>
+</platformui:DialogWindow>

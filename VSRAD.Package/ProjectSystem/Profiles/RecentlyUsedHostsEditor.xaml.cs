@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.PlatformUI;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
@@ -9,7 +10,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public sealed partial class RecentlyUsedHostsEditor : Window
+    public sealed partial class RecentlyUsedHostsEditor : DialogWindow
     {
         public class HostItem : DefaultNotifyPropertyChanged
         {
