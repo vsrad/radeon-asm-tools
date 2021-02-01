@@ -11,7 +11,18 @@
     </UserControl.Resources>
     <Grid x:Name="Root">
         <Grid.RowDefinitions>
-            <RowDefinition Height="24"/>
+            <RowDefinition>
+                <RowDefinition.Style>
+                    <Style TargetType="RowDefinition">
+                        <Setter Property="Height" Value="24" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowOffsetSelector}" Value="False">
+                                <Setter Property="Height" Value="0" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </RowDefinition.Style>
+            </RowDefinition>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <DockPanel LastChildFill="True" Grid.Row="0" x:Name="OffsetSelector">

@@ -160,9 +160,8 @@
                     <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <wavemap:WavemapOffsetInput
-                                               HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
-                                               Height="84" Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
+                <wavemap:WavemapOffsetInput HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
+                                            Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
                 <Border Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" BorderBrush="{x:Null}" Margin="4">
                     <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0" Stretch="None"/>
                 </Border>
