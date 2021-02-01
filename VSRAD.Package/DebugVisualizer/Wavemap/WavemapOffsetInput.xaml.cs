@@ -19,6 +19,13 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             set { _offsetLabel = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OffsetLabel))); }
         }
 
+        private bool _showOffsetSelector = true;
+        public bool ShowOffsetSelector
+        {
+            get => _showOffsetSelector;
+            set { _showOffsetSelector = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShowOffsetSelector))); }
+        }
+
         public WavemapOffsetInput()
         {
             InitializeComponent();
@@ -79,10 +86,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 DecButton.IsEnabled = _image.FirstGroup != 0;
                 IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
 
-                if (_image.FirstGroup == 0 && !IncButton.IsEnabled)
-                    OffsetSelector.Visibility = Visibility.Collapsed;
-                else
-                    OffsetSelector.Visibility = Visibility.Visible;
+                ShowOffsetSelector = _image.FirstGroup != 0 || IncButton.IsEnabled;
 
                 if (_image.FirstGroup < groupCount)
                 {
