@@ -45,6 +45,9 @@ namespace VSRAD.Syntax.Core
             if (_documents.TryGetValue(path, out var document))
                 return document;
 
+            if (!System.IO.File.Exists(path))
+                return null;
+
             var contentType = _contentTypeManager.DetermineContentType(path);
             if (contentType == null)
                 return null;

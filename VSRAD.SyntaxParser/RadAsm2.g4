@@ -15,6 +15,7 @@ ASIC    : 'asic' ;
 TYPE    : 'type' ;
 ASSERT  : 'assert' ;
 SHADER  : 'shader' ;
+RETURN  : 'return' ;
 
 FUNCTION: 'function' ;
 

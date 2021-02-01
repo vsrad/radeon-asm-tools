@@ -16,17 +16,19 @@ namespace VSRAD.Syntax.Core.Parser
     internal abstract class AbstractCodeParser : IParser
     {
         abstract protected AsmType AsmType { get; }
-        protected HashSet<string> Instructions { get; private set; }
         protected HashSet<string> OtherInstructions { get; private set; }
 
         private readonly IDocumentFactory _documentFactory;
+        private HashSet<string> _instructions;
         protected readonly DefinitionContainer _definitionContainer;
+        protected readonly LinkedList<(string text, TrackingToken trackingToken, IBlock block)> _referenceCandidates;
 
         public AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
         {
             _documentFactory = documentFactory;
             _definitionContainer = new DefinitionContainer();
-            Instructions = new HashSet<string>();
+            _referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
+            _instructions = new HashSet<string>();
             OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
@@ -42,7 +44,7 @@ namespace VSRAD.Syntax.Core.Parser
                 var instructions = sender.GetInstructions(AsmType);
                 var selectedSetInstructions = sender.GetSelectedSetInstructions(AsmType);
 
-                Instructions = selectedSetInstructions
+                _instructions = selectedSetInstructions
                     .Select(i => i.Text)
                     .Distinct()
                     .ToHashSet();
@@ -52,7 +54,7 @@ namespace VSRAD.Syntax.Core.Parser
                     .Distinct()
                     .ToHashSet();
 
-                OtherInstructions.ExceptWith(Instructions);
+                OtherInstructions.ExceptWith(_instructions);
             }
         }
 
@@ -105,6 +107,17 @@ namespace VSRAD.Syntax.Core.Parser
                 }
 
                 block.AddToken(new ReferenceToken(referenceType, token, version, definitionToken));
+                return true;
+            }
+
+            return false;
+        }
+
+        protected bool TryAddInstruction(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
+        {
+            if (_instructions.Contains(tokenText))
+            {
+                block.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
                 return true;
             }
 
