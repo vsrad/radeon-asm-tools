@@ -10,12 +10,20 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
-    public sealed partial class RecentlyUsedHostsEditor : DialogWindow
+    public sealed partial class TargetHostsEditor : DialogWindow
     {
-        public class HostItem : DefaultNotifyPropertyChanged
+        public sealed class HostItem : DefaultNotifyPropertyChanged
         {
             private string _host = "";
             public string Host { get => _host; set => SetField(ref _host, value); }
+
+            public bool UsedInActiveProfile { get; }
+
+            public HostItem(string host, bool usedInActiveProfile)
+            {
+                Host = host;
+                UsedInActiveProfile = usedInActiveProfile;
+            }
         }
 
         public static bool TryParseHost(string input, out string formatted, out string hostname, out ushort port)
@@ -42,10 +50,11 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private readonly IProject _project;
         private bool _promptUnsavedOnClose = true;
 
-        public RecentlyUsedHostsEditor(IProject project)
+        public TargetHostsEditor(IProject project)
         {
             _project = project;
-            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts.Select(h => new HostItem { Host = h }));
+            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts.Select(h =>
+                new HostItem(h, usedInActiveProfile: !project.Options.Profile.General.RunActionsLocally && project.Options.Profile.General.Connection.ToString() == h)));
             DeleteHostCommand = new WpfDelegateCommand(DeleteHost);
 
             InitializeComponent();
@@ -53,7 +62,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void AddHost(object sender, RoutedEventArgs e)
         {
-            var item = new HostItem();
+            var item = new HostItem("", usedInActiveProfile: false);
             Hosts.Add(item);
 
             // Finish editing the current host before moving the focus away from it
@@ -77,7 +86,20 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private void SaveChanges()
         {
             _project.Options.TargetHosts.Clear();
-            _project.Options.TargetHosts.AddRange(Hosts.Select(h => h.Host));
+            _project.Options.TargetHosts.AddRange(Hosts.Select(h => h.Host).Distinct());
+
+            var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
+            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && TryParseHost(hi.Host, out _, out var hostname, out var port))
+            {
+                updatedProfile.General.RemoteMachine = hostname;
+                updatedProfile.General.Port = port;
+            }
+            else
+            {
+                updatedProfile.General.RunActionsLocally = true;
+            }
+            _project.Options.UpdateActiveProfile(updatedProfile);
+
             _project.SaveOptions();
         }
 

@@ -213,8 +213,8 @@
     <Compile Include="ProjectSystem\Profiles\LegacyProfileImporter.cs" />
     <Compile Include="ProjectSystem\Profiles\LegacyProfileOptionsMigrator.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
-    <Compile Include="ProjectSystem\Profiles\RecentlyUsedHostsEditor.xaml.cs">
-      <DependentUpon>RecentlyUsedHostsEditor.xaml</DependentUpon>
+    <Compile Include="ProjectSystem\Profiles\TargetHostsEditor.xaml.cs">
+      <DependentUpon>TargetHostsEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />
@@ -452,7 +452,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ProjectSystem\Profiles\RecentlyUsedHostsEditor.xaml">
+    <Page Include="ProjectSystem\Profiles\TargetHostsEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

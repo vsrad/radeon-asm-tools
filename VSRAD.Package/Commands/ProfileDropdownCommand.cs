@@ -95,7 +95,7 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                if (!RecentlyUsedHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
+                if (!TargetHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
                     return;
 
                 _project.Options.TargetHosts.Add(formattedHost);
@@ -109,6 +109,6 @@ namespace VSRAD.Package.Commands
         }
 
         private void OpenHostsEditor() =>
-            new RecentlyUsedHostsEditor(_project) { ShowInTaskbar = false }.ShowModal();
+            new TargetHostsEditor(_project) { ShowInTaskbar = false }.ShowModal();
     }
 }

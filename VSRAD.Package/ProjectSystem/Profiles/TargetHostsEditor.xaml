@@ -4,7 +4,7 @@
                          xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                          xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
                          xmlns:platformui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
-                         x:Class="VSRAD.Package.ProjectSystem.Profiles.RecentlyUsedHostsEditor"
+                         x:Class="VSRAD.Package.ProjectSystem.Profiles.TargetHostsEditor"
                          x:Name="Root" mc:Ignorable="d"
                          Title="Target Hosts Editor" Height="450" Width="300" MinHeight="150" MinWidth="200"
                          Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
