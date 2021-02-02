@@ -33,7 +33,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeColumns = false;
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
-            HeatMapMode = false;
+            HeatMapMode = _context.Options.SliceVisualizerOptions.UseHeatMap;
             ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             MouseClick += ShowContextMenu;
