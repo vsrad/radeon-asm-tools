@@ -110,10 +110,12 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     Color breakColor;
                     if (breakNotReached)
                         breakColor = Color.Gray;
-                    else if (partialMask)
-                        breakColor = Color.LightGray;
                     else
+                    {
                         breakColor = _colorManager.GetColorForBreakpoint(breakLine);
+                        if (partialMask)
+                            breakColor = Color.FromArgb(breakColor.R / 2, breakColor.G / 2, breakColor.B / 2);
+                    }
 
                     return new WaveInfo
                     {
