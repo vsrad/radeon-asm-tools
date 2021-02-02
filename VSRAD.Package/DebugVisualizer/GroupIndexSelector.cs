@@ -92,7 +92,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void UpdateOnBreak(BreakState breakState)
         {
             _currentDispatchParams = breakState.DispatchParameters;
-            if (_currentDispatchParams != null)
+            if (!_projectOptions.VisualizerOptions.ManualMode && _currentDispatchParams != null)
                 SetOptionsFromDispatchParams();
             else
                 Update();
