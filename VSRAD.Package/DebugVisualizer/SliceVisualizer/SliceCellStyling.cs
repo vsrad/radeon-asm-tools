@@ -63,11 +63,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
             }
         }
-        private void HidePhantomColumn(DataGridViewCellPaintingEventArgs e)
-        {
-            //e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds); TODO: what brush?
-            e.Handled = true;
-        }
 
         private void PaintColumnSeparators(int dataColumnIndex, DataGridViewCellPaintingEventArgs e)
         {
