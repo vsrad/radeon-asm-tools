@@ -34,7 +34,7 @@ namespace VSRAD.Syntax.Core
             if (_resultsRequests.TryGetValue(textSnapshot, out var task))
                 return await task.ConfigureAwait(false);
 
-            throw new NotImplementedException();
+            throw new TaskCanceledException("Buffer changes have not yet been processed");
         }
 
         private void TokenizerUpdated(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
