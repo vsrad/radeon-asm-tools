@@ -11,6 +11,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly SliceColumnStyling _columnStyling;
         private readonly Options.VisualizerAppearance _appearance;
         private readonly ColumnStylingOptions _stylingOptions;
+        private readonly SolidBrush _tableBackgroundBrush;
 
         public SliceCellStyling(SliceVisualizerTable table, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, SliceVisualizerContext context)
         {
@@ -19,6 +20,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _columnStyling = styling;
             _appearance = context.Options.VisualizerAppearance;
             _stylingOptions = context.Options.VisualizerColumnStyling;
+            _tableBackgroundBrush = new SolidBrush(_table.BackgroundColor);
         }
 
         public static void ApplyCellStylingOnCellPainting(SliceVisualizerTable table, SliceColumnStyling styling, IFontAndColorProvider fontAndColor, SliceVisualizerContext context)
@@ -30,9 +32,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (_table.SelectedWatch == null ||
-                e.ColumnIndex < SliceVisualizerTable.DataColumnOffset ||
+                (e.ColumnIndex < SliceVisualizerTable.DataColumnOffset && e.ColumnIndex != _table.PhantomColumnIndex) ||
                 e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.ColumnCount)
                 return;
+
+            if (e.ColumnIndex == _table.PhantomColumnIndex)
+            {
+                e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+                e.Handled = true;
+                return;
+            }
 
             if (e.RowIndex >= 0) PaintBackgroud(e);
 
