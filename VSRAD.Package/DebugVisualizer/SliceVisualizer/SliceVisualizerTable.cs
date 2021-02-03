@@ -42,6 +42,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             MouseLeave += (s, e) => _context.StatusString = ""; // clear status bar on leaving control
 
             _state = new TableState(this, 60);
+            _state.ReorderingEnabled = false;
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
