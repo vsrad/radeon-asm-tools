@@ -14,6 +14,7 @@ namespace VSRAD.Package.DebugVisualizer
         public IReadOnlyList<DataGridViewColumn> DataColumns => _dataColumns;
         public int ColumnWidth { get; set; }
         public ScalingMode ScalingMode { get; set; } = ScalingMode.ResizeColumn;
+        public bool ReorderingEnabled { get; set; } = true;
 
         private readonly List<DataGridViewColumn> _dataColumns = new List<DataGridViewColumn>();
 
