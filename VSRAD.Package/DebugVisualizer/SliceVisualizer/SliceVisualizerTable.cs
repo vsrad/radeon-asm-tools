@@ -22,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private readonly TableState _state;
 
         public uint GroupSize => _context.GroupSize;
+        public int PhantomColumnIndex => _state.PhantomColumnIndex;
 
         public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor) : base()
         {
@@ -73,6 +74,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             var col = hit.ColumnIndex - DataColumnOffset;
             if (SelectedWatch.IsInactiveCell(hit.RowIndex, col)) return;
+            if (hit.ColumnIndex == PhantomColumnIndex) return;
 
             new ContextMenu(new MenuItem[] {
                 new MenuItem("Go to watch list", (s, o) => _context.NavigateToCell(hit.RowIndex, col))
@@ -89,7 +91,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void DisplayWatch()
         {
-            var columnsMissing = SelectedWatch.ColumnCount - (Columns.Count - 1);
+            var columnsMissing = SelectedWatch.ColumnCount - Columns.Count;
             if (columnsMissing > 0)
             {
                 var missingColumnsStartAt = _state.DataColumns.Count;
