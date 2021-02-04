@@ -31,8 +31,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (_table.SelectedWatch == null ||
-                (e.ColumnIndex < SliceVisualizerTable.DataColumnOffset && e.ColumnIndex != _table.PhantomColumnIndex) ||
+            if (_table.SelectedWatch == null)
+            {
+                e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
+                e.Handled = true;
+                return;
+            }
+
+            if ((e.ColumnIndex < SliceVisualizerTable.DataColumnOffset && e.ColumnIndex != _table.PhantomColumnIndex) ||
                 e.ColumnIndex >= SliceVisualizerTable.DataColumnOffset + _table.SelectedWatch.ColumnCount)
                 return;
 
