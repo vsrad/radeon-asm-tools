@@ -8,7 +8,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
     sealed class SliceVisualizerTable : DataGridView
     {
-        public const int DataColumnOffset = 1; // including phantom column
+        public const int DataColumnOffset = 2; // including phantom column and first invisible column
 
         public TypedSliceWatchView SelectedWatch => _context.SelectedWatchView;
         public bool HeatMapMode { get; private set; }
@@ -37,10 +37,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             HeatMapMode = _context.Options.SliceVisualizerOptions.UseHeatMap;
             ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             MouseClick += ShowContextMenu;
             CellMouseEnter += DisplayCellStatus;
             MouseLeave += (s, e) => _context.StatusString = ""; // clear status bar on leaving control
 
+            SetupColumns();
             _state = new TableState(this, 60);
             _state.ReorderingEnabled = false;
 
@@ -60,6 +62,22 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
         }
 
+        private void SetupColumns()
+        {
+            // create invisible first column
+            // needed for proper scaling
+            var invisibleColumn = new DataGridViewTextBoxColumn
+            {
+                FillWeight = 1,
+                MinimumWidth = 2,
+                Width = 2,
+                ReadOnly = true,
+                SortMode = DataGridViewColumnSortMode.NotSortable
+            };
+
+            Columns.Add(invisibleColumn);
+        }
+
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
@@ -72,10 +90,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (e.Button != MouseButtons.Right) return;
             var hit = HitTest(e.X, e.Y);
             if (hit.Type != DataGridViewHitTestType.Cell) return;
+            if (hit.ColumnIndex < DataColumnOffset || hit.ColumnIndex == PhantomColumnIndex) return;
 
             var col = hit.ColumnIndex - DataColumnOffset;
             if (SelectedWatch.IsInactiveCell(hit.RowIndex, col)) return;
-            if (hit.ColumnIndex == PhantomColumnIndex) return;
 
             new ContextMenu(new MenuItem[] {
                 new MenuItem("Go to watch list", (s, o) => _context.NavigateToCell(hit.RowIndex, col))
@@ -92,7 +110,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void DisplayWatch()
         {
-            var columnsMissing = SelectedWatch.ColumnCount - Columns.Count;
+            var columnsMissing = SelectedWatch.ColumnCount - (Columns.Count - 1);
             if (columnsMissing > 0)
             {
                 var missingColumnsStartAt = _state.DataColumns.Count;
