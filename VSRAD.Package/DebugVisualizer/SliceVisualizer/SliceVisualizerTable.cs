@@ -45,6 +45,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             SetupColumns();
             _state = new TableState(this, 60);
             _state.ReorderingEnabled = false;
+            _state.AddDataColumns(Array.Empty<DataGridViewColumn>());
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
@@ -110,7 +111,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void DisplayWatch()
         {
-            var columnsMissing = SelectedWatch.ColumnCount - (Columns.Count - 1);
+            var columnsMissing = SelectedWatch.ColumnCount - _state.DataColumns.Count;
             if (columnsMissing > 0)
             {
                 var missingColumnsStartAt = _state.DataColumns.Count;
