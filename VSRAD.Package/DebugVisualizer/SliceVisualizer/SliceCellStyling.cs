@@ -70,9 +70,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             }
             else
             {
-                var colorIndex = e.ColumnIndex % _table.GroupSize == 0
-                    ? _table.GroupSize - SliceVisualizerTable.DataColumnOffset
-                    : e.ColumnIndex % _table.GroupSize - SliceVisualizerTable.DataColumnOffset;
+                var colIndex = e.ColumnIndex - SliceVisualizerTable.DataColumnOffset;
+                var colorIndex = colIndex % _table.GroupSize == 0
+                    ? _table.GroupSize
+                    : colIndex % _table.GroupSize;
                 var bgColor = DataHighlightColors.GetFromColorString(_stylingOptions.BackgroundColors, (int)colorIndex);
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)bgColor];
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
