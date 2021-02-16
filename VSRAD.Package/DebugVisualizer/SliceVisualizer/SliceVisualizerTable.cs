@@ -34,13 +34,16 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeColumns = false;
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
-            HeatMapMode = _context.Options.SliceVisualizerOptions.UseHeatMap;
-            ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
+            VirtualMode = true;
+            RowHeadersVisible = false;
+            CellValueNeeded += DisplayCellValue;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             MouseClick += ShowContextMenu;
             CellMouseEnter += DisplayCellStatus;
             MouseLeave += (s, e) => _context.StatusString = ""; // clear status bar on leaving control
+
+            HeatMapMode = _context.Options.SliceVisualizerOptions.UseHeatMap;
+            ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
 
             SetupColumns();
             _state = new TableState(this, 60);
@@ -63,20 +66,32 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
         }
 
+        private void DisplayCellValue(object sender, DataGridViewCellValueEventArgs e)
+        {
+            var dataColumnIndex = e.ColumnIndex - DataColumnOffset;
+            if (SelectedWatch == null || e.RowIndex >= SelectedWatch.RowCount)
+                return;
+
+            if (e.ColumnIndex == 0) // Group #
+                e.Value = SelectedWatch.GetGroupIndex(row: e.RowIndex, column: 0);
+            else if (dataColumnIndex >= 0 && dataColumnIndex < SelectedWatch.ColumnCount)
+                e.Value = SelectedWatch[e.RowIndex, e.ColumnIndex - DataColumnOffset];
+        }
+
         private void SetupColumns()
         {
-            // create invisible first column
-            // needed for proper scaling
-            var invisibleColumn = new DataGridViewTextBoxColumn
+            // 1) Used as a workaround for scaling logic relying on a fixed column at the start of the table
+            // 2) Accessing HeaderCells for each row is too expensive when the row count is over 1000 so we use our own column to display group indexes
+            Columns.Add(new DataGridViewTextBoxColumn
             {
+                HeaderText = "Group #",
                 FillWeight = 1,
-                MinimumWidth = 2,
-                Width = 2,
+                Width = 75,
                 ReadOnly = true,
+                Frozen = true,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
                 SortMode = DataGridViewColumnSortMode.NotSortable
-            };
-
-            Columns.Add(invisibleColumn);
+            });
         }
 
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
@@ -84,7 +99,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             _context.SetStatusString(e.RowIndex, e.ColumnIndex - DataColumnOffset, Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString());
         }
-
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
         {
@@ -133,24 +147,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             for (int i = 0; i < _state.DataColumns.Count; ++i)
                 _state.DataColumns[i].Visible = i < SelectedWatch.ColumnCount;
 
-            if (Rows.Count < SelectedWatch.RowCount)
-                Rows.Add(SelectedWatch.RowCount - Rows.Count);
-            for (int i = 0; i < Rows.Count; ++i)
-            {
-                var row = Rows[i];
-                if (i < SelectedWatch.RowCount)
-                {
-                    for (int j = 0; j < SelectedWatch.ColumnCount; ++j)
-                        row.Cells[DataColumnOffset + j].Value = SelectedWatch[i, j];
-                    row.HeaderCell.Value = SelectedWatch.GetGroupIndex(row: i, column: 0);
-                    row.Visible = true;
-                }
-                else
-                {
-                    row.Visible = false;
-                }
-            }
             ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+
+            RowCount = SelectedWatch.RowCount;
+            Invalidate();
         }
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
@@ -207,8 +207,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (e.Button == MouseButtons.Left)
             {
                 var hit = HitTest(e.X, e.Y);
-                if (hit.Type == DataGridViewHitTestType.RowHeader)
-                    _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
                 if (hit.Type == DataGridViewHitTestType.ColumnHeader)
                     _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
             }
