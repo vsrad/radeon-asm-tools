@@ -27,7 +27,7 @@ docker run -p 9339:9339 -it --device=/dev/kfd --device=/dev/dri --security-opt s
 * [.NET Core 3.1 Runtime](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 * CMake and additional script dependencies:
 ```sh
-sudo apt-get -y install cmake libboost-program-options-dev liblist-moreutils-perl
+sudo apt-get -y install cmake liblist-moreutils-perl
 ```
 
 #### Build the Example Application
@@ -54,23 +54,24 @@ make
 2. Go to *Tools* -> *RAD Debug* -> *Options*
 3. Click the *Edit* button in the opened window to edit the active debug profile
 4. In the *General* tab, set *Remote Machine Address* to the IP address of your remote machine
-5. In the *Debugger* tab, set *Working Directory* to the absolute path
+5. In the *Macro* tab, set *RadDebugWorkDir* to the absolute path
 to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` in the **Docker container**)
 6. Press *Apply* to save the changes and *OK* to close the profile editor
+
+* **Note:** All RAD buttons can be added to main window: *View* -> *Toolbars* -> *RAD Debug*)
 
 ### Build your shader
 
 1. Open `fp32_v_add.s` in *Solution Explorer*
-2. Click *Build* -> *Build DebuggerProjectExample* or press *Ctrl+B*
+2. Click *Tools* -> *RAD Debug* -> *Actions* -> *Build*
 3. Check that the object file `VectorAddProjectExample/fp32_v_add_build.co` is created on the remote machine
 
-* **Note:** if the build executable is not set in the profile options, the build will be skipped (and marked as successful)
 * **Note:** when using Docker, the code object can be found at `/VectorAddProjectExample` (execute `docker exec -it containerIdOrName bash` to enter the container)
 
-* To configure build options, navigate to *Tools* -> *RAD Debug* -> *Options* -> *Build*
-    ![Build options](docs/build-options.PNG)
+* To configure build action, navigate to *Tools* -> *RAD Debug* -> *Options* -> *Edit* -> *Actions/Build*
+    ![Build options](docs/build-options.gif)
 * Build errors are displayed in the standard output window (and highlighted in the code if the `RadeonAsmSyntax` extension is installed)
-    ![Build errors](docs/build-errors.PNG)
+    ![Build errors](docs/build-errors.gif)
 
 ### Launch the Debugger
 
@@ -79,17 +80,17 @@ to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` i
 3. Start debugging by pressing F5 (alternatively, clicking on the *RAD Debugger* button with a green arrow)
 4. Go to *Tools* -> *RAD Debug* -> *Open Visualizer* to open debug visualizer. You should
 see the values of watched VGPRs:
-![Visualizer output](docs/visualizer-output.PNG)
+![Visualizer output](docs/visualizer-output.gif)
 
-* You can set your debug options *Tools* -> *RAD Debug* -> *Options* -> *Debugger*
-    ![Debugger options](docs/debug-options.PNG)
+* You can set your debug options *Tools* -> *RAD Debug* -> *Options* -> *Edit* -> *Actions/Debug*
+    ![Debugger options](docs/debug-options.gif)
 
 ## Notes and Remarks
 
 * To troubleshoot errors, open the *Output* window (*View* -> *Output*) and select *RAD Debug* in the *Show output from* dropdown.
 
 * Upon reaching the breakpoint, the host-side will output validation failure messages. This is expected because the kernel execution is aborted at the breakpoint, so no output is written to the destination address.
-![Visualizer output](docs/output-window.PNG)
+![Visualizer output](docs/output-window.gif)
 
 * If you see *Permissions denied* messages in the output, make sure that the following files have the executable bit set (`chmod +x`):
   - `VectorAddProjectExample/common/debugger/dbg_clang_wrapper.sh`
