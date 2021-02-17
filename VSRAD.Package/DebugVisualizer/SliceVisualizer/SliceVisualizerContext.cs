@@ -69,12 +69,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void NavigateToCell(int sliceRowIndex, int sliceColumnIndex)
         {
-            Options.VisualizerOptions.NDRange3D = false; // disable NDRange3D since we dont have implementation of navigation for it
-
             var groupIndex = SelectedWatchView.GetGroupIndex(sliceRowIndex, sliceColumnIndex);
             var laneIndex = SelectedWatchView.GetLaneIndex(sliceColumnIndex);
 
-            _visualizerContext.GroupIndex.SetGroupIndex(groupIndex);
+            _visualizerContext.GroupIndex.GoToGroup((uint)groupIndex);
             _visualizerContext.SelectCell(SelectedWatch, laneIndex);
         }
 

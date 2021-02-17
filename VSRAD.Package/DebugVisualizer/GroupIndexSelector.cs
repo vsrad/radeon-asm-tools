@@ -151,8 +151,6 @@ namespace VSRAD.Package.DebugVisualizer
             ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Z)));
         }
 
-        public void SetGroupIndex(int index) => X = (uint)index;
-
         public IEnumerable GetErrors(string propertyName)
         {
             if ((propertyName != "X" && propertyName != "Y" && propertyName != "Z")
