@@ -97,7 +97,12 @@ see the values of watched VGPRs:
   - `VectorAddProjectExample/common/debugger/vadd_debug.sh`
   - `VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl`
 
-* Wave size is hardcoded in this example (see [breakpoint_gcnasm.pl](VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl#L170)):
+* Workgroup size is hardcoded in this example (see [breakpoint_gcnasm.pl](VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl#L129)):
+    ```
+    -   s_mul_i32 s[dbg_soff], s[\\gidx], waves_in_group
+    +   s_mul_i32 s[dbg_soff], s[\\gidx], 1
+    ```
+* Wave size is hardcoded in this example (see [breakpoint_gcnasm.pl](VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl#L133)):
     ```
     -   s_mul_i32 s[dbg_soff], s[dbg_soff], wave_size * (1 + $n_var) * 4
     +   s_mul_i32 s[dbg_soff], s[dbg_soff], 64 * (1 + $n_var) * 4
