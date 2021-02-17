@@ -97,11 +97,12 @@ private:
   bool InitDispatch();
   bool RunDispatch();
   bool Wait();
+  bool Destroy();
 
 protected:
   std::ostringstream output;
   bool Error(const char *msg);
-  bool HsaError(const char *msg, hsa_status_t status = HSA_STATUS_SUCCESS);
+  bool GetAgentName(std::string& agent_name);
 
 public:
   Dispatch(int argc, const char** argv);
@@ -130,6 +131,7 @@ public:
   bool CopyToLocal(void* dest, void* src, size_t size);
   bool CopyFromLocal(void* dest, void* src, size_t size);
   Buffer* AllocateBuffer(size_t size, bool prefer_gpu_local=true);
+  bool FreeBuffer(Buffer* buffer);
   bool CopyTo(Buffer* buffer);
   bool CopyFrom(Buffer* buffer);
   virtual bool Setup() { return true; }

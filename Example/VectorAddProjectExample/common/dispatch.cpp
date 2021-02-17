@@ -48,6 +48,19 @@
 #include <cstdlib>
 #include <iostream>
 
+static inline bool check(hsa_status_t status, const char* msg)
+{
+    if (status == HSA_STATUS_SUCCESS)
+        return true;
+
+    const char* err = 0;
+    hsa_status_string(status, &err);
+    std::cerr << msg << " failed: " << (err ? err : "hsa_status_string() failed") << std::endl;
+
+    return false;
+}
+#define CHECK(x) check(x, #x)
+
 namespace amd {
 namespace dispatch {
 
@@ -69,8 +82,8 @@ hsa_status_t find_gpu_device(hsa_agent_t agent, void *data)
   if (data == NULL) { return HSA_STATUS_ERROR_INVALID_ARGUMENT; }
 
   hsa_device_type_t hsa_device_type;
-  hsa_status_t hsa_error_code = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &hsa_device_type);
-  if (hsa_error_code != HSA_STATUS_SUCCESS) { return hsa_error_code; }
+  if (!CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &hsa_device_type)))
+    return HSA_STATUS_ERROR;
 
   if (hsa_device_type == HSA_DEVICE_TYPE_GPU) {
     Dispatch* dispatch = static_cast<Dispatch*>(data);
@@ -124,43 +137,20 @@ hsa_status_t FindRegions(hsa_region_t region, void* data)
   return HSA_STATUS_SUCCESS;
 }
 
-bool Dispatch::HsaError(const char* msg, hsa_status_t status)
-{
-  const char* err = 0;
-  if (status != HSA_STATUS_SUCCESS) {
-    hsa_status_string(status, &err);
-  }
-  output << msg << ": " << (err ? err : "unknown error") << std::endl;
-  return false;
-}
-
 bool Dispatch::Init()
 {
-  hsa_status_t status;
-  status = hsa_init();
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_init failed", status); }
+  if (!CHECK(hsa_init())
+      || !CHECK(hsa_iterate_agents(find_gpu_device, this))
+      || !CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_QUEUE_MAX_SIZE, &queue_size)) 
+      || !CHECK(hsa_queue_create(agent, queue_size, HSA_QUEUE_TYPE_MULTI, NULL, NULL, UINT32_MAX, UINT32_MAX, &queue)) 
+      || !CHECK(hsa_signal_create(1, 0, NULL, &signal)) 
+      || !CHECK(hsa_agent_iterate_regions(agent, FindRegions, this)) 
+      || !kernarg_region.handle)
+      return false;
 
-  // Find GPU
-  status = hsa_iterate_agents(find_gpu_device, this);
-  assert(status == HSA_STATUS_SUCCESS);
-
-  char agent_name[64];
-  status = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, agent_name);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_agent_get_info(HSA_AGENT_INFO_NAME) failed", status); }
+  std::string agent_name;
+  if (!GetAgentName(agent_name)) return false;
   output << "Using agent: " << agent_name << std::endl;
-
-  status = hsa_agent_get_info(agent, HSA_AGENT_INFO_QUEUE_MAX_SIZE, &queue_size);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_agent_get_info(HSA_AGENT_INFO_QUEUE_MAX_SIZE) failed", status); }
-
-  status = hsa_queue_create(agent, queue_size, HSA_QUEUE_TYPE_MULTI, NULL, NULL, UINT32_MAX, UINT32_MAX, &queue);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_queue_create failed", status); }
-
-  status = hsa_signal_create(1, 0, NULL, &signal);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_signal_create failed", status); }
-
-  status = hsa_agent_iterate_regions(agent, FindRegions, this);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("Failed to iterate memory regions", status); }
-  if (!kernarg_region.handle) { return HsaError("Failed to find kernarg memory region"); }
 
   return true;
 }
@@ -250,9 +240,9 @@ void Dispatch::SetDynamicGroupSegmentSize(uint32_t size)
 
 bool Dispatch::AllocateKernarg(uint32_t size)
 {
-  hsa_status_t status;
-  status = hsa_memory_allocate(kernarg_region, size, &kernarg);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("Failed to allocate kernarg", status); }
+  if (!CHECK(hsa_memory_allocate(kernarg_region, size, &kernarg)))
+    return false;
+
   aql->kernarg_address = kernarg;
   kernarg_offset = 0;
   return true;
@@ -272,14 +262,8 @@ bool Dispatch::LoadCodeObjectFromFile(const std::string& filename)
   std::copy(std::istreambuf_iterator<char>(in),
             std::istreambuf_iterator<char>(),
             ptr);
-/*
-  res.assign((std::istreambuf_iterator<char>(in)),
-              std::istreambuf_iterator<char>());
 
-*/
-  hsa_status_t status = hsa_code_object_reader_create_from_memory(ptr, size, &co_reader);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("Failed to deserialize code object", status); }
-  return true;
+  return CHECK(hsa_code_object_reader_create_from_memory(ptr, size, &co_reader));
 }
 
 bool Dispatch::SetupCodeObject()
@@ -294,41 +278,20 @@ bool Dispatch::SetupDebugBuffer()
 
 bool Dispatch::SetupExecutable()
 {
-  hsa_status_t status;
   hsa_executable_symbol_t kernel_symbol;
-
-  if (!SetupCodeObject()) { return false; }
-  status = hsa_executable_create(HSA_PROFILE_FULL, HSA_EXECUTABLE_STATE_UNFROZEN,
-                                 NULL, &executable);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_create failed", status); }
-
-  // Load code object
-  status = hsa_executable_load_agent_code_object(executable, agent, co_reader, NULL, NULL);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_load_code_object failed", status); }
-
-  // Freeze executable
-  status = hsa_executable_freeze(executable, NULL);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_freeze failed", status); }
-
-  // Get symbol handle
-  status = hsa_executable_get_symbol(executable, NULL, "hello_world", agent,
-                                     0, &kernel_symbol);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_get_symbol failed", status); }
-
-  // Get code handle
   uint64_t code_handle;
-  status = hsa_executable_symbol_get_info(kernel_symbol,
-                                          HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT,
-                                          &code_handle);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_symbol_get_info failed", status); }
 
-  status = hsa_executable_symbol_get_info(kernel_symbol,
-                HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE,
-                &group_static_size);
-  if (status != HSA_STATUS_SUCCESS) { return HsaError("hsa_executable_symbol_get_info failed", status); }
+  if (!SetupCodeObject()) 
+    return false;
+  if (!CHECK(hsa_executable_create(HSA_PROFILE_FULL, HSA_EXECUTABLE_STATE_UNFROZEN, NULL, &executable)) 
+      || !CHECK(hsa_executable_load_agent_code_object(executable, agent, co_reader, NULL, NULL)) 
+      || !CHECK(hsa_executable_freeze(executable, NULL)) 
+      || !CHECK(hsa_executable_get_symbol(executable, NULL, "hello_world", agent, 0, &kernel_symbol)) 
+      || !CHECK(hsa_executable_symbol_get_info(kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle)) 
+      || !CHECK(hsa_executable_symbol_get_info(kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &group_static_size)))
+    return false;
 
   aql->kernel_object = code_handle;
-
   return true;
 }
 
@@ -350,14 +313,18 @@ bool Dispatch::Wait()
   return true;
 }
 
+bool Dispatch::Destroy()
+{
+  return CHECK(hsa_queue_inactivate(queue)) 
+      && CHECK(hsa_signal_destroy(signal));
+}
+
 void* Dispatch::AllocateGPULocalMemory(size_t size)
 {
   assert(gpu_local_region.handle != 0);
   void *p = NULL;
 
-  hsa_status_t status = hsa_memory_allocate(gpu_local_region, size, (void **)&p);
-  if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_allocate(gpu_local_region) failed", status); return 0; }
-  return p;
+  return CHECK(hsa_memory_allocate(gpu_local_region, size, (void **)&p)) ? p : 0;
 }
 
 void* Dispatch::AllocateLocalMemory(size_t size)
@@ -365,39 +332,24 @@ void* Dispatch::AllocateLocalMemory(size_t size)
   assert(local_region.handle != 0);
   void *p = NULL;
 
-  hsa_status_t status = hsa_memory_allocate(local_region, size, (void **)&p);
-  if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_allocate(local_region) failed", status); return 0; }
-  //status = hsa_memory_assign_agent(p, agent, HSA_ACCESS_PERMISSION_RW);
-  //if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_assign_agent failed", status); return 0; }
-  return p;
+  return CHECK(hsa_memory_allocate(local_region, size, (void **)&p)) ? p : 0;
 }
 
 void* Dispatch::AllocateSystemMemory(size_t size)
 {
   void *p = NULL;
-  hsa_status_t status = hsa_memory_allocate(system_region, size, (void **)&p);
-  if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_allocate(system_region) failed", status); return 0; }
-  return p;
+  return CHECK(hsa_memory_allocate(system_region, size, (void **)&p)) ? p : 0;
 }
 
 bool Dispatch::CopyToLocal(void* dest, void* src, size_t size)
 {
-  hsa_status_t status;
-  status = hsa_memory_copy(dest, src, size);
-  if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_copy failed", status); return false; }
-  //status = hsa_memory_assign_agent(dest, agent, HSA_ACCESS_PERMISSION_RW);
-  //if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_assign_agent failed", status); return false; }
-  return true;
+  return CHECK(hsa_memory_copy(dest, src, size));
 }
 
 bool Dispatch::CopyFromLocal(void* dest, void* src, size_t size)
 {
-  hsa_status_t status;
-  status = hsa_memory_assign_agent(src, cpu_agent, HSA_ACCESS_PERMISSION_RW);
-  if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_assign_agent failed", status); return false; }
-  status = hsa_memory_copy(dest, src, size);
-  if (status != HSA_STATUS_SUCCESS) { HsaError("hsa_memory_copy failed", status); return false; }
-  return true;
+  return CHECK(hsa_memory_assign_agent(src, cpu_agent, HSA_ACCESS_PERMISSION_RW)) 
+      && CHECK(hsa_memory_copy(dest, src, size));
 }
 
 Buffer* Dispatch::AllocateBuffer(size_t size, bool prefer_gpu_local)
@@ -422,6 +374,11 @@ Buffer* Dispatch::AllocateBuffer(size_t size, bool prefer_gpu_local)
   } else {
     return new Buffer(size, system_ptr);
   }
+}
+
+bool Dispatch::FreeBuffer(Buffer* buffer)
+{
+  return CHECK(hsa_memory_free(buffer->Ptr<void>()));
 }
 
 bool Dispatch::CopyTo(Buffer* buffer)
@@ -464,7 +421,8 @@ bool Dispatch::Run()
     Setup() &&
     RunDispatch() &&
     Wait() &&
-    Verify();
+    Verify() &&
+    Destroy();
   std::string out = output.str();
   if (!out.empty()) {
     std::cout << out << std::endl;
@@ -478,17 +436,20 @@ int Dispatch::RunMain()
   return Run() ? 0 : 1;
 }
 
+bool Dispatch::GetAgentName(std::string& agent_name)
+{
+  char agent_name_buf[64];
+  if (!CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, agent_name_buf)))
+    return false;
+
+  agent_name = std::string(agent_name_buf);
+  return true;
+}
+
 uint64_t Dispatch::GetTimestampFrequency()
 {
   uint64_t frequency;
-  hsa_status_t status;
-  status = hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY, &frequency);
-  if (status != HSA_STATUS_SUCCESS) {
-    HsaError("hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY) failed", status);
-    return 0;
-  }
-
-  return frequency;
+  return CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY, &frequency)) ? frequency : 0;
 }
 
 }

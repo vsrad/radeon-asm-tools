@@ -1,11 +1,10 @@
 #include "dispatch.hpp"
+#include "op_params.hpp"
 #include <string.h>
-#include <boost/program_options.hpp>
 #include <iostream>
 #include <fstream>
 
 using namespace amd::dispatch;
-using namespace boost::program_options;
 
 class HalfVectorAdd : public Dispatch {
 private:
@@ -54,10 +53,13 @@ public:
   bool SetupCodeObject() override {
     std::stringstream stream;
 
+    std::string agent_name;
+    if (!GetAgentName(agent_name)) return false;
+
     stream <<"cat  "
       << asm_source << " | "
-      << clang << " -x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I"
-      << include_dir << " -o " << output_path << " -";
+      << clang << " -x assembler -target amdgcn--amdhsa -mno-code-object-v3 -I"
+      << include_dir << " -mcpu=" << agent_name << " -o " << output_path << " -";
 
     std::string clang_call = stream.str();
 
@@ -76,6 +78,8 @@ public:
 
       fs.write(debug->Ptr<char>(), debug->Size());
       fs.close();
+
+      FreeBuffer(debug);
     }
 
     return true;
@@ -116,6 +120,10 @@ public:
         ok = false;
       }
     }
+
+    FreeBuffer(in1);
+    FreeBuffer(in2);
+    FreeBuffer(out);
     return ok;
   }
 };
@@ -123,31 +131,60 @@ public:
 int main(int argc, const char** argv)
 {
   try {
-    options_description desc("General options");
-    desc.add_options()
-    ("help,h", "usage message")
-    ("clang", value<std::string>()->default_value("clang"), "clang compiler path")
-    ("asm", value<std::string>()->default_value("fp32_v_add.s"), "kernel source")
-    ("include", value<std::string>()->default_value("./include/"), "include directories")
-    ("output_path", value<std::string>()->default_value("fp32_v_add.co"), "kernel binary output path")
-    ("debug_path", value<std::string>()->default_value("debug_result"), "debug buffer binary result")
-    ("debug_size", value<unsigned>()->default_value(0), "debug buffer size")
-    ;
 
-    variables_map vm;
-    store(parse_command_line(argc, argv, desc), vm);
+    std::string clang;
+    std::string asm_source;
+    std::string include_dir;
+    std::string output_path;
+    std::string debug_path;
+    unsigned int debug_size;
 
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      return 0;
+    Options cli_ops(100);
+    cli_ops.Add(&clang,  "-asm", "", string("/opt/rocm/llvm/bin/clang"), "path to compiler", str2str);
+    cli_ops.Add(&asm_source,  "-s", "", string(""), "path to source", str2str);
+    cli_ops.Add(&include_dir,  "-I", "", string(""), "path to include dir", str2str);
+    cli_ops.Add(&output_path,  "-o", "", string(""), "path to output code object", str2str);
+    cli_ops.Add(&debug_path,  "-b", "", string(""), "path to debug buffer", str2str);
+    cli_ops.Add(&debug_size,  "-bsz", "", 0u, "debug buffer size", str2u);
+
+    for (int i = 1; i <= argc-1; i += 2)
+    {
+        if (!strcmp(argv[i], "-?") || !strcmp(argv[i], "-help"))
+        {
+            cli_ops.ShowHelp();
+            exit(0);
+            return false;
+        }
+
+        bool merged_flag = false;
+        if (!cli_ops.ProcessArg(argv[i], argv[i+1], &merged_flag))
+        {
+            std::cerr << "Unknown flag or flag without value: " << argv[i] << "\n";
+            return false;
+        }
+
+        if (merged_flag)
+        {
+            i--;
+            continue;
+        }
+
+        if (argv[i+1] && cli_ops.MatchArg(argv[i+1]))
+        {
+            std::cerr << "Argument \"" << argv[i + 1]
+                << "\" is aliased with command line flags\n\t maybe real argument is missed for flag \""
+                << argv[i] << "\"\n";
+            return false;
+        }
     }
 
-    std::string clang = vm["clang"].as<std::string>();
-    std::string asm_source = vm["asm"].as<std::string>();;
-    std::string include_dir = vm["include"].as<std::string>();
-    std::string output_path = vm["output_path"].as<std::string>();
-    std::string debug_path = vm["debug_path"].as<std::string>();
-    unsigned debug_size = vm["debug_size"].as<unsigned>();
+    if (clang.empty() || asm_source.empty() || include_dir.empty() || output_path.empty())
+    {
+        std::cerr << "Some argument is empty\n";
+        cli_ops.ShowHelp();
+        exit(0);
+        return false;
+    }
 
     return HalfVectorAdd(argc,
       argv,
