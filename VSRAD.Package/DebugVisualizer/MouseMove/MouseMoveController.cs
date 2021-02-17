@@ -20,7 +20,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             {
                 new ScaleOperation(_table, _state),
                 new PanOperation(_state),
-                new ReorderOperation(_table, _state.ReorderingEnabled)
+                new ReorderOperation(_table)
             };
         }
 

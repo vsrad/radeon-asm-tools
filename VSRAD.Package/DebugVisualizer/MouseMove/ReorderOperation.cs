@@ -10,21 +10,18 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private readonly DataGridView _table;
 
         private bool _operationStarted;
-        private bool _enabled;
         private int _hoverRowIndex;
         private int _newWatchRowIndex;
         private List<DataGridViewRow> _selectedRows;
         private List<DataGridViewRow> _rowsToMove;
 
-        public ReorderOperation(DataGridView table, bool enabled)
+        public ReorderOperation(DataGridView table)
         {
             _table = table;
-            _enabled = enabled;
         }
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (!_enabled) return false;
             _newWatchRowIndex = _table.RowCount - 1;
             if (hit.Type != DataGridViewHitTestType.RowHeader
                 || hit.RowIndex <= VisualizerTable.SystemRowIndex
