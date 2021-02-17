@@ -34,11 +34,7 @@ where `port` is a TCP port number the server will listen on.
 
 1. Clone this repository and open the solution in Visual Studio.
 2. Right-click on `VSRAD.Package` in *Solution Explorer* and select *Set as StartUp Project*.
-3. Right-click on `VSRAD.Package` in *Solution Explorer* and
-select *Properties*.
-4. Navigate to the *Debug* tab in the project properties editor.
-5. Choose *Start external program* as the *Start action* and enter the path to your Visual Studio executable (`<Visual Studio installation path>\Common7\IDE\devenv.exe`).
-6. Close the project properties editor and start debugging by pressing F5.
+3. Start debugging by pressing F5.
 
 ### Assembling a Release
 
