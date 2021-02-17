@@ -16,7 +16,6 @@ RUN apt-get update && \
   libnuma-dev \
   build-essential \
   liblist-moreutils-perl \
-  libboost-program-options-dev \
   cmake \
   unzip \
   rocm-dev \
@@ -24,15 +23,15 @@ RUN apt-get update && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-ENV PATH "${PATH}:/opt/rocm/bin:/opt/rocm/opencl/bin/x86_64"
+ENV PATH "${PATH}:/opt/rocm/bin:/opt/rocm/llvm/bin"
 
-ENV BIN_VERSION=2020.01.17 SRC_VERSION=f85b1bbfc20311e3f0106a431eab5b56094c6e07
+ENV VERSION=2021.01.22
 
 # compile example application
-RUN curl -L https://github.com/vsrad/radeon-asm-tools/archive/${SRC_VERSION}.zip -o source.zip && \
-  unzip source.zip "radeon-asm-tools-${SRC_VERSION}/Example/VectorAddProjectExample/*" && \
-  mv radeon-asm-tools-${SRC_VERSION}/Example/VectorAddProjectExample . && \
-  rm -r source.zip radeon-asm-tools-${SRC_VERSION} && \
+RUN curl -L https://github.com/vsrad/radeon-asm-tools/archive/${VERSION}.zip -o source.zip && \
+  unzip source.zip "radeon-asm-tools-${VERSION}/Example/VectorAddProjectExample/*" && \
+  mv radeon-asm-tools-${VERSION}/Example/VectorAddProjectExample . && \
+  rm -r source.zip radeon-asm-tools-${VERSION} && \
   cd VectorAddProjectExample && \
   mkdir build && \
   cd build && \
@@ -40,7 +39,7 @@ RUN curl -L https://github.com/vsrad/radeon-asm-tools/archive/${SRC_VERSION}.zip
   make
 
 # download Debug Server
-RUN curl -LO https://github.com/vsrad/radeon-asm-tools/releases/download/${BIN_VERSION}/Release.zip && \
+RUN curl -LO https://github.com/vsrad/radeon-asm-tools/releases/download/${VERSION}/Release.zip && \
   unzip -j Release.zip 'Release/DebugServerLinux64/*' -d DebugServerLinux64 && \
   rm Release.zip && \
   chmod +x DebugServerLinux64/RadeonAsmDebugServer
