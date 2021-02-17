@@ -204,6 +204,7 @@ void Dispatch::SetWorkgroupSize(uint16_t sizeX, uint16_t sizeY, uint16_t sizeZ)
   aql->workgroup_size_x = sizeX;
   aql->workgroup_size_y = sizeY;
   aql->workgroup_size_z = sizeZ;
+  std::cout << "Workgroup size [" << sizeX << ", " << sizeY << ", " << sizeZ << "]\n";
 }
 
 void Dispatch::SetGridSize(uint32_t sizeX, uint32_t sizeY, uint32_t sizeZ)
@@ -211,6 +212,7 @@ void Dispatch::SetGridSize(uint32_t sizeX, uint32_t sizeY, uint32_t sizeZ)
   aql->grid_size_x = sizeX;
   aql->grid_size_y = sizeY;
   aql->grid_size_z = sizeZ;
+  std::cout << "Grid size [" << sizeX << ", " << sizeY << ", " << sizeZ << "]\n";
 }
 
 void Dispatch::SetSystemRegion(hsa_region_t region)

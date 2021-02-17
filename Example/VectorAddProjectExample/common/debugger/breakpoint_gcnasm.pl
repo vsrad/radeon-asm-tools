@@ -125,45 +125,8 @@ my $plug_macro = << "PLUGMACRO";
 // dbg_ptr_off should be defined in main programm
 .macro m_dbg_init gidx
 	debug_init_start:
-	//s_load_dwordx2 s[dbg_srd:dbg_srd+1], s[kernarg:kernarg+1], 0 + dbg_ptr_off
-	//s_waitcnt 0
-	//
-	//// compute flat wave id assuming group has only x_dim
-	//// flat_group_id = gid_x + gid_y * gid_x_size + gid_z * gid_x_size * gid_y_size
-	//// flat_wave_id = local_wave_id + waves_in_group * flat_group_id
-	//grid_group_size_off = 4 * 11;
-	//waves_in_group_off = 4 * 3;
-	//s_load_dwordx2 s[dbg_srd+2:dbg_srd+3], s[dbg_srd:dbg_srd+1], 0 + grid_group_size_off
-	//s_load_dword s[dbg_counter], s[dbg_srd:dbg_srd+1], 0 + waves_in_group_off
-	//s_waitcnt 0
-	//s_mov_b32 s[dbg_soff], s[\\gidx]
-	//s_cmp_gt_i32 s[dbg_srd+2], 1
-	//s_cbranch_scc0 debug_skip_gid_y
-	//	s_mul_i32 s[dbg_stmp], s[\\gidx + 1], s[dbg_srd+2]
-	//	s_add_u32 s[dbg_soff], s[dbg_soff], s[dbg_stmp]
-	//debug_skip_gid_y:
-	//s_cmp_gt_i32 s[dbg_srd+3], 1
-	//s_cbranch_scc0 debug_skip_gid_z
-	//	s_mul_i32 s[dbg_stmp], s[\\gidx + 2], s[dbg_srd+2]
-	//	s_mul_i32 s[dbg_stmp], s[dbg_stmp], s[dbg_srd+3]
-	//	s_add_u32 s[dbg_soff], s[dbg_soff], s[dbg_stmp]
-	//debug_skip_gid_z:
-	//s_mul_i32 s[dbg_soff], s[dbg_soff], s[dbg_counter]
-	//v_readfirstlane_b32 s[dbg_stmp], v[tid]
-	//s_lshr_b32 s[dbg_stmp], s[dbg_stmp], wave_size_log2
-	//s_add_u32 s[dbg_soff], s[dbg_soff], s[dbg_stmp]
-	//
-	//// compute dbg_soff
-	//// soff = flat_wave_id * wave_size * (1 + nvars) * sizeof(dword)
-	//s_mul_i32 s[dbg_soff], s[dbg_soff], wave_size * (1 + $n_var) * 4
-	//
-	//// construct dbg_srd
-	//s_load_dwordx4 s[dbg_srd:dbg_srd+3], s[dbg_srd:dbg_srd+1], 0
-	//s_waitcnt 0
-	//s_mov_b32 s[dbg_srd+3], 0x804fac
-	//s_add_u32 s[dbg_srd+1], s[dbg_srd+1], (($n_var + 1) << 18)
 
-	s_mul_i32 s[dbg_soff], s[\\gidx], 8 //waves_in_group
+	s_mul_i32 s[dbg_soff], s[\\gidx], 1 //waves_in_group
 	v_readfirstlane_b32 s[dbg_counter], v[tid]
 	s_lshr_b32 s[dbg_counter], s[dbg_counter], 6 //wave_size_log2
 	s_add_u32 s[dbg_soff], s[dbg_soff], s[dbg_counter]

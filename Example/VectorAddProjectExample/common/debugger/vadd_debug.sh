@@ -14,7 +14,7 @@ do
 	;;
 	t) counter=$OPTARG
 	;;
-	v) vdk_args=$OPTARG
+	a) app_args=$OPTARG
 	;;
 	p) perl_args=$OPTARG
 	;;
@@ -38,6 +38,7 @@ export VADD_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd
 	-I "$VADD_DIR/gfx9/include" \
 	-o "./tmp_dir/fp32_v_add.co" \
 	-b "$dump_path" \
-	-bsz "$ASM_DBG_BUF_SIZE"
+	-bsz "$ASM_DBG_BUF_SIZE" \
+	$app_args
 
 echo

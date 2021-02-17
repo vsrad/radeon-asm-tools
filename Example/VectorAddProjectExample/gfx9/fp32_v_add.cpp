@@ -21,7 +21,8 @@ private:
   unsigned debug_size;
 
 public:
-  HalfVectorAdd(int argc, const char **argv, 
+  HalfVectorAdd(int argc, const char **argv,
+    unsigned length,
     std::string &clang, 
     std::string &asm_source, 
     std::string &include_dir,
@@ -29,7 +30,7 @@ public:
     std::string &debug_path,
     unsigned &debug_size)
     : Dispatch(argc, argv), 
-      length(64), 
+      length(length), 
       clang{std::move(clang) }, 
       asm_source{std::move(asm_source) }, 
       include_dir{std::move(include_dir) },
@@ -100,7 +101,7 @@ public:
     Kernarg(in1);
     Kernarg(in2);
     Kernarg(out);
-    SetGridSize(64);
+    SetGridSize(length);
     SetWorkgroupSize(64);
     return true;
   }
@@ -138,6 +139,7 @@ int main(int argc, const char** argv)
     std::string output_path;
     std::string debug_path;
     unsigned int debug_size;
+    unsigned int length;
 
     Options cli_ops(100);
     cli_ops.Add(&clang,  "-asm", "", string("/opt/rocm/llvm/bin/clang"), "path to compiler", str2str);
@@ -146,6 +148,7 @@ int main(int argc, const char** argv)
     cli_ops.Add(&output_path,  "-o", "", string(""), "path to output code object", str2str);
     cli_ops.Add(&debug_path,  "-b", "", string(""), "path to debug buffer", str2str);
     cli_ops.Add(&debug_size,  "-bsz", "", 0u, "debug buffer size", str2u);
+    cli_ops.Add(&length,  "-l", "", 64u, "vector length", str2u);
 
     for (int i = 1; i <= argc-1; i += 2)
     {
@@ -188,6 +191,7 @@ int main(int argc, const char** argv)
 
     return HalfVectorAdd(argc,
       argv,
+      length,
       clang,
       asm_source,
       include_dir,
