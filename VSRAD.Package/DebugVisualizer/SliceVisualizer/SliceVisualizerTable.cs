@@ -47,7 +47,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             SetupColumns();
             _state = new TableState(this, 60);
-            _state.ReorderingEnabled = false;
             _state.AddDataColumns(Array.Empty<DataGridViewColumn>());
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
