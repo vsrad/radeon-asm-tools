@@ -101,11 +101,11 @@ namespace VSRAD.Package.DebugVisualizer
             e.Handled = true;
         }
 
-        public static void PaintContentWithSeparator(int width, SolidBrush color, Rectangle r, DataGridViewCellPaintingEventArgs e)
+        public static void PaintContentWithSeparator(int width, SolidBrush color, Rectangle r, DataGridViewCellPaintingEventArgs e, bool overridePaint = true)
         {
             r.Width -= width;
             e.Graphics.SetClip(r);
-            e.Paint(r, DataGridViewPaintParts.All);
+            if (overridePaint) e.Paint(r, DataGridViewPaintParts.All);
             e.Graphics.SetClip(e.CellBounds);
             r = new Rectangle(r.Right - 1, r.Top, width + 1, r.Height);
             e.Graphics.FillRectangle(color, r);
