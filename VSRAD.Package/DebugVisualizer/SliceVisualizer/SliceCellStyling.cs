@@ -49,24 +49,27 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 return;
             }
 
-            if (e.RowIndex >= 0) PaintBackgroud(e);
+            var handled = false;
+
+            if (e.RowIndex >= 0) handled = PaintBackgroud(e);
 
             // called last because manipulates with e.Handled
-            PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
+            handled |= PaintColumnSeparators(e.ColumnIndex - SliceVisualizerTable.DataColumnOffset, e);
+            e.Handled = handled;
         }
 
-        private void PaintBackgroud(DataGridViewCellPaintingEventArgs e)
+        private bool PaintBackgroud(DataGridViewCellPaintingEventArgs e)
         {
             if (_table.SelectedWatch.IsInactiveCell(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset))
             {
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
-                return;
+                return false;
             }
 
             if (_table.HeatMapMode)
             {
-                HandleHeatMap(e);
+                return HandleHeatMap(e);
             }
             else
             {
@@ -75,10 +78,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 var bgColor = DataHighlightColors.GetFromColorString(_stylingOptions.BackgroundColors, (int)colorIndex);
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)bgColor];
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
+                return false;
             }
         }
 
-        private void PaintColumnSeparators(int dataColumnIndex, DataGridViewCellPaintingEventArgs e)
+        private bool PaintColumnSeparators(int dataColumnIndex, DataGridViewCellPaintingEventArgs e)
         {
             int width;
             SolidBrush color;
@@ -93,13 +97,15 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 width = _appearance.SliceSubgroupSeparatorWidth;
                 color = _fontAndColor.FontAndColorState.SliceSubgroupSeparatorBrush;
             }
-            else return;
+            else return false;
 
-            CellStyling.PaintContentWithSeparator(width, color, e.CellBounds, e);
-            e.Handled = true;
+            var overrideColor = !(_table.SelectedWatch.IsSingleWordValue && _table.HeatMapMode && e.RowIndex != -1);
+
+            CellStyling.PaintContentWithSeparator(width, color, e.CellBounds, e, overrideColor);
+            return true;
         }
 
-        private void HandleHeatMap(DataGridViewCellPaintingEventArgs e)
+        private bool HandleHeatMap(DataGridViewCellPaintingEventArgs e)
         {
             if (_table.SelectedWatch.IsSingleWordValue)
             {
@@ -111,12 +117,13 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 e.Graphics.FillRectangle(brush1, new Rectangle(e.CellBounds.Left, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
                 e.Graphics.FillRectangle(brush2, new Rectangle(e.CellBounds.Left + e.CellBounds.Width / 2, e.CellBounds.Top, e.CellBounds.Width / 2, e.CellBounds.Height));
                 e.Paint(e.CellBounds, DataGridViewPaintParts.All & ~DataGridViewPaintParts.Background);
-                e.Handled = true;
+                return true;
             }
             else
             {
                 var relValue = _table.SelectedWatch.GetRelativeValue(e.RowIndex, e.ColumnIndex - SliceVisualizerTable.DataColumnOffset);
                 e.CellStyle.BackColor = GetHeatmapColor(relValue);
+                return false;
             }
         }
 
