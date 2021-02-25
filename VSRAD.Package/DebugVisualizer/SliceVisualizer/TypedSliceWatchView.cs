@@ -132,7 +132,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                                 if (firstHalf > fmax)
                                     fmax = firstHalf;
                             }
-                            if (!float.IsNaN(secondHalf) && !float.IsInfinity(firstHalf))
+                            if (!float.IsNaN(secondHalf) && !float.IsInfinity(secondHalf))
                             {
                                 if (secondHalf < fmin)
                                     fmin = secondHalf;
