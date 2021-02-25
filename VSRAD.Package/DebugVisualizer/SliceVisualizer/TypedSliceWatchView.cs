@@ -50,6 +50,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
                 case VariableType.Half:
                     floatValue = Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(_view[row, column]), startIndex: word * 2));
+                    if (float.IsInfinity(floatValue)) return float.NaN;
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
             }
             throw new NotImplementedException();
@@ -124,14 +125,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                             byte[] bytes = BitConverter.GetBytes(view[row, col]);
                             float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
                             float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
-                            if (!float.IsNaN(firstHalf))
+                            if (!float.IsNaN(firstHalf) && !float.IsInfinity(firstHalf))
                             {
                                 if (firstHalf < fmin)
                                     fmin = firstHalf;
                                 if (firstHalf > fmax)
                                     fmax = firstHalf;
                             }
-                            if (!float.IsNaN(secondHalf))
+                            if (!float.IsNaN(secondHalf) && !float.IsInfinity(firstHalf))
                             {
                                 if (secondHalf < fmin)
                                     fmin = secondHalf;
