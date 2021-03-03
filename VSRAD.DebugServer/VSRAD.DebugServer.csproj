@@ -11,7 +11,7 @@
 
   <PropertyGroup>
     <TrimUnusedDependencies>true</TrimUnusedDependencies>
-    <Version>2021.01.22</Version>
+    <Version>2021.03.03</Version>
     <AssemblyName>RadeonAsmDebugServer</AssemblyName>
     <RootNamespace>VSRAD.DebugServer</RootNamespace>
   </PropertyGroup>
