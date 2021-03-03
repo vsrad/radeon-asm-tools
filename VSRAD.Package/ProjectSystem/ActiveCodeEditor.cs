@@ -62,9 +62,9 @@ namespace VSRAD.Package.ProjectSystem
             if (activeWord.Length == 0)
             {
                 var wpfTextView = GetTextViewFromVsTextView(GetActiveTextView());
-                activeWord = _emptyBracketsRegex.Replace(GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition), "").Trim();
+                activeWord = _emptyBracketsRegex.Replace(GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition), "");
             }
-            return activeWord;
+            return activeWord.Trim();
         }
 
         private string GetWordOnPosition(ITextBuffer textBuffer, SnapshotPoint position)

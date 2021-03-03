@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.ProjectSystem;
 using System;
 using System.ComponentModel.Composition;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Commands
 {
@@ -24,19 +25,33 @@ namespace VSRAD.Package.Commands
 
         public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
-            if (commandId == Constants.MenuCommandId)
-                return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
-            return 0;
+            if (commandId == Constants.AddArrayToWatchesFromHeaderId)
+                return OLECMDF.OLECMDF_SUPPORTED;
+            if (commandId >= Constants.AddArrayToWatchesToHeaderOffset
+                && commandId < Constants.AddArrayToWatchesToHeaderOffset + Constants.AddArrayToWatchesIndexCount)
+                return OLECMDF.OLECMDF_SUPPORTED;
+
+            return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
         }
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            if (commandId != Constants.MenuCommandId)
+            var watchName = _codeEditor.GetActiveWord();
+            if (string.IsNullOrEmpty(watchName))
                 return;
 
-            var activeWord = _codeEditor.GetActiveWord();
-            if (!string.IsNullOrWhiteSpace(activeWord))
-                _toolIntegration.AddWatchFromEditor(activeWord);
+            if (commandId == Constants.AddToWatchesCommandId)
+            {
+                _toolIntegration.AddWatchFromEditor(watchName);
+            }
+            else if (commandId >= Constants.AddArrayToWatchesToIdOffset)
+            {
+                var fromIndex = Math.DivRem(commandId - Constants.AddArrayToWatchesToIdOffset, Constants.AddArrayToWatchesToFromOffset, out var toIndex);
+                var arrayRangeWatch = ArrayRange.FormatArrayRangeWatch(watchName, (int)fromIndex, (int)toIndex);
+
+                foreach (var watch in arrayRangeWatch)
+                    _toolIntegration.AddWatchFromEditor(watch);
+            }
         }
     }
 }

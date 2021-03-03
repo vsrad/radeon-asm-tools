@@ -129,7 +129,6 @@
     <Compile Include="BuildTools\Errors\Parser.cs" />
     <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
-    <Compile Include="Commands\AddArrayToWatchesCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />

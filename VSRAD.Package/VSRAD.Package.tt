@@ -1,10 +1,6 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#"
-#><#@ assembly name="System.Core"
-#><#@ import namespace="System.Linq"
-#><#@ import namespace="System.Text"
-#><#@ import namespace="System.Collections.Generic"
-#><#@ output extension=".vsct"
-#><?xml version="1.0" encoding="utf-8"?>
+﻿<#@ template debug="false" hostspecific="false" language="C#"#>
+<#@ output extension=".vsct"#>
+<?xml version="1.0" encoding="utf-8"?>
 <CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
@@ -38,24 +34,24 @@
         </Strings>
       </Menu>
       <!-- Editor context menu -> Add to watches as array -->
-      <Menu guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuId" priority="0x1000" type="Menu">
-        <Parent guid="guidCmdSetSelectionArray" id="EditorContextMenuAddArrayToWatchesGroup" />
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuId" priority="0x1000" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="EditorContextMenuAddToWatchesGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add To Watches As Array</ButtonText>
           <CommandName>Add To Watches As Array</CommandName>
         </Strings>
       </Menu>
-	  <!-- Editor context menu -> Add to watches as array -> From 0..15 -->
-	  <# for (int i = 0; i < 16; ++i) { #>
-	  <Menu guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Id" priority="0x<#= (0x1100 + i).ToString("x") #>" type="Menu">
-        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuGroup" />
+      <!-- Editor context menu -> Add to watches as array -> From 0..15 -->
+<# for (int i = 0; i < 16; ++i) { #>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom<#= i #>Id" priority="0x<#= (0x1100 + i).ToString("x") #>" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
         <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
         <Strings>
           <ButtonText><#= i #></ButtonText>
         </Strings>
       </Menu>
-	  <# } #>
+<# } #>
     </Menus>
 
     <Buttons>
@@ -95,7 +91,7 @@
         <CommandFlag>DynamicItemStart</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
-	    <Strings>
+        <Strings>
           <ButtonText>(No actions available)</ButtonText>
         </Strings>
       </Button>
@@ -148,39 +144,39 @@
           <ButtonText>Force Run To Cursor</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetSelection" id="AddSelectionToWatchesCommandId" priority="0x0100" type="Button">
-        <Parent guid="guidCmdSetSelection" id="EditorContextMenuSelectionGroup" />
+      <Button guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdSetAddToWatches" id="EditorContextMenuAddToWatchesGroup" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add To Watches</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetSelectionArray" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
-        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuGroup" />
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>From</ButtonText>
         </Strings>
       </Button>
-	  <# for (int i = 0; i < 16; ++i) { #>
-	  <Button guid="guidCmdSetSelectionArray" id="AddArrayToWatchesFrom<#= i #>ToHeaderId" priority="0x<#= (0x1200 + i).ToString("x") #>">
-        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Group" />
+<# for (int i = 0; i < 16; ++i) { #>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom<#= i #>ToHeaderId" priority="0x<#= (0x1200 + i).ToString("x") #>">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom<#= i #>Group" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>To</ButtonText>
         </Strings>
       </Button>
-	  <# for (int j = i; j < 16; ++j) { #>
-	  <Button guid="guidCmdSetSelectionArray" id="AddArrayToWatchesFrom<#= i #>To<#= j #>Id" priority="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>">
-        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Group" />
+<# for (int j = i; j < 16; ++j) { #>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom<#= i #>To<#= j #>Id" priority="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom<#= i #>Group" />
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText><#= j #></ButtonText>
         </Strings>
       </Button>
-	  <# } #>
-	  <# } #>
+<# } #>
+<# } #>
       <!--<Button guid="guidCmdEvaluateSelected" id="EvaluateSelectedCommandId" priority="0x0100" type="Button">
         <Parent guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -218,20 +214,17 @@
       <Group guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
       </Group>
-      <Group guid="guidCmdSetSelection" id="EditorContextMenuSelectionGroup" priority="0x0600">
+      <Group guid="guidCmdSetAddToWatches" id="EditorContextMenuAddToWatchesGroup" priority="0x4000">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
       </Group>
-      <Group guid="guidCmdSetSelectionArray" id="EditorContextMenuAddArrayToWatchesGroup" priority="0x4000">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" priority="0x4000">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuId" />
       </Group>
-      <Group guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuGroup" priority="0x4000">
-        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuId" />
+<# for (int i = 0; i < 16; ++i) { #>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom<#= i #>Group" priority="0x<#= (0x4100 + i).ToString("x") #>">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom<#= i #>Id" />
       </Group>
-	  <# for (int i = 0; i < 16; ++i) { #>
-	  <Group guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Group" priority="0x<#= (0x4100 + i).ToString("x") #>">
-        <Parent guid="guidCmdSetSelectionArray" id="AddArrayToWatchesMenuFrom<#= i #>Id" />
-      </Group>
-	  <# } #>
+<# } #>
       <!--<Group guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
       </Group>-->
@@ -252,14 +245,14 @@
   </Commands>
 
   <KeyBindings>
-    <KeyBinding guid="guidCmdSetSelection" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
   </KeyBindings>
 
   <CommandPlacements>
     <CommandPlacement guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0100">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
-	<CommandPlacement guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0100">
+    <CommandPlacement guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0100">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
   </CommandPlacements>
@@ -299,24 +292,20 @@
       <IDSymbol value="4128" name="EditorContextMenuFRTCGroup" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidCmdSetSelection" value="{8560BD12-1D31-40BA-B300-1A31FC901E93}">
+    <GuidSymbol name="guidCmdSetAddToWatches" value="{8560BD12-1D31-40BA-B300-1A31FC901E93}">
+      <IDSymbol value="0x1020" name="EditorContextMenuAddToWatchesGroup" />
       <IDSymbol value="0x0100" name="AddSelectionToWatchesCommandId" />
-      <IDSymbol value="4128" name="EditorContextMenuSelectionGroup" />
-    </GuidSymbol>
-
-    <GuidSymbol name="guidCmdSetSelectionArray" value="{A03BE90E-E3E1-47F8-815B-387605FDCB73}">
-      <IDSymbol value="0x1020" name="EditorContextMenuAddArrayToWatchesGroup" />
       <IDSymbol value="0x1025" name="AddArrayToWatchesMenuGroup" />
       <IDSymbol value="0x1030" name="AddArrayToWatchesMenuId" />
       <IDSymbol value="0x1031" name="AddArrayToWatchesFromHeaderId" />
-	  <# for (int i = 0; i < 16; ++i) { #>
-	  <IDSymbol value="0x<#= (0x1100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Id" />
-	  <IDSymbol value="0x<#= (0x4100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Group" />
-	  <IDSymbol value="0x<#= (0x1200 + i).ToString("x") #>" name="AddArrayToWatchesFrom<#= i #>ToHeaderId" />
-	  <# for (int j = i; j < 16; ++j) { #>
-	  <IDSymbol value="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>" name="AddArrayToWatchesFrom<#=i #>To<#= j #>Id" />
-	  <# } #>
-	  <# } #>
+<# for (int i = 0; i < 16; ++i) { #>
+      <IDSymbol value="0x<#= (0x1100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Id" />
+      <IDSymbol value="0x<#= (0x4100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Group" />
+      <IDSymbol value="0x<#= (0x1200 + i).ToString("x") #>" name="AddArrayToWatchesFrom<#= i #>ToHeaderId" />
+<# for (int j = i; j < 16; ++j) { #>
+      <IDSymbol value="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>" name="AddArrayToWatchesFrom<#=i #>To<#= j #>Id" />
+<# } #>
+<# } #>
     </GuidSymbol>
 
     <!--<GuidSymbol name="guidCmdEvaluateSelected" value="{6624A31D-4C20-4675-84D7-67D140842579}">
