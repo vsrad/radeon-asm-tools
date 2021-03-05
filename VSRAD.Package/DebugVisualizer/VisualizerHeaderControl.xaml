@@ -149,7 +149,8 @@
                       Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                       Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+                      ItemsSource="{Binding Options.DebuggerOptions.LastAppArgs, UpdateSourceTrigger=PropertyChanged}"/>
             <TextBox Text="{Binding Options.DebuggerOptions.BreakArgs, UpdateSourceTrigger=PropertyChanged}"
                      Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
