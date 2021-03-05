@@ -19,7 +19,7 @@ namespace VSRAD.Package.Options
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
         public List<Watch> Watches { get; } = new List<Watch>();
-        public List<string> LastAppArgs { get; } = new List<string>(new[] { "1", "2", "3" });
+        public ObservableCollection<string> LastAppArgs { get; } = new ObservableCollection<string>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => !w.IsEmpty).Select(w => w.Name).Distinct().ToList());
@@ -58,6 +58,12 @@ namespace VSRAD.Package.Options
 
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
+
+        public void UpdateLastAppArgs()
+        {
+            if (LastAppArgs.Contains(AppArgs)) return;
+            LastAppArgs.Add(AppArgs);
+        }
     }
 
     public sealed class BackwardsCompatibilityWatchConverter : JsonConverter
