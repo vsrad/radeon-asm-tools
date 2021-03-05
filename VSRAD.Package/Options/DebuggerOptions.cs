@@ -19,7 +19,7 @@ namespace VSRAD.Package.Options
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
         public List<Watch> Watches { get; } = new List<Watch>();
-        public ObservableCollection<string> LastAppArgs { get; } = new ObservableCollection<string>();
+        public RecentlyUsedCollection LastAppArgs { get; } = new RecentlyUsedCollection();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => !w.IsEmpty).Select(w => w.Name).Distinct().ToList());
@@ -61,13 +61,7 @@ namespace VSRAD.Package.Options
 
         public void UpdateLastAppArgs()
         {
-            if (string.IsNullOrWhiteSpace(AppArgs)) return;
-            if (LastAppArgs.IndexOf(AppArgs) is var oldIndex && oldIndex != -1)
-            {
-                LastAppArgs.Move(oldIndex, 0);
-                return;
-            }
-            LastAppArgs.Insert(0, AppArgs);
+            LastAppArgs.AddElement(AppArgs);
         }
     }
 
