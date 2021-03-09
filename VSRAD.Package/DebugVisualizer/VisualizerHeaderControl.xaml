@@ -6,6 +6,7 @@
              xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:wavemap="clr-namespace:VSRAD.Package.DebugVisualizer.Wavemap"
+             xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              mc:Ignorable="d"
              d:DesignHeight="140" d:DesignWidth="720">
     <UserControl.ContextMenu>
@@ -22,6 +23,7 @@
     </UserControl.ContextMenu>
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <utils:WpfBoolToStringConverter x:Key="PinnedButtonColorConverter" TrueValue="LightGray" FalseValue="White" />
         <Style x:Key="NDRangeInput" TargetType="local:NumberInput">
             <Setter Property="IsEnabled" Value="{Binding GroupIndexEditable}"/>
             <Style.Triggers>
@@ -162,7 +164,7 @@
                                         BorderThickness="{TemplateBinding BorderThickness}"
                                         Background="{TemplateBinding Background}">
                                         <StackPanel Orientation="Horizontal">
-                                            <CheckBox IsChecked="{Binding Pinned}" Width="100"/>
+                                            <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}" Width="25" Height="25"/>
                                             <Label Content="{Binding Value}" />
                                         </StackPanel>
                                     </Border>
