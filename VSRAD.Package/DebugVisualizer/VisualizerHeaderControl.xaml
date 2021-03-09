@@ -150,22 +150,36 @@
                       Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                       BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
-                      ItemsSource="{Binding Options.DebuggerOptions.LastAppArgs, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-
-                            <Button>📌</Button>
-                            <Label Grid.Column="1" Content="{Binding}" Width="100" />
-                            
-                        </Grid>
-
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
+                      ItemsSource="{Binding Options.DebuggerOptions.LastAppArgs, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
+                      DisplayMemberPath="Value">
+                <ComboBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ComboBoxItem}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                                    <Border x:Name="Bd"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Background="{TemplateBinding Background}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox IsChecked="{Binding Pinned}" Width="100"/>
+                                            <Label Content="{Binding Value}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ComboBox.ItemContainerStyle>
             </ComboBox>
             <TextBox Text="{Binding Options.DebuggerOptions.BreakArgs, UpdateSourceTrigger=PropertyChanged}"
                      Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
