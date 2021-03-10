@@ -46,7 +46,9 @@ namespace VSRAD.Package.Utils
             var newElement = new LastUsed(value);
             if (IndexOf(newElement) is var oldIndex && oldIndex != -1)
             {
-                MoveItem(oldIndex, this[oldIndex].Pinned ? 0 : _pinnedCount);
+                var newIndex = this[oldIndex].Pinned ? 0 : _pinnedCount;
+                if (newIndex == oldIndex) return;
+                Move(oldIndex, newIndex);
                 return;
             }
             Insert(_pinnedCount, newElement);
@@ -64,7 +66,7 @@ namespace VSRAD.Package.Utils
         private void PinElement(LastUsed element)
         {
             if (IndexOf(element) is var oldIndex && oldIndex == -1) return; // No such element in collection
-            MoveItem(oldIndex, _pinnedCount);
+            Move(oldIndex, _pinnedCount);
             this[_pinnedCount].Pinned = true;
             _pinnedCount++;
         }
@@ -73,7 +75,7 @@ namespace VSRAD.Package.Utils
         {
             if (IndexOf(element) is var oldIndex && oldIndex == -1) return; // No such element in collection
             _pinnedCount--;
-            MoveItem(oldIndex, _pinnedCount);
+            Move(oldIndex, _pinnedCount);
             this[_pinnedCount].Pinned = false;
         }
     }
