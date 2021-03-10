@@ -8,6 +8,7 @@
              xmlns:wavemap="clr-namespace:VSRAD.Package.DebugVisualizer.Wavemap"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              mc:Ignorable="d"
+             x:Name="Root"
              d:DesignHeight="140" d:DesignWidth="720">
     <UserControl.ContextMenu>
         <ContextMenu>
@@ -153,7 +154,7 @@
                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                       BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
                       ItemsSource="{Binding Options.DebuggerOptions.LastAppArgs, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
-                      DisplayMemberPath="Value">
+                      DisplayMemberPath="Value" x:Name="LastAppArgsCombo">
                 <ComboBox.ItemContainerStyle>
                     <Style TargetType="{x:Type ComboBoxItem}">
                         <Setter Property="Template">
@@ -164,7 +165,8 @@
                                         BorderThickness="{TemplateBinding BorderThickness}"
                                         Background="{TemplateBinding Background}">
                                         <StackPanel Orientation="Horizontal">
-                                            <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}" Width="25" Height="25"/>
+                                            <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}" Width="25" Height="25"
+                                                    Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"/>
                                             <Label Content="{Binding Value}" />
                                         </StackPanel>
                                     </Border>

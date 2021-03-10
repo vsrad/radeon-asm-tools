@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -50,6 +52,7 @@ namespace VSRAD.Package.DebugVisualizer
             TableHost.Setup(_table);
             RestoreSavedState();
         }
+
 
         private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
         {
