@@ -15,11 +15,15 @@ namespace VSRAD.Package.Utils
         private bool _pinned;
         public bool Pinned { get => _pinned; set => SetField(ref _pinned, value); }
 
-        public LastUsed(string value)
+        public LastUsed(string value, bool pinned = false)
         {
             Value = value;
-            Pinned = false;
+            Pinned = pinned;
         }
+
+        // Override Equals for proper behaviour of IndexOf - we want it to rely only on value
+        // because we don't know about the pinned state in the execution phase
+        public override bool Equals(object obj) => obj is LastUsed other && other.Value == Value;
     }
 
     public sealed class RecentlyUsedCollection : ObservableCollection<LastUsed>
@@ -27,9 +31,12 @@ namespace VSRAD.Package.Utils
         private const int MAX_COUNT = 10;
         private int _pinnedCount = 0;
 
-        public RecentlyUsedCollection()
+        // Override InsertItem for proper initialization of _pinnedCount
+        // when deserializing a JSON
+        protected override void InsertItem(int index, LastUsed item)
         {
-            _pinnedCount = this.Count(x => x.Pinned);
+            if (item.Pinned) _pinnedCount++;
+            base.InsertItem(index, item);
         }
 
         public void AddElement(string value)
@@ -39,14 +46,22 @@ namespace VSRAD.Package.Utils
             var newElement = new LastUsed(value);
             if (IndexOf(newElement) is var oldIndex && oldIndex != -1)
             {
-                MoveItem(oldIndex, _pinnedCount);
+                MoveItem(oldIndex, this[oldIndex].Pinned ? 0 : _pinnedCount);
                 return;
             }
             Insert(_pinnedCount, newElement);
             if (Count > MAX_COUNT) RemoveAt(MAX_COUNT);
         }
 
-        public void PinElement(LastUsed element)
+        public void TogglePinnedState(LastUsed element)
+        {
+            if (element.Pinned)
+                UnpinElement(element);
+            else
+                PinElement(element);
+        }
+
+        private void PinElement(LastUsed element)
         {
             if (IndexOf(element) is var oldIndex && oldIndex == -1) return; // No such element in collection
             MoveItem(oldIndex, _pinnedCount);
@@ -54,7 +69,7 @@ namespace VSRAD.Package.Utils
             _pinnedCount++;
         }
 
-        public void UnpinElement(LastUsed element)
+        private void UnpinElement(LastUsed element)
         {
             if (IndexOf(element) is var oldIndex && oldIndex == -1) return; // No such element in collection
             _pinnedCount--;

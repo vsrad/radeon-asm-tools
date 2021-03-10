@@ -26,10 +26,7 @@ namespace VSRAD.Package.DebugVisualizer
         private void PinnedButtonClick(object param)
         {
             if (!(param is LastUsed element)) return;
-            if (element.Pinned)
-                DebugOptions.LastAppArgs.UnpinElement(element);
-            else
-                DebugOptions.LastAppArgs.PinElement(element);
+            DebugOptions.LastAppArgs.TogglePinnedState(element);
         }
     }
 }
