@@ -69,18 +69,18 @@
 
             <ControlTemplate TargetType="{x:Type ComboBoxItem}" x:Key="ComboBoxItemTemplate">
                 <Border BorderThickness="{TemplateBinding BorderThickness}" x:Name="Bd"
-                                            Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}">
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}">
                     <StackPanel Orientation="Horizontal" x:Name="SP"
-                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
+                                Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
                         <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}"
-                                                    Width="25" Height="25"
-                                                    Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
-                                                    Foreground="Black"/>
-                        <Label Content="{Binding Value}" x:Name="CL"
-                                                   Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                                   BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                                Width="25" Height="25"
+                                Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
+                                Foreground="Black"/>
+                        <Label  Content="{Binding Value}" x:Name="CL"
+                                Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
                     </StackPanel>
                 </Border>
                 <ControlTemplate.Triggers>
@@ -142,8 +142,7 @@
                                             Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                             Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                             IsReadOnly="{TemplateBinding IsReadOnly}"/>
-                                    <Popup
-                                            Name="Popup"
+                                    <Popup  Name="Popup"
                                             Placement="Bottom"
                                             IsOpen="{TemplateBinding IsDropDownOpen}"
                                             AllowsTransparency="True"
@@ -153,8 +152,7 @@
                                               SnapsToDevicePixels="True"
                                               MinWidth="{TemplateBinding ActualWidth}"
                                               MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                            <Border
-                                                    x:Name="DropDownBorder"
+                                            <Border x:Name="DropDownBorder"
                                                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                                     BorderThickness="1"
                                                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
