@@ -53,7 +53,6 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
-
         private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
         {
             _context.GroupIndex.GoToGroup(e.GroupIdx);
