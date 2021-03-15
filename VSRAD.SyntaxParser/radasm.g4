@@ -1,4 +1,4 @@
-grammar RadAsm;
+﻿grammar RadAsm;
 
 function
     : MACRO ENDM
@@ -99,30 +99,6 @@ AMD_HSA_KERNEL      : '.amdgpu_hsa_kernel'       ;
 AMD_KERNEL_CODE     : '.amd_kernel_code_t'       ;
 AMD_END_KERNEL_CODE : '.end_amd_kernel_code_t'   ;
 
-STARTIF
-    : IF
-    | IFDEF
-    | IFNDEF
-    | IFNOTDEF
-    | IFB
-    | IFC
-    | IFEQ
-    | IFEQS
-    | IFGE
-    | IFGT
-    | IFLE
-    | IFLT
-    | IFNB
-    | IFNC
-    | IFNE
-    | IFNES
-    ;
-
-MIDDLEIF
-    : ELSEIF
-    | ELSE
-    ;
-
 /* Expression-operator symbols */
 EQ      : '='   ;
 LT      : '<'   ;
@@ -139,25 +115,13 @@ PLUS    : '+'   ;
 MINUS   : '-'   ;
 STAR    : '*'   ;
 SLASH   : '/'   ;
+BSHASH  : '\\'  ;
 PERCENT : '%'   ;
 CARET   : '^'   ;
 AND     : '&'   ;
 OR      : '|'   ;
 SHL     : '<<'  ;
 SHR     : '>>'  ;
-
-BINOP
-    : PLUS
-    | SLASH
-    | MINUS
-    | STAR
-    | PERCENT
-    | CARET
-    | AND
-    | OR
-    | SHL
-    | SHR
-    ;
 
 /* "Structural symbols" */
 
@@ -194,5 +158,5 @@ IDENTIFIER
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^]+
+    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^/\\]+
     ;
