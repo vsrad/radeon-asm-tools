@@ -1,7 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Label="Globals">
-    <CustomProjectExtensionsPath>$(LocalAppData)\CustomProjectSystems\RADProject\</CustomProjectExtensionsPath>
+    <!-- Development only. CPS props are copied to $(LocalAppData) on every build -->
+    <CustomProjectExtensionsPath Condition="Exists('$(LocalAppData)\VSRAD\RADProject.props')">$(LocalAppData)\VSRAD\</CustomProjectExtensionsPath>
+    <!-- When installed as a VSIX, CPS props are copied to $(MSBuildExtensionsPath) -->
+    <CustomProjectExtensionsPath Condition="'$(CustomProjectExtensionsPath)' == ''">$(MSBuildExtensionsPath)\VSRAD\</CustomProjectExtensionsPath>
     <ProjectGuid>cc9d61e8-283d-4d9a-b9cb-1bf49fa4a4e1</ProjectGuid>
   </PropertyGroup>
   <Import Project="$(CustomProjectExtensionsPath)RADProject.props" />
