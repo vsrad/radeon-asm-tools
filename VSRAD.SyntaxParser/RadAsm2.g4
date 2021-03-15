@@ -1,7 +1,23 @@
-﻿grammar RadAsm2;
+grammar RadAsm2;
 
 function
     : FUNCTION END
+    ;
+
+WHITESPACE
+    : [ \t]+
+    ;
+
+EOL
+    : '\r'? '\n'
+    ;
+
+LINE_COMMENT
+    : '//' ~[\r\n]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
     ;
 
 /* Keywords */
@@ -120,22 +136,6 @@ STRING_LITERAL
 
 IDENTIFIER
     : '.'? [a-zA-Z_] [a-zA-Z0-9_]*
-    ;
-
-WHITESPACE
-    : [ \t]+
-    ;
-
-EOL
-    : '\r'? '\n'
-    ;
-
-LINE_COMMENT
-    : '//' ~[\r\n]*
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
     ;
 
 UNKNOWN

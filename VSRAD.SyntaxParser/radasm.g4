@@ -1,7 +1,23 @@
-﻿grammar RadAsm;
+grammar RadAsm;
 
 function
     : MACRO ENDM
+    ;
+
+WHITESPACE
+    : [ \t]+
+    ;
+
+EOL
+    : '\r'? '\n'
+    ;
+
+LINE_COMMENT
+    : ('//' | ';') ~[\r\n]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
     ;
 
 /* Keywords */
@@ -175,22 +191,6 @@ STRING_LITERAL
 
 IDENTIFIER
     : [.\\]? [a-zA-Z_] [a-zA-Z0-9_]*
-    ;
-
-WHITESPACE
-    : [ \t]+
-    ;
-
-EOL
-    : '\r'? '\n'
-    ;
-
-LINE_COMMENT
-    : '//' ~[\r\n]*
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
     ;
 
 UNKNOWN
