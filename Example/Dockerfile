@@ -1,31 +1,28 @@
-FROM ubuntu:16.04
+FROM rocm/dev-ubuntu-18.04:4.0.1
+
+USER root
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl apt-transport-https ca-certificates && \
-  # add ROCm repository
-  curl -sL http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | apt-key add - && \
-  sh -c 'echo deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main > /etc/apt/sources.list.d/rocm.list' && \
   # add .NET Core repository (required for Debug Server)
-  curl -O https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb && \
+  curl -O https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb && \
   dpkg -i packages-microsoft-prod.deb && \
   rm packages-microsoft-prod.deb && \
-  # install development tools, dependencies, and ROCm
+  # install development tools, dependencies
   apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-  libelf1 \
-  libnuma-dev \
-  build-essential \
   liblist-moreutils-perl \
   cmake \
   unzip \
-  rocm-dev \
   dotnet-runtime-3.1 && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
 ENV PATH "${PATH}:/opt/rocm/bin:/opt/rocm/llvm/bin"
 
-ENV VERSION=2021.01.22
+WORKDIR /
+
+ENV VERSION=2021.03.03
 
 # compile example application
 RUN curl -L https://github.com/vsrad/radeon-asm-tools/archive/${VERSION}.zip -o source.zip && \

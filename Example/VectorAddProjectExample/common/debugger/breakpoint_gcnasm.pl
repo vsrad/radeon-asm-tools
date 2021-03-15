@@ -1,5 +1,5 @@
 my $usage = << "ENDOFUSAGE";
-Usage: $0 [<options>] <sp3_source> <line_number> <sp3_injection>
+Usage: $0 gcnasm_source [<options>]
     gcnasm_source          the source s file
     options
         -l <line>       line number to break (mandatory)
@@ -7,16 +7,11 @@ Usage: $0 [<options>] <sp3_source> <line_number> <sp3_injection>
         -w <watches>    extra watches supplied colon separated in quotes;
                         watch type can be present
                         (like -w "a:b:c:i")
-        -e <command>    SP3 instruction to insert after the injection
+        -e <command>    instruction to insert after the injection
                         instead of "s_endpgm"; if "NONE" is supplied
                         then none is added
         -a              use "auto's"; the script would not look for auto
                         watch variables (kicks in by itself if -w is empty)
-        -c <condition>  SP3 condition to satisfy to watch
-        -s <N_sgpr>     number of the SGPR to use for SRD, must be 4-aligned
-        -v <N_vgpr>     number of the temporary VGPR (not destroyed)
-        -g <N_grp_id>   number of the SGPR containing group ID
-        -r <N_vgpr>     number of the SGPR to use for loop counter
         -t <value>      target value for the loop counter
         -h              print usage information
 ENDOFUSAGE
@@ -30,16 +25,9 @@ my @watches;
 my $endpgm  = "s_endpgm";
 my @lines;
 my $line    = 0;
-my $auto    = 0;
 my $condit  = "1";
 my $output  = 0;
-my $gid     = 8;
-my $sgpr    = 0;
-my $vgpr    = 31;
-my $counter;
 my $target;
-
-# print join (' :: ', @ARGV) . "\n";
 
 while (scalar @ARGV) {
     my $str = shift @ARGV;
@@ -49,15 +37,10 @@ while (scalar @ARGV) {
                             $output  = 1;                       next;   }
     if ($str eq "-w")   {   @watches = split /:/, shift @ARGV;  next;   }
     if ($str eq "-e")   {   $endpgm  =            shift @ARGV;  next;   }
-    if ($str eq "-a")   {   $auto    = 1;                       next;   }
-    if ($str eq "-s")   {   $sgpr    =            shift @ARGV;  next;   }
-    if ($str eq "-v")   {   $vgpr    =            shift @ARGV;  next;   }
-    if ($str eq "-g")   {   $gid     =            shift @ARGV;  next;   }
-    if ($str eq "-r")   {   $counter =            shift @ARGV;  next;   }
     if ($str eq "-t")   {   $target  =            shift @ARGV;  next;   }
     if ($str eq "-h")   {   print "$usage\n";                   last;   }
-
-    open my $df, '<', $str || die "$usage\nCould not open '$str: $!";
+	
+	open my $df, '<', $str || die "$usage\nCould not open '$str: $!";
     push @lines, <$df>;
     close $df;
 }
@@ -68,7 +51,6 @@ my @done = @watches;
 
 my $n_var   = scalar @done;
 my $to_dump = join ', ', @done;
-   $sgpr = 0; 
 
 my $loopcounter = << "LOOPCOUNTER";
         s_cbranch_scc1 debug_dumping_loop_counter_lab1_\\\@
@@ -86,7 +68,6 @@ $loopcounter = "" unless $target;
 my $dump_vars = "$done[0]";
 for (my $i = 1; $i < scalar @done; $i += 1) {
 	$dump_vars = "$dump_vars, $done[$i]";
-	#print __LINE__ . "\t$done[$i] << $i\n";
 }
 
 $bufsize =  defined $ENV{'ASM_DBG_BUF_SIZE'} ? $ENV{'ASM_DBG_BUF_SIZE'} : 1048576; # 1 MB
@@ -201,18 +182,11 @@ my $insert  = << "PREAMBLE";
 m_debug_plug $dump_vars
 PREAMBLE
 
-# map { s/\bdebug\s*=\s*0+\b/debug = 1/ } @lines;
 my @m = @lines [0..$line-1] if $line > 0;
 my @merge = ($plug_macro, @m, $insert, @lines [$line..scalar @lines - 1]);
 foreach(@merge) {
 	$_ = qq[m_dbg_gpr_alloc\n$_] if $_ =~ /\.GPR_ALLOC_END/;
 	$_ .= qq(\nm_dbg_init gid_x\n) if $_ =~ /\.end_amd_kernel_code_t/;
 }
-#$_ .= qq(\nm_dbg_init gid_x\n) if $_ eq qq[.end_amd_kernel_code_t\n];
 
 print $fo @merge;
-
-#print $fo $plug_macro;
-#print $fo @lines [0..$line-1] if $line > 0;
-#print $fo $insert;
-#print $fo @lines [$line..scalar @lines - 1];

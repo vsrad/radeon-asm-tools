@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-while getopts "l:f:o:w:t:p:e:v:" opt
+while getopts "l:f:o:w:t:a:p:" opt
 do
 	echo "$opt $OPTARG"
 	case "$opt" in
@@ -27,7 +27,7 @@ tmp=tmp_dir/tmp_gcn_breakpoint_pl.s
 
 num_watches=`echo "${watches}" | awk -F":" '{print NF}'`
 
-export BREAKPOINT_SCRIPT_OPTIONS="-l $line -o $tmp -s 96 -r s0 -t $counter $perl_args"
+export BREAKPOINT_SCRIPT_OPTIONS="-l $line -o $tmp -t $counter $perl_args"
 export BREAKPOINT_SCRIPT_WATCHES="$watches"
 export ASM_DBG_BUF_SIZE=4194304
 export VADD_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/../../"
