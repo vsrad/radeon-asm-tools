@@ -2,18 +2,6 @@
 
 rule    : LET  ;
 
-WHITESPACE
-    : [ \t]+
-    ;
-
-EOL
-    : '\r'? '\n'
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
-    ;
-
 LET : 'let';
 
 /* "Structural symbols" */
@@ -23,6 +11,18 @@ COLON      : ':' ;
 
 IDENTIFIER
     : [a-zA-Z] [a-zA-Z0-9_]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
+    ;
+
+WHITESPACE
+    : [ \t]+
+    ;
+
+EOL
+    : '\r'? '\n'
     ;
 
 UNKNOWN

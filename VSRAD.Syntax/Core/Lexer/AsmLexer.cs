@@ -40,7 +40,6 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsmLexer.MINUS, RadAsmTokenType.Operation },
             { RadAsmLexer.STAR, RadAsmTokenType.Operation },
             { RadAsmLexer.SLASH, RadAsmTokenType.Operation },
-            { RadAsmLexer.BSHASH, RadAsmTokenType.Operation },
             { RadAsmLexer.PERCENT, RadAsmTokenType.Operation },
             { RadAsmLexer.CARET, RadAsmTokenType.Operation },
             { RadAsmLexer.AND, RadAsmTokenType.Operation },

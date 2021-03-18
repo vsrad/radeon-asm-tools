@@ -4,22 +4,6 @@ function
     : MACRO ENDM
     ;
 
-WHITESPACE
-    : [ \t]+
-    ;
-
-EOL
-    : '\r'? '\n'
-    ;
-
-LINE_COMMENT
-    : ('//' | ';') ~[\r\n]*
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
-    ;
-
 /* Keywords */
 TEXT    : '.text'       ;
 SET     : '.set'        ;
@@ -115,7 +99,6 @@ PLUS    : '+'   ;
 MINUS   : '-'   ;
 STAR    : '*'   ;
 SLASH   : '/'   ;
-BSHASH  : '\\'  ;
 PERCENT : '%'   ;
 CARET   : '^'   ;
 AND     : '&'   ;
@@ -157,6 +140,22 @@ IDENTIFIER
     : [.\\]? [a-zA-Z_] [a-zA-Z0-9_]*
     ;
 
+LINE_COMMENT
+    : ('//' | ';') ~[\r\n]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
+    ;
+
+WHITESPACE
+    : [ \t]+
+    ;
+
+EOL
+    : '\r'? '\n'
+    ;
+
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^/\\]+
+    : ~[ \t\r\n,:;()[\]{}=<>!&|~+\\-*%^/]+
     ;
