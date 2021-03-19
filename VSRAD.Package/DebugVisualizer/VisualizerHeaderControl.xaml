@@ -71,10 +71,10 @@
                     <StackPanel Orientation="Horizontal" x:Name="SP"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
                         <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}"
-                                Width="25" Height="25"
+                                Width="22" Height="22"
                                 Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
                                 Foreground="Black"/>
-                        <Label  Content="{Binding Value}" x:Name="CL"
+                        <Label  Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
@@ -151,7 +151,7 @@
                                                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                                     BorderThickness="1"
                                                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-                                            <ScrollViewer Margin="4,6,4,6" SnapsToDevicePixels="True">
+                                            <ScrollViewer Margin="2,4" SnapsToDevicePixels="True">
                                                 <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
                                             </ScrollViewer>
                                         </Grid>
