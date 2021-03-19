@@ -65,21 +65,17 @@
             </ControlTemplate>
 
             <ControlTemplate TargetType="{x:Type ComboBoxItem}" x:Key="ComboBoxItemTemplate">
-                <Border BorderThickness="{TemplateBinding BorderThickness}" x:Name="Bd"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}">
-                    <StackPanel Orientation="Horizontal" x:Name="SP"
+                <StackPanel Orientation="Horizontal" x:Name="SP"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
-                        <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}"
+                    <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}"
                                 Width="22" Height="22"
                                 Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
                                 Foreground="Black"/>
-                        <Label  Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
+                    <Label  Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-                    </StackPanel>
-                </Border>
+                </StackPanel>
                 <ControlTemplate.Triggers>
                     <Trigger Property="IsHighlighted" Value="True">
                         <Setter TargetName="SP" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
