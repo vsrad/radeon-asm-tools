@@ -25,7 +25,9 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
-            <utils:WpfBoolToStringConverter x:Key="PinnedButtonColorConverter" TrueValue="LightGray" FalseValue="White" />
+            <utils:WpfBoolToStringConverter x:Key="PinnedButtonRotConverter" TrueValue="-45" FalseValue="0" />
+            <utils:WpfBoolToStringConverter x:Key="PinnedButtonTrXConverter" TrueValue="-3" FalseValue="0" />
+            <utils:WpfBoolToStringConverter x:Key="PinnedButtonTrYConverter" TrueValue="7" FalseValue="0" />
             <Style x:Key="NDRangeInput" TargetType="local:NumberInput">
                 <Setter Property="IsEnabled" Value="{Binding GroupIndexEditable}"/>
                 <Style.Triggers>
@@ -67,10 +69,23 @@
             <ControlTemplate TargetType="{x:Type ComboBoxItem}" x:Key="ComboBoxItemTemplate">
                 <StackPanel Orientation="Horizontal" x:Name="SP"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
-                    <Button Content="📌" Background="{Binding Pinned, Converter={StaticResource PinnedButtonColorConverter}}"
-                                Width="22" Height="22"
-                                Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
-                                Foreground="Black"/>
+                    <Button Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                            Width="22" Height="22"
+                            Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
+                            Foreground="Black" RenderTransformOrigin="0.5 0.5" BorderThickness="0">
+                        <Button.Content>
+                            <TextBlock>
+                                📌
+                                <TextBlock.RenderTransform>
+                                    <TransformGroup>
+                                        <RotateTransform Angle="{Binding Pinned, Converter={StaticResource PinnedButtonRotConverter}}"/>
+                                        <TranslateTransform X="{Binding Pinned, Converter={StaticResource PinnedButtonTrXConverter}}"
+                                                            Y="{Binding Pinned, Converter={StaticResource PinnedButtonTrYConverter}}"/>
+                                    </TransformGroup>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                        </Button.Content>
+                    </Button>
                     <Label  Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
