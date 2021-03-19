@@ -1,7 +1,5 @@
 ﻿using System.ComponentModel;
-using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
