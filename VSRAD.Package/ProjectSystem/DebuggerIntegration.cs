@@ -19,16 +19,18 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
         private readonly IActiveCodeEditor _codeEditor;
+        private readonly IBreakpointTracker _breakpointTracker;
         private readonly BreakLineGlyphTaggerProvider _breakLineTagger;
 
         public bool DebugInProgress { get; private set; } = false;
 
         [ImportingConstructor]
-        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActiveCodeEditor codeEditor)
+        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker)
         {
             _project = project;
             _actionLauncher = actionLauncher;
             _codeEditor = codeEditor;
+            _breakpointTracker = breakpointTracker;
 
             // Cannot import BreakLineGlyphTaggerProvider directly because there are
             // multiple IViewTaggerProvider exports and we don't want to instantiate each one
@@ -43,12 +45,20 @@ namespace VSRAD.Package.ProjectSystem
             if (DebugInProgress)
                 throw new InvalidOperationException($"{nameof(RegisterEngine)} must only be called by the engine, and the engine must be launched via {nameof(DebuggerLaunchProvider)}");
 
+            // When entering the debug mode, we always want to start from the first breakpoint. The current next break target
+            // may be different, however, because the debug action may have been run in the edit mode, so we need to reset the state.
+            _breakpointTracker.ResetToFirstBreakTarget();
+            _breakLineTagger.RemoveBreakLineMarkers();
+
             DebugInProgress = true;
             return this;
         }
 
         public void DeregisterEngine()
         {
+            _breakpointTracker.ResetToFirstBreakTarget();
+            _breakLineTagger.RemoveBreakLineMarkers();
+
             DebugInProgress = false;
         }
 

@@ -54,6 +54,18 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
             }
         }
 
+        public void RemoveBreakLineMarkers()
+        {
+            try
+            {
+                DebugExecutionCompleted?.Invoke(this, null);
+            }
+            catch (Exception e)
+            {
+                Errors.ShowCritical($"An error occurred while clearing break line markers: {e.Message}\r\n\r\n{e.StackTrace}");
+            }
+        }
+
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
         {
             if (buffer != null && buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument document))
@@ -82,21 +94,21 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             _tagSpans.Clear();
 
-            if (e.File != _document.FilePath)
-                return;
-
-            var toolTip = "Last RAD debugger break " + (e.Lines.Length == 1
-                ? $"line: {e.Lines[0]}"
-                : "lines: " + string.Join(", ", e.Lines));
-
-            foreach (var line in e.Lines)
+            if (e != null && e.File == _document.FilePath)
             {
-                if (line >= _buffer.CurrentSnapshot.LineCount)
-                    continue;
+                var toolTip = "Last RAD debugger break " + (e.Lines.Length == 1
+                            ? $"line: {e.Lines[0]}"
+                            : "lines: " + string.Join(", ", e.Lines));
 
-                var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)line);
-                var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
-                _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag(toolTip)));
+                foreach (var line in e.Lines)
+                {
+                    if (line >= _buffer.CurrentSnapshot.LineCount)
+                        continue;
+
+                    var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)line);
+                    var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
+                    _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag(toolTip)));
+                }
             }
 
             TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
