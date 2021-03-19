@@ -64,7 +64,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             var sourceManager = new Mock<IProjectSourceManager>();
             var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
                 codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
-            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object);
+            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object);
 
             /* Set up server responses */
 
