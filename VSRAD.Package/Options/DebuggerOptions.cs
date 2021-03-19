@@ -61,6 +61,7 @@ namespace VSRAD.Package.Options
 
         public void UpdateLastAppArgs()
         {
+            if (string.IsNullOrWhiteSpace(AppArgs)) return;
             LastAppArgs.AddElement(AppArgs);
         }
     }

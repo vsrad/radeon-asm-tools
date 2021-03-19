@@ -5,13 +5,13 @@ namespace VSRAD.Package.Utils
 {
     public sealed class PinnableElement<T> : DefaultNotifyPropertyChanged where T : IEquatable<T>
     {
-        private string _value;
-        public string Value { get => _value; set => SetField(ref _value, value); }
+        private T _value;
+        public T Value { get => _value; set => SetField(ref _value, value); }
 
         private bool _pinned;
         public bool Pinned { get => _pinned; set => SetField(ref _pinned, value); }
 
-        public PinnableElement(string value, bool pinned = false)
+        public PinnableElement(T value, bool pinned = false)
         {
             Value = value;
             Pinned = pinned;
@@ -19,7 +19,7 @@ namespace VSRAD.Package.Utils
 
         // Override Equals for proper behaviour of IndexOf - we want it to rely only on value
         // because we don't know about the pinned state in the execution phase
-        public override bool Equals(object obj) => obj is PinnableElement<T> other && other.Value == Value;
+        public override bool Equals(object obj) => obj is PinnableElement<T> other && other.Value.Equals(Value);
     }
 
     public sealed class PinnableMruCollection<T> : ObservableCollection<PinnableElement<T>> where T: IEquatable<T>
@@ -35,10 +35,8 @@ namespace VSRAD.Package.Utils
             base.InsertItem(index, item);
         }
 
-        public void AddElement(string value)
+        public void AddElement(T value)
         {
-            if (string.IsNullOrWhiteSpace(value)) return;
-
             var newElement = new PinnableElement<T>(value);
             if (IndexOf(newElement) is var oldIndex && oldIndex != -1)
             {
