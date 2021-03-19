@@ -118,7 +118,7 @@
                                                   Width="20"
                                                   Focusable="false"
                                                   IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
-                                                  ClickMode="Press"/>
+                                                  ClickMode="Press" Click="DropdownStateChanged"/>
                                     <ContentPresenter Name="ContentSite" IsHitTestVisible="True"  Content="{TemplateBinding SelectionBoxItem}"
                                                       ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                                       ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"

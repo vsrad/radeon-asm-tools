@@ -28,5 +28,10 @@ namespace VSRAD.Package.DebugVisualizer
             if (!(param is PinnableElement<string> element)) return;
             DebugOptions.LastAppArgs.TogglePinnedState(element);
         }
+
+        private void DropdownStateChanged(object sender, RoutedEventArgs e)
+        {
+            DebugOptions.LastAppArgs.UpdateElementsOrder();
+        }
     }
 }

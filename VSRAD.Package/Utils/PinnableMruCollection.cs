@@ -62,17 +62,27 @@ namespace VSRAD.Package.Utils
         private void PinElement(PinnableElement<T> element)
         {
             if (IndexOf(element) is var oldIndex && oldIndex == -1) return; // No such element in collection
-            if (oldIndex != _pinnedCount) Move(oldIndex, _pinnedCount);
-            this[_pinnedCount].Pinned = true;
+            element.Pinned = true;
             _pinnedCount++;
         }
 
         private void UnpinElement(PinnableElement<T> element)
         {
             if (IndexOf(element) is var oldIndex && oldIndex == -1) return; // No such element in collection
+            element.Pinned = false;
             _pinnedCount--;
-            if (oldIndex != _pinnedCount) Move(oldIndex, _pinnedCount);
-            this[_pinnedCount].Pinned = false;
+        }
+
+        public void UpdateElementsOrder()
+        {
+            for (int i = 0, pinnedMapped = 0; pinnedMapped != _pinnedCount; i++)
+            {
+                if (this[i].Pinned)
+                {
+                    if (i != pinnedMapped) Move(i, pinnedMapped);
+                    pinnedMapped++;
+                }
+            }
         }
     }
 }
