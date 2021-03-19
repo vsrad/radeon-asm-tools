@@ -69,10 +69,11 @@
             <ControlTemplate TargetType="{x:Type ComboBoxItem}" x:Key="ComboBoxItemTemplate">
                 <StackPanel Orientation="Horizontal" x:Name="SP"
                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
-                    <Button Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                    <Button Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}" x:Name="PinButton"
                             Width="22" Height="22"
                             Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
-                            Foreground="Black" RenderTransformOrigin="0.5 0.5" BorderThickness="0">
+                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                            RenderTransformOrigin="0.5 0.5" BorderThickness="0">
                         <Button.Content>
                             <TextBlock>
                                 📌
@@ -87,11 +88,15 @@
                         </Button.Content>
                     </Button>
                     <Label  Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
-                                Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                            Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
                 </StackPanel>
                 <ControlTemplate.Triggers>
+                    <Trigger SourceName="PinButton" Property="IsMouseOver" Value="True">
+                        <Setter TargetName="PinButton" Property="Foreground" Value="Black"/>
+                        <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowButtonHoverActiveKey}}"/>
+                    </Trigger>
                     <Trigger Property="IsHighlighted" Value="True">
                         <Setter TargetName="SP" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
                         <Setter TargetName="CL" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
