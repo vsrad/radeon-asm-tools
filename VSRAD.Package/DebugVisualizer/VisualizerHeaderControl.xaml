@@ -96,6 +96,9 @@
                 <Border x:Name="PART_ContentHost" Focusable="False" Background="{TemplateBinding Background}" />
             </ControlTemplate>
 
+            <SolidColorBrush x:Key="ComboBoxMouseOverBorderKey" Color="#FF7EB4EA"/>
+            <SolidColorBrush x:Key="ComboBoxFocusedBorderKey" Color="#FF569DE5"/>
+
             <Style x:Key="{x:Type ComboBox}" TargetType="{x:Type ComboBox}">
                 <Setter Property="SnapsToDevicePixels" Value="true"/>
                 <Setter Property="OverridesDefaultStyle" Value="true"/>
@@ -172,8 +175,11 @@
                                 <Trigger Property="IsEditable"  Value="true">
                                     <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
                                 </Trigger>
-                                <Trigger Property="IsMouseOver" Value="True" SourceName="ComboGrid">
-                                    <Setter TargetName="Brd" Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowButtonHoverActiveBorderKey}}"/>
+                                <Trigger Property="IsMouseOver" Value="true" SourceName="ComboGrid">
+                                    <Setter TargetName="Brd" Property="BorderBrush" Value="{StaticResource ComboBoxMouseOverBorderKey}"/>
+                                </Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="true" SourceName="PART_EditableTextBox">
+                                    <Setter TargetName="Brd" Property="BorderBrush" Value="{StaticResource ComboBoxFocusedBorderKey}"/>
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
