@@ -19,7 +19,7 @@ namespace VSRAD.Package.Options
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
         public List<Watch> Watches { get; } = new List<Watch>();
-        public RecentlyUsedCollection LastAppArgs { get; } = new RecentlyUsedCollection();
+        public PinnableMruCollection<string> LastAppArgs { get; } = new PinnableMruCollection<string>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => !w.IsEmpty).Select(w => w.Name).Distinct().ToList());
