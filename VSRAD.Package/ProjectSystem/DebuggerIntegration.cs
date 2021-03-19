@@ -78,7 +78,8 @@ namespace VSRAD.Package.ProjectSystem
 
         public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients)
         {
-            RaiseExecutionCompleted(transients?.ActiveSourceFullPath ?? "", transients?.BreakLines ?? new[] { 0u }, isStepping: false, runResult?.BreakState);
+            if (runResult != null) // If RunResult is null, the action was not launched (e.g. because another action is already running)
+                RaiseExecutionCompleted(transients?.ActiveSourceFullPath ?? "", transients?.BreakLines ?? new[] { 0u }, isStepping: false, runResult.BreakState);
         }
 
         public void Execute(bool step)
