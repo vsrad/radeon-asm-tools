@@ -1,19 +1,15 @@
 ﻿using Microsoft.VisualStudio.Text;
-using System;
 
 namespace VSRAD.Syntax.Core
 {
-    public delegate void DocumentRenamedEventHandler(IDocument document, string oldPath, string newPath);
-
-    public interface IDocument : IDisposable
+    public interface IDocument
     {
         IDocumentAnalysis DocumentAnalysis { get; }
         IDocumentTokenizer DocumentTokenizer { get; }
-        string Path { get; }
+        string Path { get; set; }
         ITextSnapshot CurrentSnapshot { get; }
         bool IsDisposed { get; }
 
-        event DocumentRenamedEventHandler DocumentRenamed;
         void OpenDocumentInEditor();
         void NavigateToPosition(int position);
     }

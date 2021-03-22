@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.Core
     {
         private readonly ContentTypeManager _contentTypeManager;
         private readonly RadeonServiceProvider _serviceProvider;
-        private readonly Dictionary<string, IDocument> _documents;
+        private readonly Dictionary<string, KeyValuePair<ITextDocument, IDocument>> _documents;
         private readonly Lazy<IInstructionListManager> _instructionManager;
 
 
@@ -31,7 +31,7 @@ namespace VSRAD.Syntax.Core
         {
             _instructionManager = instructionManager;
 
-            _documents = new Dictionary<string, IDocument>();
+            _documents = new Dictionary<string, KeyValuePair<ITextDocument, IDocument>>();
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
             _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += TextDocumentDisposed;
@@ -43,7 +43,7 @@ namespace VSRAD.Syntax.Core
         public IDocument GetOrCreateDocument(string path)
         {
             if (_documents.TryGetValue(path, out var document))
-                return document;
+                return document.Value;
 
             if (!System.IO.File.Exists(path))
                 return null;
@@ -70,8 +70,8 @@ namespace VSRAD.Syntax.Core
             var factory = GetDocumentFactory(textDocument);
             if (factory == null) return null;
 
-            if (_documents.TryGetValue(textDocument.FilePath, out document)
-                && document is InvisibleDocument invisibleDocument)
+            if (_documents.TryGetValue(textDocument.FilePath, out var documentPair)
+                && documentPair.Value is InvisibleDocument invisibleDocument)
             {
                 document = invisibleDocument.ToVisibleDocument(factory);
                 ObserveDocument(document, textDocument);
@@ -113,41 +113,53 @@ namespace VSRAD.Syntax.Core
 
         private void ObserveDocument(IDocument document, ITextDocument textDocument)
         {
-            document.DocumentRenamed += DocumentRenamed;
+            textDocument.FileActionOccurred += TextDocumentActionOccurred;
             textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
 
-            _documents.Add(document.Path, document);
+            _documents.Add(document.Path, new KeyValuePair<ITextDocument, IDocument>(textDocument, document));
+        }
+
+        private void TextDocumentActionOccurred(object sender, TextDocumentFileActionEventArgs e)
+        {
+            if (e.FileActionType == FileActionTypes.DocumentRenamed)
+            {
+                foreach (var path in _documents.Keys)
+                {
+                    var documentPair = _documents[path];
+                    if (documentPair.Key.Equals(sender))
+                    {
+                        documentPair.Value.Path = e.FilePath;
+                        _documents[e.FilePath] = documentPair;
+                        _documents.Remove(path);
+                        break;
+                    }
+                }
+            }
         }
 
         private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
         {
-            if (_documents.TryGetValue(e.TextDocument.FilePath, out var document))
+            if (_documents.TryGetValue(e.TextDocument.FilePath, out var documentPair))
             {
-                document.DocumentRenamed -= DocumentRenamed;
-                document.Dispose();
+                e.TextDocument.FileActionOccurred -= TextDocumentActionOccurred;
+                DocumentDisposed?.Invoke(documentPair.Value);
                 _documents.Remove(e.TextDocument.FilePath);
-                DocumentDisposed?.Invoke(document);
             }
-        }
-
-        private void DocumentRenamed(IDocument document, string oldPath, string newPath)
-        {
-            if (_documents.Remove(oldPath))
-                _documents.Add(newPath, document);
         }
 
         private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)
         {
             if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
             {
+                IDocument document = null;
                 var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
-                _documents.TryGetValue(openWindowPath, out var document);
-
-                // if this document is opened for the first time, then it can be a RadeonAsm document, but 
-                // the parser is initialized after visual buffer initialization, so
-                // it is necessary to force initialize RadeonAsm document
-                if (document == null)
+                if (_documents.TryGetValue(openWindowPath, out var documentPair))
                 {
+                    document = documentPair.Value;
+
+                    // if this document is opened for the first time, then it can be a RadeonAsm document, but 
+                    // the parser is initialized after visual buffer initialization, so
+                    // it is necessary to force initialize RadeonAsm document
                     var vsTextBuffer = Utils.GetWindowVisualBuffer(GotFocus, _serviceProvider.ServiceProvider);
                     if (vsTextBuffer != null)
                     {

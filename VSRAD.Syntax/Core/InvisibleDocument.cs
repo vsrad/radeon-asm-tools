@@ -50,10 +50,7 @@ namespace VSRAD.Syntax.Core
             throw new InvalidOperationException($"Cannot open document {Path}");
         }
 
-        public IDocument ToVisibleDocument(Func<ILexer, IParser, IDocument> factory)
-        {
-            Dispose();
-            return factory.Invoke(_lexer, _parser);
-        }
+        public IDocument ToVisibleDocument(Func<ILexer, IParser, IDocument> factory) =>
+            factory.Invoke(_lexer, _parser);
     }
 }
