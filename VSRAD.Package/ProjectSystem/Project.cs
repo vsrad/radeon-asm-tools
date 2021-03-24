@@ -39,6 +39,7 @@ namespace VSRAD.Package.ProjectSystem
         public UnconfiguredProject UnconfiguredProject { get; }
         public string RootPath { get; }
 
+        private readonly string _visualOptionsFilePath;
         private readonly string _optionsFilePath;
         private readonly string _legacyOptionsFilePath;
 
@@ -50,6 +51,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
             _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
+            _visualOptionsFilePath = unconfiguredProject.FullPath + ".viz.json";
             _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             UnconfiguredProject = unconfiguredProject;
         }
@@ -95,7 +97,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Unload() => Unloaded?.Invoke();
 
-        public void SaveOptions() => Options.Write(_optionsFilePath);
+        public void SaveOptions() => Options.Write(_optionsFilePath, _visualOptionsFilePath);
 
         public IProjectProperties GetProjectProperties()
         {
