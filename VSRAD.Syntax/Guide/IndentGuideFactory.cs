@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Text.Editor;
+﻿using System.Collections.Generic;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Options;
@@ -13,25 +14,41 @@ namespace VSRAD.Syntax.Guide
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly OptionsProvider _optionsProvider;
+        private readonly Dictionary<IDocument, IndentGuide> _guidesDictionary;
 
         [ImportingConstructor]
         public IndentGuideFactory(IDocumentFactory documentFactory, OptionsProvider optionsProvider)
         {
             _documentFactory = documentFactory;
             _optionsProvider = optionsProvider;
+            _guidesDictionary = new Dictionary<IDocument, IndentGuide>();
+
+            _documentFactory.DocumentDisposed += OnDocumentRemove;
+        }
+
+        private void OnDocumentRemove(IDocument document)
+        {
+            if (!_guidesDictionary.TryGetValue(document, out var guide))
+                return;
+
+            guide.OnDestroy();
+            _guidesDictionary.Remove(document);
         }
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name(Constants.IndentGuideAdornmentLayerName)]
         [Order(After = PredefinedAdornmentLayers.DifferenceChanges, Before = PredefinedAdornmentLayers.Text)]
         [TextViewRole(PredefinedTextViewRoles.Document)]
-        public AdornmentLayerDefinition editorAdornmentLayer = null;
+        public AdornmentLayerDefinition EditorAdornmentLayer = null;
 
         public void TextViewCreated(IWpfTextView textView)
         {
             var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
-            if (document != null)
-                textView.Properties.AddProperty(typeof(IndentGuide), new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider));
+            if (document == null) return;
+
+            var guide = new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider);
+            textView.Properties.AddProperty(typeof(IndentGuide), guide);
+            _guidesDictionary.Add(document, guide);
         }
     }
 }

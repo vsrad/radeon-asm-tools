@@ -1,16 +1,16 @@
-﻿using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Tagging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Core;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Tagging;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 
-namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
+namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
 {
     public class DefinitionHighlightWordTag : TextMarkerTag
     {
@@ -178,6 +178,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
             if (navigationWordSpans != null)
                 yield return new TagSpan<DefinitionHighlightWordTag>(navigationWordSpans.Value, new DefinitionHighlightWordTag());
+        }
+
+        public void OnDestroy()
+        {
+            _view.Caret.PositionChanged -= CaretPositionChanged;
+            _view.LayoutChanged -= ViewLayoutChanged;
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
