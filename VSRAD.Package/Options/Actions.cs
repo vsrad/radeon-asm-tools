@@ -59,6 +59,15 @@ namespace VSRAD.Package.Options
         private bool _checkTimestamp;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 
+        private bool _skipIfSame;
+        public bool SkipIfSame { get => _skipIfSame; set => SetField(ref _skipIfSame, value); }
+
+        private bool _preserveTimestamp;
+        public bool PreserveTimestamp { get => _preserveTimestamp; set => SetField(ref _preserveTimestamp, value); }
+
+        private bool _useCompression;
+        public bool UseCompression { get => _useCompression; set => SetField(ref _useCompression, value); }
+
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
@@ -75,7 +84,10 @@ namespace VSRAD.Package.Options
             obj is CopyFileStep step &&
             SourcePath == step.SourcePath &&
             TargetPath == step.TargetPath &&
-            CheckTimestamp == step.CheckTimestamp;
+            CheckTimestamp == step.CheckTimestamp &&
+            SkipIfSame == step.SkipIfSame &&
+            PreserveTimestamp == step.PreserveTimestamp &&
+            UseCompression == step.UseCompression;
 
         public override int GetHashCode() => 1;
 
@@ -103,9 +115,12 @@ namespace VSRAD.Package.Options
             return new CopyFileStep
             {
                 Direction = direction,
-                CheckTimestamp = CheckTimestamp,
                 SourcePath = evaluatedSourcePath,
-                TargetPath = evaluatedTargetPath
+                TargetPath = evaluatedTargetPath,
+                CheckTimestamp = CheckTimestamp,
+                SkipIfSame = SkipIfSame,
+                PreserveTimestamp = PreserveTimestamp,
+                UseCompression = UseCompression
             };
         }
     }

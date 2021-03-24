@@ -36,18 +36,18 @@ namespace VSRAD.DebugServerTests.Handlers
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "test")));
             Assert.Equal(new byte[] { 0x4C }, File.ReadAllBytes(Path.Combine(tmpPath, "test")));
-            Assert.Equal(new DateTime(1998, 07, 06), File.GetLastWriteTimeUtc(Path.Combine(tmpPath, "test")));
+            Assert.Equal(new DateTime(1998, 07, 06), File.GetLastWriteTime(Path.Combine(tmpPath, "test")));
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "dir", "test")));
             Assert.Equal(new byte[] { 0x4C, 0x41, 0x49 }, File.ReadAllBytes(Path.Combine(tmpPath, "dir", "test")));
-            Assert.Equal(new DateTime(1998, 07, 13), File.GetLastWriteTimeUtc(Path.Combine(tmpPath, "dir", "test")));
+            Assert.Equal(new DateTime(1998, 07, 13), File.GetLastWriteTime(Path.Combine(tmpPath, "dir", "test")));
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "nested", "dir", "test")));
             Assert.Equal(new byte[] { 0x4E }, File.ReadAllBytes(Path.Combine(tmpPath, "nested", "dir", "test")));
-            Assert.Equal(new DateTime(1998, 07, 20), File.GetLastWriteTimeUtc(Path.Combine(tmpPath, "nested", "dir", "test")));
+            Assert.Equal(new DateTime(1998, 07, 20), File.GetLastWriteTime(Path.Combine(tmpPath, "nested", "dir", "test")));
 
             Assert.True(Directory.Exists(Path.Combine(tmpPath, "empty", "dir")));
-            Assert.Equal(new DateTime(1998, 07, 27), Directory.GetLastWriteTimeUtc(Path.Combine(tmpPath, "empty", "dir")));
+            Assert.Equal(new DateTime(1998, 07, 27), Directory.GetLastWriteTime(Path.Combine(tmpPath, "empty", "dir")));
 
             Directory.Delete(tmpPath, recursive: true);
         }
@@ -94,15 +94,15 @@ namespace VSRAD.DebugServerTests.Handlers
             Directory.Delete(tmpPath, recursive: true);
         }
 
-        private static byte[] CreateZipArchive(IEnumerable<(byte[] Data, string Name, DateTime LastWriteTimeUtc)> items)
+        private static byte[] CreateZipArchive(IEnumerable<(byte[] Data, string Name, DateTime LastWriteTime)> items)
         {
             using var memStream = new MemoryStream();
             using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, false))
             {
-                foreach (var (data, name, lastWriteTimeUtc) in items)
+                foreach (var (data, name, lastWriteTime) in items)
                 {
                     var entry = archive.CreateEntry(name);
-                    entry.LastWriteTime = lastWriteTimeUtc;
+                    entry.LastWriteTime = lastWriteTime;
                     using var entryStream = entry.Open();
                     entryStream.Write(data);
                 }
