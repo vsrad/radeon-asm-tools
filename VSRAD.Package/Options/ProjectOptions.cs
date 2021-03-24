@@ -72,6 +72,14 @@ namespace VSRAD.Package.Options
         #endregion
 
         #region Read/Write
+        struct VisualizerJsonStruct
+        {
+            public VisualizerOptions VisualizerOptions;
+            public VisualizerAppearance VisualizerAppearance;
+            public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling;
+            public SliceVisualizerOptions SliceVisualizerOptions;
+        }
+
         public static ProjectOptions Read(string path)
         {
             ProjectOptions options = null;
@@ -107,12 +115,20 @@ namespace VSRAD.Package.Options
             }
         }
 
-        public void Write(string path)
+        public void Write(string path, string visualConfigPath)
         {
             var serializedOptions = JsonConvert.SerializeObject(this, Formatting.Indented);
+            var visualOptionsObject = JsonConvert.SerializeObject(new VisualizerJsonStruct
+            {
+                VisualizerOptions = VisualizerOptions,
+                VisualizerAppearance = VisualizerAppearance,
+                VisualizerColumnStyling = VisualizerColumnStyling,
+                SliceVisualizerOptions = SliceVisualizerOptions
+            }, Formatting.Indented);
             try
             {
                 WriteAtomic(path, serializedOptions);
+                WriteAtomic(visualConfigPath, visualOptionsObject);
             }
             catch (UnauthorizedAccessException)
             {
