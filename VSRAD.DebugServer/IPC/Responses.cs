@@ -206,7 +206,7 @@ namespace VSRAD.DebugServer.IPC.Responses
 
     public sealed class ListFilesResponse : IResponse
     {
-        public (string RelativePath, bool IsDirectory, long Size, DateTime LastWriteTimeUtc)[] Files { get; set; }
+        public FileMetadata[] Files { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -217,21 +217,21 @@ namespace VSRAD.DebugServer.IPC.Responses
         public static ListFilesResponse Deserialize(IPCReader reader)
         {
             var length = reader.Read7BitEncodedInt();
-            var files = new (string, bool, long, DateTime)[length];
+            var files = new FileMetadata[length];
             for (int i = 0; i < length; ++i)
-                files[i] = (reader.ReadString(), reader.ReadBoolean(), reader.ReadInt64(), reader.ReadDateTime());
+                files[i] = new FileMetadata(reader.ReadString(), reader.ReadBoolean(), reader.ReadInt64(), reader.ReadDateTime());
             return new ListFilesResponse { Files = files };
         }
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write7BitEncodedInt(Files.Length);
-            foreach (var (relativePath, isDirectory, size, lastWriteTimeUtc) in Files)
+            foreach (var file in Files)
             {
-                writer.Write(relativePath);
-                writer.Write(isDirectory);
-                writer.Write(size);
-                writer.Write(lastWriteTimeUtc);
+                writer.Write(file.RelativePath);
+                writer.Write(file.IsDirectory);
+                writer.Write(file.Size);
+                writer.Write(file.LastWriteTimeUtc);
             }
         }
     }
