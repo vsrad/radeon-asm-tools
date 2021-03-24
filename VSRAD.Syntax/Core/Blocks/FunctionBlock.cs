@@ -9,14 +9,15 @@ namespace VSRAD.Syntax.Core.Blocks
         public DefinitionToken Name { get; }
         public List<DefinitionToken> Parameters { get; }
 
-        public FunctionBlock(IBlock parrent, BlockType type, TrackingToken tokenStart, DefinitionToken name) : base(parrent, type, tokenStart)
+        public FunctionBlock(IBlock parent, BlockType type, TrackingToken tokenStart, DefinitionToken name) 
+            : base(parent, type, tokenStart)
         {
             Name = name;
             Parameters = new List<DefinitionToken>();
-            parrent.AddToken(name);
+            parent.AddToken(name);
         }
 
-        public override void AddToken(AnalysisToken token)
+        public override void AddToken(IAnalysisToken token)
         {
             base.AddToken(token);
             if (token.Type == RadAsmTokenType.FunctionParameter)

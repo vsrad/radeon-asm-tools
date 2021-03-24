@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.Options.Instructions
             SetName = Path.GetFileNameWithoutExtension(path);
         }
 
-        public void AddInstruction(string text, IReadOnlyList<NavigationToken> navigations)
+        public void AddInstruction(string text, IReadOnlyList<INavigationToken> navigations)
         {
             var instruction = new Instruction(text, navigations);
             Add(instruction);

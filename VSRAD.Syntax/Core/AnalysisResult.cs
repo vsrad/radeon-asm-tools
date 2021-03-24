@@ -26,17 +26,10 @@ namespace VSRAD.Syntax.Core
         public IReadOnlyList<IDocument> Includes { get; }
         public ITextSnapshot Snapshot { get; }
 
-        public AnalysisToken GetToken(int point)
+        public IAnalysisToken GetToken(int point)
         {
             var block = GetBlock(point);
-
-            foreach (var token in block.Tokens)
-            {
-                if (token.Span.Contains(point))
-                    return token;
-            }
-
-            return null;
+            return block.Tokens.FirstOrDefault(token => token.Span.Contains(point));
         }
 
         public IBlock GetBlock(int point)
@@ -56,16 +49,8 @@ namespace VSRAD.Syntax.Core
             return block;
         }
 
-        private static IBlock InnerInRange(IEnumerable<IBlock> blocks, int point)
-        {
-            foreach (var innerBlock in blocks)
-            {
-                if (innerBlock.Type == BlockType.Comment) continue;
-                if (innerBlock.InRange(point)) return innerBlock;
-            }
-
-            return null;
-        }
+        private static IBlock InnerInRange(IEnumerable<IBlock> blocks, int point) => 
+            blocks.Where(innerBlock => innerBlock.Type != BlockType.Comment).FirstOrDefault(innerBlock => innerBlock.InRange(point));
 
         public IEnumerable<DefinitionToken> GetGlobalDefinitions() =>
             Root.Tokens.Where(t => t is DefinitionToken).Cast<DefinitionToken>();

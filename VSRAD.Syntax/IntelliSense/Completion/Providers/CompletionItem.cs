@@ -16,10 +16,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
     internal class CompletionItem : ICompletionItem
     {
-        private readonly NavigationToken _token;
+        private readonly INavigationToken _token;
         private readonly ImageElement _imageElement;
 
-        public CompletionItem(NavigationToken navigationToken, ImageElement imageElement)
+        public CompletionItem(INavigationToken navigationToken, ImageElement imageElement)
         {
             _token = navigationToken;
             _imageElement = imageElement;
@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
         public VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource)
         {
-            var completionItem = new VsComplectionItem(_token.GetText(), asyncCompletionSource, _imageElement);
+            var completionItem = new VsComplectionItem(_token.AnalysisToken.Text, asyncCompletionSource, _imageElement);
             completionItem.Properties.AddProperty(typeof(ICompletionItem), this);
             return completionItem;
         }
@@ -39,10 +39,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     internal class MultipleCompletionItem : ICompletionItem
     {
         private readonly string _name;
-        private readonly IReadOnlyList<NavigationToken> _tokens;
+        private readonly IReadOnlyList<INavigationToken> _tokens;
         private readonly ImageElement _imageElement;
 
-        public MultipleCompletionItem(string name, IReadOnlyList<NavigationToken> tokens, ImageElement imageElement)
+        public MultipleCompletionItem(string name, IReadOnlyList<INavigationToken> tokens, ImageElement imageElement)
         {
             _name = name;
             _tokens = tokens;
@@ -62,10 +62,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
     public static class VsCompletionItemExtension
     {
-        public static ICompletionItem GetRadCompletionItem(this VsComplectionItem vsComplection) => 
-            vsComplection.Properties.GetProperty<ICompletionItem>(typeof(ICompletionItem));
+        public static ICompletionItem GetRadCompletionItem(this VsComplectionItem vsCompletion) => 
+            vsCompletion.Properties.GetProperty<ICompletionItem>(typeof(ICompletionItem));
 
-        public static Task<object> GetDescriptionAsync(this VsComplectionItem vsComplection, IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
-            vsComplection.GetRadCompletionItem().GetDescriptionAsync(descriptionBuilder, cancellationToken);
+        public static Task<object> GetDescriptionAsync(this VsComplectionItem vsCompletion, IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
+            vsCompletion.GetRadCompletionItem().GetDescriptionAsync(descriptionBuilder, cancellationToken);
     }
 }

@@ -201,7 +201,7 @@ namespace VSRAD.Syntax.Core.Parser
                     if (token.Type == RadAsmLexer.IDENTIFIER)
                     {
                         var functionDefinition = new DefinitionToken(RadAsmTokenType.FunctionParameter, token, version);
-                        _definitionContainer.Add(currentBlock, functionDefinition, $"\\{functionDefinition.GetText()}");
+                        _definitionContainer.Add(currentBlock, functionDefinition, $"\\{functionDefinition.Text}");
                         currentBlock.AddToken(functionDefinition);
                     }
                 }

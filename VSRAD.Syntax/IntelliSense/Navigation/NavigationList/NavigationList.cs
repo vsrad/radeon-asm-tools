@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
     [Guid(Constants.NavigationListToolWindowPaneGuid)]
     public class NavigationList : ToolWindowPane
     {
-        private static NavigationListControl Control;
+        private static NavigationListControl _control;
 
         public NavigationList() : base(null)
         {
@@ -19,27 +19,23 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
         protected override void Initialize()
         {
-            Control = new NavigationListControl();
-            Content = Control;
+            _control = new NavigationListControl();
+            Content = _control;
         }
 
-        public static void UpdateNavigationList(IReadOnlyList<NavigationToken> tokens)
+        public static void UpdateNavigationList(IReadOnlyList<INavigationToken> tokens)
         {
-            if (Control != null) UpdateNavigationList(Control, tokens);
             if (Syntax.Package.Instance == null) return;
 
             var window = (NavigationList)Syntax.Package.Instance.FindToolWindow(typeof(NavigationList), 0, true);
-            if (window == null || window.Frame == null) return;
+            if (window?.Frame == null) return;
 
-            if (window.Content is NavigationListControl navigationListControl)
-            {
-                var windowFrame = (IVsWindowFrame)window.Frame;
-                ErrorHandler.ThrowOnFailure(windowFrame.Show());
-                UpdateNavigationList(navigationListControl, tokens);
-            }
+            var windowFrame = (IVsWindowFrame)window.Frame;
+            ErrorHandler.ThrowOnFailure(windowFrame.Show());
+            UpdateNavigationList(_control, tokens);
         }
 
-        private static void UpdateNavigationList(NavigationListControl control, IReadOnlyList<NavigationToken> tokens) =>
+        private static void UpdateNavigationList(NavigationListControl control, IReadOnlyList<INavigationToken> tokens) =>
             ThreadHelper.JoinableTaskFactory.RunAsync(() => control.UpdateNavigationListAsync(tokens));
     }
 }

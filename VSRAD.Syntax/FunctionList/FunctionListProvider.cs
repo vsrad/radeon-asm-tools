@@ -5,7 +5,6 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
@@ -24,7 +23,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
-        private KeyValuePair<IDocument, IAnalysisResult>? lastResult;
+        private IAnalysisResult _lastResult;
 
         private static FunctionListProvider _instance;
         private static FunctionListControl _functionListControl;
@@ -88,7 +87,7 @@ namespace VSRAD.Syntax.FunctionList
         {
             if (!document.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
             {
-                document.DocumentAnalysis.AnalysisUpdated += (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
+                document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
                 document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
             }
             ActiveDocumentChanged(document);
@@ -97,7 +96,7 @@ namespace VSRAD.Syntax.FunctionList
         private void DocumentCreated(IDocument document) => AssignDocumentToFunctionList(document);
 
         private void DocumentDisposed(IDocument document) =>
-            document.DocumentAnalysis.AnalysisUpdated -= (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
+            document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
@@ -116,26 +115,25 @@ namespace VSRAD.Syntax.FunctionList
         private void ClearFunctionList()
         {
             _functionListControl.ClearList();
-            lastResult = null;
+            _lastResult = null;
         }
 
         private void UpdateFunctionList(IDocument document)
         {
             var analysisResult = document.DocumentAnalysis.CurrentResult;
-
-            if (analysisResult == null || analysisResult == lastResult?.Value) return;
-            UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
+            if (analysisResult == null || analysisResult == _lastResult) return;
+            UpdateFunctionList(analysisResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
         {
             if (reason == RescanReason.ContentChanged)
-                UpdateFunctionList(document, analysisResult, cancellationToken);
+                UpdateFunctionList(analysisResult, cancellationToken);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            lastResult = new KeyValuePair<IDocument, IAnalysisResult>(document, analysisResult);
+            _lastResult = analysisResult;
 
             // if document analyzed before Function List view initialization
             if (_functionListControl == null) return;
@@ -144,8 +142,8 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
-                    .Select(t => _navigationTokenService.Value.CreateToken(t, document))
-                    .Select(t => new FunctionListItem(t))
+                    .Select(t => _navigationTokenService.Value.CreateToken(t))
+                    .Select(n => new FunctionListItem(n))
                     .AsParallel()
                     .WithCancellation(cancellationToken)
                     .ToList();
@@ -156,12 +154,8 @@ namespace VSRAD.Syntax.FunctionList
 
         private void SetLastResultFunctionList(CancellationToken cancellationToken)
         {
-            if (lastResult.HasValue)
-            {
-                var document = lastResult.Value.Key;
-                var analysisResult = lastResult.Value.Value;
-                UpdateFunctionList(document, analysisResult, cancellationToken);
-            }
+            if (_lastResult == null) return;
+            UpdateFunctionList(_lastResult, cancellationToken);
         }
 
         public static void FunctionListWindowCreated(FunctionListControl functionListControl)

@@ -22,10 +22,10 @@ namespace VSRAD.Syntax.Core.Blocks
         TrackingBlock Area { get; }
         BlockType Type { get; }
         List<IBlock> Children { get; }
-        List<AnalysisToken> Tokens { get; }
+        List<IAnalysisToken> Tokens { get; }
 
         void AddChildren(IBlock block);
-        void AddToken(AnalysisToken token);
+        void AddToken(IAnalysisToken token);
         bool InScope(int point);
         bool InScope(Span span);
         bool InRange(int point);
@@ -40,7 +40,7 @@ namespace VSRAD.Syntax.Core.Blocks
         public ITextSnapshot Snapshot { get; }
         public BlockType Type { get; }
         public List<IBlock> Children { get; }
-        public List<AnalysisToken> Tokens { get; }
+        public List<IAnalysisToken> Tokens { get; }
         public TrackingBlock Scope { get; private set; }
         public TrackingBlock Area { get; private set; }
 
@@ -48,11 +48,11 @@ namespace VSRAD.Syntax.Core.Blocks
         protected int actualEnd;
         private int startPosition;
 
-        public Block(IBlock parrent, BlockType type, TrackingToken tokenStart)
+        public Block(IBlock parent, BlockType type, TrackingToken tokenStart)
         {
-            Parent = parrent;
+            Parent = parent;
             Type = type;
-            Snapshot = parrent.Snapshot;
+            Snapshot = parent.Snapshot;
 
             actualStart = tokenStart.GetStart(Snapshot);
             actualEnd = Snapshot.Length - 1;
@@ -60,14 +60,14 @@ namespace VSRAD.Syntax.Core.Blocks
             Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
 
             Children = new List<IBlock>();
-            Tokens = new List<AnalysisToken>();
+            Tokens = new List<IAnalysisToken>();
         }
 
-        public Block(IBlock parrent, BlockType type, TrackingToken tokenStart, TrackingToken tokenEnd)
+        public Block(IBlock parent, BlockType type, TrackingToken tokenStart, TrackingToken tokenEnd)
         {
-            Parent = parrent;
+            Parent = parent;
             Type = type;
-            Snapshot = parrent.Snapshot;
+            Snapshot = parent.Snapshot;
 
             actualStart = tokenStart.GetStart(Snapshot);
             actualEnd = tokenEnd.GetEnd(Snapshot);
@@ -75,7 +75,7 @@ namespace VSRAD.Syntax.Core.Blocks
             Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
 
             Children = new List<IBlock>();
-            Tokens = new List<AnalysisToken>();
+            Tokens = new List<IAnalysisToken>();
         }
 
         public Block(ITextSnapshot snapshot)
@@ -87,7 +87,7 @@ namespace VSRAD.Syntax.Core.Blocks
             actualEnd = Snapshot.Length - 1;
 
             Children = new List<IBlock>();
-            Tokens = new List<AnalysisToken>();
+            Tokens = new List<IAnalysisToken>();
         }
 
         public void SetStart(int scopeStart) =>
@@ -95,18 +95,17 @@ namespace VSRAD.Syntax.Core.Blocks
 
         public void SetEnd(int endPosition, TrackingToken tokenEnd)
         {
-            if (startPosition <= endPosition)
-            {
-                actualEnd = tokenEnd.GetEnd(Snapshot);
-                Scope = new TrackingBlock(Snapshot, startPosition, endPosition);
-                Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
-            }
+            if (startPosition > endPosition) return;
+
+            actualEnd = tokenEnd.GetEnd(Snapshot);
+            Scope = new TrackingBlock(Snapshot, startPosition, endPosition);
+            Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
         }
 
         public virtual void AddChildren(IBlock block) =>
             Children.Add(block);
 
-        public virtual void AddToken(AnalysisToken token) =>
+        public virtual void AddToken(IAnalysisToken token) =>
             Tokens.Add(token);
 
         public virtual bool InScope(int point) =>

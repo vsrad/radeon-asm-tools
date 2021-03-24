@@ -13,13 +13,13 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     {
         private static readonly ImageElement FunctionIcon = GetImageElement(KnownImageIds.Method);
         private bool _autocompleteFunctions;
-        private readonly INavigationTokenService _navigationTokenservice;
+        private readonly INavigationTokenService _navigationTokenService;
 
         public FunctionCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
             : base(optionsProvider)
         {
             _autocompleteFunctions = optionsProvider.AutocompleteFunctions;
-            _navigationTokenservice = navigationTokenService;
+            _navigationTokenService = navigationTokenService;
         }
 
         public override void DisplayOptionsUpdated(OptionsProvider sender) =>
@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 .AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
-                .Select(t => _navigationTokenservice.CreateToken(t, document.Path))
+                .Select(t => _navigationTokenService.CreateToken(t))
                 .Select(t => new CompletionItem(t, FunctionIcon));
 
             return new RadCompletionContext(completionItems.ToList());

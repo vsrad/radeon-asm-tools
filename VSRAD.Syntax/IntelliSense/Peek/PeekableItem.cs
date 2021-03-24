@@ -7,9 +7,9 @@ namespace VSRAD.Syntax.IntelliSense.Peek
     internal sealed class PeekableItem : IPeekableItem
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly NavigationToken _navigationToken;
+        private readonly INavigationToken _navigationToken;
 
-        public PeekableItem(IPeekResultFactory peekResultFactory, NavigationToken navigationToken)
+        public PeekableItem(IPeekResultFactory peekResultFactory, INavigationToken navigationToken)
         {
             _peekResultFactory = peekResultFactory;
             _navigationToken = navigationToken;

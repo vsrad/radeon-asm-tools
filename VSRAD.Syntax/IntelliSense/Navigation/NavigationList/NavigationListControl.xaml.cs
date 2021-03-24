@@ -1,21 +1,20 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Controls;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 {
-    public partial class NavigationListControl : UserControl
+    public partial class NavigationListControl
     {
         public NavigationListControl()
         {
             InitializeComponent();
         }
 
-        public async Task UpdateNavigationListAsync(IEnumerable<NavigationToken> navitaionList)
+        public async Task UpdateNavigationListAsync(IEnumerable<INavigationToken> navigationList)
         {
-            var navigationGroups = navitaionList.GroupBy(n => n.Path).ToList();
+            var navigationGroups = navigationList.GroupBy(n => n.Path).ToList();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             NavigationTokens.Items.Clear();
@@ -36,11 +35,10 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
         private void NavigationTokens_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
         {
-            if (e.Key == System.Windows.Input.Key.Enter)
-            {
-                e.Handled = true;
-                NavigateToToken();
-            }
+            if (e.Key != System.Windows.Input.Key.Enter) return;
+
+            e.Handled = true;
+            NavigateToToken();
         }
 
         private void NavigateToToken()

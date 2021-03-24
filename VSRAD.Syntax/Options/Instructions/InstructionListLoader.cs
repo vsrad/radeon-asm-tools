@@ -22,7 +22,6 @@ namespace VSRAD.Syntax.Options.Instructions
     [Export(typeof(IInstructionListLoader))]
     internal sealed class InstructionListLoader : IInstructionListLoader
     {
-        private readonly OptionsProvider _optionsProvider;
         private readonly Lazy<IDocumentFactory> _documentFactory;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly List<InstructionSet> _sets;
@@ -35,12 +34,11 @@ namespace VSRAD.Syntax.Options.Instructions
             Lazy<IDocumentFactory> documentFactory,
             Lazy<INavigationTokenService> navigationTokenService)
         {
-            _optionsProvider = optionsEventProvider;
             _documentFactory = documentFactory;
             _navigationTokenService = navigationTokenService;
             _sets = new List<InstructionSet>();
 
-            _optionsProvider.OptionsUpdated += OptionsUpdated;
+            optionsEventProvider.OptionsUpdated += OptionsUpdated;
         }
 
         private void OptionsUpdated(OptionsProvider provider)
@@ -61,7 +59,7 @@ namespace VSRAD.Syntax.Options.Instructions
                 .Where(x => !string.IsNullOrWhiteSpace(x));
 
             var loadFromDirectoryTasks = paths
-                .Select(p => LoadInstructionsFromDirectoryAsync(p))
+                .Select(LoadInstructionsFromDirectoryAsync)
                 .ToArray();
 
             try
@@ -99,11 +97,15 @@ namespace VSRAD.Syntax.Options.Instructions
                 var loadTasks = new List<Task<InstructionSet>>();
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
-                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
-
-                    else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
+                    switch (Path.GetExtension(filepath))
+                    {
+                        case Constants.FileExtensionAsm1Doc:
+                            loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
+                            break;
+                        case Constants.FileExtensionAsm2Doc:
+                            loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
+                            break;
+                    }
                 }
 
                 var results = await Task.WhenAll(loadTasks);
@@ -112,7 +114,6 @@ namespace VSRAD.Syntax.Options.Instructions
             catch (Exception e) when (
                e is DirectoryNotFoundException ||
                e is IOException ||
-               e is PathTooLongException ||
                e is UnauthorizedAccessException)
             {
                 Error.ShowError(e, "Instruction loader");
@@ -135,8 +136,8 @@ namespace VSRAD.Syntax.Options.Instructions
             var navigationService = _navigationTokenService.Value;
 
             var navigationTokens = instructions
-                .Select(i => navigationService.CreateToken(i, document))
-                .GroupBy(n => n.GetText());
+                .Select(i => navigationService.CreateToken(i))
+                .GroupBy(n => n.AnalysisToken.Text);
 
             foreach (var instructionNameGroup in navigationTokens)
             {

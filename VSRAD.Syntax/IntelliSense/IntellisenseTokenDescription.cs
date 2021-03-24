@@ -16,8 +16,8 @@ namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntellisenseDescriptionBuilder
     {
-        Task<object> GetColorizedDescriptionAsync(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken);
-        Task<object> GetColorizedDescriptionAsync(NavigationToken token, CancellationToken cancellationToken);
+        Task<object> GetColorizedDescriptionAsync(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken);
+        Task<object> GetColorizedDescriptionAsync(INavigationToken token, CancellationToken cancellationToken);
     }
 
     [Export(typeof(IIntellisenseDescriptionBuilder))]
@@ -33,14 +33,14 @@ namespace VSRAD.Syntax.IntelliSense
             _navigationTokenService = navigationTokenService;
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken)
+        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken)
         {
             if (tokens == null || tokens.Count == 0) return null;
             else if (tokens.Count == 1) return await GetColorizedDescriptionAsync(tokens[0], cancellationToken);
             else return GetColorizedDescriptions(tokens, cancellationToken);
         }
 
-        private object GetColorizedDescriptions(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken)
+        private object GetColorizedDescriptions(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken)
         {
             var builder = new ClassifiedTextBuilder();
             foreach (var tokenGroup in tokens.GroupBy(t => t.Path))
@@ -54,9 +54,12 @@ namespace VSRAD.Syntax.IntelliSense
                 builder.AddClassifiedText(filePath).SetAsElement();
                 foreach (var token in tokenGroup)
                 {
+                    var tokenText = token.AnalysisToken.Text;
+                    var lineTokenStart = token.AnalysisToken.Span.Start - token.Line.LineStart;
+                    var lineTokenEnd = lineTokenStart + tokenText.Length;
                     var typeName = token.Type.GetName();
-                    var textBeforeToken = token.LineText.Substring(0, token.LineTokenStart);
-                    var textAfterToken = token.LineText.Substring(token.LineTokenEnd);
+                    var textBeforeToken = tokenText.Substring(0, lineTokenStart);
+                    var textAfterToken = tokenText.Substring(lineTokenEnd);
 
                     builder.AddClassifiedText($"({typeName}) ")
                         .AddClassifiedText(textBeforeToken)
@@ -69,9 +72,9 @@ namespace VSRAD.Syntax.IntelliSense
             return builder.Build();
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(NavigationToken token, CancellationToken cancellationToken)
+        public async Task<object> GetColorizedDescriptionAsync(INavigationToken token, CancellationToken cancellationToken)
         {
-            if (token == NavigationToken.Empty) return null;
+            if (token == null) return null;
             cancellationToken.ThrowIfCancellationRequested();
 
             var typeName = token.Type.GetName();
@@ -96,7 +99,7 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var documentAnalysis = await document.DocumentAnalysis.GetAnalysisResultAsync(token.AnalysisToken.Snapshot);
-                var block = documentAnalysis.GetBlock(token.GetEnd());
+                var block = documentAnalysis.GetBlock(token.AnalysisToken.Span.End);
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -105,7 +108,7 @@ namespace VSRAD.Syntax.IntelliSense
                     for (var i = 0; i < functionBlock.Parameters.Count; i++)
                     {
                         builder.AddClassifiedText(" ")
-                            .AddClassifiedText(_navigationTokenService.CreateToken(functionBlock.Parameters[i], document));
+                            .AddClassifiedText(_navigationTokenService.CreateToken(functionBlock.Parameters[i]));
                         if (i != functionBlock.Parameters.Count - 1)
                             builder.AddClassifiedText(",");
                     }
@@ -123,7 +126,7 @@ namespace VSRAD.Syntax.IntelliSense
             }
 
             builder.SetAsElement();
-            if (TryGetCommentDescription(document.DocumentTokenizer, token.GetEnd(), cancellationToken, out var message))
+            if (TryGetCommentDescription(document.DocumentTokenizer, token.AnalysisToken.Span.End, cancellationToken, out var message))
                 builder.AddClassifiedText(message).SetAsElement();
             return builder.Build();
         }
@@ -136,7 +139,8 @@ namespace VSRAD.Syntax.IntelliSense
 
             var tokenLineComment = tokenizerResult
                 .GetTokens(new Span(tokenEnd, currentLine.End - tokenEnd))
-                .Where(t => documentTokenizer.GetTokenType(t.Type) == RadAsmTokenType.Comment);
+                .Where(t => documentTokenizer.GetTokenType(t.Type) == RadAsmTokenType.Comment)
+                .ToList();
 
             if (tokenLineComment.Any())
             {
@@ -154,9 +158,10 @@ namespace VSRAD.Syntax.IntelliSense
                 currentLine = snapshot.GetLineFromLineNumber(currentLineNumber);
                 var tokensAtLine = tokenizerResult
                     .GetTokens(new Span(currentLine.Start, currentLine.Length))
-                    .Where(t => documentTokenizer.GetTokenType(t.Type) != RadAsmTokenType.Whitespace);
+                    .Where(t => documentTokenizer.GetTokenType(t.Type) != RadAsmTokenType.Whitespace)
+                    .ToList();
 
-                if (tokensAtLine.Count() == 1)
+                if (tokensAtLine.Count == 1)
                 {
                     var trackingToken = tokensAtLine.First();
                     if (documentTokenizer.GetTokenType(trackingToken.Type) == RadAsmTokenType.Comment)
@@ -209,9 +214,9 @@ namespace VSRAD.Syntax.IntelliSense
                 return this;
             }
 
-            public ClassifiedTextBuilder AddClassifiedText(NavigationToken navigationToken)
+            public ClassifiedTextBuilder AddClassifiedText(INavigationToken navigationToken)
             {
-                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.GetText(), navigationToken.Navigate));
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.AnalysisToken.Text, navigationToken.Navigate));
                 return this;
             }
 

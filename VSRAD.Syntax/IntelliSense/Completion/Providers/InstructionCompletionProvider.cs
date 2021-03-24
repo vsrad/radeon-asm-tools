@@ -42,21 +42,17 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             var startSpan = new SnapshotSpan(line.Start, applicableToSpan.Start);
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (string.IsNullOrWhiteSpace(startSpan.GetText()))
-            {
-                var type = triggerLocation.Snapshot.GetAsmType();
-                switch (type)
-                {
-                    case AsmType.RadAsm:
-                        return Task.FromResult(new RadCompletionContext(_asm1InstructionCompletions));
-                    case AsmType.RadAsm2:
-                        return Task.FromResult(new RadCompletionContext(_asm2InstructionCompletions));
-                    default:
-                        return Task.FromResult(RadCompletionContext.Empty);
-                }
-            }
+            if (!string.IsNullOrWhiteSpace(startSpan.GetText())) return Task.FromResult(RadCompletionContext.Empty);
 
-            return Task.FromResult(RadCompletionContext.Empty);
+            switch (triggerLocation.Snapshot.GetAsmType())
+            {
+                case AsmType.RadAsm:
+                    return Task.FromResult(new RadCompletionContext(_asm1InstructionCompletions));
+                case AsmType.RadAsm2:
+                    return Task.FromResult(new RadCompletionContext(_asm2InstructionCompletions));
+                default:
+                    return Task.FromResult(RadCompletionContext.Empty);
+            }
         }
 
         private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)

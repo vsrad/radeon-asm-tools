@@ -5,43 +5,56 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
-    public readonly struct NavigationToken : IEquatable<NavigationToken>
+    public interface ITokenLine
     {
-        public static NavigationToken Empty { get { return new NavigationToken(); } }
+        int LineStart { get; }
+        int LineNumber { get; }
+        string LineText { get; }
+    }
 
-        public AnalysisToken AnalysisToken { get; }
+    public interface INavigationToken
+    {
+        IAnalysisToken AnalysisToken { get; }
+        RadAsmTokenType Type { get; }
+        string Path { get; }
+        ITokenLine Line { get; }
+
+        void Navigate();
+    }
+
+    internal readonly struct TokenLine : ITokenLine
+    {
+        private readonly Lazy<ITextSnapshotLine> _lineLazy;
+
+        public TokenLine(IAnalysisToken token)
+        {
+            _lineLazy = new Lazy<ITextSnapshotLine>(() => token.Span.Start.GetContainingLine());
+        }
+
+        public int LineStart => _lineLazy.Value.Start;
+        public int LineNumber => _lineLazy.Value.LineNumber;
+        public string LineText => _lineLazy.Value.GetText();
+    }
+
+    public class NavigationToken : INavigationToken
+    {
+        public IAnalysisToken AnalysisToken { get; }
         public string Path { get; }
-        public int Line { get; }
-        public string LineText { get; }
-        public int LineTokenStart { get; }
-        public int LineTokenEnd { get; }
+        public ITokenLine Line { get; }
         public RadAsmTokenType Type => AnalysisToken.Type;
 
         private readonly Action _navigate;
 
-        public NavigationToken(AnalysisToken analysisToken, string path, Action navigate)
+        public NavigationToken(IAnalysisToken analysisToken, string path, Action navigate)
         {
-            AnalysisToken = analysisToken;
             _navigate = navigate;
+            AnalysisToken = analysisToken;
             Path = path;
-
-            var lineText = analysisToken
-                .Span.Start
-                .GetContainingLine();
-            Line = lineText.LineNumber;
-            LineText = lineText.GetText();
-            LineTokenStart = AnalysisToken.Span.Start - lineText.Start;
-            LineTokenEnd = AnalysisToken.Span.End - lineText.Start;
+            Line = new TokenLine(AnalysisToken);
         }
 
         public void Navigate() =>
             _navigate?.Invoke();
-
-        public SnapshotPoint GetEnd() =>
-            AnalysisToken.Span.End;
-
-        public string GetText() =>
-            AnalysisToken.GetText();
 
         public override string ToString()
         {
@@ -52,23 +65,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
                 sb.Append(" ");
             }
             sb.Append("(");
-            sb.Append(Line + 1);
+            sb.Append(Line.LineNumber + 1);
             sb.Append("): ");
 
-            sb.Append(LineText);
+            sb.Append(Line.LineText);
             return sb.ToString();
         }
-
-        public bool Equals(NavigationToken o) => AnalysisToken == o.AnalysisToken && Path == o.Path && Line == o.Line;
-
-        public static bool operator ==(NavigationToken left, NavigationToken right) =>
-            left.Equals(right);
-
-        public static bool operator !=(NavigationToken left, NavigationToken right) =>
-            !(left == right);
-
-        public override bool Equals(object obj) => obj is NavigationToken o && Equals(o);
-
-        public override int GetHashCode() => (AnalysisToken, Path, Line).GetHashCode();
     }
 }

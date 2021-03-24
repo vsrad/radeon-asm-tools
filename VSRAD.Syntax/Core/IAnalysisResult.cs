@@ -12,7 +12,7 @@ namespace VSRAD.Syntax.Core
         IReadOnlyList<IErrorToken> Errors { get; }
         IReadOnlyList<IDocument> Includes { get; }
         ITextSnapshot Snapshot { get; }
-        AnalysisToken GetToken(int point);
+        IAnalysisToken GetToken(int point);
         IBlock GetBlock(int point);
         IEnumerable<DefinitionToken> GetGlobalDefinitions();
     }

@@ -15,10 +15,9 @@ namespace VSRAD.Syntax.IntelliSense
 {
     public interface INavigationTokenService
     {
-        NavigationToken CreateToken(AnalysisToken analysisToken, string path);
-        NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document);
+        INavigationToken CreateToken(IAnalysisToken analysisToken);
         Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
-        void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
+        void NavigateOrOpenNavigationList(IReadOnlyList<INavigationToken> navigations);
     }
 
     [Export(typeof(INavigationTokenService))]
@@ -34,21 +33,19 @@ namespace VSRAD.Syntax.IntelliSense
             _instructionListManager = instructionListManager;
         }
 
-        public NavigationToken CreateToken(AnalysisToken analysisToken, string path)
+        public INavigationToken CreateToken(IAnalysisToken analysisToken)
         {
             var document = _documentFactory.GetOrCreateDocument(analysisToken.Snapshot.TextBuffer);
             return CreateToken(analysisToken, document);
         }
 
-        public NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document)
+        private static INavigationToken CreateToken(IAnalysisToken analysisToken, IDocument document)
         {
-            if (document == null) return NavigationToken.Empty;
-
             var navigateAction = GetNavigateAction(analysisToken, document);
             return new NavigationToken(analysisToken, document.Path, navigateAction);
         }
 
-        private Action GetNavigateAction(AnalysisToken analysisToken, IDocument document) =>
+        private static Action GetNavigateAction(IAnalysisToken analysisToken, IDocument document) =>
             () =>
             {
                 try
@@ -56,7 +53,8 @@ namespace VSRAD.Syntax.IntelliSense
                     // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
                     var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
                     document.NavigateToPosition(navigatePosition);
-                }catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     Error.ShowError(e, "Navigation service");
                 }
@@ -71,44 +69,47 @@ namespace VSRAD.Syntax.IntelliSense
             var analysisToken = analysisResult.GetToken(point);
 
             if (analysisToken == null) return null;
-            var tokens = new List<NavigationToken>();
+            var tokens = new List<INavigationToken>();
 
-            if (analysisToken is DefinitionToken definitionToken)
+            switch (analysisToken)
             {
-                tokens.Add(CreateToken(definitionToken, document));
-            }
-            else if (analysisToken is ReferenceToken referenceToken)
-            {
-                var definition = referenceToken.Definition;
-                var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
-                tokens.Add(CreateToken(definition, definitionDocument));
-            }
-            else
-            {
-                if (analysisToken.Type == RadAsmTokenType.Instruction)
-                {
-                    var asmType = analysisToken.Snapshot.GetAsmType();
-                    var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
-                    var instructionText = analysisToken.GetText();
-                    var instructionNavigations = new List<NavigationToken>();
+                case DefinitionToken definitionToken:
+                    {
+                        tokens.Add(CreateToken(definitionToken, document));
+                        break;
+                    }
+                case ReferenceToken referenceToken:
+                    {
+                        var definition = referenceToken.Definition;
+                        var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
+                        tokens.Add(CreateToken(definition, definitionDocument));
+                        break;
+                    }
+                default:
+                    {
+                        if (analysisToken.Type != RadAsmTokenType.Instruction) return null;
 
-                    var navigations = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations);
-                    instructionNavigations.AddRange(navigations);
-                    
-                    if (instructionNavigations.Count != 0)
-                        return new NavigationTokenServiceResult(instructionNavigations, analysisToken);
-                    
-                }
-                else
-                {
-                    return null;
-                }
+                        var asmType = analysisToken.Snapshot.GetAsmType();
+                        var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
+                        var instructionText = analysisToken.Text;
+                        var instructionNavigations = new List<INavigationToken>();
+
+                        var navigations = instructions
+                            .Where(i => i.Text == instructionText)
+                            .SelectMany(i => i.Navigations);
+                        instructionNavigations.AddRange(navigations);
+
+                        if (instructionNavigations.Count != 0)
+                            return new NavigationTokenServiceResult(instructionNavigations, analysisToken);
+
+                        break;
+                    }
             }
 
             return new NavigationTokenServiceResult(tokens, analysisToken);
         }
 
-        public void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations)
+        public void NavigateOrOpenNavigationList(IReadOnlyList<INavigationToken> navigations)
         {
             if (navigations.Count == 1) navigations[0].Navigate();
             else if (navigations.Count > 1) NavigationList.UpdateNavigationList(navigations);
