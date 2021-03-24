@@ -127,6 +127,9 @@
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\TextDebuggerOutputParser.cs">
       <Link>Server\SharedUtils\TextDebuggerOutputParser.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\ZipUtils.cs">
+      <Link>Server\SharedUtils\ZipUtils.cs</Link>
+    </Compile>
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
     <Compile Include="BuildTools\Errors\Parser.cs" />

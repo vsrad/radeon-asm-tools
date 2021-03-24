@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 using Xunit;
 
 namespace VSRAD.DebugServerTests.Handlers
@@ -26,7 +27,7 @@ namespace VSRAD.DebugServerTests.Handlers
 
             File.SetLastWriteTimeUtc(tmpPath + "\\k\\s", new DateTime(2002, 09, 12));
             File.SetLastWriteTimeUtc(tmpPath + "\\h\\b\\w", new DateTime(1985, 06, 15));
-            Directory.SetLastWriteTimeUtc(tmpPath + "\\empty", new DateTime(1980, 01, 01));
+            Directory.SetLastWriteTimeUtc(tmpPath + "\\empty", new DateTime(1981, 01, 01));
 
             var response = await Helper.DispatchCommandAsync<GetFilesCommand, GetFilesResponse>(new GetFilesCommand
             {
@@ -42,15 +43,15 @@ namespace VSRAD.DebugServerTests.Handlers
 
             Assert.Equal("k/s", items[0].Path);
             Assert.Equal(new byte[] { 0x63, 0x72, 0x6f, 0x77 }, items[0].Data);
-            Assert.Equal(new DateTime(2002, 09, 12), items[0].LastWriteTime);
+            Assert.Equal(new DateTime(2002, 09, 12, 0, 0, 0, DateTimeKind.Utc), items[0].LastWriteTimeUtc);
 
             Assert.Equal("h/b/w", items[1].Path);
             Assert.Equal(new byte[] { 0x74, 0x65, 0x6f, 0x74, 0x77 }, items[1].Data);
-            Assert.Equal(new DateTime(1985, 06, 15), items[1].LastWriteTime);
+            Assert.Equal(new DateTime(1985, 06, 15, 0, 0, 0, DateTimeKind.Utc), items[1].LastWriteTimeUtc);
 
             Assert.Equal("empty/", items[2].Path);
             Assert.Equal(Array.Empty<byte>(), items[2].Data);
-            Assert.Equal(new DateTime(1980, 01, 01), items[2].LastWriteTime);
+            Assert.Equal(new DateTime(1981, 01, 01, 0, 0, 0, DateTimeKind.Utc), items[2].LastWriteTimeUtc);
 
             Directory.Delete(tmpPath, recursive: true);
         }
@@ -81,7 +82,7 @@ namespace VSRAD.DebugServerTests.Handlers
             Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
         }
 
-        private static IEnumerable<(string Path, byte[] Data, DateTime LastWriteTime)> ReadZipItems(byte[] zipBytes)
+        private static IEnumerable<(string Path, byte[] Data, DateTime LastWriteTimeUtc)> ReadZipItems(byte[] zipBytes)
         {
             using var stream = new MemoryStream(zipBytes);
             using var archive = new ZipArchive(stream);
@@ -91,7 +92,7 @@ namespace VSRAD.DebugServerTests.Handlers
                 using var s = new MemoryStream();
                 using var dataStream = e.Open();
                 dataStream.CopyTo(s);
-                yield return (e.FullName, s.ToArray(), e.LastWriteTime.DateTime);
+                yield return (e.FullName, s.ToArray(), e.LastWriteTime.UtcDateTime);
             }
         }
     }
