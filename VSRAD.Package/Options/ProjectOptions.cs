@@ -51,7 +51,7 @@ namespace VSRAD.Package.Options
         public bool HasProfiles => Profiles.Count > 0;
         [JsonIgnore]
         public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
-
+        [JsonIgnore]
         public IReadOnlyDictionary<string, ProfileOptions> Profiles { get; private set; } =
             new Dictionary<string, ProfileOptions>();
 
@@ -72,22 +72,16 @@ namespace VSRAD.Package.Options
         #endregion
 
         #region Read/Write
-        struct VisualizerJsonStruct
-        {
-            public VisualizerOptions VisualizerOptions;
-            public VisualizerAppearance VisualizerAppearance;
-            public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling;
-            public SliceVisualizerOptions SliceVisualizerOptions;
-        }
-
-        public static ProjectOptions Read(string path)
+        public static ProjectOptions Read(string visualizerOptionsPath, string profilesOptionsPath)
         {
             ProjectOptions options = null;
             try
             {
-                var optionsJson = JObject.Parse(File.ReadAllText(path));
-                LegacyProfileOptionsMigrator.ConvertOldOptionsIfPresent(optionsJson);
+                var optionsJson = JObject.Parse(File.ReadAllText(visualizerOptionsPath));
+                var profilesJson = JObject.Parse(File.ReadAllText(profilesOptionsPath));
                 options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
+                var profiles = profilesJson.ToObject<Dictionary<string, ProfileOptions>>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
+                options.SetProfiles(profiles, options.ActiveProfile);
             }
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)
@@ -115,36 +109,30 @@ namespace VSRAD.Package.Options
             }
         }
 
-        public void Write(string path, string visualConfigPath)
+        public void Write(string visualConfigPath, string profilesConfigPath)
         {
             var serializedOptions = JsonConvert.SerializeObject(this, Formatting.Indented);
-            var visualOptionsObject = JsonConvert.SerializeObject(new VisualizerJsonStruct
-            {
-                VisualizerOptions = VisualizerOptions,
-                VisualizerAppearance = VisualizerAppearance,
-                VisualizerColumnStyling = VisualizerColumnStyling,
-                SliceVisualizerOptions = SliceVisualizerOptions
-            }, Formatting.Indented);
+            var serializedProfiles = JsonConvert.SerializeObject(Profiles, Formatting.Indented);
             try
             {
-                WriteAtomic(path, serializedOptions);
-                WriteAtomic(visualConfigPath, visualOptionsObject);
+                WriteAtomic(visualConfigPath, serializedOptions);
+                WriteAtomic(profilesConfigPath, serializedProfiles);
             }
             catch (UnauthorizedAccessException)
             {
-                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {path} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {profilesConfigPath} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
                 if (res == DialogResult.OK)
                 {
                     try
                     {
-                        File.SetAttributes(path, FileAttributes.Normal);
+                        File.SetAttributes(profilesConfigPath, FileAttributes.Normal);
                     }
                     catch (Exception ex)
                     {
                         Errors.ShowWarning("Cannot make file writable: " + ex.Message);
                         return;
                     }
-                    WriteAtomic(path, serializedOptions);
+                    WriteAtomic(profilesConfigPath, serializedOptions);
                 }
             }
             catch (SystemException e)
