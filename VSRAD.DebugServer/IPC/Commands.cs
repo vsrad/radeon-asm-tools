@@ -13,7 +13,8 @@ namespace VSRAD.DebugServer.IPC.Commands
         ListEnvironmentVariables = 4,
         PutFile = 5,
         PutDirectory = 6,
-        ListFiles = 7
+        ListFiles = 7,
+        GetFiles = 8
     }
 #pragma warning restore CA1028
     public enum HandShakeStatus
@@ -47,6 +48,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
                 case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
                 case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
+                case CommandType.GetFiles: return GetFilesCommand.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -64,6 +66,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case PutFileCommand _: type = CommandType.PutFile; break;
                 case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
                 case ListFilesCommand _: type = CommandType.ListFiles; break;
+                case GetFilesCommand _: type = CommandType.GetFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -273,6 +276,36 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             writer.Write(Path);
             writer.Write(WorkDir);
+        }
+    }
+
+    public sealed class GetFilesCommand : ICommand
+    {
+        public bool UseCompression { get; set; }
+
+        public string[] Paths { get; set; }
+
+        public string[] RootPath { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[] {
+            "GetFilesCommand",
+            $"UseCompression = {UseCompression}",
+            $"Paths = {string.Join(", ", Paths)}",
+            $"WorkDir = {string.Join(", ", RootPath)}"
+        });
+
+        public static GetFilesCommand Deserialize(IPCReader reader) => new GetFilesCommand
+        {
+            UseCompression = reader.ReadBoolean(),
+            Paths = reader.ReadLengthPrefixedStringArray(),
+            RootPath = reader.ReadLengthPrefixedStringArray()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(UseCompression);
+            writer.WriteLengthPrefixedArray(Paths);
+            writer.WriteLengthPrefixedArray(RootPath);
         }
     }
 
