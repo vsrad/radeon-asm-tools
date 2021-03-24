@@ -32,6 +32,9 @@ namespace VSRAD.DebugServer.IPC
 
         public void Write(DateTime timestamp) =>
             Write(timestamp.ToBinary());
+
+        public new void Write7BitEncodedInt(int value) =>
+            base.Write7BitEncodedInt(value);
     }
 
     public sealed class IPCReader : BinaryReader
@@ -64,5 +67,8 @@ namespace VSRAD.DebugServer.IPC
 
         public DateTime ReadDateTime() =>
             DateTime.FromBinary(ReadInt64());
+
+        public new int Read7BitEncodedInt() =>
+            base.Read7BitEncodedInt();
     }
 }
