@@ -12,7 +12,8 @@ namespace VSRAD.DebugServer.IPC.Responses
         ResultRangeFetched = 2,
         EnvironmentVariablesListed = 3,
         PutFile = 4,
-        ListFiles = 5
+        PutDirectory = 5,
+        ListFiles = 6
     }
 #pragma warning restore CA1028
 
@@ -33,6 +34,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
                 case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
+                case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
@@ -48,6 +50,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
                 case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
                 case PutFileResponse _: type = ResponseType.PutFile; break;
+                case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
@@ -180,6 +183,27 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
+    public sealed class PutDirectoryResponse : IResponse
+    {
+        public PutDirectoryStatus Status { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "PutDirectoryResponse",
+            $"Status = {Status}",
+        });
+
+        public static PutDirectoryResponse Deserialize(IPCReader reader) => new PutDirectoryResponse
+        {
+            Status = (PutDirectoryStatus)reader.ReadByte()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+        }
+    }
+
     public sealed class ListFilesResponse : IResponse
     {
         public (string RelativePath, bool IsDirectory, long Size, DateTime LastWriteTimeUtc)[] Files { get; set; }
@@ -250,6 +274,15 @@ namespace VSRAD.DebugServer.IPC.Responses
         Successful = 0,
         PermissionDenied = 1,
         OtherIOError = 2
+    }
+
+    public enum PutDirectoryStatus : byte
+    {
+        Successful = 0,
+        PermissionDenied = 1,
+        TargetPathIsFile = 2,
+        ArchiveContainsPathOutsideTarget = 3,
+        OtherIOError = 4
     }
 #pragma warning restore CA1028
 }
