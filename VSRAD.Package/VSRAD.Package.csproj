@@ -106,9 +106,6 @@
     <Compile Include="..\VSRAD.BuildTools\IPCBuildResult.cs">
       <Link>BuildTools\IPCBuildResult.cs</Link>
     </Compile>
-    <Compile Include="..\VSRAD.DebugServer\FileMetadata.cs">
-      <Link>Server\IPC\FileMetadata.cs</Link>
-    </Compile>
     <Compile Include="..\VSRAD.DebugServer\IPC\Commands.cs">
       <Link>Server\IPC\Commands.cs</Link>
     </Compile>
@@ -121,11 +118,14 @@
     <Compile Include="..\VSRAD.DebugServer\IPC\StreamExtensions.cs">
       <Link>Server\IPC\StreamExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\VSRAD.DebugServer\ObservableProcess.cs">
-      <Link>Server\IPC\ObservableProcess.cs</Link>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\FileMetadata.cs">
+      <Link>Server\SharedUtils\FileMetadata.cs</Link>
     </Compile>
-    <Compile Include="..\VSRAD.DebugServer\TextDebuggerOutputParser.cs">
-      <Link>Server\TextDebuggerOutputParser.cs</Link>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\ObservableProcess.cs">
+      <Link>Server\SharedUtils\ObservableProcess.cs</Link>
+    </Compile>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\TextDebuggerOutputParser.cs">
+      <Link>Server\SharedUtils\TextDebuggerOutputParser.cs</Link>
     </Compile>
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
