@@ -11,7 +11,8 @@ namespace VSRAD.DebugServer.IPC.Commands
         FetchResultRange = 2,
         Deploy = 3,
         ListEnvironmentVariables = 4,
-        PutFile = 5
+        PutFile = 5,
+        ListFiles = 6
     }
 #pragma warning restore CA1028
     public enum HandShakeStatus
@@ -43,6 +44,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
+                case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -58,6 +60,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
+                case ListFilesCommand _: type = CommandType.ListFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -204,6 +207,31 @@ namespace VSRAD.DebugServer.IPC.Commands
         public void Serialize(IPCWriter writer)
         {
             writer.WriteLengthPrefixedBlob(Data);
+            writer.Write(Path);
+            writer.Write(WorkDir);
+        }
+    }
+
+    public sealed class ListFilesCommand : ICommand
+    {
+        public string Path { get; set; }
+
+        public string WorkDir { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[] {
+            "ListFilesCommand",
+            $"Path = {Path}",
+            $"WorkDir = {WorkDir}"
+        });
+
+        public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
+        {
+            Path = reader.ReadString(),
+            WorkDir = reader.ReadString()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
             writer.Write(Path);
             writer.Write(WorkDir);
         }

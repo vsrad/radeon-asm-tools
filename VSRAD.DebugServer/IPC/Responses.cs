@@ -11,7 +11,8 @@ namespace VSRAD.DebugServer.IPC.Responses
         MetadataFetched = 1,
         ResultRangeFetched = 2,
         EnvironmentVariablesListed = 3,
-        PutFile = 4
+        PutFile = 4,
+        ListFiles = 5
     }
 #pragma warning restore CA1028
 
@@ -32,6 +33,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
                 case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
+                case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -46,6 +48,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
                 case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
                 case PutFileResponse _: type = ResponseType.PutFile; break;
+                case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -174,6 +177,38 @@ namespace VSRAD.DebugServer.IPC.Responses
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
+        }
+    }
+
+    public sealed class ListFilesResponse : IResponse
+    {
+        public (string RelativePath, bool IsDirectory, long Size, DateTime LastWriteTimeUtc)[] Files { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "ListFilesResponse",
+            $"Files = <{Files.Length} items>",
+        });
+
+        public static ListFilesResponse Deserialize(IPCReader reader)
+        {
+            var length = reader.Read7BitEncodedInt();
+            var files = new (string, bool, long, DateTime)[length];
+            for (int i = 0; i < length; ++i)
+                files[i] = (reader.ReadString(), reader.ReadBoolean(), reader.ReadInt64(), reader.ReadDateTime());
+            return new ListFilesResponse { Files = files };
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write7BitEncodedInt(Files.Length);
+            foreach (var (relativePath, isDirectory, size, lastWriteTimeUtc) in Files)
+            {
+                writer.Write(relativePath);
+                writer.Write(isDirectory);
+                writer.Write(size);
+                writer.Write(lastWriteTimeUtc);
+            }
         }
     }
 
