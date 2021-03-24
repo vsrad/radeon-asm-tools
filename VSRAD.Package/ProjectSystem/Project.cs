@@ -71,7 +71,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (!File.Exists(_optionsFilePath) && File.Exists(_legacyOptionsFilePath))
                     Options = ProjectOptions.ReadLegacy(_legacyOptionsFilePath);
                 else
-                    Options = ProjectOptions.Read(_optionsFilePath);
+                    Options = ProjectOptions.Read(_visualOptionsFilePath, _optionsFilePath);
 
                 Options.PropertyChanged += OptionsPropertyChanged;
                 Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
@@ -97,7 +97,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Unload() => Unloaded?.Invoke();
 
-        public void SaveOptions() => Options.Write(_optionsFilePath, _visualOptionsFilePath);
+        public void SaveOptions() => Options.Write(_visualOptionsFilePath, _optionsFilePath);
 
         public IProjectProperties GetProjectProperties()
         {
