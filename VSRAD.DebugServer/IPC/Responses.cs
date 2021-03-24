@@ -310,8 +310,7 @@ namespace VSRAD.DebugServer.IPC.Responses
         Successful = 0,
         PermissionDenied = 1,
         TargetPathIsFile = 2,
-        ArchiveContainsPathOutsideTarget = 3,
-        OtherIOError = 4
+        OtherIOError = 3
     }
 
     public enum GetFilesStatus : byte

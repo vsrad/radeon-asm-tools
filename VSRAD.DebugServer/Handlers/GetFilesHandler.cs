@@ -33,12 +33,11 @@ namespace VSRAD.DebugServer.Handlers
                         if (path.EndsWith('/'))
                         {
                             var e = archive.CreateEntry(path);
-                            e.LastWriteTime = Directory.GetLastWriteTimeUtc(fullPath);
+                            e.LastWriteTime = Directory.GetLastWriteTime(fullPath);
                         }
                         else
                         {
-                            var e = archive.CreateEntryFromFile(fullPath, path.Replace('\\', '/'), compLevel);
-                            e.LastWriteTime = e.LastWriteTime.UtcDateTime;
+                            archive.CreateEntryFromFile(fullPath, path.Replace('\\', '/'), compLevel);
                         }
                     }
                 }

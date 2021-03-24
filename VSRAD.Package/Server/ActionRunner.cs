@@ -2,11 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 using System.Threading.Tasks;
-using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
@@ -70,6 +71,149 @@ namespace VSRAD.Package.Server
         }
 
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
+        {
+            IList<FileMetadata> sourceFiles, targetFiles;
+            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            {
+                var command = new ListFilesCommand { Path = step.SourcePath, WorkDir = _environment.RemoteWorkDir };
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                sourceFiles = response.Files;
+            }
+            else
+            {
+                sourceFiles = FileMetadata.GetMetadataForTree(Path.Combine(_environment.LocalWorkDir, step.SourcePath));
+            }
+            if (sourceFiles.Count == 0)
+            {
+                var cwd = step.Direction == FileCopyDirection.RemoteToLocal ? _environment.RemoteWorkDir : _environment.LocalWorkDir;
+                return new StepResult(true, $"No files were found at \"{step.SourcePath}\"\r\nWorking directory: \"{cwd}\"", "");
+            }
+
+            if (step.Direction == FileCopyDirection.LocalToRemote)
+            {
+                var command = new ListFilesCommand { Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                targetFiles = response.Files;
+            }
+            else
+            {
+                targetFiles = FileMetadata.GetMetadataForTree(Path.Combine(_environment.LocalWorkDir, step.TargetPath));
+            }
+
+            /* Copying a single file */
+            if (sourceFiles.Count == 1 && !sourceFiles[0].IsDirectory)
+            {
+                if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
+                    return new StepResult(false, $"File \"{step.SourcePath}\" cannot be copied: the target path is a directory.", "");
+
+                if (step.SkipIfSame
+                    && targetFiles.Count == 1
+                    && sourceFiles[0].Size == targetFiles[0].Size
+                    && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
+                    return new StepResult(true, "", "File was not copied: sizes and modification times are identical on the source and target sides.");
+
+                return await DoCopySingleFileAsync(step);
+            }
+            /* Copying a directory */
+            return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles);
+        }
+
+        private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles)
+        {
+            byte[] sourceZip;
+            /* Get source files in an archive */
+            bool SourceIdenticalToTarget(FileMetadata src)
+            {
+                foreach (var dst in targetFiles)
+                {
+                    if (dst.RelativePath == src.RelativePath)
+                        return dst.Size == src.Size && dst.LastWriteTimeUtc == src.LastWriteTimeUtc;
+                }
+                return false;
+            }
+            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            {
+                var filesToGet = new List<string>();
+                foreach (var src in sourceFiles)
+                {
+                    if (step.SkipIfSame && SourceIdenticalToTarget(src))
+                        continue;
+                    if (!src.IsDirectory)
+                        filesToGet.Add(src.RelativePath);
+                }
+                var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
+                var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
+
+                if (response.Status != GetFilesStatus.Successful)
+                    return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet));
+
+                sourceZip = response.ZipData;
+            }
+            else
+            {
+                var compLevel = step.UseCompression ? CompressionLevel.Optimal : CompressionLevel.NoCompression;
+                using (var memStream = new MemoryStream())
+                {
+                    using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, false))
+                    {
+                        foreach (var src in sourceFiles)
+                        {
+                            if (step.SkipIfSame && SourceIdenticalToTarget(src))
+                                continue;
+
+                            var fullPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath, src.RelativePath);
+
+                            if (src.IsDirectory)
+                            {
+                                var e = archive.CreateEntry(src.RelativePath.Replace('\\', '/') + "/");
+                                e.LastWriteTime = src.LastWriteTimeUtc;
+                            }
+                            else
+                            {
+                                archive.CreateEntryFromFile(fullPath, src.RelativePath.Replace('\\', '/'), compLevel);
+                            }
+                        }
+                    }
+                    sourceZip = memStream.ToArray();
+                }
+            }
+            /* Extract the archive to the target path */
+            if (step.Direction == FileCopyDirection.LocalToRemote)
+            {
+                var command = new PutDirectoryCommand { ZipData = sourceZip, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, PreserveTimestamps = step.PreserveTimestamp };
+                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+                if (response.Status == PutDirectoryStatus.TargetPathIsFile)
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
+                if (response.Status == PutDirectoryStatus.PermissionDenied)
+                    return new StepResult(false, $"Access to path \"{step.TargetPath}\" on the remote machine is denied", "");
+                if (response.Status == PutDirectoryStatus.OtherIOError)
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine", "");
+            }
+            else
+            {
+                var fullPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
+
+                if (File.Exists(fullPath))
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine: the target path is a file.", "");
+
+                try
+                {
+                    ZipUtils.UnpackToDirectory(fullPath, sourceZip, preserveTimestamps: step.PreserveTimestamp);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return new StepResult(false, $"Access to path \"{step.TargetPath}\" on the local machine is denied", "");
+                }
+                catch (IOException)
+                {
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine", "");
+                }
+            }
+
+            return new StepResult(true, "", "");
+        }
+
+        private async Task<StepResult> DoCopySingleFileAsync(CopyFileStep step)
         {
             byte[] sourceContents;
             /* Read source file */

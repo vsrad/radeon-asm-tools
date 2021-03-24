@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.Handlers
 {
@@ -25,32 +25,7 @@ namespace VSRAD.DebugServer.Handlers
 
             try
             {
-                var destination = Directory.CreateDirectory(fullPath);
-
-                using var stream = new MemoryStream(_command.ZipData);
-                using var archive = new ZipArchive(stream);
-
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    var entryDestPath = Path.Combine(destination.FullName, entry.FullName);
-                    if (!entryDestPath.StartsWith(destination.FullName, StringComparison.Ordinal))
-                        return Task.FromResult<IResponse>(new PutDirectoryResponse { Status = PutDirectoryStatus.ArchiveContainsPathOutsideTarget });
-
-                    if (Path.GetFileName(entryDestPath.AsSpan()).IsEmpty)
-                    {
-                        Directory.CreateDirectory(entryDestPath);
-                        if (_command.PreserveTimestamps)
-                            Directory.SetLastWriteTimeUtc(entryDestPath, entry.LastWriteTime.DateTime);
-                    }
-                    else
-                    {
-                        Directory.CreateDirectory(Path.GetDirectoryName(entryDestPath));
-                        entry.ExtractToFile(entryDestPath, overwrite: true);
-                        if (_command.PreserveTimestamps)
-                            File.SetLastWriteTimeUtc(entryDestPath, entry.LastWriteTime.DateTime);
-                    }
-                }
-
+                ZipUtils.UnpackToDirectory(fullPath, _command.ZipData, _command.PreserveTimestamps);
                 return Task.FromResult<IResponse>(new PutDirectoryResponse { Status = PutDirectoryStatus.Successful });
             }
             catch (UnauthorizedAccessException)
