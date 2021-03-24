@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 using Xunit;
 
 namespace VSRAD.DebugServerTests.Handlers
@@ -23,7 +24,7 @@ namespace VSRAD.DebugServerTests.Handlers
             });
 
             Assert.Single(response.Files);
-            Assert.Equal((".", false, 5, DateTime.FromFileTimeUtc(1)), response.Files[0]);
+            Assert.Equal(new FileMetadata(".", false, 5, DateTime.FromFileTimeUtc(1)), response.Files[0]);
 
             File.Delete(tmpPath);
         }
@@ -55,13 +56,13 @@ namespace VSRAD.DebugServerTests.Handlers
             });
 
             Assert.Equal(7, response.Files.Length);
-            Assert.Equal((".", true, 0, DateTime.FromFileTimeUtc(1)), response.Files[0]);
-            Assert.Equal(("a", true, 0, DateTime.FromFileTimeUtc(2)), response.Files[1]);
-            Assert.Equal(("b", true, 0, DateTime.FromFileTimeUtc(3)), response.Files[2]);
-            Assert.Equal(("t", false, 4, DateTime.FromFileTimeUtc(4)), response.Files[3]);
-            Assert.Equal(("a\\t", false, 3, DateTime.FromFileTimeUtc(5)), response.Files[4]);
-            Assert.Equal(("b\\c", true, 0, DateTime.FromFileTimeUtc(6)), response.Files[5]);
-            Assert.Equal(("b\\c\\t", false, 1, DateTime.FromFileTimeUtc(7)), response.Files[6]);
+            Assert.Equal(new FileMetadata(".", true, 0, DateTime.FromFileTimeUtc(1)), response.Files[0]);
+            Assert.Equal(new FileMetadata("a", true, 0, DateTime.FromFileTimeUtc(2)), response.Files[1]);
+            Assert.Equal(new FileMetadata("b", true, 0, DateTime.FromFileTimeUtc(3)), response.Files[2]);
+            Assert.Equal(new FileMetadata("t", false, 4, DateTime.FromFileTimeUtc(4)), response.Files[3]);
+            Assert.Equal(new FileMetadata("a\\t", false, 3, DateTime.FromFileTimeUtc(5)), response.Files[4]);
+            Assert.Equal(new FileMetadata("b\\c", true, 0, DateTime.FromFileTimeUtc(6)), response.Files[5]);
+            Assert.Equal(new FileMetadata("b\\c\\t", false, 1, DateTime.FromFileTimeUtc(7)), response.Files[6]);
 
             Directory.Delete(tmpPath, recursive: true);
         }

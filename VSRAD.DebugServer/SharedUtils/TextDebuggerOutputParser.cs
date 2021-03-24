@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace VSRAD.DebugServer
+namespace VSRAD.DebugServer.SharedUtils
 {
     public static class TextDebuggerOutputParser
     {
