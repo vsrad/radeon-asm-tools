@@ -13,9 +13,9 @@ using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal abstract class AbstractCodeParser : IParser
+    internal abstract class AbstractCodeParser : IAsmParser
     {
-        abstract protected AsmType AsmType { get; }
+        protected AsmType AsmType { get; set; }
         protected HashSet<string> OtherInstructions { get; private set; }
 
         private readonly IDocumentFactory _documentFactory;
@@ -23,39 +23,36 @@ namespace VSRAD.Syntax.Core.Parser
         protected readonly DefinitionContainer _definitionContainer;
         protected readonly LinkedList<(string text, TrackingToken trackingToken, IBlock block)> _referenceCandidates;
 
-        public AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
         {
             _documentFactory = documentFactory;
             _definitionContainer = new DefinitionContainer();
             _referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
             _instructions = new HashSet<string>();
             OtherInstructions = new HashSet<string>();
-
-            instructionListManager.InstructionsUpdated += InstructionsUpdated;
-            InstructionsUpdated(instructionListManager, AsmType);
+            UpdateInstructions(instructionListManager, AsmType);
         }
 
         public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
-        private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
+        public void UpdateInstructions(IInstructionListManager sender, AsmType asmType)
         {
-            if ((asmType & AsmType) == AsmType)
-            {
-                var instructions = sender.GetInstructions(AsmType);
-                var selectedSetInstructions = sender.GetSelectedSetInstructions(AsmType);
+            if ((asmType & AsmType) != AsmType) return;
 
-                _instructions = selectedSetInstructions
-                    .Select(i => i.Text)
-                    .Distinct()
-                    .ToHashSet();
+            var instructions = sender.GetInstructions(AsmType);
+            var selectedSetInstructions = sender.GetSelectedSetInstructions(AsmType);
 
-                OtherInstructions = instructions
-                    .Select(i => i.Text)
-                    .Distinct()
-                    .ToHashSet();
+            _instructions = selectedSetInstructions
+                .Select(i => i.Text)
+                .Distinct()
+                .ToHashSet();
 
-                OtherInstructions.ExceptWith(_instructions);
-            }
+            OtherInstructions = instructions
+                .Select(i => i.Text)
+                .Distinct()
+                .ToHashSet();
+
+            OtherInstructions.ExceptWith(_instructions);
         }
 
         protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block)
@@ -83,45 +80,41 @@ namespace VSRAD.Syntax.Core.Parser
         protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
-            if (_definitionContainer.TryGetDefinition(tokenText, out var definitionToken))
-            {
-                RadAsmTokenType referenceType;
-                switch (definitionToken.Type)
-                {
-                    case RadAsmTokenType.FunctionName:
-                        referenceType = RadAsmTokenType.FunctionReference;
-                        break;
-                    case RadAsmTokenType.FunctionParameter:
-                        referenceType = RadAsmTokenType.FunctionParameterReference;
-                        break;
-                    case RadAsmTokenType.Label:
-                        referenceType = RadAsmTokenType.LabelReference;
-                        break;
-                    case RadAsmTokenType.GlobalVariable:
-                        referenceType = RadAsmTokenType.GlobalVariableReference;
-                        break;
-                    case RadAsmTokenType.LocalVariable:
-                        referenceType = RadAsmTokenType.LocalVariableReference;
-                        break;
-                    default: return true;
-                }
+            if (!_definitionContainer.TryGetDefinition(tokenText, out var definitionToken)) 
+                return false;
 
-                block.AddToken(new ReferenceToken(referenceType, token, version, definitionToken));
-                return true;
+            RadAsmTokenType referenceType;
+            switch (definitionToken.Type)
+            {
+                case RadAsmTokenType.FunctionName:
+                    referenceType = RadAsmTokenType.FunctionReference;
+                    break;
+                case RadAsmTokenType.FunctionParameter:
+                    referenceType = RadAsmTokenType.FunctionParameterReference;
+                    break;
+                case RadAsmTokenType.Label:
+                    referenceType = RadAsmTokenType.LabelReference;
+                    break;
+                case RadAsmTokenType.GlobalVariable:
+                    referenceType = RadAsmTokenType.GlobalVariableReference;
+                    break;
+                case RadAsmTokenType.LocalVariable:
+                    referenceType = RadAsmTokenType.LocalVariableReference;
+                    break;
+                default: return true;
             }
 
-            return false;
+            block.AddToken(new ReferenceToken(referenceType, token, version, definitionToken));
+            return true;
+
         }
 
         protected bool TryAddInstruction(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
         {
-            if (_instructions.Contains(tokenText))
-            {
-                block.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
-                return true;
-            }
+            if (!_instructions.Contains(tokenText)) return false;
 
-            return false;
+            block.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
+            return true;
         }
     }
 }

@@ -14,8 +14,8 @@ namespace VSRAD.Syntax.Core
         private readonly IDocumentFactory _documentFactory;
         private IDocument visibleDocument;
 
-        public InvisibleDocument(IDocumentFactory documentFactory, ITextDocument textDocument, ILexer lexer, IParser parser)
-            : base(textDocument, lexer, parser)
+        public InvisibleDocument(ITextDocumentFactoryService textDocumentFactory, IDocumentFactory documentFactory, ITextDocument textDocument, ILexer lexer, IParser parser, OnDestroyAction onDestroy)
+            : base(textDocumentFactory, textDocument, lexer, parser, onDestroy)
         {
             _documentFactory = documentFactory;
         }
@@ -51,6 +51,6 @@ namespace VSRAD.Syntax.Core
         }
 
         public IDocument ToVisibleDocument(Func<ILexer, IParser, IDocument> factory) =>
-            factory.Invoke(_lexer, _parser);
+            factory.Invoke(Lexer, Parser);
     }
 }

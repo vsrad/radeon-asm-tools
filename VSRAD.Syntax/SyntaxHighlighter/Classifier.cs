@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text.Classification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using VSRAD.Syntax.Core.Tokens;
@@ -13,15 +14,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter
 {
     internal class AnalysisClassifier : IClassifier
     {
-        private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
+        private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
+        private readonly IDocumentAnalysis _documentAnalysis;
         private IAnalysisResult _analysisResult;
 
-        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
+        public AnalysisClassifier(IDocumentAnalysis documentAnalysis)
         {
             _analysisResult = documentAnalysis.CurrentResult;
-            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result, rs);
-
-            InitializeClassifierDictonary(typeRegistryService);
+            _documentAnalysis = documentAnalysis;
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
         }
 
 #pragma warning disable CS0067 // disable "The event is never used". It's required by IClassifier
@@ -54,8 +55,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             return classificationSpans;
         }
 
-        private void InitializeClassifierDictonary(IClassificationTypeRegistryService registryService)
+        public void OnDestroy()
         {
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
+        }
+
+        public static void InitializeClassifierDictionary(IClassificationTypeRegistryService registryService)
+        {
+            if (_tokenClassification != null)
+                return;
+
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
                 { RadAsmTokenType.Instruction, registryService.GetClassificationType(RadAsmTokenType.Instruction.GetClassificationTypeName()) },
@@ -68,7 +77,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
         {
             _analysisResult = analysisResult;
 
@@ -83,13 +92,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private readonly IDocumentTokenizer _tokenizer;
         private ITokenizerResult _currentResult;
 
-        public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
+        public TokenizerClassifier(IDocumentTokenizer tokenizer)
         {
             _tokenizer = tokenizer;
-            _tokenizer.TokenizerUpdated += (result, rs, ct) => TokenizerUpdated(result);
-
-            InitializeClassifierDictionary(standardClassificationService);
-            TokenizerUpdated(_tokenizer.CurrentResult);
+            _tokenizer.TokenizerUpdated += TokenizerUpdated;
+            TokenizerUpdated(_tokenizer.CurrentResult, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -110,7 +117,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             }
         }
 
-        private void InitializeClassifierDictionary(IStandardClassificationService typeService)
+        public void OnDestroy()
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
+        }
+
+        public static void InitializeClassifierDictionary(IStandardClassificationService typeService)
         {
             if (_tokenClassification != null)
                 return;
@@ -139,7 +151,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokenizerUpdated(ITokenizerResult result)
+        private void TokenizerUpdated(ITokenizerResult result, CancellationToken ct)
         {
             var tokens = result.UpdatedTokens;
             if (!tokens.Any())

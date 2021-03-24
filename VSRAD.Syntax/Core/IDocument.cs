@@ -1,12 +1,13 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using System;
+using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Core
 {
-    public interface IDocument
+    public interface IDocument : IDisposable
     {
         IDocumentAnalysis DocumentAnalysis { get; }
         IDocumentTokenizer DocumentTokenizer { get; }
-        string Path { get; set; }
+        string Path { get; }
         ITextSnapshot CurrentSnapshot { get; }
         bool IsDisposed { get; }
 

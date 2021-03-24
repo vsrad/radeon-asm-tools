@@ -40,7 +40,7 @@ namespace VSRAD.Syntax.Helpers
             if (persistFileFormat == null)
                 return null;
 
-            persistFileFormat.GetCurFile(out string filePath, out _);
+            persistFileFormat.GetCurFile(out var filePath, out _);
             return filePath;
         }
 

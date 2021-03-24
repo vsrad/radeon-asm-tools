@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using System.Threading;
+using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Options.Instructions;
@@ -7,10 +8,28 @@ namespace VSRAD.Syntax.Core
 {
     internal class CodeDocument : Document
     {
-        public CodeDocument(IInstructionListManager instructionListManager, ITextDocument textDocument, ILexer lexer, IParser parser)
-            : base(textDocument, lexer, parser)
+        private readonly IInstructionListManager _instructionListManager;
+
+        public CodeDocument(ITextDocumentFactoryService textDocumentFactory,
+            IInstructionListManager instructionListManager,
+            ITextDocument textDocument,
+            ILexer lexer, IParser parser, OnDestroyAction onDestroy)
+            : base(textDocumentFactory, textDocument, lexer, parser, onDestroy)
         {
-            instructionListManager.InstructionsUpdated += (s, t) => DocumentTokenizer.Rescan(RescanReason.InstructionsChanged);
+            _instructionListManager = instructionListManager;
+            _instructionListManager.InstructionsUpdated += InstructionsUpdated;
+        }
+
+        private void InstructionsUpdated(IInstructionListManager sender, Helpers.AsmType asmType)
+        {
+            ((IAsmParser)Parser).UpdateInstructions(sender, asmType);
+            DocumentAnalysis.Rescan(RescanReason.InstructionsChanged, CancellationToken.None);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            _instructionListManager.InstructionsUpdated -= InstructionsUpdated;
         }
     }
 }

@@ -30,8 +30,8 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             if (textBuffer == null)
                 throw new ArgumentNullException(nameof(textBuffer));
 
-            return textBuffer.Properties.GetOrCreateSingletonProperty(
-                () => new PeekableItemSource(textBuffer, _serviceProvider.PeekResultFactory, _navigationTokenService));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => 
+                new PeekableItemSource(textBuffer, _serviceProvider.PeekResultFactory, _navigationTokenService) as IPeekableItemSource);
         }
     }
 }

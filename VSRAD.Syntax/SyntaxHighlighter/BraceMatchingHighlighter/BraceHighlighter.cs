@@ -49,10 +49,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
         private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) =>
             UpdateAtCaretPosition(e.NewPosition);
 
-        private void UpdateAtCaretPosition(CaretPosition caretPoisition)
+        private void UpdateAtCaretPosition(CaretPosition caretPosition)
         {
             indentCts.Cancel();
-            SnapshotPoint? point = caretPoisition.Point.GetPoint(_buffer, caretPoisition.Affinity);
+            var point = caretPosition.Point.GetPoint(_buffer, caretPosition.Affinity);
 
             if (!point.HasValue)
                 return;
@@ -78,6 +78,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             }
             catch (Exception)
             {
+                // ignored
             }
         }
 
@@ -240,11 +241,17 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             if (spans.OverlapsWith(new NormalizedSnapshotSpanCollection(currentWord)))
                 yield return new TagSpan<BraceHighlightWordTag>(currentWord, new BraceHighlightWordTag());
 
-            foreach (SnapshotSpan span in NormalizedSnapshotSpanCollection.Overlap(spans, wordSpans))
+            foreach (var span in NormalizedSnapshotSpanCollection.Overlap(spans, wordSpans))
                 yield return new TagSpan<BraceHighlightWordTag>(span, new BraceHighlightWordTag());
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+
+        public void OnDestroy()
+        {
+            _view.Caret.PositionChanged -= CaretPositionChanged;
+            _view.LayoutChanged -= ViewLayoutChanged;
+        }
 
         private enum BracketType
         {

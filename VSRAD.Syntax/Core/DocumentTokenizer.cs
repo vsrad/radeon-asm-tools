@@ -13,6 +13,7 @@ namespace VSRAD.Syntax.Core
     internal class DocumentTokenizer : IDocumentTokenizer
     {
         private readonly TrackingToken.NonOverlappingComparer _comparer;
+        private readonly ITextBuffer _buffer;
         private readonly ILexer _lexer;
         private TokenizerCollection CurrentTokens;
         private CancellationTokenSource _cts;
@@ -22,30 +23,35 @@ namespace VSRAD.Syntax.Core
 
         public ITextSnapshot CurrentSnapshot
         {
-            get { return _comparer.Version; }
-            set { _comparer.Version = value; }
+            get => _comparer.Version;
+            set => _comparer.Version = value;
         }
 
         public DocumentTokenizer(ITextBuffer buffer, ILexer lexer)
         {
+            _buffer = buffer;
             _lexer = lexer;
             _comparer = new TrackingToken.NonOverlappingComparer();
-            CurrentSnapshot = buffer.CurrentSnapshot;
+            CurrentSnapshot = _buffer.CurrentSnapshot;
             _cts = new CancellationTokenSource();
 
             Initialize();
-            buffer.Changed += BufferChanged;
+            _buffer.Changed += BufferChanged;
         }
 
-        private void Initialize() => Rescan(RescanReason.ContentChanged);
+        public void OnDestroy()
+        {
+            _buffer.Changed -= BufferChanged;
+            CurrentTokens.Clear();
+        }
 
-        public void Rescan(RescanReason reason)
+        private void Initialize()
         {
             var initialTextSegment = new[] { CurrentSnapshot.GetText() };
             var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));
 
             CurrentTokens = new TokenizerCollection(lexerTokens, _comparer);
-            RaiseTokensChanged(CurrentTokens.ToList(), reason);
+            RaiseTokensChanged(CurrentTokens.ToList());
         }
 
         public RadAsmTokenType GetTokenType(int type) =>
@@ -88,13 +94,13 @@ namespace VSRAD.Syntax.Core
                 CurrentTokens.Remove(forRemoval[i]);
             foreach (var token in updated)
                 CurrentTokens.Add(token);
-            RaiseTokensChanged(updated, RescanReason.ContentChanged);
+            RaiseTokensChanged(updated);
         }
 
-        private void RaiseTokensChanged(IList<TrackingToken> updated, RescanReason reason)
+        private void RaiseTokensChanged(IList<TrackingToken> updated)
         {
             CurrentResult = new TokenizerResult(CurrentSnapshot, tokens: CurrentTokens, updatedTokens: updated);
-            TokenizerUpdated?.Invoke(CurrentResult, reason, _cts.Token);
+            TokenizerUpdated?.Invoke(CurrentResult, _cts.Token);
         }
 
         private List<TrackingToken> GetInvalidated(ITextSnapshot oldSnapshot, ITextChange change) =>
@@ -196,11 +202,11 @@ namespace VSRAD.Syntax.Core
             public Span OldSpan { get; }
             public int Delta { get; }
 
-            public int LineCountDelta { get { throw new NotImplementedException(); } }
-            public int NewEnd { get { throw new NotImplementedException(); } }
-            public int NewLength { get { throw new NotImplementedException(); } }
-            public int NewPosition { get { throw new NotImplementedException(); } }
-            public Span NewSpan { get { throw new NotImplementedException(); } }
+            public int LineCountDelta => throw new NotImplementedException();
+            public int NewEnd => throw new NotImplementedException();
+            public int NewLength => throw new NotImplementedException();
+            public int NewPosition => throw new NotImplementedException();
+            public Span NewSpan => throw new NotImplementedException();
             public string NewText { get { throw new NotImplementedException(); } }
             public int OldEnd { get { throw new NotImplementedException(); } }
             public int OldLength { get { throw new NotImplementedException(); } }

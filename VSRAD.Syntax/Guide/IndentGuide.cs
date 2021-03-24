@@ -99,8 +99,10 @@ namespace VSRAD.Syntax.Guide
                 CleanupIndentGuidesAsync().ConfigureAwait(false);
         }
 
-        private void CanvasRemoved(object tag, UIElement element) =>
-            _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
+        private void CanvasRemoved(object tag, UIElement element)
+        {
+            // TODO: here is some code
+        }
 
         private void UpdateIndentGuides()
         {

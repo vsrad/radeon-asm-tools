@@ -15,6 +15,7 @@ namespace VSRAD.Syntax.Core
         private readonly IDocument _document;
         private readonly IParser _parser;
         private readonly FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>> _resultsRequests;
+        private readonly IDocumentTokenizer _tokenizer;
 
         public IAnalysisResult CurrentResult { get; private set; }
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
@@ -22,11 +23,12 @@ namespace VSRAD.Syntax.Core
         public DocumentAnalysis(IDocument document, IDocumentTokenizer tokenizer, IParser parser)
         {
             _document = document;
+            _tokenizer = tokenizer;
             _parser = parser;
-            _resultsRequests = new FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(100);
+            _resultsRequests = new FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(10);
 
             tokenizer.TokenizerUpdated += TokenizerUpdated;
-            TokenizerUpdated(tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+            TokenizerUpdated(tokenizer.CurrentResult, CancellationToken.None);
         }
 
         public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
@@ -37,10 +39,25 @@ namespace VSRAD.Syntax.Core
             throw new TaskCanceledException("Buffer changes have not yet been processed");
         }
 
-        private void TokenizerUpdated(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
+        public void Rescan(RescanReason rescanReason, CancellationToken cancellationToken)
+        {
+            if (_tokenizer.CurrentResult == null) return;
+            Rescan(_tokenizer.CurrentResult, rescanReason, cancellationToken);
+        }
+
+        public void OnDestroy()
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
+            _resultsRequests.Clear();
+        }
+
+        private void TokenizerUpdated(ITokenizerResult tokenizerResult, CancellationToken cancellationToken) =>
+            Rescan(tokenizerResult, RescanReason.ContentChanged, cancellationToken);
+
+        private void Rescan(ITokenizerResult tokenizerResult, RescanReason rescanReason, CancellationToken cancellationToken)
         {
             _resultsRequests.AddValue(tokenizerResult.Snapshot,
-                () => RunAnalysisAsync(tokenizerResult, reason, cancellationToken));
+                () => RunAnalysisAsync(tokenizerResult, rescanReason, cancellationToken));
         }
 
         private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)

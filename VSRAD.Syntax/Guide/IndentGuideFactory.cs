@@ -28,9 +28,7 @@ namespace VSRAD.Syntax.Guide
 
         private void OnDocumentRemove(IDocument document)
         {
-            if (!_guidesDictionary.TryGetValue(document, out var guide))
-                return;
-
+            if (!_guidesDictionary.TryGetValue(document, out var guide)) return;
             guide.OnDestroy();
             _guidesDictionary.Remove(document);
         }
@@ -47,7 +45,6 @@ namespace VSRAD.Syntax.Guide
             if (document == null) return;
 
             var guide = new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider);
-            textView.Properties.AddProperty(typeof(IndentGuide), guide);
             _guidesDictionary.Add(document, guide);
         }
     }

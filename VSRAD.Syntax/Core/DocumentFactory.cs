@@ -34,7 +34,6 @@ namespace VSRAD.Syntax.Core
             _documents = new Dictionary<string, KeyValuePair<ITextDocument, IDocument>>();
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
-            _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += TextDocumentDisposed;
 
             var dte = _serviceProvider.ServiceProvider.GetService(typeof(DTE)) as DTE;
             dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
@@ -56,22 +55,21 @@ namespace VSRAD.Syntax.Core
                 .TextDocumentFactoryService
                 .CreateAndLoadTextDocument(path, contentType);
 
-            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(this, textDocument, lexer, parser));
+            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(_serviceProvider.TextDocumentFactoryService, this, textDocument, lexer, parser, OnDocumentDestroy));
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
         {
-            if (buffer.Properties.TryGetProperty(typeof(IDocument), out IDocument document))
-                return document;
-
             if (!buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument))
                 return null;
+            if (_documents.TryGetValue(textDocument.FilePath, out var documentPair) && textDocument == documentPair.Key)
+                return documentPair.Value;
 
+            IDocument document;
             var factory = GetDocumentFactory(textDocument);
             if (factory == null) return null;
 
-            if (_documents.TryGetValue(textDocument.FilePath, out var documentPair)
-                && documentPair.Value is InvisibleDocument invisibleDocument)
+            if ( documentPair.Value is InvisibleDocument invisibleDocument)
             {
                 document = invisibleDocument.ToVisibleDocument(factory);
                 ObserveDocument(document, textDocument);
@@ -92,9 +90,9 @@ namespace VSRAD.Syntax.Core
             {
                 case AsmType.RadAsm:
                 case AsmType.RadAsm2:
-                    return (lexer, parser) => new CodeDocument(_instructionManager.Value, document, lexer, parser);
+                    return (lexer, parser) => new CodeDocument(_serviceProvider.TextDocumentFactoryService, _instructionManager.Value, document, lexer, parser, OnDocumentDestroy);
                 case AsmType.RadAsmDoc:
-                    return (lexer, parser) => new Document(document, lexer, parser);
+                    return (lexer, parser) => new Document(_serviceProvider.TextDocumentFactoryService, document, lexer, parser, OnDocumentDestroy);
                 default:
                     return null;
             }
@@ -114,37 +112,34 @@ namespace VSRAD.Syntax.Core
         private void ObserveDocument(IDocument document, ITextDocument textDocument)
         {
             textDocument.FileActionOccurred += TextDocumentActionOccurred;
-            textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
-
             _documents.Add(document.Path, new KeyValuePair<ITextDocument, IDocument>(textDocument, document));
         }
 
         private void TextDocumentActionOccurred(object sender, TextDocumentFileActionEventArgs e)
         {
-            if (e.FileActionType == FileActionTypes.DocumentRenamed)
+            if (e.FileActionType != FileActionTypes.DocumentRenamed)
+                return;
+
+            foreach (var path in _documents.Keys)
             {
-                foreach (var path in _documents.Keys)
-                {
-                    var documentPair = _documents[path];
-                    if (documentPair.Key.Equals(sender))
-                    {
-                        documentPair.Value.Path = e.FilePath;
-                        _documents[e.FilePath] = documentPair;
-                        _documents.Remove(path);
-                        break;
-                    }
-                }
+                var documentPair = _documents[path];
+                if (!documentPair.Key.Equals(sender)) 
+                    continue;
+
+                _documents[e.FilePath] = documentPair;
+                _documents.Remove(path);
+                break;
             }
         }
 
-        private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
+        private void OnDocumentDestroy(IDocument document)
         {
-            if (_documents.TryGetValue(e.TextDocument.FilePath, out var documentPair))
-            {
-                e.TextDocument.FileActionOccurred -= TextDocumentActionOccurred;
-                DocumentDisposed?.Invoke(documentPair.Value);
-                _documents.Remove(e.TextDocument.FilePath);
-            }
+            if (!_documents.TryGetValue(document.Path, out var documentPair)) 
+                return;
+
+            documentPair.Key.FileActionOccurred -= TextDocumentActionOccurred;
+            _documents.Remove(document.Path);
+            DocumentDisposed?.Invoke(document);
         }
 
         private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)

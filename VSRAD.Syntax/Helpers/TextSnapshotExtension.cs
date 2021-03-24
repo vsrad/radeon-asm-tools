@@ -1,7 +1,9 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using System;
+using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Helpers
 {
+    [Flags]
     public enum AsmType
     {
         RadAsm = 1,

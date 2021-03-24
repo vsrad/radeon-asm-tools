@@ -10,6 +10,9 @@ namespace VSRAD.Syntax.Core
     {
         IAnalysisResult CurrentResult { get; }
         Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot);
+        void Rescan(RescanReason rescanReason, CancellationToken cancellationToken);
+        void OnDestroy();
+
 
         event AnalysisUpdatedEventHandler AnalysisUpdated;
     }

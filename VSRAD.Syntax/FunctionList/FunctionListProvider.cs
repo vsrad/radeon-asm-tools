@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
@@ -23,6 +24,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
+        private readonly Dictionary<IDocument, ITextView> _documentTextViews;
         private IAnalysisResult _lastResult;
 
         private static FunctionListProvider _instance;
@@ -34,8 +36,8 @@ namespace VSRAD.Syntax.FunctionList
             _editorAdaptersFactoryService = serviceProvider.EditorAdaptersFactoryService;
             _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
+            _documentTextViews = new Dictionary<IDocument, ITextView>();
 
-            _documentFactory.DocumentCreated += DocumentCreated;
             _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
             _instance = this;
@@ -46,34 +48,30 @@ namespace VSRAD.Syntax.FunctionList
             var textView = _editorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
             if (textView == null) return;
 
-            textView.Caret.PositionChanged += (sender, e) => CaretPositionChanged(e.NewPosition.BufferPosition);
-
             if (TryGetDocument(textView.TextBuffer, out var document))
-                AssignDocumentToFunctionList(document);
-
+                AssignDocumentToFunctionList(textView, document);
         }
 
-        private void CaretPositionChanged(SnapshotPoint point)
+        private void CaretOnPositionChanged(object sender, CaretPositionChangedEventArgs e)
         {
             if (_functionListControl == null) return;
+            var point = e.NewPosition.BufferPosition;
 
-            if (TryGetDocument(point.Snapshot.TextBuffer, out var document))
+            if (!TryGetDocument(point.Snapshot.TextBuffer, out var document)) return;
+            ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
-                ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
-                {
-                    var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
-                    var functionBlock = analysisResult.TryGetFunctionBlock(point);
+                var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
+                var functionBlock = analysisResult.TryGetFunctionBlock(point);
 
-                    if (functionBlock != null)
-                    {
-                        _functionListControl.HighlightItemAtLine(functionBlock.Name.Span.Start.GetContainingLine().LineNumber + 1);
-                    }
-                    else
-                    {
-                        _functionListControl.ClearHighlightItem();
-                    }
-                });
-            }
+                if (functionBlock != null)
+                {
+                    _functionListControl.HighlightItemAtLine(functionBlock.Name.Span.Start.GetContainingLine().LineNumber + 1);
+                }
+                else
+                {
+                    _functionListControl.ClearHighlightItem();
+                }
+            });
         }
 
         private bool TryGetDocument(ITextBuffer textBuffer, out IDocument document)
@@ -83,20 +81,30 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         #region update function list
-        private void AssignDocumentToFunctionList(IDocument document)
+        private void AssignDocumentToFunctionList(ITextView textView, IDocument document)
         {
+            _documentTextViews.Add(document, textView);
             if (!document.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
             {
                 document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
                 document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
             }
+            textView.Caret.PositionChanged += CaretOnPositionChanged;
             ActiveDocumentChanged(document);
         }
 
-        private void DocumentCreated(IDocument document) => AssignDocumentToFunctionList(document);
+        private void DocumentDisposed(IDocument document)
+        {
+            if (!_documentTextViews.TryGetValue(document, out var textView)) return;
 
-        private void DocumentDisposed(IDocument document) =>
             document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
+            document.CurrentSnapshot.TextBuffer.Properties.RemoveProperty(typeof(FunctionListWindow));
+            textView.Caret.PositionChanged -= CaretOnPositionChanged;
+            if (_lastResult.Snapshot.TextBuffer == document.CurrentSnapshot.TextBuffer)
+                ClearFunctionList();
+
+            _documentTextViews.Remove(document);
+        }
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
@@ -114,7 +122,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ClearFunctionList()
         {
-            _functionListControl.ClearList();
+            _functionListControl?.ClearList();
             _lastResult = null;
         }
 

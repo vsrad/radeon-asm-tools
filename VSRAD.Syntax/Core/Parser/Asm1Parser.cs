@@ -14,10 +14,11 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal class Asm1Parser : AbstractCodeParser
     {
-        protected override AsmType AsmType => AsmType.RadAsm;
-
-        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager) { }
+        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
+            : base(documentFactory, instructionListManager)
+        {
+            AsmType = AsmType.RadAsm;
+        }
 
         public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
