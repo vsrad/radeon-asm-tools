@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace VSRAD.DebugServer
+namespace VSRAD.DebugServer.SharedUtils
 {
     public readonly struct FileMetadata : IEquatable<FileMetadata>
     {
