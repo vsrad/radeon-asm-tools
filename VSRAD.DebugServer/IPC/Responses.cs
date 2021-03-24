@@ -14,7 +14,8 @@ namespace VSRAD.DebugServer.IPC.Responses
         EnvironmentVariablesListed = 3,
         PutFile = 4,
         PutDirectory = 5,
-        ListFiles = 6
+        ListFiles = 6,
+        GetFiles = 7
     }
 #pragma warning restore CA1028
 
@@ -37,6 +38,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
                 case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
+                case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -53,6 +55,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case PutFileResponse _: type = ResponseType.PutFile; break;
                 case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
+                case GetFilesResponse _: type = ResponseType.GetFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -237,6 +240,31 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
+    public sealed class GetFilesResponse : IResponse
+    {
+        public GetFilesStatus Status { get; set; }
+        public byte[] ZipData { get; set; } = Array.Empty<byte>();
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "GetFilesResponse",
+            $"Status = {Status}",
+            $"ZipData = <{ZipData.Length} bytes>",
+        });
+
+        public static GetFilesResponse Deserialize(IPCReader reader) => new GetFilesResponse
+        {
+            Status = (GetFilesStatus)reader.ReadByte(),
+            ZipData = reader.ReadLengthPrefixedBlob()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+            writer.WriteLengthPrefixedBlob(ZipData);
+        }
+    }
+
     public sealed class EnvironmentVariablesListed : IResponse
     {
         public IReadOnlyDictionary<string, string> Variables { get; set; }
@@ -284,6 +312,14 @@ namespace VSRAD.DebugServer.IPC.Responses
         TargetPathIsFile = 2,
         ArchiveContainsPathOutsideTarget = 3,
         OtherIOError = 4
+    }
+
+    public enum GetFilesStatus : byte
+    {
+        Successful = 0,
+        FileNotFound = 1,
+        PermissionDenied = 2,
+        OtherIOError = 3
     }
 #pragma warning restore CA1028
 }
