@@ -95,20 +95,6 @@ namespace VSRAD.Package.Options
             return options;
         }
 
-        public static ProjectOptions ReadLegacy(string path)
-        {
-            try
-            {
-                var legacyJson = JObject.Parse(File.ReadAllText(path));
-                return LegacyProfileImporter.ReadProjectOptions(legacyJson);
-            }
-            catch (Exception e)
-            {
-                Errors.ShowWarning($"A legacy project options file was found but could not be converted: {e.Message}\r\nYou can transfer your configuration manually from {path}");
-                return new ProjectOptions();
-            }
-        }
-
         public void Write(string visualConfigPath, string profilesConfigPath)
         {
             var serializedOptions = JsonConvert.SerializeObject(this, Formatting.Indented);
