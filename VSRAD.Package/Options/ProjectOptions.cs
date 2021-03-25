@@ -75,20 +75,34 @@ namespace VSRAD.Package.Options
         public static ProjectOptions Read(string visualizerOptionsPath, string profilesOptionsPath)
         {
             ProjectOptions options = null;
+            // Handle options and profiles loading in separate try blocks since we want them
+            // to load indepentently, i.e use default configs if corresponding file is missing
+            // in each case without affecting one another
             try
             {
                 var optionsJson = JObject.Parse(File.ReadAllText(visualizerOptionsPath));
                 options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
-                var profiles = ProfileTransferManager.Import(profilesOptionsPath);
-                options.SetProfiles(profiles, options.ActiveProfile);
             }
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)
             {
                 Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
             }
+
             if (options == null) // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
                 options = new ProjectOptions();
+
+            try
+            {
+                var profiles = ProfileTransferManager.Import(profilesOptionsPath);
+                options?.SetProfiles(profiles, options.ActiveProfile);
+            }
+            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
+            catch (Exception e)
+            {
+                Errors.ShowWarning($"An error has occurred while loading the profiles: {e.Message}\r\nProceeding with defaults.");
+            }
+
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
