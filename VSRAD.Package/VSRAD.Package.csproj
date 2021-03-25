@@ -215,8 +215,6 @@
     <Compile Include="ProjectSystem\Profiles\ExtendedTreeView.xaml.cs">
       <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ProjectSystem\Profiles\LegacyProfileImporter.cs" />
-    <Compile Include="ProjectSystem\Profiles\LegacyProfileOptionsMigrator.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\Profiles\TargetHostsEditor.xaml.cs">
       <DependentUpon>TargetHostsEditor.xaml</DependentUpon>

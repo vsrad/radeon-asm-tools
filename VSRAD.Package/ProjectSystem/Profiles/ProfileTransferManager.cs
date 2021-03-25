@@ -12,10 +12,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public static Dictionary<string, ProfileOptions> Import(string path)
         {
             var json = JObject.Parse(File.ReadAllText(path));
-
-            if (json.Properties().First().Value is JObject firstProfile && firstProfile.ContainsKey("Preprocessor"))
-                return LegacyProfileImporter.ReadProfiles(json);
-
             return json.ToObject<Dictionary<string, ProfileOptions>>();
         }
 
