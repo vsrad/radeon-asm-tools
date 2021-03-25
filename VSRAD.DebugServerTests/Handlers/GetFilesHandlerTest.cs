@@ -38,7 +38,7 @@ namespace VSRAD.DebugServerTests.Handlers
 
             Assert.Equal(GetFilesStatus.Successful, response.Status);
 
-            var items = ReadZipItems(response.ZipData).ToArray();
+            var items = ZipUtils.ReadZipItems(response.ZipData).ToArray();
             Assert.Equal(3, items.Length);
 
             Assert.Equal("k/s", items[0].Path);
@@ -80,20 +80,6 @@ namespace VSRAD.DebugServerTests.Handlers
                 RootPath = new[] { tmpPath }
             });
             Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
-        }
-
-        private static IEnumerable<(string Path, byte[] Data, DateTime LastWriteTimeUtc)> ReadZipItems(byte[] zipBytes)
-        {
-            using var stream = new MemoryStream(zipBytes);
-            using var archive = new ZipArchive(stream);
-
-            foreach (var e in archive.Entries)
-            {
-                using var s = new MemoryStream();
-                using var dataStream = e.Open();
-                dataStream.CopyTo(s);
-                yield return (e.FullName, s.ToArray(), e.LastWriteTime.UtcDateTime);
-            }
         }
     }
 }
