@@ -22,7 +22,7 @@ namespace VSRAD.DebugServer.Handlers
             {
                 return Task.FromResult<IResponse>(new MetadataFetched { Status = FetchStatus.FileNotFound });
             }
-            var timestamp = File.GetLastWriteTime(FilePath).ToUniversalTime();
+            var timestamp = File.GetLastWriteTimeUtc(FilePath);
             return Task.FromResult<IResponse>(new MetadataFetched
             {
                 Status = FetchStatus.Successful,

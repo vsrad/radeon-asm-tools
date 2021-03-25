@@ -30,8 +30,13 @@ namespace VSRAD.DebugServer.IPC
             }
         }
 
-        public void Write(DateTime timestamp) =>
+        public void Write(DateTime timestamp)
+        {
+            if (timestamp != default && timestamp.Kind != DateTimeKind.Utc)
+                throw new ArgumentException("Attempting to serialize a non-UTC DateTime", nameof(timestamp));
+
             Write(timestamp.ToBinary());
+        }
 
         public new void Write7BitEncodedInt(int value) =>
             base.Write7BitEncodedInt(value);
