@@ -111,6 +111,10 @@ namespace VSRAD.Package.Options
             }
             catch (UnauthorizedAccessException)
             {
+                if (File.ReadAllText(destPath) == contents) return; // We don't want to show the warning if config haven't changed
+                                                                    // However, it's cheaper for us to rewrite the whole file than
+                                                                    // to read it's contents to do this check, so we are doing it
+                                                                    // only in case if the file is read-only to avoid extra warning
                 DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {destPath} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
                 if (res == DialogResult.OK)
                 {
