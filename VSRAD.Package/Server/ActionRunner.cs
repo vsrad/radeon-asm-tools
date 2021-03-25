@@ -84,14 +84,14 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                sourceFiles = FileMetadata.GetMetadataForPath(Path.Combine(_environment.LocalWorkDir, step.SourcePath), step.IncludeSubdirectories);
+                if (!TryGetMetadataForLocalPath(step.SourcePath, step.IncludeSubdirectories, out sourceFiles, out var error))
+                    return new StepResult(false, error, "");
             }
             if (sourceFiles.Count == 0)
             {
                 var cwd = step.Direction == FileCopyDirection.RemoteToLocal ? _environment.RemoteWorkDir : _environment.LocalWorkDir;
-                return new StepResult(true, $"No files were found at \"{step.SourcePath}\"\r\nWorking directory: \"{cwd}\"", "");
+                return new StepResult(false, $"Path \"{step.SourcePath}\" does not exist\r\nWorking directory: \"{cwd}\"", "");
             }
-
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 var command = new ListFilesCommand { Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
@@ -100,7 +100,8 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                targetFiles = FileMetadata.GetMetadataForPath(Path.Combine(_environment.LocalWorkDir, step.TargetPath), step.IncludeSubdirectories);
+                if (!TryGetMetadataForLocalPath(step.TargetPath, step.IncludeSubdirectories, out targetFiles, out var error))
+                    return new StepResult(false, error, "");
             }
 
             /* Copying a single file */
@@ -108,6 +109,9 @@ namespace VSRAD.Package.Server
             {
                 if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
                     return new StepResult(false, $"File \"{step.SourcePath}\" cannot be copied: the target path is a directory.", "");
+
+                if (step.CheckTimestamp && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
+                    return new StepResult(false, "File was not changed after executing the previous steps. Disable Check Timestamp in step options to skip the modification date check.", "");
 
                 if (step.SkipIfSame
                     && targetFiles.Count == 1
@@ -194,8 +198,8 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                var fullPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
-
+                if (!TryGetFullLocalPath(step.TargetPath, out var fullPath, out var error))
+                    return new StepResult(false, error, "");
                 if (File.Exists(fullPath))
                     return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine: the target path is a file.", "");
 
@@ -220,23 +224,17 @@ namespace VSRAD.Package.Server
         {
             byte[] sourceContents;
             /* Read source file */
-            var initTimestamp = GetInitialFileTimestamp(step.SourcePath);
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
-                if (step.CheckTimestamp && initTimestamp == response.Timestamp)
-                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
                 sourceContents = response.Data;
             }
-            else
+            else if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
             {
-                if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
-                    return new StepResult(false, error, "");
-                if (step.CheckTimestamp && initTimestamp == GetLocalFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is not changed at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                return new StepResult(false, error, "");
             }
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
@@ -250,19 +248,17 @@ namespace VSRAD.Package.Server
             }
             else
             {
+                if (!TryGetFullLocalPath(step.TargetPath, out var localPath, out var error))
+                    return new StepResult(false, error, "");
+
                 try
                 {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                     Directory.CreateDirectory(Path.GetDirectoryName(localPath));
                     File.WriteAllBytes(localPath, sourceContents);
                 }
                 catch (UnauthorizedAccessException)
                 {
                     return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
             }
 
@@ -406,7 +402,7 @@ namespace VSRAD.Package.Server
                 else
                 {
                     var fullPath = new[] { _environment.LocalWorkDir, path };
-                    var timestamp = GetLocalFileTimestamp(path);
+                    var timestamp = GetLocalFileLastWriteTimeUtc(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
 
@@ -442,7 +438,7 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                if (checkTimestamp && GetLocalFileTimestamp(path) == initTimestamp)
+                if (checkTimestamp && GetLocalFileLastWriteTimeUtc(path) == initTimestamp)
                     return new Error($"{type} file ({path}) was not modified.");
                 if (!ReadLocalFile(path, out var data, out var error))
                     return new Error($"{type} file could not be opened. {error}");
@@ -452,10 +448,14 @@ namespace VSRAD.Package.Server
 
         private bool ReadLocalFile(string path, out byte[] data, out string error, int byteOffset = 0)
         {
+            if (!TryGetFullLocalPath(path, out var fullPath, out error))
+            {
+                data = null;
+                return false;
+            }
             try
             {
-                var localPath = Path.Combine(_environment.LocalWorkDir, path);
-                using (var stream = new FileStream(localPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
+                using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
                 {
                     stream.Seek(byteOffset, SeekOrigin.Begin);
 
@@ -481,10 +481,6 @@ namespace VSRAD.Package.Server
             {
                 error = $"Access to path {path} on the local machine is denied";
             }
-            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-            {
-                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
-            }
             data = null;
             return false;
         }
@@ -499,7 +495,7 @@ namespace VSRAD.Package.Server
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                             new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
                     else
-                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
+                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
                 else if (step is ReadDebugDataStep readDebugData)
                 {
@@ -512,22 +508,51 @@ namespace VSRAD.Package.Server
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                                 new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, file.Path } })).Timestamp;
                         else
-                            _initialTimestamps[file.Path] = GetLocalFileTimestamp(file.Path);
+                            _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }
                 }
             }
         }
 
-        private DateTime GetLocalFileTimestamp(string file)
+        private DateTime GetLocalFileLastWriteTimeUtc(string file)
         {
             try
             {
                 var localPath = Path.Combine(_environment.LocalWorkDir, file);
-                return File.GetLastWriteTime(localPath);
+                return File.GetLastWriteTimeUtc(localPath);
             }
             catch
             {
                 return default;
+            }
+        }
+
+        private bool TryGetMetadataForLocalPath(string path, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
+        {
+            if (!TryGetFullLocalPath(path, out var localPath, out error))
+            {
+                metadata = null;
+                return false;
+            }
+
+            // TODO: try-catch for IO errors
+            metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
+            return true;
+        }
+
+        private bool TryGetFullLocalPath(string path, out string fullPath, out string error)
+        {
+            try
+            {
+                error = "";
+                fullPath = Path.Combine(_environment.LocalWorkDir, path);
+                return true;
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+                fullPath = null;
+                return false;
             }
         }
     }
