@@ -223,7 +223,7 @@ namespace VSRAD.DebugServer.IPC.Responses
             var length = reader.Read7BitEncodedInt();
             var files = new FileMetadata[length];
             for (int i = 0; i < length; ++i)
-                files[i] = new FileMetadata(reader.ReadString(), reader.ReadBoolean(), reader.ReadInt64(), reader.ReadDateTime());
+                files[i] = new FileMetadata(reader.ReadString(), reader.ReadInt64(), reader.ReadDateTime());
             return new ListFilesResponse { Files = files };
         }
 
@@ -233,7 +233,6 @@ namespace VSRAD.DebugServer.IPC.Responses
             foreach (var file in Files)
             {
                 writer.Write(file.RelativePath);
-                writer.Write(file.IsDirectory);
                 writer.Write(file.Size);
                 writer.Write(file.LastWriteTimeUtc);
             }
