@@ -81,7 +81,7 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                sourceFiles = FileMetadata.GetMetadataForTree(Path.Combine(_environment.LocalWorkDir, step.SourcePath));
+                sourceFiles = FileMetadata.GetMetadataForPath(Path.Combine(_environment.LocalWorkDir, step.SourcePath), step.IncludeSubdirectories);
             }
             if (sourceFiles.Count == 0)
             {
@@ -97,7 +97,7 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                targetFiles = FileMetadata.GetMetadataForTree(Path.Combine(_environment.LocalWorkDir, step.TargetPath));
+                targetFiles = FileMetadata.GetMetadataForPath(Path.Combine(_environment.LocalWorkDir, step.TargetPath), step.IncludeSubdirectories);
             }
 
             /* Copying a single file */

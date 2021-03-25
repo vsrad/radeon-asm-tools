@@ -253,22 +253,27 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string WorkDir { get; set; }
 
+        public bool IncludeSubdirectories { get; set; }
+
         public override string ToString() => string.Join(Environment.NewLine, new[] {
             "ListFilesCommand",
             $"Path = {Path}",
-            $"WorkDir = {WorkDir}"
+            $"WorkDir = {WorkDir}",
+            $"IncludeSubdirectories = {IncludeSubdirectories}"
         });
 
         public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
         {
             Path = reader.ReadString(),
-            WorkDir = reader.ReadString()
+            WorkDir = reader.ReadString(),
+            IncludeSubdirectories = reader.ReadBoolean()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write(Path);
             writer.Write(WorkDir);
+            writer.Write(IncludeSubdirectories);
         }
     }
 

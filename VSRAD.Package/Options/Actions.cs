@@ -65,6 +65,9 @@ namespace VSRAD.Package.Options
         private bool _preserveTimestamp;
         public bool PreserveTimestamp { get => _preserveTimestamp; set => SetField(ref _preserveTimestamp, value); }
 
+        private bool _includeSubdirectories;
+        public bool IncludeSubdirectories { get => _includeSubdirectories; set => SetField(ref _includeSubdirectories, value); }
+
         private bool _useCompression;
         public bool UseCompression { get => _useCompression; set => SetField(ref _useCompression, value); }
 
@@ -87,6 +90,7 @@ namespace VSRAD.Package.Options
             CheckTimestamp == step.CheckTimestamp &&
             SkipIfSame == step.SkipIfSame &&
             PreserveTimestamp == step.PreserveTimestamp &&
+            IncludeSubdirectories == step.IncludeSubdirectories &&
             UseCompression == step.UseCompression;
 
         public override int GetHashCode() => 1;
@@ -120,6 +124,7 @@ namespace VSRAD.Package.Options
                 CheckTimestamp = CheckTimestamp,
                 SkipIfSame = SkipIfSame,
                 PreserveTimestamp = PreserveTimestamp,
+                IncludeSubdirectories = IncludeSubdirectories,
                 UseCompression = UseCompression
             };
         }
