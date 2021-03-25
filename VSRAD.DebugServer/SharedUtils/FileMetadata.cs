@@ -11,7 +11,7 @@ namespace VSRAD.DebugServer.SharedUtils
         /// this matches the behavior of zip archives used in <see cref="IPC.Commands.GetFilesCommand"/> and <see cref="IPC.Commands.PutDirectoryCommand"/>.
         /// </summary>
         public string RelativePath { get; }
-        public bool IsDirectory => RelativePath.EndsWith("/");
+        public bool IsDirectory => RelativePath.EndsWith("/", StringComparison.Ordinal);
         public long Size { get; }
         public DateTime LastWriteTimeUtc { get; }
 

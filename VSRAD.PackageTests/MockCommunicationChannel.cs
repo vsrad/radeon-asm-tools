@@ -43,6 +43,15 @@ namespace VSRAD.PackageTests
             _mock
                 .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>()))
                 .Returns<ICommand>((c) => Task.FromResult((PutFileResponse)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<PutDirectoryResponse>(It.IsAny<PutDirectoryCommand>()))
+                .Returns<ICommand>((c) => Task.FromResult((PutDirectoryResponse)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<ListFilesResponse>(It.IsAny<ListFilesCommand>()))
+                .Returns<ICommand>((c) => Task.FromResult((ListFilesResponse)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<GetFilesResponse>(It.IsAny<GetFilesCommand>()))
+                .Returns<ICommand>((c) => Task.FromResult((GetFilesResponse)HandleCommand(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)
