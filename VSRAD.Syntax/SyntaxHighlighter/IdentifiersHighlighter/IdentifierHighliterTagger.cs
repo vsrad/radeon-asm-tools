@@ -22,7 +22,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
         public ReferenceHighlightWordTag() : base(PredefinedMarkerFormatNames.ReferenceIdentifier) { }
     }
 
-    internal class HighlightWordTagger : ITagger<TextMarkerTag>
+    internal class HighlightWordTagger : ITagger<TextMarkerTag>, ISyntaxDisposable
     {
         private readonly object updateLock = new object();
         private readonly ITextView _view;
@@ -180,7 +180,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
                 yield return new TagSpan<DefinitionHighlightWordTag>(navigationWordSpans.Value, new DefinitionHighlightWordTag());
         }
 
-        public void OnDestroy()
+        public void OnDispose()
         {
             _view.Caret.PositionChanged -= CaretPositionChanged;
             _view.LayoutChanged -= ViewLayoutChanged;

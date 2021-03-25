@@ -18,7 +18,7 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Guide
 {
-    internal sealed class IndentGuide
+    internal sealed class IndentGuide : ISyntaxDisposable
     {
         private readonly IWpfTextView _textView;
         private readonly OptionsProvider _options;
@@ -214,7 +214,7 @@ namespace VSRAD.Syntax.Guide
             }
         }
 
-        public void OnDestroy()
+        public void OnDispose()
         {
             _textView.LayoutChanged -= LayoutChanged;
             _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;

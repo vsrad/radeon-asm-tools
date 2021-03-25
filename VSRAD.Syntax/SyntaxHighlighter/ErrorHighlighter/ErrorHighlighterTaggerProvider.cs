@@ -42,9 +42,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
         {
-            if (textView.TextBuffer != buffer)
-                return null;
-
+            if (textView.TextBuffer != buffer) return null;
             return new ErrorHighlighterTagger(this, textView, buffer) as ITagger<T>;
         }
     }

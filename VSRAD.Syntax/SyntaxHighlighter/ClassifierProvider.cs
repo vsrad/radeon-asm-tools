@@ -1,19 +1,18 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.Composition;
+﻿using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
     [Export(typeof(IClassifierProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
-    internal class AnalysisClassifierProvider : IClassifierProvider
+    internal class AnalysisClassifierProvider : DisposableProvider<IDocument, AnalysisClassifier>, IClassifierProvider
     {
-        private readonly Dictionary<IDocument, AnalysisClassifier> _analysisClassifiers;
         private readonly IDocumentFactory _documentFactory;
 
         [ImportingConstructor]
@@ -23,68 +22,42 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             ThemeColorManager classificationColorManager)
         {
             AnalysisClassifier.InitializeClassifierDictionary(classificationTypeRegistryService);
-            _analysisClassifiers = new Dictionary<IDocument, AnalysisClassifier>();
             _documentFactory = documentFactory;
 
-            _documentFactory.DocumentDisposed += DocumentDisposed;
+            _documentFactory.DocumentDisposed += DisposeRequest;
             Microsoft.VisualStudio.PlatformUI.VSColorTheme.ThemeChanged += (e) => classificationColorManager.UpdateColors();
-        }
-
-        private void DocumentDisposed(IDocument document)
-        {
-            if (!_analysisClassifiers.TryGetValue(document, out var analysis)) return;
-            analysis.OnDestroy();
-            _analysisClassifiers.Remove(document);
         }
 
         public IClassifier GetClassifier(ITextBuffer textBuffer)
         {
             var document = _documentFactory.GetOrCreateDocument(textBuffer);
-            if (!_analysisClassifiers.TryGetValue(document, out var analysisClassifier))
-            {
-                analysisClassifier = new AnalysisClassifier(document.DocumentAnalysis);
-                _analysisClassifiers.Add(document, analysisClassifier);
-            }
-            
-            return analysisClassifier;
+            if (document == null) return null;
+
+            return GetValue(document, () => new AnalysisClassifier(document.DocumentAnalysis));
         }
     }
 
     [Export(typeof(ITaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TagType(typeof(ClassificationTag))]
-    internal class TokenizerClassifierProvider : ITaggerProvider
+    internal class TokenizerClassifierProvider : DisposableProvider<IDocument, TokenizerClassifier>, ITaggerProvider
     {
         private readonly IDocumentFactory _documentFactory;
-        private readonly Dictionary<IDocument, TokenizerClassifier> _tokenizerClassifiers;
 
         [ImportingConstructor]
         public TokenizerClassifierProvider(IStandardClassificationService classificationService, IDocumentFactory documentFactory)
         {
             TokenizerClassifier.InitializeClassifierDictionary(classificationService);
-            _tokenizerClassifiers = new Dictionary<IDocument, TokenizerClassifier>();
             _documentFactory = documentFactory;
-
-            _documentFactory.DocumentDisposed += DocumentDisposed;
-        }
-
-        private void DocumentDisposed(IDocument document)
-        {
-            if (!_tokenizerClassifiers.TryGetValue(document, out var tokenizer)) return;
-            tokenizer.OnDestroy();
-            _tokenizerClassifiers.Remove(document);
+            _documentFactory.DocumentDisposed += DisposeRequest;
         }
 
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            if (!_tokenizerClassifiers.TryGetValue(document, out var tokenizerClassifier))
-            {
-                tokenizerClassifier = new TokenizerClassifier(document.DocumentTokenizer);
-                _tokenizerClassifiers.Add(document, tokenizerClassifier);
-            }
-            
-            return tokenizerClassifier as ITagger<T>;
+            if (document == null) return null;
+
+            return GetValue(document, () => new TokenizerClassifier(document.DocumentTokenizer)) as ITagger<T>;
         }
     }
 }

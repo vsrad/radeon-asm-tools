@@ -9,10 +9,11 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class AnalysisClassifier : IClassifier
+    internal class AnalysisClassifier : IClassifier, ISyntaxDisposable
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentAnalysis _documentAnalysis;
@@ -55,7 +56,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             return classificationSpans;
         }
 
-        public void OnDestroy()
+        public void OnDispose()
         {
             _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
         }
@@ -86,7 +87,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         }
     }
 
-    internal class TokenizerClassifier : ITagger<ClassificationTag>
+    internal class TokenizerClassifier : ITagger<ClassificationTag>, ISyntaxDisposable
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentTokenizer _tokenizer;
@@ -117,7 +118,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             }
         }
 
-        public void OnDestroy()
+        public void OnDispose()
         {
             _tokenizer.TokenizerUpdated -= TokenizerUpdated;
         }

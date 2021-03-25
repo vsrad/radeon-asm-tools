@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
@@ -15,7 +16,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
         public BraceHighlightWordTag() : base(PredefinedMarkerFormatNames.BraceMatching) { }
     }
 
-    internal class BraceHighlighter : ITagger<TextMarkerTag>
+    internal class BraceHighlighter : ITagger<TextMarkerTag>, ISyntaxDisposable
     {
         private readonly object updateLock = new object();
         private readonly ITextView _view;
@@ -247,7 +248,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
-        public void OnDestroy()
+        public void OnDispose()
         {
             _view.Caret.PositionChanged -= CaretPositionChanged;
             _view.LayoutChanged -= ViewLayoutChanged;

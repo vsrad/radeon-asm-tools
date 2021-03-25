@@ -1,36 +1,26 @@
-﻿using System.Collections.Generic;
-using Microsoft.VisualStudio.Text.Editor;
+﻿using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Guide
 {
     [Export(typeof(IWpfTextViewCreationListener))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TextViewRole(PredefinedTextViewRoles.Document)]
-    internal sealed class IndentGuideFactory : IWpfTextViewCreationListener
+    internal sealed class IndentGuideFactory : DisposableProvider<IDocument, IndentGuide>, IWpfTextViewCreationListener
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly OptionsProvider _optionsProvider;
-        private readonly Dictionary<IDocument, IndentGuide> _guidesDictionary;
 
         [ImportingConstructor]
         public IndentGuideFactory(IDocumentFactory documentFactory, OptionsProvider optionsProvider)
         {
             _documentFactory = documentFactory;
             _optionsProvider = optionsProvider;
-            _guidesDictionary = new Dictionary<IDocument, IndentGuide>();
-
-            _documentFactory.DocumentDisposed += OnDocumentRemove;
-        }
-
-        private void OnDocumentRemove(IDocument document)
-        {
-            if (!_guidesDictionary.TryGetValue(document, out var guide)) return;
-            guide.OnDestroy();
-            _guidesDictionary.Remove(document);
+            _documentFactory.DocumentDisposed += DisposeRequest;
         }
 
         [Export(typeof(AdornmentLayerDefinition))]
@@ -44,8 +34,7 @@ namespace VSRAD.Syntax.Guide
             var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
             if (document == null) return;
 
-            var guide = new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider);
-            _guidesDictionary.Add(document, guide);
+            GetValue(document, () => new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider));
         }
     }
 }

@@ -13,6 +13,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     internal class ErrorHighlighterTagger : ITagger<IErrorTag>
     {
         private static readonly Regex _activeWordWithBracketsRegular = new Regex(@"[\w\\$]*\[[^\[\]]*\]", RegexOptions.Compiled | RegexOptions.Singleline);
+        private readonly ErrorHighlighterTaggerProvider _provider;
         private readonly ITextView view;
         private readonly ITextBuffer buffer;
         private readonly object updateLock;
@@ -26,12 +27,21 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             view = textView;
             buffer = sourceBuffer;
             updateLock = new object();
+            _provider = provider;
 
-            var rc = buffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out textDocument);
+            var rc = buffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
             if (!rc) throw new InvalidOperationException("Cannot find text document for this view");
 
-            provider.ErrorsUpdated += ErrorsUpdatedEvent;
+            _provider.ErrorsUpdated += ErrorsUpdatedEvent;
+            view.Closed += OnClose;
         }
+
+        private void OnClose(object sender, EventArgs e)
+        {
+            _provider.ErrorsUpdated -= ErrorsUpdatedEvent;
+            view.Closed -= OnClose;
+        }
+
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
             if (currentErrorSnapshotList == null)
@@ -44,7 +54,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         {
             if (errors.TryGetValue(textDocument.FilePath, out requestedErrorList))
             {
-                UpdateErorMarker();
+                UpdateErrorMarker();
             }
             else
             {
@@ -52,7 +62,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             }
         }
 
-        private void UpdateErorMarker()
+        private void UpdateErrorMarker()
         {
             ThreadPool.QueueUserWorkItem(UpdateSpanAdornments);
         }

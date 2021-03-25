@@ -120,7 +120,9 @@
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
+    <Compile Include="Helpers\DisposableProvider.cs" />
     <Compile Include="Helpers\Error.cs" />
+    <Compile Include="Helpers\ISyntaxDisposable.cs" />
     <Compile Include="Helpers\NotifyPropertyChanged.cs" />
     <Compile Include="Helpers\AnalysisResultExtension.cs" />
     <Compile Include="Helpers\ServiceProviderExtension.cs" />

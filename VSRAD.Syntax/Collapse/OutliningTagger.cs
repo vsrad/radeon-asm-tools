@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Collapse
 {
-    internal sealed class OutliningTagger : ITagger<IOutliningRegionTag>
+    internal sealed class OutliningTagger : ITagger<IOutliningRegionTag>, ISyntaxDisposable
     {
         private readonly IDocumentAnalysis _documentAnalysis;
         private ITextSnapshot _currentSnapshot;
@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.Collapse
                 AnalysisUpdated(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
-        public void OnDestroy()
+        public void OnDispose()
         {
             _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
         }
