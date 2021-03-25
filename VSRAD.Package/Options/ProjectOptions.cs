@@ -159,6 +159,14 @@ namespace VSRAD.Package.Options
                 // Destination file does not exist
                 File.Move(tmpPath, destPath);
             }
+            catch (Exception)
+            {
+                // In case when we can't perform Move for a reasons that we do not handle in
+                // this function (typically destPath is read-only) we want to delete .tmp
+                // file, otherwise it will stay in the directory
+                File.Delete(tmpPath);
+                throw;
+            }
         }
         #endregion
     }
