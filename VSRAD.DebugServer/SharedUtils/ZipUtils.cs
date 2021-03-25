@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 
@@ -35,6 +36,25 @@ namespace VSRAD.DebugServer.SharedUtils
                     }
                 }
             }
+        }
+
+        // Used in tests
+        public static IEnumerable<(string Path, byte[] Data, DateTime LastWriteTimeUtc)> ReadZipItems(byte[] zipBytes)
+        {
+            using (var stream = new MemoryStream(zipBytes))
+            using (var archive = new ZipArchive(stream))
+            {
+                foreach (var e in archive.Entries)
+                {
+                    using (var s = new MemoryStream())
+                    using (var dataStream = e.Open())
+                    {
+                        dataStream.CopyTo(s);
+                        yield return (e.FullName, s.ToArray(), e.LastWriteTime.UtcDateTime);
+                    }
+                }
+            }
+
         }
     }
 }

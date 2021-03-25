@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -192,7 +193,7 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task CopyLLTestAsync()
+        public async Task CopyFileLLTestAsync()
         {
             var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""), _project);
 
@@ -210,6 +211,117 @@ namespace VSRAD.PackageTests.Server
             Assert.True(result.Successful);
 
             Assert.Equal("local to local copy test", File.ReadAllText(target));
+        }
+
+        [Fact]
+        public async Task CopyDirectoryLRTestAsync()
+        {
+            var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tmpDir);
+            File.WriteAllText(tmpDir + "\\t", "test");
+            File.WriteAllText(tmpDir + "\\t2", "test2");
+            File.SetLastWriteTimeUtc(tmpDir + "\\t", new DateTime(1980, 1, 1));
+            File.SetLastWriteTimeUtc(tmpDir + "\\t2", new DateTime(1990, 1, 1));
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfSame = true } };
+
+            // t is unchanged, t2's size is different
+            channel.ThenRespond(new ListFilesResponse
+            {
+                Files = new[]
+                {
+                    new FileMetadata("./", default, default),
+                    new FileMetadata("t", 4, new DateTime(1980, 1, 1)),
+                    new FileMetadata("t2", 4, new DateTime(1990, 1, 1))
+                }
+            }, (ListFilesCommand command) =>
+            {
+                Assert.Equal("rawdir", command.Path);
+                Assert.Equal("/home/mizu/machete", command.WorkDir);
+            });
+            channel.ThenRespond(new PutDirectoryResponse { Status = PutDirectoryStatus.Successful }, (PutDirectoryCommand command) =>
+            {
+                var items = ZipUtils.ReadZipItems(command.ZipData).ToArray();
+                Assert.Single(items);
+                Assert.Equal("t2", items[0].Path);
+                Assert.Equal("test2", Encoding.UTF8.GetString(items[0].Data));
+            });
+            var result = await runner.RunAsync("HTMT", steps);
+            Assert.True(result.Successful);
+
+            Directory.Delete(tmpDir, recursive: true);
+        }
+
+        [Fact]
+        public async Task CopyDirectoryLRErrorsTestAsync()
+        {
+            var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfSame = true } };
+
+            // Path does not exist
+            var result = await runner.RunAsync("HTMT", steps);
+            Assert.False(result.Successful);
+            Assert.Equal($@"Path ""{tmpDir}"" does not exist{"\r\n"}Working directory: ""{Path.GetTempPath()}""", result.StepResults[0].Warning);
+
+            // Permission denied
+            Directory.CreateDirectory(tmpDir);
+            var acl = Directory.GetAccessControl(tmpDir);
+            acl.AddAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User, FileSystemRights.ListDirectory, AccessControlType.Deny));
+            Directory.SetAccessControl(tmpDir, acl);
+
+            result = await runner.RunAsync("HTMT", steps);
+            Assert.False(result.Successful);
+            Assert.Equal($"Access to directory or its contents is denied: \"{tmpDir}\"", result.StepResults[0].Warning);
+
+            acl.RemoveAccessRule(new FileSystemAccessRule(WindowsIdentity.GetCurrent().User, FileSystemRights.ListDirectory, AccessControlType.Deny));
+            Directory.SetAccessControl(tmpDir, acl);
+            Directory.Delete(tmpDir, recursive: true);
+        }
+
+        [Fact]
+        public async Task CopyDirectoryRLTestAsync()
+        {
+            var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tmpDir);
+            File.WriteAllText(tmpDir + "\\t", "test");
+            File.WriteAllText(tmpDir + "\\t2", "test2");
+            File.SetLastWriteTimeUtc(tmpDir + "\\t", new DateTime(1980, 1, 1));
+            File.SetLastWriteTimeUtc(tmpDir + "\\t2", new DateTime(1990, 1, 1));
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfSame = true } };
+
+            // t is unchanged, t2's size is different
+            channel.ThenRespond(new ListFilesResponse
+            {
+                Files = new[]
+                {
+                    new FileMetadata("./", default, default),
+                    new FileMetadata("t", 4, new DateTime(1980, 1, 1)),
+                    new FileMetadata("t2", 4, new DateTime(1990, 1, 1))
+                }
+            }, (ListFilesCommand command) =>
+            {
+                Assert.Equal("rawdir", command.Path);
+                Assert.Equal("/home/mizu/machete", command.WorkDir);
+            });
+            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.OtherIOError }, (GetFilesCommand command) =>
+            {
+                Assert.Equal(new[] { "/home/mizu/machete", "rawdir" }, command.RootPath);
+                Assert.Equal(new[] { "t2" }, command.Paths);
+            });
+            var result = await runner.RunAsync("HTMT", steps);
+            Assert.False(result.Successful);
+            Assert.Equal("Unable to copy files from the remote machine", result.StepResults[0].Warning);
+            Assert.Equal("The following files were requested:\r\nt2", result.StepResults[0].Log);
+
+            Directory.Delete(tmpDir, recursive: true);
         }
         #endregion
 

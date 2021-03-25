@@ -143,6 +143,8 @@ namespace VSRAD.Package.Server
                 var filesToGet = new List<string>();
                 foreach (var src in sourceFiles)
                 {
+                    if (src.RelativePath == "./") // root directory
+                        continue;
                     if (step.SkipIfSame && SourceIdenticalToTarget(src))
                         continue;
                     if (!src.IsDirectory)
@@ -165,6 +167,8 @@ namespace VSRAD.Package.Server
                     {
                         foreach (var src in sourceFiles)
                         {
+                            if (src.RelativePath == "./") // root directory
+                                continue;
                             if (step.SkipIfSame && SourceIdenticalToTarget(src))
                                 continue;
 
@@ -535,9 +539,23 @@ namespace VSRAD.Package.Server
                 return false;
             }
 
-            // TODO: try-catch for IO errors
-            metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
-            return true;
+            try
+            {
+                metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                error = $"Access to directory or its contents is denied: \"{localPath}\"";
+                metadata = null;
+                return false;
+            }
+            catch (IOException)
+            {
+                error = $"Unable to open directory or its contents: \"{localPath}\"";
+                metadata = null;
+                return false;
+            }
         }
 
         private bool TryGetFullLocalPath(string path, out string fullPath, out string error)
