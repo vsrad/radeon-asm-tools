@@ -78,9 +78,8 @@ namespace VSRAD.Package.Options
             try
             {
                 var optionsJson = JObject.Parse(File.ReadAllText(visualizerOptionsPath));
-                var profilesJson = JObject.Parse(File.ReadAllText(profilesOptionsPath));
                 options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
-                var profiles = profilesJson.ToObject<Dictionary<string, ProfileOptions>>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
+                var profiles = ProfileTransferManager.Import(profilesOptionsPath);
                 options.SetProfiles(profiles, options.ActiveProfile);
             }
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
@@ -99,26 +98,32 @@ namespace VSRAD.Package.Options
         {
             var serializedOptions = JsonConvert.SerializeObject(this, Formatting.Indented);
             var serializedProfiles = JsonConvert.SerializeObject(Profiles, Formatting.Indented);
+
+            WriteAtomicWithErrorChecking(visualConfigPath, serializedOptions);
+            WriteAtomicWithErrorChecking(profilesConfigPath, serializedProfiles);
+        }
+
+        private static void WriteAtomicWithErrorChecking(string destPath, string contents)
+        {
             try
             {
-                WriteAtomic(visualConfigPath, serializedOptions);
-                WriteAtomic(profilesConfigPath, serializedProfiles);
+                WriteAtomic(destPath, contents);
             }
             catch (UnauthorizedAccessException)
             {
-                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {profilesConfigPath} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {destPath} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
                 if (res == DialogResult.OK)
                 {
                     try
                     {
-                        File.SetAttributes(profilesConfigPath, FileAttributes.Normal);
+                        File.SetAttributes(destPath, FileAttributes.Normal);
                     }
                     catch (Exception ex)
                     {
                         Errors.ShowWarning("Cannot make file writable: " + ex.Message);
                         return;
                     }
-                    WriteAtomic(profilesConfigPath, serializedOptions);
+                    WriteAtomic(destPath, contents);
                 }
             }
             catch (SystemException e)
