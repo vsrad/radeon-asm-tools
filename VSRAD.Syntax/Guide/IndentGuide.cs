@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.Guide
     internal sealed class IndentGuide : ISyntaxDisposable
     {
         private readonly IWpfTextView _textView;
-        private readonly OptionsProvider _options;
+        private readonly GeneralOptionProvider _generalOption;
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
         private readonly IDocumentAnalysis _documentAnalysis;
@@ -35,10 +35,10 @@ namespace VSRAD.Syntax.Guide
         private bool _isEnabled;
         private int _tabSize;
 
-        public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
+        public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, GeneralOptionProvider generalOptionProvider)
         {
             _textView = textView ?? throw new NullReferenceException();
-            _options = optionsProvider ?? throw new NullReferenceException();
+            _generalOption = generalOptionProvider ?? throw new NullReferenceException();
             _documentAnalysis = documentAnalysis ?? throw new NullReferenceException();
 
             _currentAdornments = new List<Line>();
@@ -53,11 +53,11 @@ namespace VSRAD.Syntax.Guide
             _textView.LayoutChanged += LayoutChanged;
 
             _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
-            _options.OptionsUpdated += IndentGuideOptionsUpdated;
+            _generalOption.OptionsUpdated += IndentGuideGeneralOptionUpdated;
             _textView.Options.OptionChanged += TabSizeOptionsChanged;
 
             _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
-            IndentGuideOptionsUpdated(_options);
+            IndentGuideGeneralOptionUpdated(_generalOption);
         }
 
         private void LayoutChanged(object sender, TextViewLayoutChangedEventArgs e) => 
@@ -77,7 +77,7 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void IndentGuideOptionsUpdated(OptionsProvider sender)
+        private void IndentGuideGeneralOptionUpdated(GeneralOptionProvider sender)
         {
             // ReSharper disable CompareOfFloatsByEqualityOperator
             if (sender.IsEnabledIndentGuides == _isEnabled && sender.IndentGuideThickness == _thickness &&
@@ -219,7 +219,7 @@ namespace VSRAD.Syntax.Guide
             _textView.LayoutChanged -= LayoutChanged;
             _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
             _textView.Options.OptionChanged -= TabSizeOptionsChanged;
-            _options.OptionsUpdated -= IndentGuideOptionsUpdated;
+            _generalOption.OptionsUpdated -= IndentGuideGeneralOptionUpdated;
             _layer.RemoveAllAdornments();
         }
     }

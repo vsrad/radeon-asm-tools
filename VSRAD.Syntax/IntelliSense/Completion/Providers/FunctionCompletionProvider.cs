@@ -15,14 +15,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private bool _autocompleteFunctions;
         private readonly INavigationTokenService _navigationTokenService;
 
-        public FunctionCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
-            : base(optionsProvider)
+        public FunctionCompletionProvider(GeneralOptionProvider generalOptionProvider, INavigationTokenService navigationTokenService)
+            : base(generalOptionProvider)
         {
-            _autocompleteFunctions = optionsProvider.AutocompleteFunctions;
+            _autocompleteFunctions = generalOptionProvider.AutocompleteFunctions;
             _navigationTokenService = navigationTokenService;
         }
 
-        public override void DisplayOptionsUpdated(OptionsProvider sender) =>
+        public override void DisplayOptionsUpdated(GeneralOptionProvider sender) =>
             _autocompleteFunctions = sender.AutocompleteFunctions;
 
         public override async Task<RadCompletionContext> GetContextAsync(IDocument document, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)

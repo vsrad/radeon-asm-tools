@@ -19,10 +19,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private readonly List<InstructionCompletionItem> _asm1InstructionCompletions;
         private readonly List<InstructionCompletionItem> _asm2InstructionCompletions;
 
-        public InstructionCompletionProvider(OptionsProvider optionsProvider, IInstructionListManager instructionListManager)
-            : base(optionsProvider)
+        public InstructionCompletionProvider(GeneralOptionProvider generalOptionProvider, IInstructionListManager instructionListManager)
+            : base(generalOptionProvider)
         {
-            _autocomplete = optionsProvider.AutocompleteInstructions;
+            _autocomplete = generalOptionProvider.AutocompleteInstructions;
             _asm1InstructionCompletions = new List<InstructionCompletionItem>();
             _asm2InstructionCompletions = new List<InstructionCompletionItem>();
 
@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
         }
 
-        public override void DisplayOptionsUpdated(OptionsProvider sender) =>
+        public override void DisplayOptionsUpdated(GeneralOptionProvider sender) =>
             _autocomplete = sender.AutocompleteInstructions;
 
         public override Task<RadCompletionContext> GetContextAsync(IDocument _, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)

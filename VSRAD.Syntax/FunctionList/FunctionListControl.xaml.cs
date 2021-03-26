@@ -27,29 +27,29 @@ namespace VSRAD.Syntax.FunctionList
         private string searchText;
         private FunctionListItem lastHighlightedItem;
 
-        public FunctionListControl(OptionsProvider optionsProvider, OleMenuCommandService service)
+        public FunctionListControl(GeneralOptionProvider generalOptionProvider, OleMenuCommandService service)
         {
             items = new List<FunctionListItem>();
             hideLineNumber = false;
             searchText = string.Empty;
-            SortState = optionsProvider.SortOptions;
-            Autoscroll = optionsProvider.Autoscroll;
+            SortState = generalOptionProvider.SortOptions;
+            Autoscroll = generalOptionProvider.AutoScroll;
             _commandService = service;
 
             InitializeComponent();
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
-            optionsProvider.OptionsUpdated += OptionsUpdated;
+            generalOptionProvider.OptionsUpdated += OptionsUpdated;
             typeFilter.Content = TypeFilterState.ToString();
         }
 
-        private void OptionsUpdated(OptionsProvider sender)
+        private void OptionsUpdated(GeneralOptionProvider sender)
         {
             if (sender.SortOptions != SortState)
             {
                 SortState = sender.SortOptions;
                 SortAndReloadFunctionList();
             }
-            Autoscroll = sender.Autoscroll;
+            Autoscroll = sender.AutoScroll;
         }
 
         #region public methods

@@ -154,6 +154,7 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
+    <Compile Include="Options\GeneralOptionModel.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
@@ -161,9 +162,12 @@
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Options\Instructions\InstructionSet.cs" />
     <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
+    <Compile Include="Options\GeneralOptionProvider.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Options\GeneralOptionPage.cs" />
+    <Compile Include="Options\GeneralOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />

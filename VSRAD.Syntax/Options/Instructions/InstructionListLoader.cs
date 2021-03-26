@@ -16,6 +16,7 @@ namespace VSRAD.Syntax.Options.Instructions
 
     public interface IInstructionListLoader
     {
+        IReadOnlyList<IInstructionSet> InstructionSets { get; }
         event InstructionsLoadDelegate InstructionsUpdated;
     }
 
@@ -24,52 +25,51 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         private readonly Lazy<IDocumentFactory> _documentFactory;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
-        private readonly List<InstructionSet> _sets;
-        private string _loadedPaths;
+        private readonly List<IInstructionSet> _sets;
+        private IReadOnlyList<string> _loadedPaths;
 
+        public IReadOnlyList<IInstructionSet> InstructionSets => _sets;
         public event InstructionsLoadDelegate InstructionsUpdated;
 
         [ImportingConstructor]
-        public InstructionListLoader(OptionsProvider optionsEventProvider,
+        public InstructionListLoader(GeneralOptionProvider generalOptionEventProvider,
             Lazy<IDocumentFactory> documentFactory,
             Lazy<INavigationTokenService> navigationTokenService)
         {
             _documentFactory = documentFactory;
             _navigationTokenService = navigationTokenService;
-            _sets = new List<InstructionSet>();
+            _sets = new List<IInstructionSet>();
+            _loadedPaths = new List<string>();
 
-            optionsEventProvider.OptionsUpdated += OptionsUpdated;
+            generalOptionEventProvider.OptionsUpdated += OptionsUpdated;
         }
 
-        private void OptionsUpdated(OptionsProvider provider)
+        private void OptionsUpdated(GeneralOptionProvider provider)
         {
-            var instructionPaths = provider.InstructionsPaths;
+            var instructionPaths = provider.InstructionsPaths.ToHashSet();
+            instructionPaths.SymmetricExceptWith(_loadedPaths);
 
             // skip if options haven't changed
-            if (instructionPaths == _loadedPaths) return;
+            if (instructionPaths.Count == 0) return;
 
-            Task.Run(() => LoadInstructionsFromDirectoriesAsync(instructionPaths))
+            Task.Run(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths))
                 .RunAsyncWithoutAwait();
         }
 
-        public async Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
+        public async Task LoadInstructionsFromDirectoriesAsync(IReadOnlyList<string> paths)
         {
-            var paths = dirPathsString.Split(';')
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x));
-
             var loadFromDirectoryTasks = paths
                 .Select(LoadInstructionsFromDirectoryAsync)
                 .ToArray();
 
             try
             {
-                var results = await Task.WhenAll(loadFromDirectoryTasks);
+                var results = await Task.WhenAll(loadFromDirectoryTasks).ConfigureAwait(false);
                 var instructionSets = results.SelectMany(t => t);
 
                 _sets.Clear();
                 _sets.AddRange(instructionSets);
-                _loadedPaths = dirPathsString;
+                _loadedPaths = paths;
 
                 InstructionsUpdated?.Invoke(_sets);
             }
@@ -108,7 +108,7 @@ namespace VSRAD.Syntax.Options.Instructions
                     }
                 }
 
-                var results = await Task.WhenAll(loadTasks);
+                var results = await Task.WhenAll(loadTasks).ConfigureAwait(false);
                 instructionSets.AddRange(results);
             }
             catch (Exception e) when (

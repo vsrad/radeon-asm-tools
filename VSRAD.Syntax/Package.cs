@@ -37,7 +37,7 @@ namespace VSRAD.Syntax
             _componentModel = await GetServiceAsync(typeof(SComponentModel)) as IComponentModel;
             var commandService = await GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
 
-            await ((GeneralOptionPage)GetDialogPage(typeof(GeneralOptionPage))).InitializeAsync();
+            await GeneralOptionModel.GetInstanceAsync();
             await NavigationListCommand.InitializeAsync(this);
 
             FunctionListCommand.Initialize(this, commandService);

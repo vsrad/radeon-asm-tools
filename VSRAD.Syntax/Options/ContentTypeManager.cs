@@ -34,7 +34,7 @@ namespace VSRAD.Syntax.Options
             IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
             IContentTypeRegistryService contentTypeRegistryService,
             IFileExtensionRegistryService fileExtensionRegistryService,
-            OptionsProvider optionsEventProvider)
+            GeneralOptionProvider generalOptionEventProvider)
         {
             _serviceProvider = serviceProvider;
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
@@ -42,12 +42,12 @@ namespace VSRAD.Syntax.Options
             _dte = (DTE)serviceProvider.GetService(typeof(DTE));
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
-            optionsEventProvider.OptionsUpdated += FileExtensionChanged;
+            generalOptionEventProvider.OptionsUpdated += FileExtensionChanged;
             Asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
             Asm2ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
             AsmDocContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
-            _asm1Extensions = optionsEventProvider.Asm1FileExtensions;
-            _asm2Extensions = optionsEventProvider.Asm2FileExtensions;
+            _asm1Extensions = generalOptionEventProvider.Asm1FileExtensions;
+            _asm2Extensions = generalOptionEventProvider.Asm2FileExtensions;
             _asmDocExtensions = new List<string>() { Constants.FileExtensionAsm1Doc, Constants.FileExtensionAsm2Doc };
         }
 
@@ -100,8 +100,8 @@ namespace VSRAD.Syntax.Options
             }
         }
 
-        private void FileExtensionChanged(OptionsProvider optionsProvider) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(optionsProvider.Asm1FileExtensions, optionsProvider.Asm2FileExtensions));
+        private void FileExtensionChanged(GeneralOptionProvider generalOptionProvider) =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(generalOptionProvider.Asm1FileExtensions, generalOptionProvider.Asm2FileExtensions));
 
         private void DeleteExtensions(IContentType contentType)
         {

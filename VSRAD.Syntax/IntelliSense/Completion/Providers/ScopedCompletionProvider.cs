@@ -22,15 +22,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
 
-        public ScopedCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
-            : base(optionsProvider)
+        public ScopedCompletionProvider(GeneralOptionProvider generalOptionProvider, INavigationTokenService navigationTokenService)
+            : base(generalOptionProvider)
         {
             _navigationTokenService = navigationTokenService;
-            _autocompleteLabels = optionsProvider.AutocompleteLabels;
-            _autocompleteVariables = optionsProvider.AutocompleteVariables;
+            _autocompleteLabels = generalOptionProvider.AutocompleteLabels;
+            _autocompleteVariables = generalOptionProvider.AutocompleteVariables;
         }
 
-        public override void DisplayOptionsUpdated(OptionsProvider sender)
+        public override void DisplayOptionsUpdated(GeneralOptionProvider sender)
         {
             _autocompleteLabels = sender.AutocompleteLabels;
             _autocompleteVariables = sender.AutocompleteVariables;
