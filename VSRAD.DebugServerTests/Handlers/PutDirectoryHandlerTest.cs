@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 using Xunit;
 
 namespace VSRAD.DebugServerTests.Handlers
@@ -16,7 +17,7 @@ namespace VSRAD.DebugServerTests.Handlers
         {
             var tmpPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-            var zipData = CreateZipArchive(new[]
+            var zipData = ZipUtils.CreateZipArchive(new[]
             {
                 (new byte[] { 0x4C }, "test", new DateTime(1998, 07, 06)),
                 (new byte[] { 0x4C, 0x41, 0x49 }, "dir/test", new DateTime(1998, 07, 13)),
@@ -79,7 +80,7 @@ namespace VSRAD.DebugServerTests.Handlers
             File.WriteAllText(Path.Combine(tmpPath, "test"), "read only");
             File.SetAttributes(Path.Combine(tmpPath, "test"), FileAttributes.ReadOnly);
 
-            var zipData = CreateZipArchive(new[] { (new byte[] { 0x48 }, "test", new DateTime(2002, 10, 09)) });
+            var zipData = ZipUtils.CreateZipArchive(new[] { (new byte[] { 0x48 }, "test", new DateTime(2002, 10, 09)) });
 
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
@@ -92,22 +93,6 @@ namespace VSRAD.DebugServerTests.Handlers
 
             File.SetAttributes(Path.Combine(tmpPath, "test"), FileAttributes.Normal);
             Directory.Delete(tmpPath, recursive: true);
-        }
-
-        private static byte[] CreateZipArchive(IEnumerable<(byte[] Data, string Name, DateTime LastWriteTime)> items)
-        {
-            using var memStream = new MemoryStream();
-            using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, false))
-            {
-                foreach (var (data, name, lastWriteTime) in items)
-                {
-                    var entry = archive.CreateEntry(name);
-                    entry.LastWriteTime = lastWriteTime;
-                    using var entryStream = entry.Open();
-                    entryStream.Write(data);
-                }
-            }
-            return memStream.ToArray();
         }
     }
 }
