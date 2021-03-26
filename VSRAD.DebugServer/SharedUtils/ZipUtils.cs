@@ -38,7 +38,25 @@ namespace VSRAD.DebugServer.SharedUtils
             }
         }
 
-        // Used in tests
+        #region Test utils
+        public static byte[] CreateZipArchive(IEnumerable<(byte[] Data, string Name, DateTime LastWriteTime)> items)
+        {
+            using (var memStream = new MemoryStream())
+            {
+                using (var archive = new ZipArchive(memStream, ZipArchiveMode.Create, false))
+                {
+                    foreach (var (data, name, lastWriteTime) in items)
+                    {
+                        var entry = archive.CreateEntry(name);
+                        entry.LastWriteTime = lastWriteTime;
+                        using (var entryStream = entry.Open())
+                            entryStream.Write(data, 0, data.Length);
+                    }
+                }
+                return memStream.ToArray();
+            }
+        }
+
         public static IEnumerable<(string Path, byte[] Data, DateTime LastWriteTimeUtc)> ReadZipItems(byte[] zipBytes)
         {
             using (var stream = new MemoryStream(zipBytes))
@@ -54,7 +72,7 @@ namespace VSRAD.DebugServer.SharedUtils
                     }
                 }
             }
-
         }
+        #endregion
     }
 }
