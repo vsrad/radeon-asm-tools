@@ -100,7 +100,7 @@ namespace VSRAD.Syntax.FunctionList
             document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
             document.CurrentSnapshot.TextBuffer.Properties.RemoveProperty(typeof(FunctionListWindow));
             textView.Caret.PositionChanged -= CaretOnPositionChanged;
-            if (_lastResult.Snapshot.TextBuffer == document.CurrentSnapshot.TextBuffer)
+            if (_lastResult != null && _lastResult.Snapshot.TextBuffer == document.CurrentSnapshot.TextBuffer)
                 ClearFunctionList();
 
             _documentTextViews.Remove(document);

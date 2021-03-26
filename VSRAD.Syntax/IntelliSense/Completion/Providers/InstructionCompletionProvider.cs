@@ -16,15 +16,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     {
         private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
         private bool _autocomplete;
-        private readonly List<MultipleCompletionItem> _asm1InstructionCompletions;
-        private readonly List<MultipleCompletionItem> _asm2InstructionCompletions;
+        private readonly List<InstructionCompletionItem> _asm1InstructionCompletions;
+        private readonly List<InstructionCompletionItem> _asm2InstructionCompletions;
 
         public InstructionCompletionProvider(OptionsProvider optionsProvider, IInstructionListManager instructionListManager)
             : base(optionsProvider)
         {
             _autocomplete = optionsProvider.AutocompleteInstructions;
-            _asm1InstructionCompletions = new List<MultipleCompletionItem>();
-            _asm2InstructionCompletions = new List<MultipleCompletionItem>();
+            _asm1InstructionCompletions = new List<InstructionCompletionItem>();
+            _asm2InstructionCompletions = new List<InstructionCompletionItem>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
             InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
@@ -62,7 +62,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 _asm1InstructionCompletions.Clear();
                 _asm1InstructionCompletions.AddRange(
                     sender.GetSelectedSetInstructions(AsmType.RadAsm)
-                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+                          .Select(i => new InstructionCompletionItem(i, Icon)));
             }
 
             if ((asmType & AsmType.RadAsm2) != 0)
@@ -70,7 +70,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 _asm2InstructionCompletions.Clear();
                 _asm2InstructionCompletions.AddRange(
                     sender.GetSelectedSetInstructions(AsmType.RadAsm2)
-                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+                          .Select(i => new InstructionCompletionItem(i, Icon)));
             }
         }
     }

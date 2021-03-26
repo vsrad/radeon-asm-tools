@@ -65,7 +65,9 @@ namespace VSRAD.Syntax.IntelliSense
             var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
             if (document == null) return null;
 
-            var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
+            var analysisResult = await document.DocumentAnalysis
+                .GetAnalysisResultAsync(point.Snapshot)
+                .ConfigureAwait(false);
             var analysisToken = analysisResult.GetToken(point);
 
             if (analysisToken == null) return null;
@@ -92,16 +94,11 @@ namespace VSRAD.Syntax.IntelliSense
                         var asmType = analysisToken.Snapshot.GetAsmType();
                         var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
                         var instructionText = analysisToken.Text;
-                        var instructionNavigations = new List<INavigationToken>();
 
                         var navigations = instructions
                             .Where(i => i.Text == instructionText)
                             .SelectMany(i => i.Navigations);
-                        instructionNavigations.AddRange(navigations);
-
-                        if (instructionNavigations.Count != 0)
-                            return new NavigationTokenServiceResult(instructionNavigations, analysisToken);
-
+                        tokens.AddRange(navigations);
                         break;
                     }
             }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.Options.Instructions;
 using VsComplectionItem = Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data.CompletionItem;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
@@ -36,28 +37,26 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             descriptionBuilder.GetColorizedDescriptionAsync(_token, cancellationToken);
     }
 
-    internal class MultipleCompletionItem : ICompletionItem
+    internal class InstructionCompletionItem : ICompletionItem
     {
-        private readonly string _name;
-        private readonly IReadOnlyList<INavigationToken> _tokens;
         private readonly ImageElement _imageElement;
+        private readonly Instruction _instruction;
 
-        public MultipleCompletionItem(string name, IReadOnlyList<INavigationToken> tokens, ImageElement imageElement)
+        public InstructionCompletionItem(Instruction instruction, ImageElement imageElement)
         {
-            _name = name;
-            _tokens = tokens;
+            _instruction = instruction;
             _imageElement = imageElement;
         }
 
         public VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource)
         {
-            var completionItem = new VsComplectionItem(_name, asyncCompletionSource, _imageElement);
+            var completionItem = new VsComplectionItem(_instruction.Text, asyncCompletionSource, _imageElement);
             completionItem.Properties.AddProperty(typeof(ICompletionItem), this);
             return completionItem;
         }
 
         public Task<object> GetDescriptionAsync(IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
-            descriptionBuilder.GetColorizedDescriptionAsync(_tokens, cancellationToken);
+            descriptionBuilder.GetColorizedDescriptionAsync(_instruction.Navigations, cancellationToken);
     }
 
     public static class VsCompletionItemExtension

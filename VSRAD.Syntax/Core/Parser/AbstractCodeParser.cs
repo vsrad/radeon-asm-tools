@@ -10,12 +10,13 @@ using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options.Instructions;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Core.Parser
 {
     internal abstract class AbstractCodeParser : IAsmParser
     {
-        protected AsmType AsmType { get; set; }
+        private readonly AsmType _asmType;
         protected HashSet<string> OtherInstructions { get; private set; }
 
         private readonly IDocumentFactory _documentFactory;
@@ -23,24 +24,25 @@ namespace VSRAD.Syntax.Core.Parser
         protected readonly DefinitionContainer _definitionContainer;
         protected readonly LinkedList<(string text, TrackingToken trackingToken, IBlock block)> _referenceCandidates;
 
-        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, AsmType asmType)
         {
+            _asmType = asmType;
             _documentFactory = documentFactory;
             _definitionContainer = new DefinitionContainer();
             _referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
             _instructions = new HashSet<string>();
             OtherInstructions = new HashSet<string>();
-            UpdateInstructions(instructionListManager, AsmType);
+            UpdateInstructions(instructionListManager, _asmType);
         }
 
         public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         public void UpdateInstructions(IInstructionListManager sender, AsmType asmType)
         {
-            if ((asmType & AsmType) != AsmType) return;
+            if ((asmType & _asmType) != _asmType) return;
 
-            var instructions = sender.GetInstructions(AsmType);
-            var selectedSetInstructions = sender.GetSelectedSetInstructions(AsmType);
+            var instructions = sender.GetInstructions(_asmType);
+            var selectedSetInstructions = sender.GetSelectedSetInstructions(_asmType);
 
             _instructions = selectedSetInstructions
                 .Select(i => i.Text)
