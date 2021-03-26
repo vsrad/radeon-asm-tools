@@ -307,16 +307,43 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal("rawdir", command.Path);
                 Assert.Equal("/home/mizu/machete", command.WorkDir);
             });
-            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.OtherIOError }, (GetFilesCommand command) =>
+
+            var zipData = ZipUtils.CreateZipArchive(new[] { (new byte[] { 0, 1, 2, 3 }, "t2", new DateTime(1990, 1, 1)) });
+            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, ZipData = zipData }, (GetFilesCommand command) =>
             {
                 Assert.Equal(new[] { "/home/mizu/machete", "rawdir" }, command.RootPath);
                 Assert.Equal(new[] { "t2" }, command.Paths);
             });
             var result = await runner.RunAsync("HTMT", steps);
-            Assert.False(result.Successful);
-            Assert.Equal("Unable to copy files from the remote machine", result.StepResults[0].Warning);
-            Assert.Equal("The following files were requested:\r\nt2", result.StepResults[0].Log);
+            Assert.True(result.Successful);
 
+            Directory.Delete(tmpDir, recursive: true);
+        }
+
+        [Fact]
+        public async Task CopyDirectoryRLErrorsTestAsync()
+        {
+            var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+            Directory.CreateDirectory(tmpDir);
+            File.WriteAllText(tmpDir + "\\t", "test");
+
+            var channel = new MockCommunicationChannel();
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfSame = true } };
+
+            // t's size is changed => it'll be requested
+            channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("./", default, default), new FileMetadata("t", 1, default) }  });
+            var zipData = ZipUtils.CreateZipArchive(new[] { (new byte[] { 0, 1, 2, 3 }, "t", new DateTime(1990, 1, 1)) });
+            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, ZipData = zipData });
+
+            // Permission denied
+            File.SetAttributes(tmpDir + "\\t", FileAttributes.ReadOnly);
+
+            var result = await runner.RunAsync("HTMT", steps);
+            Assert.False(result.Successful);
+            Assert.Equal($"Access to path \"{tmpDir}\" on the local machine is denied", result.StepResults[0].Warning);
+
+            File.SetAttributes(tmpDir + "\\t", FileAttributes.Normal);
             Directory.Delete(tmpDir, recursive: true);
         }
         #endregion
