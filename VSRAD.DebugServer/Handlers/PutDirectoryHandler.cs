@@ -16,25 +16,39 @@ namespace VSRAD.DebugServer.Handlers
             _command = command;
         }
 
-        public Task<IResponse> RunAsync()
+        public async Task<IResponse> RunAsync()
         {
             var fullPath = Path.Combine(_command.WorkDir, _command.Path);
 
             if (File.Exists(fullPath))
-                return Task.FromResult<IResponse>(new PutDirectoryResponse { Status = PutDirectoryStatus.TargetPathIsFile });
+                return new PutDirectoryResponse { Status = PutDirectoryStatus.TargetPathIsFile };
 
-            try
+            bool retryOnce = true;
+            while (true)
             {
-                ZipUtils.UnpackToDirectory(fullPath, _command.ZipData, _command.PreserveTimestamps);
-                return Task.FromResult<IResponse>(new PutDirectoryResponse { Status = PutDirectoryStatus.Successful });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Task.FromResult<IResponse>(new PutDirectoryResponse { Status = PutDirectoryStatus.PermissionDenied });
-            }
-            catch (IOException)
-            {
-                return Task.FromResult<IResponse>(new PutDirectoryResponse { Status = PutDirectoryStatus.OtherIOError });
+                try
+                {
+                    ZipUtils.UnpackToDirectory(fullPath, _command.ZipData, _command.PreserveTimestamps);
+                    return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful };
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return new PutDirectoryResponse { Status = PutDirectoryStatus.PermissionDenied };
+                }
+                catch (IOException)
+                {
+                    // Retrying the operation helps with "file is being used by another process" errors
+                    // when the process that accessed the file has just exited
+                    if (retryOnce)
+                    {
+                        retryOnce = false;
+                        await Task.Delay(100);
+                    }
+                    else
+                    {
+                        return new PutDirectoryResponse { Status = PutDirectoryStatus.OtherIOError };
+                    }
+                }
             }
         }
     }
