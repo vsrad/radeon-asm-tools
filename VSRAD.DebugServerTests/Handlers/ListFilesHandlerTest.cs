@@ -92,7 +92,7 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = tmpPath,
+                Path = tmpPath + "\\",
                 WorkDir = "",
                 IncludeSubdirectories = false
             });

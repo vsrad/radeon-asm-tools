@@ -31,10 +31,12 @@ namespace VSRAD.DebugServer.SharedUtils
                 files.Add(new FileMetadata("./", 0, File.GetLastWriteTimeUtc(path)));
 
                 var root = new DirectoryInfo(path);
+                var rootPathLength = root.FullName.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal)
+                    ? root.FullName.Length : root.FullName.Length + 1;
                 var searchOpts = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
                 foreach (var entry in root.EnumerateFileSystemInfos("*", searchOpts))
                 {
-                    var relPath = entry.FullName.Substring(root.FullName.Length + 1).Replace('\\', '/');
+                    var relPath = entry.FullName.Substring(rootPathLength).Replace('\\', '/');
                     if (entry is FileInfo file)
                         files.Add(new FileMetadata(relPath, file.Length, file.LastWriteTimeUtc));
                     else if (recursive)
