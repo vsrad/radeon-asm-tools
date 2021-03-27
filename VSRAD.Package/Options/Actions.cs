@@ -56,14 +56,14 @@ namespace VSRAD.Package.Options
         private string _targetPath = "";
         public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
-        private bool _checkTimestamp;
-        public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
+        private bool _failIfNotModified;
+        public bool FailIfNotModified { get => _failIfNotModified; set => SetField(ref _failIfNotModified, value); }
 
-        private bool _skipIfSame;
-        public bool SkipIfSame { get => _skipIfSame; set => SetField(ref _skipIfSame, value); }
+        private bool _skipIfNotModified;
+        public bool SkipIfNotModified { get => _skipIfNotModified; set => SetField(ref _skipIfNotModified, value); }
 
-        private bool _preserveTimestamp;
-        public bool PreserveTimestamp { get => _preserveTimestamp; set => SetField(ref _preserveTimestamp, value); }
+        private bool _preserveTimestamps;
+        public bool PreserveTimestamps { get => _preserveTimestamps; set => SetField(ref _preserveTimestamps, value); }
 
         private bool _includeSubdirectories;
         public bool IncludeSubdirectories { get => _includeSubdirectories; set => SetField(ref _includeSubdirectories, value); }
@@ -74,7 +74,7 @@ namespace VSRAD.Package.Options
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
-                return "Copy File";
+                return "Copy File/Directory";
 
             var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote"
                     : Direction == FileCopyDirection.RemoteToLocal ? "from Remote"
@@ -87,9 +87,9 @@ namespace VSRAD.Package.Options
             obj is CopyFileStep step &&
             SourcePath == step.SourcePath &&
             TargetPath == step.TargetPath &&
-            CheckTimestamp == step.CheckTimestamp &&
-            SkipIfSame == step.SkipIfSame &&
-            PreserveTimestamp == step.PreserveTimestamp &&
+            FailIfNotModified == step.FailIfNotModified &&
+            SkipIfNotModified == step.SkipIfNotModified &&
+            PreserveTimestamps == step.PreserveTimestamps &&
             IncludeSubdirectories == step.IncludeSubdirectories &&
             UseCompression == step.UseCompression;
 
@@ -121,9 +121,9 @@ namespace VSRAD.Package.Options
                 Direction = direction,
                 SourcePath = evaluatedSourcePath,
                 TargetPath = evaluatedTargetPath,
-                CheckTimestamp = CheckTimestamp,
-                SkipIfSame = SkipIfSame,
-                PreserveTimestamp = PreserveTimestamp,
+                FailIfNotModified = FailIfNotModified,
+                SkipIfNotModified = SkipIfNotModified,
+                PreserveTimestamps = PreserveTimestamps,
                 IncludeSubdirectories = IncludeSubdirectories,
                 UseCompression = UseCompression
             };
