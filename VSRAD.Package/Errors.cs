@@ -45,11 +45,7 @@ namespace VSRAD.Package
             // Cancelled operations are usually triggered by the user or are accompanied by a more descriptive message.
             if (e is OperationCanceledException) return;
 
-#if DEBUG
-            ShowCritical(e.Message + "\r\n\r\n" + e.StackTrace);
-#else
-            ShowCritical(e.Message);
-#endif
+            ShowCritical(e.Message + "\r\n\r\n" + e.StackTrace, title: "An unexpected error occurred in RAD Debugger");
         }
 
         public static void RunAsyncWithErrorHandling(this JoinableTaskFactory taskFactory, Func<Task> method, Action exceptionCallbackOnMainThread = null) =>
