@@ -110,10 +110,10 @@ namespace VSRAD.Package.Server
                 if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
                     return new StepResult(false, $"File \"{step.SourcePath}\" cannot be copied: the target path is a directory.", "");
 
-                if (step.CheckTimestamp && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
+                if (step.FailIfNotModified && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
                     return new StepResult(false, "File was not changed after executing the previous steps. Disable Check Timestamp in step options to skip the modification date check.", "");
 
-                if (step.SkipIfSame
+                if (step.SkipIfNotModified
                     && targetFiles.Count == 1
                     && sourceFiles[0].Size == targetFiles[0].Size
                     && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
@@ -145,7 +145,7 @@ namespace VSRAD.Package.Server
                 {
                     if (src.RelativePath == "./") // root directory
                         continue;
-                    if (step.SkipIfSame && SourceIdenticalToTarget(src))
+                    if (step.SkipIfNotModified && SourceIdenticalToTarget(src))
                         continue;
                     if (!src.IsDirectory)
                         filesToGet.Add(src.RelativePath);
@@ -169,7 +169,7 @@ namespace VSRAD.Package.Server
                         {
                             if (src.RelativePath == "./") // root directory
                                 continue;
-                            if (step.SkipIfSame && SourceIdenticalToTarget(src))
+                            if (step.SkipIfNotModified && SourceIdenticalToTarget(src))
                                 continue;
 
                             var fullPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath, src.RelativePath);
@@ -191,7 +191,7 @@ namespace VSRAD.Package.Server
             /* Extract the archive to the target path */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new PutDirectoryCommand { ZipData = sourceZip, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, PreserveTimestamps = step.PreserveTimestamp };
+                var command = new PutDirectoryCommand { ZipData = sourceZip, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, PreserveTimestamps = step.PreserveTimestamps };
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
                     return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
@@ -209,7 +209,7 @@ namespace VSRAD.Package.Server
 
                 try
                 {
-                    ZipUtils.UnpackToDirectory(fullPath, sourceZip, preserveTimestamps: step.PreserveTimestamp);
+                    ZipUtils.UnpackToDirectory(fullPath, sourceZip, preserveTimestamps: step.PreserveTimestamps);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -493,7 +493,7 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
+                if (step is CopyFileStep copyFile && copyFile.FailIfNotModified)
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
