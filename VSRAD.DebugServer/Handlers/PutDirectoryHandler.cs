@@ -28,7 +28,7 @@ namespace VSRAD.DebugServer.Handlers
             {
                 try
                 {
-                    PackedFile.UnpackFiles(fullPath, _command.Files, _command.DecompressFiles, _command.PreserveTimestamps);
+                    PackedFile.UnpackFiles(fullPath, _command.Files, _command.PreserveTimestamps);
                     return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful };
                 }
                 catch (UnauthorizedAccessException)

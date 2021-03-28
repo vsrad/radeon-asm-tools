@@ -159,13 +159,16 @@ namespace VSRAD.Package.Server
             else
             {
                 var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-                files = PackedFile.PackFiles(rootPath, filesToGet, step.UseCompression);
+                files = PackedFile.PackFiles(rootPath, filesToGet);
             }
             /* Extract the archive to the target path */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new PutDirectoryCommand { Files = files, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, DecompressFiles = step.UseCompression, PreserveTimestamps = step.PreserveTimestamps };
+                ICommand command = new PutDirectoryCommand { Files = files, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, PreserveTimestamps = step.PreserveTimestamps };
+                if (step.UseCompression)
+                    command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
                     return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
                 if (response.Status == PutDirectoryStatus.PermissionDenied)
@@ -182,7 +185,7 @@ namespace VSRAD.Package.Server
 
                 try
                 {
-                    PackedFile.UnpackFiles(fullPath, files, step.UseCompression, step.PreserveTimestamps);
+                    PackedFile.UnpackFiles(fullPath, files, step.PreserveTimestamps);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -216,8 +219,11 @@ namespace VSRAD.Package.Server
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                if (step.UseCompression)
+                    command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
+
                 if (response.Status == PutFileStatus.PermissionDenied)
                     return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
                 if (response.Status == PutFileStatus.OtherIOError)

@@ -21,8 +21,13 @@ namespace VSRAD.DebugServer.Handlers
             var rootPath = Path.Combine(_command.RootPath);
             try
             {
-                var files = PackedFile.PackFiles(rootPath, _command.Paths, _command.UseCompression);
-                return Task.FromResult<IResponse>(new GetFilesResponse { Status = GetFilesStatus.Successful, Files = files });
+                var files = PackedFile.PackFiles(rootPath, _command.Paths);
+
+                IResponse response = new GetFilesResponse { Status = GetFilesStatus.Successful, Files = files };
+                if (_command.UseCompression)
+                    response = new CompressedResponse(response);
+
+                return Task.FromResult(response);
             }
             catch (FileNotFoundException)
             {
