@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC.Responses
@@ -15,7 +16,9 @@ namespace VSRAD.DebugServer.IPC.Responses
         PutFile = 4,
         PutDirectory = 5,
         ListFiles = 6,
-        GetFiles = 7
+        GetFiles = 7,
+
+        CompressedResponse = 0xFF
     }
 #pragma warning restore CA1028
 
@@ -39,6 +42,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
                 case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
+
+                case ResponseType.CompressedResponse: return CompressedResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -56,6 +61,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 case GetFilesResponse _: type = ResponseType.GetFiles; break;
+
+                case CompressedResponse _: type = ResponseType.CompressedResponse; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -281,6 +288,46 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public void Serialize(IPCWriter writer) =>
             writer.WriteLengthPrefixedDict(Variables);
+    }
+
+    public sealed class CompressedResponse : IResponse
+    {
+        public IResponse InnerResponse { get; }
+
+        public CompressedResponse(IResponse response)
+        {
+            InnerResponse = response;
+        }
+
+        public override string ToString() =>
+            "CompressedResponse: " + InnerResponse.ToString();
+
+        public static IResponse Deserialize(IPCReader reader)
+        {
+            var commandData = reader.ReadLengthPrefixedBlob();
+            using (var uncompresedStream = new MemoryStream())
+            {
+                using (var inputStream = new MemoryStream(commandData))
+                using (var dstream = new DeflateStream(inputStream, CompressionMode.Decompress))
+                    dstream.CopyTo(uncompresedStream);
+
+                uncompresedStream.Seek(0, SeekOrigin.Begin);
+                using (var uncompressedReader = new IPCReader(uncompresedStream))
+                    return uncompressedReader.ReadResponse();
+            }
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            using (var outputStream = new MemoryStream())
+            {
+                using (var dstream = new DeflateStream(outputStream, CompressionLevel.Optimal))
+                using (var compressedWriter = new IPCWriter(dstream))
+                    compressedWriter.WriteResponse(InnerResponse);
+
+                writer.WriteLengthPrefixedBlob(outputStream.ToArray());
+            }
+        }
     }
 
 #pragma warning disable CA1028 // Using byte for enum storage because it is transferred over the wire

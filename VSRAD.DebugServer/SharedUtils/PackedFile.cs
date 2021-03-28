@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
 
 namespace VSRAD.DebugServer.SharedUtils
@@ -19,7 +18,7 @@ namespace VSRAD.DebugServer.SharedUtils
             LastWriteTimeUtc = lastWriteTimeUtc;
         }
 
-        public static PackedFile[] PackFiles(string workDir, IEnumerable<string> paths, bool useCompression)
+        public static PackedFile[] PackFiles(string workDir, IEnumerable<string> paths)
         {
             try
             {
@@ -33,26 +32,7 @@ namespace VSRAD.DebugServer.SharedUtils
                     else
                     {
                         var lastWriteTime = File.GetLastWriteTimeUtc(fullPath);
-                        if (useCompression)
-                        {
-                            byte[] compressedData;
-
-                            using (var dstStream = new MemoryStream())
-                            {
-                                using (var srcStream = File.OpenRead(fullPath))
-                                using (var gzipStream = new GZipStream(dstStream, CompressionLevel.Optimal))
-                                {
-                                    srcStream.CopyTo(gzipStream);
-                                }
-                                compressedData = dstStream.ToArray();
-                            }
-
-                            return new PackedFile(compressedData, path, lastWriteTime);
-                        }
-                        else
-                        {
-                            return new PackedFile(File.ReadAllBytes(fullPath), path, lastWriteTime);
-                        }
+                        return new PackedFile(File.ReadAllBytes(fullPath), path, lastWriteTime);
                     }
                 }).ToArray();
             }
@@ -62,7 +42,7 @@ namespace VSRAD.DebugServer.SharedUtils
             }
         }
 
-        public static void UnpackFiles(string path, PackedFile[] files, bool decompress, bool preserveTimestamps)
+        public static void UnpackFiles(string path, PackedFile[] files, bool preserveTimestamps)
         {
             var destination = Directory.CreateDirectory(path);
 
@@ -81,21 +61,7 @@ namespace VSRAD.DebugServer.SharedUtils
                     else
                     {
                         Directory.CreateDirectory(Path.GetDirectoryName(entryDestPath));
-
-                        if (decompress)
-                        {
-                            using (var dstStream = File.Create(entryDestPath))
-                            using (var srcStream = new MemoryStream(file.Data))
-                            using (var gzipStream = new GZipStream(srcStream, CompressionMode.Decompress))
-                            {
-                                gzipStream.CopyTo(dstStream);
-                            }
-                        }
-                        else
-                        {
-                            File.WriteAllBytes(entryDestPath, file.Data);
-                        }
-
+                        File.WriteAllBytes(entryDestPath, file.Data);
                         if (preserveTimestamps)
                             File.SetLastWriteTimeUtc(entryDestPath, file.LastWriteTimeUtc);
                     }

@@ -23,21 +23,20 @@ namespace VSRAD.DebugServer
 
         public void Disconnect() => _socket.Close();
 
-        public async Task<ICommand> ReceiveCommandAsync()
+        public async Task<(ICommand, int)> ReceiveCommandAsync()
         {
             try
             {
-                var message = await _socket.GetStream().ReadSerializedMessageAsync<ICommand>().ConfigureAwait(false);
+                var (message, size) = await _socket.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
                 if (message == null) throw new ConnectionFailedException();
 
-                return message;
+                return (message, size);
             }
             catch (IOException e) when (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset)
             {
                 throw new ConnectionFailedException();
             }
         }
-        
 
         public Task<int> SendResponseAsync(IPC.Responses.IResponse response) =>
              _socket.GetStream().WriteSerializedMessageAsync(response);

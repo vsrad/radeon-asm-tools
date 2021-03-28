@@ -21,7 +21,8 @@ namespace VSRAD.DebugServerTests.Handlers
             await stream.WriteSerializedMessageAsync(response);
             stream.Position = 0;
             // Test response serialization
-            return (TR)await stream.ReadSerializedMessageAsync<IResponse>();
+            var (r, _) = await stream.ReadSerializedResponseAsync<TR>();
+            return r;
         }
 
         public static async Task<T> WithSerializationAsync<T>(this T command) where T : ICommand
@@ -29,7 +30,8 @@ namespace VSRAD.DebugServerTests.Handlers
             using var stream = new MemoryStream();
             await stream.WriteSerializedMessageAsync(command);
             stream.Position = 0;
-            return (T)await stream.ReadSerializedMessageAsync<ICommand>();
+            var (c, _) = await stream.ReadSerializedCommandAsync<T>();
+            return c;
         }
     }
 }

@@ -92,12 +92,12 @@ namespace VSRAD.Package.Server
             try
             {
                 await EstablishServerConnectionAsync().ConfigureAwait(false);
-                await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Sent command to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
+                var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
+                await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
 
-                var response = await _connection.GetStream().ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Received response from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
-                return (T)response;
+                var (response, bytesReceived) = await _connection.GetStream().ReadSerializedResponseAsync<T>().ConfigureAwait(false);
+                await _outputWindowWriter.PrintMessageAsync($"Received response ({bytesReceived} bytes) from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
+                return response;
             }
             catch (ObjectDisposedException) // ForceDisconnect has been called within the try block 
             {

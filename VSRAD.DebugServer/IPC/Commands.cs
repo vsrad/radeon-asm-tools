@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC.Commands
@@ -15,7 +16,9 @@ namespace VSRAD.DebugServer.IPC.Commands
         PutFile = 5,
         PutDirectory = 6,
         ListFiles = 7,
-        GetFiles = 8
+        GetFiles = 8,
+
+        CompressedCommand = 0xFF
     }
 #pragma warning restore CA1028
 
@@ -43,6 +46,8 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
                 case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
                 case CommandType.GetFiles: return GetFilesCommand.Deserialize(reader);
+
+                case CommandType.CompressedCommand: return CompressedCommand.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -61,6 +66,8 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
                 case ListFilesCommand _: type = CommandType.ListFiles; break;
                 case GetFilesCommand _: type = CommandType.GetFiles; break;
+
+                case CompressedCommand _: type = CommandType.CompressedCommand; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -220,8 +227,6 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string WorkDir { get; set; }
 
-        public bool DecompressFiles { get; set; }
-
         public bool PreserveTimestamps { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
@@ -230,7 +235,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             $"Files = <{Files.Length} files>",
             $"Path = {Path}",
             $"WorkDir = {WorkDir}",
-            $"DecompressFiles = {DecompressFiles}",
             $"PreserveTimestamps = {PreserveTimestamps}"
         });
 
@@ -239,7 +243,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             Files = reader.ReadLengthPrefixedFileArray(),
             Path = reader.ReadString(),
             WorkDir = reader.ReadString(),
-            DecompressFiles = reader.ReadBoolean(),
             PreserveTimestamps = reader.ReadBoolean()
         };
 
@@ -248,7 +251,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.WriteLengthPrefixedFileArray(Files);
             writer.Write(Path);
             writer.Write(WorkDir);
-            writer.Write(DecompressFiles);
             writer.Write(PreserveTimestamps);
         }
     }
@@ -310,6 +312,46 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(UseCompression);
             writer.WriteLengthPrefixedArray(Paths);
             writer.WriteLengthPrefixedArray(RootPath);
+        }
+    }
+
+    public sealed class CompressedCommand : ICommand
+    {
+        public ICommand InnerCommand { get; }
+
+        public CompressedCommand(ICommand command)
+        {
+            InnerCommand = command;
+        }
+
+        public override string ToString() =>
+            "CompressedCommand: " + InnerCommand.ToString();
+
+        public static ICommand Deserialize(IPCReader reader)
+        {
+            var commandData = reader.ReadLengthPrefixedBlob();
+            using (var uncompresedStream = new MemoryStream())
+            {
+                using (var inputStream = new MemoryStream(commandData))
+                using (var dstream = new DeflateStream(inputStream, CompressionMode.Decompress))
+                    dstream.CopyTo(uncompresedStream);
+
+                uncompresedStream.Seek(0, SeekOrigin.Begin);
+                using (var uncompressedReader = new IPCReader(uncompresedStream))
+                    return uncompressedReader.ReadCommand();
+            }
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            using (var outputStream = new MemoryStream())
+            {
+                using (var dstream = new DeflateStream(outputStream, CompressionLevel.Optimal))
+                using (var compressedWriter = new IPCWriter(dstream))
+                    compressedWriter.WriteCommand(InnerCommand);
+
+                writer.WriteLengthPrefixedBlob(outputStream.ToArray());
+            }
         }
     }
 
