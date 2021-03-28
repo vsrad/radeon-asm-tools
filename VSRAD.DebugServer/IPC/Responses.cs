@@ -242,25 +242,25 @@ namespace VSRAD.DebugServer.IPC.Responses
     public sealed class GetFilesResponse : IResponse
     {
         public GetFilesStatus Status { get; set; }
-        public byte[] ZipData { get; set; } = Array.Empty<byte>();
+        public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "GetFilesResponse",
             $"Status = {Status}",
-            $"ZipData = <{ZipData.Length} bytes>",
+            $"Files = <{Files.Length} files>",
         });
 
         public static GetFilesResponse Deserialize(IPCReader reader) => new GetFilesResponse
         {
             Status = (GetFilesStatus)reader.ReadByte(),
-            ZipData = reader.ReadLengthPrefixedBlob()
+            Files = reader.ReadLengthPrefixedFileArray()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
-            writer.WriteLengthPrefixedBlob(ZipData);
+            writer.WriteLengthPrefixedFileArray(Files);
         }
     }
 

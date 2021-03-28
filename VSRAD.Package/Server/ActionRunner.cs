@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
@@ -127,7 +128,7 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles)
         {
-            byte[] sourceZip;
+            PackedFile[] files;
             /* Get source files in an archive */
             bool SourceIdenticalToTarget(FileMetadata src)
             {
@@ -138,60 +139,35 @@ namespace VSRAD.Package.Server
                 }
                 return false;
             }
+            var filesToGet = new List<string>();
+            foreach (var src in sourceFiles)
+            {
+                if (src.RelativePath == "./") // root directory
+                    continue;
+                if (step.SkipIfNotModified && SourceIdenticalToTarget(src))
+                    continue;
+                if (!src.IsDirectory)
+                    filesToGet.Add(src.RelativePath);
+            }
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var filesToGet = new List<string>();
-                foreach (var src in sourceFiles)
-                {
-                    if (src.RelativePath == "./") // root directory
-                        continue;
-                    if (step.SkipIfNotModified && SourceIdenticalToTarget(src))
-                        continue;
-                    if (!src.IsDirectory)
-                        filesToGet.Add(src.RelativePath);
-                }
                 var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
                 var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
 
                 if (response.Status != GetFilesStatus.Successful)
                     return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet));
 
-                sourceZip = response.ZipData;
+                files = response.Files;
             }
             else
             {
-                var compLevel = step.UseCompression ? CompressionLevel.Optimal : CompressionLevel.NoCompression;
-                using (var memStream = new MemoryStream())
-                {
-                    using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, false))
-                    {
-                        foreach (var src in sourceFiles)
-                        {
-                            if (src.RelativePath == "./") // root directory
-                                continue;
-                            if (step.SkipIfNotModified && SourceIdenticalToTarget(src))
-                                continue;
-
-                            var fullPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath, src.RelativePath);
-
-                            if (src.IsDirectory)
-                            {
-                                var e = archive.CreateEntry(src.RelativePath.Replace('\\', '/') + "/");
-                                e.LastWriteTime = src.LastWriteTimeUtc;
-                            }
-                            else
-                            {
-                                archive.CreateEntryFromFile(fullPath, src.RelativePath.Replace('\\', '/'), compLevel);
-                            }
-                        }
-                    }
-                    sourceZip = memStream.ToArray();
-                }
+                var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
+                files = PackedFile.PackFiles(rootPath, filesToGet, step.UseCompression);
             }
             /* Extract the archive to the target path */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new PutDirectoryCommand { ZipData = sourceZip, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, PreserveTimestamps = step.PreserveTimestamps };
+                var command = new PutDirectoryCommand { Files = files, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, DecompressFiles = step.UseCompression, PreserveTimestamps = step.PreserveTimestamps };
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
                     return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
@@ -209,7 +185,7 @@ namespace VSRAD.Package.Server
 
                 try
                 {
-                    ZipUtils.UnpackToDirectory(fullPath, sourceZip, preserveTimestamps: step.PreserveTimestamps);
+                    PackedFile.UnpackFiles(fullPath, files, step.UseCompression, step.PreserveTimestamps);
                 }
                 catch (UnauthorizedAccessException)
                 {

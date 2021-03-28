@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -17,19 +15,20 @@ namespace VSRAD.DebugServerTests.Handlers
         {
             var tmpPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
-            var zipData = ZipUtils.CreateZipArchive(new[]
+            var files = new[]
             {
-                (new byte[] { 0x4C }, "test", new DateTime(1998, 07, 06)),
-                (new byte[] { 0x4C, 0x41, 0x49 }, "dir/test", new DateTime(1998, 07, 13)),
-                (new byte[] { 0x4E }, "nested/dir/test", new DateTime(1998, 07, 20)),
-                (Array.Empty<byte>(), "empty/dir/", new DateTime(1998, 07, 27)),
-            });
+                new PackedFile(new byte[] { 0x4C }, "test", new DateTime(1998, 07, 06, 0, 0, 0, DateTimeKind.Utc)),
+                new PackedFile(new byte[] { 0x4C, 0x41, 0x49 }, "dir/test", new DateTime(1998, 07, 13, 0, 0, 0, DateTimeKind.Utc)),
+                new PackedFile(new byte[] { 0x4E }, "nested/dir/test", new DateTime(1998, 07, 20, 0, 0, 0, DateTimeKind.Utc)),
+                new PackedFile(Array.Empty<byte>(), "empty/dir/", new DateTime(1998, 07, 27, 0, 0, 0, DateTimeKind.Utc)),
+            };
 
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
-                ZipData = zipData,
+                Files = files,
                 Path = Path.GetFileName(tmpPath),
                 WorkDir = Path.GetDirectoryName(tmpPath),
+                DecompressFiles = false,
                 PreserveTimestamps = true
             });
 
@@ -37,18 +36,18 @@ namespace VSRAD.DebugServerTests.Handlers
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "test")));
             Assert.Equal(new byte[] { 0x4C }, File.ReadAllBytes(Path.Combine(tmpPath, "test")));
-            Assert.Equal(new DateTime(1998, 07, 06), File.GetLastWriteTime(Path.Combine(tmpPath, "test")));
+            Assert.Equal(new DateTime(1998, 07, 06), File.GetLastWriteTimeUtc(Path.Combine(tmpPath, "test")));
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "dir", "test")));
             Assert.Equal(new byte[] { 0x4C, 0x41, 0x49 }, File.ReadAllBytes(Path.Combine(tmpPath, "dir", "test")));
-            Assert.Equal(new DateTime(1998, 07, 13), File.GetLastWriteTime(Path.Combine(tmpPath, "dir", "test")));
+            Assert.Equal(new DateTime(1998, 07, 13), File.GetLastWriteTimeUtc(Path.Combine(tmpPath, "dir", "test")));
 
             Assert.True(File.Exists(Path.Combine(tmpPath, "nested", "dir", "test")));
             Assert.Equal(new byte[] { 0x4E }, File.ReadAllBytes(Path.Combine(tmpPath, "nested", "dir", "test")));
-            Assert.Equal(new DateTime(1998, 07, 20), File.GetLastWriteTime(Path.Combine(tmpPath, "nested", "dir", "test")));
+            Assert.Equal(new DateTime(1998, 07, 20), File.GetLastWriteTimeUtc(Path.Combine(tmpPath, "nested", "dir", "test")));
 
             Assert.True(Directory.Exists(Path.Combine(tmpPath, "empty", "dir")));
-            Assert.Equal(new DateTime(1998, 07, 27), Directory.GetLastWriteTime(Path.Combine(tmpPath, "empty", "dir")));
+            Assert.Equal(new DateTime(1998, 07, 27), Directory.GetLastWriteTimeUtc(Path.Combine(tmpPath, "empty", "dir")));
 
             Directory.Delete(tmpPath, recursive: true);
         }
@@ -61,7 +60,7 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
-                ZipData = Array.Empty<byte>(),
+                Files = Array.Empty<PackedFile>(),
                 Path = Path.GetFileName(tmpPath),
                 WorkDir = Path.GetDirectoryName(tmpPath)
             });
@@ -80,11 +79,11 @@ namespace VSRAD.DebugServerTests.Handlers
             File.WriteAllText(Path.Combine(tmpPath, "test"), "read only");
             File.SetAttributes(Path.Combine(tmpPath, "test"), FileAttributes.ReadOnly);
 
-            var zipData = ZipUtils.CreateZipArchive(new[] { (new byte[] { 0x48 }, "test", new DateTime(2002, 10, 09)) });
+            var files = new[] { new PackedFile(new byte[] { 0x48 }, "test", new DateTime(2002, 10, 09, 0, 0, 0, DateTimeKind.Utc)) };
 
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
-                ZipData = zipData,
+                Files = files,
                 Path = tmpPath,
                 WorkDir = ""
             });

@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
-using VSRAD.DebugServer.SharedUtils;
 using Xunit;
 
 namespace VSRAD.DebugServerTests.Handlers
@@ -31,27 +27,26 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<GetFilesCommand, GetFilesResponse>(new GetFilesCommand
             {
-                UseCompression = true,
+                UseCompression = false,
                 Paths = new[] { "k/s", "h/b/w", "empty/" },
                 RootPath = new[] { tmpPath }
             });
 
             Assert.Equal(GetFilesStatus.Successful, response.Status);
 
-            var items = ZipUtils.ReadZipItems(response.ZipData).ToArray();
-            Assert.Equal(3, items.Length);
+            Assert.Equal(3, response.Files.Length);
 
-            Assert.Equal("k/s", items[0].Path);
-            Assert.Equal(new byte[] { 0x63, 0x72, 0x6f, 0x77 }, items[0].Data);
-            Assert.Equal(new DateTime(2002, 09, 12, 0, 0, 0, DateTimeKind.Utc), items[0].LastWriteTimeUtc);
+            Assert.Equal("k/s", response.Files[0].RelativePath);
+            Assert.Equal(new byte[] { 0x63, 0x72, 0x6f, 0x77 }, response.Files[0].Data);
+            Assert.Equal(new DateTime(2002, 09, 12, 0, 0, 0, DateTimeKind.Utc), response.Files[0].LastWriteTimeUtc);
 
-            Assert.Equal("h/b/w", items[1].Path);
-            Assert.Equal(new byte[] { 0x74, 0x65, 0x6f, 0x74, 0x77 }, items[1].Data);
-            Assert.Equal(new DateTime(1985, 06, 15, 0, 0, 0, DateTimeKind.Utc), items[1].LastWriteTimeUtc);
+            Assert.Equal("h/b/w", response.Files[1].RelativePath);
+            Assert.Equal(new byte[] { 0x74, 0x65, 0x6f, 0x74, 0x77 }, response.Files[1].Data);
+            Assert.Equal(new DateTime(1985, 06, 15, 0, 0, 0, DateTimeKind.Utc), response.Files[1].LastWriteTimeUtc);
 
-            Assert.Equal("empty/", items[2].Path);
-            Assert.Equal(Array.Empty<byte>(), items[2].Data);
-            Assert.Equal(new DateTime(1981, 01, 01, 0, 0, 0, DateTimeKind.Utc), items[2].LastWriteTimeUtc);
+            Assert.Equal("empty/", response.Files[2].RelativePath);
+            Assert.Equal(Array.Empty<byte>(), response.Files[2].Data);
+            Assert.Equal(new DateTime(1981, 01, 01, 0, 0, 0, DateTimeKind.Utc), response.Files[2].LastWriteTimeUtc);
 
             Directory.Delete(tmpPath, recursive: true);
         }

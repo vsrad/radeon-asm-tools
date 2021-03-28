@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.IO.Compression;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.Handlers
 {
@@ -21,28 +21,8 @@ namespace VSRAD.DebugServer.Handlers
             var rootPath = Path.Combine(_command.RootPath);
             try
             {
-                var compLevel = _command.UseCompression ? CompressionLevel.Optimal : CompressionLevel.NoCompression;
-                using var memStream = new MemoryStream();
-
-                using (var archive = new ZipArchive(memStream, ZipArchiveMode.Update, false))
-                {
-                    foreach (var path in _command.Paths)
-                    {
-                        var fullPath = Path.Combine(rootPath, path);
-
-                        if (path.EndsWith('/'))
-                        {
-                            var e = archive.CreateEntry(path);
-                            e.LastWriteTime = Directory.GetLastWriteTime(fullPath);
-                        }
-                        else
-                        {
-                            archive.CreateEntryFromFile(fullPath, path.Replace('\\', '/'), compLevel);
-                        }
-                    }
-                }
-
-                return Task.FromResult<IResponse>(new GetFilesResponse { Status = GetFilesStatus.Successful, ZipData = memStream.ToArray() });
+                var files = PackedFile.PackFiles(rootPath, _command.Paths, _command.UseCompression);
+                return Task.FromResult<IResponse>(new GetFilesResponse { Status = GetFilesStatus.Successful, Files = files });
             }
             catch (FileNotFoundException)
             {
