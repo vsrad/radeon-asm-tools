@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC.Commands
 {
@@ -213,36 +214,41 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class PutDirectoryCommand : ICommand
     {
-        public byte[] ZipData { get; set; }
+        public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
 
         public string Path { get; set; }
 
         public string WorkDir { get; set; }
+
+        public bool DecompressFiles { get; set; }
 
         public bool PreserveTimestamps { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "PutDirectoryCommand",
-            $"ZipData = <{ZipData.Length} bytes>",
+            $"Files = <{Files.Length} files>",
             $"Path = {Path}",
             $"WorkDir = {WorkDir}",
+            $"DecompressFiles = {DecompressFiles}",
             $"PreserveTimestamps = {PreserveTimestamps}"
         });
 
         public static PutDirectoryCommand Deserialize(IPCReader reader) => new PutDirectoryCommand
         {
-            ZipData = reader.ReadLengthPrefixedBlob(),
+            Files = reader.ReadLengthPrefixedFileArray(),
             Path = reader.ReadString(),
             WorkDir = reader.ReadString(),
+            DecompressFiles = reader.ReadBoolean(),
             PreserveTimestamps = reader.ReadBoolean()
         };
 
         public void Serialize(IPCWriter writer)
         {
-            writer.WriteLengthPrefixedBlob(ZipData);
+            writer.WriteLengthPrefixedFileArray(Files);
             writer.Write(Path);
             writer.Write(WorkDir);
+            writer.Write(DecompressFiles);
             writer.Write(PreserveTimestamps);
         }
     }
