@@ -130,8 +130,8 @@ namespace VSRAD.DebugServer
                 var lockAcquired = false;
                 try
                 {
-                    var command = await client.ReceiveCommandAsync().ConfigureAwait(false);
-                    clientLog.CommandReceived(command);
+                    var (command, bytesReceived) = await client.ReceiveCommandAsync().ConfigureAwait(false);
+                    clientLog.CommandReceived(command, bytesReceived);
 
                     await _commandExecutionLock.WaitAsync();
                     lockAcquired = true;

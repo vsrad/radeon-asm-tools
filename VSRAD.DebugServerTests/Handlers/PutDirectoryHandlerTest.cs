@@ -28,7 +28,6 @@ namespace VSRAD.DebugServerTests.Handlers
                 Files = files,
                 Path = Path.GetFileName(tmpPath),
                 WorkDir = Path.GetDirectoryName(tmpPath),
-                DecompressFiles = false,
                 PreserveTimestamps = true
             });
 
