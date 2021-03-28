@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -243,10 +242,9 @@ namespace VSRAD.PackageTests.Server
             });
             channel.ThenRespond(new PutDirectoryResponse { Status = PutDirectoryStatus.Successful }, (PutDirectoryCommand command) =>
             {
-                var items = ZipUtils.ReadZipItems(command.ZipData).ToArray();
-                Assert.Single(items);
-                Assert.Equal("t2", items[0].Path);
-                Assert.Equal("test2", Encoding.UTF8.GetString(items[0].Data));
+                Assert.Single(command.Files);
+                Assert.Equal("t2", command.Files[0].RelativePath);
+                Assert.Equal("test2", Encoding.UTF8.GetString(command.Files[0].Data));
             });
             var result = await runner.RunAsync("HTMT", steps);
             Assert.True(result.Successful);
@@ -312,8 +310,8 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal("/home/mizu/machete", command.WorkDir);
             });
 
-            var zipData = ZipUtils.CreateZipArchive(new[] { (new byte[] { 0, 1, 2, 3 }, "t2", new DateTime(1990, 1, 1)) });
-            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, ZipData = zipData }, (GetFilesCommand command) =>
+            var files = new[] { new PackedFile(new byte[] { 0, 1, 2, 3 }, "t2", new DateTime(1990, 1, 1)) };
+            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, Files = files }, (GetFilesCommand command) =>
             {
                 Assert.Equal(new[] { "/home/mizu/machete", "rawdir" }, command.RootPath);
                 Assert.Equal(new[] { "t2" }, command.Paths);
@@ -336,9 +334,9 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfNotModified = true } };
 
             // t's size is changed => it'll be requested
-            channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("./", default, default), new FileMetadata("t", 1, default) }  });
-            var zipData = ZipUtils.CreateZipArchive(new[] { (new byte[] { 0, 1, 2, 3 }, "t", new DateTime(1990, 1, 1)) });
-            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, ZipData = zipData });
+            channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("./", default, default), new FileMetadata("t", 1, default) } });
+            var files = new[] { new PackedFile(new byte[] { 0, 1, 2, 3 }, "t", new DateTime(1990, 1, 1)) };
+            channel.ThenRespond(new GetFilesResponse { Status = GetFilesStatus.Successful, Files = files });
 
             // Permission denied
             File.SetAttributes(tmpDir + "\\t", FileAttributes.ReadOnly);

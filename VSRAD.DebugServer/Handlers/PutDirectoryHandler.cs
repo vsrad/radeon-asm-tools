@@ -28,7 +28,7 @@ namespace VSRAD.DebugServer.Handlers
             {
                 try
                 {
-                    ZipUtils.UnpackToDirectory(fullPath, _command.ZipData, _command.PreserveTimestamps);
+                    PackedFile.UnpackFiles(fullPath, _command.Files, _command.DecompressFiles, _command.PreserveTimestamps);
                     return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful };
                 }
                 catch (UnauthorizedAccessException)

@@ -11,9 +11,10 @@ namespace VSRAD.DebugServer.SharedUtils
         /// this matches the behavior of zip archives used in <see cref="IPC.Commands.GetFilesCommand"/> and <see cref="IPC.Commands.PutDirectoryCommand"/>.
         /// </summary>
         public string RelativePath { get; }
-        public bool IsDirectory => RelativePath.EndsWith("/", StringComparison.Ordinal);
         public long Size { get; }
         public DateTime LastWriteTimeUtc { get; }
+
+        public bool IsDirectory => RelativePath.EndsWith("/", StringComparison.Ordinal);
 
         public FileMetadata(string relativePath, long size, DateTime lastWriteTimeUtc)
         {
@@ -54,12 +55,11 @@ namespace VSRAD.DebugServer.SharedUtils
 
         public bool Equals(FileMetadata other) =>
             RelativePath == other.RelativePath &&
-            IsDirectory == other.IsDirectory &&
             Size == other.Size &&
             LastWriteTimeUtc == other.LastWriteTimeUtc;
 
         public override bool Equals(object obj) => obj is FileMetadata metadata && Equals(metadata);
-        public override int GetHashCode() => (RelativePath, IsDirectory, Size, LastWriteTimeUtc).GetHashCode();
+        public override int GetHashCode() => (RelativePath, Size, LastWriteTimeUtc).GetHashCode();
         public static bool operator ==(FileMetadata left, FileMetadata right) => left.Equals(right);
         public static bool operator !=(FileMetadata left, FileMetadata right) => !(left == right);
     }
