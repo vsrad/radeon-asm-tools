@@ -42,7 +42,7 @@ namespace VSRAD.DebugServer.SharedUtils
             }
         }
 
-        public static void UnpackFiles(string path, PackedFile[] files, bool preserveTimestamps)
+        public static void UnpackFiles(string path, IEnumerable<PackedFile> files, bool preserveTimestamps)
         {
             var destination = Directory.CreateDirectory(path);
 

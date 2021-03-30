@@ -213,6 +213,8 @@ namespace VSRAD.PackageTests.Server
         {
             var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Directory.CreateDirectory(tmpDir);
+            Directory.CreateDirectory(tmpDir + "\\empty");
+            Directory.SetLastWriteTimeUtc(tmpDir + "\\empty", new DateTime(1970, 1, 1));
             File.WriteAllText(tmpDir + "\\t", "test");
             File.WriteAllText(tmpDir + "\\t2", "test2");
             File.SetLastWriteTimeUtc(tmpDir + "\\t", new DateTime(1980, 1, 1));
@@ -220,9 +222,9 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfNotModified = true } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfNotModified = true, IncludeSubdirectories = true } };
 
-            // t is unchanged, t2's size is different
+            // t is unchanged, t2's size is different, empty/ is missing
             channel.ThenRespond(new ListFilesResponse
             {
                 Files = new[]
@@ -238,9 +240,11 @@ namespace VSRAD.PackageTests.Server
             });
             channel.ThenRespond(new PutDirectoryResponse { Status = PutDirectoryStatus.Successful }, (PutDirectoryCommand command) =>
             {
-                Assert.Single(command.Files);
+                Assert.Equal(2, command.Files.Length);
                 Assert.Equal("t2", command.Files[0].RelativePath);
                 Assert.Equal("test2", Encoding.UTF8.GetString(command.Files[0].Data));
+                Assert.Equal("empty/", command.Files[1].RelativePath);
+                Assert.Equal(Array.Empty<byte>(), command.Files[1].Data);
             });
             var result = await runner.RunAsync("HTMT", steps);
             Assert.True(result.Successful);
