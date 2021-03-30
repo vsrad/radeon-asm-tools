@@ -23,6 +23,8 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
+        DebugServer.IPC.CapabilityInfo ServerCapabilities { get; }
+
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
@@ -34,6 +36,13 @@ namespace VSRAD.Package.Server
     {
         public ConnectionRefusedException(ServerConnectionOptions connection) :
             base($"Unable to establish connection to a debug server at {connection}")
+        { }
+    }
+
+    public sealed class UnsupportedServerVersionException : System.IO.IOException
+    {
+        public UnsupportedServerVersionException(ServerConnectionOptions connection) :
+            base($"The debug server on host {connection} is out of date and missing critical features. Please update it to the latest available version.")
         { }
     }
 
@@ -62,6 +71,8 @@ namespace VSRAD.Package.Server
                 ConnectionStateChanged?.Invoke();
             }
         }
+
+        public DebugServer.IPC.CapabilityInfo ServerCapabilities { get; private set; }
 
         private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
 
@@ -92,6 +103,7 @@ namespace VSRAD.Package.Server
             try
             {
                 await EstablishServerConnectionAsync().ConfigureAwait(false);
+
                 var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
                 await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
 
@@ -103,7 +115,7 @@ namespace VSRAD.Package.Server
             {
                 throw new OperationCanceledException();
             }
-            catch (Exception e)
+            catch (Exception e) when (!(e is UnsupportedServerVersionException)) // Don't attempt to reconnect to an unsupported server
             {
                 if (tryReconnect)
                 {
@@ -128,7 +140,6 @@ namespace VSRAD.Package.Server
         {
             if (_remoteEnvironment == null)
             {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
                 var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables());
                 _remoteEnvironment = environment.Variables;
             }
@@ -156,11 +167,23 @@ namespace VSRAD.Package.Server
                 using (cts.Token.Register(() => client.Dispose()))
                 {
                     await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
-                    _connection = client;
-                    ConnectionState = ClientState.Connected;
                 }
+                await client.GetStream().WriteSerializedMessageAsync(new GetServerCapabilitiesCommand()).ConfigureAwait(false);
+                var (response, _) = await client.GetStream().ReadSerializedResponseAsync<GetServerCapabilitiesResponse>().ConfigureAwait(false);
+                if (response == null)
+                {
+                    ConnectionState = ClientState.Disconnected;
+                    throw new UnsupportedServerVersionException(ConnectionOptions);
+                }
+
+                ServerCapabilities = response.Info;
+                if (!ServerCapabilities.IsUpToDate())
+                    Errors.ShowWarning($"The debug server on host {ConnectionOptions} is out of date. Some features may not work properly.");
+
+                _connection = client;
+                ConnectionState = ClientState.Connected;
             }
-            catch (Exception)
+            catch (Exception e) when (!(e is UnsupportedServerVersionException))
             {
                 ConnectionState = ClientState.Disconnected;
                 throw new ConnectionRefusedException(ConnectionOptions);

@@ -106,6 +106,9 @@
     <Compile Include="..\VSRAD.BuildTools\IPCBuildResult.cs">
       <Link>BuildTools\IPCBuildResult.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\IPC\Capabilities.cs">
+      <Link>Server\IPC\Capabilities.cs</Link>
+    </Compile>
     <Compile Include="..\VSRAD.DebugServer\IPC\Commands.cs">
       <Link>Server\IPC\Commands.cs</Link>
     </Compile>
