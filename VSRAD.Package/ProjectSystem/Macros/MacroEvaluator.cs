@@ -102,8 +102,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         Task<Result<string>> EvaluateAsync(string src);
     }
 
-    public sealed class MacroEvaluationException : Exception { public MacroEvaluationException(string message) : base(message) { } }
-
     public sealed class MacroEvaluator : IMacroEvaluator
     {
         private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);

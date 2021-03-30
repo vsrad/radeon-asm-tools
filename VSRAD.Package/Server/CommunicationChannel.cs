@@ -32,14 +32,14 @@ namespace VSRAD.Package.Server
         void ForceDisconnect();
     }
 
-    public sealed class ConnectionRefusedException : System.IO.IOException
+    public sealed class ConnectionRefusedException : UserException
     {
         public ConnectionRefusedException(ServerConnectionOptions connection) :
-            base($"Unable to establish connection to a debug server at {connection}")
+            base($"Unable to establish connection to the debug server at host {connection}")
         { }
     }
 
-    public sealed class UnsupportedServerVersionException : System.IO.IOException
+    public sealed class UnsupportedServerVersionException : UserException
     {
         public UnsupportedServerVersionException(ServerConnectionOptions connection) :
             base($"The debug server on host {connection} is out of date and missing critical features. Please update it to the latest available version.")
@@ -127,7 +127,7 @@ namespace VSRAD.Package.Server
                 {
                     ForceDisconnect();
                     await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to {ConnectionOptions}").ConfigureAwait(false);
-                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                    throw;
                 }
             }
             finally
