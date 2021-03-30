@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
@@ -118,7 +116,7 @@ namespace VSRAD.Package.Server
                     && targetFiles.Count == 1
                     && sourceFiles[0].Size == targetFiles[0].Size
                     && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
-                    return new StepResult(true, "", "File was not copied: sizes and modification times are identical on the source and target sides.");
+                    return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
 
                 return await DoCopySingleFileAsync(step);
             }
@@ -128,8 +126,8 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles)
         {
-            PackedFile[] files;
-            /* Get source files in an archive */
+            /* Retrieve source files */
+            var files = new List<PackedFile>();
             bool SourceIdenticalToTarget(FileMetadata src)
             {
                 foreach (var dst in targetFiles)
@@ -142,32 +140,47 @@ namespace VSRAD.Package.Server
             var filesToGet = new List<string>();
             foreach (var src in sourceFiles)
             {
-                if (src.RelativePath == "./") // root directory
-                    continue;
-                if (step.SkipIfNotModified && SourceIdenticalToTarget(src))
-                    continue;
-                if (!src.IsDirectory)
+                if (!src.IsDirectory && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
                     filesToGet.Add(src.RelativePath);
             }
-            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            if (filesToGet.Count > 0)
             {
-                var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
-                var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
+                if (step.Direction == FileCopyDirection.RemoteToLocal)
+                {
+                    var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
+                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
 
-                if (response.Status != GetFilesStatus.Successful)
-                    return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet));
+                    if (response.Status != GetFilesStatus.Successful)
+                        return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
 
-                files = response.Files;
+                    files.AddRange(response.Files);
+                }
+                else
+                {
+                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
+                    files.AddRange(PackedFile.PackFiles(rootPath, filesToGet));
+                }
             }
-            else
+            /* Include empty directories */
+            foreach (var src in sourceFiles)
             {
-                var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-                files = PackedFile.PackFiles(rootPath, filesToGet);
+                // ./ indicates the root directory
+                if (src.IsDirectory && src.RelativePath != "./" && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                    files.Add(new PackedFile(Array.Empty<byte>(), src.RelativePath, src.LastWriteTimeUtc));
             }
-            /* Extract the archive to the target path */
+            /* Write source files and directories to the target directory */
+            if (files.Count == 0)
+                return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
+
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                ICommand command = new PutDirectoryCommand { Files = files, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir, PreserveTimestamps = step.PreserveTimestamps };
+                ICommand command = new PutDirectoryCommand
+                {
+                    Files = files.ToArray(),
+                    Path = step.TargetPath,
+                    WorkDir = _environment.RemoteWorkDir,
+                    PreserveTimestamps = step.PreserveTimestamps
+                };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
