@@ -17,6 +17,7 @@ namespace VSRAD.DebugServer.IPC.Responses
         PutDirectory = 5,
         ListFiles = 6,
         GetFiles = 7,
+        GetServerCapabilities = 8,
 
         CompressedResponse = 0xFF
     }
@@ -42,6 +43,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
                 case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
+                case ResponseType.GetServerCapabilities: return GetServerCapabilitiesResponse.Deserialize(reader);
 
                 case ResponseType.CompressedResponse: return CompressedResponse.Deserialize(reader);
             }
@@ -61,6 +63,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 case GetFilesResponse _: type = ResponseType.GetFiles; break;
+                case GetServerCapabilitiesResponse _: type = ResponseType.GetServerCapabilities; break;
 
                 case CompressedResponse _: type = ResponseType.CompressedResponse; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
@@ -288,6 +291,24 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public void Serialize(IPCWriter writer) =>
             writer.WriteLengthPrefixedDict(Variables);
+    }
+
+    public sealed class GetServerCapabilitiesResponse : IResponse
+    {
+        public CapabilityInfo Info { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "GetServerCapabilitiesResponse",
+            Info.ToString()
+        });
+
+        public static GetServerCapabilitiesResponse Deserialize(IPCReader reader) => new GetServerCapabilitiesResponse
+        {
+            Info = CapabilityInfo.Deserialize(reader)
+        };
+
+        public void Serialize(IPCWriter writer) => Info.Serialize(writer);
     }
 
     public sealed class CompressedResponse : IResponse

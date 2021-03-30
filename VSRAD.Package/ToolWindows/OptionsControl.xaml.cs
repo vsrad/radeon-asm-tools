@@ -22,6 +22,9 @@ namespace VSRAD.Package.ToolWindows
             public string ConnectionInfo =>
                 Options.Profile?.General?.RunActionsLocally == true ? "Local" : _channel.ConnectionOptions.ToString();
 
+            public string ServerInfo =>
+                _channel.ServerCapabilities?.ToString() ?? "";
+
             public Visibility DisconnectButtonVisible =>
                 Options.Profile?.General?.RunActionsLocally == true ? Visibility.Hidden : Visibility.Visible;
 
@@ -56,6 +59,7 @@ namespace VSRAD.Package.ToolWindows
             private void ConnectionStateChanged()
             {
                 RaisePropertyChanged(nameof(ConnectionInfo));
+                RaisePropertyChanged(nameof(ServerInfo));
                 RaisePropertyChanged(nameof(DisconnectLabel));
                 RaisePropertyChanged(nameof(DisconnectButtonVisible));
                 ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;

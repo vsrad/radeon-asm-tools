@@ -17,6 +17,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         PutDirectory = 6,
         ListFiles = 7,
         GetFiles = 8,
+        GetServerCapabilities = 9,
 
         CompressedCommand = 0xFF
     }
@@ -46,6 +47,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
                 case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
                 case CommandType.GetFiles: return GetFilesCommand.Deserialize(reader);
+                case CommandType.GetServerCapabilities: return GetServerCapabilitiesCommand.Deserialize(reader);
 
                 case CommandType.CompressedCommand: return CompressedCommand.Deserialize(reader);
             }
@@ -66,6 +68,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
                 case ListFilesCommand _: type = CommandType.ListFiles; break;
                 case GetFilesCommand _: type = CommandType.GetFiles; break;
+                case GetServerCapabilitiesCommand _: type = CommandType.GetServerCapabilities; break;
 
                 case CompressedCommand _: type = CommandType.CompressedCommand; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
@@ -313,6 +316,15 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.WriteLengthPrefixedArray(Paths);
             writer.WriteLengthPrefixedArray(RootPath);
         }
+    }
+
+    public sealed class GetServerCapabilitiesCommand : ICommand
+    {
+        public override string ToString() => "GetServerCapabilitiesCommand";
+
+        public static GetServerCapabilitiesCommand Deserialize(IPCReader _) => new GetServerCapabilitiesCommand();
+
+        public void Serialize(IPCWriter _) { }
     }
 
     public sealed class CompressedCommand : ICommand
