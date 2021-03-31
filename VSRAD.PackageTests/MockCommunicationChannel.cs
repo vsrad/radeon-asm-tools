@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using VSRAD.DebugServer.IPC;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Server;
@@ -28,9 +29,12 @@ namespace VSRAD.PackageTests
 
         public void RaiseConnectionStateChanged() => _mock.Raise((m) => m.ConnectionStateChanged += null);
 
-        public MockCommunicationChannel()
+        public MockCommunicationChannel(ServerPlatform platform = ServerPlatform.Windows)
         {
             _mock = new Mock<ICommunicationChannel>();
+            _mock
+                .SetupGet(c => c.ServerCapabilities)
+                .Returns(new CapabilityInfo("", platform, CapabilityInfo.LatestServerCapabilities));
             _mock
                 .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>()))
                 .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c)));

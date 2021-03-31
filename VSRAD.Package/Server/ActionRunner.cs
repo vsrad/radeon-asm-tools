@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,13 +19,13 @@ namespace VSRAD.Package.Server
         private readonly ICommunicationChannel _channel;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
-        private readonly ActionEnvironment _environment;
+        private readonly ReadOnlyCollection<string> _debugWatches;
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ActionEnvironment environment)
+        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ReadOnlyCollection<string> debugWatches)
         {
             _channel = channel;
             _serviceProvider = serviceProvider;
-            _environment = environment;
+            _debugWatches = debugWatches;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
@@ -72,35 +73,35 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
             IList<FileMetadata> sourceFiles, targetFiles;
+            // List all source files
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var command = new ListFilesCommand { Path = step.SourcePath, WorkDir = _environment.RemoteWorkDir };
+                var command = new ListFilesCommand { Path = step.SourcePath };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
                 sourceFiles = response.Files;
             }
             else
             {
-                if (!TryGetMetadataForLocalPath(step.SourcePath, step.IncludeSubdirectories, out sourceFiles, out var error))
+                if (!TryGetLocalMetadata(step.SourcePath, step.IncludeSubdirectories, out sourceFiles, out var error))
                     return new StepResult(false, error, "");
             }
             if (sourceFiles.Count == 0)
             {
-                var cwd = step.Direction == FileCopyDirection.RemoteToLocal ? _environment.RemoteWorkDir : _environment.LocalWorkDir;
-                return new StepResult(false, $"Path \"{step.SourcePath}\" does not exist\r\nWorking directory: \"{cwd}\"", "");
+                return new StepResult(false, $"Path \"{step.SourcePath}\" does not exist", "");
             }
+            // List all target files
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new ListFilesCommand { Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                var command = new ListFilesCommand { Path = step.TargetPath };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
                 targetFiles = response.Files;
             }
             else
             {
-                if (!TryGetMetadataForLocalPath(step.TargetPath, step.IncludeSubdirectories, out targetFiles, out var error))
+                if (!TryGetLocalMetadata(step.TargetPath, step.IncludeSubdirectories, out targetFiles, out var error))
                     return new StepResult(false, error, "");
             }
-
-            /* Copying a single file */
+            // Copying one file?
             if (sourceFiles.Count == 1 && !sourceFiles[0].IsDirectory)
             {
                 if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
@@ -117,13 +118,13 @@ namespace VSRAD.Package.Server
 
                 return await DoCopySingleFileAsync(step);
             }
-            /* Copying a directory */
+            // Copying a directory?
             return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles);
         }
 
         private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles)
         {
-            /* Retrieve source files */
+            // Retrieve source files
             var files = new List<PackedFile>();
             bool SourceIdenticalToTarget(FileMetadata src)
             {
@@ -144,7 +145,7 @@ namespace VSRAD.Package.Server
             {
                 if (step.Direction == FileCopyDirection.RemoteToLocal)
                 {
-                    var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
+                    var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
                     var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
 
                     if (response.Status != GetFilesStatus.Successful)
@@ -154,30 +155,24 @@ namespace VSRAD.Package.Server
                 }
                 else
                 {
-                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-                    files.AddRange(PackedFile.PackFiles(rootPath, filesToGet));
+                    files.AddRange(PackedFile.PackFiles(step.SourcePath, filesToGet));
                 }
             }
-            /* Include empty directories */
+            // Include empty directories
             foreach (var src in sourceFiles)
             {
                 // ./ indicates the root directory
                 if (src.IsDirectory && src.RelativePath != "./" && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
                     files.Add(new PackedFile(Array.Empty<byte>(), src.RelativePath, src.LastWriteTimeUtc));
             }
-            /* Write source files and directories to the target directory */
+            // Write source files and directories to the target directory
             if (files.Count == 0)
+            {
                 return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
-
+            }
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                ICommand command = new PutDirectoryCommand
-                {
-                    Files = files.ToArray(),
-                    Path = step.TargetPath,
-                    WorkDir = _environment.RemoteWorkDir,
-                    PreserveTimestamps = step.PreserveTimestamps
-                };
+                ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
@@ -191,14 +186,12 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                if (!TryGetFullLocalPath(step.TargetPath, out var fullPath, out var error))
-                    return new StepResult(false, error, "");
-                if (File.Exists(fullPath))
-                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine: the target path is a file.", "");
+                if (File.Exists(step.TargetPath))
+                    return new StepResult(false, $"Directory \"{step.TargetPath}\" could not be copied to the local machine: the target path is a file.", "");
 
                 try
                 {
-                    PackedFile.UnpackFiles(fullPath, files, step.PreserveTimestamps);
+                    PackedFile.UnpackFiles(step.TargetPath, files, step.PreserveTimestamps);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -206,7 +199,7 @@ namespace VSRAD.Package.Server
                 }
                 catch (IOException)
                 {
-                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine", "");
+                    return new StepResult(false, $"Directory \"{step.TargetPath}\" could not be copied to the local machine", "");
                 }
             }
 
@@ -219,7 +212,7 @@ namespace VSRAD.Package.Server
             /* Read source file */
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
+                var command = new FetchResultRange { FilePath = new[] { step.SourcePath } };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
@@ -232,7 +225,7 @@ namespace VSRAD.Package.Server
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
@@ -244,13 +237,10 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                if (!TryGetFullLocalPath(step.TargetPath, out var localPath, out var error))
-                    return new StepResult(false, error, "");
-
                 try
                 {
-                    Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                    File.WriteAllBytes(localPath, sourceContents);
+                    Directory.CreateDirectory(Path.GetDirectoryName(step.TargetPath));
+                    File.WriteAllBytes(step.TargetPath, sourceContents);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -263,15 +253,11 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
         {
-            var workDir = step.WorkingDirectory;
-            if (string.IsNullOrEmpty(workDir))
-                workDir = step.Environment == StepEnvironment.Local ? _environment.LocalWorkDir : _environment.RemoteWorkDir;
-
             var command = new Execute
             {
                 Executable = step.Executable,
                 Arguments = step.Arguments,
-                WorkingDirectory = workDir,
+                WorkingDirectory = step.WorkingDirectory,
                 RunAsAdministrator = step.RunAsAdmin,
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
@@ -324,7 +310,7 @@ namespace VSRAD.Package.Server
 
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
-            var watches = _environment.Watches;
+            var watches = _debugWatches;
             BreakStateDispatchParameters dispatchParams = null;
 
             if (!string.IsNullOrEmpty(step.WatchesFile.Path))
@@ -350,8 +336,8 @@ namespace VSRAD.Package.Server
                     return (new StepResult(false, error.Message, ""), null);
             }
             {
-                var path = step.OutputFile.Path;
-                var initOutputTimestamp = GetInitialFileTimestamp(path);
+                var outputPath = step.OutputFile.Path;
+                var initOutputTimestamp = GetInitialFileTimestamp(outputPath);
 
                 int GetOutputDwordCount(int fileByteCount, out string warning)
                 {
@@ -366,7 +352,7 @@ namespace VSRAD.Package.Server
 
                     if (fileDwordCount < dispatchDwordCount)
                     {
-                        warning = $"Output file ({path}) is smaller than expected.\r\n\r\n" +
+                        warning = $"Output file ({outputPath}) is smaller than expected.\r\n\r\n" +
                             $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
                             $"which corresponds to {totalLaneCount} lanes. With {laneDataSize} DWORDs per lane, the output file is expected to contain at least " +
                             $"{dispatchDwordCount} DWORDs, but it only contains {fileDwordCount} DWORDs.";
@@ -381,34 +367,32 @@ namespace VSRAD.Package.Server
 
                 if (step.OutputFile.IsRemote())
                 {
-                    var fullPath = new[] { _environment.RemoteWorkDir, path };
-                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput });
 
                     if (response.Status == FetchStatus.FileNotFound)
-                        return (new StepResult(false, $"Output file ({path}) could not be found.", ""), null);
+                        return (new StepResult(false, $"Output file ({outputPath}) could not be found.", ""), null);
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+                        return (new StepResult(false, $"Output file ({outputPath}) was not modified. Data may be stale.", ""), null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataByteCount = Math.Max(0, response.ByteCount - offset);
                     var dataDwordCount = GetOutputDwordCount(dataByteCount, out stepWarning);
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
+                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
                 }
                 else
                 {
-                    var fullPath = new[] { _environment.LocalWorkDir, path };
-                    var timestamp = GetLocalFileLastWriteTimeUtc(path);
+                    var timestamp = GetLocalFileLastWriteTimeUtc(outputPath);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+                        return (new StepResult(false, $"Output file ({outputPath}) was not modified. Data may be stale.", ""), null);
 
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
-                    if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
+                    if (!ReadLocalFile(outputPath, out localOutputData, out var readError, readOffset))
                         return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
                     var dataDwordCount = GetOutputDwordCount(localOutputData.Length, out stepWarning);
-                    outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
+                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
 
                 var data = new BreakStateData(watches, outputFile, localOutputData);
@@ -422,7 +406,7 @@ namespace VSRAD.Package.Server
             if (isRemote)
             {
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                    new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
+                    new FetchResultRange { FilePath = new[] { path } });
 
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} file ({path}) could not be found.");
@@ -441,13 +425,8 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool ReadLocalFile(string path, out byte[] data, out string error, int byteOffset = 0)
+        private bool ReadLocalFile(string fullPath, out byte[] data, out string error, int byteOffset = 0)
         {
-            if (!TryGetFullLocalPath(path, out var fullPath, out error))
-            {
-                data = null;
-                return false;
-            }
             try
             {
                 using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
@@ -470,11 +449,11 @@ namespace VSRAD.Package.Server
             }
             catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
             {
-                error = $"File {path} is not found on the local machine";
+                error = $"File {fullPath} is not found on the local machine";
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access to path {path} on the local machine is denied";
+                error = $"Access to path {fullPath} on the local machine is denied";
             }
             data = null;
             return false;
@@ -488,7 +467,7 @@ namespace VSRAD.Package.Server
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
+                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } })).Timestamp;
                     else
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
@@ -501,7 +480,7 @@ namespace VSRAD.Package.Server
                             continue;
                         if (file.IsRemote())
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, file.Path } })).Timestamp;
+                                new FetchMetadata { FilePath = new[] { file.Path } })).Timestamp;
                         else
                             _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }
@@ -509,12 +488,11 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private DateTime GetLocalFileLastWriteTimeUtc(string file)
+        private DateTime GetLocalFileLastWriteTimeUtc(string path)
         {
             try
             {
-                var localPath = Path.Combine(_environment.LocalWorkDir, file);
-                return File.GetLastWriteTimeUtc(localPath);
+                return File.GetLastWriteTimeUtc(path);
             }
             catch
             {
@@ -522,16 +500,11 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool TryGetMetadataForLocalPath(string path, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
+        private bool TryGetLocalMetadata(string localPath, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
         {
-            if (!TryGetFullLocalPath(path, out var localPath, out error))
-            {
-                metadata = null;
-                return false;
-            }
-
             try
             {
+                error = "";
                 metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
                 return true;
             }
@@ -545,22 +518,6 @@ namespace VSRAD.Package.Server
             {
                 error = $"Unable to open directory or its contents: \"{localPath}\"";
                 metadata = null;
-                return false;
-            }
-        }
-
-        private bool TryGetFullLocalPath(string path, out string fullPath, out string error)
-        {
-            try
-            {
-                error = "";
-                fullPath = Path.Combine(_environment.LocalWorkDir, path);
-                return true;
-            }
-            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-            {
-                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
-                fullPath = null;
                 return false;
             }
         }

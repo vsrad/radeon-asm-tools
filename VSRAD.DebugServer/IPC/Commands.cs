@@ -228,8 +228,6 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string Path { get; set; }
 
-        public string WorkDir { get; set; }
-
         public bool PreserveTimestamps { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
@@ -237,7 +235,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             "PutDirectoryCommand",
             $"Files = <{Files.Length} files>",
             $"Path = {Path}",
-            $"WorkDir = {WorkDir}",
             $"PreserveTimestamps = {PreserveTimestamps}"
         });
 
@@ -245,7 +242,6 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             Files = reader.ReadLengthPrefixedFileArray(),
             Path = reader.ReadString(),
-            WorkDir = reader.ReadString(),
             PreserveTimestamps = reader.ReadBoolean()
         };
 
@@ -253,7 +249,6 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             writer.WriteLengthPrefixedFileArray(Files);
             writer.Write(Path);
-            writer.Write(WorkDir);
             writer.Write(PreserveTimestamps);
         }
     }
@@ -262,28 +257,23 @@ namespace VSRAD.DebugServer.IPC.Commands
     {
         public string Path { get; set; }
 
-        public string WorkDir { get; set; }
-
         public bool IncludeSubdirectories { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[] {
             "ListFilesCommand",
             $"Path = {Path}",
-            $"WorkDir = {WorkDir}",
             $"IncludeSubdirectories = {IncludeSubdirectories}"
         });
 
         public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
         {
             Path = reader.ReadString(),
-            WorkDir = reader.ReadString(),
             IncludeSubdirectories = reader.ReadBoolean()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write(Path);
-            writer.Write(WorkDir);
             writer.Write(IncludeSubdirectories);
         }
     }
@@ -292,29 +282,29 @@ namespace VSRAD.DebugServer.IPC.Commands
     {
         public bool UseCompression { get; set; }
 
-        public string[] Paths { get; set; }
+        public string RootPath { get; set; }
 
-        public string[] RootPath { get; set; }
+        public string[] Paths { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[] {
             "GetFilesCommand",
             $"UseCompression = {UseCompression}",
-            $"Paths = {string.Join(", ", Paths)}",
-            $"WorkDir = {string.Join(", ", RootPath)}"
+            $"RootPath = {RootPath}",
+            $"Paths = {string.Join(", ", Paths)}"
         });
 
         public static GetFilesCommand Deserialize(IPCReader reader) => new GetFilesCommand
         {
             UseCompression = reader.ReadBoolean(),
-            Paths = reader.ReadLengthPrefixedStringArray(),
-            RootPath = reader.ReadLengthPrefixedStringArray()
+            RootPath = reader.ReadString(),
+            Paths = reader.ReadLengthPrefixedStringArray()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write(UseCompression);
+            writer.Write(RootPath);
             writer.WriteLengthPrefixedArray(Paths);
-            writer.WriteLengthPrefixedArray(RootPath);
         }
     }
 

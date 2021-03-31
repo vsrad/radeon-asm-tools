@@ -19,8 +19,7 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = Path.GetFileName(tmpPath),
-                WorkDir = Path.GetDirectoryName(tmpPath),
+                Path = tmpPath,
                 IncludeSubdirectories = true
             });
 
@@ -53,7 +52,6 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
                 Path = tmpPath,
-                WorkDir = "",
                 IncludeSubdirectories = true
             });
 
@@ -93,7 +91,6 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
                 Path = tmpPath + "\\",
-                WorkDir = "",
                 IncludeSubdirectories = false
             });
 
@@ -112,8 +109,7 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<ListFilesCommand, ListFilesResponse>(new ListFilesCommand
             {
-                Path = Path.GetFileName(tmpPath),
-                WorkDir = Path.GetDirectoryName(tmpPath),
+                Path = tmpPath,
                 IncludeSubdirectories = true
             });
 
