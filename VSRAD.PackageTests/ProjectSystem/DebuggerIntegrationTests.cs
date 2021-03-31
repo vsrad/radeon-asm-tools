@@ -60,7 +60,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             var serviceProvider = new Mock<SVsServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
 
-            var channel = new MockCommunicationChannel();
+            var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
             var sourceManager = new Mock<IProjectSourceManager>();
             var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
                 codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
@@ -69,7 +69,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             /* Set up server responses */
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata timestampFetch) =>
-                Assert.Equal(new[] { "/periphery/votw", "output-path" }, timestampFetch.FilePath));
+                Assert.Equal(new[] { "/periphery/votw/output-path" }, timestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);

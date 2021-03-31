@@ -35,7 +35,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
-            return await step.EvaluateAsync(evaluator, _dirtyProfile, sourceAction);
+            var actionEvalEnv = new ActionEvaluationEnvironment("", "", _dirtyProfile.General.RunActionsLocally,
+                new DebugServer.IPC.CapabilityInfo(default, default, default), _dirtyProfile.Actions);
+
+            return await step.EvaluateAsync(evaluator, actionEvalEnv, sourceAction);
         }
 
         public async Task EditObjectPropertyAsync(object target, string propertyName)
