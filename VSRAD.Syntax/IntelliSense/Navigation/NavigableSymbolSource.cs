@@ -2,7 +2,6 @@
 using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
@@ -21,7 +20,8 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
             var tokensResult = await _navigationService.GetNavigationsAsync(triggerPoint);
             if (tokensResult == null) return null;
 
-            return new NavigableSymbol(tokensResult.ApplicableToken.Span,
+            var snapshotSpan = new SnapshotSpan(triggerPoint.Snapshot, tokensResult.ApplicableToken.Span);
+            return new NavigableSymbol(snapshotSpan,
                 () => _navigationService.NavigateOrOpenNavigationList(tokensResult.Values));
         }
 

@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
         public async Task UpdateNavigationListAsync(IEnumerable<INavigationToken> navigationList)
         {
-            var navigationGroups = navigationList.GroupBy(n => n.Path).ToList();
+            var navigationGroups = navigationList.GroupBy(n => n.Document.Path).ToList();
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             NavigationTokens.Items.Clear();

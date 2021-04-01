@@ -18,7 +18,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
     {
         public INavigationToken NavigationToken { get; }
         public NavigationListItemNode(INavigationToken token) 
-            : base($"{token.Line.LineNumber + 1}: {token.Line.LineText}")
+            : base($"{token.GetLine().LineNumber + 1}: {token.GetLine().LineText}")
         {
             NavigationToken = token;
         }

@@ -15,7 +15,7 @@ namespace VSRAD.Syntax.IntelliSense
 {
     public interface INavigationTokenService
     {
-        INavigationToken CreateToken(IAnalysisToken analysisToken);
+        INavigationToken CreateToken(IAnalysisToken analysisToken, IDocument document);
         Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
         void NavigateOrOpenNavigationList(IReadOnlyList<INavigationToken> navigations);
     }
@@ -33,32 +33,8 @@ namespace VSRAD.Syntax.IntelliSense
             _instructionListManager = instructionListManager;
         }
 
-        public INavigationToken CreateToken(IAnalysisToken analysisToken)
-        {
-            var document = _documentFactory.GetOrCreateDocument(analysisToken.Snapshot.TextBuffer);
-            return CreateToken(analysisToken, document);
-        }
-
-        private static INavigationToken CreateToken(IAnalysisToken analysisToken, IDocument document)
-        {
-            var navigateAction = GetNavigateAction(analysisToken, document);
-            return new NavigationToken(analysisToken, document.Path, navigateAction);
-        }
-
-        private static Action GetNavigateAction(IAnalysisToken analysisToken, IDocument document) =>
-            () =>
-            {
-                try
-                {
-                    // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
-                    var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
-                    document.NavigateToPosition(navigatePosition);
-                }
-                catch (Exception e)
-                {
-                    Error.ShowError(e, "Navigation service");
-                }
-            };
+        public INavigationToken CreateToken(IAnalysisToken analysisToken, IDocument document) =>
+            new NavigationToken(analysisToken, document);
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
         {
@@ -83,7 +59,12 @@ namespace VSRAD.Syntax.IntelliSense
                 case ReferenceToken referenceToken:
                     {
                         var definition = referenceToken.Definition;
-                        var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
+                        var textBuffer = definition.Span.Snapshot.TextBuffer;
+                        var definitionDocument = _documentFactory.GetOrCreateDocument(textBuffer);
+
+                        // if document is closed
+                        if (definitionDocument == null) return null;
+
                         tokens.Add(CreateToken(definition, definitionDocument));
                         break;
                     }
@@ -91,7 +72,7 @@ namespace VSRAD.Syntax.IntelliSense
                     {
                         if (analysisToken.Type != RadAsmTokenType.Instruction) return null;
 
-                        var asmType = analysisToken.Snapshot.GetAsmType();
+                        var asmType = analysisResult.Snapshot.GetAsmType();
                         var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
                         var instructionText = analysisToken.Text;
 
