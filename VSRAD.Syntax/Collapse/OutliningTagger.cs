@@ -68,7 +68,7 @@ namespace VSRAD.Syntax.Collapse
             var newSpanElements = blocks.AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(b => b.Type != BlockType.Root)
-                .Select(b => b.Scope.GetSpan(textSnapshot))
+                .Select(b => b.Scope)
                 .ToList();
 
             var oldSpanCollection = new NormalizedSpanCollection(_currentSpans);

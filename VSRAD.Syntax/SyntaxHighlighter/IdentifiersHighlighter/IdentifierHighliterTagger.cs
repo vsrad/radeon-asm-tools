@@ -60,10 +60,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
         private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) =>
             UpdateAtCaretPosition(e.NewPosition);
 
-        private void UpdateAtCaretPosition(CaretPosition caretPoisition)
+        private void UpdateAtCaretPosition(CaretPosition caretPosition)
         {
             indentCts.Cancel();
-            SnapshotPoint? point = caretPoisition.Point.GetPoint(_buffer, caretPoisition.Affinity);
+            var point = caretPosition.Point.GetPoint(_buffer, caretPosition.Affinity);
 
             if (!point.HasValue)
                 return;
@@ -95,8 +95,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
                 return;
             }
 
-            var currentWord = word.Span;
-            if (this.currentWord.HasValue && currentWord == this.currentWord)
+            var newCurrentWord = word.Span;
+            if (newCurrentWord == currentWord)
                 return;
 
             cancellation.ThrowIfCancellationRequested();
@@ -120,20 +120,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
                 return;
             }
 
-            var wordSpans = new List<SnapshotSpan>();
-            var navigationTokenSpan = definition.Snapshot == version
-                ? (SnapshotSpan?)definition.Span
+            var navigationTokenSpan = definition.Span.Snapshot == version
+                ? (SnapshotSpan?)new SnapshotSpan(version, definition.Span)
                 : null;
 
-            foreach (var reference in definition.References)
-            {
-                cancellation.ThrowIfCancellationRequested();
-                if (reference.Snapshot == version)
-                    wordSpans.Add(reference.Span);
-            }
+            var spans = definition.References.Select(r => r.Span).Where(s => s.Snapshot == version);
 
+            cancellation.ThrowIfCancellationRequested();
             if (currentRequest == requestedPoint)
-                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(wordSpans), currentWord, navigationTokenSpan);
+                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(spans), newCurrentWord, navigationTokenSpan);
         }
 
         private void SynchronousUpdate(SnapshotPoint currentRequest, NormalizedSnapshotSpanCollection newSpans, SnapshotSpan? newCurrentWord, SnapshotSpan? navigationTokenSpan)

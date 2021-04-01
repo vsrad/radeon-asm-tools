@@ -72,7 +72,7 @@
     <Compile Include="Core\DocumentFactory.cs" />
     <Compile Include="Core\DocumentTokenizer.cs" />
     <Compile Include="Core\Helper\BitHelper.cs" />
-    <Compile Include="Core\Helper\FixedSizeDictionary.cs" />
+    <Compile Include="Core\Helper\OrderedFixedSizeDictionary.cs" />
     <Compile Include="Core\Helper\ListBlockExtension.cs" />
     <Compile Include="Core\Helper\SortedSet.cs" />
     <Compile Include="Core\Helper\ITokenizerCollection.cs" />
@@ -108,7 +108,6 @@
     <Compile Include="Core\Tokens\TokenType.cs" />
     <Compile Include="Core\Tokens\TrackingToken.cs" />
     <Compile Include="Core\Tokens\VariableToken.cs" />
-    <Compile Include="Core\InvisibleDocument.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />

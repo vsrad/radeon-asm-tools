@@ -152,14 +152,13 @@ namespace VSRAD.Syntax.Guide
 
         private bool IsInVisualBuffer(IBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
-            var blockStart = block.Area.GetStart(_textView.TextSnapshot);
-            var blockEnd = block.Area.GetEnd(_textView.TextSnapshot);
+            var blockStart = block.Area.Start;
+            var blockEnd = block.Area.End;
 
-            bool isOnStart = blockStart <= lastVisibleLine.End;
-            bool isOnEnd = blockEnd >= firstVisibleLine.End;
+            var isOnStart = blockStart <= lastVisibleLine.End;
+            var isOnEnd = blockEnd >= firstVisibleLine.End;
 
-            bool isInBlockAll = (blockStart <= firstVisibleLine.End) && (blockEnd >= lastVisibleLine.Start);
-
+            var isInBlockAll = (blockStart <= firstVisibleLine.End) && (blockEnd >= lastVisibleLine.Start);
             return isOnStart && isOnEnd || isInBlockAll;
         }
 
@@ -168,8 +167,8 @@ namespace VSRAD.Syntax.Guide
             ThreadHelper.ThrowIfNotOnUIThread();
             foreach (var block in blocks)
             {
-                var pointStart = new SnapshotPoint(_textView.TextSnapshot, block.Area.GetStart(_textView.TextSnapshot));
-                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.Area.GetEnd(_textView.TextSnapshot));
+                var pointStart = new SnapshotPoint(_textView.TextSnapshot, block.Area.Start);
+                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.Area.End);
 
                 var viewLineStart = _textView.GetTextViewLineContainingBufferPosition(pointStart);
                 var viewLineEnd = _textView.GetTextViewLineContainingBufferPosition(pointEnd);
