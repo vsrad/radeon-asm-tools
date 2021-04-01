@@ -29,21 +29,23 @@ namespace VSRAD.Syntax.IntelliSense.Peek
 
         private IDocumentPeekResult CreateResult()
         {
-            var lineNumber = _token.Line.LineNumber;
+            var tokenLine = _token.GetLine();
+            var lineNumber = tokenLine.LineNumber;
 
             const int startLineIndex = 0;
-            var endLineIndex = _token.Line.LineText.Length;
-            var idIndex = _token.AnalysisToken.Span.End - _token.Line.LineStart;
+            var endLineIndex = tokenLine.LineEnd;
+            var idIndex = _token.GetStart() - tokenLine.LineStart;
+            var path = _token.Document.Path;
 
             var displayInfo = new PeekResultDisplayInfo(
-                label: _token.Path,
-                labelTooltip: _token.Path,
-                title: _token.Path,
-                titleTooltip: _token.Path);
+                label: path,
+                labelTooltip: path,
+                title: path,
+                titleTooltip: path);
 
             return _peekResultFactory.Create(
                 displayInfo,
-                _token.Path,
+                path,
                 lineNumber,
                 startLineIndex,
                 lineNumber,

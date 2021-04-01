@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 .AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
-                .Select(t => _navigationTokenService.CreateToken(t))
+                .Select(t => _navigationTokenService.CreateToken(t, document))
                 .Select(t => new CompletionItem(t, FunctionIcon));
 
             return new RadCompletionContext(completionItems.ToList());
