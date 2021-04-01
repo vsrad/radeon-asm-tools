@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
@@ -12,23 +14,24 @@ using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
-    public delegate void InstructionsLoadDelegate(IReadOnlyList<IInstructionSet> instructions);
+    public delegate void InstructionsLoadDelegate(IEnumerable<IInstructionSet> instructions);
 
     public interface IInstructionListLoader
     {
-        IReadOnlyList<IInstructionSet> InstructionSets { get; }
+        IEnumerable<IInstructionSet> InstructionSets { get; }
         event InstructionsLoadDelegate InstructionsUpdated;
     }
 
     [Export(typeof(IInstructionListLoader))]
     internal sealed class InstructionListLoader : IInstructionListLoader
     {
+        private readonly object _lock = new object();
         private readonly Lazy<IDocumentFactory> _documentFactory;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
-        private readonly List<IInstructionSet> _sets;
-        private IReadOnlyList<string> _loadedPaths;
+        private readonly Dictionary<string, IInstructionSet> _sets;
+        private readonly Dictionary<string, ITextDocument> _instructionSetPaths;
 
-        public IReadOnlyList<IInstructionSet> InstructionSets => _sets;
+        public IEnumerable<IInstructionSet> InstructionSets => _sets.Values;
         public event InstructionsLoadDelegate InstructionsUpdated;
 
         [ImportingConstructor]
@@ -38,25 +41,60 @@ namespace VSRAD.Syntax.Options.Instructions
         {
             _documentFactory = documentFactory;
             _navigationTokenService = navigationTokenService;
-            _sets = new List<IInstructionSet>();
-            _loadedPaths = new List<string>();
+            _sets = new Dictionary<string, IInstructionSet>(StringComparer.OrdinalIgnoreCase);
+            _instructionSetPaths = new Dictionary<string, ITextDocument>(StringComparer.OrdinalIgnoreCase);
 
             generalOptionEventProvider.OptionsUpdated += OptionsUpdated;
+            OptionsUpdated(generalOptionEventProvider);
         }
 
         private void OptionsUpdated(GeneralOptionProvider provider)
         {
-            var instructionPaths = provider.InstructionsPaths.ToHashSet();
-            instructionPaths.SymmetricExceptWith(_loadedPaths);
+            var sb = new StringBuilder();
+            var newInstructionPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var directory in provider.InstructionsPaths)
+            {
+                try
+                {
+                    foreach (var filepath in Directory.EnumerateFiles(directory))
+                    {
+                        newInstructionPaths.Add(filepath);
+                    }
+                }
+                catch (Exception e) when (
+                    e is DirectoryNotFoundException ||
+                    e is PathTooLongException ||
+                    e is SecurityException ||
+                    e is IOException ||
+                    e is UnauthorizedAccessException)
+                {
+                    sb.AppendLine(e.Message);
+                }
+            }
 
-            // skip if options haven't changed
-            if (instructionPaths.Count == 0) return;
+            if (sb.Length != 0)
+                Error.ShowErrorMessage(sb.ToString(), "Instruction loader");
 
-            Task.Run(() => LoadInstructionsFromDirectoriesAsync(provider.InstructionsPaths))
+            lock (_lock)
+            {
+                var invalidatedPaths = newInstructionPaths.ToHashSet();
+                invalidatedPaths.SymmetricExceptWith(_instructionSetPaths.Keys);
+
+                // skip if options haven't changed
+                if (invalidatedPaths.Count == 0) return;
+
+                invalidatedPaths.ExceptWith(newInstructionPaths);
+                CleanInstructionSets(invalidatedPaths);
+
+                // now _instructionSetPaths contains only elements which is both in new sets and old sets
+                newInstructionPaths.ExceptWith(_instructionSetPaths.Keys);
+            }
+
+            Task.Run(() => LoadInstructionsFromDirectoriesAsync(newInstructionPaths))
                 .RunAsyncWithoutAwait();
         }
 
-        public async Task LoadInstructionsFromDirectoriesAsync(IReadOnlyList<string> paths)
+        public async Task LoadInstructionsFromDirectoriesAsync(IEnumerable<string> paths)
         {
             var loadFromDirectoryTasks = paths
                 .Select(LoadInstructionsFromDirectoryAsync)
@@ -65,13 +103,23 @@ namespace VSRAD.Syntax.Options.Instructions
             try
             {
                 var results = await Task.WhenAll(loadFromDirectoryTasks).ConfigureAwait(false);
-                var instructionSets = results.SelectMany(t => t);
+                var instructionSets = results.Where(s => s != null);
 
-                _sets.Clear();
-                _sets.AddRange(instructionSets);
-                _loadedPaths = paths;
+                lock (_lock)
+                {
+                    foreach (var tuple in instructionSets)
+                    {
+                        var (path, document, set) = tuple;
+                        if (document.CurrentSnapshot.TextBuffer.GetTextDocument(out var textDocument))
+                        {
 
-                InstructionsUpdated?.Invoke(_sets);
+                            _sets.Add(path, set);
+                            _instructionSetPaths.Add(path, textDocument);
+                        }
+                    }
+
+                    InstructionsUpdated?.Invoke(_sets.Values);
+                }
             }
             catch (AggregateException e)
             {
@@ -89,40 +137,27 @@ namespace VSRAD.Syntax.Options.Instructions
         }
 
         // TODO: implement with IAsyncEnumerable
-        private async Task<IEnumerable<InstructionSet>> LoadInstructionsFromDirectoryAsync(string path)
+        private async Task<Tuple<string, IDocument, InstructionSet>> LoadInstructionsFromDirectoryAsync(string path)
         {
-            var instructionSets = new List<InstructionSet>();
-            try
-            {
-                var loadTasks = new List<Task<InstructionSet>>();
-                foreach (var filepath in Directory.EnumerateFiles(path))
-                {
-                    switch (Path.GetExtension(filepath))
-                    {
-                        case Constants.FileExtensionAsm1Doc:
-                            loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
-                            break;
-                        case Constants.FileExtensionAsm2Doc:
-                            loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
-                            break;
-                    }
-                }
 
-                var results = await Task.WhenAll(loadTasks).ConfigureAwait(false);
-                instructionSets.AddRange(results);
-            }
-            catch (Exception e) when (
-               e is DirectoryNotFoundException ||
-               e is IOException ||
-               e is UnauthorizedAccessException)
+            Task<Tuple<IDocument, InstructionSet>> loadTask;
+            switch (Path.GetExtension(path))
             {
-                Error.ShowError(e, "Instruction loader");
+                case Constants.FileExtensionAsm1Doc:
+                    loadTask = LoadInstructionsFromFileAsync(path, InstructionType.RadAsm1);
+                    break;
+                case Constants.FileExtensionAsm2Doc:
+                    loadTask = LoadInstructionsFromFileAsync(path, InstructionType.RadAsm2);
+                    break;
+                default:
+                    return null;
             }
 
-            return instructionSets;
+            var (document, set) = await loadTask.ConfigureAwait(false);
+            return new Tuple<string, IDocument, InstructionSet>(path, document, set);
         }
 
-        private async Task<InstructionSet> LoadInstructionsFromFileAsync(string path, InstructionType type)
+        private async Task<Tuple<IDocument, InstructionSet>> LoadInstructionsFromFileAsync(string path, InstructionType type)
         {
             var document = _documentFactory.Value.GetOrCreateDocument(path);
             var documentAnalysis = document.DocumentAnalysis;
@@ -136,7 +171,7 @@ namespace VSRAD.Syntax.Options.Instructions
             var navigationService = _navigationTokenService.Value;
 
             var navigationTokens = instructions
-                .Select(i => navigationService.CreateToken(i))
+                .Select(i => navigationService.CreateToken(i, document))
                 .GroupBy(n => n.AnalysisToken.Text);
 
             foreach (var instructionNameGroup in navigationTokens)
@@ -146,7 +181,20 @@ namespace VSRAD.Syntax.Options.Instructions
                 instructionSet.AddInstruction(name, navigations);
             }
 
-            return instructionSet;
+            return new Tuple<IDocument, InstructionSet>(document, instructionSet);
+        }
+
+        private void CleanInstructionSets(IEnumerable<string> paths)
+        {
+            foreach (var path in paths)
+            {
+                if (_instructionSetPaths.TryGetValue(path, out var textDocument))
+                {
+                    textDocument.Dispose();
+                    _sets.Remove(path);
+                    _instructionSetPaths.Remove(path);
+                }
+            }
         }
     }
 }

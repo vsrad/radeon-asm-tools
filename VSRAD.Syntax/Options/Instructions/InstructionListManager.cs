@@ -2,6 +2,7 @@
 using System.ComponentModel.Composition;
 using System.Linq;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Options.Instructions
@@ -14,7 +15,6 @@ namespace VSRAD.Syntax.Options.Instructions
         event InstructionsUpdateDelegate InstructionsUpdated;
     }
 
-    public delegate void AsmTypeChange();
     public interface IInstructionSetManager
     {
         void ChangeInstructionSet(string selectedSetName);
@@ -23,10 +23,14 @@ namespace VSRAD.Syntax.Options.Instructions
         event AsmTypeChange AsmTypeChanged;
     }
 
+    public delegate void AsmTypeChange();
+
     [Export(typeof(IInstructionListManager))]
     [Export(typeof(IInstructionSetManager))]
     internal sealed class InstructionListManager : IInstructionListManager, IInstructionSetManager
     {
+        public static IInstructionSetManager Instance;
+
         private readonly List<IInstructionSet> _radAsm1InstructionSets;
         private readonly List<IInstructionSet> _radAsm2InstructionSets;
         private readonly List<Instruction> _radAsm1Instructions;
@@ -52,9 +56,10 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm2Instructions = new List<Instruction>();
             _activeDocumentType = AsmType.Unknown;
             InstructionsLoaded(instructionListLoader.InstructionSets);
+            Instance = this;
         }
 
-        private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructions)
+        private void InstructionsLoaded(IEnumerable<IInstructionSet> instructions)
         {
             _radAsm1InstructionSets.Clear();
             _radAsm2InstructionSets.Clear();
@@ -76,7 +81,7 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm2SelectedSet = null;
 
             AsmTypeChanged?.Invoke();
-            InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
+            InstructionsUpdatedInvoke(AsmType.RadAsmCode);
         }
 
         public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
@@ -102,11 +107,10 @@ namespace VSRAD.Syntax.Options.Instructions
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
             var newActiveDocumentAsm = activeDocument?.CurrentSnapshot.GetAsmType() ?? AsmType.Unknown;
-            if (newActiveDocumentAsm != _activeDocumentType)
-            {
-                _activeDocumentType = newActiveDocumentAsm;
-                AsmTypeChanged?.Invoke();
-            }
+            if (newActiveDocumentAsm == _activeDocumentType) return;
+
+            _activeDocumentType = newActiveDocumentAsm;
+            AsmTypeChanged?.Invoke();
         }
 
         public void ChangeInstructionSet(string selected)
@@ -128,7 +132,7 @@ namespace VSRAD.Syntax.Options.Instructions
                 }
             }
 
-            InstructionsUpdated?.Invoke(this, _activeDocumentType);
+            InstructionsUpdatedInvoke(_activeDocumentType);
         }
 
         private void ChangeInstructionSet(string setName, List<IInstructionSet> sets, ref IInstructionSet selectedSet)
@@ -142,6 +146,13 @@ namespace VSRAD.Syntax.Options.Instructions
             }
 
             selectedSet = set;
+        }
+
+        private void InstructionsUpdatedInvoke(AsmType type)
+        {
+            Asm1Parser.UpdateInstructions(this, type);
+            Asm2Parser.UpdateInstructions(this, type);
+            InstructionsUpdated?.Invoke(this, type);
         }
 
         public IReadOnlyList<IInstructionSet> GetInstructionSets() =>
