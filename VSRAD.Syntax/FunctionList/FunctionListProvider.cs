@@ -65,7 +65,8 @@ namespace VSRAD.Syntax.FunctionList
 
                 if (functionBlock != null)
                 {
-                    _functionListControl.HighlightItemAtLine(functionBlock.Name.Span.Start.GetContainingLine().LineNumber + 1);
+                    var lineNumber = analysisResult.Snapshot.GetLineNumberFromPosition(functionBlock.Name.Span.Start) + 1;
+                    _functionListControl.HighlightItemAtLine(lineNumber);
                 }
                 else
                 {
@@ -150,7 +151,7 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
-                    .Select(t => _navigationTokenService.Value.CreateToken(t))
+                    .Select(t => _navigationTokenService.Value.CreateToken(t, _lastResult.Document))
                     .Select(n => new FunctionListItem(n))
                     .AsParallel()
                     .WithCancellation(cancellationToken)

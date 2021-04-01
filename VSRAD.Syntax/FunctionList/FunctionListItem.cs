@@ -24,7 +24,7 @@ namespace VSRAD.Syntax.FunctionList
             Type = GetType(navigationToken.Type);
             Text = navigationToken.AnalysisToken.Text;
             // line number starts from 1
-            LineNumber = navigationToken.Line.LineNumber + 1;
+            LineNumber = navigationToken.GetLine().LineNumber + 1;
             _isCurrentWorkingItem = false;
             _navigationToken = navigationToken;
         }
