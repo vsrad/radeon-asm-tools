@@ -16,36 +16,32 @@ namespace VSRAD.Syntax.Core
     internal class Document : IDocument
     {
         public IDocumentAnalysis DocumentAnalysis { get; }
-        public IDocumentTokenizer DocumentTokenizer { get; }
+        public IDocumentTokenizer DocumentTokenizer => _tokenizer;
         public string Path => _textDocument.FilePath;
-        public ITextSnapshot CurrentSnapshot => TextBuffer.CurrentSnapshot;
+        public ITextSnapshot CurrentSnapshot => _textBuffer.CurrentSnapshot;
         public bool IsDisposed { get; private set; }
 
         protected readonly ILexer Lexer;
         protected readonly IParser Parser;
-        private readonly ITextDocument _textDocument;
         private readonly ITextDocumentFactoryService _textDocumentFactory;
         private readonly OnDestroyAction _destroyAction;
-        private ITextBuffer TextBuffer => _textDocument.TextBuffer;
+        private readonly DocumentTokenizer _tokenizer;
+        private ITextDocument _textDocument;
+        private ITextBuffer _textBuffer;
 
         public Document(ITextDocumentFactoryService textDocumentFactory, ITextDocument textDocument, ILexer lexer, IParser parser, OnDestroyAction onDestroy)
         {
             _textDocumentFactory = textDocumentFactory;
             _textDocument = textDocument;
+            _textBuffer = textDocument.TextBuffer;
             Lexer = lexer;
             Parser = parser;
             _destroyAction = onDestroy;
-            DocumentTokenizer = new DocumentTokenizer(TextBuffer, Lexer);
+            _tokenizer = new DocumentTokenizer(_textDocument.TextBuffer, Lexer);
             DocumentAnalysis = new DocumentAnalysis(this, DocumentTokenizer, Parser);
             IsDisposed = false;
 
             _textDocumentFactory.TextDocumentDisposed += OnTextDocumentDisposed;
-        }
-
-        private void OnTextDocumentDisposed(object sender, TextDocumentEventArgs e)
-        {
-            if (e.TextDocument == _textDocument)
-                Dispose();
         }
 
         public virtual void OpenDocumentInEditor()
@@ -63,12 +59,31 @@ namespace VSRAD.Syntax.Core
             var serviceProvider = ServiceProvider.GlobalProvider;
             var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager;
             var adapterService = serviceProvider.GetMefService<IVsEditorAdaptersFactoryService>();
+            var vsTextBuffer = adapterService.GetBufferAdapter(_textBuffer);
 
-            if (IsDisposed) OpenDocumentInEditor();
+            if (IsDisposed || vsTextBuffer == null)
+            {
+                VsShellUtilities.OpenDocument(serviceProvider, Path, Guid.Empty, out _, out _, out var windowFrame);
+                var textView = VsShellUtilities.GetTextView(windowFrame);
 
-            var vsTextBuffer = adapterService.GetBufferAdapter(TextBuffer);
+                if (textView.GetBuffer(out var vsTextLines) != VSConstants.S_OK) 
+                    return;
+
+                vsTextBuffer = vsTextLines;
+            }
+
             var hr = textManager.NavigateToPosition(vsTextBuffer, VSConstants.LOGVIEWID.TextView_guid, position, 0);
             if (hr != VSConstants.S_OK) throw Marshal.GetExceptionForHR(hr);
+        }
+
+        public void ReplaceDocument(ITextDocument document)
+        {
+            var oldDocument = _textDocument;
+            _textDocument = document;
+            _textBuffer = document.TextBuffer;
+
+            _tokenizer.OnDocumentChanged(oldDocument.TextBuffer.CurrentSnapshot, CurrentSnapshot);
+            oldDocument.Dispose();
         }
 
         public virtual void Dispose()
@@ -80,6 +95,12 @@ namespace VSRAD.Syntax.Core
             DocumentTokenizer.OnDestroy();
             DocumentAnalysis.OnDestroy();
             _destroyAction.Invoke(this);
+        }
+
+        private void OnTextDocumentDisposed(object sender, TextDocumentEventArgs e)
+        {
+            if (e.TextDocument == _textDocument)
+                Dispose();
         }
     }
 }

@@ -14,54 +14,26 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal abstract class AbstractCodeParser : IAsmParser
+    internal abstract class AbstractCodeParser : IParser
     {
-        private readonly AsmType _asmType;
-        protected HashSet<string> OtherInstructions { get; private set; }
-
         private readonly IDocumentFactory _documentFactory;
-        private HashSet<string> _instructions;
         protected readonly DefinitionContainer _definitionContainer;
         protected readonly LinkedList<(string text, TrackingToken trackingToken, IBlock block)> _referenceCandidates;
 
-        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, AsmType asmType)
+        protected AbstractCodeParser(IDocumentFactory documentFactory)
         {
-            _asmType = asmType;
             _documentFactory = documentFactory;
             _definitionContainer = new DefinitionContainer();
             _referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
-            _instructions = new HashSet<string>();
-            OtherInstructions = new HashSet<string>();
-            UpdateInstructions(instructionListManager, _asmType);
         }
 
         public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
-        public void UpdateInstructions(IInstructionListManager sender, AsmType asmType)
-        {
-            if ((asmType & _asmType) != _asmType) return;
-
-            var instructions = sender.GetInstructions(_asmType);
-            var selectedSetInstructions = sender.GetSelectedSetInstructions(_asmType);
-
-            _instructions = selectedSetInstructions
-                .Select(i => i.Text)
-                .Distinct()
-                .ToHashSet();
-
-            OtherInstructions = instructions
-                .Select(i => i.Text)
-                .Distinct()
-                .ToHashSet();
-
-            OtherInstructions.ExceptWith(_instructions);
-        }
-
-        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block)
+        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, ITextSnapshot snapshot, IBlock block)
         {
             try
             {
-                var externalFileName = includeStr.GetText(block.Snapshot).Trim('"');
+                var externalFileName = includeStr.GetText(snapshot).Trim('"');
                 var externalFilePath = Path.Combine(Path.GetDirectoryName(path), externalFileName);
                 var externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
 
@@ -111,12 +83,30 @@ namespace VSRAD.Syntax.Core.Parser
 
         }
 
-        protected bool TryAddInstruction(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
+        protected bool TryAddInstruction(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version, HashSet<string> instructions)
         {
-            if (!_instructions.Contains(tokenText)) return false;
+            if (!instructions.Contains(tokenText)) return false;
 
             block.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
             return true;
+        }
+
+        protected static void UpdateInstructions(IInstructionListManager sender, AsmType asmType, ref HashSet<string> instructionSet, ref HashSet<string> other)
+        {
+            var instructions = sender.GetInstructions(asmType);
+            var selectedSetInstructions = sender.GetSelectedSetInstructions(asmType);
+
+            instructionSet = selectedSetInstructions
+                .Select(i => i.Text)
+                .Distinct()
+                .ToHashSet();
+
+            other = instructions
+                .Select(i => i.Text)
+                .Distinct()
+                .ToHashSet();
+
+            other.ExceptWith(instructionSet);
         }
     }
 }

@@ -20,14 +20,13 @@ namespace VSRAD.Syntax.Core
             _instructionListManager.InstructionsUpdated += InstructionsUpdated;
         }
 
-        private void InstructionsUpdated(IInstructionListManager sender, Helpers.AsmType asmType)
-        {
-            ((IAsmParser)Parser).UpdateInstructions(sender, asmType);
+        private void InstructionsUpdated(IInstructionListManager sender, Helpers.AsmType asmType) =>
             DocumentAnalysis.Rescan(RescanReason.InstructionsChanged, CancellationToken.None);
-        }
 
         public override void Dispose()
         {
+            if (IsDisposed) return;
+
             base.Dispose();
             _instructionListManager.InstructionsUpdated -= InstructionsUpdated;
         }

@@ -10,11 +10,11 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Core
 {
-    internal class DocumentTokenizer : IDocumentTokenizer
+    internal class DocumentTokenizer : IDocumentTokenizer, IReplaceableSnapshot
     {
         private readonly TrackingToken.NonOverlappingComparer _comparer;
-        private readonly ITextBuffer _buffer;
         private readonly ILexer _lexer;
+        private ITextBuffer _buffer;
         private TokenizerCollection CurrentTokens;
         private CancellationTokenSource _cts;
 
@@ -29,23 +29,50 @@ namespace VSRAD.Syntax.Core
 
         public DocumentTokenizer(ITextBuffer buffer, ILexer lexer)
         {
-            _buffer = buffer;
             _lexer = lexer;
             _comparer = new TrackingToken.NonOverlappingComparer();
-            CurrentSnapshot = _buffer.CurrentSnapshot;
-            _cts = new CancellationTokenSource();
 
-            Initialize();
-            _buffer.Changed += BufferChanged;
+            Initialize(buffer);
+            FullRescan();
         }
 
         public void OnDestroy()
         {
             _buffer.Changed -= BufferChanged;
-            CurrentTokens.Clear();
+            _cts.Dispose();
         }
 
-        private void Initialize()
+        public void OnDocumentChanged(ITextSnapshot oldSnapshot, ITextSnapshot newSnapshot)
+        {
+            var pervSnapshot = CurrentSnapshot;
+
+            OnDestroy();
+            Initialize(newSnapshot.TextBuffer);
+
+            if (oldSnapshot != pervSnapshot)
+            {
+                FullRescan();
+            }
+            else
+            {
+                var changedSnapshotTokens = CurrentTokens.Select(t =>
+                    new TrackingToken(CurrentSnapshot, t.GetSpan(pervSnapshot), t.Type));
+
+                CurrentTokens = new TokenizerCollection(changedSnapshotTokens, _comparer);
+                RaiseTokensChanged(CurrentTokens.ToList());
+            }
+        }
+
+        private void Initialize(ITextBuffer buffer)
+        {
+            _buffer = buffer;
+            _buffer.Changed += BufferChanged;
+
+            _cts = new CancellationTokenSource();
+            CurrentSnapshot = _buffer.CurrentSnapshot;
+        }
+
+        private void FullRescan()
         {
             var initialTextSegment = new[] { CurrentSnapshot.GetText() };
             var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));
@@ -60,6 +87,7 @@ namespace VSRAD.Syntax.Core
         private void BufferChanged(object src, TextContentChangedEventArgs arg)
         {
             _cts.Cancel();
+            _cts.Dispose();
             _cts = new CancellationTokenSource();
             ApplyTextChanges(arg);
         }
@@ -76,7 +104,7 @@ namespace VSRAD.Syntax.Core
             catch (Exception ex)
             {
                 Error.LogError(ex, "Document analysis apply changes");
-                Initialize();
+                FullRescan();
             }
         }
 

@@ -7,6 +7,7 @@ namespace VSRAD.Syntax.Core
 {
     public interface IAnalysisResult
     {
+        IDocument Document { get; }
         IBlock Root { get; }
         IReadOnlyList<IBlock> Scopes { get; }
         IReadOnlyList<IErrorToken> Errors { get; }

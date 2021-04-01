@@ -15,7 +15,7 @@ namespace VSRAD.Syntax.Core.Parser
         public Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();
-            IBlock rootBlock = new Block(version);
+            IBlock rootBlock = new Block();
             var blocks = new List<IBlock>() { rootBlock };
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsmDocLexer.WHITESPACE && t.Type != RadAsmDocLexer.BLOCK_COMMENT)

@@ -14,8 +14,18 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal class Asm1Parser : AbstractCodeParser
     {
-        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
-            : base(documentFactory, instructionListManager, AsmType.RadAsm) { }
+        private static HashSet<string> Instructions = new HashSet<string>();
+        private static HashSet<string> OtherInstructions = new HashSet<string>();
+        public static void UpdateInstructions(IInstructionListManager sender, AsmType asmType)
+        {
+            const AsmType currentAsmType = AsmType.RadAsm;
+            if ((asmType & currentAsmType) != currentAsmType) return;
+
+            UpdateInstructions(sender, currentAsmType, ref Instructions, ref OtherInstructions);
+        }
+
+        public Asm1Parser(IDocumentFactory documentFactory)
+            : base(documentFactory) { }
 
         public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
@@ -30,7 +40,7 @@ namespace VSRAD.Syntax.Core.Parser
             _definitionContainer.Clear();
             var blocks = new List<IBlock>();
             var errors = new List<IErrorToken>();
-            IBlock currentBlock = new Block(version);
+            var currentBlock = new Block();
             var parserState = ParserState.SearchInScope;
             var searchInCondition = false;
             var preprocessBlock = false;
@@ -53,15 +63,13 @@ namespace VSRAD.Syntax.Core.Parser
                 if (preprocessBlock)
                 {
                     if (token.Type == RadAsmLexer.IDENTIFIER)
-                        TryAddInstruction(token.GetText(version), token, currentBlock, version);
-
-                    continue;
+                        TryAddInstruction(token.GetText(version), token, currentBlock, version, Instructions);
                 }
                 else if (parserState == ParserState.SearchInScope)
                 {
                     if (token.Type == RadAsmLexer.BLOCK_COMMENT)
                     {
-                        blocks.AppendBlock(new Block(currentBlock, BlockType.Comment, token, token));
+                        blocks.AppendBlock(new Block(currentBlock, BlockType.Comment, token, token, version));
                     }
                     else if (token.Type == RadAsmLexer.MACRO)
                     {
@@ -69,14 +77,14 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             var funcDefinition = new DefinitionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
                             _definitionContainer.Add(currentBlock, funcDefinition);
-                            currentBlock = blocks.AppendBlock(new FunctionBlock(currentBlock, BlockType.Function, token, funcDefinition));
+                            currentBlock = blocks.AppendBlock(new FunctionBlock(currentBlock, BlockType.Function, token, version, funcDefinition));
                             parserState = ParserState.SearchArguments;
                             i += 1;
                         }
                     }
                     else if (token.Type == RadAsmLexer.ENDM && currentBlock.Type == BlockType.Function)
                     {
-                        currentBlock.SetEnd(token.GetEnd(version), token);
+                        currentBlock.SetEnd(token.GetEnd(version), token, version);
                         _definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
 
@@ -117,21 +125,21 @@ namespace VSRAD.Syntax.Core.Parser
                         || token.Type == RadAsmLexer.IFNE
                         || token.Type == RadAsmLexer.IFNES)
                     {
-                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
+                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token, version));
                         searchInCondition = true;
                     }
                     else if ((token.Type == RadAsmLexer.ELSEIF || token.Type == RadAsmLexer.ELSE) && currentBlock.Type == BlockType.Condition)
                     {
-                        currentBlock.SetEnd(tokens[i - 1].Start.GetPosition(version), token);
+                        currentBlock.SetEnd(tokens[i - 1].Start.GetPosition(version), token, version);
                         _definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
 
-                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
+                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token, version));
                         searchInCondition = true;
                     }
                     else if (token.Type == RadAsmLexer.ENDIF && currentBlock.Type == BlockType.Condition)
                     {
-                        currentBlock.SetEnd(token.GetEnd(version), token);
+                        currentBlock.SetEnd(token.GetEnd(version), token, version);
                         _definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
                     }
@@ -139,12 +147,12 @@ namespace VSRAD.Syntax.Core.Parser
                         || token.Type == RadAsmLexer.IRP
                         || token.Type == RadAsmLexer.IRPC)
                     {
-                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Repeat, token));
+                        currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Repeat, token, version));
                         searchInCondition = true;
                     }
                     else if (token.Type == RadAsmLexer.ENDR && currentBlock.Type == BlockType.Repeat)
                     {
-                        currentBlock.SetEnd(token.GetEnd(version), token);
+                        currentBlock.SetEnd(token.GetEnd(version), token, version);
                         _definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
                     }
@@ -162,7 +170,7 @@ namespace VSRAD.Syntax.Core.Parser
                     else if (token.Type == RadAsmLexer.IDENTIFIER)
                     {
                         var tokenText = token.GetText(version);
-                        if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
+                        if (!TryAddInstruction(tokenText, token, currentBlock, version, Instructions) && 
                             !TryAddReference(tokenText, token, currentBlock, version, cancellation))
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.EQ)
@@ -182,7 +190,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
                         {
-                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock);
+                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], version, currentBlock);
                             i += 1;
                         }
                     }
@@ -218,7 +226,6 @@ namespace VSRAD.Syntax.Core.Parser
         {
             SearchInScope = 1,
             SearchArguments = 2,
-            SearchArgAttribute = 3,
         }
     }
 }

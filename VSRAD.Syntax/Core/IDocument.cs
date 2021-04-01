@@ -13,5 +13,11 @@ namespace VSRAD.Syntax.Core
 
         void OpenDocumentInEditor();
         void NavigateToPosition(int position);
+        void ReplaceDocument(ITextDocument document);
+    }
+
+    public interface IReplaceableSnapshot
+    {
+        void OnDocumentChanged(ITextSnapshot oldSnapshot, ITextSnapshot newSnapshot);
     }
 }

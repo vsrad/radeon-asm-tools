@@ -7,7 +7,6 @@ namespace VSRAD.Syntax.Core.Tokens
     {
         RadAsmTokenType Type { get; }
         TrackingToken TrackingToken { get; }
-        ITextSnapshot Snapshot { get; }
         SnapshotSpan Span { get; }
         string Text { get; }
     }
@@ -16,7 +15,6 @@ namespace VSRAD.Syntax.Core.Tokens
     {
         public RadAsmTokenType Type { get; }
         public TrackingToken TrackingToken { get; }
-        public ITextSnapshot Snapshot { get; }
         public SnapshotSpan Span { get; }
         public string Text => _textLazy.Value;
 
@@ -26,8 +24,8 @@ namespace VSRAD.Syntax.Core.Tokens
         {
             Type = tokenType;
             TrackingToken = trackingToken;
-            Snapshot = snapshot;
-            Span = new SnapshotSpan(Snapshot, TrackingToken.GetSpan(Snapshot));
+
+            Span = new SnapshotSpan(snapshot, TrackingToken.GetSpan(snapshot));
             _textLazy = new Lazy<string>(() => Span.GetText());
         }
     }

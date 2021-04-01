@@ -14,6 +14,6 @@ namespace VSRAD.Syntax.Core.Helper
             return block;
         }
 
-        public static IBlock GetParent(this IBlock block) => block.Parent ?? block;
+        public static Block GetParent(this Block block) => block.Parent as Block ?? block;
     }
 }

@@ -17,9 +17,8 @@ namespace VSRAD.Syntax.Core.Blocks
     public interface IBlock
     {
         IBlock Parent { get; }
-        ITextSnapshot Snapshot { get; }
-        TrackingBlock Scope { get; }
-        TrackingBlock Area { get; }
+        Span Scope { get; }
+        Span Area { get; }
         BlockType Type { get; }
         List<IBlock> Children { get; }
         List<IAnalysisToken> Tokens { get; }
@@ -30,76 +29,55 @@ namespace VSRAD.Syntax.Core.Blocks
         bool InScope(Span span);
         bool InRange(int point);
         bool InRange(Span span);
-        void SetEnd(int endPosition, TrackingToken tokenEnd);
-        void SetStart(int startPosition);
     }
 
     internal class Block : IBlock
     {
         public IBlock Parent { get; }
-        public ITextSnapshot Snapshot { get; }
         public BlockType Type { get; }
         public List<IBlock> Children { get; }
         public List<IAnalysisToken> Tokens { get; }
-        public TrackingBlock Scope { get; private set; }
-        public TrackingBlock Area { get; private set; }
+        public Span Scope { get; private set; }
+        public Span Area { get; private set; }
 
-        protected int actualStart;
-        protected int actualEnd;
-        private int startPosition;
+        private int _startPosition;
 
-        public Block(IBlock parent, BlockType type, TrackingToken tokenStart)
+        public Block(IBlock parent, BlockType type, TrackingToken start, ITextSnapshot snapshot)
+            : this(parent, type, start.GetStart(snapshot), snapshot.Length - 1) { }
+
+        public Block(IBlock parent, BlockType type, TrackingToken start, TrackingToken end, ITextSnapshot snapshot)
+            : this(parent, type, start.GetStart(snapshot), end.GetEnd(snapshot)) { }
+
+        public Block(IBlock parent, BlockType type, int start, int end)
         {
             Parent = parent;
             Type = type;
-            Snapshot = parent.Snapshot;
-
-            actualStart = tokenStart.GetStart(Snapshot);
-            actualEnd = Snapshot.Length - 1;
-            Scope = new TrackingBlock(Snapshot, actualStart, actualEnd);
-            Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
 
             Children = new List<IBlock>();
             Tokens = new List<IAnalysisToken>();
+
+            Scope = new Span(start, end - start);
+            Area = Scope;
         }
 
-        public Block(IBlock parent, BlockType type, TrackingToken tokenStart, TrackingToken tokenEnd)
-        {
-            Parent = parent;
-            Type = type;
-            Snapshot = parent.Snapshot;
-
-            actualStart = tokenStart.GetStart(Snapshot);
-            actualEnd = tokenEnd.GetEnd(Snapshot);
-            Scope = new TrackingBlock(Snapshot, actualStart, actualEnd);
-            Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
-
-            Children = new List<IBlock>();
-            Tokens = new List<IAnalysisToken>();
-        }
-
-        public Block(ITextSnapshot snapshot)
+        public Block()
         {
             Parent = null;
             Type = BlockType.Root;
-            Snapshot = snapshot;
-            actualStart = 0;
-            actualEnd = Snapshot.Length - 1;
 
             Children = new List<IBlock>();
             Tokens = new List<IAnalysisToken>();
         }
 
         public void SetStart(int scopeStart) =>
-            startPosition = scopeStart;
+            _startPosition = scopeStart;
 
-        public void SetEnd(int endPosition, TrackingToken tokenEnd)
+        public void SetEnd(int endPosition, TrackingToken endToken, ITextSnapshot snapshot)
         {
-            if (startPosition > endPosition) return;
+            if (_startPosition > endPosition) return;
 
-            actualEnd = tokenEnd.GetEnd(Snapshot);
-            Scope = new TrackingBlock(Snapshot, startPosition, endPosition);
-            Area = new TrackingBlock(Snapshot, actualStart, actualEnd);
+            Scope = new Span(_startPosition, endPosition - _startPosition);
+            Area = new Span(Area.Start, endToken.GetEnd(snapshot) - Area.Start);
         }
 
         public virtual void AddChildren(IBlock block) =>
@@ -109,15 +87,15 @@ namespace VSRAD.Syntax.Core.Blocks
             Tokens.Add(token);
 
         public virtual bool InScope(int point) =>
-            Scope.GetSpan(Snapshot).Contains(point);
+            Scope.Contains(point);
 
         public virtual bool InScope(Span span) =>
-            Scope.GetSpan(Snapshot).Contains(span);
+            Scope.Contains(span);
 
         public virtual bool InRange(int point) =>
-            actualStart <= point && actualEnd >= point;
+            Area.Contains(point);
 
         public virtual bool InRange(Span span) =>
-            actualStart <= span.Start && actualEnd >= span.End;
+            Area.Contains(span);
     }
 }
