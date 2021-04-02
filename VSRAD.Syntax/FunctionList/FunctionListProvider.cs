@@ -49,7 +49,14 @@ namespace VSRAD.Syntax.FunctionList
             if (textView == null) return;
 
             if (TryGetDocument(textView.TextBuffer, out var document))
+            {
                 AssignDocumentToFunctionList(textView, document);
+                ActiveDocumentChanged(document);
+            }
+            else
+            {
+                textView.TextBuffer.ContentTypeChanged += ContentTypeChanged;
+            }
         }
 
         private void CaretOnPositionChanged(object sender, CaretPositionChangedEventArgs e)
@@ -81,17 +88,42 @@ namespace VSRAD.Syntax.FunctionList
             return document != null;
         }
 
-        #region update function list
+        #region document assignment
         private void AssignDocumentToFunctionList(ITextView textView, IDocument document)
         {
             _documentTextViews.Add(document, textView);
-            if (!document.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
-            {
-                document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
-                document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
-            }
+            document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
+            document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
             textView.Caret.PositionChanged += CaretOnPositionChanged;
-            ActiveDocumentChanged(document);
+        }
+
+        private void ContentTypeChanged(object sender, ContentTypeChangedEventArgs e)
+        {
+            var textBuffer = (ITextBuffer)sender;
+
+            if (textBuffer == null) return;
+            if (!TryGetDocument(textBuffer, out var document)) return;
+
+            var serviceProvider = ServiceProvider.GlobalProvider;
+            VsShellUtilities.IsDocumentOpen(serviceProvider, document.Path, Guid.Empty, 
+                out _, out _, out var windowFrame);
+            if (windowFrame == null) return;
+
+            var vsTextView = VsShellUtilities.GetTextView(windowFrame);
+            if (vsTextView == null)
+            {
+                _documentTextViews.Remove(document);
+                return;
+            }
+
+            var textView = _editorAdaptersFactoryService.GetWpfTextView(vsTextView);
+            if (textView == null)
+            {
+                _documentTextViews.Remove(document);
+                return;
+            }
+
+            AssignDocumentToFunctionList(textView, document);
         }
 
         private void DocumentDisposed(IDocument document)
@@ -106,7 +138,9 @@ namespace VSRAD.Syntax.FunctionList
 
             _documentTextViews.Remove(document);
         }
+        #endregion
 
+        #region update function list
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
             if (_functionListControl == null) return;
