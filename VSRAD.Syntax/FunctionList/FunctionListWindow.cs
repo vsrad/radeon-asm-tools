@@ -1,8 +1,6 @@
-﻿using System;
-using System.ComponentModel.Design;
+﻿using System.ComponentModel.Design;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
@@ -19,7 +17,7 @@ namespace VSRAD.Syntax.FunctionList
 
         protected override void Initialize()
         {
-            var optionsEventProvider = ServiceProvider.GlobalProvider.GetMefService<GeneralOptionProvider>();
+            var optionsEventProvider = GeneralOptionProvider.Instance;
             var commandService = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 
             FunctionListControl = new FunctionListControl(optionsEventProvider, commandService);

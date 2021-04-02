@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using VSRAD.Syntax.Helpers;
 using DisplayNameAttribute = System.ComponentModel.DisplayNameAttribute;
 
 namespace VSRAD.Syntax.Options
@@ -13,7 +14,7 @@ namespace VSRAD.Syntax.Options
 
         public GeneralOptionPage()
         {
-            _generalOptionEventProvider = Package.Instance.GetMEFComponent<GeneralOptionProvider>();
+            _generalOptionEventProvider = GeneralOptionProvider.Instance;
             _model = GeneralOptionModel.Instance;
         }
 

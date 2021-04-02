@@ -35,8 +35,7 @@ namespace VSRAD.Syntax.Options.Instructions
         public event InstructionsLoadDelegate InstructionsUpdated;
 
         [ImportingConstructor]
-        public InstructionListLoader(GeneralOptionProvider generalOptionEventProvider,
-            Lazy<IDocumentFactory> documentFactory,
+        public InstructionListLoader(Lazy<IDocumentFactory> documentFactory,
             Lazy<INavigationTokenService> navigationTokenService)
         {
             _documentFactory = documentFactory;
@@ -44,8 +43,9 @@ namespace VSRAD.Syntax.Options.Instructions
             _sets = new Dictionary<string, IInstructionSet>(StringComparer.OrdinalIgnoreCase);
             _instructionSetPaths = new Dictionary<string, ITextDocument>(StringComparer.OrdinalIgnoreCase);
 
-            generalOptionEventProvider.OptionsUpdated += OptionsUpdated;
-            OptionsUpdated(generalOptionEventProvider);
+            var optionProvider = GeneralOptionProvider.Instance;
+            optionProvider.OptionsUpdated += OptionsUpdated;
+            OptionsUpdated(optionProvider);
         }
 
         private void OptionsUpdated(GeneralOptionProvider provider)

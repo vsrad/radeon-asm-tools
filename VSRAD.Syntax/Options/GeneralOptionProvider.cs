@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.IO;
 using System.Reflection;
 
 namespace VSRAD.Syntax.Options
 {
-    [Export(typeof(GeneralOptionProvider))]
     public class GeneralOptionProvider
     {
+        private static readonly Lazy<GeneralOptionProvider> LazyInstance =
+            new Lazy<GeneralOptionProvider>(() => new GeneralOptionProvider());
+        public static GeneralOptionProvider Instance => LazyInstance.Value;
+
         public GeneralOptionProvider()
         {
             SortOptions = GeneralOptionPage.SortState.ByName;

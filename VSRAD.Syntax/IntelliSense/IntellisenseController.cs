@@ -10,15 +10,15 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntellisenseController : IOleCommandTarget
     {
         private readonly ITextView _textView;
-        private readonly RadeonServiceProvider _editorService;
         private readonly INavigationTokenService _navigationService;
+        private readonly IPeekBroker _peekBroker;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(RadeonServiceProvider editorService, INavigationTokenService navigationService, ITextView textView)
+        public IntellisenseController(IPeekBroker peekBroker, INavigationTokenService navigationService, ITextView textView)
         {
+            _peekBroker = peekBroker;
             _textView = textView;
-            _editorService = editorService;
             _navigationService = navigationService;
         }
 
@@ -43,10 +43,10 @@ namespace VSRAD.Syntax.IntelliSense
                     switch ((VSConstants.VSStd12CmdID)prgCmds[i].cmdID)
                     {
                         case VSConstants.VSStd12CmdID.PeekDefinition:
-                            var canPeek = _editorService.PeekBroker.CanTriggerPeekSession(
+                            var canPeek = _peekBroker.CanTriggerPeekSession(
                                 _textView,
                                 PredefinedPeekRelationships.Definitions.Name,
-                                isStandaloneFilePredicate: (string filename) => false
+                                filename => false
                             );
                             prgCmds[i].cmdf = (uint)OLECMDF.OLECMDF_SUPPORTED;
                             prgCmds[0].cmdf |= (uint)(canPeek == true ? OLECMDF.OLECMDF_ENABLED : OLECMDF.OLECMDF_INVISIBLE);
@@ -77,7 +77,7 @@ namespace VSRAD.Syntax.IntelliSense
                         if (!_textView.Roles.Contains(PredefinedTextViewRoles.EmbeddedPeekTextView) &&
                             !_textView.Roles.Contains(PredefinedTextViewRoles.CodeDefinitionView))
                         {
-                            _editorService.PeekBroker.TriggerPeekSession(_textView, PredefinedPeekRelationships.Definitions.Name);
+                            _peekBroker.TriggerPeekSession(_textView, PredefinedPeekRelationships.Definitions.Name);
                             return VSConstants.S_OK;
                         }
                         break;

@@ -16,10 +16,10 @@ namespace VSRAD.Syntax.Guide
         private readonly GeneralOptionProvider _generalOptionProvider;
 
         [ImportingConstructor]
-        public IndentGuideFactory(IDocumentFactory documentFactory, GeneralOptionProvider generalOptionProvider)
+        public IndentGuideFactory(IDocumentFactory documentFactory)
         {
             _documentFactory = documentFactory;
-            _generalOptionProvider = generalOptionProvider;
+            _generalOptionProvider = GeneralOptionProvider.Instance;
             _documentFactory.DocumentDisposed += DisposeRequest;
         }
 

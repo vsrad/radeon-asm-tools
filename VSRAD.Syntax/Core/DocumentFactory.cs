@@ -18,6 +18,7 @@ namespace VSRAD.Syntax.Core
         private readonly Dictionary<string, KeyValuePair<ITextDocument, IDocument>> _documents;
         private readonly Lazy<ContentTypeManager> _contentTypeManager;
         private readonly Lazy<IInstructionListManager> _instructionManager;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
@@ -26,17 +27,18 @@ namespace VSRAD.Syntax.Core
 
         [ImportingConstructor]
         public DocumentFactory(RadeonServiceProvider serviceProvider,
+            ITextDocumentFactoryService textDocumentFactoryService,
             Lazy<ContentTypeManager> contentTypeManager,
             Lazy<IInstructionListManager> instructionManager)
         {
+            _textDocumentFactoryService = textDocumentFactoryService;
             _instructionManager = instructionManager;
 
             _documents = new Dictionary<string, KeyValuePair<ITextDocument, IDocument>>(StringComparer.OrdinalIgnoreCase);
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
 
-            var dte = _serviceProvider.ServiceProvider.GetService(typeof(DTE)) as DTE;
-            dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+            _serviceProvider.Dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
         }
 
         public IDocument GetOrCreateDocument(string path)
@@ -51,9 +53,7 @@ namespace VSRAD.Syntax.Core
             if (contentType == null)
                 return null;
 
-            var textDocument = _serviceProvider
-                .TextDocumentFactoryService
-                .CreateAndLoadTextDocument(path, contentType);
+            var textDocument = _textDocumentFactoryService.CreateAndLoadTextDocument(path, contentType);
 
             return GetOrCreateDocument(textDocument);
         }
@@ -85,9 +85,9 @@ namespace VSRAD.Syntax.Core
             {
                 case AsmType.RadAsm:
                 case AsmType.RadAsm2:
-                    return (lexer, parser) => new CodeDocument(_serviceProvider.TextDocumentFactoryService, _instructionManager.Value, document, lexer, parser, OnDocumentDestroy);
+                    return (lexer, parser) => new CodeDocument(_textDocumentFactoryService, _instructionManager.Value, document, lexer, parser, OnDocumentDestroy);
                 case AsmType.RadAsmDoc:
-                    return (lexer, parser) => new Document(_serviceProvider.TextDocumentFactoryService, document, lexer, parser, OnDocumentDestroy);
+                    return (lexer, parser) => new Document(_textDocumentFactoryService, document, lexer, parser, OnDocumentDestroy);
                 default:
                     return null;
             }

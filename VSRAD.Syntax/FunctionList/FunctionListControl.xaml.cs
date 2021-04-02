@@ -64,8 +64,7 @@ namespace VSRAD.Syntax.FunctionList
         public void GoToSelectedItem()
         {
             var token = (FunctionListItem)tokens.SelectedItem;
-            if (token != null)
-                token.Navigate();
+            token?.Navigate();
         }
 
         public async Task UpdateListAsync(List<FunctionListItem> newTokens, CancellationToken cancellationToken)

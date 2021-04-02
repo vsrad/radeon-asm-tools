@@ -53,6 +53,7 @@ namespace VSRAD.Syntax.Options.Instructions
             {
                 _instructionSetManager = InstructionListManager.Instance;
                 _instructionSetManager.AsmTypeChanged += AsmTypeChanged;
+                AsmTypeChanged();
                 _initialized = true;
             }
 

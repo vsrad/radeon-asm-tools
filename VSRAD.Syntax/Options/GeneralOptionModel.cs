@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,7 +13,6 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell.Settings;
 using Microsoft.VisualStudio.Threading;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Options.Instructions;
 using AsyncServiceProvider = Microsoft.VisualStudio.Shell.AsyncServiceProvider;
 using ThreadHelper = Microsoft.VisualStudio.Shell.ThreadHelper;
 
@@ -59,15 +59,15 @@ namespace VSRAD.Syntax.Options
         /// <returns></returns>
         private static async Task<GeneralOptionModel> CreateAsync()
         {
-            var serviceProvider = AsyncServiceProvider.GlobalProvider;
-            // make sure this managers initialized before initial option event
-            _ = await serviceProvider.GetMefServiceAsync<ContentTypeManager>();
-            _ = await serviceProvider.GetMefServiceAsync<IInstructionListManager>();
-
-            var optionProvider = await serviceProvider.GetMefServiceAsync<GeneralOptionProvider>();
+            var optionProvider = GeneralOptionProvider.Instance;
             var instance = new GeneralOptionModel(optionProvider);
 
             await instance.LoadAsync();
+
+            // required initialization before options
+            var serviceProvider = AsyncServiceProvider.GlobalProvider;
+            _ = await serviceProvider.GetMefServiceAsync<ContentTypeManager>();
+
             optionProvider.OptionsUpdatedInvoke();
             return instance;
         }
@@ -200,7 +200,7 @@ namespace VSRAD.Syntax.Options
         {
             using (var stream = new MemoryStream())
             {
-                var formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter { Binder = TypeOnlyBinder.Instance };
                 formatter.Serialize(stream, value);
                 stream.Flush();
                 return Convert.ToBase64String(stream.ToArray());
@@ -216,7 +216,7 @@ namespace VSRAD.Syntax.Options
 
             using (var stream = new MemoryStream(b))
             {
-                var formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter { Binder = TypeOnlyBinder.Instance };
                 return formatter.Deserialize(stream);
             }
         }
@@ -260,6 +260,22 @@ namespace VSRAD.Syntax.Options
 
             Assumes.Present(svc);
             return new ShellSettingsManager(svc);
+        }
+    }
+
+    internal class TypeOnlyBinder : SerializationBinder
+    {
+        public static SerializationBinder Instance = new TypeOnlyBinder();
+
+        public override Type BindToType(string assemblyName, string typeName)
+        {
+            return assemblyName.Equals("NA", StringComparison.Ordinal) ? Type.GetType(typeName) : null;
+        }
+
+        public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        {
+            assemblyName = "NA";
+            typeName = serializedType.FullName;
         }
     }
 }
