@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
@@ -71,31 +71,172 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
+            IList<FileMetadata> sourceFiles, targetFiles;
+            if (step.Direction == FileCopyDirection.RemoteToLocal)
+            {
+                var command = new ListFilesCommand { Path = step.SourcePath, WorkDir = _environment.RemoteWorkDir };
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                sourceFiles = response.Files;
+            }
+            else
+            {
+                if (!TryGetMetadataForLocalPath(step.SourcePath, step.IncludeSubdirectories, out sourceFiles, out var error))
+                    return new StepResult(false, error, "");
+            }
+            if (sourceFiles.Count == 0)
+            {
+                var cwd = step.Direction == FileCopyDirection.RemoteToLocal ? _environment.RemoteWorkDir : _environment.LocalWorkDir;
+                return new StepResult(false, $"Path \"{step.SourcePath}\" does not exist\r\nWorking directory: \"{cwd}\"", "");
+            }
+            if (step.Direction == FileCopyDirection.LocalToRemote)
+            {
+                var command = new ListFilesCommand { Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                targetFiles = response.Files;
+            }
+            else
+            {
+                if (!TryGetMetadataForLocalPath(step.TargetPath, step.IncludeSubdirectories, out targetFiles, out var error))
+                    return new StepResult(false, error, "");
+            }
+
+            /* Copying a single file */
+            if (sourceFiles.Count == 1 && !sourceFiles[0].IsDirectory)
+            {
+                if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
+                    return new StepResult(false, $"File \"{step.SourcePath}\" cannot be copied: the target path is a directory.", "");
+
+                if (step.FailIfNotModified && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
+                    return new StepResult(false, "File was not changed after executing the previous steps. Disable Check Timestamp in step options to skip the modification date check.", "");
+
+                if (step.SkipIfNotModified
+                    && targetFiles.Count == 1
+                    && sourceFiles[0].Size == targetFiles[0].Size
+                    && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
+                    return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
+
+                return await DoCopySingleFileAsync(step);
+            }
+            /* Copying a directory */
+            return await DoCopyDirectoryAsync(step, sourceFiles, targetFiles);
+        }
+
+        private async Task<StepResult> DoCopyDirectoryAsync(CopyFileStep step, IList<FileMetadata> sourceFiles, IList<FileMetadata> targetFiles)
+        {
+            /* Retrieve source files */
+            var files = new List<PackedFile>();
+            bool SourceIdenticalToTarget(FileMetadata src)
+            {
+                foreach (var dst in targetFiles)
+                {
+                    if (dst.RelativePath == src.RelativePath)
+                        return dst.Size == src.Size && dst.LastWriteTimeUtc == src.LastWriteTimeUtc;
+                }
+                return false;
+            }
+            var filesToGet = new List<string>();
+            foreach (var src in sourceFiles)
+            {
+                if (!src.IsDirectory && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                    filesToGet.Add(src.RelativePath);
+            }
+            if (filesToGet.Count > 0)
+            {
+                if (step.Direction == FileCopyDirection.RemoteToLocal)
+                {
+                    var command = new GetFilesCommand { RootPath = new[] { _environment.RemoteWorkDir, step.SourcePath }, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
+                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
+
+                    if (response.Status != GetFilesStatus.Successful)
+                        return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
+
+                    files.AddRange(response.Files);
+                }
+                else
+                {
+                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
+                    files.AddRange(PackedFile.PackFiles(rootPath, filesToGet));
+                }
+            }
+            /* Include empty directories */
+            foreach (var src in sourceFiles)
+            {
+                // ./ indicates the root directory
+                if (src.IsDirectory && src.RelativePath != "./" && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                    files.Add(new PackedFile(Array.Empty<byte>(), src.RelativePath, src.LastWriteTimeUtc));
+            }
+            /* Write source files and directories to the target directory */
+            if (files.Count == 0)
+                return new StepResult(true, "", "No files were copied. Sizes and modification times are identical on the source and target sides.\r\n");
+
+            if (step.Direction == FileCopyDirection.LocalToRemote)
+            {
+                ICommand command = new PutDirectoryCommand
+                {
+                    Files = files.ToArray(),
+                    Path = step.TargetPath,
+                    WorkDir = _environment.RemoteWorkDir,
+                    PreserveTimestamps = step.PreserveTimestamps
+                };
+                if (step.UseCompression)
+                    command = new CompressedCommand(command);
+                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+
+                if (response.Status == PutDirectoryStatus.TargetPathIsFile)
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
+                if (response.Status == PutDirectoryStatus.PermissionDenied)
+                    return new StepResult(false, $"Access to path \"{step.TargetPath}\" on the remote machine is denied", "");
+                if (response.Status == PutDirectoryStatus.OtherIOError)
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine", "");
+            }
+            else
+            {
+                if (!TryGetFullLocalPath(step.TargetPath, out var fullPath, out var error))
+                    return new StepResult(false, error, "");
+                if (File.Exists(fullPath))
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine: the target path is a file.", "");
+
+                try
+                {
+                    PackedFile.UnpackFiles(fullPath, files, step.PreserveTimestamps);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return new StepResult(false, $"Access to path \"{step.TargetPath}\" on the local machine is denied", "");
+                }
+                catch (IOException)
+                {
+                    return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the local machine", "");
+                }
+            }
+
+            return new StepResult(true, "", "");
+        }
+
+        private async Task<StepResult> DoCopySingleFileAsync(CopyFileStep step)
+        {
             byte[] sourceContents;
             /* Read source file */
-            var initTimestamp = GetInitialFileTimestamp(step.SourcePath);
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
-                if (step.CheckTimestamp && initTimestamp == response.Timestamp)
-                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
                 sourceContents = response.Data;
             }
-            else
+            else if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
             {
-                if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
-                    return new StepResult(false, error, "");
-                if (step.CheckTimestamp && initTimestamp == GetLocalFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is not changed at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                return new StepResult(false, error, "");
             }
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
+                if (step.UseCompression)
+                    command = new CompressedCommand(command);
                 var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
+
                 if (response.Status == PutFileStatus.PermissionDenied)
                     return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
                 if (response.Status == PutFileStatus.OtherIOError)
@@ -103,19 +244,17 @@ namespace VSRAD.Package.Server
             }
             else
             {
+                if (!TryGetFullLocalPath(step.TargetPath, out var localPath, out var error))
+                    return new StepResult(false, error, "");
+
                 try
                 {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                     Directory.CreateDirectory(Path.GetDirectoryName(localPath));
                     File.WriteAllBytes(localPath, sourceContents);
                 }
                 catch (UnauthorizedAccessException)
                 {
                     return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
                 }
             }
 
@@ -258,7 +397,7 @@ namespace VSRAD.Package.Server
                 else
                 {
                     var fullPath = new[] { _environment.LocalWorkDir, path };
-                    var timestamp = GetLocalFileTimestamp(path);
+                    var timestamp = GetLocalFileLastWriteTimeUtc(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
 
@@ -294,7 +433,7 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                if (checkTimestamp && GetLocalFileTimestamp(path) == initTimestamp)
+                if (checkTimestamp && GetLocalFileLastWriteTimeUtc(path) == initTimestamp)
                     return new Error($"{type} file ({path}) was not modified.");
                 if (!ReadLocalFile(path, out var data, out var error))
                     return new Error($"{type} file could not be opened. {error}");
@@ -304,10 +443,14 @@ namespace VSRAD.Package.Server
 
         private bool ReadLocalFile(string path, out byte[] data, out string error, int byteOffset = 0)
         {
+            if (!TryGetFullLocalPath(path, out var fullPath, out error))
+            {
+                data = null;
+                return false;
+            }
             try
             {
-                var localPath = Path.Combine(_environment.LocalWorkDir, path);
-                using (var stream = new FileStream(localPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
+                using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
                 {
                     stream.Seek(byteOffset, SeekOrigin.Begin);
 
@@ -333,10 +476,6 @@ namespace VSRAD.Package.Server
             {
                 error = $"Access to path {path} on the local machine is denied";
             }
-            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-            {
-                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
-            }
             data = null;
             return false;
         }
@@ -345,13 +484,13 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
+                if (step is CopyFileStep copyFile && copyFile.FailIfNotModified)
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                             new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, copyFile.SourcePath } })).Timestamp;
                     else
-                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileTimestamp(copyFile.SourcePath);
+                        _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
                 else if (step is ReadDebugDataStep readDebugData)
                 {
@@ -364,22 +503,65 @@ namespace VSRAD.Package.Server
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
                                 new FetchMetadata { FilePath = new[] { _environment.RemoteWorkDir, file.Path } })).Timestamp;
                         else
-                            _initialTimestamps[file.Path] = GetLocalFileTimestamp(file.Path);
+                            _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }
                 }
             }
         }
 
-        private DateTime GetLocalFileTimestamp(string file)
+        private DateTime GetLocalFileLastWriteTimeUtc(string file)
         {
             try
             {
                 var localPath = Path.Combine(_environment.LocalWorkDir, file);
-                return File.GetLastWriteTime(localPath);
+                return File.GetLastWriteTimeUtc(localPath);
             }
             catch
             {
                 return default;
+            }
+        }
+
+        private bool TryGetMetadataForLocalPath(string path, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
+        {
+            if (!TryGetFullLocalPath(path, out var localPath, out error))
+            {
+                metadata = null;
+                return false;
+            }
+
+            try
+            {
+                metadata = FileMetadata.GetMetadataForPath(localPath, includeSubdirectories);
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                error = $"Access to directory or its contents is denied: \"{localPath}\"";
+                metadata = null;
+                return false;
+            }
+            catch (IOException)
+            {
+                error = $"Unable to open directory or its contents: \"{localPath}\"";
+                metadata = null;
+                return false;
+            }
+        }
+
+        private bool TryGetFullLocalPath(string path, out string fullPath, out string error)
+        {
+            try
+            {
+                error = "";
+                fullPath = Path.Combine(_environment.LocalWorkDir, path);
+                return true;
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+                fullPath = null;
+                return false;
             }
         }
     }

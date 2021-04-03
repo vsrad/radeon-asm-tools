@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC
 {
@@ -30,8 +31,27 @@ namespace VSRAD.DebugServer.IPC
             }
         }
 
-        public void Write(DateTime timestamp) =>
+        public void Write(DateTime timestamp)
+        {
+            if (timestamp != default && timestamp.Kind != DateTimeKind.Utc)
+                throw new ArgumentException("Attempting to serialize a non-UTC DateTime", nameof(timestamp));
+
             Write(timestamp.ToBinary());
+        }
+
+        public new void Write7BitEncodedInt(int value) =>
+            base.Write7BitEncodedInt(value);
+
+        public void WriteLengthPrefixedFileArray(PackedFile[] files)
+        {
+            Write7BitEncodedInt(files.Length);
+            foreach (var file in files)
+            {
+                WriteLengthPrefixedBlob(file.Data);
+                Write(file.RelativePath);
+                Write(file.LastWriteTimeUtc);
+            }
+        }
     }
 
     public sealed class IPCReader : BinaryReader
@@ -64,5 +84,17 @@ namespace VSRAD.DebugServer.IPC
 
         public DateTime ReadDateTime() =>
             DateTime.FromBinary(ReadInt64());
+
+        public new int Read7BitEncodedInt() =>
+            base.Read7BitEncodedInt();
+
+        public PackedFile[] ReadLengthPrefixedFileArray()
+        {
+            var fileCount = Read7BitEncodedInt();
+            var files = new PackedFile[fileCount];
+            for (int i = 0; i < fileCount; ++i)
+                files[i] = new PackedFile(ReadLengthPrefixedBlob(), ReadString(), ReadDateTime());
+            return files;
+        }
     }
 }
