@@ -77,7 +77,7 @@ namespace VSRAD.Package.Server
             // List all source files
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
-                var command = new ListFilesCommand { Path = step.SourcePath };
+                var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
                 sourceFiles = response.Files;
             }
@@ -93,7 +93,7 @@ namespace VSRAD.Package.Server
             // List all target files
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
-                var command = new ListFilesCommand { Path = step.TargetPath };
+                var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
                 var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
                 targetFiles = response.Files;
             }
