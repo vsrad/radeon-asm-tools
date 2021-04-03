@@ -50,7 +50,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
             _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
-            _visualOptionsFilePath = unconfiguredProject.FullPath + ".viz.json";
+            _visualOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             UnconfiguredProject = unconfiguredProject;
         }
 
