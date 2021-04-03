@@ -23,11 +23,11 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        DebugServer.IPC.CapabilityInfo ServerCapabilities { get; }
-
         Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
 
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
+
+        Task<DebugServer.IPC.CapabilityInfo> GetServerCapabilityInfoAsync();
 
         void ForceDisconnect();
     }
@@ -144,6 +144,13 @@ namespace VSRAD.Package.Server
                 _remoteEnvironment = environment.Variables;
             }
             return _remoteEnvironment;
+        }
+
+        public async Task<DebugServer.IPC.CapabilityInfo> GetServerCapabilityInfoAsync()
+        {
+            if (ConnectionState != ClientState.Connected)
+                await EstablishServerConnectionAsync();
+            return ServerCapabilities;
         }
 
         public void ForceDisconnect()

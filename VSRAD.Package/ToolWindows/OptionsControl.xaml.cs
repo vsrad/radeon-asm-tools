@@ -36,13 +36,13 @@ namespace VSRAD.Package.ToolWindows
 
             public ICommand DisconnectCommand { get; }
 
-            private readonly ICommunicationChannel _channel;
+            private readonly CommunicationChannel _channel;
 
             public Context(ProjectOptions options, ICommunicationChannel channel)
             {
                 Options = options;
                 Options.PropertyChanged += OptionsChanged;
-                _channel = channel;
+                _channel = (CommunicationChannel)channel;
                 _channel.ConnectionStateChanged += ConnectionStateChanged;
                 DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
             }
