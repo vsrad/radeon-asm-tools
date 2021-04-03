@@ -47,11 +47,20 @@ namespace VSRAD.Package.Options
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
+        private string _remoteMachine = "127.0.0.1";
+        public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
+
+        private int _port = 9339;
+        public int Port { get => _port; set => SetField(ref _port, value); }
+
+        [JsonIgnore]
+        public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
+
         [JsonIgnore]
         public bool HasProfiles => Profiles.Count > 0;
         [JsonIgnore]
         public ProfileOptions Profile => Profiles.TryGetValue(ActiveProfile, out var profile) ? profile : null;
-
+        [JsonIgnore]
         public IReadOnlyDictionary<string, ProfileOptions> Profiles { get; private set; } =
             new Dictionary<string, ProfileOptions>();
 
@@ -72,13 +81,15 @@ namespace VSRAD.Package.Options
         #endregion
 
         #region Read/Write
-        public static ProjectOptions Read(string path)
+        public static ProjectOptions Read(string visualizerOptionsPath, string profilesOptionsPath)
         {
             ProjectOptions options = null;
+            // Handle options and profiles loading in separate try blocks since we want them
+            // to load indepentently, i.e use default configs if corresponding file is missing
+            // in each case without affecting one another
             try
             {
-                var optionsJson = JObject.Parse(File.ReadAllText(path));
-                LegacyProfileOptionsMigrator.ConvertOldOptionsIfPresent(optionsJson);
+                var optionsJson = JObject.Parse(File.ReadAllText(visualizerOptionsPath));
                 options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
             }
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
@@ -86,49 +97,60 @@ namespace VSRAD.Package.Options
             {
                 Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
             }
+
             if (options == null) // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
                 options = new ProjectOptions();
+
+            try
+            {
+                var profiles = ProfileTransferManager.Import(profilesOptionsPath);
+                options.SetProfiles(profiles, options.ActiveProfile);
+            }
+            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
+            catch (Exception e)
+            {
+                Errors.ShowWarning($"An error has occurred while loading the profiles: {e.Message}\r\nProceeding with defaults.");
+            }
+
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
         }
 
-        public static ProjectOptions ReadLegacy(string path)
-        {
-            try
-            {
-                var legacyJson = JObject.Parse(File.ReadAllText(path));
-                return LegacyProfileImporter.ReadProjectOptions(legacyJson);
-            }
-            catch (Exception e)
-            {
-                Errors.ShowWarning($"A legacy project options file was found but could not be converted: {e.Message}\r\nYou can transfer your configuration manually from {path}");
-                return new ProjectOptions();
-            }
-        }
-
-        public void Write(string path)
+        public void Write(string visualConfigPath, string profilesConfigPath)
         {
             var serializedOptions = JsonConvert.SerializeObject(this, Formatting.Indented);
+            var serializedProfiles = JsonConvert.SerializeObject(Profiles, Formatting.Indented);
+
+            WriteAtomicWithErrorChecking(visualConfigPath, serializedOptions);
+            WriteAtomicWithErrorChecking(profilesConfigPath, serializedProfiles);
+        }
+
+        private static void WriteAtomicWithErrorChecking(string destPath, string contents)
+        {
             try
             {
-                WriteAtomic(path, serializedOptions);
+                WriteAtomic(destPath, contents);
             }
             catch (UnauthorizedAccessException)
             {
-                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {path} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
+                if (File.ReadAllText(destPath) == contents) return; // We don't want to show the warning if config haven't changed
+                                                                    // However, it's cheaper for us to rewrite the whole file than
+                                                                    // to read it's contents to do this check, so we are doing it
+                                                                    // only in case if the file is read-only to avoid extra warning
+                DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {destPath} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
                 if (res == DialogResult.OK)
                 {
                     try
                     {
-                        File.SetAttributes(path, FileAttributes.Normal);
+                        File.SetAttributes(destPath, FileAttributes.Normal);
                     }
                     catch (Exception ex)
                     {
                         Errors.ShowWarning("Cannot make file writable: " + ex.Message);
                         return;
                     }
-                    WriteAtomic(path, serializedOptions);
+                    WriteAtomic(destPath, contents);
                 }
             }
             catch (SystemException e)
@@ -159,6 +181,14 @@ namespace VSRAD.Package.Options
             {
                 // Destination file does not exist
                 File.Move(tmpPath, destPath);
+            }
+            catch (Exception)
+            {
+                // In case when we can't perform Move for a reasons that we do not handle in
+                // this function (typically destPath is read-only) we want to delete .tmp
+                // file, otherwise it will stay in the directory
+                File.Delete(tmpPath);
+                throw;
             }
         }
         #endregion

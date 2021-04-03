@@ -96,12 +96,6 @@ namespace VSRAD.Package.Options
         [JsonIgnore]
         public string ProfileName { get => _profileName; set => SetField(ref _profileName, value); }
 
-        private string _remoteMachine = "127.0.0.1";
-        public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
-
-        private int _port = 9339;
-        public int Port { get => _port; set => SetField(ref _port, value); }
-
         private bool _runActionsLocally = false;
         public bool RunActionsLocally { get => _runActionsLocally; set => SetField(ref _runActionsLocally, value); }
 
@@ -113,9 +107,6 @@ namespace VSRAD.Package.Options
 
         private string _remoteWorkDir = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
-
-        [JsonIgnore]
-        public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
 
         public async Task<Result<GeneralProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator)
         {
@@ -129,8 +120,6 @@ namespace VSRAD.Package.Options
             return new GeneralProfileOptions
             {
                 ProfileName = ProfileName,
-                RemoteMachine = RemoteMachine,
-                Port = Port,
                 RunActionsLocally = RunActionsLocally,
                 LocalWorkDir = evaluatedLocalDir,
                 RemoteWorkDir = evaluatedRemoteDir

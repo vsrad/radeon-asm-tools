@@ -39,8 +39,8 @@ namespace VSRAD.Package.ProjectSystem
         public UnconfiguredProject UnconfiguredProject { get; }
         public string RootPath { get; }
 
+        private readonly string _visualOptionsFilePath;
         private readonly string _optionsFilePath;
-        private readonly string _legacyOptionsFilePath;
 
         private bool _loaded = false;
         private readonly List<Action<ProjectOptions>> _onLoadCallbacks = new List<Action<ProjectOptions>>();
@@ -50,7 +50,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
             _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
-            _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
+            _visualOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             UnconfiguredProject = unconfiguredProject;
         }
 
@@ -64,10 +64,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Load()
         {
-            if (!File.Exists(_optionsFilePath) && File.Exists(_legacyOptionsFilePath))
-                Options = ProjectOptions.ReadLegacy(_legacyOptionsFilePath);
-            else
-                Options = ProjectOptions.Read(_optionsFilePath);
+            Options = ProjectOptions.Read(_visualOptionsFilePath, _optionsFilePath);
 
             Options.PropertyChanged += OptionsPropertyChanged;
             Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
@@ -88,7 +85,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Unload() => Unloaded?.Invoke();
 
-        public void SaveOptions() => Options.Write(_optionsFilePath);
+        public void SaveOptions() => Options.Write(_visualOptionsFilePath, _optionsFilePath);
 
         public IProjectProperties GetProjectProperties()
         {
