@@ -33,8 +33,8 @@ namespace VSRAD.PackageTests
         {
             _mock = new Mock<ICommunicationChannel>();
             _mock
-                .SetupGet(c => c.ServerCapabilities)
-                .Returns(new CapabilityInfo("", platform, CapabilityInfo.LatestServerCapabilities));
+                .Setup(c => c.GetServerCapabilityInfoAsync())
+                .ReturnsAsync(new CapabilityInfo("", platform, CapabilityInfo.LatestServerCapabilities));
             _mock
                 .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>()))
                 .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c)));
