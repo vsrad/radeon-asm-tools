@@ -427,7 +427,7 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool ReadLocalFile(string fullPath, out byte[] data, out string error, int byteOffset = 0)
+        private static bool ReadLocalFile(string fullPath, out byte[] data, out string error, int byteOffset = 0)
         {
             try
             {
@@ -490,7 +490,7 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private DateTime GetLocalFileLastWriteTimeUtc(string path)
+        private static DateTime GetLocalFileLastWriteTimeUtc(string path)
         {
             try
             {
@@ -502,7 +502,7 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private bool TryGetLocalMetadata(string localPath, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
+        private static bool TryGetLocalMetadata(string localPath, bool includeSubdirectories, out IList<FileMetadata> metadata, out string error)
         {
             try
             {

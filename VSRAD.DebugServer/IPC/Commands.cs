@@ -197,7 +197,7 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string Path { get; set; }
 
-        public string WorkDir { get; set; }
+        public string WorkDir { get; set; } = "";
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
