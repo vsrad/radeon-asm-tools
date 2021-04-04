@@ -111,15 +111,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
         {
-            if (_context.Options.DebuggerOptions.GroupSize > 8192)
-            {
-                Errors.ShowException(
-                    new ArgumentException("The column count in Debug Visualizer exceeded the limit - 8192 columns. " +
-                        "Please check your Group Size.")
-                );
-                return;
-            }
-
             if (e.Warning != null)
                 Errors.ShowWarning(e.Warning);
             if (e.DispatchParameters == null && !_context.Options.VisualizerOptions.ManualMode)
@@ -239,7 +230,6 @@ To switch to manual grid size selection, right-click on the space next to the Gr
 
         private static void RenderRowData(System.Windows.Forms.DataGridViewRow row, uint groupSize, WatchView data)
         {
-            if (groupSize > 8192) return;
             var variableType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
             for (int i = 0; i < groupSize; i++)
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(variableType, data[i]);

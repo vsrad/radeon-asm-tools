@@ -241,7 +241,7 @@
             <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
                 <Label Content="Group size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                 <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.DebuggerOptions.GroupSize, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Step="64" Width="38" Height="24"/>
+                                   Minimum="1" Step="64" Maximum="8192" Width="38" Height="24"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
                 <Label Content="Wave size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
