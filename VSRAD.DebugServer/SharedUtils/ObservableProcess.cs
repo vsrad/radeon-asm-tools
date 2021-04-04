@@ -1,8 +1,12 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
+#if !NETCORE
+using VSRAD.Package.Utils;
+#endif
 
 namespace VSRAD.DebugServer.SharedUtils
 {
@@ -155,12 +159,44 @@ namespace VSRAD.DebugServer.SharedUtils
             {
                 try
                 {
-                    _process.Kill();
                     _stoppedByTimeout = true;
+                    KillProcessTree();
                 }
                 catch (InvalidOperationException) { /* Already stopped */ }
             };
             timeoutTimer.Start();
+        }
+
+        private void KillProcessTree()
+        {
+#if NETCORE
+            _process.Kill(true);
+#else
+            void KillChildProcesses(Process parent)
+            {
+                foreach (var p in Process.GetProcesses())
+                {
+                    try
+                    {
+                        if (parent.StartTime < p.StartTime && parent.Id == p.GetParentProcessId())
+                        {
+                            try
+                            {
+                                p.Kill();
+                                KillChildProcesses(p);
+                            }
+                            catch (InvalidOperationException) { /* Process already stopped */ }
+                        }
+                    }
+                    catch (Win32Exception) { /* For system processes trying to access their info results in access denied; just skip these */ }
+                }
+            }
+
+            try { _process.Kill(); }
+            catch (InvalidOperationException) { /* Process already stopped */ }
+
+            KillChildProcesses(_process);
+#endif
         }
     }
 }
