@@ -1,166 +1,97 @@
 {
-  "DebuggerOptions": {
-    "Watches": [
+  "Default": {
+    "General": {
+      "RunActionsLocally": false,
+      "ContinueActionExecOnError": false,
+      "LocalWorkDir": "$(ProjectDir)",
+      "RemoteWorkDir": "$(RadDebugWorkDir)"
+    },
+    "Macros": [
+      [
+        "RadDebugWorkDir",
+        "/home/keker/Example/VectorAddProjectExample"
+      ],
+      [
+        "RadDebugDataOutputPath",
+        "$(RadDebugWorkDir)/tmp_dir/debug_result"
+      ],
+      [
+        "RadDeployDir",
+        "$(RadDebugWorkDir)/gfx9"
+      ]
+    ],
+    "Actions": [
       {
-        "Name": "v[tid]",
-        "Type": "Uint",
-        "IsAVGPR": false
+        "Name": "Debug",
+        "Steps": [
+          {
+            "Name": "Build",
+            "Type": "RunAction"
+          },
+          {
+            "Environment": "Remote",
+            "Executable": "bash",
+            "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDeployDir)/$(RadActiveSourceFile) -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
+            "WorkingDirectory": "$(RadDebugWorkDir)",
+            "RunAsAdmin": false,
+            "WaitForCompletion": true,
+            "TimeoutSecs": 0,
+            "Type": "Execute"
+          },
+          {
+            "OutputFile": {
+              "Location": "Remote",
+              "Path": "$(RadDebugDataOutputPath)",
+              "CheckTimestamp": true
+            },
+            "WatchesFile": {
+              "Location": "Remote",
+              "Path": "",
+              "CheckTimestamp": true
+            },
+            "DispatchParamsFile": {
+              "Location": "Remote",
+              "Path": null,
+              "CheckTimestamp": true
+            },
+            "BinaryOutput": true,
+            "OutputOffset": 0,
+            "Type": "ReadDebugData"
+          }
+        ]
       },
       {
-        "Name": "v[in1]",
-        "Type": "Float",
-        "IsAVGPR": false
-      },
-      {
-        "Name": "v[in2]",
-        "Type": "Float",
-        "IsAVGPR": false
-      },
-      {
-        "Name": "v[out]",
-        "Type": "Float",
-        "IsAVGPR": false
+        "Name": "Build",
+        "Steps": [
+          {
+            "Direction": "LocalToRemote",
+            "SourcePath": "$(RadActiveSourceFullPath)",
+            "TargetPath": "$(RadDeployDir)/$(RadActiveSourceFile)",
+            "FailIfNotModified": false,
+            "SkipIfNotModified": false,
+            "PreserveTimestamps": false,
+            "IncludeSubdirectories": false,
+            "UseCompression": false,
+            "Type": "CopyFile"
+          },
+          {
+            "Environment": "Remote",
+            "Executable": "/opt/rocm/llvm/bin/clang",
+            "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
+            "WorkingDirectory": "$(RadDebugWorkDir)",
+            "RunAsAdmin": false,
+            "WaitForCompletion": true,
+            "TimeoutSecs": 0,
+            "Type": "Execute"
+          }
+        ]
       }
     ],
-    "NGroups": 0,
-    "Counter": 0,
-    "AppArgs": "",
-    "BreakArgs": "",
-    "Autosave": true,
-    "SingleActiveBreakpoint": false,
-    "GroupSize": 256,
-    "WaveSize": 64,
-    "BreakMode": 0
-  },
-  "VisualizerOptions": {
-    "ShowSystemVariable": false,
-    "MaskLanes": false,
-    "NDRange3D": false,
-    "VerticalSplit": true,
-    "LaneGrouping": 4,
-    "WavemapElementSize": 8,
-    "CheckMagicNumber": true,
-    "MagicNumber": "0x7777777",
-    "ManualMode": true,
-    "ShowColumnsField": false,
-    "ShowAppArgsField": false,
-    "ShowBreakArgsField": false,
-    "ShowWavemap": false
-  },
-  "SliceVisualizerOptions": {
-    "VisibleColumns": "0:1-63"
-  },
-  "VisualizerAppearance": {
-    "NameColumnAlignment": 0,
-    "HeadersAlignment": 2,
-    "DataColumnAlignment": 2,
-    "LaneSeparatorWidth": 3,
-    "HiddenColumnSeparatorWidth": 8,
-    "ScalingMode": 1,
-    "DarkenAlternatingRowsBy": 0
-  },
-  "VisualizerColumnStyling": {
-    "VisibleColumns": "0-63",
-    "BackgroundColors": null,
-    "ForegroundColors": null
-  },
-  "TargetHosts": [
-    "localhost:9339"
-  ],
-  "ActiveProfile": "Default",
-  "Profiles": {
-    "Default": {
-      "General": {
-        "RemoteMachine": "localhost",
-        "Port": 9339,
-        "RunActionsLocally": false,
-        "ContinueActionExecOnError": false,
-        "LocalWorkDir": "$(ProjectDir)",
-        "RemoteWorkDir": "$(RadDebugWorkDir)"
-      },
-      "Macros": [
-        [
-          "RadDebugWorkDir",
-          "/VectorAddProjectExample"
-        ],
-        [
-          "RadDebugDataOutputPath",
-          "$(RadDebugWorkDir)/tmp_dir/debug_result"
-        ],
-        [
-          "RadDeployDir",
-          "$(RadDebugWorkDir)/gfx9"
-        ]
-      ],
-      "Actions": [
-        {
-          "Name": "Debug",
-          "Steps": [
-            {
-              "Name": "Build",
-              "Type": "RunAction"
-            },
-            {
-              "Environment": "Remote",
-              "Executable": "bash",
-              "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDeployDir)/$(RadActiveSourceFile) -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
-              "WorkingDirectory": "$(RadDebugWorkDir)",
-              "RunAsAdmin": false,
-              "WaitForCompletion": true,
-              "TimeoutSecs": 0,
-              "Type": "Execute"
-            },
-            {
-              "OutputFile": {
-                "Location": "Remote",
-                "Path": "$(RadDebugDataOutputPath)",
-                "CheckTimestamp": true
-              },
-              "WatchesFile": {
-                "Location": "Remote",
-                "Path": "",
-                "CheckTimestamp": true
-              },
-              "DispatchParamsFile": {
-                "Location": "Remote",
-                "Path": null,
-                "CheckTimestamp": true
-              },
-              "BinaryOutput": true,
-              "OutputOffset": 0,
-              "Type": "ReadDebugData"
-            }
-          ]
-        },
-        {
-          "Name": "Build",
-          "Steps": [
-            {
-              "Direction": "LocalToRemote",
-              "SourcePath": "$(RadActiveSourceFullPath)",
-              "TargetPath": "$(RadDeployDir)/$(RadActiveSourceFile)",
-              "CheckTimestamp": false,
-              "Type": "CopyFile"
-            },
-            {
-              "Environment": "Remote",
-              "Executable": "/opt/rocm/llvm/bin/clang",
-              "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
-              "WorkingDirectory": "$(RadDebugWorkDir)",
-              "RunAsAdmin": false,
-              "WaitForCompletion": true,
-              "TimeoutSecs": 0,
-              "Type": "Execute"
-            }
-          ]
-        }
-      ],
-      "MenuCommands": {
-        "DebugAction": "Debug",
-        "ProfileAction": "",
-        "DisassembleAction": "",
-        "PreprocessAction": ""
-      }
+    "MenuCommands": {
+      "DebugAction": "Debug",
+      "ProfileAction": "",
+      "DisassembleAction": "",
+      "PreprocessAction": ""
     }
   }
 }
