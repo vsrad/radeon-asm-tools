@@ -119,7 +119,7 @@ namespace VSRAD.Package.ProjectSystem
             Assumes.Present(textManager);
 
             textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-            return activeView ?? throw new InvalidOperationException(NoFilesOpenError);
+            return activeView ?? throw new UserException(NoFilesOpenError);
         }
 
         private static IWpfTextView GetTextViewFromVsTextView(IVsTextView view)

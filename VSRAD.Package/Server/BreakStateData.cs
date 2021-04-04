@@ -213,7 +213,7 @@ namespace VSRAD.Package.Server
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
                 {
-                    FilePath = _outputFile.Path,
+                    FilePath = new[] { _outputFile.Path },
                     BinaryOutput = _outputFile.BinaryOutput,
                     ByteOffset = requestedByteOffset,
                     ByteCount = requestedByteCount,

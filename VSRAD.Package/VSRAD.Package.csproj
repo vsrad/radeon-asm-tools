@@ -106,6 +106,9 @@
     <Compile Include="..\VSRAD.BuildTools\IPCBuildResult.cs">
       <Link>BuildTools\IPCBuildResult.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\IPC\Capabilities.cs">
+      <Link>Server\IPC\Capabilities.cs</Link>
+    </Compile>
     <Compile Include="..\VSRAD.DebugServer\IPC\Commands.cs">
       <Link>Server\IPC\Commands.cs</Link>
     </Compile>
@@ -250,6 +253,7 @@
     <Compile Include="Utils\CollectionExtensions.cs" />
     <Compile Include="Utils\MruCollection.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
+    <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\VsEditor.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfConverters.cs" />

@@ -16,7 +16,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var watches = new ReadOnlyCollection<string>(new[] { "local_id", "group_id", "group_size" });
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "madoka" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/madoka", binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
             var breakStateData = new BreakStateData(watches, file);
 
             var data = new int[1024]; // 2 groups by 2 waves (1 wave = 64 lanes), each containing 1 system dword and 3 watch dwords
@@ -117,7 +117,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var watches = new ReadOnlyCollection<string>(new[] { "local_id" });
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "madoka" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: watchCount * laneCount);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/madoka", binaryOutput: true, offset: 0, timestamp: default, dwordCount: watchCount * laneCount);
             var breakStateData = new BreakStateData(watches, file);
 
             Assert.Equal(groupCount, breakStateData.GetGroupCount(groupSize, waveSize, 0));
@@ -157,13 +157,13 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var watches = new ReadOnlyCollection<string>(new[] { "h" });
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/log.tar", binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
             var breakStateData = new BreakStateData(watches, file);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>
             {
-                Assert.Equal(new[] { "/home/kyubey/projects", "log.tar" }, command.FilePath);
+                Assert.Equal(new[] { "/home/kyubey/projects/log.tar" }, command.FilePath);
             });
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 512, waveSize: 64, nGroups: 1);
             Assert.Equal("Group #0 is incomplete: expected to read 4096 bytes but the output file contains 0.", warning);
@@ -176,7 +176,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var watches = new ReadOnlyCollection<string>(new[] { "h" });
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/log.tar", binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
             var breakStateData = new BreakStateData(watches, file);
 
             Assert.Equal(2, breakStateData.GetGroupCount(groupSize: 256, waveSize: 64, nGroups: 4));
@@ -201,7 +201,7 @@ namespace VSRAD.PackageTests.Server
             Buffer.BlockCopy(data, 0, localData, 0, localData.Length);
 
             var watches = new ReadOnlyCollection<string>(new[] { "local_id" });
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "madoka" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 2 * 256);
+            var file = new BreakStateOutputFile("/home/kyubey/projects/madoka", binaryOutput: true, offset: 0, timestamp: default, dwordCount: 2 * 256);
             var breakStateData = new BreakStateData(watches, file, localData);
 
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: 1, groupSize: 64, waveSize: 32, nGroups: 2);

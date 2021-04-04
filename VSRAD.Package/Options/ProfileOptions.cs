@@ -76,12 +76,12 @@ namespace VSRAD.Package.Options
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
         public ObservableCollection<IActionStep> Steps { get; } = new ObservableCollection<IActionStep>();
 
-        public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile)
+        public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationEnvironment env)
         {
             var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
             {
-                if ((await step.EvaluateAsync(evaluator, profile, Name)).TryGetResult(out var evaluatedStep, out var error))
+                if ((await step.EvaluateAsync(evaluator, env, Name)).TryGetResult(out var evaluatedStep, out var error))
                     evaluated.Steps.Add(evaluatedStep);
                 else
                     return error;
@@ -145,30 +145,5 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
         public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
         public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
-    }
-
-    public readonly struct ActionEnvironment : IEquatable<ActionEnvironment>
-    {
-        public string LocalWorkDir { get; }
-        public string RemoteWorkDir { get; }
-        public ReadOnlyCollection<string> Watches { get; }
-
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir) :
-            this(localWorkDir, remoteWorkDir, new ReadOnlyCollection<string>(Array.Empty<string>()))
-        {
-        }
-
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir, ReadOnlyCollection<string> watches)
-        {
-            LocalWorkDir = localWorkDir;
-            RemoteWorkDir = remoteWorkDir;
-            Watches = watches;
-        }
-
-        public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;
-        public override bool Equals(object o) => o is ActionEnvironment env && Equals(env);
-        public override int GetHashCode() => (LocalWorkDir, RemoteWorkDir).GetHashCode();
-        public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
-        public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
     }
 }

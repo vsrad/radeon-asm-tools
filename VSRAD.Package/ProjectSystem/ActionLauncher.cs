@@ -106,21 +106,26 @@ namespace VSRAD.Package.ProjectSystem
                 var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
                     ? null
                     : new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
+                var serverCapabilities = _project.Options.Profile.General.RunActionsLocally
+                    ? null
+                    : await _channel.GetServerCapabilityInfoAsync();
 
                 var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
 
                 var generalResult = await _project.Options.Profile.General.EvaluateAsync(evaluator);
                 if (!generalResult.TryGetResult(out var general, out var evalError))
                     return new ActionExecution(evalError);
-                var evalResult = await action.EvaluateAsync(evaluator, _project.Options.Profile);
-                if (!evalResult.TryGetResult(out action, out evalError))
+
+                var actionEvalEnv = new ActionEvaluationEnvironment(general.LocalWorkDir, general.RemoteWorkDir, general.RunActionsLocally,
+                    serverCapabilities, _project.Options.Profile.Actions);
+                var actionEvalResult = await action.EvaluateAsync(evaluator, actionEvalEnv);
+                if (!actionEvalResult.TryGetResult(out action, out evalError))
                     return new ActionExecution(evalError);
 
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 _projectSources.SaveProjectState();
 
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches);
-                var runner = new ActionRunner(_channel, _serviceProvider, env);
+                var runner = new ActionRunner(_channel, _serviceProvider, transients.Watches);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
                 return new ActionExecution(actionError, transients, runResult);
