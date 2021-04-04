@@ -101,7 +101,13 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             var overrideColor = !(_table.SelectedWatch.IsSingleWordValue && _table.HeatMapMode && e.RowIndex != -1);
 
-            CellStyling.PaintContentWithSeparator(width, color, e.CellBounds, e, overrideColor);
+            // We doing force paint of _visible_ part of cell.
+            // Since we have frozen columns visible part of cell
+            // is not necessarily whole cell.
+            var r = e.CellBounds.Left > _table.ReservedColumnsOffset
+                ? e.CellBounds
+                : new Rectangle(_table.ReservedColumnsOffset + 1, e.CellBounds.Top, e.CellBounds.Right - _table.ReservedColumnsOffset - 1, e.CellBounds.Height);
+            CellStyling.PaintContentWithSeparator(width, color, r, e, overrideColor);
             return true;
         }
 

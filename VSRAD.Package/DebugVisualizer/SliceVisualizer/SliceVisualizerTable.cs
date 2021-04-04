@@ -14,6 +14,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public bool HeatMapMode { get; private set; }
         public SliceColumnStyling ColumnStyling { get; private set; }
 
+        public const int GroupNumberColumnIndex = 0;
+        public int ReservedColumnsOffset => Columns[GroupNumberColumnIndex].Width + 1; // +1 for border
+
         private readonly SliceVisualizerContext _context;
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
