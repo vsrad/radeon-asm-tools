@@ -124,6 +124,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void DisplayWatch()
         {
+            if (SelectedWatch.ColumnCount > 8192)
+            {
+                Errors.ShowException(
+                    new ArgumentException("The column count in Slice Visualizer exceeded the limit - 8192 columns. " +
+                        "Please check your configuration: Group Size and Groups in Row.")
+                );
+                return;
+            }
             var columnsMissing = SelectedWatch.ColumnCount - _state.DataColumns.Count;
             if (columnsMissing > 0)
             {
