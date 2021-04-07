@@ -48,7 +48,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _windowVisibilityEvents.WindowHiding += OnToolWindowVisibilityChanged;
         }
 
-        public void SetStatusString(int row, int column, string val)
+        public void SetStatusString(int row, int column, string val, string info)
         {
             if (row < 0 || column < 0 || string.IsNullOrEmpty(val))
             {
@@ -64,7 +64,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             var gNum = SelectedWatchView.GetGroupIndex(row, column);
             var lNum = SelectedWatchView.GetLaneIndex(column);
-            StatusString = $"Group# {gNum}, Column# {lNum}, Value: {val}";
+            StatusString = $"Group# {gNum}, Column# {lNum}, Value: {val} {info}";
         }
 
         public void NavigateToCell(int sliceRowIndex, int sliceColumnIndex)
