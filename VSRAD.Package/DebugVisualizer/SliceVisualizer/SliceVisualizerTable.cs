@@ -99,7 +99,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
-            _context.SetStatusString(e.RowIndex, e.ColumnIndex - DataColumnOffset, Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString());
+            var info = SelectedWatch.AllValuesEqual && HeatMapMode
+                ? "*Note: HeatMap mode is active, but all values of current watch are equal accross all threads."
+                : "";
+            _context.SetStatusString(e.RowIndex, e.ColumnIndex - DataColumnOffset, Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString(), info);
         }
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
