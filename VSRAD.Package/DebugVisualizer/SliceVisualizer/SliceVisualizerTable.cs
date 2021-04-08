@@ -111,10 +111,19 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             if (e.Button != MouseButtons.Right) return;
             var hit = HitTest(e.X, e.Y);
+            var col = hit.ColumnIndex - DataColumnOffset;
+
+            if (hit.Type == DataGridViewHitTestType.ColumnHeader && SelectedWatch != null)
+            {
+                new ContextMenu(new MenuItem[] {
+                    new MenuItem("Autofit Width", (s, o) => _state.FitWidth(col))
+                }).Show(this, new Point(e.X, e.Y));
+                return;
+            }
+
             if (hit.Type != DataGridViewHitTestType.Cell) return;
             if (hit.ColumnIndex < DataColumnOffset || hit.ColumnIndex == PhantomColumnIndex) return;
 
-            var col = hit.ColumnIndex - DataColumnOffset;
             if (SelectedWatch.IsInactiveCell(hit.RowIndex, col)) return;
 
             new ContextMenu(new MenuItem[] {
