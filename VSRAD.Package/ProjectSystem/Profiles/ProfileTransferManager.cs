@@ -15,6 +15,12 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             return json.ToObject<Dictionary<string, ProfileOptions>>();
         }
 
+        public static Dictionary<string, ProfileOptions> ImportObsolete(string path)
+        {
+            var json = JObject.Parse(File.ReadAllText(path));
+            return json["Profiles"].ToObject<Dictionary<string, ProfileOptions>>();
+        }
+
         public static void Export(IDictionary<string, ProfileOptions> profiles, string oath) =>
             File.WriteAllText(oath, JsonConvert.SerializeObject(profiles, Formatting.Indented));
     }
