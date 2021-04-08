@@ -39,7 +39,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public float GetRelativeValue(int row, int column, int word = 0)
         {
-            if (AllValuesEqual) return 0.5f; // we want all the cells to be in the middle of color spectre if all values are equal
+            // we want all the cells to be in the middle of color spectre if all values are equal, but we need a proper
+            // handling of NaN's and Infinities.
+            if (AllValuesEqual && !float.IsNaN(_view[row, column])
+                               && !float.IsInfinity(_view[row, column])
+                               && _type != VariableType.Half) return 0.5f;
             switch (_type)
             {
                 case VariableType.Uint:
@@ -53,7 +57,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
                 case VariableType.Half:
                     floatValue = Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(_view[row, column]), startIndex: word * 2));
-                    if (float.IsInfinity(floatValue)) return float.NaN;
+                    if (float.IsInfinity(floatValue) || float.IsNaN(floatValue)) return float.NaN;
+                    if (AllValuesEqual) return 0.5f;
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
             }
             throw new NotImplementedException();
