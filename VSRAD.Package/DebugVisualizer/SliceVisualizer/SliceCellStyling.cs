@@ -87,15 +87,15 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             int width;
             SolidBrush color;
 
-            if ((_columnStyling[dataColumnIndex] & ColumnStates.HasHiddenColumnSeparator) != 0)
-            {
-                width = _appearance.SliceHiddenColumnSeparatorWidth;
-                color = _fontAndColor.FontAndColorState.SliceHiddenColumnSeparatorBrush;
-            }
-            else if ((_columnStyling[dataColumnIndex] & ColumnStates.HasSubgroupSeparator) != 0)
+            if ((_columnStyling[dataColumnIndex] & ColumnStates.HasSubgroupSeparator) != 0)
             {
                 width = _appearance.SliceSubgroupSeparatorWidth;
                 color = _fontAndColor.FontAndColorState.SliceSubgroupSeparatorBrush;
+            }
+            else if ((_columnStyling[dataColumnIndex] & ColumnStates.HasHiddenColumnSeparator) != 0)
+            {
+                width = _appearance.SliceHiddenColumnSeparatorWidth;
+                color = _fontAndColor.FontAndColorState.SliceHiddenColumnSeparatorBrush;
             }
             else return false;
 
