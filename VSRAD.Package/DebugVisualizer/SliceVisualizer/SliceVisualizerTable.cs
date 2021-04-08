@@ -65,7 +65,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             _state.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
 
-            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
         }
 
         private void DisplayCellValue(object sender, DataGridViewCellValueEventArgs e)
@@ -173,7 +173,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             for (int i = 0; i < _state.DataColumns.Count; ++i)
                 _state.DataColumns[i].Visible = i < SelectedWatch.ColumnCount;
 
-            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
 
             RowCount = SelectedWatch.RowCount;
             Invalidate();
@@ -201,7 +201,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             {
                 case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.SliceSubgroupSeparatorWidth):
-                    ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns, _context.Options.VisualizerAppearance);
+                    ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
                     break;
                 case nameof(Options.VisualizerAppearance.ScalingMode):
                     _state.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
