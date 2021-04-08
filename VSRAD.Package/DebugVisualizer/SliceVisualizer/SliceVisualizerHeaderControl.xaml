@@ -30,9 +30,9 @@
         <StackPanel Orientation="Horizontal">
             <Label Content="Show columns" Height="26"/>
             <TextBox Text="{Binding Options.SliceVisualizerOptions.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
-                    Width="100" VerticalContentAlignment="Center" Height="26"/>
+                    Width="100" VerticalContentAlignment="Center" Height="24"/>
             <Label Content="of each subgroup of " Height="26"/>
-            <viz:NumberInput Value="{Binding Options.SliceVisualizerOptions.SubgroupSize, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="24" Step="64" Minimum="1"/>
+            <viz:NumberInput Value="{Binding Options.SliceVisualizerOptions.SubgroupSize, UpdateSourceTrigger=PropertyChanged}" Width="38" Height="26" Step="64" Minimum="1"/>
         </StackPanel>
         <DockPanel>
             <StackPanel Orientation="Horizontal">
