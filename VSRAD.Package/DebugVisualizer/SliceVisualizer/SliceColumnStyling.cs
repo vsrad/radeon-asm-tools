@@ -28,7 +28,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         
         public void GrayOutColumns() => ColumnState.ForEach(s => s |= ColumnStates.Inactive);
 
-        public void Recompute(int subgroupSize, string columnSelector, Options.VisualizerAppearance appearance)
+        public void Recompute(int subgroupSize, string columnSelector)
         {
             if (subgroupSize == 0) return;
             SubgroupSize = (uint)subgroupSize;
