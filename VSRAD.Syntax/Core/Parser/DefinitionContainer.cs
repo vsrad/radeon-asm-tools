@@ -13,7 +13,7 @@ namespace VSRAD.Syntax.Core.Parser
         }
 
         public void Add(IBlock block, DefinitionToken definitionToken) =>
-            Add(block, definitionToken, definitionToken.Text);
+            Add(block, definitionToken, definitionToken.GetText());
 
         public void Add(IBlock block, DefinitionToken definitionToken, string text)
         {

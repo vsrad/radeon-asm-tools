@@ -22,7 +22,7 @@ namespace VSRAD.Syntax.FunctionList
         public FunctionListItem(INavigationToken navigationToken)
         {
             Type = GetType(navigationToken.Type);
-            Text = navigationToken.AnalysisToken.Text;
+            Text = navigationToken.Definition.GetText();
             // line number starts from 1
             LineNumber = navigationToken.GetLine().LineNumber + 1;
             _isCurrentWorkingItem = false;

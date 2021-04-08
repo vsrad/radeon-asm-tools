@@ -1,4 +1,5 @@
-﻿using VSRAD.Syntax.Core;
+﻿using System;
+using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Helpers;
 using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.IntelliSense.Navigation;
@@ -8,14 +9,13 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
-using System;
 using System.Linq;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     public interface INavigationTokenService
     {
-        INavigationToken CreateToken(IAnalysisToken analysisToken, IDocument document);
+        INavigationToken CreateToken(IDefinitionToken analysisToken, IDocument document);
         Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
         void NavigateOrOpenNavigationList(IReadOnlyList<INavigationToken> navigations);
     }
@@ -33,8 +33,11 @@ namespace VSRAD.Syntax.IntelliSense
             _instructionListManager = instructionListManager;
         }
 
-        public INavigationToken CreateToken(IAnalysisToken analysisToken, IDocument document) =>
-            new NavigationToken(analysisToken, document);
+        public INavigationToken CreateToken(IDefinitionToken analysisToken, IDocument document)
+        {
+            if (analysisToken == null) throw new ArgumentNullException(nameof(analysisToken));
+            return new NavigationToken(analysisToken, document);
+        }
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
         {
@@ -74,7 +77,7 @@ namespace VSRAD.Syntax.IntelliSense
 
                         var asmType = analysisResult.Snapshot.GetAsmType();
                         var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
-                        var instructionText = analysisToken.Text;
+                        var instructionText = analysisToken.GetText();
 
                         var navigations = instructions
                             .Where(i => i.Text == instructionText)

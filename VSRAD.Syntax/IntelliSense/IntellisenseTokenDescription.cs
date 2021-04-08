@@ -113,7 +113,7 @@ namespace VSRAD.Syntax.IntelliSense
             }
             else if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.LocalVariable)
             {
-                var variableToken = (VariableToken)token.AnalysisToken;
+                var variableToken = (VariableToken)token.Definition;
                 if (variableToken.DefaultValue != default)
                 {
                     var defaultValueText = variableToken.DefaultValue.GetText(snapshot);
@@ -123,7 +123,7 @@ namespace VSRAD.Syntax.IntelliSense
             }
 
             builder.SetAsElement();
-            if (token.AnalysisToken is IDefinitionToken definitionToken)
+            if (token.Definition is IDefinitionToken definitionToken)
             {
                 var description = definitionToken.GetDescription();
                 if (description != null)
@@ -155,7 +155,7 @@ namespace VSRAD.Syntax.IntelliSense
 
             public ClassifiedTextBuilder AddClassifiedText(INavigationToken navigationToken)
             {
-                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.AnalysisToken.Text, navigationToken.Navigate));
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.Definition.GetText(), navigationToken.Navigate));
                 return this;
             }
 

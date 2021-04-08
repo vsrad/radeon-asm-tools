@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Core.Tokens
 {
@@ -8,7 +7,8 @@ namespace VSRAD.Syntax.Core.Tokens
         RadAsmTokenType Type { get; }
         TrackingToken TrackingToken { get; }
         SnapshotSpan Span { get; }
-        string Text { get; }
+
+        string GetText();
     }
 
     public class AnalysisToken : IAnalysisToken
@@ -16,17 +16,15 @@ namespace VSRAD.Syntax.Core.Tokens
         public RadAsmTokenType Type { get; }
         public TrackingToken TrackingToken { get; }
         public SnapshotSpan Span { get; }
-        public string Text => _textLazy.Value;
-
-        private readonly Lazy<string> _textLazy;
 
         public AnalysisToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot)
         {
             Type = tokenType;
             TrackingToken = trackingToken;
-
             Span = new SnapshotSpan(snapshot, TrackingToken.GetSpan(snapshot));
-            _textLazy = new Lazy<string>(() => Span.GetText());
         }
+
+        public virtual string GetText() =>
+            Span.GetText();
     }
 }

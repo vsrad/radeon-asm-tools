@@ -19,7 +19,7 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
     public interface INavigationToken
     {
         IDocument Document { get; }
-        IAnalysisToken AnalysisToken { get; }
+        IDefinitionToken Definition { get; }
         RadAsmTokenType Type { get; }
 
         int GetStart();
@@ -50,23 +50,23 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
     public class NavigationToken : INavigationToken
     {
         public IDocument Document { get; }
-        public IAnalysisToken AnalysisToken { get; }
-        public RadAsmTokenType Type => AnalysisToken.Type;
+        public IDefinitionToken Definition { get; }
+        public RadAsmTokenType Type => Definition.Type;
 
-        public NavigationToken(IAnalysisToken analysisToken, IDocument document)
+        public NavigationToken(IDefinitionToken definition, IDocument document)
         {
             Document = document;
-            AnalysisToken = analysisToken;
+            Definition = definition;
         }
 
         public ITokenLine GetLine() =>
-            new TokenLine(AnalysisToken, Document.CurrentSnapshot);
+            new TokenLine(Definition, Document.CurrentSnapshot);
 
         public int GetStart() =>
-            AnalysisToken.TrackingToken.GetStart(Document.CurrentSnapshot);
+            Definition.TrackingToken.GetStart(Document.CurrentSnapshot);
 
         public int GetEnd() =>
-            AnalysisToken.TrackingToken.GetEnd(Document.CurrentSnapshot);
+            Definition.TrackingToken.GetEnd(Document.CurrentSnapshot);
 
         public void Navigate()
         {

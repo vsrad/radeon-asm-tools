@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Core;
 using System.Threading;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
@@ -35,6 +36,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 .AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
+                .Cast<IDefinitionToken>()
                 .Select(t => _navigationTokenService.CreateToken(t, document))
                 .Select(t => new CompletionItem(t, FunctionIcon));
 

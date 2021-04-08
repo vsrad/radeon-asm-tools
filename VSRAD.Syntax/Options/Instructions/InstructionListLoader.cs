@@ -166,13 +166,14 @@ namespace VSRAD.Syntax.Options.Instructions
             var instructionSet = new InstructionSet(path, type);
 
             var instructions = analysisResult.Root.Tokens
-                .Where(t => t.Type == RadAsmTokenType.Instruction);
+                .Where(t => t.Type == RadAsmTokenType.Instruction)
+                .Cast<IDefinitionToken>();
 
             var navigationService = _navigationTokenService.Value;
 
             var navigationTokens = instructions
                 .Select(i => navigationService.CreateToken(i, document))
-                .GroupBy(n => n.AnalysisToken.Text);
+                .GroupBy(n => n.Definition.GetText());
 
             foreach (var instructionNameGroup in navigationTokens)
             {

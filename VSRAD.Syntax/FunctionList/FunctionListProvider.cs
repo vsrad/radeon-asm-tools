@@ -185,6 +185,7 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
+                    .Cast<IDefinitionToken>()
                     .Select(t => _navigationTokenService.Value.CreateToken(t, _lastResult.Document))
                     .Select(n => new FunctionListItem(n))
                     .AsParallel()

@@ -28,7 +28,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
         public VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource)
         {
-            var completionItem = new VsComplectionItem(_token.AnalysisToken.Text, asyncCompletionSource, _imageElement);
+            var completionItem = new VsComplectionItem(_token.Definition.GetText(), asyncCompletionSource, _imageElement);
             completionItem.Properties.AddProperty(typeof(ICompletionItem), this);
             return completionItem;
         }

@@ -34,7 +34,7 @@ namespace VSRAD.Syntax.Core.Parser
                     if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                     {
                         var definition = new VariableToken(RadAsmTokenType.GlobalVariable, tokens[i + 1], version);
-                        definitions.Add(definition.Text, definition);
+                        definitions.Add(definition.GetText(), definition);
                         i += 1;
                     }
                 }

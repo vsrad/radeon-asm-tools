@@ -49,7 +49,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private IEnumerable<CompletionItem> GetScopedCompletions(IDocument document, IAnalysisResult analysisResult, SnapshotPoint triggerPoint, CancellationToken cancellationToken)
         {
             CompletionItem CreateCompletionItem(IAnalysisToken analysisToken, ImageElement imageElement) =>
-                new CompletionItem(_navigationTokenService.CreateToken(analysisToken, document), imageElement);
+                new CompletionItem(_navigationTokenService.CreateToken((IDefinitionToken)analysisToken, document), imageElement);
 
             var currentBlock = analysisResult.GetBlock(triggerPoint);
             while (currentBlock != null)
