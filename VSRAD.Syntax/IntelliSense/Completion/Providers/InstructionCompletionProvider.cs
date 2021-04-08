@@ -62,7 +62,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 _asm1InstructionCompletions.Clear();
                 _asm1InstructionCompletions.AddRange(
                     sender.GetSelectedSetInstructions(AsmType.RadAsm)
-                          .Select(i => new InstructionCompletionItem(i, Icon)));
+                        .GroupBy(i => i.Text)
+                        .Select(g => new InstructionCompletionItem(g, g.Key, Icon))
+                    );
             }
 
             if ((asmType & AsmType.RadAsm2) != 0)
@@ -70,7 +72,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 _asm2InstructionCompletions.Clear();
                 _asm2InstructionCompletions.AddRange(
                     sender.GetSelectedSetInstructions(AsmType.RadAsm2)
-                          .Select(i => new InstructionCompletionItem(i, Icon)));
+                        .GroupBy(i => i.Text)
+                        .Select(g => new InstructionCompletionItem(g, g.Key, Icon))
+                    );
             }
         }
     }

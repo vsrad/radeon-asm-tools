@@ -90,18 +90,19 @@ namespace VSRAD.Syntax.Options.Instructions
                 newInstructionPaths.ExceptWith(_instructionSetPaths.Keys);
             }
 
-            Task.Run(() => LoadInstructionsFromDirectoriesAsync(newInstructionPaths))
-                .RunAsyncWithoutAwait();
+            _ = Task.Run(() => LoadInstructionsFromDirectoriesAsync(newInstructionPaths));
         }
 
         public async Task LoadInstructionsFromDirectoriesAsync(IEnumerable<string> paths)
         {
-            var loadFromDirectoryTasks = paths
-                .Select(LoadInstructionsFromDirectoryAsync)
-                .ToArray();
-
             try
             {
+                var loadFromDirectoryTasks = paths
+                    .Select(DocPathToAsmType)
+                    .Where(t => t != null)
+                    .Select(LoadInstructionsFromDirectoryAsync)
+                    .ToArray();
+
                 var results = await Task.WhenAll(loadFromDirectoryTasks).ConfigureAwait(false);
                 var instructionSets = results.Where(s => s != null);
 
@@ -136,17 +137,31 @@ namespace VSRAD.Syntax.Options.Instructions
             }
         }
 
-        // TODO: implement with IAsyncEnumerable
-        private async Task<Tuple<string, IDocument, InstructionSet>> LoadInstructionsFromDirectoryAsync(string path)
+        private static Tuple<string, AsmType> DocPathToAsmType(string path)
         {
-
-            Task<Tuple<IDocument, InstructionSet>> loadTask;
             switch (Path.GetExtension(path))
             {
                 case Constants.FileExtensionAsm1Doc:
+                    return new Tuple<string, AsmType>(path, AsmType.RadAsm);
+                case Constants.FileExtensionAsm2Doc:
+                    return new Tuple<string, AsmType>(path, AsmType.RadAsm2);
+                default:
+                    return null;
+            }
+        }
+
+        // TODO: implement with IAsyncEnumerable
+        private async Task<Tuple<string, IDocument, InstructionSet>> LoadInstructionsFromDirectoryAsync(Tuple<string, AsmType> tuple)
+        {
+
+            Task<Tuple<IDocument, InstructionSet>> loadTask;
+            var (path, asmType) = tuple;
+            switch (asmType)
+            {
+                case AsmType.RadAsm:
                     loadTask = LoadInstructionsFromFileAsync(path, InstructionType.RadAsm1);
                     break;
-                case Constants.FileExtensionAsm2Doc:
+                case AsmType.RadAsm2:
                     loadTask = LoadInstructionsFromFileAsync(path, InstructionType.RadAsm2);
                     break;
                 default:

@@ -40,7 +40,7 @@ namespace VSRAD.Syntax.Core.Parser
                 }
                 else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                 {
-                    rootBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
+                    rootBlock.AddToken(new DefinitionToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
                 }
                 else if (token.Type == RadAsmDocLexer.IDENTIFIER)
                 {

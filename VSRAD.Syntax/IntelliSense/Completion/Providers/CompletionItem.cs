@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.IntelliSense.Navigation;
@@ -40,23 +41,25 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     internal class InstructionCompletionItem : ICompletionItem
     {
         private readonly ImageElement _imageElement;
-        private readonly Instruction _instruction;
+        private readonly IReadOnlyList<INavigationToken> _instructionNavigations;
+        private readonly string _text;
 
-        public InstructionCompletionItem(Instruction instruction, ImageElement imageElement)
+        public InstructionCompletionItem(IEnumerable<Instruction> instructions, string text, ImageElement imageElement)
         {
-            _instruction = instruction;
+            _instructionNavigations = instructions.SelectMany(i => i.Navigations).ToList();
+            _text = text;
             _imageElement = imageElement;
         }
 
         public VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource)
         {
-            var completionItem = new VsComplectionItem(_instruction.Text, asyncCompletionSource, _imageElement);
+            var completionItem = new VsComplectionItem(_text, asyncCompletionSource, _imageElement);
             completionItem.Properties.AddProperty(typeof(ICompletionItem), this);
             return completionItem;
         }
 
         public Task<object> GetDescriptionAsync(IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
-            descriptionBuilder.GetColorizedDescriptionAsync(_instruction.Navigations, cancellationToken);
+            descriptionBuilder.GetColorizedDescriptionAsync(_instructionNavigations, cancellationToken);
     }
 
     public static class VsCompletionItemExtension
