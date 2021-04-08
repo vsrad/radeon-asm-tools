@@ -109,7 +109,15 @@ namespace VSRAD.Package.Options
             catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
             catch (Exception e)
             {
-                Errors.ShowWarning($"An error has occurred while loading the profiles: {e.Message}\r\nProceeding with defaults.");
+                try
+                {
+                    var profiles = ProfileTransferManager.ImportObsolete(profilesOptionsPath);
+                    options.SetProfiles(profiles, options.ActiveProfile);
+                }
+                catch (Exception ex)
+                {
+                    Errors.ShowWarning($"An error has occurred while loading the profiles: {ex.Message}\r\nProceeding with defaults.");
+                }
             }
 
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
