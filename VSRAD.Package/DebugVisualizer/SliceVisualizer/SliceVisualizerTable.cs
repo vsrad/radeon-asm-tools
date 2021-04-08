@@ -84,7 +84,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             // 1) Used as a workaround for scaling logic relying on a fixed column at the start of the table
             // 2) Accessing HeaderCells for each row is too expensive when the row count is over 1000 so we use our own column to display group indexes
-            Columns.Add(new DataGridViewTextBoxColumn
+            var idx = Columns.Add(new DataGridViewTextBoxColumn
             {
                 HeaderText = "Group #",
                 FillWeight = 1,
@@ -94,6 +94,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
+            Columns[idx].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+            Columns[idx].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
         }
 
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
@@ -153,6 +155,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                         SortMode = DataGridViewColumnSortMode.NotSortable,
                         Width = _state.ColumnWidth
                     };
+                    columns[i].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 }
                 _state.AddDataColumns(columns);
                 Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
