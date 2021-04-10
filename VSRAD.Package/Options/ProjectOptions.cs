@@ -98,7 +98,8 @@ namespace VSRAD.Package.Options
                 Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
             }
 
-            if (options == null) // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
+            var optionsLoaded = options != null; // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
+            if (!optionsLoaded)
                 options = new ProjectOptions();
 
             try
@@ -111,6 +112,7 @@ namespace VSRAD.Package.Options
             {
                 try
                 {
+                    if (!optionsLoaded) options = ProfileTransferManager.ImportObsoleteOptions(profilesOptionsPath);
                     var profiles = ProfileTransferManager.ImportObsolete(profilesOptionsPath);
                     options.SetProfiles(profiles, options.ActiveProfile);
                 }
