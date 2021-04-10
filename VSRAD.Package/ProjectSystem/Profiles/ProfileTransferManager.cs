@@ -21,6 +21,31 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             return json["Profiles"].ToObject<Dictionary<string, ProfileOptions>>();
         }
 
+        public static ProjectOptions ImportObsoleteOptions(string path)
+        {
+            var json = JObject.Parse(File.ReadAllText(path));
+            var debuggerOptions = json["DebuggerOptions"].ToObject<DebuggerOptions>();
+            var visualizerOptions = json["VisualizerOptions"].ToObject<VisualizerOptions>();
+            var sliceVisualizerOptions = json["SliceVisualizerOptions"].ToObject<SliceVisualizerOptions>();
+            var visualizerAppearance = json["VisualizerAppearance"].ToObject<VisualizerAppearance>();
+            var visualizerColumnStyling = json["VisualizerColumnStyling"].ToObject<DebugVisualizer.ColumnStylingOptions>();
+            var targetHosts = json["TargetHosts"].ToObject<List<string>>();
+            var activeProfile = json["ActiveProfile"].ToString();
+
+            var options = new ProjectOptions(
+                debuggerOptions,
+                visualizerOptions,
+                sliceVisualizerOptions,
+                visualizerAppearance,
+                visualizerColumnStyling
+            );
+            foreach (var host in targetHosts)
+                options.TargetHosts.Add(host);
+            options.ActiveProfile = activeProfile;
+
+            return options;
+        }
+
         public static void Export(IDictionary<string, ProfileOptions> profiles, string oath) =>
             File.WriteAllText(oath, JsonConvert.SerializeObject(profiles, Formatting.Indented));
     }
