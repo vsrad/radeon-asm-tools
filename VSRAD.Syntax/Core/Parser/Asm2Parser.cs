@@ -87,6 +87,18 @@ namespace VSRAD.Syntax.Core.Parser
                             var labelDefinition = new DefinitionToken(RadAsmTokenType.Label, tokens[i + 1], version);
                             _definitionContainer.Add(currentBlock, labelDefinition);
                             currentBlock.AddToken(labelDefinition);
+
+                            // lookbehind search references to label
+                            var labelReferences = _referenceCandidates
+                                .Where(t => t.text == labelDefinition.GetText())
+                                .TakeWhile(t => currentBlock.Area.Contains(t.block.Area.Start))
+                                .ToList();
+
+                            foreach (var reference in labelReferences)
+                            {
+                                _referenceCandidates.Remove(reference);
+                                reference.block.AddToken(new ReferenceToken(RadAsmTokenType.LabelReference, reference.trackingToken, version, labelDefinition));
+                            }
                             i += 2;
                         }
                     }
@@ -176,7 +188,7 @@ namespace VSRAD.Syntax.Core.Parser
                         if (!TryAddInstruction(tokenText, token, currentBlock, version, Instructions) && 
                             !TryAddReference(tokenText, token, currentBlock, version, cancellation))
                         {
-                            _referenceCandidates.AddLast((tokenText, token, currentBlock));
+                            _referenceCandidates.AddFirst((tokenText, token, currentBlock));
                         }
                     }
                     else if (token.Type == RadAsm2Lexer.PP_INCLUDE)
