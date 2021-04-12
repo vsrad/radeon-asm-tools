@@ -31,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void HandleCellPaint(object sender, DataGridViewCellPaintingEventArgs e)
         {
-            if (_table.SelectedWatch == null)
+            if (_table.SelectedWatch == null || !_table.SelectedWatchValid)
             {
                 e.Graphics.FillRectangle(_tableBackgroundBrush, e.CellBounds);
                 e.Handled = true;
