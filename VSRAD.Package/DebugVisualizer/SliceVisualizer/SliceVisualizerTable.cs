@@ -26,6 +26,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public uint GroupSize => _context.GroupSize;
         public int PhantomColumnIndex => _state.PhantomColumnIndex;
+        public bool SelectedWatchValid => SelectedWatch?.ColumnCount <= 8192;
 
         public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor) : base()
         {
@@ -141,7 +142,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public void DisplayWatch()
         {
-            if (SelectedWatch.ColumnCount > 8192)
+            if (!SelectedWatchValid)
             {
                 Errors.ShowException(
                     new ArgumentException("The column count in Slice Visualizer exceeded the limit - 8192 columns. " +
