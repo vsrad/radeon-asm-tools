@@ -112,7 +112,11 @@ namespace VSRAD.Package.DebugVisualizer
             _projectOptions.DebuggerOptions.NGroups = _currentDispatchParams.NDRange3D
                 ? _currentDispatchParams.DimX * _currentDispatchParams.DimY * _currentDispatchParams.DimZ
                 : _currentDispatchParams.DimX;
-            _projectOptions.DebuggerOptions.GroupSize = _currentDispatchParams.GroupSizeX;
+
+            if (_currentDispatchParams.GroupSizeX > 8192)
+                Errors.ShowWarning("Group Size from dispatch params exceeded the limit - 8192. Proceeding with 8192.");
+
+            _projectOptions.DebuggerOptions.GroupSize = Math.Min(_currentDispatchParams.GroupSizeX, 8192);
 
             _updateOptions = true;
             Update();
