@@ -23,6 +23,8 @@ namespace VSRAD.Syntax.Options
             IndentGuideOffsetY = 2.0;
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
+            Asm1SelectedSet = string.Empty;
+            Asm2SelectedSet = string.Empty;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
             AutocompleteInstructions = false;
             AutocompleteFunctions = false;
@@ -40,6 +42,8 @@ namespace VSRAD.Syntax.Options
         public double IndentGuideOffsetX;
         public IReadOnlyList<string> Asm1FileExtensions;
         public IReadOnlyList<string> Asm2FileExtensions;
+        public string Asm1SelectedSet;
+        public string Asm2SelectedSet;
         public IReadOnlyList<string> InstructionsPaths;
         public bool AutocompleteInstructions;
         public bool AutocompleteFunctions;

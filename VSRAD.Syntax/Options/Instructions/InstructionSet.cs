@@ -34,5 +34,7 @@ namespace VSRAD.Syntax.Options.Instructions
             var instruction = new Instruction(text, navigations);
             Add(instruction);
         }
+
+        public override string ToString() => SetName;
     }
 }

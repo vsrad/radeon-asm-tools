@@ -121,6 +121,8 @@ namespace VSRAD.Syntax.Options
                 _generalOptionProvider.IndentGuideOffsetX = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideOffsetX));
                 _generalOptionProvider.Asm1FileExtensions = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.Asm1FileExtensions));
                 _generalOptionProvider.Asm2FileExtensions = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.Asm2FileExtensions));
+                _generalOptionProvider.Asm1SelectedSet = ReadSetting<string>(settingsStore, nameof(_generalOptionProvider.Asm1SelectedSet));
+                _generalOptionProvider.Asm2SelectedSet = ReadSetting<string>(settingsStore, nameof(_generalOptionProvider.Asm2SelectedSet));
                 _generalOptionProvider.InstructionsPaths = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.InstructionsPaths));
                 _generalOptionProvider.AutocompleteInstructions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteInstructions));
                 _generalOptionProvider.AutocompleteFunctions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteFunctions));
@@ -134,7 +136,7 @@ namespace VSRAD.Syntax.Options
         }
 
         /// <summary>
-        /// Saves the properties to the registry.
+        /// Saves the properties to the registry and notify.
         /// </summary>
         public virtual void Save()
         {
@@ -166,6 +168,8 @@ namespace VSRAD.Syntax.Options
             WriteSetting(settingsStore, _generalOptionProvider.IndentGuideOffsetX, nameof(_generalOptionProvider.IndentGuideOffsetX));
             WriteSetting(settingsStore, _generalOptionProvider.Asm1FileExtensions, nameof(_generalOptionProvider.Asm1FileExtensions));
             WriteSetting(settingsStore, _generalOptionProvider.Asm2FileExtensions, nameof(_generalOptionProvider.Asm2FileExtensions));
+            WriteSetting(settingsStore, _generalOptionProvider.Asm1SelectedSet, nameof(_generalOptionProvider.Asm1SelectedSet));
+            WriteSetting(settingsStore, _generalOptionProvider.Asm2SelectedSet, nameof(_generalOptionProvider.Asm2SelectedSet));
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteInstructions, nameof(_generalOptionProvider.AutocompleteInstructions));
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteFunctions, nameof(_generalOptionProvider.AutocompleteFunctions));
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteLabels, nameof(_generalOptionProvider.AutocompleteLabels));

@@ -56,9 +56,10 @@ namespace VSRAD.Syntax.Options.Instructions
             {
                 try
                 {
-                    foreach (var filepath in Directory.EnumerateFiles(directory))
+                    foreach (var path in Directory.EnumerateFiles(directory, $"*{Constants.FileExtensionAsm1Doc}")
+                        .Concat(Directory.EnumerateFiles(directory, $"*{Constants.FileExtensionAsm2Doc}")))
                     {
-                        newInstructionPaths.Add(filepath);
+                        newInstructionPaths.Add(path);
                     }
                 }
                 catch (Exception e) when (
@@ -99,7 +100,6 @@ namespace VSRAD.Syntax.Options.Instructions
             {
                 var loadFromDirectoryTasks = paths
                     .Select(DocPathToAsmType)
-                    .Where(t => t != null)
                     .Select(LoadInstructionsFromDirectoryAsync)
                     .ToArray();
 
