@@ -75,7 +75,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.IDENTIFIER)
                         {
-                            var funcDefinition = new DefinitionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
+                            var funcDefinition = new FunctionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
                             _definitionContainer.Add(currentBlock, funcDefinition);
                             currentBlock = blocks.AppendBlock(new FunctionBlock(currentBlock, BlockType.Function, token, version, funcDefinition));
                             parserState = ParserState.SearchArguments;

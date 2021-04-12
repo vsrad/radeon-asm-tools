@@ -102,6 +102,7 @@
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
     <Compile Include="Core\Tokens\ErrorToken.cs" />
+    <Compile Include="Core\Tokens\FunctionToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
     <Compile Include="Core\Tokens\TokenSpan.cs" />

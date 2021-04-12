@@ -36,8 +36,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var analysisResult = _analysisResult;
             if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            var block = analysisResult.GetBlock(span.Start);
+            var block = analysisResult.GetBlock(span.End);
             if (block.Type == BlockType.Comment) return classificationSpans;
+            if (block.Type == BlockType.Function)
+            {
+                var fBlock = (IFunctionBlock) block;
+                classificationSpans.Add(new ClassificationSpan(fBlock.Name.Span, _tokenClassification[fBlock.Name.Type]));
+            }
 
             foreach (var scopeToken in block.Tokens)
             {
@@ -109,10 +114,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 foreach (var token in result.GetTokens(span))
                 {
-                    if (token.IsEmpty || _tokenizer.GetTokenType(token.Type) == RadAsmTokenType.Identifier)
-                        continue;
+                    if (token.IsEmpty) continue;
 
-                    var tag = new ClassificationTag(_tokenClassification[_tokenizer.GetTokenType(token.Type)]);
+                    var tokenType = _tokenizer.GetTokenType(token.Type);
+                    if (tokenType == RadAsmTokenType.Identifier) continue;
+
+                    var tag = new ClassificationTag(_tokenClassification[tokenType]);
                     yield return new TagSpan<ClassificationTag>(new SnapshotSpan(result.Snapshot, token.GetSpan(result.Snapshot)), tag);
                 }
             }
