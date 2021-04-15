@@ -101,7 +101,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || !SelectedWatchValid) return;
             var info = SelectedWatch.AllValuesEqual && HeatMapMode
                 ? "*Note: HeatMap mode is active, but all values of current watch are equal accross all threads."
                 : "";
@@ -110,7 +110,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void ShowContextMenu(object sender, MouseEventArgs e)
         {
-            if (e.Button != MouseButtons.Right) return;
+            if (e.Button != MouseButtons.Right || !SelectedWatchValid) return;
             var hit = HitTest(e.X, e.Y);
             var col = hit.ColumnIndex - DataColumnOffset;
 
@@ -148,6 +148,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     new ArgumentException("The column count in Slice Visualizer exceeded the limit - 8192 columns. " +
                         "Please check your configuration: Group Size and Groups in Row.")
                 );
+                Invalidate();
                 return;
             }
             var columnsMissing = SelectedWatch.ColumnCount - _state.DataColumns.Count;
@@ -243,6 +244,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
+            if (!SelectedWatchValid) return;
             Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), _state, e.X)
                 ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))
