@@ -19,7 +19,6 @@ namespace VSRAD.Syntax.IntelliSense
         private readonly ISignatureHelpBroker _signatureHelpBroker;
         private readonly SignatureConfig _signatureConfig;
         private ISignatureHelpSession _currentSignatureSession;
-        private int _parameterCommas;
 
         public IOleCommandTarget Next { get; set; }
 
@@ -98,13 +97,14 @@ namespace VSRAD.Syntax.IntelliSense
 
             var res = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
-            if (pguidCmdGroup == VSConstants.VSStd2K && _signatureConfig != null)
+            if (pguidCmdGroup == VSConstants.VSStd2K && _signatureConfig != null && _signatureConfig.Enabled)
             {
                 switch ((VSConstants.VSStd2KCmdID)nCmdID)
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var ch = GetTypeChar(pvaIn);
-                        if (ch == _signatureConfig.TriggerSignatureChar) StartSignatureSession();
+                        if (ch == _signatureConfig.TriggerInstructionSignatureChar 
+                            || ch == _signatureConfig.TriggerFunctionSignatureChar) StartSignatureSession();
                         else if (ch == _signatureConfig.DismissSignatureChar) CancelSignatureSession();
                         else if (ch == _signatureConfig.TriggerParameterChar) ChangeParameterSignatureSession();
                         break;
@@ -112,11 +112,15 @@ namespace VSRAD.Syntax.IntelliSense
                     case VSConstants.VSStd2KCmdID.DELETE:
                         ChangeParameterSignatureSession();
                         break;
+                    case VSConstants.VSStd2KCmdID.EOL:
                     case VSConstants.VSStd2KCmdID.CANCEL:
                         CancelSignatureSession();
                         break;
                 }
             }
+
+            if (_signatureConfig != null && !_signatureConfig.Enabled)
+                CancelSignatureSession();
 
             return res;
         }
@@ -140,7 +144,6 @@ namespace VSRAD.Syntax.IntelliSense
                 _textView.TextBuffer.Properties.AddProperty(typeof(ISignatureHelpSession), _currentSignatureSession);
             }
 
-            _parameterCommas = 0;
             _currentSignatureSession.Dismissed += SignatureSessionDismissed;
             _currentSignatureSession.Start();
         }

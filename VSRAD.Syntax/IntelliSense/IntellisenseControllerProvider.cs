@@ -4,6 +4,8 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Language.Intellisense;
+using VSRAD.Syntax.IntelliSense.SignatureHelp;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -18,12 +20,25 @@ namespace VSRAD.Syntax.IntelliSense
         private readonly ISignatureHelpBroker _signatureHelpBroker;
 
         [ImportingConstructor]
-        public IntellisenseControllerProvider(RadeonServiceProvider editorService, IPeekBroker peekBroker, ISignatureHelpBroker signatureHelpBroker, INavigationTokenService navigationService)
+        public IntellisenseControllerProvider(RadeonServiceProvider editorService,
+            IPeekBroker peekBroker,
+            ISignatureHelpBroker signatureHelpBroker,
+            INavigationTokenService navigationService)
         {
             _adaptersFactoryService = editorService.EditorAdaptersFactoryService;
             _peekBroker = peekBroker;
             _signatureHelpBroker = signatureHelpBroker;
             _navigationService = navigationService;
+
+            var optionProvider = GeneralOptionProvider.Instance;
+            optionProvider.OptionsUpdated += OptionsUpdated;
+            OptionsUpdated(optionProvider);
+        }
+
+        private static void OptionsUpdated(GeneralOptionProvider sender)
+        {
+            SignatureConfig.Asm1Instance.Enabled = sender.SignatureHelp;
+            SignatureConfig.Asm2Instance.Enabled = sender.SignatureHelp;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)

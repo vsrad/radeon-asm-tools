@@ -5,18 +5,23 @@ using System.Linq;
 using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 {
     internal class SignatureHelpSource : ISignatureHelpSource
     {
         private readonly IDocumentAnalysis _documentAnalysis;
+        private readonly IInstructionListManager _instructionListManager;
         private readonly ITextBuffer _textBuffer;
         private readonly SignatureConfig _signatureConfig;
 
-        public SignatureHelpSource(IDocumentAnalysis documentAnalysis, ITextBuffer textBuffer, SignatureConfig signatureConfig)
+        public SignatureHelpSource(IDocumentAnalysis documentAnalysis, IInstructionListManager instructionListManager, 
+            ITextBuffer textBuffer, SignatureConfig signatureConfig)
         {
             _documentAnalysis = documentAnalysis;
+            _instructionListManager = instructionListManager;
             _textBuffer = textBuffer;
             _signatureConfig = signatureConfig;
         }
@@ -34,20 +39,42 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
                 () => _documentAnalysis.GetAnalysisResultAsync(snapshot));
 
             var triggerBlock = analysisResult.GetBlock(searchSpan.Start);
-            var triggerToken = (ReferenceToken)triggerBlock.Tokens
+            var triggerToken = triggerBlock.Tokens
                 .Where(t => ContainsInclusive(searchSpan, t.Span))
-                .FirstOrDefault(t => t.Type == RadAsmTokenType.FunctionReference);
+                .FirstOrDefault(t => t.Type == RadAsmTokenType.FunctionReference || t.Type == RadAsmTokenType.Instruction);
 
             if (triggerToken == null) return;
 
             var applicableSpan = new SnapshotSpan(triggerToken.Span.End, triggerLine.End);
             var trackingSpan = snapshot.CreateTrackingSpan(applicableSpan, SpanTrackingMode.EdgeInclusive);
-            var functionToken = (IFunctionToken) triggerToken.Definition;
-
             var parameterIdx = applicableSpan.GetCurrentParameter(_signatureConfig.TriggerParameterChar);
-            var functionSign = new FunctionSignature(trackingSpan, functionToken.FunctionBlock, _signatureConfig, parameterIdx);
 
+            if (triggerToken.Type == RadAsmTokenType.FunctionReference)
+                AddFunctionSignature(trackingSpan, triggerToken, parameterIdx, signatures);
+            else
+                AddInstructionSignature(snapshot, trackingSpan, triggerToken, parameterIdx, signatures);
+        }
+
+        private void AddFunctionSignature(ITrackingSpan trackingSpan, IAnalysisToken token, int parameterIdx, ICollection<ISignature> signatures)
+        {
+            var functionToken = (IFunctionToken)((ReferenceToken)token).Definition;
+            var functionSign = new FunctionSignature(trackingSpan, functionToken.FunctionBlock, _signatureConfig, parameterIdx);
             signatures.Add(functionSign);
+        }
+
+        private void AddInstructionSignature(ITextSnapshot snapshot, ITrackingSpan trackingSpan, IAnalysisToken token, int parameterIdx, ICollection<ISignature> signatures)
+        {
+            var asmType = snapshot.GetAsmType();
+            var tokenText = token.GetText();
+
+            foreach (var instruction in _instructionListManager.GetInstructionsByName(asmType, tokenText))
+            {
+                if (instruction.Definition is IInstructionToken instructionToken)
+                {
+                    var instructionSign = new InstructionSignature(trackingSpan, instructionToken, parameterIdx);
+                    signatures.Add(instructionSign);
+                }
+            }
         }
 
         public ISignature GetBestMatch(ISignatureHelpSession session) => null;

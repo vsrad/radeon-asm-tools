@@ -5,6 +5,7 @@ using System;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 {
@@ -15,11 +16,13 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
     internal sealed class SignatureHelpSourceProvider : ISignatureHelpSourceProvider
     {
         private readonly IDocumentFactory _documentFactory;
+        private readonly IInstructionListManager _instructionListManager;
 
         [ImportingConstructor]
-        public SignatureHelpSourceProvider(IDocumentFactory documentFactory)
+        public SignatureHelpSourceProvider(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
         {
             _documentFactory = documentFactory;
+            _instructionListManager = instructionListManager;
         }
 
         public ISignatureHelpSource TryCreateSignatureHelpSource(ITextBuffer textBuffer)
@@ -31,7 +34,7 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 
             var asmType = textBuffer.CurrentSnapshot.GetAsmType();
             var config = SignatureConfig.GetSignature(asmType);
-            return config == null ? null : new SignatureHelpSource(document.DocumentAnalysis, textBuffer, config);
+            return config == null ? null : new SignatureHelpSource(document.DocumentAnalysis, _instructionListManager, textBuffer, config);
         }
     }
 }
