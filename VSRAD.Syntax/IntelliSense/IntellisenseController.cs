@@ -112,7 +112,7 @@ namespace VSRAD.Syntax.IntelliSense
                     case VSConstants.VSStd2KCmdID.DELETE:
                         ChangeParameterSignatureSession();
                         break;
-                    case VSConstants.VSStd2KCmdID.EOL:
+                    case VSConstants.VSStd2KCmdID.RETURN:
                     case VSConstants.VSStd2KCmdID.CANCEL:
                         CancelSignatureSession();
                         break;
