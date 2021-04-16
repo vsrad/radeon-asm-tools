@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using VSRAD.Syntax.Helpers;
 using DisplayNameAttribute = System.ComponentModel.DisplayNameAttribute;
 
 namespace VSRAD.Syntax.Options
@@ -116,8 +115,8 @@ namespace VSRAD.Syntax.Options
             set => _generalOptionEventProvider.InstructionsPaths = ConvertListFrom(value);
         }
 
-        [Category("Autocompletion")]
-        [DisplayName("Instruction autocompletion")]
+        [Category("Intellisense")]
+        [DisplayName("Autocomplete instruction")]
         [Description("Autocomplete instructions")]
         public bool AutocompleteInstructions
         {
@@ -125,8 +124,8 @@ namespace VSRAD.Syntax.Options
             set => _generalOptionEventProvider.AutocompleteInstructions = value;
         }
 
-        [Category("Autocompletion")]
-        [DisplayName("Function autocompletion")]
+        [Category("Intellisense")]
+        [DisplayName("Autocomplete function")]
         [Description("Autocomplete function name")]
         public bool AutocompleteFunctions
         {
@@ -134,8 +133,8 @@ namespace VSRAD.Syntax.Options
             set => _generalOptionEventProvider.AutocompleteFunctions = value;
         }
 
-        [Category("Autocompletion")]
-        [DisplayName("Label autocompletion")]
+        [Category("Intellisense")]
+        [DisplayName("Autocomplete label")]
         [Description("Autocomplete labels")]
         public bool AutocompleteLabels
         {
@@ -143,13 +142,21 @@ namespace VSRAD.Syntax.Options
             set => _generalOptionEventProvider.AutocompleteLabels = value;
         }
 
-        [Category("Autocompletion")]
-        [DisplayName("Variable autocompletion")]
+        [Category("Intellisense")]
+        [DisplayName("Autocomplete variable")]
         [Description("Autocomplete global variables, local variables, function arguments")]
         public bool AutocompleteVariables
         {
             get => _generalOptionEventProvider.AutocompleteVariables;
             set => _generalOptionEventProvider.AutocompleteVariables = value;
+        }
+
+        [Category("Intellisense")]
+        [DisplayName("Signature help")]
+        public bool SignatureHelp
+        {
+            get => _generalOptionEventProvider.SignatureHelp;
+            set => _generalOptionEventProvider.SignatureHelp = value;
         }
 
         public enum SortState
