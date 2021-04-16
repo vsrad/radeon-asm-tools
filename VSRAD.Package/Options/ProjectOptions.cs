@@ -81,50 +81,103 @@ namespace VSRAD.Package.Options
         #endregion
 
         #region Read/Write
-        public static ProjectOptions Read(string visualizerOptionsPath, string profilesOptionsPath)
+        public static ProjectOptions Read(string visualizerOptionsPath, string profilesOptionsPath, string oldOptionsPath)
         {
-            ProjectOptions options = null;
-            // Handle options and profiles loading in separate try blocks since we want them
-            // to load indepentently, i.e use default configs if corresponding file is missing
-            // in each case without affecting one another
-            try
-            {
-                var optionsJson = JObject.Parse(File.ReadAllText(visualizerOptionsPath));
-                options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
-            }
-            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
-            catch (Exception e)
-            {
-                Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
-            }
+            Exception optionsException,
+                      oldOptionsException = null,
+                      profilesException,
+                      oldProfilesException = null;
+            var options = ReadProjectOptions(visualizerOptionsPath, out optionsException); // Try to parse .user.json
+            if (options == null)
+                options = ReadObsoleteProjectOptions(oldOptionsPath, out oldOptionsException);
 
-            var optionsLoaded = options != null; // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
-            if (!optionsLoaded)
+            if (options == null && optionsException != null)
+            {
+                if (optionsException is FileNotFoundException)
+                    if (oldOptionsException != null && !(oldOptionsException is FileNotFoundException))
+                        Errors.ShowWarning($"An error has occurred while loading the options: {oldOptionsException.Message}\r\nProceeding with defaults.");
+                    else
+                        Errors.ShowWarning($"An error has occurred while loading the options: {optionsException.Message}\r\nProceeding with defaults.");
+
                 options = new ProjectOptions();
+            }
 
-            try
+            var profiles = ReadProfiles(profilesOptionsPath, out profilesException);
+            if (profiles == null)
+                profiles = ReadObsoleteProfiles(oldOptionsPath, out oldProfilesException);
+
+            if (profiles == null && profilesException != null)
             {
-                var profiles = ProfileTransferManager.Import(profilesOptionsPath);
+                if (profilesException is FileNotFoundException)
+                    if (oldProfilesException != null && !(oldProfilesException is FileNotFoundException))
+                        Errors.ShowWarning($"An error has occurred while loading the profiles: {oldProfilesException.Message}\r\nProceeding with defaults.");
+                    else
+                        Errors.ShowWarning($"An error has occurred while loading the profiles: {profilesException.Message}\r\nProceeding with defaults.");
+            }
+
+            if (profiles != null)
                 options.SetProfiles(profiles, options.ActiveProfile);
-            }
-            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
-            catch (Exception e)
-            {
-                try
-                {
-                    if (!optionsLoaded) options = ProfileTransferManager.ImportObsoleteOptions(profilesOptionsPath);
-                    var profiles = ProfileTransferManager.ImportObsolete(profilesOptionsPath);
-                    options.SetProfiles(profiles, options.ActiveProfile);
-                }
-                catch (Exception ex)
-                {
-                    Errors.ShowWarning($"An error has occurred while loading the profiles: {ex.Message}\r\nProceeding with defaults.");
-                }
-            }
 
             if (options.Profiles.Count > 0 && !options.Profiles.ContainsKey(options.ActiveProfile))
                 options.ActiveProfile = options.Profiles.Keys.First();
             return options;
+        }
+
+        private static ProjectOptions ReadProjectOptions(string optionsPath, out Exception exception)
+        {
+            exception = null;
+            try
+            {
+                var optionsJson = JObject.Parse(File.ReadAllText(optionsPath));
+                return optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
+            }
+            catch (Exception e)
+            {
+                exception = e;
+                return null;
+            }
+        }
+
+        private static ProjectOptions ReadObsoleteProjectOptions(string optionsPath, out Exception exception)
+        {
+            exception = null;
+            try
+            {
+                return ProfileTransferManager.ImportObsoleteOptions(optionsPath);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+                return null;
+            }
+        }
+
+        private static Dictionary<string, ProfileOptions> ReadProfiles(string profilesPath, out Exception exception)
+        {
+            exception = null;
+            try
+            {
+                return ProfileTransferManager.Import(profilesPath);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+                return null;
+            }
+        }
+
+        private static Dictionary<string, ProfileOptions> ReadObsoleteProfiles(string profilesPath, out Exception exception)
+        {
+            exception = null;
+            try
+            {
+                return ProfileTransferManager.ImportObsolete(profilesPath);
+            }
+            catch (Exception e)
+            {
+                exception = e;
+                return null;
+            }
         }
 
         public void Write(string visualConfigPath, string profilesConfigPath)
