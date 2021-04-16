@@ -154,6 +154,15 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\FunctionSignature.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\Helper.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\Parameter.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\Signature.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureConfig.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpClassifier.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpClassifierProvider.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpSource.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpSourceProvider.cs" />
     <Compile Include="Options\GeneralOptionModel.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />

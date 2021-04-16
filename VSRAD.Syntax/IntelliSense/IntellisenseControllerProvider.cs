@@ -15,12 +15,14 @@ namespace VSRAD.Syntax.IntelliSense
         private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
         private readonly INavigationTokenService _navigationService;
         private readonly IPeekBroker _peekBroker;
+        private readonly ISignatureHelpBroker _signatureHelpBroker;
 
         [ImportingConstructor]
-        public IntellisenseControllerProvider(RadeonServiceProvider editorService, IPeekBroker peekBroker, INavigationTokenService navigationService)
+        public IntellisenseControllerProvider(RadeonServiceProvider editorService, IPeekBroker peekBroker, ISignatureHelpBroker signatureHelpBroker, INavigationTokenService navigationService)
         {
             _adaptersFactoryService = editorService.EditorAdaptersFactoryService;
             _peekBroker = peekBroker;
+            _signatureHelpBroker = signatureHelpBroker;
             _navigationService = navigationService;
         }
 
@@ -29,7 +31,7 @@ namespace VSRAD.Syntax.IntelliSense
             var view = _adaptersFactoryService.GetWpfTextView(textViewAdapter);
             if (view == null) return;
 
-            var filter = new IntellisenseController(_peekBroker, _navigationService, view);
+            var filter = new IntellisenseController(_peekBroker, _signatureHelpBroker, _navigationService, view);
             textViewAdapter.AddCommandFilter(filter, out var next);
             filter.Next = next;
         }
