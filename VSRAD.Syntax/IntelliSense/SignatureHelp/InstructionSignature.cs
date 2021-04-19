@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
@@ -9,23 +8,19 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 {
-    internal class InstructionSignature : ISyntaxSignature
+    internal class InstructionSignature : SyntaxSignature
     {
         private readonly IInstructionToken _token;
-        private string _content;
-        private IParameter _currentParameter;
-        private ReadOnlyCollection<IParameter> _parameters;
-        private ReadOnlyCollection<TextTag> _displayParts;
-        private int _parameterIdx;
+        private readonly int _initParameterIdx;
 
         public InstructionSignature(ITrackingSpan span, IInstructionToken token, int parameterIdx = 0)
         {
             ApplicableToSpan = span;
-            _parameterIdx = parameterIdx;
+            _initParameterIdx = parameterIdx;
             _token = token;
         }
 
-        public void Initialize()
+        protected override void Initialize()
         {
             if (_content != null) return;
 
@@ -68,72 +63,9 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
             _content = content.ToString();
             _displayParts = new ReadOnlyCollection<TextTag>(displayParts);
             _parameters = new ReadOnlyCollection<IParameter>(parameters);
+            _documentation = _token.GetDescription() ?? string.Empty;
 
-            SetCurrentParameter(_parameterIdx);
+            SetCurrentParameter(_initParameterIdx);
         }
-
-        public void SetCurrentParameter(int idx)
-        {
-            if (_parameters.Count <= idx) return;
-
-            var newValue = _parameters[idx];
-            if (newValue == _currentParameter) return;
-
-            var old = _currentParameter;
-            _currentParameter = newValue;
-            _parameterIdx = idx;
-            CurrentParameterChanged?.Invoke(this, new CurrentParameterChangedEventArgs(old, newValue));
-        }
-
-        public ITrackingSpan ApplicableToSpan { get; }
-
-        public string Documentation => _token.GetDescription() ?? string.Empty;
-
-        public string Content
-        {
-            get
-            {
-                Initialize();
-                return _content;
-            }
-        }
-
-        public string PrettyPrintedContent
-        {
-            get
-            {
-                Initialize();
-                return _content;
-            }
-        }
-
-        public ReadOnlyCollection<IParameter> Parameters
-        {
-            get
-            {
-                Initialize();
-                return _parameters;
-            }
-        }
-
-        public IParameter CurrentParameter
-        {
-            get
-            {
-                Initialize();
-                return _currentParameter;
-            }
-        }
-
-        public ReadOnlyCollection<TextTag> DisplayParts
-        {
-            get
-            {
-                Initialize();
-                return _displayParts;
-            }
-        }
-
-        public event EventHandler<CurrentParameterChangedEventArgs> CurrentParameterChanged;
     }
 }

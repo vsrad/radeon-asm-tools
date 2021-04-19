@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
 using Microsoft.VisualStudio.Language.Intellisense;
@@ -9,25 +8,21 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 {
-    internal class FunctionSignature : ISyntaxSignature
+    internal class FunctionSignature : SyntaxSignature
     {
         private readonly IFunctionBlock _block;
         private readonly SignatureConfig _signatureConfig;
-        private string _content;
-        private IParameter _currentParameter;
-        private ReadOnlyCollection<IParameter> _parameters;
-        private ReadOnlyCollection<TextTag> _displayParts;
-        private int _parameterIdx;
+        private readonly int _initParameterIdx;
 
         public FunctionSignature(ITrackingSpan span, IFunctionBlock block, SignatureConfig signatureConfig, int parameterIdx = 0)
         {
             ApplicableToSpan = span;
-            _parameterIdx = parameterIdx;
             _block = block;
             _signatureConfig = signatureConfig;
+            _initParameterIdx = parameterIdx;
         }
 
-        public void Initialize()
+        protected override void Initialize()
         {
             if (_content != null) return;
 
@@ -73,72 +68,9 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
             _content = content.ToString();
             _displayParts = new ReadOnlyCollection<TextTag>(displayParts);
             _parameters = new ReadOnlyCollection<IParameter>(parameters);
+            _documentation = _block.Name.GetDescription() ?? string.Empty;
 
-            SetCurrentParameter(_parameterIdx);
+            SetCurrentParameter(_initParameterIdx);
         }
-
-        public void SetCurrentParameter(int idx)
-        {
-            if (_parameters.Count <= idx) return;
-
-            var newValue = _parameters[idx];
-            if (newValue == _currentParameter) return;
-
-            var old = _currentParameter;
-            _currentParameter = newValue;
-            _parameterIdx = idx;
-            CurrentParameterChanged?.Invoke(this, new CurrentParameterChangedEventArgs(old, newValue));
-        }
-
-        public ITrackingSpan ApplicableToSpan { get; }
-
-        public string Documentation => _block.Name.GetDescription() ?? string.Empty;
-
-        public string Content
-        {
-            get
-            {
-                Initialize();
-                return _content;
-            }
-        }
-
-        public string PrettyPrintedContent
-        {
-            get
-            {
-                Initialize();
-                return _content;
-            }
-        }
-
-        public ReadOnlyCollection<IParameter> Parameters
-        {
-            get
-            {
-                Initialize();
-                return _parameters;
-            }
-        }
-
-        public IParameter CurrentParameter
-        {
-            get
-            {
-                Initialize();
-                return _currentParameter;
-            }
-        }
-
-        public ReadOnlyCollection<TextTag> DisplayParts
-        {
-            get
-            {
-                Initialize();
-                return _displayParts;
-            }
-        }
-
-        public event EventHandler<CurrentParameterChangedEventArgs> CurrentParameterChanged;
     }
 }
