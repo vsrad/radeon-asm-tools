@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 
         public void SetCurrentParameter(int idx)
         {
-            if (_parameters.Count <= idx) return;
+            if (_parameters == null || _parameters.Count <= idx) return;
 
             var newValue = _parameters[idx];
             if (newValue == _parameter) return;
