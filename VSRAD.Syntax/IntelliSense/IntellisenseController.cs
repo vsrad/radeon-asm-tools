@@ -158,8 +158,18 @@ namespace VSRAD.Syntax.IntelliSense
             // all signatures have the same applicable span
             var trackingSpan = _currentSignatureSession.Signatures[0].ApplicableToSpan;
             var currentPosition = _textView.Caret.Position.BufferPosition;
-            var currentParam = trackingSpan.GetSpan(_textView.TextSnapshot)
-                .GetCurrentParameter(currentPosition, _signatureConfig.TriggerParameterChar);
+            var trackingStart = trackingSpan.GetStartPoint(currentPosition.Snapshot);
+
+            // check left border of applicable span, it might be invalid token
+            if (trackingStart == currentPosition)
+            {
+                _currentSignatureSession.Recalculate();
+                // if there is no applicable token, then current signatureSession will be null
+                if (_currentSignatureSession == null) return;
+            }
+
+            var searchParam = new SnapshotSpan(trackingStart, currentPosition);
+            var currentParam = searchParam.GetCurrentParameter(_signatureConfig.TriggerParameterChar);
 
             foreach (var signature in _currentSignatureSession.Signatures)
             {

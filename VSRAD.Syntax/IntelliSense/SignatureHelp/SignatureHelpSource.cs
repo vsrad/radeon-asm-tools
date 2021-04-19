@@ -47,7 +47,8 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 
             var applicableSpan = new SnapshotSpan(triggerToken.Span.End, triggerLine.End);
             var trackingSpan = snapshot.CreateTrackingSpan(applicableSpan, SpanTrackingMode.EdgeInclusive);
-            var parameterIdx = applicableSpan.GetCurrentParameter(triggerPoint.Value, _signatureConfig.TriggerParameterChar);
+            var parameterSpan = new SnapshotSpan(applicableSpan.Start, triggerPoint.Value);
+            var parameterIdx = parameterSpan.GetCurrentParameter(_signatureConfig.TriggerParameterChar);
 
             switch (triggerToken.Type)
             {
