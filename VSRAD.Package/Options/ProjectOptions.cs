@@ -94,10 +94,12 @@ namespace VSRAD.Package.Options
             if (options == null && optionsException != null)
             {
                 if (optionsException is FileNotFoundException)
+                {
                     if (oldOptionsException != null && !(oldOptionsException is FileNotFoundException))
                         Errors.ShowWarning($"An error has occurred while loading the options: {oldOptionsException.Message}\r\nProceeding with defaults.");
-                    else
-                        Errors.ShowWarning($"An error has occurred while loading the options: {optionsException.Message}\r\nProceeding with defaults.");
+                }
+                else
+                    Errors.ShowWarning($"An error has occurred while loading the options: {optionsException.Message}\r\nProceeding with defaults.");
 
                 options = new ProjectOptions();
             }
@@ -109,10 +111,12 @@ namespace VSRAD.Package.Options
             if (profiles == null && profilesException != null)
             {
                 if (profilesException is FileNotFoundException)
+                {
                     if (oldProfilesException != null && !(oldProfilesException is FileNotFoundException))
                         Errors.ShowWarning($"An error has occurred while loading the profiles: {oldProfilesException.Message}\r\nProceeding with defaults.");
-                    else
-                        Errors.ShowWarning($"An error has occurred while loading the profiles: {profilesException.Message}\r\nProceeding with defaults.");
+                }
+                else
+                    Errors.ShowWarning($"An error has occurred while loading the profiles: {profilesException.Message}\r\nProceeding with defaults.");
             }
 
             if (profiles != null)
