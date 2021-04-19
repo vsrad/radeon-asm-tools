@@ -12,10 +12,15 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
         public static void AddTag(this IList<TextTag> tags, RadAsmTokenType type, Span span) =>
             tags.Add(new TextTag(type, span));
 
-        public static int GetCurrentParameter(this SnapshotSpan span, char splitChar)
+        public static int GetCurrentParameter(this SnapshotSpan span, SnapshotPoint point, char splitChar)
         {
-            var text = span.GetText();
-            return text.Split(splitChar).Length - 1;
+            if (span.Start > point) return 0;
+
+            var endPoint = point > span.End ? span.End : point;
+            var searchSpan = new SnapshotSpan(span.Start, endPoint);
+            var searchText = searchSpan.GetText();
+
+            return searchText.Split(splitChar).Length - 1;
         }
     }
 }

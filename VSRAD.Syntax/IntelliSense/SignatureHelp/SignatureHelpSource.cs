@@ -47,12 +47,17 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 
             var applicableSpan = new SnapshotSpan(triggerToken.Span.End, triggerLine.End);
             var trackingSpan = snapshot.CreateTrackingSpan(applicableSpan, SpanTrackingMode.EdgeInclusive);
-            var parameterIdx = applicableSpan.GetCurrentParameter(_signatureConfig.TriggerParameterChar);
+            var parameterIdx = applicableSpan.GetCurrentParameter(triggerPoint.Value, _signatureConfig.TriggerParameterChar);
 
-            if (triggerToken.Type == RadAsmTokenType.FunctionReference)
-                AddFunctionSignature(trackingSpan, triggerToken, parameterIdx, signatures);
-            else
-                AddInstructionSignature(snapshot, trackingSpan, triggerToken, parameterIdx, signatures);
+            switch (triggerToken.Type)
+            {
+                case RadAsmTokenType.FunctionReference:
+                    AddFunctionSignature(trackingSpan, triggerToken, parameterIdx, signatures); 
+                    break;
+                case RadAsmTokenType.Instruction:
+                    AddInstructionSignature(snapshot, trackingSpan, triggerToken, parameterIdx, signatures);
+                    break;
+            }
         }
 
         private void AddFunctionSignature(ITrackingSpan trackingSpan, IAnalysisToken token, int parameterIdx, ICollection<ISignature> signatures)

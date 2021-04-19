@@ -110,6 +110,8 @@ namespace VSRAD.Syntax.IntelliSense
                         break;
                     case VSConstants.VSStd2KCmdID.BACKSPACE:
                     case VSConstants.VSStd2KCmdID.DELETE:
+                    case VSConstants.VSStd2KCmdID.LEFT:
+                    case VSConstants.VSStd2KCmdID.RIGHT:
                         ChangeParameterSignatureSession();
                         break;
                     case VSConstants.VSStd2KCmdID.RETURN:
@@ -155,8 +157,9 @@ namespace VSRAD.Syntax.IntelliSense
 
             // all signatures have the same applicable span
             var trackingSpan = _currentSignatureSession.Signatures[0].ApplicableToSpan;
+            var currentPosition = _textView.Caret.Position.BufferPosition;
             var currentParam = trackingSpan.GetSpan(_textView.TextSnapshot)
-                .GetCurrentParameter(_signatureConfig.TriggerParameterChar);
+                .GetCurrentParameter(currentPosition, _signatureConfig.TriggerParameterChar);
 
             foreach (var signature in _currentSignatureSession.Signatures)
             {
