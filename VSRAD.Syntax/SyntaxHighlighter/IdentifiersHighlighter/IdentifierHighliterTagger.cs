@@ -1,16 +1,16 @@
-﻿using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Tagging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Core;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
+using Microsoft.VisualStudio.Text.Tagging;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 
-namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
+namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighlighter
 {
     public class DefinitionHighlightWordTag : TextMarkerTag
     {
@@ -22,7 +22,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         public ReferenceHighlightWordTag() : base(PredefinedMarkerFormatNames.ReferenceIdentifier) { }
     }
 
-    internal class HighlightWordTagger : ITagger<TextMarkerTag>
+    internal class HighlightWordTagger : ITagger<TextMarkerTag>, ISyntaxDisposable
     {
         private readonly object updateLock = new object();
         private readonly ITextView _view;
@@ -60,10 +60,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
         private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) =>
             UpdateAtCaretPosition(e.NewPosition);
 
-        private void UpdateAtCaretPosition(CaretPosition caretPoisition)
+        private void UpdateAtCaretPosition(CaretPosition caretPosition)
         {
             indentCts.Cancel();
-            SnapshotPoint? point = caretPoisition.Point.GetPoint(_buffer, caretPoisition.Affinity);
+            var point = caretPosition.Point.GetPoint(_buffer, caretPosition.Affinity);
 
             if (!point.HasValue)
                 return;
@@ -95,8 +95,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return;
             }
 
-            var currentWord = word.Span;
-            if (this.currentWord.HasValue && currentWord == this.currentWord)
+            var newCurrentWord = word.Span;
+            if (newCurrentWord == currentWord)
                 return;
 
             cancellation.ThrowIfCancellationRequested();
@@ -120,20 +120,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return;
             }
 
-            var wordSpans = new List<SnapshotSpan>();
-            var navigationTokenSpan = definition.Snapshot == version
-                ? (SnapshotSpan?)definition.Span
+            var navigationTokenSpan = definition.Span.Snapshot == version
+                ? (SnapshotSpan?)new SnapshotSpan(version, definition.Span)
                 : null;
 
-            foreach (var reference in definition.References)
-            {
-                cancellation.ThrowIfCancellationRequested();
-                if (reference.Snapshot == version)
-                    wordSpans.Add(reference.Span);
-            }
+            var spans = definition.References.Select(r => r.Span).Where(s => s.Snapshot == version);
 
+            cancellation.ThrowIfCancellationRequested();
             if (currentRequest == requestedPoint)
-                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(wordSpans), currentWord, navigationTokenSpan);
+                SynchronousUpdate(currentRequest, new NormalizedSnapshotSpanCollection(spans), newCurrentWord, navigationTokenSpan);
         }
 
         private void SynchronousUpdate(SnapshotPoint currentRequest, NormalizedSnapshotSpanCollection newSpans, SnapshotSpan? newCurrentWord, SnapshotSpan? navigationTokenSpan)
@@ -178,6 +173,12 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 
             if (navigationWordSpans != null)
                 yield return new TagSpan<DefinitionHighlightWordTag>(navigationWordSpans.Value, new DefinitionHighlightWordTag());
+        }
+
+        public void OnDispose()
+        {
+            _view.Caret.PositionChanged -= CaretPositionChanged;
+            _view.LayoutChanged -= ViewLayoutChanged;
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;

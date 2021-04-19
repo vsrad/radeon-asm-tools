@@ -46,7 +46,6 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsmLexer.OR, RadAsmTokenType.Operation },
             { RadAsmLexer.SHL, RadAsmTokenType.Operation },
             { RadAsmLexer.SHR, RadAsmTokenType.Operation },
-            { RadAsmLexer.BINOP, RadAsmTokenType.Operation },
 
             { RadAsmLexer.TEXT, RadAsmTokenType.Keyword },
             { RadAsmLexer.SET, RadAsmTokenType.Keyword },
@@ -84,10 +83,8 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsmLexer.IFNC, RadAsmTokenType.Keyword },
             { RadAsmLexer.IFNE, RadAsmTokenType.Keyword },
             { RadAsmLexer.IFNES, RadAsmTokenType.Keyword },
-            { RadAsmLexer.STARTIF, RadAsmTokenType.Keyword },
             { RadAsmLexer.ELSEIF, RadAsmTokenType.Keyword },
             { RadAsmLexer.ELSE, RadAsmTokenType.Keyword },
-            { RadAsmLexer.MIDDLEIF, RadAsmTokenType.Keyword },
             { RadAsmLexer.ENDIF, RadAsmTokenType.Keyword },
 
             { RadAsmLexer.REPT, RadAsmTokenType.Keyword },

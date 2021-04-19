@@ -2,7 +2,7 @@
 
 rule    : LET  ;
 
-LET     : 'let';
+LET : 'let';
 
 /* "Structural symbols" */
 
@@ -13,16 +13,16 @@ IDENTIFIER
     : [a-zA-Z] [a-zA-Z0-9_]*
     ;
 
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
+    ;
+
 WHITESPACE
     : [ \t]+
     ;
 
 EOL
     : '\r'? '\n'
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
     ;
 
 UNKNOWN

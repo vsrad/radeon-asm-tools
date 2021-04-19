@@ -72,7 +72,7 @@
     <Compile Include="Core\DocumentFactory.cs" />
     <Compile Include="Core\DocumentTokenizer.cs" />
     <Compile Include="Core\Helper\BitHelper.cs" />
-    <Compile Include="Core\Helper\FixedSizeDictionary.cs" />
+    <Compile Include="Core\Helper\OrderedFixedSizeDictionary.cs" />
     <Compile Include="Core\Helper\ListBlockExtension.cs" />
     <Compile Include="Core\Helper\SortedSet.cs" />
     <Compile Include="Core\Helper\ITokenizerCollection.cs" />
@@ -102,13 +102,13 @@
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
     <Compile Include="Core\Tokens\ErrorToken.cs" />
+    <Compile Include="Core\Tokens\FunctionToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
     <Compile Include="Core\Tokens\TokenSpan.cs" />
     <Compile Include="Core\Tokens\TokenType.cs" />
     <Compile Include="Core\Tokens\TrackingToken.cs" />
     <Compile Include="Core\Tokens\VariableToken.cs" />
-    <Compile Include="Core\InvisibleDocument.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
@@ -120,7 +120,9 @@
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
+    <Compile Include="Helpers\DisposableProvider.cs" />
     <Compile Include="Helpers\Error.cs" />
+    <Compile Include="Helpers\ISyntaxDisposable.cs" />
     <Compile Include="Helpers\NotifyPropertyChanged.cs" />
     <Compile Include="Helpers\AnalysisResultExtension.cs" />
     <Compile Include="Helpers\ServiceProviderExtension.cs" />
@@ -152,6 +154,7 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
+    <Compile Include="Options\GeneralOptionModel.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
@@ -159,9 +162,12 @@
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Options\Instructions\InstructionSet.cs" />
     <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
+    <Compile Include="Options\GeneralOptionProvider.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Options\GeneralOptionPage.cs" />
+    <Compile Include="Options\GeneralOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />
@@ -195,8 +201,8 @@
     <Compile Include="SyntaxHighlighter\ErrorHighlighter\ErrorHighlighterTagger.cs" />
     <Compile Include="SyntaxHighlighter\ErrorHighlighter\ErrorHighlighterTaggerProvider.cs" />
     <Compile Include="SyntaxHighlighter\PredefinedClassificationNames.cs" />
-    <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTagger.cs" />
-    <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTaggerProvider.cs" />
+    <Compile Include="SyntaxHighlighter\IdentifiersHighlighter\IdentifierHighliterTagger.cs" />
+    <Compile Include="SyntaxHighlighter\IdentifiersHighlighter\IdentifierHighlighterTaggerProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />

@@ -9,10 +9,11 @@ namespace VSRAD.Syntax.Core
 {
     internal class AnalysisResult : IAnalysisResult
     {
-        public AnalysisResult(IParserResult parserResult,
+        public AnalysisResult(IDocument document, IParserResult parserResult,
             IReadOnlyList<IDocument> includes, 
             ITextSnapshot snapshot)
         {
+            Document = document;
             Root = parserResult.RootBlock;
             Scopes = parserResult.Blocks;
             Errors = parserResult.Errors;
@@ -20,23 +21,17 @@ namespace VSRAD.Syntax.Core
             Snapshot = snapshot;
         }
 
+        public IDocument Document { get; }
         public IBlock Root { get; }
         public IReadOnlyList<IBlock> Scopes { get; }
         public IReadOnlyList<IErrorToken> Errors { get; }
         public IReadOnlyList<IDocument> Includes { get; }
         public ITextSnapshot Snapshot { get; }
 
-        public AnalysisToken GetToken(int point)
+        public IAnalysisToken GetToken(int point)
         {
             var block = GetBlock(point);
-
-            foreach (var token in block.Tokens)
-            {
-                if (token.Span.Contains(point))
-                    return token;
-            }
-
-            return null;
+            return block.Tokens.FirstOrDefault(token => token.Span.Contains(point));
         }
 
         public IBlock GetBlock(int point)
@@ -56,16 +51,8 @@ namespace VSRAD.Syntax.Core
             return block;
         }
 
-        private static IBlock InnerInRange(IEnumerable<IBlock> blocks, int point)
-        {
-            foreach (var innerBlock in blocks)
-            {
-                if (innerBlock.Type == BlockType.Comment) continue;
-                if (innerBlock.InRange(point)) return innerBlock;
-            }
-
-            return null;
-        }
+        private static IBlock InnerInRange(IEnumerable<IBlock> blocks, int point) => 
+            blocks.Where(innerBlock => innerBlock.Type != BlockType.Comment).FirstOrDefault(innerBlock => innerBlock.InRange(point));
 
         public IEnumerable<DefinitionToken> GetGlobalDefinitions() =>
             Root.Tokens.Where(t => t is DefinitionToken).Cast<DefinitionToken>();

@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
+using Microsoft.VisualStudio.Language.Intellisense;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -11,24 +12,24 @@ namespace VSRAD.Syntax.IntelliSense
     [TextViewRole(PredefinedTextViewRoles.Editable)]
     internal class IntellisenseControllerProvider : IVsTextViewCreationListener
     {
-        private readonly RadeonServiceProvider _editorService;
+        private readonly IVsEditorAdaptersFactoryService _adaptersFactoryService;
         private readonly INavigationTokenService _navigationService;
+        private readonly IPeekBroker _peekBroker;
 
         [ImportingConstructor]
-        public IntellisenseControllerProvider(RadeonServiceProvider editorService, INavigationTokenService navigationService)
+        public IntellisenseControllerProvider(RadeonServiceProvider editorService, IPeekBroker peekBroker, INavigationTokenService navigationService)
         {
-            _editorService = editorService;
+            _adaptersFactoryService = editorService.EditorAdaptersFactoryService;
+            _peekBroker = peekBroker;
             _navigationService = navigationService;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
         {
-            var view = _editorService.EditorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
+            var view = _adaptersFactoryService.GetWpfTextView(textViewAdapter);
             if (view == null) return;
 
-            var filter = view.Properties.GetOrCreateSingletonProperty(
-                () => new IntellisenseController(_editorService, _navigationService, view));
-
+            var filter = new IntellisenseController(_peekBroker, _navigationService, view);
             textViewAdapter.AddCommandFilter(filter, out var next);
             filter.Next = next;
         }

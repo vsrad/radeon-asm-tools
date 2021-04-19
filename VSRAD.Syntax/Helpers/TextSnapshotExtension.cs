@@ -1,8 +1,12 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using System;
+using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Helpers
 {
+    [Flags]
+#pragma warning disable CA1714 // Flags enums should have plural names
     public enum AsmType
+#pragma warning restore CA1714 // Flags enums should have plural names
     {
         RadAsm = 1,
         RadAsm2 = 2,
@@ -27,5 +31,8 @@ namespace VSRAD.Syntax.Helpers
 
         internal static AsmType GetAsmType(this ITextBuffer textBuffer) =>
             GetAsmType(textBuffer.CurrentSnapshot);
+
+        internal static bool GetTextDocument(this ITextBuffer textBuffer, out ITextDocument textDocument) =>
+            textBuffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
     }
 }

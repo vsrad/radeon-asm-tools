@@ -7,34 +7,44 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
 {
-    internal sealed class SyntaxErrorHighlighterTagger : ITagger<IErrorTag>
+    internal sealed class SyntaxErrorHighlighterTagger : ITagger<IErrorTag>, ISyntaxDisposable
     {
         private readonly object _lock = new object();
-        private IReadOnlyList<ITagSpan<IErrorTag>> currentErrorTags;
+        private readonly IDocumentAnalysis _documentAnalysis;
+        private IReadOnlyList<ITagSpan<IErrorTag>> _currentErrorTags;
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
 
         public SyntaxErrorHighlighterTagger(IDocumentAnalysis documentAnalysis)
         {
-            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => UpdateErorMarker(result, cancellation);
-            if (documentAnalysis.CurrentResult != null)
-                UpdateErorMarker(documentAnalysis.CurrentResult, CancellationToken.None);
+            _documentAnalysis = documentAnalysis;
+            _documentAnalysis.AnalysisUpdated += UpdateErrorMarker;
+            if (_documentAnalysis.CurrentResult != null)
+                UpdateErrorMarker(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+        }
+
+        public void OnDispose()
+        {
+            _documentAnalysis.AnalysisUpdated -= UpdateErrorMarker;
         }
 
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans) =>
-            currentErrorTags ?? Enumerable.Empty<ITagSpan<IErrorTag>>();
+            _currentErrorTags ?? Enumerable.Empty<ITagSpan<IErrorTag>>();
 
-        private void UpdateErorMarker(IAnalysisResult analysisResult, CancellationToken cancellationToken) =>
-            Task.Run(() => UpdateSpanAdornments(analysisResult, cancellationToken));
+        private void UpdateErrorMarker(IAnalysisResult analysisResult, RescanReason rescanReason, CancellationToken cancellationToken) =>
+            Task.Run(() => UpdateSpanAdornments(analysisResult, cancellationToken), cancellationToken);
 
         private void UpdateSpanAdornments(IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
             if (analysisResult == null || cancellationToken.IsCancellationRequested) return;
 
             var errorList = analysisResult.Errors
+                .AsParallel()
+                .WithCancellation(cancellationToken)
                 .Select(i => new TagSpan<IErrorTag>(i.Span, new ErrorTag(PredefinedErrorTypeNames.SyntaxError, i.Message)))
                 .ToList();
 
@@ -42,11 +52,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             SynchronousUpdate(errorList, analysisResult.Snapshot);
         }
 
-        private void SynchronousUpdate(List<TagSpan<IErrorTag>> errorList, ITextSnapshot snapshot)
+        private void SynchronousUpdate(IReadOnlyList<TagSpan<IErrorTag>> errorList, ITextSnapshot snapshot)
         {
             lock (_lock)
             {
-                currentErrorTags = errorList;
+                _currentErrorTags = errorList;
                 TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(snapshot, 0, snapshot.Length)));
             }
         }

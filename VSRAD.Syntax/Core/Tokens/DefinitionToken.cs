@@ -3,17 +3,37 @@ using System.Collections.Generic;
 
 namespace VSRAD.Syntax.Core.Tokens
 {
-    public class DefinitionToken : AnalysisToken
+    public interface IDefinitionToken : IAnalysisToken
     {
-        public readonly LinkedList<ReferenceToken> References;
+        ICollection<IAnalysisToken> References { get; }
+
+        /// <summary>
+        /// Return token description, for example comments 
+        /// </summary>
+        /// <returns>string if present; otherwise, null</returns>
+        string GetDescription();
+    }
+
+    public class DefinitionToken : AnalysisToken, IDefinitionToken
+    {
+        public ICollection<IAnalysisToken> References { get; }
+        private readonly string _text;
 
         public DefinitionToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot)
             : base(tokenType, trackingToken, snapshot)
         {
-            References = new LinkedList<ReferenceToken>();
+            References = new LinkedList<IAnalysisToken>();
+            _text = base.GetText();
         }
 
         public void AddReference(ReferenceToken reference) =>
-            References.AddLast(reference);
+            References.Add(reference);
+
+        public override string GetText() => _text;
+
+        public string GetDescription()
+        {
+            return null;
+        }
     }
 }

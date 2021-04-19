@@ -14,10 +14,11 @@ namespace VSRAD.Syntax.Core
     [Export(typeof(IDocumentFactory))]
     internal partial class DocumentFactory : IDocumentFactory
     {
-        private readonly ContentTypeManager _contentTypeManager;
         private readonly RadeonServiceProvider _serviceProvider;
-        private readonly Dictionary<string, IDocument> _documents;
+        private readonly Dictionary<string, KeyValuePair<ITextDocument, IDocument>> _documents;
+        private readonly Lazy<ContentTypeManager> _contentTypeManager;
         private readonly Lazy<IInstructionListManager> _instructionManager;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
@@ -26,61 +27,54 @@ namespace VSRAD.Syntax.Core
 
         [ImportingConstructor]
         public DocumentFactory(RadeonServiceProvider serviceProvider,
-            ContentTypeManager contentTypeManager,
+            ITextDocumentFactoryService textDocumentFactoryService,
+            Lazy<ContentTypeManager> contentTypeManager,
             Lazy<IInstructionListManager> instructionManager)
         {
+            _textDocumentFactoryService = textDocumentFactoryService;
             _instructionManager = instructionManager;
 
-            _documents = new Dictionary<string, IDocument>();
+            _documents = new Dictionary<string, KeyValuePair<ITextDocument, IDocument>>(StringComparer.OrdinalIgnoreCase);
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
-            _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += TextDocumentDisposed;
 
-            var dte = _serviceProvider.ServiceProvider.GetService(typeof(DTE)) as DTE;
-            dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+            _serviceProvider.Dte.Events.WindowEvents.WindowActivated += OnActiveWindowChanged;
         }
 
-        public IDocument GetOrCreateDocument(string path)
+        public IDocument GetOrCreateDocument(string path, bool observe)
         {
             if (_documents.TryGetValue(path, out var document))
-                return document;
+                return document.Value;
 
             if (!System.IO.File.Exists(path))
                 return null;
 
-            var contentType = _contentTypeManager.DetermineContentType(path);
+            var contentType = _contentTypeManager.Value.DetermineContentType(path);
             if (contentType == null)
                 return null;
 
-            var textDocument = _serviceProvider
-                .TextDocumentFactoryService
-                .CreateAndLoadTextDocument(path, contentType);
+            var textDocument = _textDocumentFactoryService.CreateAndLoadTextDocument(path, contentType);
 
-            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(this, textDocument, lexer, parser));
+            return GetOrCreateDocument(textDocument, observe);
         }
 
         public IDocument GetOrCreateDocument(ITextBuffer buffer)
         {
-            if (buffer.Properties.TryGetProperty(typeof(IDocument), out IDocument document))
-                return document;
-
-            if (!buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument))
+            if (!buffer.GetTextDocument(out var textDocument))
                 return null;
+            if (_documents.TryGetValue(textDocument.FilePath, out var documentPair) && textDocument == documentPair.Key)
+                return documentPair.Value;
 
+            // TODO: fix true constant
+            return GetOrCreateDocument(textDocument, true);
+        }
+
+        private IDocument GetOrCreateDocument(ITextDocument textDocument, bool observe)
+        {
             var factory = GetDocumentFactory(textDocument);
             if (factory == null) return null;
 
-            if (_documents.TryGetValue(textDocument.FilePath, out document)
-                && document is InvisibleDocument invisibleDocument)
-            {
-                document = invisibleDocument.ToVisibleDocument(factory);
-                ObserveDocument(document, textDocument);
-            }
-            else
-            {
-                document = CreateDocument(textDocument, factory);
-            }
-
+            var document = CreateDocument(textDocument, factory, observe);
             // CreateDocument can return null if document does not belong to RadAsmSyntax
             if (document != null) DocumentCreated?.Invoke(document);
             return document;
@@ -92,71 +86,89 @@ namespace VSRAD.Syntax.Core
             {
                 case AsmType.RadAsm:
                 case AsmType.RadAsm2:
-                    return (lexer, parser) => new CodeDocument(_instructionManager.Value, document, lexer, parser);
+                    return (lexer, parser) => new CodeDocument(_textDocumentFactoryService, _instructionManager.Value, document, lexer, parser, OnDocumentDestroy);
                 case AsmType.RadAsmDoc:
-                    return (lexer, parser) => new Document(document, lexer, parser);
+                    return (lexer, parser) => new Document(_textDocumentFactoryService, document, lexer, parser, OnDocumentDestroy);
                 default:
                     return null;
             }
         }
 
-        private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator)
+        private IDocument CreateDocument(ITextDocument textDocument, Func<ILexer, IParser, IDocument> creator, bool observe)
         {
             var lexerParser = GetLexerParser(textDocument.TextBuffer.GetAsmType());
             if (!lexerParser.HasValue) return null;
 
-            var document = creator(lexerParser.Value.Lexer, lexerParser.Value.Parser);
-            ObserveDocument(document, textDocument);
+            IDocument document;
+            if (observe && _documents.TryGetValue(textDocument.FilePath, out var documentPair))
+            {
+                document = documentPair.Value;
+                document.ReplaceDocument(textDocument);
+                OnDocumentDestroy(document);
+            }
+            else
+            {
+                document = creator(lexerParser.Value.Lexer, lexerParser.Value.Parser);
+            }
+
+            if (observe)
+            {
+                textDocument.FileActionOccurred += TextDocumentActionOccurred;
+                _documents.Add(document.Path, new KeyValuePair<ITextDocument, IDocument>(textDocument, document));
+            }
 
             return document;
         }
 
-        private void ObserveDocument(IDocument document, ITextDocument textDocument)
+        private void TextDocumentActionOccurred(object sender, TextDocumentFileActionEventArgs e)
         {
-            document.DocumentRenamed += DocumentRenamed;
-            textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
+            if (e.FileActionType != FileActionTypes.DocumentRenamed)
+                return;
 
-            _documents.Add(document.Path, document);
-        }
-
-        private void TextDocumentDisposed(object sender, TextDocumentEventArgs e)
-        {
-            if (_documents.TryGetValue(e.TextDocument.FilePath, out var document))
+            foreach (var path in _documents.Keys)
             {
-                document.DocumentRenamed -= DocumentRenamed;
-                document.Dispose();
-                _documents.Remove(e.TextDocument.FilePath);
-                DocumentDisposed?.Invoke(document);
+                var documentPair = _documents[path];
+                if (!documentPair.Key.Equals(sender))
+                    continue;
+
+                _documents[e.FilePath] = documentPair;
+                _documents.Remove(path);
+                break;
             }
         }
 
-        private void DocumentRenamed(IDocument document, string oldPath, string newPath)
+        private void OnDocumentDestroy(IDocument document)
         {
-            if (_documents.Remove(oldPath))
-                _documents.Add(newPath, document);
+            if (!_documents.TryGetValue(document.Path, out var documentPair))
+                return;
+
+            documentPair.Key.FileActionOccurred -= TextDocumentActionOccurred;
+            _documents.Remove(document.Path);
+            DocumentDisposed?.Invoke(document);
         }
 
-        private void OnChangeActivatedWindow(Window GotFocus, Window LostFocus)
+        private void OnActiveWindowChanged(Window gotFocus, Window _)
         {
-            if (GotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase))
-            {
-                var openWindowPath = System.IO.Path.Combine(GotFocus.Document.Path, GotFocus.Document.Name);
-                _documents.TryGetValue(openWindowPath, out var document);
+            if (!gotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase)) 
+                return;
 
-                // if this document is opened for the first time, then it can be a RadeonAsm document, but 
+            IDocument document = null;
+            var openWindowPath = System.IO.Path.Combine(gotFocus.Document.Path, gotFocus.Document.Name);
+            if (_documents.TryGetValue(openWindowPath, out var documentPair))
+            {
+                document = documentPair.Value;
+
+                // if this document is opened for the first time, then it can be not a RadeonAsm document, but 
                 // the parser is initialized after visual buffer initialization, so
                 // it is necessary to force initialize RadeonAsm document
-                if (document == null)
+                var vsTextBuffer = Utils.GetWindowVisualBuffer(gotFocus, _serviceProvider.ServiceProvider);
+                if (vsTextBuffer != null)
                 {
-                    var vsTextBuffer = Utils.GetWindowVisualBuffer(GotFocus, _serviceProvider.ServiceProvider);
-                    if (vsTextBuffer != null)
-                    {
-                        var textBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
-                        document = GetOrCreateDocument(textBuffer);
-                    }
+                    var textBuffer = _serviceProvider.EditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
+                    document = GetOrCreateDocument(textBuffer);
                 }
-                ActiveDocumentChanged?.Invoke(document);
             }
+            ActiveDocumentChanged?.Invoke(document);
         }
     }
 }

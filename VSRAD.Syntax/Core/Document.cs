@@ -1,53 +1,52 @@
-﻿using Microsoft.VisualStudio;
+﻿using System;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Core
 {
-    internal class Document : IDocument, IDisposable
+    public delegate void OnDestroyAction(IDocument sender);
+
+    internal class Document : IDocument
     {
         public IDocumentAnalysis DocumentAnalysis { get; }
-        public IDocumentTokenizer DocumentTokenizer { get; }
-        public string Path { get; private set; }
+        public IDocumentTokenizer DocumentTokenizer => _tokenizer;
+        public string Path => _textDocument.FilePath;
         public ITextSnapshot CurrentSnapshot => _textBuffer.CurrentSnapshot;
-        public bool IsDisposed { get; private set; }
+        public bool Disposed { get; private set; }
 
-        public event DocumentRenamedEventHandler DocumentRenamed;
+        protected readonly ILexer Lexer;
+        protected readonly IParser Parser;
+        private readonly ITextDocumentFactoryService _textDocumentFactory;
+        private readonly OnDestroyAction _destroyAction;
+        private readonly DocumentTokenizer _tokenizer;
+        private ITextDocument _textDocument;
+        private ITextBuffer _textBuffer;
+        private CancellationTokenSource _cts;
 
-        protected readonly ITextDocument _textDocument;
-        protected readonly ILexer _lexer;
-        protected readonly IParser _parser;
-        private readonly ITextBuffer _textBuffer;
-
-        public Document(ITextDocument textDocument, ILexer lexer, IParser parser)
+        public Document(ITextDocumentFactoryService textDocumentFactory, ITextDocument textDocument, ILexer lexer, IParser parser, OnDestroyAction onDestroy)
         {
-            _lexer = lexer;
-            _parser = parser;
+            _textDocumentFactory = textDocumentFactory;
             _textDocument = textDocument;
-            _textBuffer = _textDocument.TextBuffer;
-            Path = _textDocument.FilePath;
-            DocumentTokenizer = new DocumentTokenizer(_textBuffer, _lexer);
-            DocumentAnalysis = new DocumentAnalysis(this, DocumentTokenizer, _parser);
-            IsDisposed = false;
+            _textBuffer = textDocument.TextBuffer;
+            Lexer = lexer;
+            Parser = parser;
+            _destroyAction = onDestroy;
+            _cts = new CancellationTokenSource();
 
-            _textDocument.FileActionOccurred += FileActionOccurred;
-        }
+            _tokenizer = new DocumentTokenizer(_textDocument.TextBuffer, Lexer, _cts.Token);
+            DocumentAnalysis = new DocumentAnalysis(this, DocumentTokenizer, Parser);
+            Disposed = false;
 
-        private void FileActionOccurred(object sender, TextDocumentFileActionEventArgs e)
-        {
-            if (e.FileActionType == FileActionTypes.DocumentRenamed)
-            {
-                var oldPath = Path;
-                Path = e.FilePath;
-                DocumentRenamed?.Invoke(this, oldPath, Path);
-            }
+            _textDocumentFactory.TextDocumentDisposed += OnTextDocumentDisposed;
+            _textBuffer.Changed += BufferChanged;
         }
 
         public virtual void OpenDocumentInEditor()
@@ -65,28 +64,70 @@ namespace VSRAD.Syntax.Core
             var serviceProvider = ServiceProvider.GlobalProvider;
             var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager;
             var adapterService = serviceProvider.GetMefService<IVsEditorAdaptersFactoryService>();
-
-            if (IsDisposed) OpenDocumentInEditor();
-
             var vsTextBuffer = adapterService.GetBufferAdapter(_textBuffer);
+
+            if (Disposed || vsTextBuffer == null)
+            {
+                VsShellUtilities.OpenDocument(serviceProvider, Path, Guid.Empty, out _, out _, out var windowFrame);
+                var textView = VsShellUtilities.GetTextView(windowFrame);
+
+                if (textView.GetBuffer(out var vsTextLines) != VSConstants.S_OK) 
+                    return;
+
+                vsTextBuffer = vsTextLines;
+            }
+
             var hr = textManager.NavigateToPosition(vsTextBuffer, VSConstants.LOGVIEWID.TextView_guid, position, 0);
             if (hr != VSConstants.S_OK) throw Marshal.GetExceptionForHR(hr);
         }
 
-        public void Dispose()
+        private void BufferChanged(object sender, TextContentChangedEventArgs e) =>
+            _tokenizer.ApplyTextChanges(e, UpdateCancellation());
+
+        protected void Cancel()
         {
-            if (!IsDisposed)
-            {
-                _textDocument.FileActionOccurred -= FileActionOccurred;
-                _textDocument.Dispose();
-                IsDisposed = true;
-                GC.SuppressFinalize(this);
-            }
+            _cts.Cancel();
+            _cts.Dispose();
         }
 
-        ~Document()
+        protected CancellationToken UpdateCancellation()
         {
-            Dispose();
+            Cancel();
+            _cts = new CancellationTokenSource();
+            return _cts.Token;
+        }
+
+        public void ReplaceDocument(ITextDocument document)
+        {
+            var cancellation = UpdateCancellation();
+            var oldDocument = _textDocument;
+
+            _textDocument = document;
+            _textBuffer = document.TextBuffer;
+
+            _tokenizer.OnDocumentChanged(oldDocument.TextBuffer.CurrentSnapshot, CurrentSnapshot, cancellation);
+            oldDocument.Dispose();
+        }
+
+        public virtual void Dispose()
+        {
+            if (Disposed) return;
+
+            Cancel();
+            _textBuffer.Changed -= BufferChanged;
+            _textDocumentFactory.TextDocumentDisposed -= OnTextDocumentDisposed;
+
+            DocumentTokenizer.OnDestroy();
+            DocumentAnalysis.OnDestroy();
+
+            Disposed = true;
+            _destroyAction.Invoke(this);
+        }
+
+        private void OnTextDocumentDisposed(object sender, TextDocumentEventArgs e)
+        {
+            if (e.TextDocument == _textDocument)
+                Dispose();
         }
     }
 }

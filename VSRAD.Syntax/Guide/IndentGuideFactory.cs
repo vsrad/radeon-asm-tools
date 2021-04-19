@@ -3,35 +3,38 @@ using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Guide
 {
     [Export(typeof(IWpfTextViewCreationListener))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TextViewRole(PredefinedTextViewRoles.Document)]
-    internal sealed class IndentGuideFactory : IWpfTextViewCreationListener
+    internal sealed class IndentGuideFactory : DisposableProvider<IDocument, IndentGuide>, IWpfTextViewCreationListener
     {
         private readonly IDocumentFactory _documentFactory;
-        private readonly OptionsProvider _optionsProvider;
+        private readonly GeneralOptionProvider _generalOptionProvider;
 
         [ImportingConstructor]
-        public IndentGuideFactory(IDocumentFactory documentFactory, OptionsProvider optionsProvider)
+        public IndentGuideFactory(IDocumentFactory documentFactory)
         {
             _documentFactory = documentFactory;
-            _optionsProvider = optionsProvider;
+            _generalOptionProvider = GeneralOptionProvider.Instance;
+            _documentFactory.DocumentDisposed += DisposeRequest;
         }
 
         [Export(typeof(AdornmentLayerDefinition))]
         [Name(Constants.IndentGuideAdornmentLayerName)]
         [Order(After = PredefinedAdornmentLayers.DifferenceChanges, Before = PredefinedAdornmentLayers.Text)]
         [TextViewRole(PredefinedTextViewRoles.Document)]
-        public AdornmentLayerDefinition editorAdornmentLayer = null;
+        public AdornmentLayerDefinition EditorAdornmentLayer = null;
 
         public void TextViewCreated(IWpfTextView textView)
         {
             var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
-            if (document != null)
-                textView.Properties.AddProperty(typeof(IndentGuide), new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider));
+            if (document == null) return;
+
+            GetValue(document, () => new IndentGuide(textView, document.DocumentAnalysis, _generalOptionProvider));
         }
     }
 }

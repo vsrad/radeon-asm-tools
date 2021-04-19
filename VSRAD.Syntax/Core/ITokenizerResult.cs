@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.Core
     {
         ITextSnapshot Snapshot { get; }
         ITokenizerCollection<TrackingToken> Tokens { get; }
-        IEnumerable<TrackingToken> UpdatedTokens { get; }
+        IList<TrackingToken> UpdatedTokens { get; }
 
         TrackingToken GetToken(int point);
         IEnumerable<TrackingToken> GetTokens(Span span);

@@ -12,17 +12,24 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Collapse
 {
-    internal sealed class OutliningTagger : ITagger<IOutliningRegionTag>
+    internal sealed class OutliningTagger : ITagger<IOutliningRegionTag>, ISyntaxDisposable
     {
-        private ITextSnapshot currentSnapshot;
-        private IReadOnlyList<Span> currentSpans;
+        private readonly IDocumentAnalysis _documentAnalysis;
+        private ITextSnapshot _currentSnapshot;
+        private IReadOnlyList<Span> _currentSpans;
 
         public OutliningTagger(IDocumentAnalysis documentAnalysis)
         {
-            currentSpans = new List<Span>();
-            documentAnalysis.AnalysisUpdated += AnalysisUpdated;
-            if (documentAnalysis.CurrentResult != null) 
-                AnalysisUpdated(documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+            _currentSpans = new List<Span>();
+            _documentAnalysis = documentAnalysis;
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
+            if (_documentAnalysis.CurrentResult != null) 
+                AnalysisUpdated(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+        }
+
+        public void OnDispose()
+        {
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -32,11 +39,11 @@ namespace VSRAD.Syntax.Collapse
             if (spans.Count == 0)
                 yield break;
 
-            foreach (var span in currentSpans)
+            foreach (var span in _currentSpans)
             {
-                if (currentSnapshot.Length >= span.End)
+                if (_currentSnapshot.Length >= span.End)
                 {
-                    var hintSpan = new SnapshotSpan(currentSnapshot, span.Start, span.Length);
+                    var hintSpan = new SnapshotSpan(_currentSnapshot, span.Start, span.Length);
 
                     // skip one line blocks
                     if (hintSpan.Start.GetContainingLine().LineNumber == hintSpan.End.GetContainingLine().LineNumber)
@@ -61,15 +68,15 @@ namespace VSRAD.Syntax.Collapse
             var newSpanElements = blocks.AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(b => b.Type != BlockType.Root)
-                .Select(b => b.Scope.GetSpan(textSnapshot))
+                .Select(b => b.Scope)
                 .ToList();
 
-            var oldSpanCollection = new NormalizedSpanCollection(currentSpans);
+            var oldSpanCollection = new NormalizedSpanCollection(_currentSpans);
             var newSpanCollection = new NormalizedSpanCollection(newSpanElements);
 
             var removed = NormalizedSpanCollection.Difference(oldSpanCollection, newSpanCollection);
 
-            int changeStart = int.MaxValue;
+            int changeStart;
             int changeEnd = -1;
 
             if (removed.Count > 0)
@@ -80,7 +87,7 @@ namespace VSRAD.Syntax.Collapse
             else
             {
                 changeStart = 0;
-                if (currentSnapshot != null)
+                if (_currentSnapshot != null)
                     changeEnd = textSnapshot.Length;
             }
 
@@ -94,13 +101,13 @@ namespace VSRAD.Syntax.Collapse
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-                currentSpans = newSpanElements;
-                currentSnapshot = textSnapshot;
-                changeEnd = changeEnd > currentSnapshot.Length ? currentSnapshot.Length : changeEnd;
+                _currentSpans = newSpanElements;
+                _currentSnapshot = textSnapshot;
+                changeEnd = changeEnd > _currentSnapshot.Length ? _currentSnapshot.Length : changeEnd;
 
                 TagsChanged?.Invoke(this,
                     new SnapshotSpanEventArgs(
-                        new SnapshotSpan(currentSnapshot, Span.FromBounds(changeStart, changeEnd))));
+                        new SnapshotSpan(_currentSnapshot, Span.FromBounds(changeStart, changeEnd))));
             }
             catch (ArgumentOutOfRangeException e)
             {
@@ -123,7 +130,7 @@ namespace VSRAD.Syntax.Collapse
 
         private class OutliningTag : IOutliningRegionTag
         {
-            private readonly SnapshotSpan _hintSpan;
+            private SnapshotSpan _hintSpan;
 
             public OutliningTag(SnapshotSpan hintSpan)
             {

@@ -3,27 +3,31 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Collapse
 {
     [Export(typeof(ITaggerProvider))]
     [TagType(typeof(IOutliningRegionTag))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
-    internal sealed class OutliningTaggerAsmProvider : ITaggerProvider
+    internal sealed class OutliningTaggerProvider : DisposableProvider<IDocument, OutliningTagger>, ITaggerProvider
     {
         private readonly IDocumentFactory _documentFactory;
 
         [ImportingConstructor]
-        public OutliningTaggerAsmProvider(IDocumentFactory documentFactory)
+        public OutliningTaggerProvider(IDocumentFactory documentFactory)
         {
             _documentFactory = documentFactory;
+            _documentFactory.DocumentDisposed += DisposeRequest;
         }
 
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
+            if (document == null) return null;
 
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(document.DocumentAnalysis) as ITagger<T>);
+            return GetValue(document, () => 
+                new OutliningTagger(document.DocumentAnalysis)) as ITagger<T>;
         }
     }
 }

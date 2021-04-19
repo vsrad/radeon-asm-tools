@@ -24,7 +24,8 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
-        private KeyValuePair<IDocument, IAnalysisResult>? lastResult;
+        private readonly Dictionary<IDocument, ITextView> _documentTextViews;
+        private IAnalysisResult _lastResult;
 
         private static FunctionListProvider _instance;
         private static FunctionListControl _functionListControl;
@@ -35,8 +36,8 @@ namespace VSRAD.Syntax.FunctionList
             _editorAdaptersFactoryService = serviceProvider.EditorAdaptersFactoryService;
             _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
+            _documentTextViews = new Dictionary<IDocument, ITextView>();
 
-            _documentFactory.DocumentCreated += DocumentCreated;
             _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
             _instance = this;
@@ -47,34 +48,38 @@ namespace VSRAD.Syntax.FunctionList
             var textView = _editorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
             if (textView == null) return;
 
-            textView.Caret.PositionChanged += (sender, e) => CaretPositionChanged(e.NewPosition.BufferPosition);
-
             if (TryGetDocument(textView.TextBuffer, out var document))
-                AssignDocumentToFunctionList(document);
-
+            {
+                AssignDocumentToFunctionList(textView, document);
+                ActiveDocumentChanged(document);
+            }
+            else
+            {
+                textView.TextBuffer.ContentTypeChanged += ContentTypeChanged;
+            }
         }
 
-        private void CaretPositionChanged(SnapshotPoint point)
+        private void CaretOnPositionChanged(object sender, CaretPositionChangedEventArgs e)
         {
             if (_functionListControl == null) return;
+            var point = e.NewPosition.BufferPosition;
 
-            if (TryGetDocument(point.Snapshot.TextBuffer, out var document))
+            if (!TryGetDocument(point.Snapshot.TextBuffer, out var document)) return;
+            ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
-                ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
-                {
-                    var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
-                    var functionBlock = analysisResult.TryGetFunctionBlock(point);
+                var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
+                var functionBlock = analysisResult.TryGetFunctionBlock(point);
 
-                    if (functionBlock != null)
-                    {
-                        _functionListControl.HighlightItemAtLine(functionBlock.Name.Span.Start.GetContainingLine().LineNumber + 1);
-                    }
-                    else
-                    {
-                        _functionListControl.ClearHighlightItem();
-                    }
-                });
-            }
+                if (functionBlock != null)
+                {
+                    var lineNumber = analysisResult.Snapshot.GetLineNumberFromPosition(functionBlock.Name.Span.Start) + 1;
+                    _functionListControl.HighlightItemAtLine(lineNumber);
+                }
+                else
+                {
+                    _functionListControl.ClearHighlightItem();
+                }
+            });
         }
 
         private bool TryGetDocument(ITextBuffer textBuffer, out IDocument document)
@@ -83,22 +88,59 @@ namespace VSRAD.Syntax.FunctionList
             return document != null;
         }
 
-        #region update function list
-        private void AssignDocumentToFunctionList(IDocument document)
+        #region document assignment
+        private void AssignDocumentToFunctionList(ITextView textView, IDocument document)
         {
-            if (!document.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
-            {
-                document.DocumentAnalysis.AnalysisUpdated += (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
-                document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
-            }
-            ActiveDocumentChanged(document);
+            _documentTextViews.Add(document, textView);
+            document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
+            document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
+            textView.Caret.PositionChanged += CaretOnPositionChanged;
         }
 
-        private void DocumentCreated(IDocument document) => AssignDocumentToFunctionList(document);
+        private void ContentTypeChanged(object sender, ContentTypeChangedEventArgs e)
+        {
+            var textBuffer = (ITextBuffer)sender;
 
-        private void DocumentDisposed(IDocument document) =>
-            document.DocumentAnalysis.AnalysisUpdated -= (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
+            if (textBuffer == null) return;
+            if (!TryGetDocument(textBuffer, out var document)) return;
 
+            var serviceProvider = ServiceProvider.GlobalProvider;
+            VsShellUtilities.IsDocumentOpen(serviceProvider, document.Path, Guid.Empty, 
+                out _, out _, out var windowFrame);
+            if (windowFrame == null) return;
+
+            var vsTextView = VsShellUtilities.GetTextView(windowFrame);
+            if (vsTextView == null)
+            {
+                _documentTextViews.Remove(document);
+                return;
+            }
+
+            var textView = _editorAdaptersFactoryService.GetWpfTextView(vsTextView);
+            if (textView == null)
+            {
+                _documentTextViews.Remove(document);
+                return;
+            }
+
+            AssignDocumentToFunctionList(textView, document);
+        }
+
+        private void DocumentDisposed(IDocument document)
+        {
+            if (!_documentTextViews.TryGetValue(document, out var textView)) return;
+
+            document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
+            document.CurrentSnapshot.TextBuffer.Properties.RemoveProperty(typeof(FunctionListWindow));
+            textView.Caret.PositionChanged -= CaretOnPositionChanged;
+            if (_lastResult != null && _lastResult.Snapshot.TextBuffer == document.CurrentSnapshot.TextBuffer)
+                ClearFunctionList();
+
+            _documentTextViews.Remove(document);
+        }
+        #endregion
+
+        #region update function list
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
             if (_functionListControl == null) return;
@@ -115,27 +157,26 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ClearFunctionList()
         {
-            _functionListControl.ClearList();
-            lastResult = null;
+            _functionListControl?.ClearList();
+            _lastResult = null;
         }
 
         private void UpdateFunctionList(IDocument document)
         {
             var analysisResult = document.DocumentAnalysis.CurrentResult;
-
-            if (analysisResult == null || analysisResult == lastResult?.Value) return;
-            UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
+            if (analysisResult == null || analysisResult == _lastResult) return;
+            UpdateFunctionList(analysisResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
         {
             if (reason == RescanReason.ContentChanged)
-                UpdateFunctionList(document, analysisResult, cancellationToken);
+                UpdateFunctionList(analysisResult, cancellationToken);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            lastResult = new KeyValuePair<IDocument, IAnalysisResult>(document, analysisResult);
+            _lastResult = analysisResult;
 
             // if document analyzed before Function List view initialization
             if (_functionListControl == null) return;
@@ -144,8 +185,9 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
-                    .Select(t => _navigationTokenService.Value.CreateToken(t, document))
-                    .Select(t => new FunctionListItem(t))
+                    .Cast<IDefinitionToken>()
+                    .Select(t => _navigationTokenService.Value.CreateToken(t, _lastResult.Document))
+                    .Select(n => new FunctionListItem(n))
                     .AsParallel()
                     .WithCancellation(cancellationToken)
                     .ToList();
@@ -156,12 +198,8 @@ namespace VSRAD.Syntax.FunctionList
 
         private void SetLastResultFunctionList(CancellationToken cancellationToken)
         {
-            if (lastResult.HasValue)
-            {
-                var document = lastResult.Value.Key;
-                var analysisResult = lastResult.Value.Value;
-                UpdateFunctionList(document, analysisResult, cancellationToken);
-            }
+            if (_lastResult == null) return;
+            UpdateFunctionList(_lastResult, cancellationToken);
         }
 
         public static void FunctionListWindowCreated(FunctionListControl functionListControl)

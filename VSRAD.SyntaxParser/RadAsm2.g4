@@ -5,19 +5,35 @@ function
     ;
 
 /* Keywords */
-VAR     : 'var' ;
-VMCNT   : 'vmcnt' ;
-EXPCNT  : 'expcnt' ;
-LGKMCNT : 'lgkmcnt' ;
-HWREG   : 'hwreg' ;
-SENDMSG : 'sendmsg' ;
-ASIC    : 'asic' ;
-TYPE    : 'type' ;
-ASSERT  : 'assert' ;
-SHADER  : 'shader' ;
-RETURN  : 'return' ;
+VMCNT       : 'vmcnt' ;
+EXPCNT      : 'expcnt' ;
+LGKMCNT     : 'lgkmcnt' ;
+HWREG       : 'hwreg' ;
+SENDMSG     : 'sendmsg' ;
+ASIC        : 'asic' ;
+TYPE        : 'type' ;
+ASSERT      : 'assert' ;
+SHADER      : 'shader' ;
+LEN         : 'len' ;
+ABS         : 'abs' ;
+ONES        : 'ones' ;
+ZEROS       : 'zeros' ;
+ZEROES      : 'zeroes' ;
+USGPR_COUNT : 'user_sgpr_count' ;
+SGPR_COUNT  : 'sgpr_count' ;
+VGPR_COUNT  : 'vgpr_count' ;
+BLOCK_SIZE  : 'block_size' ;
+GROUP_SIZE  : 'group_size' ;
+TG_SIZE_EN  : 'tg_size_en' ;
+TGID_X_EN   : 'tgid_x_en' ;
+TGID_Y_EN   : 'tgid_y_en' ;
+TGID_Z_EN   : 'tgid_z_en' ;
+ALLOC_LDS   : 'alloc_lds' ;
+WAVE_SIZE   : 'wave_size' ;
 
-FUNCTION: 'function' ;
+VAR         : 'var' ;
+RETURN      : 'return' ;
+FUNCTION    : 'function' ;
 
 IF      : 'if' ;
 ELSIF   : 'elsif' ;
@@ -54,45 +70,38 @@ PP_ENDIF    : '#endif'   ;
 
 /* Expression-operator symbols */
 EQ      : '='   ;
+PLUSEQ  : '+='  ;
 LT      : '<'   ;
 LE      : '<='  ;
 EQEQ    : '=='  ;
 NE      : '!='  ;
 GE      : '>='  ;
 GT      : '>'   ;
-ANDAND  : '&&'  ;
-OROR    : '||'  ;
-NOT     : '!'   ;
-TILDE   : '~'   ;
-PLUS    : '+'   ;
-MINUS   : '-'   ;
-STAR    : '*'   ;
-SLASH   : '/'   ;
-PERCENT : '%'   ;
-CARET   : '^'   ;
-AND     : '&'   ;
-OR      : '|'   ;
 SHL     : '<<'  ;
 SHR     : '>>'  ;
-
-BINOP
-    : PLUS
-    | SLASH
-    | MINUS
-    | STAR
-    | PERCENT
-    | CARET
-    | AND
-    | OR
-    | SHL
-    | SHR
-    ;
+LOGOR   : '||'  ;
+LOGAND  : '&&'  ;
+LOGXOR  : '^^'  ;
+LOGNOT  : '!'   ;
+REDMIN  : '<:'  ;
+REDMAX  : '>:'  ;
+PLUS    : '+'   ;
+MINUS   : '-'   ;
+PROD    : '*'   ;
+DIV     : '/'   ;
+MOD     : '%'   ;
+BITOR   : '|'   ;
+BITAND  : '&'   ;
+BITXOR  : '^'   ;
+BITNOT  : '~'   ;
 
 /* "Structural symbols" */
 
 COMMA      : ',' ;
 SEMI       : ';' ;
 COLON      : ':' ;
+QUEST      : '?' ;
+SHARP      : '#' ;
 LPAREN     : '(' ;
 RPAREN     : ')' ;
 LSQUAREBRACKET   : '[' ;
@@ -122,14 +131,6 @@ IDENTIFIER
     : '.'? [a-zA-Z_] [a-zA-Z0-9_]*
     ;
 
-WHITESPACE
-    : [ \t]+
-    ;
-
-EOL
-    : '\r'? '\n'
-    ;
-
 LINE_COMMENT
     : '//' ~[\r\n]*
     ;
@@ -138,6 +139,14 @@ BLOCK_COMMENT
     : '/*' .*? ('*/' | EOF)
     ;
 
+WHITESPACE
+    : [ \t]+
+    ;
+
+EOL
+    : '\r'? '\n'
+    ;
+
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^]+
+    : ~[ \t\r\n,:;#?()[\]{}=<>!&|~+\\-*%^/]+
     ;

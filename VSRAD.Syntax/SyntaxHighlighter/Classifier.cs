@@ -4,24 +4,26 @@ using Microsoft.VisualStudio.Text.Classification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class AnalysisClassifier : IClassifier
+    internal class AnalysisClassifier : IClassifier, ISyntaxDisposable
     {
-        private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
+        private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
+        private readonly IDocumentAnalysis _documentAnalysis;
         private IAnalysisResult _analysisResult;
 
-        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
+        public AnalysisClassifier(IDocumentAnalysis documentAnalysis)
         {
             _analysisResult = documentAnalysis.CurrentResult;
-            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result, rs);
-
-            InitializeClassifierDictonary(typeRegistryService);
+            _documentAnalysis = documentAnalysis;
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
         }
 
 #pragma warning disable CS0067 // disable "The event is never used". It's required by IClassifier
@@ -34,8 +36,13 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var analysisResult = _analysisResult;
             if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            var block = analysisResult.GetBlock(span.Start);
+            var block = analysisResult.GetBlock(span.End);
             if (block.Type == BlockType.Comment) return classificationSpans;
+            if (block.Type == BlockType.Function)
+            {
+                var fBlock = (IFunctionBlock) block;
+                classificationSpans.Add(new ClassificationSpan(fBlock.Name.Span, _tokenClassification[fBlock.Name.Type]));
+            }
 
             foreach (var scopeToken in block.Tokens)
             {
@@ -54,8 +61,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             return classificationSpans;
         }
 
-        private void InitializeClassifierDictonary(IClassificationTypeRegistryService registryService)
+        public void OnDispose()
         {
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
+        }
+
+        public static void InitializeClassifierDictionary(IClassificationTypeRegistryService registryService)
+        {
+            if (_tokenClassification != null)
+                return;
+
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
                 { RadAsmTokenType.Instruction, registryService.GetClassificationType(RadAsmTokenType.Instruction.GetClassificationTypeName()) },
@@ -68,7 +83,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
         {
             _analysisResult = analysisResult;
 
@@ -77,19 +92,17 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         }
     }
 
-    internal class TokenizerClassifier : ITagger<ClassificationTag>
+    internal class TokenizerClassifier : ITagger<ClassificationTag>, ISyntaxDisposable
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentTokenizer _tokenizer;
         private ITokenizerResult _currentResult;
 
-        public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
+        public TokenizerClassifier(IDocumentTokenizer tokenizer)
         {
             _tokenizer = tokenizer;
-            _tokenizer.TokenizerUpdated += (result, rs, ct) => TokenizerUpdated(result);
-
-            InitializeClassifierDictionary(standardClassificationService);
-            TokenizerUpdated(_tokenizer.CurrentResult);
+            _tokenizer.TokenizerUpdated += TokenizerUpdated;
+            TokenizerUpdated(_tokenizer.CurrentResult, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -101,16 +114,23 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 foreach (var token in result.GetTokens(span))
                 {
-                    if (token.IsEmpty || _tokenizer.GetTokenType(token.Type) == RadAsmTokenType.Identifier)
-                        continue;
+                    if (token.IsEmpty) continue;
 
-                    var tag = new ClassificationTag(_tokenClassification[_tokenizer.GetTokenType(token.Type)]);
+                    var tokenType = _tokenizer.GetTokenType(token.Type);
+                    if (tokenType == RadAsmTokenType.Identifier) continue;
+
+                    var tag = new ClassificationTag(_tokenClassification[tokenType]);
                     yield return new TagSpan<ClassificationTag>(new SnapshotSpan(result.Snapshot, token.GetSpan(result.Snapshot)), tag);
                 }
             }
         }
 
-        private void InitializeClassifierDictionary(IStandardClassificationService typeService)
+        public void OnDispose()
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
+        }
+
+        public static void InitializeClassifierDictionary(IStandardClassificationService typeService)
         {
             if (_tokenClassification != null)
                 return;
@@ -139,7 +159,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokenizerUpdated(ITokenizerResult result)
+        private void TokenizerUpdated(ITokenizerResult result, CancellationToken ct)
         {
             var tokens = result.UpdatedTokens;
             if (!tokens.Any())

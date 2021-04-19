@@ -15,7 +15,7 @@ namespace VSRAD.Syntax.Core.Parser
         public Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();
-            IBlock rootBlock = new Block(version);
+            IBlock rootBlock = new Block();
             var blocks = new List<IBlock>() { rootBlock };
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsmDocLexer.WHITESPACE && t.Type != RadAsmDocLexer.BLOCK_COMMENT)
@@ -40,7 +40,7 @@ namespace VSRAD.Syntax.Core.Parser
                 }
                 else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                 {
-                    rootBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
+                    rootBlock.AddToken(new DefinitionToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
                 }
                 else if (token.Type == RadAsmDocLexer.IDENTIFIER)
                 {

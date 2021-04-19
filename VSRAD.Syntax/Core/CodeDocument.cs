@@ -7,10 +7,27 @@ namespace VSRAD.Syntax.Core
 {
     internal class CodeDocument : Document
     {
-        public CodeDocument(IInstructionListManager instructionListManager, ITextDocument textDocument, ILexer lexer, IParser parser)
-            : base(textDocument, lexer, parser)
+        private readonly IInstructionListManager _instructionListManager;
+
+        public CodeDocument(ITextDocumentFactoryService textDocumentFactory,
+            IInstructionListManager instructionListManager,
+            ITextDocument textDocument,
+            ILexer lexer, IParser parser, OnDestroyAction onDestroy)
+            : base(textDocumentFactory, textDocument, lexer, parser, onDestroy)
         {
-            instructionListManager.InstructionsUpdated += (s, t) => DocumentTokenizer.Rescan(RescanReason.InstructionsChanged);
+            _instructionListManager = instructionListManager;
+            _instructionListManager.InstructionsUpdated += InstructionsUpdated;
+        }
+
+        private void InstructionsUpdated(IInstructionListManager sender, Helpers.AsmType asmType) =>
+            DocumentAnalysis.Rescan(RescanReason.InstructionsChanged, UpdateCancellation());
+
+        public override void Dispose()
+        {
+            if (Disposed) return;
+
+            base.Dispose();
+            _instructionListManager.InstructionsUpdated -= InstructionsUpdated;
         }
     }
 }

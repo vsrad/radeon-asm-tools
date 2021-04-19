@@ -83,30 +83,6 @@ AMD_HSA_KERNEL      : '.amdgpu_hsa_kernel'       ;
 AMD_KERNEL_CODE     : '.amd_kernel_code_t'       ;
 AMD_END_KERNEL_CODE : '.end_amd_kernel_code_t'   ;
 
-STARTIF
-    : IF
-    | IFDEF
-    | IFNDEF
-    | IFNOTDEF
-    | IFB
-    | IFC
-    | IFEQ
-    | IFEQS
-    | IFGE
-    | IFGT
-    | IFLE
-    | IFLT
-    | IFNB
-    | IFNC
-    | IFNE
-    | IFNES
-    ;
-
-MIDDLEIF
-    : ELSEIF
-    | ELSE
-    ;
-
 /* Expression-operator symbols */
 EQ      : '='   ;
 LT      : '<'   ;
@@ -129,19 +105,6 @@ AND     : '&'   ;
 OR      : '|'   ;
 SHL     : '<<'  ;
 SHR     : '>>'  ;
-
-BINOP
-    : PLUS
-    | SLASH
-    | MINUS
-    | STAR
-    | PERCENT
-    | CARET
-    | AND
-    | OR
-    | SHL
-    | SHR
-    ;
 
 /* "Structural symbols" */
 
@@ -177,6 +140,14 @@ IDENTIFIER
     : [.\\]? [a-zA-Z_] [a-zA-Z0-9_]*
     ;
 
+LINE_COMMENT
+    : ('//' | ';') ~[\r\n]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
+    ;
+
 WHITESPACE
     : [ \t]+
     ;
@@ -185,14 +156,6 @@ EOL
     : '\r'? '\n'
     ;
 
-LINE_COMMENT
-    : '//' ~[\r\n]*
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
-    ;
-
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^]+
+    : ~[ \t\r\n,:;()[\]{}=<>!&|~+\\-*%^/]+
     ;
