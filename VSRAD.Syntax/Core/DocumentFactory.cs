@@ -38,7 +38,7 @@ namespace VSRAD.Syntax.Core
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
 
-            _serviceProvider.Dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+            _serviceProvider.Dte.Events.WindowEvents.WindowActivated += OnActiveWindowChanged;
         }
 
         public IDocument GetOrCreateDocument(string path, bool observe)
@@ -147,7 +147,7 @@ namespace VSRAD.Syntax.Core
             DocumentDisposed?.Invoke(document);
         }
 
-        private void OnChangeActivatedWindow(Window gotFocus, Window _)
+        private void OnActiveWindowChanged(Window gotFocus, Window _)
         {
             if (!gotFocus.Kind.Equals("Document", StringComparison.OrdinalIgnoreCase)) 
                 return;
@@ -158,7 +158,7 @@ namespace VSRAD.Syntax.Core
             {
                 document = documentPair.Value;
 
-                // if this document is opened for the first time, then it can be a RadeonAsm document, but 
+                // if this document is opened for the first time, then it can be not a RadeonAsm document, but 
                 // the parser is initialized after visual buffer initialization, so
                 // it is necessary to force initialize RadeonAsm document
                 var vsTextBuffer = Utils.GetWindowVisualBuffer(gotFocus, _serviceProvider.ServiceProvider);

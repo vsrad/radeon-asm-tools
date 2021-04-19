@@ -71,16 +71,11 @@ namespace VSRAD.Syntax.Core
 
         private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
+            // TODO: for the future  "GoTo include" feature
+            var includes = new List<IDocument>();
             try
             {
                 var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
-
-                //var includes = parserResult.RootBlock.Tokens
-                //    .Where(t => t.Type == RadAsmTokenType.Include)
-                //    .Cast<IncludeToken>()
-                //    .Select(i => i.Document)
-                //    .ToList();
-                var includes = new List<IDocument>();
                 var analysisResult = new AnalysisResult(_document, parserResult, includes, tokenizerResult.Snapshot);
 
                 CurrentResult = analysisResult;

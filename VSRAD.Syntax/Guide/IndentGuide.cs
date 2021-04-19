@@ -96,13 +96,11 @@ namespace VSRAD.Syntax.Guide
             if (_isEnabled)
                 UpdateIndentGuides();
             else
-                CleanupIndentGuidesAsync().ConfigureAwait(false);
+                ClearIndentGuides();
         }
 
-        private void CanvasRemoved(object tag, UIElement element)
-        {
-            // TODO: here is some code
-        }
+        private void CanvasRemoved(object tag, UIElement element) =>
+            ClearIndentGuides();
 
         private void UpdateIndentGuides()
         {
@@ -111,9 +109,8 @@ namespace VSRAD.Syntax.Guide
                     .RunAsyncWithoutAwait();
         }
 
-        private async Task CleanupIndentGuidesAsync()
+        private void ClearIndentGuides()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             foreach (var oldIndentGuide in _currentAdornments)
             {
                 _canvas.Children.Remove(oldIndentGuide);

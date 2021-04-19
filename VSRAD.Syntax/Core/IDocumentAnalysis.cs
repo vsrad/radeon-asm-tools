@@ -13,7 +13,6 @@ namespace VSRAD.Syntax.Core
         void Rescan(RescanReason rescanReason, CancellationToken cancellationToken);
         void OnDestroy();
 
-
         event AnalysisUpdatedEventHandler AnalysisUpdated;
     }
 }
