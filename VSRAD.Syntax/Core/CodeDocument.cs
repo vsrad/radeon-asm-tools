@@ -1,5 +1,4 @@
-﻿using System.Threading;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Options.Instructions;
@@ -21,11 +20,11 @@ namespace VSRAD.Syntax.Core
         }
 
         private void InstructionsUpdated(IInstructionListManager sender, Helpers.AsmType asmType) =>
-            DocumentAnalysis.Rescan(RescanReason.InstructionsChanged, CancellationToken.None);
+            DocumentAnalysis.Rescan(RescanReason.InstructionsChanged, UpdateCancellation());
 
         public override void Dispose()
         {
-            if (IsDisposed) return;
+            if (Disposed) return;
 
             base.Dispose();
             _instructionListManager.InstructionsUpdated -= InstructionsUpdated;

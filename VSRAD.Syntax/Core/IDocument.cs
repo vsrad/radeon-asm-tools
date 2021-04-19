@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Core
@@ -9,7 +10,7 @@ namespace VSRAD.Syntax.Core
         IDocumentTokenizer DocumentTokenizer { get; }
         string Path { get; }
         ITextSnapshot CurrentSnapshot { get; }
-        bool IsDisposed { get; }
+        bool Disposed { get; }
 
         void OpenDocumentInEditor();
         void NavigateToPosition(int position);
@@ -18,6 +19,6 @@ namespace VSRAD.Syntax.Core
 
     public interface IReplaceableSnapshot
     {
-        void OnDocumentChanged(ITextSnapshot oldSnapshot, ITextSnapshot newSnapshot);
+        void OnDocumentChanged(ITextSnapshot oldSnapshot, ITextSnapshot newSnapshot, CancellationToken cancellation);
     }
 }

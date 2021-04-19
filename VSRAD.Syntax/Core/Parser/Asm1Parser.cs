@@ -115,6 +115,7 @@ namespace VSRAD.Syntax.Core.Parser
 
                             foreach (var reference in labelReferences)
                             {
+                                cancellation.ThrowIfCancellationRequested();
                                 _referenceCandidates.Remove(reference);
                                 reference.block.AddToken(new ReferenceToken(RadAsmTokenType.LabelReference, reference.trackingToken, version, labelDefinition));
                             }

@@ -66,11 +66,8 @@ namespace VSRAD.Syntax.Core
             _resultsRequests.Add(tokenizerResult.Snapshot, RunAnalysisAsync(tokenizerResult, rescanReason, cancellationToken));
         }
 
-        private async Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
-        {
-            var result = await Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken).ConfigureAwait(false);
-            return result;
-        }
+        private Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken) =>
+            Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken);
 
         private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {

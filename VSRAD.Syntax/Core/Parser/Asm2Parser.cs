@@ -49,6 +49,7 @@ namespace VSRAD.Syntax.Core.Parser
             blocks.Add(currentBlock);
             for (int i = 0; i < tokens.Length; i++)
             {
+                cancellation.ThrowIfCancellationRequested();
                 var token = tokens[i];
 
                 if (token.Type == RadAsm2Lexer.PP_ELSE || token.Type == RadAsm2Lexer.PP_ELSIF || token.Type == RadAsm2Lexer.PP_ELIF)
@@ -96,6 +97,7 @@ namespace VSRAD.Syntax.Core.Parser
 
                             foreach (var reference in labelReferences)
                             {
+                                cancellation.ThrowIfCancellationRequested();
                                 _referenceCandidates.Remove(reference);
                                 reference.block.AddToken(new ReferenceToken(RadAsmTokenType.LabelReference, reference.trackingToken, version, labelDefinition));
                             }
