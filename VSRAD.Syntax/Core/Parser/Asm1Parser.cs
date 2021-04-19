@@ -110,6 +110,7 @@ namespace VSRAD.Syntax.Core.Parser
                             // lookbehind search references to label
                             var labelReferences = _referenceCandidates
                                 .Where(t => t.text == labelDefinition.GetText())
+                                .Reverse()
                                 .TakeWhile(t => currentBlock.Area.Contains(t.block.Area.Start))
                                 .ToList();
 
@@ -194,7 +195,7 @@ namespace VSRAD.Syntax.Core.Parser
                             }
                             else
                             {
-                                _referenceCandidates.AddFirst((tokenText, token, currentBlock));
+                                _referenceCandidates.AddLast((tokenText, token, currentBlock));
                             }
                         }
                     }
