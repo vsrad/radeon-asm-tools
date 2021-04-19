@@ -174,7 +174,7 @@ namespace VSRAD.Syntax.Options.Instructions
 
         private async Task<Tuple<IDocument, InstructionSet>> LoadInstructionsFromFileAsync(string path, InstructionType type)
         {
-            var document = _documentFactory.Value.GetOrCreateDocument(path);
+            var document = _documentFactory.Value.GetOrCreateDocument(path, false);
             var documentAnalysis = document.DocumentAnalysis;
             var snapshot = document.CurrentSnapshot;
             var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);

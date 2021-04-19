@@ -12,8 +12,9 @@ namespace VSRAD.Syntax.Core
         /// Gets <see cref="IDocument"/> or creates if doesn't exist
         /// </summary>
         /// <param name="path"></param>
+        /// <param name="observe">If true then document is managed with factory otherwise it's should managed with caller</param>
         /// <returns><see cref="IDocument"/> if <paramref name="path"/> is RadAsm content type otherwise null</returns>
-        IDocument GetOrCreateDocument(string path);
+        IDocument GetOrCreateDocument(string path, bool observe = true);
 
         /// <summary>
         /// Gets <see cref="IDocument"/> or creates if doesn't exist
