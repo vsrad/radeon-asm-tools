@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using VSRAD.DebugServer.SharedUtils;
+using static VSRAD.DebugServer.IPC.CapabilityInfo;
 
 namespace VSRAD.DebugServer.IPC.Commands
 {
@@ -310,11 +312,29 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class GetServerCapabilitiesCommand : ICommand
     {
-        public override string ToString() => "GetServerCapabilitiesCommand";
+        public HashSet<ExtensionCapability> ExtensionCapabilities { get; set; }
 
-        public static GetServerCapabilitiesCommand Deserialize(IPCReader _) => new GetServerCapabilitiesCommand();
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "GetServerCapabilitiesCommand",
+            $"ExtensionCapabilities = {string.Join(", ", ExtensionCapabilities)}"
+        });
 
-        public void Serialize(IPCWriter _) { }
+        public static GetServerCapabilitiesCommand Deserialize(IPCReader reader)
+        {
+            var capabilityCount = reader.Read7BitEncodedInt();
+            var capabilities = new HashSet<ExtensionCapability>();
+            for (int i = 0; i < capabilityCount; ++i)
+                capabilities.Add((ExtensionCapability)reader.ReadByte());
+            return new GetServerCapabilitiesCommand { ExtensionCapabilities = capabilities };
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write7BitEncodedInt(ExtensionCapabilities.Count);
+            foreach (var cap in ExtensionCapabilities)
+                writer.Write((byte)cap);
+        }
     }
 
     public sealed class CompressedCommand : ICommand

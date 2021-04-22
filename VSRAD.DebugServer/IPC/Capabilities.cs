@@ -9,6 +9,11 @@ namespace VSRAD.DebugServer.IPC
         Base = 0
     }
 
+    public enum ExtensionCapability : byte
+    {
+        Base = 0,
+    }
+
     public enum ServerPlatform : byte
     {
         Windows = 0,
@@ -21,6 +26,11 @@ namespace VSRAD.DebugServer.IPC
         public string Version { get; }
         public ServerPlatform Platform { get; }
         public HashSet<ServerCapability> Capabilities { get; }
+
+        public static readonly HashSet<ExtensionCapability> LatestExtensionCapabilities = new HashSet<ExtensionCapability>(new[]
+        {
+            ExtensionCapability.Base,
+        });
 
         public static readonly HashSet<ServerCapability> LatestServerCapabilities = new HashSet<ServerCapability>(new[]
         {

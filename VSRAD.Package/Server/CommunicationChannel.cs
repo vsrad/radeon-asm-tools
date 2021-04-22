@@ -173,9 +173,10 @@ namespace VSRAD.Package.Server
                 using (var cts = new CancellationTokenSource(_connectionTimeout))
                 using (cts.Token.Register(() => client.Dispose()))
                 {
-                    await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
+                    await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port).ConfigureAwait(false);
                 }
-                await client.GetStream().WriteSerializedMessageAsync(new GetServerCapabilitiesCommand()).ConfigureAwait(false);
+                var capCommand = new GetServerCapabilitiesCommand { ExtensionCapabilities = DebugServer.IPC.CapabilityInfo.LatestExtensionCapabilities };
+                await client.GetStream().WriteSerializedMessageAsync(capCommand).ConfigureAwait(false);
                 var (response, _) = await client.GetStream().ReadSerializedResponseAsync<GetServerCapabilitiesResponse>().ConfigureAwait(false);
                 if (response == null)
                 {
