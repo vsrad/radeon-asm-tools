@@ -17,6 +17,7 @@ namespace VSRAD.DebugServer
 
         private readonly TcpClient _socket;
         private readonly SemaphoreSlim _globalCommandLock;
+        private readonly SemaphoreSlim _handlerStreamUsageLock = new SemaphoreSlim(1, 1);
 
         public Client(uint clientId, TcpClient socket, SemaphoreSlim globalCommandLock, bool verboseLogging)
         {
@@ -25,19 +26,35 @@ namespace VSRAD.DebugServer
             _globalCommandLock = globalCommandLock;
         }
 
-        public async Task<ICommand> ReadCommandAsync()
+        public async Task<T> RespondWithFollowUpAsync<T>(IResponse response) where T : ICommand
         {
-            var (command, bytesReceived) = await _socket.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
-            if (command != null)
-                Log.CommandReceived(command, bytesReceived);
-
-            return command;
+            try
+            {
+                await _handlerStreamUsageLock.WaitAsync();
+                await SendResponseAsync(response);
+                return (T)(await ReadCommandAsync());
+            }
+            finally
+            {
+                _handlerStreamUsageLock.Release();
+            }
         }
 
-        public async Task SendResponseAsync(IResponse response)
+        public async Task PingAsync()
         {
-            var bytesSent = await _socket.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
-            Log.ResponseSent(response, bytesSent);
+            if (Capabilities.Contains(ExtensionCapability.Base)) // If the client does not support pings, treat it as a noop
+            {
+                try
+                {
+                    await _handlerStreamUsageLock.WaitAsync();
+                    // Pinging from the handler is safe: the client is waiting for the response and isn't going to send any data
+                    await _socket.GetStream().PingUnsafeAsync();
+                }
+                finally
+                {
+                    _handlerStreamUsageLock.Release();
+                }
+            }
         }
 
         public async Task BeginClientLoopAsync()
@@ -67,7 +84,7 @@ namespace VSRAD.DebugServer
                 }
                 catch (Exception e)
                 {
-                    if (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset)
+                    if (e is OperationCanceledException || (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset))
                         Log.CliendDisconnected();
                     else
                         Log.FatalClientException(e);
@@ -81,6 +98,21 @@ namespace VSRAD.DebugServer
                         _globalCommandLock.Release();
                 }
             }
+        }
+
+        private async Task<ICommand> ReadCommandAsync()
+        {
+            var (command, bytesReceived) = await _socket.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
+            if (command != null)
+                Log.CommandReceived(command, bytesReceived);
+
+            return command;
+        }
+
+        private async Task SendResponseAsync(IResponse response)
+        {
+            var bytesSent = await _socket.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
+            Log.ResponseSent(response, bytesSent);
         }
     }
 }

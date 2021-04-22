@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +32,29 @@ namespace VSRAD.DebugServer.Handlers
             _process.StdoutRead += LogStdout;
             _process.StderrRead += LogStderr;
 
-            var response = await _process.StartAndObserveAsync(ShouldTerminateProcessesOnTimeout, CancellationToken.None);
+            var processCts = new CancellationTokenSource();
+            var processExitedTask = _process.StartAndObserveAsync(ShouldTerminateProcessesOnTimeout, processCts.Token);
+
+            // Send a ping each second to detect if the client disconnects and terminate the process accordingly.
+            // This is especially important due to the global command execution lock:
+            // if the process hangs and the client disconnects, the server will never respond to another client.
+            while (true)
+            {
+                var task = await Task.WhenAny(processExitedTask, Task.Delay(1000));
+                if (task == processExitedTask)
+                    break;
+
+                try
+                {
+                    await _client.PingAsync();
+                }
+                catch (EndOfStreamException)
+                {
+                    processCts.Cancel();
+                }
+            }
+
+            var response = await processExitedTask;
 
             _process.StdoutRead -= LogStdout;
             _process.StderrRead -= LogStderr;
@@ -46,10 +69,9 @@ namespace VSRAD.DebugServer.Handlers
         {
             if (_clientSupportsTimeoutAction)
             {
-                await _client.SendResponseAsync(new ExecutionTimedOutResponse { ProcessTree = processTree.ToArray() });
-                var command = await _client.ReadCommandAsync();
-                if (command is ExecutionTimedOutActionCommand action)
-                    return action.TerminateProcesses;
+                var action = await _client.RespondWithFollowUpAsync<ExecutionTimedOutActionCommand>(
+                    new ExecutionTimedOutResponse { ProcessTree = processTree.ToArray() });
+                return action.TerminateProcesses;
             }
             return true;
         }
