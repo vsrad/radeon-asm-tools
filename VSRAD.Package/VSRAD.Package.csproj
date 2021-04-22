@@ -124,11 +124,17 @@
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\FileMetadata.cs">
       <Link>Server\SharedUtils\FileMetadata.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\NativeMethods.cs">
+      <Link>Server\SharedUtils\NativeMethods.cs</Link>
+    </Compile>
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\ObservableProcess.cs">
       <Link>Server\SharedUtils\ObservableProcess.cs</Link>
     </Compile>
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\PackedFile.cs">
       <Link>Server\SharedUtils\PackedFile.cs</Link>
+    </Compile>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\ProcessUtils.cs">
+      <Link>Server\SharedUtils\ProcessUtils.cs</Link>
     </Compile>
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\TextDebuggerOutputParser.cs">
       <Link>Server\SharedUtils\TextDebuggerOutputParser.cs</Link>
@@ -230,6 +236,7 @@
     </Compile>
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />
+    <Compile Include="ProjectSystem\StatusBarIntegration.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -260,7 +267,6 @@
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\VsEditor.cs" />
-    <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Options\ProfileOptions.cs" />

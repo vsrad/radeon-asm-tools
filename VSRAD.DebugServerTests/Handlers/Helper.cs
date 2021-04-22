@@ -14,8 +14,8 @@ namespace VSRAD.DebugServerTests.Handlers
             // Test serialization
             command = await command.WithSerializationAsync();
 
-            var logger = new ClientLogger(0, false);
-            var response = await Dispatcher.DispatchAsync(command, logger);
+            var client = new Client(0, null, null, false);
+            var response = await Dispatcher.DispatchAsync(command, client);
 
             using var stream = new MemoryStream();
             await stream.WriteSerializedMessageAsync(response);

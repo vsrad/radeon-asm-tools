@@ -9,10 +9,16 @@ namespace VSRAD.DebugServer.IPC
     {
         public IPCWriter(Stream stream) : base(stream) { }
 
-        public void WriteLengthPrefixedArray(string[] strings)
+        public void WriteLengthPrefixedArray(string[] items)
         {
-            Write7BitEncodedInt(strings.Length);
-            foreach (string str in strings) Write(str);
+            Write7BitEncodedInt(items.Length);
+            foreach (string str in items) Write(str);
+        }
+
+        public void WriteLengthPrefixedArray(int[] items)
+        {
+            Write7BitEncodedInt(items.Length);
+            foreach (int i in items) Write(i);
         }
 
         public void WriteLengthPrefixedBlob(byte[] data)
@@ -42,7 +48,7 @@ namespace VSRAD.DebugServer.IPC
         public new void Write7BitEncodedInt(int value) =>
             base.Write7BitEncodedInt(value);
 
-        public void WriteLengthPrefixedFileArray(PackedFile[] files)
+        public void WriteLengthPrefixedArray(PackedFile[] files)
         {
             Write7BitEncodedInt(files.Length);
             foreach (var file in files)
@@ -50,6 +56,17 @@ namespace VSRAD.DebugServer.IPC
                 WriteLengthPrefixedBlob(file.Data);
                 Write(file.RelativePath);
                 Write(file.LastWriteTimeUtc);
+            }
+        }
+
+        public void WriteLengthPrefixedArray(ProcessTreeItem[] processes)
+        {
+            Write7BitEncodedInt(processes.Length);
+            foreach (var process in processes)
+            {
+                Write(process.Id);
+                Write(process.Name);
+                Write(process.ChildLevel);
             }
         }
     }
@@ -61,10 +78,10 @@ namespace VSRAD.DebugServer.IPC
         public string[] ReadLengthPrefixedStringArray()
         {
             var length = Read7BitEncodedInt();
-            var strings = new string[length];
+            var items = new string[length];
             for (int i = 0; i < length; ++i)
-                strings[i] = ReadString();
-            return strings;
+                items[i] = ReadString();
+            return items;
         }
 
         public byte[] ReadLengthPrefixedBlob()
@@ -95,6 +112,15 @@ namespace VSRAD.DebugServer.IPC
             for (int i = 0; i < fileCount; ++i)
                 files[i] = new PackedFile(ReadLengthPrefixedBlob(), ReadString(), ReadDateTime());
             return files;
+        }
+
+        public ProcessTreeItem[] ReadLengthPrefixedProcessArray()
+        {
+            var fileCount = Read7BitEncodedInt();
+            var processes = new ProcessTreeItem[fileCount];
+            for (int i = 0; i < fileCount; ++i)
+                processes[i] = new ProcessTreeItem(ReadInt32(), ReadString(), ReadInt32());
+            return processes;
         }
     }
 }

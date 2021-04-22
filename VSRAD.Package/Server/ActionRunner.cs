@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -15,18 +16,29 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
+    public interface IActionRunController
+    {
+        CancellationToken CancellationToken { get; }
+
+        Task<bool> ShouldTerminateProcessOnTimeoutAsync(IList<ProcessTreeItem> processTree);
+
+        Task OpenFileInVsEditorAsync(string path, string lineMarker);
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
         private readonly SVsServiceProvider _serviceProvider;
+        private readonly IActionRunController _controller;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
         private readonly ReadOnlyCollection<string> _debugWatches;
         private readonly IProject _project;
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ReadOnlyCollection<string> debugWatches, IProject project)
+        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, IActionRunController controller, ReadOnlyCollection<string> debugWatches, IProject project)
         {
             _channel = channel;
             _serviceProvider = serviceProvider;
+            _controller = controller;
             _debugWatches = debugWatches;
             _project = project;
         }
@@ -43,6 +55,8 @@ namespace VSRAD.Package.Server
 
             for (int i = 0; i < steps.Count; ++i)
             {
+                _controller.CancellationToken.ThrowIfCancellationRequested();
+
                 StepResult result;
                 switch (steps[i])
                 {
@@ -52,14 +66,16 @@ namespace VSRAD.Package.Server
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute);
                         break;
-                    case OpenInEditorStep openInEditor:
-                        result = await DoOpenInEditorAsync(openInEditor);
-                        break;
-                    case RunActionStep runAction:
-                        result = await DoRunActionAsync(runAction, continueOnError);
-                        break;
                     case ReadDebugDataStep readDebugData:
                         (result, runStats.BreakState) = await DoReadDebugDataAsync(readDebugData);
+                        break;
+                    case OpenInEditorStep openInEditor:
+                        await _controller.OpenFileInVsEditorAsync(openInEditor.Path, openInEditor.LineMarker);
+                        result = new StepResult(true, "", "");
+                        break;
+                    case RunActionStep runAction:
+                        var subActionResult = await RunAsync(runAction.Name, runAction.EvaluatedSteps, continueOnError);
+                        result = new StepResult(subActionResult.Successful, "", "", subActionResult);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -80,7 +96,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
-                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, _controller.CancellationToken);
                 sourceFiles = response.Files;
             }
             else
@@ -96,7 +112,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
-                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, _controller.CancellationToken);
                 targetFiles = response.Files;
             }
             else
@@ -149,7 +165,7 @@ namespace VSRAD.Package.Server
                 if (step.Direction == FileCopyDirection.RemoteToLocal)
                 {
                     var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
-                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
+                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, _controller.CancellationToken);
 
                     if (response.Status != GetFilesStatus.Successful)
                         return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
@@ -178,7 +194,7 @@ namespace VSRAD.Package.Server
                 ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command, _controller.CancellationToken);
 
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
                     return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
@@ -216,7 +232,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = new[] { step.SourcePath } };
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, _controller.CancellationToken);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
                 sourceContents = response.Data;
@@ -231,7 +247,7 @@ namespace VSRAD.Package.Server
                 ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
+                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command, _controller.CancellationToken);
 
                 if (response.Status == PutFileStatus.PermissionDenied)
                     return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
@@ -254,6 +270,13 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
+        private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker,
+                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
+            return new StepResult(true, "", "");
+        }
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
         {
             var command = new Execute
@@ -265,51 +288,55 @@ namespace VSRAD.Package.Server
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
             };
-            ExecutionCompleted response;
+            IResponse response;
             if (step.Environment == StepEnvironment.Local)
-                response = await new ObservableProcess(command).StartAndObserveAsync();
-            else
-                response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command);
-
-            var log = new StringBuilder();
-            var status = response.Status == ExecutionStatus.Completed ? $"exit code {response.ExitCode}"
-                       : response.Status == ExecutionStatus.TimedOut ? "timed out"
-                       : "could not launch";
-            var stdout = response.Stdout.TrimEnd('\r', '\n');
-            var stderr = response.Stderr.TrimEnd('\r', '\n');
-            if (stdout.Length == 0 && stderr.Length == 0)
-                log.AppendFormat("No stdout/stderr captured ({0})\r\n", status);
-            if (stdout.Length != 0)
-                log.AppendFormat("Captured stdout ({0}):\r\n{1}\r\n", status, stdout);
-            if (stderr.Length != 0)
-                log.AppendFormat("Captured stderr ({0}):\r\n{1}\r\n", status, stderr);
-
-            var machine = step.Environment == StepEnvironment.Local ? "local" : "remote";
-            switch (response.Status)
             {
-                case ExecutionStatus.Completed when response.ExitCode == 0:
-                    return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
-                case ExecutionStatus.Completed:
-                    return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
-                case ExecutionStatus.TimedOut:
-                    return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
-                default:
-                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. Make sure the path to the executable is specified correctly.", log.ToString());
+                response = await new ObservableProcess(command).StartAndObserveAsync(tree =>
+                    step.ConfirmTerminationOnTimeout ? _controller.ShouldTerminateProcessOnTimeoutAsync(tree) : Task.FromResult(true), _controller.CancellationToken);
             }
-        }
+            else
+            {
+                response = await _channel.SendWithReplyAsync<IResponse>(command, _controller.CancellationToken);
+                if (response is ExecutionTimedOutResponse timeoutResponse)
+                {
+                    var shouldTerminate = !step.ConfirmTerminationOnTimeout || await _controller.ShouldTerminateProcessOnTimeoutAsync(timeoutResponse.ProcessTree);
+                    response = await _channel.SendWithReplyAsync<IResponse>(
+                        new ExecutionTimedOutActionCommand { TerminateProcesses = shouldTerminate }, _controller.CancellationToken);
+                }
+            }
+            var machine = step.Environment == StepEnvironment.Local ? "local" : "remote";
+            if (response is ExecutionTerminatedResponse terminatedResponse)
+            {
+                var log = new StringBuilder("The following processes were terminated:\r\n");
+                ProcessUtils.PrintProcessTree(log, terminatedResponse.TerminatedProcessTree);
+                return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
+            }
+            else
+            {
+                var result = (ExecutionCompleted)response;
+                if (result.Status == ExecutionStatus.Completed)
+                {
+                    var log = new StringBuilder();
+                    var stdout = result.Stdout.TrimEnd('\r', '\n');
+                    var stderr = result.Stderr.TrimEnd('\r', '\n');
+                    if (stdout.Length == 0 && stderr.Length == 0)
+                        log.AppendFormat("No stdout/stderr captured (exit code {0})\r\n", result.ExitCode);
+                    if (stdout.Length != 0)
+                        log.AppendFormat("Captured stdout (exit code {0}):\r\n{1}\r\n", result.ExitCode, stdout);
+                    if (stderr.Length != 0)
+                        log.AppendFormat("Captured stderr (exit code {0}):\r\n{1}\r\n", result.ExitCode, stderr);
 
-        private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker,
-                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
-            return new StepResult(true, "", "");
-        }
-
-        private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
-        {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError);
-            return new StepResult(subActionResult.Successful, "", "", subActionResult);
+                    if (result.ExitCode == 0)
+                        return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                    else
+                        return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({result.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                }
+                else
+                {
+                    // result.Stderr contains the error reason 
+                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. {result.Stderr}", result.Stderr);
+                }
+            }
         }
 
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
@@ -371,7 +398,8 @@ namespace VSRAD.Package.Server
 
                 if (step.OutputFile.IsRemote())
                 {
-                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput });
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(
+                        new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput }, _controller.CancellationToken);
 
                     if (response.Status == FetchStatus.FileNotFound)
                         return (new StepResult(false, $"Output file ({outputPath}) could not be found.", ""), null);
@@ -410,7 +438,7 @@ namespace VSRAD.Package.Server
             if (isRemote)
             {
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                    new FetchResultRange { FilePath = new[] { path } });
+                    new FetchResultRange { FilePath = new[] { path } }, _controller.CancellationToken);
 
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} file ({path}) could not be found.");
@@ -471,7 +499,7 @@ namespace VSRAD.Package.Server
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } })).Timestamp;
+                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } }, _controller.CancellationToken)).Timestamp;
                     else
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
@@ -484,7 +512,7 @@ namespace VSRAD.Package.Server
                             continue;
                         if (file.IsRemote())
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = new[] { file.Path } })).Timestamp;
+                                new FetchMetadata { FilePath = new[] { file.Path } }, _controller.CancellationToken)).Timestamp;
                         else
                             _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }

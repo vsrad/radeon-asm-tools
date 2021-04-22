@@ -217,6 +217,9 @@ namespace VSRAD.Package.Options
         private int _timeoutSecs = 0;
         public int TimeoutSecs { get => _timeoutSecs; set => SetField(ref _timeoutSecs, value); }
 
+        private bool _confirmTerminationOnTimeout = true;
+        public bool ConfirmTerminationOnTimeout { get => _confirmTerminationOnTimeout; set => SetField(ref _confirmTerminationOnTimeout, value); }
+
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(Executable))
@@ -234,7 +237,8 @@ namespace VSRAD.Package.Options
             WorkingDirectory == step.WorkingDirectory &&
             RunAsAdmin == step.RunAsAdmin &&
             WaitForCompletion == step.WaitForCompletion &&
-            TimeoutSecs == step.TimeoutSecs;
+            TimeoutSecs == step.TimeoutSecs &&
+            ConfirmTerminationOnTimeout == step.ConfirmTerminationOnTimeout;
 
         public override int GetHashCode() => 3;
 
@@ -276,7 +280,8 @@ namespace VSRAD.Package.Options
                 // The option to wait for completion is hidden in the UI for remote execution (because IPC.Commands.Execute does not support it).
                 // Hence it is always true for a remote ExecuteStep. If it's forced to run locally, we should respect this behavior.
                 WaitForCompletion = Environment == StepEnvironment.Remote || WaitForCompletion,
-                TimeoutSecs = TimeoutSecs
+                TimeoutSecs = TimeoutSecs,
+                ConfirmTerminationOnTimeout = ConfirmTerminationOnTimeout
             };
         }
     }

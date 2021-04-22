@@ -23,11 +23,11 @@ namespace VSRAD.Package.Server
 
         ClientState ConnectionState { get; }
 
-        Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse;
+        Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse;
 
         Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync();
 
-        Task<DebugServer.IPC.CapabilityInfo> GetServerCapabilityInfoAsync();
+        Task<DebugServer.IPC.CapabilityInfo> GetServerCapabilityInfoAsync(CancellationToken cancellationToken);
 
         void ForceDisconnect();
     }
@@ -94,34 +94,36 @@ namespace VSRAD.Package.Server
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
         }
 
-        public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>
-            SendWithReplyAsync<T>(command, tryReconnect: true);
+        public Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse =>
+            SendWithReplyAsync<T>(command, tryReconnect: true, cancellationToken);
 
-        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect) where T : IResponse
+        private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect, CancellationToken cancellationToken) where T : IResponse
         {
             await _mutex.WaitAsync();
             try
             {
-                await EstablishServerConnectionAsync().ConfigureAwait(false);
+                await EstablishServerConnectionAsync(cancellationToken).ConfigureAwait(false);
+                using (cancellationToken.Register(ForceDisconnect))
+                {
+                    var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
 
-                var bytesSent = await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Sent command ({bytesSent} bytes) to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
-
-                var (response, bytesReceived) = await _connection.GetStream().ReadSerializedResponseAsync<T>().ConfigureAwait(false);
-                await _outputWindowWriter.PrintMessageAsync($"Received response ({bytesReceived} bytes) from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
-                return response;
+                    var (response, bytesReceived) = await _connection.GetStream().ReadSerializedResponseAsync<T>().ConfigureAwait(false);
+                    await _outputWindowWriter.PrintMessageAsync($"Received response ({bytesReceived} bytes) from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
+                    return response;
+                }
             }
             catch (ObjectDisposedException) // ForceDisconnect has been called within the try block 
             {
                 throw new OperationCanceledException();
             }
-            catch (Exception e) when (!(e is UnsupportedServerVersionException)) // Don't attempt to reconnect to an unsupported server
+            catch (Exception e) when (!cancellationToken.IsCancellationRequested && !(e is UnsupportedServerVersionException)) // Don't attempt to reconnect to an unsupported server
             {
                 if (tryReconnect)
                 {
                     await _outputWindowWriter.PrintMessageAsync($"Connection to {ConnectionOptions} lost, attempting to reconnect...").ConfigureAwait(false);
                     _mutex.Release();
-                    return await SendWithReplyAsync<T>(command, false);
+                    return await SendWithReplyAsync<T>(command, false, cancellationToken);
                 }
                 else
                 {
@@ -140,16 +142,16 @@ namespace VSRAD.Package.Server
         {
             if (_remoteEnvironment == null)
             {
-                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables());
+                var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables(), CancellationToken.None);
                 _remoteEnvironment = environment.Variables;
             }
             return _remoteEnvironment;
         }
 
-        public async Task<DebugServer.IPC.CapabilityInfo> GetServerCapabilityInfoAsync()
+        public async Task<DebugServer.IPC.CapabilityInfo> GetServerCapabilityInfoAsync(CancellationToken cancellationToken)
         {
             if (ConnectionState != ClientState.Connected)
-                await EstablishServerConnectionAsync();
+                await EstablishServerConnectionAsync(cancellationToken);
             return ServerCapabilities;
         }
 
@@ -161,7 +163,7 @@ namespace VSRAD.Package.Server
             ConnectionState = ClientState.Disconnected;
         }
 
-        private async Task EstablishServerConnectionAsync()
+        private async Task EstablishServerConnectionAsync(CancellationToken cancellationToken)
         {
             if (_connection != null && _connection.Connected) return;
 
@@ -170,20 +172,23 @@ namespace VSRAD.Package.Server
             var client = new TcpClient();
             try
             {
-                using (var cts = new CancellationTokenSource(_connectionTimeout))
-                using (cts.Token.Register(() => client.Dispose()))
+                using (var timeoutCts = new CancellationTokenSource(_connectionTimeout))
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, cancellationToken))
+                using (cts.Token.Register(() => client.Close()))
                 {
-                    await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
-                }
-                await client.GetStream().WriteSerializedMessageAsync(new GetServerCapabilitiesCommand()).ConfigureAwait(false);
-                var (response, _) = await client.GetStream().ReadSerializedResponseAsync<GetServerCapabilitiesResponse>().ConfigureAwait(false);
-                if (response == null)
-                {
-                    ConnectionState = ClientState.Disconnected;
-                    throw new UnsupportedServerVersionException(ConnectionOptions);
+                    await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port).ConfigureAwait(false);
+
+                    var capCommand = new GetServerCapabilitiesCommand { ExtensionCapabilities = DebugServer.IPC.CapabilityInfo.LatestExtensionCapabilities };
+                    await client.GetStream().WriteSerializedMessageAsync(capCommand).ConfigureAwait(false);
+                    var (response, _) = await client.GetStream().ReadSerializedResponseAsync<GetServerCapabilitiesResponse>().ConfigureAwait(false);
+                    if (response == null)
+                    {
+                        ConnectionState = ClientState.Disconnected;
+                        throw new UnsupportedServerVersionException(ConnectionOptions);
+                    }
+                    ServerCapabilities = response.Info;
                 }
 
-                ServerCapabilities = response.Info;
                 if (!ServerCapabilities.IsUpToDate())
                     Errors.ShowWarning($"The debug server on host {ConnectionOptions} is out of date. Some features may not work properly.");
 

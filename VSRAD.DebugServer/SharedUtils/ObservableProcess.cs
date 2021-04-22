@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
 
@@ -8,6 +10,8 @@ namespace VSRAD.DebugServer.SharedUtils
 {
     public sealed class ObservableProcess
     {
+        public delegate Task<bool> ConfirmTerminationOnTimeout(IList<ProcessTreeItem> processTree);
+
         public event EventHandler ExecutionStarted;
         public event EventHandler<string> StdoutRead;
         public event EventHandler<string> StderrRead;
@@ -15,7 +19,6 @@ namespace VSRAD.DebugServer.SharedUtils
         private readonly Process _process;
         private readonly bool _waitForCompletion;
         private readonly int _timeout;
-        private bool _stoppedByTimeout = false;
 
         public ObservableProcess(IPC.Commands.Execute command)
         {
@@ -46,13 +49,14 @@ namespace VSRAD.DebugServer.SharedUtils
             _timeout = command.ExecutionTimeoutSecs;
         }
 
-        public async Task<ExecutionCompleted> StartAndObserveAsync()
+        public async Task<IResponse> StartAndObserveAsync(ConfirmTerminationOnTimeout shouldTerminateOnTimeout, CancellationToken cancellationToken)
         {
             if (!_waitForCompletion)
                 return RunWithoutAwaitingCompletion();
 
             var processExitedTcs = new TaskCompletionSource<bool>();
-            _process.Exited += (sender, args) => processExitedTcs.SetResult(true);
+            _process.Exited += (sender, args) => processExitedTcs.TrySetResult(true);
+            cancellationToken.Register(() => processExitedTcs.TrySetCanceled());
 
             var (stdoutTask, stderrTask) = InitializeOutputCapture();
 
@@ -66,25 +70,55 @@ namespace VSRAD.DebugServer.SharedUtils
                     _process.BeginOutputReadLine();
                     _process.BeginErrorReadLine();
                 }
-                SetProcessTimeout();
             }
-            catch (System.ComponentModel.Win32Exception)
+            catch (System.ComponentModel.Win32Exception e)
             {
-                return new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch };
+                return new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stderr = e.Message };
             }
-            catch (InvalidOperationException) // missing executable name
+            catch (InvalidOperationException e)
             {
-                return new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch };
+                return new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stderr = e.Message };
             }
 
-            await processExitedTcs.Task;
+            var processTimeoutTcs = new TaskCompletionSource<bool>();
+            if (_timeout != 0)
+            {
+                var timeoutTimer = new System.Timers.Timer { AutoReset = false, Interval = _timeout * 1000.0 /* ms */ };
+                timeoutTimer.Elapsed += (sender, e) => processTimeoutTcs.SetResult(true);
+                timeoutTimer.Start();
+            }
 
-            var status = _stoppedByTimeout ? ExecutionStatus.TimedOut : ExecutionStatus.Completed;
+            var completedTask = await Task.WhenAny(processExitedTcs.Task, processTimeoutTcs.Task);
+            if (completedTask.IsCanceled || completedTask == processTimeoutTcs.Task)
+            {
+                // GetProcessTree call can take several seconds, it should not block the UI thread
+                var processTree = await Task.Run(() => _process.GetProcessTree());
+                if (completedTask.IsCanceled)
+                {
+                    ProcessUtils.TerminateProcessTree(processTree);
+                    throw new OperationCanceledException(cancellationToken);
+                }
+                // The tree may be empty if the process has just exited
+                if (processTree.Count > 0 && await shouldTerminateOnTimeout(processTree))
+                {
+                    var terminatedProcesses = ProcessUtils.TerminateProcessTree(processTree);
+                    return new ExecutionTerminatedResponse { TerminatedProcessTree = terminatedProcesses.ToArray() };
+                }
+                // If the process is still running and should not be terminated, wait for it to exit
+                await processExitedTcs.Task;
+            }
 
             var stdout = await stdoutTask;
             var stderr = await stderrTask;
 
-            return new ExecutionCompleted { Status = status, ExitCode = _process.ExitCode, Stdout = stdout, Stderr = stderr, ExecutionTime = stopWatch.ElapsedMilliseconds };
+            return new ExecutionCompleted
+            {
+                Status = ExecutionStatus.Completed,
+                ExitCode = _process.ExitCode,
+                Stdout = stdout,
+                Stderr = stderr,
+                ExecutionTime = stopWatch.ElapsedMilliseconds
+            };
         }
 
         private ExecutionCompleted RunWithoutAwaitingCompletion()
@@ -139,28 +173,6 @@ namespace VSRAD.DebugServer.SharedUtils
             };
 
             return (stdoutTcs.Task, stderrTcs.Task);
-        }
-
-        private void SetProcessTimeout()
-        {
-            if (_timeout == 0)
-                return;
-
-            var timeoutTimer = new System.Timers.Timer()
-            {
-                AutoReset = false,
-                Interval = _timeout * 1000.0 // seconds -> milliseconds
-            };
-            timeoutTimer.Elapsed += (sender, e) =>
-            {
-                try
-                {
-                    _process.Kill();
-                    _stoppedByTimeout = true;
-                }
-                catch (InvalidOperationException) { /* Already stopped */ }
-            };
-            timeoutTimer.Start();
         }
     }
 }

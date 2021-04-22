@@ -9,6 +9,12 @@ namespace VSRAD.DebugServer.IPC
         Base = 0
     }
 
+    public enum ExtensionCapability : byte
+    {
+        Base = 0,
+        ExecutionTimedOutResponse = 1 // The extension accepts ExecutionTimedOutResponse and replies with ExecutionTimedOutActionCommand. When this capability is absent, the server defaults to TerminateProcesses = true
+    }
+
     public enum ServerPlatform : byte
     {
         Windows = 0,
@@ -21,6 +27,12 @@ namespace VSRAD.DebugServer.IPC
         public string Version { get; }
         public ServerPlatform Platform { get; }
         public HashSet<ServerCapability> Capabilities { get; }
+
+        public static readonly HashSet<ExtensionCapability> LatestExtensionCapabilities = new HashSet<ExtensionCapability>(new[]
+        {
+            ExtensionCapability.Base,
+            ExtensionCapability.ExecutionTimedOutResponse
+        });
 
         public static readonly HashSet<ServerCapability> LatestServerCapabilities = new HashSet<ServerCapability>(new[]
         {
