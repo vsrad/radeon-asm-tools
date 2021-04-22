@@ -14,17 +14,24 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
+    public interface IActionRunController
+    {
+        Task<bool> ShouldTerminateProcessOnTimeoutAsync(IList<ProcessTreeItem> processTree);
+
+        Task OpenFileInVsEditorAsync(string path, string lineMarker);
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
-        private readonly SVsServiceProvider _serviceProvider;
+        private readonly IActionRunController _controller;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
         private readonly ReadOnlyCollection<string> _debugWatches;
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ReadOnlyCollection<string> debugWatches)
+        public ActionRunner(ICommunicationChannel channel, IActionRunController controller, ReadOnlyCollection<string> debugWatches)
         {
             _channel = channel;
-            _serviceProvider = serviceProvider;
+            _controller = controller;
             _debugWatches = debugWatches;
         }
 
@@ -49,14 +56,16 @@ namespace VSRAD.Package.Server
                     case ExecuteStep execute:
                         result = await DoExecuteAsync(execute);
                         break;
-                    case OpenInEditorStep openInEditor:
-                        result = await DoOpenInEditorAsync(openInEditor);
-                        break;
-                    case RunActionStep runAction:
-                        result = await DoRunActionAsync(runAction, continueOnError);
-                        break;
                     case ReadDebugDataStep readDebugData:
                         (result, runStats.BreakState) = await DoReadDebugDataAsync(readDebugData);
+                        break;
+                    case OpenInEditorStep openInEditor:
+                        await _controller.OpenFileInVsEditorAsync(openInEditor.Path, openInEditor.LineMarker);
+                        result = new StepResult(true, "", "");
+                        break;
+                    case RunActionStep runAction:
+                        var subActionResult = await RunAsync(runAction.Name, runAction.EvaluatedSteps, continueOnError);
+                        result = new StepResult(subActionResult.Successful, "", "", subActionResult);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -262,50 +271,55 @@ namespace VSRAD.Package.Server
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
             };
-            ExecutionCompleted response;
+            IResponse response;
             if (step.Environment == StepEnvironment.Local)
-                response = await new ObservableProcess(command).StartAndObserveAsync();
+            {
+                response = await new ObservableProcess(command).StartAndObserveAsync(_controller.ShouldTerminateProcessOnTimeoutAsync);
+            }
             else
-                response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command);
-
-            var log = new StringBuilder();
-            var status = response.Status == ExecutionStatus.Completed ? $"exit code {response.ExitCode}"
-                       : response.Status == ExecutionStatus.TimedOut ? "timed out"
-                       : "could not launch";
-            var stdout = response.Stdout.TrimEnd('\r', '\n');
-            var stderr = response.Stderr.TrimEnd('\r', '\n');
-            if (stdout.Length == 0 && stderr.Length == 0)
-                log.AppendFormat("No stdout/stderr captured ({0})\r\n", status);
-            if (stdout.Length != 0)
-                log.AppendFormat("Captured stdout ({0}):\r\n{1}\r\n", status, stdout);
-            if (stderr.Length != 0)
-                log.AppendFormat("Captured stderr ({0}):\r\n{1}\r\n", status, stderr);
+            {
+                response = await _channel.SendWithReplyAsync<IResponse>(command);
+                if (response is ExecutionTimedOutResponse timeoutResponse)
+                {
+                    var shouldTerminate = await _controller.ShouldTerminateProcessOnTimeoutAsync(timeoutResponse.ProcessTree);
+                    response = await _channel.SendWithReplyAsync<IResponse>(new ExecutionTimedOutActionCommand { TerminateProcesses = shouldTerminate });
+                }
+            }
 
             var machine = step.Environment == StepEnvironment.Local ? "local" : "remote";
-            switch (response.Status)
+            if (response is ExecutionTerminatedResponse terminatedResponse)
             {
-                case ExecutionStatus.Completed when response.ExitCode == 0:
-                    return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
-                case ExecutionStatus.Completed:
-                    return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({response.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
-                case ExecutionStatus.TimedOut:
-                    return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
-                default:
-                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. Make sure the path to the executable is specified correctly.", log.ToString());
+                var log = new StringBuilder("The following processes were terminated:\r\n");
+                ProcessUtils.PrintProcessTree(log, terminatedResponse.TerminatedProcessTree);
+
+                return new StepResult(false, $"Execution timeout is exceeded. {step.Executable} process on the {machine} machine is terminated.", log.ToString());
             }
-        }
+            else
+            {
+                var result = (ExecutionCompleted)response;
+                if (result.Status == ExecutionStatus.Completed)
+                {
+                    var log = new StringBuilder();
+                    var stdout = result.Stdout.TrimEnd('\r', '\n');
+                    var stderr = result.Stderr.TrimEnd('\r', '\n');
+                    if (stdout.Length == 0 && stderr.Length == 0)
+                        log.AppendFormat("No stdout/stderr captured (exit code {0})\r\n", result.ExitCode);
+                    if (stdout.Length != 0)
+                        log.AppendFormat("Captured stdout (exit code {0}):\r\n{1}\r\n", result.ExitCode, stdout);
+                    if (stderr.Length != 0)
+                        log.AppendFormat("Captured stderr (exit code {0}):\r\n{1}\r\n", result.ExitCode, stderr);
 
-        private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker);
-            return new StepResult(true, "", "");
-        }
-
-        private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
-        {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError);
-            return new StepResult(subActionResult.Successful, "", "", subActionResult);
+                    if (result.ExitCode == 0)
+                        return new StepResult(true, "", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                    else
+                        return new StepResult(false, $"{step.Executable} process exited with a non-zero code ({result.ExitCode}). Check your application or debug script output in Output -> RAD Debug.", log.ToString(), errorListOutput: new string[] { stdout, stderr });
+                }
+                else
+                {
+                    // result.Stderr contains the error reason 
+                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. {result.Stderr}", result.Stderr);
+                }
+            }
         }
 
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)

@@ -20,6 +20,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         ListFiles = 7,
         GetFiles = 8,
         GetServerCapabilities = 9,
+        ExecutionTimedOutAction = 10,
 
         CompressedCommand = 0xFF
     }
@@ -50,6 +51,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
                 case CommandType.GetFiles: return GetFilesCommand.Deserialize(reader);
                 case CommandType.GetServerCapabilities: return GetServerCapabilitiesCommand.Deserialize(reader);
+                case CommandType.ExecutionTimedOutAction: return ExecutionTimedOutActionCommand.Deserialize(reader);
 
                 case CommandType.CompressedCommand: return CompressedCommand.Deserialize(reader);
             }
@@ -71,6 +73,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case ListFilesCommand _: type = CommandType.ListFiles; break;
                 case GetFilesCommand _: type = CommandType.GetFiles; break;
                 case GetServerCapabilitiesCommand _: type = CommandType.GetServerCapabilities; break;
+                case ExecutionTimedOutActionCommand _: type = CommandType.ExecutionTimedOutAction; break;
 
                 case CompressedCommand _: type = CommandType.CompressedCommand; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
@@ -249,7 +252,7 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public void Serialize(IPCWriter writer)
         {
-            writer.WriteLengthPrefixedFileArray(Files);
+            writer.WriteLengthPrefixedArray(Files);
             writer.Write(Path);
             writer.Write(PreserveTimestamps);
         }
@@ -334,6 +337,27 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write7BitEncodedInt(ExtensionCapabilities.Count);
             foreach (var cap in ExtensionCapabilities)
                 writer.Write((byte)cap);
+        }
+    }
+
+    public sealed class ExecutionTimedOutActionCommand : ICommand
+    {
+        public bool TerminateProcesses { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "ExecutionTimedOutActionCommand",
+            $"TerminateProcesses = {TerminateProcesses}"
+        });
+
+        public static ExecutionTimedOutActionCommand Deserialize(IPCReader reader) => new ExecutionTimedOutActionCommand
+        {
+            TerminateProcesses = reader.ReadBoolean()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(TerminateProcesses);
         }
     }
 

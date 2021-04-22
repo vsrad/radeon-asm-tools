@@ -124,11 +124,17 @@
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\FileMetadata.cs">
       <Link>Server\SharedUtils\FileMetadata.cs</Link>
     </Compile>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\NativeMethods.cs">
+      <Link>Server\SharedUtils\NativeMethods.cs</Link>
+    </Compile>
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\ObservableProcess.cs">
       <Link>Server\SharedUtils\ObservableProcess.cs</Link>
     </Compile>
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\PackedFile.cs">
       <Link>Server\SharedUtils\PackedFile.cs</Link>
+    </Compile>
+    <Compile Include="..\VSRAD.DebugServer\SharedUtils\ProcessUtils.cs">
+      <Link>Server\SharedUtils\ProcessUtils.cs</Link>
     </Compile>
     <Compile Include="..\VSRAD.DebugServer\SharedUtils\TextDebuggerOutputParser.cs">
       <Link>Server\SharedUtils\TextDebuggerOutputParser.cs</Link>

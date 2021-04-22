@@ -3,11 +3,15 @@ using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
+using VSRAD.DebugServer.SharedUtils;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -32,7 +36,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IActionLauncher))]
-    public sealed class ActionLauncher : IActionLauncher
+    public sealed class ActionLauncher : IActionLauncher, IActionRunController
     {
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
@@ -125,7 +129,7 @@ namespace VSRAD.Package.ProjectSystem
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 _projectSources.SaveProjectState();
 
-                var runner = new ActionRunner(_channel, _serviceProvider, transients.Watches);
+                var runner = new ActionRunner(_channel, this, transients.Watches);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
                 return new ActionExecution(actionError, transients, runResult);
@@ -149,6 +153,26 @@ namespace VSRAD.Package.ProjectSystem
                     return true;
             }
             return false;
+        }
+
+        public async Task<bool> ShouldTerminateProcessOnTimeoutAsync(IList<ProcessTreeItem> processTree)
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+
+            var message = new StringBuilder("Execution timeout was reached when running ");
+            message.Append(_currentlyRunningActionName);
+            message.Append(" action. The following processes are still running:\r\n");
+            ProcessUtils.PrintProcessTree(message, processTree);
+            message.Append("\r\nDo you want to terminate these processes? Choose No to wait for the processes to finish.");
+
+            var result = MessageBox.Show(message.ToString(), "RAD Debugger", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            return result == MessageBoxResult.Yes;
+        }
+
+        public async Task OpenFileInVsEditorAsync(string path, string lineMarker)
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            VsEditor.OpenFileInEditor(_serviceProvider, path, lineMarker);
         }
     }
 }

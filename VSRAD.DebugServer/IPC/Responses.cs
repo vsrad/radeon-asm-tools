@@ -18,6 +18,8 @@ namespace VSRAD.DebugServer.IPC.Responses
         ListFiles = 6,
         GetFiles = 7,
         GetServerCapabilities = 8,
+        ExecutionTimedOut = 9,
+        ExecutionTerminated = 10,
 
         CompressedResponse = 0xFF
     }
@@ -44,6 +46,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
                 case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
                 case ResponseType.GetServerCapabilities: return GetServerCapabilitiesResponse.Deserialize(reader);
+                case ResponseType.ExecutionTimedOut: return ExecutionTimedOutResponse.Deserialize(reader);
+                case ResponseType.ExecutionTerminated: return ExecutionTerminatedResponse.Deserialize(reader);
 
                 case ResponseType.CompressedResponse: return CompressedResponse.Deserialize(reader);
             }
@@ -64,6 +68,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 case GetFilesResponse _: type = ResponseType.GetFiles; break;
                 case GetServerCapabilitiesResponse _: type = ResponseType.GetServerCapabilities; break;
+                case ExecutionTimedOutResponse _: type = ResponseType.ExecutionTimedOut; break;
+                case ExecutionTerminatedResponse _: type = ResponseType.ExecutionTerminated; break;
 
                 case CompressedResponse _: type = ResponseType.CompressedResponse; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
@@ -270,7 +276,7 @@ namespace VSRAD.DebugServer.IPC.Responses
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
-            writer.WriteLengthPrefixedFileArray(Files);
+            writer.WriteLengthPrefixedArray(Files);
         }
     }
 
@@ -309,6 +315,44 @@ namespace VSRAD.DebugServer.IPC.Responses
         };
 
         public void Serialize(IPCWriter writer) => Info.Serialize(writer);
+    }
+
+    public sealed class ExecutionTimedOutResponse : IResponse
+    {
+        public ProcessTreeItem[] ProcessTree { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "ExecutionTimedOutResponse",
+            $"ProcessTree = <{ProcessTree.Length} entries>"
+        });
+
+        public static ExecutionTimedOutResponse Deserialize(IPCReader reader) => new ExecutionTimedOutResponse
+        {
+            ProcessTree = reader.ReadLengthPrefixedProcessArray()
+        };
+
+        public void Serialize(IPCWriter writer) =>
+            writer.WriteLengthPrefixedArray(ProcessTree);
+    }
+
+    public sealed class ExecutionTerminatedResponse : IResponse
+    {
+        public ProcessTreeItem[] TerminatedProcessTree { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "ExecutionTerminatedResponse",
+            $"TerminatedProcessTree = <{TerminatedProcessTree.Length} entries>"
+        });
+
+        public static ExecutionTerminatedResponse Deserialize(IPCReader reader) => new ExecutionTerminatedResponse
+        {
+            TerminatedProcessTree = reader.ReadLengthPrefixedProcessArray()
+        };
+
+        public void Serialize(IPCWriter writer) =>
+            writer.WriteLengthPrefixedArray(TerminatedProcessTree);
     }
 
     public sealed class CompressedResponse : IResponse
