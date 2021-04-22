@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -16,6 +17,8 @@ namespace VSRAD.Package.Server
 {
     public interface IActionRunController
     {
+        CancellationToken CancellationToken { get; }
+
         Task<bool> ShouldTerminateProcessOnTimeoutAsync(IList<ProcessTreeItem> processTree);
 
         Task OpenFileInVsEditorAsync(string path, string lineMarker);
@@ -47,6 +50,8 @@ namespace VSRAD.Package.Server
 
             for (int i = 0; i < steps.Count; ++i)
             {
+                _controller.CancellationToken.ThrowIfCancellationRequested();
+
                 StepResult result;
                 switch (steps[i])
                 {
@@ -86,7 +91,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new ListFilesCommand { Path = step.SourcePath, IncludeSubdirectories = step.IncludeSubdirectories };
-                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, _controller.CancellationToken);
                 sourceFiles = response.Files;
             }
             else
@@ -102,7 +107,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.LocalToRemote)
             {
                 var command = new ListFilesCommand { Path = step.TargetPath, IncludeSubdirectories = step.IncludeSubdirectories };
-                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+                var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command, _controller.CancellationToken);
                 targetFiles = response.Files;
             }
             else
@@ -155,7 +160,7 @@ namespace VSRAD.Package.Server
                 if (step.Direction == FileCopyDirection.RemoteToLocal)
                 {
                     var command = new GetFilesCommand { RootPath = step.SourcePath, Paths = filesToGet.ToArray(), UseCompression = step.UseCompression };
-                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command);
+                    var response = await _channel.SendWithReplyAsync<GetFilesResponse>(command, _controller.CancellationToken);
 
                     if (response.Status != GetFilesStatus.Successful)
                         return new StepResult(false, $"Unable to copy files from the remote machine", "The following files were requested:\r\n" + string.Join("; ", filesToGet) + "\r\n");
@@ -184,7 +189,7 @@ namespace VSRAD.Package.Server
                 ICommand command = new PutDirectoryCommand { Files = files.ToArray(), Path = step.TargetPath, PreserveTimestamps = step.PreserveTimestamps };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+                var response = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command, _controller.CancellationToken);
 
                 if (response.Status == PutDirectoryStatus.TargetPathIsFile)
                     return new StepResult(false, $"Directory \"{step.SourcePath}\" could not be copied to the remote machine: the target path is a file.", "");
@@ -222,7 +227,7 @@ namespace VSRAD.Package.Server
             if (step.Direction == FileCopyDirection.RemoteToLocal)
             {
                 var command = new FetchResultRange { FilePath = new[] { step.SourcePath } };
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
+                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command, _controller.CancellationToken);
                 if (response.Status == FetchStatus.FileNotFound)
                     return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
                 sourceContents = response.Data;
@@ -237,7 +242,7 @@ namespace VSRAD.Package.Server
                 ICommand command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath };
                 if (step.UseCompression)
                     command = new CompressedCommand(command);
-                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
+                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command, _controller.CancellationToken);
 
                 if (response.Status == PutFileStatus.PermissionDenied)
                     return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
@@ -274,15 +279,16 @@ namespace VSRAD.Package.Server
             IResponse response;
             if (step.Environment == StepEnvironment.Local)
             {
-                response = await new ObservableProcess(command).StartAndObserveAsync(_controller.ShouldTerminateProcessOnTimeoutAsync);
+                response = await new ObservableProcess(command).StartAndObserveAsync(_controller.ShouldTerminateProcessOnTimeoutAsync, _controller.CancellationToken);
             }
             else
             {
-                response = await _channel.SendWithReplyAsync<IResponse>(command);
+                response = await _channel.SendWithReplyAsync<IResponse>(command, _controller.CancellationToken);
                 if (response is ExecutionTimedOutResponse timeoutResponse)
                 {
                     var shouldTerminate = await _controller.ShouldTerminateProcessOnTimeoutAsync(timeoutResponse.ProcessTree);
-                    response = await _channel.SendWithReplyAsync<IResponse>(new ExecutionTimedOutActionCommand { TerminateProcesses = shouldTerminate });
+                    response = await _channel.SendWithReplyAsync<IResponse>(
+                        new ExecutionTimedOutActionCommand { TerminateProcesses = shouldTerminate }, _controller.CancellationToken);
                 }
             }
 
@@ -381,7 +387,8 @@ namespace VSRAD.Package.Server
 
                 if (step.OutputFile.IsRemote())
                 {
-                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput });
+                    var response = await _channel.SendWithReplyAsync<MetadataFetched>(
+                        new FetchMetadata { FilePath = new[] { outputPath }, BinaryOutput = step.BinaryOutput }, _controller.CancellationToken);
 
                     if (response.Status == FetchStatus.FileNotFound)
                         return (new StepResult(false, $"Output file ({outputPath}) could not be found.", ""), null);
@@ -420,7 +427,7 @@ namespace VSRAD.Package.Server
             if (isRemote)
             {
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(
-                    new FetchResultRange { FilePath = new[] { path } });
+                    new FetchResultRange { FilePath = new[] { path } }, _controller.CancellationToken);
 
                 if (response.Status == FetchStatus.FileNotFound)
                     return new Error($"{type} file ({path}) could not be found.");
@@ -481,7 +488,7 @@ namespace VSRAD.Package.Server
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } })).Timestamp;
+                            new FetchMetadata { FilePath = new[] { copyFile.SourcePath } }, _controller.CancellationToken)).Timestamp;
                     else
                         _initialTimestamps[copyFile.SourcePath] = GetLocalFileLastWriteTimeUtc(copyFile.SourcePath);
                 }
@@ -494,7 +501,7 @@ namespace VSRAD.Package.Server
                             continue;
                         if (file.IsRemote())
                             _initialTimestamps[file.Path] = (await _channel.SendWithReplyAsync<MetadataFetched>(
-                                new FetchMetadata { FilePath = new[] { file.Path } })).Timestamp;
+                                new FetchMetadata { FilePath = new[] { file.Path } }, _controller.CancellationToken)).Timestamp;
                         else
                             _initialTimestamps[file.Path] = GetLocalFileLastWriteTimeUtc(file.Path);
                     }

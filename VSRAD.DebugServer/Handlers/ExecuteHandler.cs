@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
@@ -30,7 +31,7 @@ namespace VSRAD.DebugServer.Handlers
             _process.StdoutRead += LogStdout;
             _process.StderrRead += LogStderr;
 
-            var response = await _process.StartAndObserveAsync(ShouldTerminateProcessesOnTimeout);
+            var response = await _process.StartAndObserveAsync(ShouldTerminateProcessesOnTimeout, CancellationToken.None);
 
             _process.StdoutRead -= LogStdout;
             _process.StderrRead -= LogStderr;

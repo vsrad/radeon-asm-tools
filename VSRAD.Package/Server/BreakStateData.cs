@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 
@@ -218,7 +219,7 @@ namespace VSRAD.Package.Server
                     ByteOffset = requestedByteOffset,
                     ByteCount = requestedByteCount,
                     OutputOffset = _outputFile.Offset
-                }).ConfigureAwait(false);
+                }, CancellationToken.None).ConfigureAwait(false);
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
                 return "Output file could not be opened.";

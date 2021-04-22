@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
 
@@ -48,13 +49,14 @@ namespace VSRAD.DebugServer.SharedUtils
             _timeout = command.ExecutionTimeoutSecs;
         }
 
-        public async Task<IResponse> StartAndObserveAsync(ConfirmTerminationOnTimeout shouldTerminateOnTimeout)
+        public async Task<IResponse> StartAndObserveAsync(ConfirmTerminationOnTimeout shouldTerminateOnTimeout, CancellationToken cancellationToken)
         {
             if (!_waitForCompletion)
                 return RunWithoutAwaitingCompletion();
 
             var processExitedTcs = new TaskCompletionSource<bool>();
-            _process.Exited += (sender, args) => processExitedTcs.SetResult(true);
+            _process.Exited += (sender, args) => processExitedTcs.TrySetResult(true);
+            cancellationToken.Register(() => processExitedTcs.TrySetCanceled());
 
             var (stdoutTask, stderrTask) = InitializeOutputCapture();
 
@@ -87,16 +89,21 @@ namespace VSRAD.DebugServer.SharedUtils
             }
 
             var completedTask = await Task.WhenAny(processExitedTcs.Task, processTimeoutTcs.Task);
-            if (completedTask == processTimeoutTcs.Task)
+            if (completedTask.IsCanceled || completedTask == processTimeoutTcs.Task)
             {
                 var processTree = _process.GetProcessTree();
+                if (completedTask.IsCanceled)
+                {
+                    ProcessUtils.TerminateProcessTree(processTree);
+                    throw new OperationCanceledException(cancellationToken);
+                }
                 // The tree may be empty if the process has just exited
                 if (processTree.Count > 0 && await shouldTerminateOnTimeout(processTree))
                 {
                     var terminatedProcesses = ProcessUtils.TerminateProcessTree(processTree);
                     return new ExecutionTerminatedResponse { TerminatedProcessTree = terminatedProcesses.ToArray() };
                 }
-                // If the process should not be terminated, wait for it to exit
+                // If the process is still running and should not be terminated, wait for it to exit
                 await processExitedTcs.Task;
             }
 
