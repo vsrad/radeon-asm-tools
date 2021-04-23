@@ -40,9 +40,9 @@ namespace VSRAD.Package.Utils
                 case VariableType.Float:
                     return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
                 case VariableType.Uint:
-                    return data.ToString();
+                    return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
                 case VariableType.Int:
-                    return ((int)data).ToString();
+                    return intSeparator == 0 ? ((int)data).ToString() : InsertNumberSeparators(((int)data).ToString(), intSeparator);
                 case VariableType.Half:
                     byte[] bytes = BitConverter.GetBytes(data);
                     float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
