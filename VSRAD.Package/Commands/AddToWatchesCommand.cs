@@ -44,6 +44,10 @@ namespace VSRAD.Package.Commands
             {
                 _toolIntegration.AddWatchFromEditor(watchName);
             }
+            else if (commandId == Constants.AddToWatchesArrayCustomCommandId)
+            {
+
+            }
             else if (commandId >= Constants.AddArrayToWatchesToIdOffset)
             {
                 var fromIndex = Math.DivRem(commandId - Constants.AddArrayToWatchesToIdOffset, Constants.AddArrayToWatchesToFromOffset, out var toIndex);
