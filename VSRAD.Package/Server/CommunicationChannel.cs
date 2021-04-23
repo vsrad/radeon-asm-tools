@@ -17,7 +17,7 @@ namespace VSRAD.Package.Server
 {
     public interface ICommunicationChannel
     {
-        event Action ConnectionStateChanged;
+        event EventHandler ConnectionStateChanged;
 
         ServerConnectionOptions ConnectionOptions { get; }
 
@@ -57,7 +57,7 @@ namespace VSRAD.Package.Server
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class CommunicationChannel : ICommunicationChannel
     {
-        public event Action ConnectionStateChanged;
+        public event EventHandler ConnectionStateChanged;
         public ServerConnectionOptions ConnectionOptions =>
             _project.Options?.Connection ?? new ServerConnectionOptions("Remote address is not specified", 0);
 
@@ -68,7 +68,7 @@ namespace VSRAD.Package.Server
             set
             {
                 _state = value;
-                ConnectionStateChanged?.Invoke();
+                ConnectionStateChanged?.Invoke(this, null);
             }
         }
 

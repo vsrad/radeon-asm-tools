@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -120,7 +121,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _img.MouseRightButtonUp += ShowWaveMenu;
 
             _context = context;
-            _context.Options.VisualizerOptions.PropertyChanged += PropertyChanged;
+            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerOptions, PropertyChanged, "");
 
             ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
         }

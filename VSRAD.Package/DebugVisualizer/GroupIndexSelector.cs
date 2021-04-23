@@ -65,8 +65,8 @@ namespace VSRAD.Package.DebugVisualizer
         public GroupIndexSelector(Options.ProjectOptions options)
         {
             _projectOptions = options;
-            _projectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
-            _projectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
+            PropertyChangedEventManager.AddHandler(_projectOptions.VisualizerOptions, OptionsChanged, "");
+            PropertyChangedEventManager.AddHandler(_projectOptions.DebuggerOptions, OptionsChanged, "");
         }
 
         private void OptionsChanged(object sender, PropertyChangedEventArgs e)

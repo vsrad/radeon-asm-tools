@@ -1,9 +1,11 @@
-﻿using System.Windows.Controls;
+﻿using System.ComponentModel;
+using System.Windows.Controls;
 using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.ToolWindows;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    public partial class SliceVisualizerControl : UserControl
+    public sealed partial class SliceVisualizerControl : UserControl, IDisposableToolWindow
     {
         private readonly SliceVisualizerTable _table;
         private readonly SliceVisualizerContext _context;
@@ -13,13 +15,20 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _context = integration.GetSliceVisualizerContext();
             _context.WatchSelected += WatchSelected;
             _context.HeatMapStateChanged += HeatMapStateChanged;
-            _context.Options.SliceVisualizerOptions.PropertyChanged += SliceVisualizerOptionChanged;
+
             DataContext = _context;
+            PropertyChangedEventManager.AddHandler(_context.Options.SliceVisualizerOptions, SliceVisualizerOptionChanged, "");
             InitializeComponent();
 
             var tableFontAndColor = new FontAndColorProvider();
             _table = new SliceVisualizerTable(tableFontAndColor);
             TableHost.Setup(_table);
+        }
+
+        void IDisposableToolWindow.DisposeToolWindow()
+        {
+            ((DockPanel)Content).Children.Clear();
+            TableHost.Dispose();
         }
 
         private void SliceVisualizerOptionChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -6,8 +6,15 @@ using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.ToolWindows
 {
+    public interface IDisposableToolWindow
+    {
+        void DisposeToolWindow();
+    }
+
     public abstract class BaseToolWindow : ToolWindowPane
     {
+        protected UIElement Control { get; set; }
+
         private EnvDTE.WindowEvents _windowEvents;
         private bool _dteWindowHasFocus;
 
@@ -34,12 +41,17 @@ namespace VSRAD.Package.ToolWindows
 
         public void OnProjectLoaded(IToolWindowIntegration integration)
         {
+            Control = CreateToolControl(integration);
             ((Grid)Content).Children.Clear();
-            ((Grid)Content).Children.Add(CreateToolControl(integration));
+            ((Grid)Content).Children.Add(Control);
         }
 
         public void OnProjectUnloaded()
         {
+            if (Control is IDisposableToolWindow disposable)
+                disposable.DisposeToolWindow();
+
+            Control = null;
             ((Grid)Content).Children.Clear();
             ((Grid)Content).Children.Add(_projectStateMissingMessage);
         }
