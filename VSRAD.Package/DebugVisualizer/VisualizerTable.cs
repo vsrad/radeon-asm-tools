@@ -374,7 +374,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             CreateMissingDataColumns((int)options.DebuggerOptions.GroupSize);
 
-            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerColumnStyling,
+            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerAppearance, options.VisualizerColumnStyling,
                 options.DebuggerOptions.GroupSize, options.DebuggerOptions.WaveSize, system);
 
             ApplyFontAndColorInfo();
