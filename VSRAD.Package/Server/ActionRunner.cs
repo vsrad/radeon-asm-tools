@@ -279,7 +279,8 @@ namespace VSRAD.Package.Server
             IResponse response;
             if (step.Environment == StepEnvironment.Local)
             {
-                response = await new ObservableProcess(command).StartAndObserveAsync(_controller.ShouldTerminateProcessOnTimeoutAsync, _controller.CancellationToken);
+                response = await new ObservableProcess(command).StartAndObserveAsync(tree =>
+                    step.ConfirmTerminationOnTimeout ? _controller.ShouldTerminateProcessOnTimeoutAsync(tree) : Task.FromResult(true), _controller.CancellationToken);
             }
             else
             {

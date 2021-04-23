@@ -88,8 +88,12 @@ namespace VSRAD.DebugServer.SharedUtils
         {
             foreach (var item in tree)
             {
-                outString.Append('-', item.ChildLevel * 2);
-                outString.AppendFormat(" [{0}] {1}", item.Id, item.Name);
+                if (item.ChildLevel > 0)
+                {
+                    outString.Append('-', item.ChildLevel * 2);
+                    outString.Append(' ');
+                }
+                outString.AppendFormat("[{0}] {1}", item.Id, item.Name);
                 outString.AppendLine();
             }
         }

@@ -61,7 +61,7 @@ namespace VSRAD.Package.ProjectSystem
     }
 
     [Export(typeof(IActionLauncher))]
-    public sealed class ActionLauncher : IActionLauncher, IActionRunController
+    public sealed class ActionLauncher : IActionLauncher, IActionRunController, IDisposable
     {
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
@@ -102,7 +102,11 @@ namespace VSRAD.Package.ProjectSystem
             _breakpointTracker = breakpointTracker;
 
             _project.RunWhenLoaded((_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunActionLoopAsync));
-            _project.Unloaded += () => _actionLoopCts.Cancel();
+        }
+
+        public void Dispose()
+        {
+            _actionLoopCts.Cancel();
         }
 
         public Error? TryLaunchActionByName(string actionName, bool moveToNextDebugTarget = false, bool isDebugSteppingEnabled = false)
