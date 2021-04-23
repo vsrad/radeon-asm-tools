@@ -351,7 +351,7 @@ namespace VSRAD.PackageTests.Server
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("Execution timeout is exceeded. dvd-prepare process on the remote machine is terminated.", result.StepResults[0].Warning);
-            Assert.Equal("The following processes were terminated:\r\n [1] systemd\r\n", result.StepResults[0].Log);
+            Assert.Equal("The following processes were terminated:\r\n[1] systemd\r\n", result.StepResults[0].Log);
 
             controller.Setup(c => c.ShouldTerminateProcessOnTimeoutAsync(It.IsAny<IList<ProcessTreeItem>>())).ReturnsAsync(false);
             channel.ThenRespond(new ExecutionTimedOutResponse { ProcessTree = new[] { new ProcessTreeItem(1, "systemd", 0) } });
