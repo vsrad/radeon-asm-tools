@@ -33,12 +33,30 @@ namespace VSRAD.Package.ProjectSystem
         }
     }
 
+    public enum ActionExecutionState
+    {
+        Started, Finished, Cancelling, Idle
+    }
+
+    public sealed class ActionExecutionStateChangedEventArgs : EventArgs
+    {
+        public ActionExecutionState State { get; }
+        public string ActionName { get; }
+
+        public ActionExecutionStateChangedEventArgs(ActionExecutionState state, string actionName)
+        {
+            State = state;
+            ActionName = actionName;
+        }
+    }
+
     public interface IActionLauncher
     {
         Error? TryLaunchActionByName(string actionName, bool moveToNextDebugTarget = false, bool isDebugSteppingEnabled = false);
         bool IsDebugAction(ActionProfileOptions action);
 
         event EventHandler<ActionCompletedEventArgs> ActionCompleted;
+        event EventHandler<ActionExecutionStateChangedEventArgs> ActionExecutionStateChanged;
     }
 
     [Export(typeof(IActionLauncher))]
@@ -51,9 +69,9 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IBreakpointTracker _breakpointTracker;
         private readonly SVsServiceProvider _serviceProvider;
-        private readonly VsStatusBarWriter _statusBar;
 
         public event EventHandler<ActionCompletedEventArgs> ActionCompleted;
+        public event EventHandler<ActionExecutionStateChangedEventArgs> ActionExecutionStateChanged;
 
         private readonly AsyncQueue<(ActionProfileOptions, MacroEvaluatorTransientValues)> _pendingActions =
             new AsyncQueue<(ActionProfileOptions, MacroEvaluatorTransientValues)>();
@@ -81,7 +99,6 @@ namespace VSRAD.Package.ProjectSystem
             _projectSources = projectSources;
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
-            _statusBar = new VsStatusBarWriter(serviceProvider);
 
             _project.RunWhenLoaded((_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunActionLoopAsync));
             _project.Unloaded += () => _actionLoopCts.Cancel();
@@ -112,7 +129,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (shouldCancel != MessageBoxResult.Yes)
                     return null;
 
-                _statusBar.SetText("Cancelling " + _currentlyRunningActionName + " action...");
+                ActionExecutionStateChanged?.Invoke(this, new ActionExecutionStateChangedEventArgs(ActionExecutionState.Cancelling, _currentlyRunningActionName));
                 _actionCancellationTokenSource.Cancel();
             }
 
@@ -129,30 +146,29 @@ namespace VSRAD.Package.ProjectSystem
 
         private async Task RunActionLoopAsync()
         {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync(); // Events need to be fired on the main thread; don't use ConfigureAwait(false) here
             while (!_actionLoopCts.IsCancellationRequested)
             {
+                ActionExecutionStateChanged?.Invoke(this, new ActionExecutionStateChangedEventArgs(ActionExecutionState.Idle, null));
                 var (action, transients) = await _pendingActions.DequeueAsync(_actionLoopCts.Token);
                 try
                 {
                     _actionCancellationTokenSource = new CancellationTokenSource();
                     _currentlyRunningActionName = action.Name;
-                    _statusBar.SetText("Running " + action.Name + " action...");
+                    ActionExecutionStateChanged?.Invoke(this, new ActionExecutionStateChangedEventArgs(ActionExecutionState.Started, action.Name));
 
                     var result = await RunActionAsync(action, transients);
-
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                     ActionCompleted?.Invoke(this, result);
                 }
                 catch (Exception e)
                 {
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                     Errors.ShowException(e);
                     ActionCompleted?.Invoke(this, new ActionCompletedEventArgs(null, action, transients, null));
                 }
                 finally
                 {
                     _currentlyRunningActionName = null;
-                    _statusBar.SetText("Finished running " + action.Name + " action");
+                    ActionExecutionStateChanged?.Invoke(this, new ActionExecutionStateChangedEventArgs(ActionExecutionState.Finished, action.Name));
                 }
             }
         }

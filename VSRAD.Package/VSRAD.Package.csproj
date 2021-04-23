@@ -232,6 +232,7 @@
     </Compile>
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />
+    <Compile Include="ProjectSystem\StatusBarIntegration.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -261,7 +262,6 @@
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\VsEditor.cs" />
-    <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Options\ProfileOptions.cs" />

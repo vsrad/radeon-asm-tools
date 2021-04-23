@@ -75,6 +75,7 @@ namespace VSRAD.Package.ProjectSystem
             Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
 
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
+            UnconfiguredProject.Services.ExportProvider.GetExportedValue<StatusBarIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
             _loaded = true;
