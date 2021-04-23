@@ -41,6 +41,7 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
             var triggerBlock = analysisResult.GetBlock(searchSpan.Start);
             var triggerToken = triggerBlock.Tokens
                 .Where(t => ContainsInclusive(searchSpan, t.Span))
+                .OrderBy(t => t.Span.Start)
                 .FirstOrDefault(t => t.Type == RadAsmTokenType.FunctionReference || t.Type == RadAsmTokenType.Instruction);
 
             if (triggerToken == null) return;
