@@ -32,7 +32,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         public string this[int row, int column]
         {
-            get => DataFormatter.FormatDword(_type, _view[row, column]);
+            get => DataFormatter.FormatDword(_type, _view[row, column], 2, 0, true); // TODO: remove hardcode
         }
 
         public bool IsInactiveCell(int row, int column) => _view.IsInactiveCell(row, column);

@@ -160,6 +160,12 @@
                                             Value="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Insert separator in binary/hex mode between each" VerticalAlignment="Center"/>
+                            <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                                        Value="{Binding Options.VisualizerOptions.BinHexSeparator, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="numbers" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Darken odd rows by" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="0" Maximum="100" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.DarkenAlternatingRowsBy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
