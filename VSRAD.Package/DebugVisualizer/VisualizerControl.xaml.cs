@@ -192,6 +192,8 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     );
                     break;
                 case nameof(Options.VisualizerOptions.BinHexSeparator):
+                case nameof(Options.VisualizerOptions.IntUintSeparator):
+                case nameof(Options.VisualizerOptions.BinHexLeadingZeroes):
                     foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                         SetRowContentsFromBreakState(row);
                     break;
@@ -214,7 +216,8 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             if (row.Index == 0)
             {
                 RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem(),
-                    _context.Options.VisualizerOptions.BinHexSeparator, 3, true); // TODO: remove hardcode
+                    _context.Options.VisualizerOptions.BinHexSeparator, _context.Options.VisualizerOptions.IntUintSeparator,
+                    _context.Options.VisualizerOptions.BinHexLeadingZeroes);
             }
             else
             {
@@ -222,7 +225,8 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 var watchData = _context.BreakData.GetWatch(watch);
                 if (watchData != null)
                     RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData,
-                        _context.Options.VisualizerOptions.BinHexSeparator, 3, true); // TODO: remove hardcode
+                        _context.Options.VisualizerOptions.BinHexSeparator, _context.Options.VisualizerOptions.IntUintSeparator,
+                        _context.Options.VisualizerOptions.BinHexLeadingZeroes);
                 else
                     EraseRowData(row, _table.DataColumnCount);
             }
