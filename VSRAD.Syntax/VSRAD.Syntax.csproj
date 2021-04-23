@@ -104,6 +104,7 @@
     <Compile Include="Core\Tokens\ErrorToken.cs" />
     <Compile Include="Core\Tokens\FunctionToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
+    <Compile Include="Core\Tokens\InstructionToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
     <Compile Include="Core\Tokens\TokenSpan.cs" />
     <Compile Include="Core\Tokens\TokenType.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="Guide\IndentGuideFactory.cs" />
     <Compile Include="Helpers\DisposableProvider.cs" />
     <Compile Include="Helpers\Error.cs" />
+    <Compile Include="Helpers\InstructionListExtension.cs" />
     <Compile Include="Helpers\ISyntaxDisposable.cs" />
     <Compile Include="Helpers\NotifyPropertyChanged.cs" />
     <Compile Include="Helpers\AnalysisResultExtension.cs" />
@@ -154,6 +156,16 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\InstructionSignature.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\FunctionSignature.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\Helper.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\Parameter.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\Signature.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureConfig.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpClassifier.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpClassifierProvider.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpSource.cs" />
+    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpSourceProvider.cs" />
     <Compile Include="Options\GeneralOptionModel.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />

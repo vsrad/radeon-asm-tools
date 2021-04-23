@@ -4,6 +4,10 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
+using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.SignatureHelp;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -12,14 +16,21 @@ namespace VSRAD.Syntax.IntelliSense
         private readonly ITextView _textView;
         private readonly INavigationTokenService _navigationService;
         private readonly IPeekBroker _peekBroker;
+        private readonly ISignatureHelpBroker _signatureHelpBroker;
+        private readonly SignatureConfig _signatureConfig;
+        private ISignatureHelpSession _currentSignatureSession;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(IPeekBroker peekBroker, INavigationTokenService navigationService, ITextView textView)
+        public IntellisenseController(IPeekBroker peekBroker, ISignatureHelpBroker signatureHelpBroker, INavigationTokenService navigationService, ITextView textView)
         {
             _peekBroker = peekBroker;
+            _signatureHelpBroker = signatureHelpBroker;
             _textView = textView;
             _navigationService = navigationService;
+
+            var asmType = _textView.TextSnapshot.GetAsmType();
+            _signatureConfig = SignatureConfig.GetSignature(asmType);
         }
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
@@ -84,7 +95,101 @@ namespace VSRAD.Syntax.IntelliSense
                 }
             }
 
-            return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            var res = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
+            if (pguidCmdGroup == VSConstants.VSStd2K && _signatureConfig != null && _signatureConfig.Enabled)
+            {
+                switch ((VSConstants.VSStd2KCmdID)nCmdID)
+                {
+                    case VSConstants.VSStd2KCmdID.TYPECHAR:
+                        var ch = GetTypeChar(pvaIn);
+                        if (ch == _signatureConfig.TriggerInstructionSignatureChar 
+                            || ch == _signatureConfig.TriggerFunctionSignatureChar) StartSignatureSession();
+                        else if (ch == _signatureConfig.DismissSignatureChar) CancelSignatureSession();
+                        else if (ch == _signatureConfig.TriggerParameterChar) ChangeParameterSignatureSession();
+                        break;
+                    case VSConstants.VSStd2KCmdID.BACKSPACE:
+                    case VSConstants.VSStd2KCmdID.DELETE:
+                    case VSConstants.VSStd2KCmdID.LEFT:
+                    case VSConstants.VSStd2KCmdID.RIGHT:
+                        ChangeParameterSignatureSession();
+                        break;
+                    case VSConstants.VSStd2KCmdID.RETURN:
+                    case VSConstants.VSStd2KCmdID.CANCEL:
+                        CancelSignatureSession();
+                        break;
+                }
+            }
+
+            if (_signatureConfig != null && !_signatureConfig.Enabled)
+                CancelSignatureSession();
+
+            return res;
+        }
+
+        private void StartSignatureSession()
+        {
+            if (_currentSignatureSession != null)
+                return;
+
+            if (_signatureHelpBroker.IsSignatureHelpActive(_textView))
+            {
+                _currentSignatureSession = _signatureHelpBroker.GetSessions(_textView)[0];
+            }
+            else
+            {
+                var point = _textView.Caret.Position.BufferPosition;
+                var snapshot = point.Snapshot;
+                var trackingPoint = snapshot.CreateTrackingPoint(point, PointTrackingMode.Positive);
+
+                _currentSignatureSession = _signatureHelpBroker.CreateSignatureHelpSession(_textView, trackingPoint, true);
+                _textView.TextBuffer.Properties.AddProperty(typeof(ISignatureHelpSession), _currentSignatureSession);
+            }
+
+            _currentSignatureSession.Dismissed += SignatureSessionDismissed;
+            _currentSignatureSession.Start();
+        }
+
+        private void ChangeParameterSignatureSession()
+        {
+            if (_currentSignatureSession == null) return;
+            if (_currentSignatureSession.Signatures.Count == 0) return;
+
+            // all signatures have the same applicable span
+            var trackingSpan = _currentSignatureSession.Signatures[0].ApplicableToSpan;
+            var currentPosition = _textView.Caret.Position.BufferPosition;
+            var trackingStart = trackingSpan.GetStartPoint(currentPosition.Snapshot);
+
+            // check left border of applicable span, it might be invalid token
+            if (trackingStart == currentPosition)
+            {
+                _currentSignatureSession.Recalculate();
+                // if there is no applicable token, then current signatureSession will be null
+                if (_currentSignatureSession == null) return;
+            }
+
+            var searchParam = new SnapshotSpan(trackingStart, currentPosition);
+            var currentParam = searchParam.GetCurrentParameter(_signatureConfig.TriggerParameterChar);
+
+            foreach (var signature in _currentSignatureSession.Signatures)
+            {
+                if (signature is ISyntaxSignature syntaxSignature)
+                    syntaxSignature.SetCurrentParameter(currentParam);
+            }
+        }
+
+        private void SignatureSessionDismissed(object sender, EventArgs e)
+        {
+            _textView.TextBuffer.Properties.RemoveProperty(typeof(ISignatureHelpSession));
+            _currentSignatureSession = null;
+        }
+
+        private void CancelSignatureSession() =>
+            _currentSignatureSession?.Dismiss();
+
+        private static char GetTypeChar(IntPtr pvaIn)
+        {
+            return (char)(ushort)Marshal.GetObjectForNativeVariant(pvaIn);
         }
 
         private bool TryGoToDefinition()

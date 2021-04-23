@@ -128,6 +128,7 @@ namespace VSRAD.Syntax.Options
                 _generalOptionProvider.AutocompleteFunctions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteFunctions));
                 _generalOptionProvider.AutocompleteLabels = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteLabels));
                 _generalOptionProvider.AutocompleteVariables = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteVariables));
+                _generalOptionProvider.SignatureHelp = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.SignatureHelp));
             }
             catch (Exception ex)
             {
@@ -174,6 +175,7 @@ namespace VSRAD.Syntax.Options
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteFunctions, nameof(_generalOptionProvider.AutocompleteFunctions));
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteLabels, nameof(_generalOptionProvider.AutocompleteLabels));
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteVariables, nameof(_generalOptionProvider.AutocompleteVariables));
+            WriteSetting(settingsStore, _generalOptionProvider.SignatureHelp, nameof(_generalOptionProvider.SignatureHelp));
 
             if (!_generalOptionProvider.InstructionsPaths.Equals(GeneralOptionProvider.GetDefaultInstructionDirectoryPath()))
             {

@@ -30,6 +30,7 @@ namespace VSRAD.Syntax.Options
             AutocompleteFunctions = false;
             AutocompleteLabels = false;
             AutocompleteVariables = false;
+            SignatureHelp = false;
         }
 
         public GeneralOptionPage.SortState SortOptions;
@@ -49,6 +50,7 @@ namespace VSRAD.Syntax.Options
         public bool AutocompleteFunctions;
         public bool AutocompleteLabels;
         public bool AutocompleteVariables;
+        public bool SignatureHelp;
 
         public delegate void OptionsUpdate(GeneralOptionProvider sender);
         public event OptionsUpdate OptionsUpdated;

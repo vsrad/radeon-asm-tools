@@ -7,10 +7,11 @@ LET : 'let';
 /* "Structural symbols" */
 
 COMMA      : ',' ;
-COLON      : ':' ;
+LCURVEBRACKET    : '{' ;
+RCURVEBRACKET    : '}' ;
 
 IDENTIFIER
-    : [a-zA-Z] [a-zA-Z0-9_]*
+    : [a-zA-Z] [a-zA-Z0-9_:[\]]*
     ;
 
 BLOCK_COMMENT
@@ -26,5 +27,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:]+
+    : ~[ \t\r\n,{}]+
     ;

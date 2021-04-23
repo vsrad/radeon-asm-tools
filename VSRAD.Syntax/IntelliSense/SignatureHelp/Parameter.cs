@@ -1,11 +1,11 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 
-namespace VSRAD.Syntax.IntelliSense.SignatureHelper
+namespace VSRAD.Syntax.IntelliSense.SignatureHelp
 {
-    internal class RadeonParameter : IParameter
+    internal class Parameter : IParameter
     {
-        public RadeonParameter(ISignature signature, string name, string doc, Span locus, Span ppLocus)
+        public Parameter(ISignature signature, string name, string doc, Span locus, Span ppLocus)
         {
             Signature = signature;
             Name = name;

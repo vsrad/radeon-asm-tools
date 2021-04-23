@@ -24,6 +24,8 @@ namespace VSRAD.Syntax.Core.Parser
                 .WithCancellation(cancellation)
                 .ToArray();
 
+            InstructionToken currentInstruction = null;
+
             for (int i = 0; i < tokens.Length; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
@@ -40,13 +42,29 @@ namespace VSRAD.Syntax.Core.Parser
                 }
                 else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                 {
-                    rootBlock.AddToken(new DefinitionToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
+                    currentInstruction = new InstructionToken(RadAsmTokenType.Instruction, tokens[i + 1], version);
+                    rootBlock.AddToken(currentInstruction);
+                    i += 1;
                 }
                 else if (token.Type == RadAsmDocLexer.IDENTIFIER)
                 {
                     var text = token.GetText(version);
+
                     if (definitions.TryGetValue(text, out var definition))
-                        rootBlock.AddToken(new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition));
+                    {
+                        var reference = new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition);
+                        rootBlock.AddToken(reference);
+                        currentInstruction?.Parameters.Add(reference);
+                    }
+                    else if (currentInstruction != null)
+                    {
+                        var parameter = new AnalysisToken(RadAsmTokenType.GlobalVariableReference, token, version);
+                        currentInstruction.Parameters.Add(parameter);
+                    }
+                }
+                else if (token.Type == RadAsmDocLexer.LCURVEBRACKET || token.Type == RadAsmDocLexer.EOL)
+                {
+                    currentInstruction = null;
                 }
             }
 
