@@ -50,7 +50,6 @@ namespace VSRAD.Package
         public static VisualizerWindow VisualizerToolWindow { get; private set; }
         public static SliceVisualizerWindow SliceVisualizerToolWindow { get; private set; }
         public static OptionsWindow OptionsToolWindow { get; private set; }
-        public static EvaluateSelectedWindow EvaluateSelectedWindow { get; private set; }
 
         private static JoinableTaskFactory _taskFactoryOverride;
         public static JoinableTaskFactory TaskFactory
@@ -74,6 +73,7 @@ namespace VSRAD.Package
             var dte = (DTE)await GetServiceAsync(typeof(DTE));
             _solutionManager = new SolutionManager(vsMonitorSelection);
             _solutionManager.ProjectLoaded += (s, e) => TaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
+            _solutionManager.SolutionUnloaded += SolutionUnloaded;
 
 #pragma warning disable CS4014     // LoadCurrentSolution needs to be invoked _after_ we leave InitializeAsync,
 #pragma warning disable VSTHRD001  // otherwise we enter a deadlock waiting for the package to finish loading
@@ -97,19 +97,18 @@ namespace VSRAD.Package
                 typeof(SliceVisualizerWindow), 0, true, CancellationToken.None);
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
                 typeof(OptionsWindow), 0, true, CancellationToken.None);
-            //EvaluateSelectedWindow = (EvaluateSelectedWindow)await FindToolWindowAsync(
-            //    typeof(EvaluateSelectedWindow), 0, true, CancellationToken.None);
 
             await TaskFactory.SwitchToMainThreadAsync();
             VisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             SliceVisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
-            //EvaluateSelectedWindow.OnProjectLoaded(toolWindowIntegration);
         }
 
-        public static void SolutionUnloaded()
+        private void SolutionUnloaded(object sender, EventArgs e)
         {
+            _commandRouter = null;
             VisualizerToolWindow?.OnProjectUnloaded();
+            SliceVisualizerToolWindow?.OnProjectUnloaded();
             OptionsToolWindow?.OnProjectUnloaded();
         }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
@@ -24,7 +25,7 @@ namespace VSRAD.Package.DebugVisualizer
         }
     }
 
-    public sealed class VisualizerContext : DefaultNotifyPropertyChanged
+    public sealed class VisualizerContext : DefaultNotifyPropertyChanged, IDisposable
     {
         public event EventHandler<GroupFetchingEventArgs> GroupFetching;
         public event EventHandler<GroupFetchedEventArgs> GroupFetched;
@@ -53,17 +54,24 @@ namespace VSRAD.Package.DebugVisualizer
         public BreakStateData BreakData => _breakState?.Data;
 
         private readonly ICommunicationChannel _channel;
+        private readonly DebuggerIntegration _debugger;
         private BreakState _breakState;
 
         public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, DebuggerIntegration debugger)
         {
             Options = options;
             _channel = channel;
+            _debugger = debugger;
 
-            debugger.BreakEntered += EnterBreak;
+            _debugger.BreakEntered += EnterBreak;
 
             GroupIndex = new GroupIndexSelector(options);
             GroupIndex.IndexChanged += GroupIndexChanged;
+        }
+
+        public void Dispose()
+        {
+            _debugger.BreakEntered -= EnterBreak;
         }
 
         private void EnterBreak(object sender, BreakState breakState)
