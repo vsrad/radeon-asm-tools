@@ -24,6 +24,9 @@ namespace VSRAD.Package.Options
         private uint _laneGrouping;
         public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
 
+        private uint _binHexSeparator;
+        public uint BinHexSeparator { get => _binHexSeparator; set => SetField(ref _binHexSeparator, value); }
+
         private int _wavemapElementSize = 8;
         [DefaultValue(8)]
         public int WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
