@@ -32,6 +32,7 @@ namespace VSRAD.Package
         public const int DebugActionCommandId = 0x13;
         public const int EvaluateSelectedCommandId = 0x0100;
         public const int AddToWatchesCommandId = 0x0100;
+        public const int AddToWatchesArrayCustomCommandId = 0x1900;
         public const int AddArrayToWatchesIndexCount = 16;
         public const int AddArrayToWatchesFromHeaderId = 0x1031;
         public const int AddArrayToWatchesToIdOffset = 0x1400;
