@@ -91,7 +91,8 @@ namespace VSRAD.DebugServer.SharedUtils
             var completedTask = await Task.WhenAny(processExitedTcs.Task, processTimeoutTcs.Task);
             if (completedTask.IsCanceled || completedTask == processTimeoutTcs.Task)
             {
-                var processTree = _process.GetProcessTree();
+                // GetProcessTree call can take several seconds, it should not block the UI thread
+                var processTree = await Task.Run(() => _process.GetProcessTree());
                 if (completedTask.IsCanceled)
                 {
                     ProcessUtils.TerminateProcessTree(processTree);

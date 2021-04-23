@@ -53,6 +53,7 @@ namespace VSRAD.Package.ProjectSystem
     public interface IActionLauncher
     {
         Error? TryLaunchActionByName(string actionName, bool moveToNextDebugTarget = false, bool isDebugSteppingEnabled = false);
+        void CancelRunningAction();
         bool IsDebugAction(ActionProfileOptions action);
 
         event EventHandler<ActionCompletedEventArgs> ActionCompleted;
@@ -128,9 +129,7 @@ namespace VSRAD.Package.ProjectSystem
                     "RAD Debugger", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (shouldCancel != MessageBoxResult.Yes)
                     return null;
-
-                ActionExecutionStateChanged?.Invoke(this, new ActionExecutionStateChangedEventArgs(ActionExecutionState.Cancelling, _currentlyRunningActionName));
-                _actionCancellationTokenSource.Cancel();
+                CancelRunningAction();
             }
 
             var (file, breakLines) = moveToNextDebugTarget
@@ -142,6 +141,15 @@ namespace VSRAD.Package.ProjectSystem
 
             _pendingActions.Enqueue((action, transients));
             return null;
+        }
+
+        public void CancelRunningAction()
+        {
+            if (_currentlyRunningActionName != null && !_actionCancellationTokenSource.IsCancellationRequested)
+            {
+                ActionExecutionStateChanged?.Invoke(this, new ActionExecutionStateChangedEventArgs(ActionExecutionState.Cancelling, _currentlyRunningActionName));
+                _actionCancellationTokenSource.Cancel();
+            }
         }
 
         private async Task RunActionLoopAsync()

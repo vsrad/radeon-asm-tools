@@ -26,7 +26,7 @@ namespace VSRAD.Package.ToolWindows
                 _channel.ServerCapabilities?.ToString() ?? "";
 
             public Visibility DisconnectButtonVisible =>
-                Options.Profile?.General?.RunActionsLocally == true ? Visibility.Hidden : Visibility.Visible;
+                Options.Profile?.General?.RunActionsLocally == true ? Visibility.Collapsed : Visibility.Visible;
 
             public string DisconnectLabel
             {
@@ -34,17 +34,26 @@ namespace VSRAD.Package.ToolWindows
                      : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
             }
 
+            private string _actionStatusLabel;
+            public string ActionStatusLabel { get => _actionStatusLabel; private set => SetField(ref _actionStatusLabel, value); }
+
+            private Visibility _cancelActionButtonVisible = Visibility.Collapsed;
+            public Visibility CancelActionButtonVisible { get => _cancelActionButtonVisible; private set => SetField(ref _cancelActionButtonVisible, value); }
+
             public ICommand DisconnectCommand { get; }
+            public ICommand CancelActionCommand { get; }
 
             private readonly CommunicationChannel _channel;
 
-            public Context(ProjectOptions options, ICommunicationChannel channel)
+            public Context(ProjectOptions options, ICommunicationChannel channel, IActionLauncher actionLauncher)
             {
                 Options = options;
                 Options.PropertyChanged += OptionsChanged;
                 _channel = (CommunicationChannel)channel;
                 _channel.ConnectionStateChanged += ConnectionStateChanged;
+                actionLauncher.ActionExecutionStateChanged += ActionExecutionStateChanged;
                 DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
+                CancelActionCommand = new WpfDelegateCommand((_) => actionLauncher.CancelRunningAction());
             }
 
             private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -64,6 +73,24 @@ namespace VSRAD.Package.ToolWindows
                 RaisePropertyChanged(nameof(DisconnectButtonVisible));
                 ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;
             }
+
+            private void ActionExecutionStateChanged(object sender, ActionExecutionStateChangedEventArgs e)
+            {
+                switch (e.State)
+                {
+                    case ActionExecutionState.Started:
+                        ActionStatusLabel = $"Action {e.ActionName} is running";
+                        break;
+                    case ActionExecutionState.Cancelling:
+                        ActionStatusLabel = $"Cancelling {e.ActionName} action...";
+                        break;
+                    case ActionExecutionState.Finished:
+                    case ActionExecutionState.Idle:
+                        ActionStatusLabel = "";
+                        break;
+                }
+                CancelActionButtonVisible = e.State == ActionExecutionState.Started ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         private readonly IToolWindowIntegration _integration;
@@ -73,7 +100,7 @@ namespace VSRAD.Package.ToolWindows
         {
             _integration = integration;
             _projectOptions = integration.ProjectOptions;
-            DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel);
+            DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel, integration.ActionLauncher);
             InitializeComponent();
         }
 
