@@ -15,16 +15,14 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
-        private readonly DebuggerIntegration _debuggerIntegration;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, DebuggerIntegration debuggerIntegration)
+        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher)
         {
             _project = project;
             _actionLauncher = actionLauncher;
-            _debuggerIntegration = debuggerIntegration;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
@@ -54,17 +52,9 @@ namespace VSRAD.Package.Commands
         {
             if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out var error))
             {
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
-                {
-                    var isDebugAction = actionName == SelectedProfile.MenuCommands.DebugAction;
-                    var result = await _actionLauncher.LaunchActionByNameAsync(actionName, moveToNextDebugTarget: isDebugAction);
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                    if (result.Error is Error e)
-                        Errors.Show(e);
-                    if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
-                        && _actionLauncher.IsDebugAction(action))
-                        _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);
-                });
+                var isDebugAction = actionName == SelectedProfile.MenuCommands.DebugAction;
+                if (_actionLauncher.TryLaunchActionByName(actionName, moveToNextDebugTarget: isDebugAction) is Error e)
+                    Errors.Show(e);
             }
             else
             {
