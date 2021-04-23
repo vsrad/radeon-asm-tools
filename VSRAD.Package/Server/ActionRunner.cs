@@ -286,7 +286,7 @@ namespace VSRAD.Package.Server
                 response = await _channel.SendWithReplyAsync<IResponse>(command, _controller.CancellationToken);
                 if (response is ExecutionTimedOutResponse timeoutResponse)
                 {
-                    var shouldTerminate = await _controller.ShouldTerminateProcessOnTimeoutAsync(timeoutResponse.ProcessTree);
+                    var shouldTerminate = !step.ConfirmTerminationOnTimeout || await _controller.ShouldTerminateProcessOnTimeoutAsync(timeoutResponse.ProcessTree);
                     response = await _channel.SendWithReplyAsync<IResponse>(
                         new ExecutionTimedOutActionCommand { TerminateProcesses = shouldTerminate }, _controller.CancellationToken);
                 }
