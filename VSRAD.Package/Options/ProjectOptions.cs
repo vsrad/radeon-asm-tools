@@ -81,18 +81,29 @@ namespace VSRAD.Package.Options
         #endregion
 
         #region Read/Write
-        public static ProjectOptions Read(string visualizerOptionsPath, string profilesOptionsPath)
+        public static ProjectOptions Read(string userOptionsPath, string profilesOptionsPath, string oldConfigPath)
         {
             ProjectOptions options = null;
             // Handle options and profiles loading in separate try blocks since we want them
             // to load indepentently, i.e use default configs if corresponding file is missing
             // in each case without affecting one another
-            try
+            try // Try to load .user.json in the first place
             {
-                var optionsJson = JObject.Parse(File.ReadAllText(visualizerOptionsPath));
+                var optionsJson = JObject.Parse(File.ReadAllText(userOptionsPath));
                 options = optionsJson.ToObject<ProjectOptions>(new JsonSerializer { DefaultValueHandling = DefaultValueHandling.Populate });
             }
-            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
+            catch (FileNotFoundException)
+            {
+                try // Try to load options from .conf.json if .user.json is missing
+                {
+                    options = ProfileTransferManager.ImportObsoleteOptions(oldConfigPath);
+                }
+                catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
+                catch (Exception e)
+                {
+                    Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
+                }
+            }
             catch (Exception e)
             {
                 Errors.ShowWarning($"An error has occurred while loading the project options: {e.Message}\r\nProceeding with defaults.");
@@ -101,12 +112,24 @@ namespace VSRAD.Package.Options
             if (options == null) // Note that DeserializeObject can return null even on success (e.g. if the file is empty)
                 options = new ProjectOptions();
 
-            try
+            try // Try to load .profiles.json in the first place
             {
                 var profiles = ProfileTransferManager.Import(profilesOptionsPath);
                 options.SetProfiles(profiles, options.ActiveProfile);
             }
-            catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
+            catch (FileNotFoundException)
+            {
+                try // Try to load profiles from .conf.json if .profiles.json is missing
+                {
+                    var profiles = ProfileTransferManager.ImportObsolete(oldConfigPath);
+                    options.SetProfiles(profiles, options.ActiveProfile);
+                }
+                catch (FileNotFoundException) { } // Don't show an error if the configuration file is missing, just load defaults
+                catch (Exception e)
+                {
+                    Errors.ShowWarning($"An error has occurred while loading the profiles: {e.Message}\r\nProceeding with defaults.");
+                }
+            }
             catch (Exception e)
             {
                 Errors.ShowWarning($"An error has occurred while loading the profiles: {e.Message}\r\nProceeding with defaults.");
