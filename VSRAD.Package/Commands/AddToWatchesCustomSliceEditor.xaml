@@ -1,0 +1,39 @@
+﻿<platformui:DialogWindow xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                         xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
+                         xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+                         xmlns:platformui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+                         x:Class="VSRAD.Package.Commands.AddToWatchesCustomSliceEditor"
+                         x:Name="Root" mc:Ignorable="d"
+                         Title="Add To Watches As Array" Height="160" Width="300" MinHeight="150" MinWidth="200"
+                         Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                         Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
+    <platformui:DialogWindow.Resources>
+        <ResourceDictionary Source="../ToolWindows/ControlStyle.xaml"/>
+    </platformui:DialogWindow.Resources>
+    <DockPanel Margin="4">
+        <StackPanel Margin="4" Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
+            <Button Content="OK" Width="61" Height="22" Click="HandleOK"/>
+            <Button Content="Cancel" IsCancel="True" Width="61" Height="22" Margin="4,0,0,0" />
+        </StackPanel>
+        <Grid x:Name="HostGrid" Margin="4" Focusable="True">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Start:" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
+            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="StartControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="0"/>
+            <TextBlock Text="Step:" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1"/>
+            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="StepControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="1"/>
+            <TextBlock Text="Count:" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2"/>
+            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="CountControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="2"/>
+        </Grid>
+    </DockPanel>
+</platformui:DialogWindow>
