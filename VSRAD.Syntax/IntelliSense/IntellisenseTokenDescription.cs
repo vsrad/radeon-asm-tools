@@ -122,6 +122,8 @@ namespace VSRAD.Syntax.IntelliSense
                 }
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             builder.SetAsElement();
             if (token.Definition is IDefinitionToken definitionToken)
             {

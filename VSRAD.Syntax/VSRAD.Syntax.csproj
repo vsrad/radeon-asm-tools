@@ -141,6 +141,7 @@
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
+    <Compile Include="IntelliSense\Helper.cs" />
     <Compile Include="IntelliSense\IntellisenseController.cs" />
     <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />

@@ -6,12 +6,6 @@ namespace VSRAD.Syntax.Core.Tokens
     public interface IDefinitionToken : IAnalysisToken
     {
         ICollection<IAnalysisToken> References { get; }
-
-        /// <summary>
-        /// Return token description, for example comments 
-        /// </summary>
-        /// <returns>string if present; otherwise, null</returns>
-        string GetDescription();
     }
 
     public class DefinitionToken : AnalysisToken, IDefinitionToken
@@ -30,10 +24,5 @@ namespace VSRAD.Syntax.Core.Tokens
             References.Add(reference);
 
         public override string GetText() => _text;
-
-        public string GetDescription()
-        {
-            return null;
-        }
     }
 }
