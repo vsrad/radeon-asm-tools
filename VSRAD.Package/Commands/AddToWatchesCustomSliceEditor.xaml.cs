@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 namespace VSRAD.Package.Commands
 {
     /// <summary>
-    /// Interaction logic for UserControl1.xaml
+    /// Interaction logic for AddToWatchesCustomSliceEditor.xaml
     /// </summary>
     public partial class AddToWatchesCustomSliceEditor : DialogWindow
     {
