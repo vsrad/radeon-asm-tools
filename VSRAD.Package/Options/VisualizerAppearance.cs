@@ -62,6 +62,7 @@ namespace VSRAD.Package.Options
             set => SetField(ref _sliceSubgroupSeparatorWidth, value);
         }
         #endregion
+        #region number separators
         private uint _binHexSeparator;
         public uint BinHexSeparator { get => _binHexSeparator; set => SetField(ref _binHexSeparator, value); }
 
@@ -70,7 +71,6 @@ namespace VSRAD.Package.Options
 
         private bool _binHexLeadingZeroes;
         public bool BinHexLeadingZeroes { get => _binHexLeadingZeroes; set => SetField(ref _binHexLeadingZeroes, value); }
-        #region number separators
         #endregion
         private ScalingMode _scalingMode = ScalingMode.ResizeColumn;
 
