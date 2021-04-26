@@ -110,6 +110,8 @@ namespace VSRAD.Syntax.IntelliSense
                         break;
                     case VSConstants.VSStd2KCmdID.BACKSPACE:
                     case VSConstants.VSStd2KCmdID.DELETE:
+                    case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
+                    case VSConstants.VSStd2KCmdID.DELETELINE:
                     case VSConstants.VSStd2KCmdID.LEFT:
                     case VSConstants.VSStd2KCmdID.RIGHT:
                         ChangeParameterSignatureSession();
