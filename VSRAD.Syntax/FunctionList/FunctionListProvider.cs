@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
@@ -17,7 +16,7 @@ using VSRAD.Syntax.IntelliSense;
 namespace VSRAD.Syntax.FunctionList
 {
     [Export(typeof(IVsTextViewCreationListener))]
-    [ContentType("text")]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TextViewRole(PredefinedTextViewRoles.Interactive)]
     internal sealed class FunctionListProvider : IVsTextViewCreationListener
     {
@@ -48,25 +47,19 @@ namespace VSRAD.Syntax.FunctionList
             var textView = _editorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
             if (textView == null) return;
 
-            if (TryGetDocument(textView.TextBuffer, out var document))
-            {
-                AssignDocumentToFunctionList(textView, document);
-                ActiveDocumentChanged(document);
-            }
-            else
-            {
-                textView.TextBuffer.ContentTypeChanged += ContentTypeChanged;
-            }
+            var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
+            AssignDocumentToFunctionList(textView, document);
+            ActiveDocumentChanged(document);
         }
 
-        private void CaretOnPositionChanged(object sender, CaretPositionChangedEventArgs e)
+        private void OnCaretPositionChanged(object sender, CaretPositionChangedEventArgs e)
         {
             if (_functionListControl == null) return;
             var point = e.NewPosition.BufferPosition;
 
-            if (!TryGetDocument(point.Snapshot.TextBuffer, out var document)) return;
             ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
+                var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
                 var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
                 var functionBlock = analysisResult.TryGetFunctionBlock(point);
 
@@ -82,62 +75,34 @@ namespace VSRAD.Syntax.FunctionList
             });
         }
 
-        private bool TryGetDocument(ITextBuffer textBuffer, out IDocument document)
-        {
-            document = _documentFactory.GetOrCreateDocument(textBuffer);
-            return document != null;
-        }
-
         #region document assignment
         private void AssignDocumentToFunctionList(ITextView textView, IDocument document)
         {
+            // if opened text view associated with the same document (eg peek definition)
+            // then we should not care about it
+            if (_documentTextViews.ContainsKey(document))
+                return;
+
             _documentTextViews.Add(document, textView);
             document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
             document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
-            textView.Caret.PositionChanged += CaretOnPositionChanged;
+            textView.Caret.PositionChanged += OnCaretPositionChanged;
         }
 
-        private void ContentTypeChanged(object sender, ContentTypeChangedEventArgs e)
-        {
-            var textBuffer = (ITextBuffer)sender;
-
-            if (textBuffer == null) return;
-            if (!TryGetDocument(textBuffer, out var document)) return;
-
-            var serviceProvider = ServiceProvider.GlobalProvider;
-            VsShellUtilities.IsDocumentOpen(serviceProvider, document.Path, Guid.Empty, 
-                out _, out _, out var windowFrame);
-            if (windowFrame == null) return;
-
-            var vsTextView = VsShellUtilities.GetTextView(windowFrame);
-            if (vsTextView == null)
-            {
-                _documentTextViews.Remove(document);
-                return;
-            }
-
-            var textView = _editorAdaptersFactoryService.GetWpfTextView(vsTextView);
-            if (textView == null)
-            {
-                _documentTextViews.Remove(document);
-                return;
-            }
-
-            AssignDocumentToFunctionList(textView, document);
-        }
-
-        private void DocumentDisposed(IDocument document)
+        private void TryRemoveDocument(IDocument document)
         {
             if (!_documentTextViews.TryGetValue(document, out var textView)) return;
 
             document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
             document.CurrentSnapshot.TextBuffer.Properties.RemoveProperty(typeof(FunctionListWindow));
-            textView.Caret.PositionChanged -= CaretOnPositionChanged;
+            textView.Caret.PositionChanged -= OnCaretPositionChanged;
             if (_lastResult != null && _lastResult.Snapshot.TextBuffer == document.CurrentSnapshot.TextBuffer)
                 ClearFunctionList();
 
             _documentTextViews.Remove(document);
         }
+
+        private void DocumentDisposed(IDocument document) => TryRemoveDocument(document);
         #endregion
 
         #region update function list
