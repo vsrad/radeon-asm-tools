@@ -229,7 +229,7 @@ namespace VSRAD.PackageTests.Server
                                     11, 607, 21, 608, 31, 609, 41, 610, 2, 611, 12, 612, 22, 613, 32, 614, 42, 615, 3, 616, 13,
                                     617, 23, 618, 33, 619, 43 };
 
-            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, groupCount: 4, laneDataOffset: 1, laneDataSize: 2, watchName: "watch");
+            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, waveSize: 1, groupCount: 4, laneDataOffset: 1, laneDataSize: 2, watchName: "watch");
             var expected = new uint[,] { { 0, 10, 20, 30, 40, 1, 11, 21, 31, 41 },
                                          { 2, 12, 22, 32, 42, 3, 13, 23, 33, 43 } };
 
@@ -237,7 +237,7 @@ namespace VSRAD.PackageTests.Server
                 for (int col = 0; col < 10; ++col)
                     Assert.Equal(expected[row, col], sliceWatch[row, col]);
 
-            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, groupCount: 4, laneDataOffset: 0, laneDataSize: 2, watchName: "watch");
+            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, waveSize: 1, groupCount: 4, laneDataOffset: 0, laneDataSize: 2, watchName: "watch");
             expected = new uint[,] { { 600, 601, 602, 603, 604, 605, 606, 607, 608, 609 },
                                      { 610, 611, 612, 613, 614, 615, 616, 617, 618, 619 } };
 
@@ -250,7 +250,7 @@ namespace VSRAD.PackageTests.Server
         public void SliceWatchViewGetGroupNumTest()
         {
             // first watch
-            var sliceWatch = new SliceWatchView(Data, groupsInRow: 2, groupSize: 3, groupCount: 4, laneDataOffset: 1, laneDataSize: 3, watchName: "watch");
+            var sliceWatch = new SliceWatchView(Data, groupsInRow: 2, groupSize: 3, waveSize: 1, groupCount: 4, laneDataOffset: 1, laneDataSize: 3, watchName: "watch");
 
             // correct group mapping
             var expected = new uint[,] { { 0, 0, 0, 1, 1, 1 },
@@ -264,7 +264,7 @@ namespace VSRAD.PackageTests.Server
         public void SliceWatchViewGetLaneNumTest()
         {
             // first watch
-            var sliceWatch = new SliceWatchView(Data, groupsInRow: 2, groupSize: 3, groupCount: 4, laneDataOffset: 1, laneDataSize: 3, watchName: "watch");
+            var sliceWatch = new SliceWatchView(Data, groupsInRow: 2, groupSize: 3, waveSize: 1, groupCount: 4, laneDataOffset: 1, laneDataSize: 3, watchName: "watch");
 
             // correct lane mapping
             var expected = new uint[] { 0, 1, 2, 0, 1, 2 };
@@ -300,7 +300,7 @@ namespace VSRAD.PackageTests.Server
                     for (int col = 0; col < 3; ++col)
                         watchExpected[row, col] = (uint)(100 * row + 10 * col + watchOffset);
 
-                var sliceWatch = new SliceWatchView(data, groupsInRow: 1, groupSize: 3, groupCount: 4, laneDataOffset: watchOffset, laneDataSize: 7, "watch");
+                var sliceWatch = new SliceWatchView(data, groupsInRow: 1, groupSize: 3, waveSize: 1, groupCount: 4, laneDataOffset: watchOffset, laneDataSize: 7, "watch");
                 for (int row = 0; row < 4; ++row)
                     for (int col = 0; col < 3; ++col)
                         Assert.Equal(watchExpected[row, col], sliceWatch[row, col]);
@@ -315,7 +315,7 @@ namespace VSRAD.PackageTests.Server
 
             for (int groupsInRow = 1; groupsInRow < 10; ++groupsInRow)
             {
-                var sliceWatch = new SliceWatchView(data, groupsInRow: groupsInRow, groupSize: 128, groupCount: 27, laneDataOffset: 1, laneDataSize: 2, "watch");
+                var sliceWatch = new SliceWatchView(data, groupsInRow: groupsInRow, groupSize: 128, waveSize: 64, groupCount: 27, laneDataOffset: 1, laneDataSize: 2, "watch");
                 var expectedRowCount = 27 / groupsInRow + (27 % groupsInRow == 0 ? 0 : 1);
                 Assert.Equal(expectedRowCount, sliceWatch.RowCount);
 

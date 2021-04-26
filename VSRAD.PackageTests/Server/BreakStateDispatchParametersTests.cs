@@ -22,8 +22,8 @@ comment -");
             Assert.Equal<uint>(1, ps.GridSizeY);
             Assert.Equal<uint>(1, ps.GridSizeZ);
             Assert.Equal<uint>(16, ps.DimX);
-            Assert.Equal<uint>(0, ps.DimY);
-            Assert.Equal<uint>(0, ps.DimZ);
+            Assert.Equal<uint>(1, ps.DimY);
+            Assert.Equal<uint>(1, ps.DimZ);
 
             paramsResult = BreakStateDispatchParameters.Parse(@"
 grid_size (8192, 2048, 256)
