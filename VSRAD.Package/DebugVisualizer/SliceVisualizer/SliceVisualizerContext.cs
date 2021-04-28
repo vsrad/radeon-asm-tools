@@ -96,10 +96,11 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 case nameof(Options.VisualizerAppearance.IntUintSeparator):
                     if (_windowVisible && !string.IsNullOrEmpty(SelectedWatch))
                     {
-                        var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, GroupsInRow,
+                        var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, Options.SliceVisualizerOptions.GroupsInRow,
                             (int)_visualizerContext.Options.DebuggerOptions.NGroups);
                         var typedView = new TypedSliceWatchView(watchView, SelectedType, Options.VisualizerAppearance);
-                        WatchSelected(this, typedView);
+                        SelectedWatchView = typedView;
+                        WatchSelected();
                     }
                     break;
             }
@@ -129,7 +130,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, Options.SliceVisualizerOptions.GroupsInRow,
                     (int)_visualizerContext.Options.DebuggerOptions.NGroups);
                 var typedView = new TypedSliceWatchView(watchView, SelectedType, Options.VisualizerAppearance);
-                WatchSelected(this, typedView);
+                SelectedWatchView = typedView;
+                WatchSelected();
             }
         }
 
