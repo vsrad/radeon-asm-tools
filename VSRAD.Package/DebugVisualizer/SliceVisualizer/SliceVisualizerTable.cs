@@ -1,23 +1,36 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
     sealed class SliceVisualizerTable : DataGridView
     {
-        public const int DataColumnOffset = 1; // including phantom column
+        public const int DataColumnOffset = 2; // including phantom column and first invisible column
 
-        public TypedSliceWatchView SelectedWatch { get; private set; }
+        public TypedSliceWatchView SelectedWatch => _context.SelectedWatchView;
         public bool HeatMapMode { get; private set; }
+        public SliceColumnStyling ColumnStyling { get; private set; }
 
+        public const int GroupNumberColumnIndex = 0;
+        public int ReservedColumnsOffset => Columns[GroupNumberColumnIndex].Width + 1; // +1 for border
+
+        private readonly SliceVisualizerContext _context;
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
         private readonly IFontAndColorProvider _fontAndColor;
 
         private readonly TableState _state;
 
-        public SliceVisualizerTable(IFontAndColorProvider fontAndColor) : base()
+        public uint GroupSize => _context.GroupSize;
+        public int PhantomColumnIndex => _state.PhantomColumnIndex;
+        public bool SelectedWatchValid => SelectedWatch?.ColumnCount <= 8192;
+
+        public SliceVisualizerTable(SliceVisualizerContext context, IFontAndColorProvider fontAndColor) : base()
         {
+            _context = context;
             _fontAndColor = fontAndColor;
 
             DoubleBuffered = true;
@@ -25,16 +38,101 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             AllowUserToResizeColumns = false;
             AllowUserToResizeRows = false;
             AutoGenerateColumns = false;
-            HeatMapMode = false;
+            VirtualMode = true;
+            RowHeadersVisible = false;
+            CellValueNeeded += DisplayCellValue;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            MouseClick += ShowContextMenu;
+            CellMouseEnter += DisplayCellStatus;
+            MouseLeave += (s, e) => _context.StatusString = ""; // clear status bar on leaving control
 
+            HeatMapMode = _context.Options.SliceVisualizerOptions.UseHeatMap;
+            ColumnStyling = new SliceColumnStyling(this, _context.Options.VisualizerAppearance);
+
+            SetupColumns();
             _state = new TableState(this, 60);
+            _state.AddDataColumns(Array.Empty<DataGridViewColumn>());
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
-            _ = new SliceRowStyling(this);
-            _ = new SliceCellStyling(this, _state, fontAndColor);
+            SliceRowStyling.ApplyOnRowPostPaint(this);
+            SliceCellStyling.ApplyCellStylingOnCellPainting(this, ColumnStyling, fontAndColor, _context);
+            ((FontAndColorProvider)_fontAndColor).FontAndColorInfoChanged += FontAndColorChanged;
+
+            _context.WatchSelected += DisplayWatch;
+            _context.Options.VisualizerColumnStyling.PropertyChanged += ColumnStylingChanged;
+            _context.Options.VisualizerAppearance.PropertyChanged += AppearanceOptionChanged;
+            _context.Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
+
+            _state.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
+
+            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
         }
+
+        private void DisplayCellValue(object sender, DataGridViewCellValueEventArgs e)
+        {
+            var dataColumnIndex = e.ColumnIndex - DataColumnOffset;
+            if (SelectedWatch == null || e.RowIndex >= SelectedWatch.RowCount)
+                return;
+
+            if (e.ColumnIndex == 0) // Group #
+                e.Value = SelectedWatch.GetGroupIndex(row: e.RowIndex, column: 0);
+            else if (dataColumnIndex >= 0 && dataColumnIndex < SelectedWatch.ColumnCount)
+                e.Value = SelectedWatch[e.RowIndex, e.ColumnIndex - DataColumnOffset];
+        }
+
+        private void SetupColumns()
+        {
+            // 1) Used as a workaround for scaling logic relying on a fixed column at the start of the table
+            // 2) Accessing HeaderCells for each row is too expensive when the row count is over 1000 so we use our own column to display group indexes
+            var idx = Columns.Add(new DataGridViewTextBoxColumn
+            {
+                HeaderText = "Group #",
+                FillWeight = 1,
+                Width = 75,
+                ReadOnly = true,
+                Frozen = true,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+                SortMode = DataGridViewColumnSortMode.NotSortable
+            });
+            Columns[idx].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+            Columns[idx].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+        }
+
+        private void DisplayCellStatus(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0 || !SelectedWatchValid) return;
+            var info = SelectedWatch.AllValuesEqual && HeatMapMode
+                ? "*Note: HeatMap mode is active, but all values of current watch are equal accross all threads."
+                : "";
+            _context.SetStatusString(e.RowIndex, e.ColumnIndex - DataColumnOffset, Rows[e.RowIndex].Cells[e.ColumnIndex].Value?.ToString(), info);
+        }
+
+        private void ShowContextMenu(object sender, MouseEventArgs e)
+        {
+            if (e.Button != MouseButtons.Right || !SelectedWatchValid) return;
+            var hit = HitTest(e.X, e.Y);
+            var col = hit.ColumnIndex - DataColumnOffset;
+
+            if (hit.Type == DataGridViewHitTestType.ColumnHeader && SelectedWatch != null)
+            {
+                new ContextMenu(new MenuItem[] {
+                    new MenuItem("Autofit Width", (s, o) => _state.FitWidth(col))
+                }).Show(this, new Point(e.X, e.Y));
+                return;
+            }
+
+            if (hit.Type != DataGridViewHitTestType.Cell) return;
+            if (hit.ColumnIndex < DataColumnOffset || hit.ColumnIndex == PhantomColumnIndex) return;
+
+            if (SelectedWatch.IsInactiveCell(hit.RowIndex, col)) return;
+
+            new ContextMenu(new MenuItem[] {
+                new MenuItem("Go to watch list", (s, o) => _context.NavigateToCell(hit.RowIndex, col))
+            }).Show(this, new Point(e.X, e.Y));
+        }
+
+        private void FontAndColorChanged() => Invalidate();
 
         public void SetHeatMapMode(bool value)
         {
@@ -42,11 +140,18 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             Invalidate();   // redraw
         }
 
-        public void DisplayWatch(TypedSliceWatchView watchView)
+        public void DisplayWatch()
         {
-            SelectedWatch = watchView;
-
-            var columnsMissing = watchView.ColumnCount - (Columns.Count - 1);
+            if (!SelectedWatchValid)
+            {
+                Errors.ShowException(
+                    new ArgumentException("The column count in Slice Visualizer exceeded the limit - 8192 columns. " +
+                        "Please check your configuration: Group Size and Groups in Row.")
+                );
+                Invalidate();
+                return;
+            }
+            var columnsMissing = SelectedWatch.ColumnCount - _state.DataColumns.Count;
             if (columnsMissing > 0)
             {
                 var missingColumnsStartAt = _state.DataColumns.Count;
@@ -61,30 +166,19 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                         SortMode = DataGridViewColumnSortMode.NotSortable,
                         Width = _state.ColumnWidth
                     };
+                    columns[i].HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    columns[i].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 }
                 _state.AddDataColumns(columns);
                 Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             }
             for (int i = 0; i < _state.DataColumns.Count; ++i)
-                _state.DataColumns[i].Visible = i < watchView.ColumnCount;
+                _state.DataColumns[i].Visible = i < SelectedWatch.ColumnCount;
 
-            if (Rows.Count < watchView.RowCount)
-                Rows.Add(watchView.RowCount - Rows.Count);
-            for (int i = 0; i < Rows.Count; ++i)
-            {
-                var row = Rows[i];
-                if (i < watchView.RowCount)
-                {
-                    for (int j = 0; j < watchView.ColumnCount; ++j)
-                        row.Cells[DataColumnOffset + j].Value = watchView[i, j];
-                    row.HeaderCell.Value = i;
-                    row.Visible = true;
-                }
-                else
-                {
-                    row.Visible = false;
-                }
-            }
+            ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
+
+            RowCount = SelectedWatch.RowCount;
+            Invalidate();
         }
 
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
@@ -92,7 +186,41 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (!_state.TableShouldSuppressOnColumnWidthChangedEvent)
                 base.OnColumnWidthChanged(e);
         }
+        #region property changed handlers
+        private void SliceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.SliceVisualizerOptions.UseHeatMap):
+                    SetHeatMapMode(_context.Options.SliceVisualizerOptions.UseHeatMap);
+                    break;
+            }
+        }
 
+        private void AppearanceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth):
+                case nameof(Options.VisualizerAppearance.SliceSubgroupSeparatorWidth):
+                    ColumnStyling.Recompute(_context.Options.SliceVisualizerOptions.SubgroupSize, _context.Options.SliceVisualizerOptions.VisibleColumns);
+                    break;
+                case nameof(Options.VisualizerAppearance.ScalingMode):
+                    _state.ScalingMode = _context.Options.VisualizerAppearance.ScalingMode;
+                    break;
+            }
+        }
+
+        private void ColumnStylingChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(_context.Options.VisualizerColumnStyling.BackgroundColors):
+                    Invalidate();
+                    break;
+            }
+        }
+        #endregion
         #region Standard functions overriding
         protected override void OnMouseUp(MouseEventArgs e)
         {
@@ -107,8 +235,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             if (e.Button == MouseButtons.Left)
             {
                 var hit = HitTest(e.X, e.Y);
-                if (hit.Type == DataGridViewHitTestType.RowHeader)
-                    _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
                 if (hit.Type == DataGridViewHitTestType.ColumnHeader)
                     _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
             }
@@ -118,6 +244,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
+            if (!SelectedWatchValid) return;
             Cursor = DebugVisualizer.MouseMove.ScaleOperation.ShouldChangeCursor(HitTest(e.X, e.Y), _state, e.X)
                 ? Cursors.SizeWE : Cursors.Default;
             if (!_mouseMoveController.HandleMouseMove(e))

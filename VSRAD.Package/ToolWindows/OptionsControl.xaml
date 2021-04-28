@@ -23,6 +23,7 @@
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
+            <utils:WpfBoolToVisibilityConverter x:Key="SliceButtonVisibilityConverter" TrueValue="Visible" FalseValue="Collapsed"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
@@ -76,6 +77,11 @@
                 </ContentControl.Style>
             </ContentControl>
             <StackPanel Margin="8,8">
+                <StackPanel Orientation="Horizontal" Height="25" Visibility="{Binding Options.SliceVisualizerOptions.EnableSliceVisualizer,
+                        Converter={StaticResource SliceButtonVisibilityConverter}, UpdateSourceTrigger=PropertyChanged}">
+                    <Button Content="Open Slice Visualizer" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Padding="4,0,0,0" Click="OpenSliceVusualizer"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Show hidden System variable" VerticalAlignment="Center" Padding="4,0,0,0"
                                 IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, UpdateSourceTrigger=PropertyChanged}"/>
@@ -158,6 +164,16 @@
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="0" Maximum="100" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.DarkenAlternatingRowsBy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="%" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Slice Visualizer Hidden Column Separator Width:" VerticalAlignment="Center"/>
+                            <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
+                                            Value="{Binding Options.VisualizerAppearance.SliceHiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Slice Visualizer Subgroup Separator Width:" VerticalAlignment="Center"/>
+                            <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
+                                            Value="{Binding Options.VisualizerAppearance.SliceSubgroupSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Scaling mode:" VerticalAlignment="Center"/>

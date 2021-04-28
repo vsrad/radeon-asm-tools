@@ -7,19 +7,12 @@ using System.Runtime.CompilerServices;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    public sealed class SliceVisualizerContext : INotifyPropertyChanged, IDisposable
+    public sealed class SliceVisualizerContext : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<TypedSliceWatchView> WatchSelected;
-        public event EventHandler<bool> HeatMapStateChanged;
+        public event Action WatchSelected;
 
         public Options.ProjectOptions Options { get; }
-
-        private int _subgroupSize = 64;
-        public int SubgroupSize { get => _subgroupSize; set => SetField(ref _subgroupSize, value); }
-
-        private int _groupsInRow = 1;
-        public int GroupsInRow { get => _groupsInRow; set => SetField(ref _groupsInRow, value); }
 
         private string _selectedWatch;
         public string SelectedWatch { get => _selectedWatch; set => SetField(ref _selectedWatch, value); }
@@ -27,19 +20,25 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private VariableType _selectedType;
         public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
 
-        private bool _useHeatMap = false;
-        public bool UseHeatMap { get => _useHeatMap; set => SetField(ref _useHeatMap, value); }
+        private string _statusString;
+        public string StatusString { get => _statusString; set => SetField(ref _statusString, value); }
 
-        public List<string> Watches { get; } = new List<string>();
+        public List<string> Watches { get; private set; } = new List<string>();
 
         private readonly VisualizerContext _visualizerContext;
         private readonly EnvDTE80.WindowVisibilityEvents _windowVisibilityEvents;
 
+        public uint GroupSize => (uint)_visualizerContext.Options.DebuggerOptions.GroupSize;
+
         private bool _windowVisible;
+
+        public TypedSliceWatchView SelectedWatchView { get; private set; }
 
         public SliceVisualizerContext(Options.ProjectOptions options, VisualizerContext visualizerContext, EnvDTE80.WindowVisibilityEvents visibilityEvents)
         {
             Options = options;
+            Options.SliceVisualizerOptions.PropertyChanged += SliceOptionChanged;
+            
             _visualizerContext = visualizerContext;
             _visualizerContext.GroupFetching += SetupDataFetch;
             _visualizerContext.GroupFetched += DisplayFetchedData;
@@ -48,10 +47,44 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _windowVisibilityEvents.WindowHiding += OnToolWindowVisibilityChanged;
         }
 
-        public void Dispose()
+        public void SetStatusString(int row, int column, string val, string info)
         {
-            _windowVisibilityEvents.WindowShowing -= OnToolWindowVisibilityChanged;
-            _windowVisibilityEvents.WindowHiding -= OnToolWindowVisibilityChanged;
+            if (row < 0 || column < 0 || string.IsNullOrEmpty(val))
+            {
+                StatusString = "";
+                return;
+            }
+
+            if (SelectedWatchView.IsInactiveCell(row, column))
+            {
+                StatusString = "Out of bounds";
+                return;
+            }
+
+            var gNum = SelectedWatchView.GetGroupIndex(row, column);
+            var lNum = SelectedWatchView.GetLaneIndex(column);
+            StatusString = $"Group# {gNum}, Column# {lNum}, Value: {val} {info}";
+        }
+
+        public void NavigateToCell(int sliceRowIndex, int sliceColumnIndex)
+        {
+            var groupIndex = SelectedWatchView.GetGroupIndex(sliceRowIndex, sliceColumnIndex);
+            var laneIndex = SelectedWatchView.GetLaneIndex(sliceColumnIndex);
+
+            _visualizerContext.GroupIndex.GoToGroup((uint)groupIndex);
+            _visualizerContext.SelectCell(SelectedWatch, laneIndex);
+        }
+
+        private void SliceOptionChanged(object sender, PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.SliceVisualizerOptions.GroupsInRow):
+                case nameof(Options.SliceVisualizerOptions.SubgroupSize):
+                case nameof(Options.SliceVisualizerOptions.VisibleColumns):
+                    WatchSelectionChanged();
+                    break;
+            }
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
@@ -63,17 +96,17 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             if (!Watches.SequenceEqual(_visualizerContext.BreakData.Watches))
             {
-                Watches.Clear();
-                Watches.Add("System");
+                Watches = new List<string>() { "System" };
                 Watches.AddRange(_visualizerContext.BreakData.Watches);
                 RaisePropertyChanged(nameof(Watches));
             }
             if (_windowVisible && !string.IsNullOrEmpty(SelectedWatch))
             {
-                var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, GroupsInRow,
+                var watchView = _visualizerContext.BreakData.GetSliceWatch(SelectedWatch, Options.SliceVisualizerOptions.GroupsInRow,
                     (int)_visualizerContext.Options.DebuggerOptions.NGroups);
                 var typedView = new TypedSliceWatchView(watchView, SelectedType);
-                WatchSelected(this, typedView);
+                SelectedWatchView = typedView;
+                WatchSelected();
             }
         }
 
@@ -90,14 +123,9 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             switch (propertyName)
             {
-                case nameof(SubgroupSize):
-                case nameof(GroupsInRow):
                 case nameof(SelectedWatch):
                 case nameof(SelectedType):
                     WatchSelectionChanged();
-                    break;
-                case nameof(UseHeatMap):
-                    HeatMapStateChanged(this, UseHeatMap);
                     break;
             }
         }

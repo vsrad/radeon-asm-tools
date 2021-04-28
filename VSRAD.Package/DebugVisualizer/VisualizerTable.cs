@@ -106,6 +106,21 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
 
+        public void SelectCell(string watchName, int laneIndex, ColumnStylingOptions stylingOptions)
+        {
+            ClearSelection();
+            var colIndex = laneIndex + DataColumnOffset;
+            stylingOptions.VisibleColumns = ColumnSelector.ShowColumn(laneIndex, stylingOptions.VisibleColumns, DataColumnCount); // unhide desired column if hidden
+            var row = Rows.Cast<DataGridViewRow>().First(r => r.Cells[NameColumnIndex].Value.ToString() == watchName); // find row that represent desired watch
+            row.Cells[laneIndex + DataColumnOffset].Selected = true; // select desired cell
+            var lastVisibleColumnBeforeTargetIndex = Columns
+                                                        .Cast<DataGridViewColumn>()
+                                                        .Last(c => c.Visible && c.Index < colIndex)
+                                                        .Index;
+
+            FirstDisplayedScrollingColumnIndex = Math.Max(lastVisibleColumnBeforeTargetIndex, DataColumnOffset); // scroll to the desired column
+        }
+
         public void ScaleControls(float scaleFactor)
         {
             var rowHeight = (int)(scaleFactor * 20);

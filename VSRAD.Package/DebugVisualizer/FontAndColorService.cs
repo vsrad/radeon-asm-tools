@@ -12,7 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public enum FontAndColorItem
     {
-        Header, WatchNames, ColumnSeparator, HiddenColumnSeparator
+        Header, WatchNames, ColumnSeparator, HiddenColumnSeparator, SliceHiddenColumnSeparator, SliceSubgroupSeparator
     }
 
     public enum HeatmapColor
@@ -30,6 +30,8 @@ namespace VSRAD.Package.DebugVisualizer
                 case FontAndColorItem.WatchNames: return "Watch Names";
                 case FontAndColorItem.ColumnSeparator: return "Column Separator";
                 case FontAndColorItem.HiddenColumnSeparator: return "Hidden Column Separator";
+                case FontAndColorItem.SliceHiddenColumnSeparator: return "Slice Visualizer Hidden Column Separator";
+                case FontAndColorItem.SliceSubgroupSeparator: return "Slice Visualizer Subgroup Separator";
             }
             throw new NotImplementedException();
         }
@@ -74,6 +76,8 @@ namespace VSRAD.Package.DebugVisualizer
             CreateItem(FontAndColorItem.WatchNames.GetDisplayName()),
             CreateItem(FontAndColorItem.ColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0xa0a0a0), hasText: false),
             CreateItem(FontAndColorItem.HiddenColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0x404040), hasText: false),
+            CreateItem(FontAndColorItem.SliceHiddenColumnSeparator.GetDisplayName(), bg: Color.FromArgb(0x404040), hasText: false),
+            CreateItem(FontAndColorItem.SliceSubgroupSeparator.GetDisplayName(), bg: Color.FromArgb(0x404040), hasText: false),
             CreateItem(DataHighlightColor.None.GetDisplayName()),
             CreateItem(DataHighlightColor.Inactive.GetDisplayName(), bg: Color.LightGray, hasText: false),
             CreateItem(DataHighlightColor.Red.GetDisplayName(), fg: Color.Red, bg: Color.FromArgb(245, 226, 227)),

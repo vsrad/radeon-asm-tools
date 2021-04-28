@@ -25,10 +25,23 @@ namespace VSRAD.Package.DebugVisualizer
         }
     }
 
+    public class CellSelectionEventArgs : EventArgs
+    {
+        public string WatchName;
+        public int LaneIndex;
+
+        public CellSelectionEventArgs(string watchName, int laneIndex)
+        {
+            WatchName = watchName;
+            LaneIndex = laneIndex;
+        }
+    }
+
     public sealed class VisualizerContext : DefaultNotifyPropertyChanged, IDisposable
     {
         public event EventHandler<GroupFetchingEventArgs> GroupFetching;
         public event EventHandler<GroupFetchedEventArgs> GroupFetched;
+        public event EventHandler<CellSelectionEventArgs> CellSelectionEvent;
 
         public Options.ProjectOptions Options { get; }
         public GroupIndexSelector GroupIndex { get; }
@@ -68,6 +81,7 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex = new GroupIndexSelector(options);
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
+        public void SelectCell(string watchName, int laneIndex) => CellSelectionEvent(this, new CellSelectionEventArgs(watchName, laneIndex));
 
         public void Dispose()
         {

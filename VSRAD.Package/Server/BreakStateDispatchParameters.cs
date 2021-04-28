@@ -31,8 +31,8 @@ namespace VSRAD.Package.Server
             GridSizeY = Math.Max(1, gridY);
             GridSizeZ = Math.Max(1, gridZ);
             DimX = gridX / GroupSizeX;
-            DimY = gridY > 1 ? gridY / GroupSizeY : 0;
-            DimZ = gridZ > 1 ? gridZ / GroupSizeZ : 0;
+            DimY = gridY > 1 ? gridY / GroupSizeY : 1;
+            DimZ = gridZ > 1 ? gridZ / GroupSizeZ : 1;
             NDRange3D = gridY > 1 || gridZ > 1;
             StatusString = statusString;
         }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Server;
@@ -11,6 +12,11 @@ namespace VSRAD.PackageTests.Server
 {
     public class BreakStateTests
     {
+        // two watches, system == 777, first watch == x, second watch == 100 + x
+        // group size = 3, we have 4 groups here, groups in row = 2, we have 2 rows
+        static readonly uint[] Data = new uint[] { 777, 1, 101, 777, 2, 102, 777, 3, 103, 777, 4, 104, 777, 5, 105, 777, 6, 106,
+                                                777, 7, 107, 777, 8, 108, 777, 9, 109, 777, 10, 110, 777, 11, 111, 777, 12, 112 };
+
         [Fact]
         public async Task WatchViewTestAsync()
         {
@@ -223,7 +229,7 @@ namespace VSRAD.PackageTests.Server
                                     11, 607, 21, 608, 31, 609, 41, 610, 2, 611, 12, 612, 22, 613, 32, 614, 42, 615, 3, 616, 13,
                                     617, 23, 618, 33, 619, 43 };
 
-            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, groupCount: 4, laneDataOffset: 1, laneDataSize: 2);
+            var sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, waveSize: 1, groupCount: 4, laneDataOffset: 1, laneDataSize: 2, watchName: "watch");
             var expected = new uint[,] { { 0, 10, 20, 30, 40, 1, 11, 21, 31, 41 },
                                          { 2, 12, 22, 32, 42, 3, 13, 23, 33, 43 } };
 
@@ -231,13 +237,98 @@ namespace VSRAD.PackageTests.Server
                 for (int col = 0; col < 10; ++col)
                     Assert.Equal(expected[row, col], sliceWatch[row, col]);
 
-            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, groupCount: 4, laneDataOffset: 0, laneDataSize: 2);
+            sliceWatch = new SliceWatchView(data, groupsInRow: 2, groupSize: 5, waveSize: 1, groupCount: 4, laneDataOffset: 0, laneDataSize: 2, watchName: "watch");
             expected = new uint[,] { { 600, 601, 602, 603, 604, 605, 606, 607, 608, 609 },
                                      { 610, 611, 612, 613, 614, 615, 616, 617, 618, 619 } };
 
             for (int row = 0; row < 2; ++row)
                 for (int col = 0; col < 10; ++col)
                     Assert.Equal(expected[row, col], sliceWatch[row, col]);
+        }
+
+        [Fact]
+        public void SliceWatchViewGetGroupNumTest()
+        {
+            // first watch
+            var sliceWatch = new SliceWatchView(Data, groupsInRow: 2, groupSize: 3, waveSize: 1, groupCount: 4, laneDataOffset: 1, laneDataSize: 3, watchName: "watch");
+
+            // correct group mapping
+            var expected = new uint[,] { { 0, 0, 0, 1, 1, 1 },
+                                         { 2, 2, 2, 3, 3, 3 } };
+            for (int row = 0; row < 2; ++row)
+                for (int col = 0; col < 6; ++col)
+                    Assert.Equal(expected[row, col], (uint)sliceWatch.GetGroupIndex(row, col));
+        }
+
+        [Fact]
+        public void SliceWatchViewGetLaneNumTest()
+        {
+            // first watch
+            var sliceWatch = new SliceWatchView(Data, groupsInRow: 2, groupSize: 3, waveSize: 1, groupCount: 4, laneDataOffset: 1, laneDataSize: 3, watchName: "watch");
+
+            // correct lane mapping
+            var expected = new uint[] { 0, 1, 2, 0, 1, 2 };
+
+            for (int col = 0; col < 6; ++col)
+                Assert.Equal(expected[col], (uint)sliceWatch.GetLaneIndex(col));
+        }
+
+        [Fact]
+        public void SliceWatchViewExtendedIndexationTest()
+        {
+            var data = new uint[84]; // 4 groups 3 lanes 6 watches
+            var groupSize = 21;
+
+            for (int group = 0; group < 4; ++group)
+            {
+                for (int lane = 0; lane < 3; ++lane)
+                {
+                    var index = group * groupSize + lane * 7;
+                    data[index] = 777;
+                    for (int watchOffset = 1; watchOffset < 7; ++watchOffset)
+                    {
+                        data[index + watchOffset] = (uint)(group * 100 + lane * 10 + watchOffset);
+                    }
+                }
+            }
+            // element = 100 * groupNum + 10 * laneNum + watchOffset
+
+            for (int watchOffset = 1; watchOffset < 7; ++watchOffset)
+            {
+                var watchExpected = new uint[4, 3];
+                for (int row = 0; row < 4; ++row)
+                    for (int col = 0; col < 3; ++col)
+                        watchExpected[row, col] = (uint)(100 * row + 10 * col + watchOffset);
+
+                var sliceWatch = new SliceWatchView(data, groupsInRow: 1, groupSize: 3, waveSize: 1, groupCount: 4, laneDataOffset: watchOffset, laneDataSize: 7, "watch");
+                for (int row = 0; row < 4; ++row)
+                    for (int col = 0; col < 3; ++col)
+                        Assert.Equal(watchExpected[row, col], sliceWatch[row, col]);
+                Assert.Equal(0, (int)sliceWatch[3, 3]);
+            }
+        }
+
+        [Fact]
+        public void SliceWatchViewRowCountAndInactiveCellsComputationTest()
+        {
+            var data = new uint[6912]; // 1 watch + system, group size = 128, 27 groups
+
+            for (int groupsInRow = 1; groupsInRow < 10; ++groupsInRow)
+            {
+                var sliceWatch = new SliceWatchView(data, groupsInRow: groupsInRow, groupSize: 128, waveSize: 64, groupCount: 27, laneDataOffset: 1, laneDataSize: 2, "watch");
+                var expectedRowCount = 27 / groupsInRow + (27 % groupsInRow == 0 ? 0 : 1);
+                Assert.Equal(expectedRowCount, sliceWatch.RowCount);
+
+                var expectedInactiveCellsCount = 27 % groupsInRow != 0
+                    ? (groupsInRow - (27 % groupsInRow)) * 128 : 0;
+
+                var actualInactiveCellsCount = 0;
+                for (int row = 0; row < sliceWatch.RowCount; ++row)
+                    for (int col = 0; col < sliceWatch.ColumnCount; ++col)
+                        if (sliceWatch.IsInactiveCell(row, col))
+                            actualInactiveCellsCount++;
+                Assert.Equal(expectedInactiveCellsCount, actualInactiveCellsCount);
+            }
         }
     }
 }

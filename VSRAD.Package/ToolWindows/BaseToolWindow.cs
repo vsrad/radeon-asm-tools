@@ -17,6 +17,7 @@ namespace VSRAD.Package.ToolWindows
 
         private EnvDTE.WindowEvents _windowEvents;
         private bool _dteWindowHasFocus;
+        protected EnvDTE.DTE _dte;
 
         private readonly UIElement _projectStateMissingMessage = new TextBlock
         {
@@ -61,6 +62,7 @@ namespace VSRAD.Package.ToolWindows
             ThreadHelper.ThrowIfNotOnUIThread();
             var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
             _windowEvents = dte.Events.WindowEvents;
+            _dte = dte;
             _windowEvents.WindowActivated += OnDteWindowFocusChanged;
             Application.Current.Activated += (sender, e) => OnVsWindowFocusChanged(hasFocus: true);
             Application.Current.Deactivated += (sender, e) => OnVsWindowFocusChanged(hasFocus: false);

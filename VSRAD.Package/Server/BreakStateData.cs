@@ -54,28 +54,40 @@ namespace VSRAD.Package.Server
     {
         public int ColumnCount { get; }
         public int RowCount { get; }
+        public string Name { get; }
+        public int GroupSize { get; }
 
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
         private readonly int _lastValidIndex;
+        private readonly int _groupsInRow;
+        private readonly int _groupSize;
+        private readonly int _inactiveLanesCount;
 
         private readonly uint[] _data;
 
-        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int waveSize, int groupCount, int laneDataOffset, int laneDataSize, string watchName)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
-            _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
+            _groupsInRow = groupsInRow;
+            _groupSize = groupSize;
+            _inactiveLanesCount = Math.Max(waveSize - groupSize, 0);
+            _lastValidIndex = (groupSize + _inactiveLanesCount) * groupCount * laneDataSize - (laneDataSize - _laneDataOffset);
 
+            Name = watchName;
             ColumnCount = groupsInRow * groupSize;
-            RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
+            RowCount = ((_data.Length - (_inactiveLanesCount * groupCount * _laneDataSize)) / _laneDataSize / ColumnCount) + (groupCount % groupsInRow == 0 ? 0 : 1); // one extra row for partial groups
         }
+
+        public int GetGroupIndex(int row, int column) => _groupsInRow * row + column / _groupSize;
+        public int GetLaneIndex(int column) => column % _groupSize;
 
         public bool IsInactiveCell(int row, int column)
         {
             var groupIdx = row * ColumnCount + column;
-            var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
+            var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset + _inactiveLanesCount * _laneDataSize * GetGroupIndex(row, column);
             return dwordIdx > _lastValidIndex;
         }
 
@@ -84,7 +96,7 @@ namespace VSRAD.Package.Server
             get
             {
                 var groupIdx = row * ColumnCount + column;
-                var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
+                var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset + _inactiveLanesCount * _laneDataSize * GetGroupIndex(row, column);
                 return dwordIdx <= _lastValidIndex ? _data[dwordIdx] : 0;
             }
         }
@@ -172,7 +184,8 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize);
+
+            return new SliceWatchView(_data, groupsInRow, GroupSize, WaveSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize, watch);
         }
 
         public WavemapView GetWavemapView()

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
@@ -16,18 +17,24 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly FontAndColorProvider _fontAndColorProvider;
         private readonly IToolWindowIntegration _integration;
 
-        public VisualizerControl(IToolWindowIntegration integration)
+        public delegate void ActivateWindow();
+
+        private ActivateWindow _activateWindow;
+
+        public VisualizerControl(IToolWindowIntegration integration, ActivateWindow activateWindow)
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
+            _context.CellSelectionEvent += CellSelected;
             DataContext = _context;
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
+            _activateWindow = activateWindow;
 
             _integration = integration;
             _integration.AddWatch += AddWatch;
@@ -74,6 +81,12 @@ namespace VSRAD.Package.DebugVisualizer
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
         {
             e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemap;
+        }
+        private void CellSelected(object sender, CellSelectionEventArgs e)
+        {
+            _activateWindow();
+            _table.SelectCell(e.WatchName, e.LaneIndex, _context.Options.VisualizerColumnStyling);
+            RefreshDataStyling();
         }
 
         public void WindowFocusChanged(bool hasFocus) =>
