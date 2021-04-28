@@ -5,7 +5,7 @@ using VSRAD.Package.ToolWindows;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    public sealed partial class SliceVisualizerControl : UserControl, IDisposableToolWindow
+    public sealed partial class SliceVisualizerControl : UserControl
     {
         private readonly SliceVisualizerTable _table;
         private readonly SliceVisualizerContext _context;
@@ -14,7 +14,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         {
             _context = integration.GetSliceVisualizerContext();
             DataContext = _context;
-            PropertyChangedEventManager.AddHandler(_context.Options.SliceVisualizerOptions, SliceVisualizerOptionChanged, "");
             InitializeComponent();
 
             var tableFontAndColor = new FontAndColorProvider();

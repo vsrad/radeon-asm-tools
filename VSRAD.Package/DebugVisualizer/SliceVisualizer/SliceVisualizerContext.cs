@@ -1,14 +1,13 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    public sealed class SliceVisualizerContext : INotifyPropertyChanged, IDisposable
+    public sealed class SliceVisualizerContext : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public event Action WatchSelected;

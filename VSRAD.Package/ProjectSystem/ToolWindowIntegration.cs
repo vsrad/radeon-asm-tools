@@ -29,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem
 
     [Export(typeof(IToolWindowIntegration))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class ToolWindowIntegration : IToolWindowIntegration, IDisposable
+    public sealed class ToolWindowIntegration : IToolWindowIntegration
     {
         public IProject Project { get; }
         public ProjectOptions ProjectOptions => Project.Options;
@@ -76,13 +76,5 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);
-
-        public void Dispose()
-        {
-            _visualizerContext?.Dispose();
-            _visualizerContext = null;
-            _sliceVisualizerContext?.Dispose();
-            _sliceVisualizerContext = null;
-        }
     }
 }
