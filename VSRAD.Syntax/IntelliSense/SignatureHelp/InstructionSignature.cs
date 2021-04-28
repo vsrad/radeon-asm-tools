@@ -63,7 +63,7 @@ namespace VSRAD.Syntax.IntelliSense.SignatureHelp
             _content = content.ToString();
             _displayParts = new ReadOnlyCollection<TextTag>(displayParts);
             _parameters = new ReadOnlyCollection<IParameter>(parameters);
-            _documentation = _token.GetDescription() ?? string.Empty;
+            _documentation = string.Empty;
 
             SetCurrentParameter(_initParameterIdx);
         }
