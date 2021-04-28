@@ -9,6 +9,9 @@ namespace VSRAD.Package.Options
 {
     public sealed class SliceVisualizerOptions : DefaultNotifyPropertyChanged
     {
+        private bool _enableSliceVisualizer = false;
+        public bool EnableSliceVisualizer { get => _enableSliceVisualizer; set => SetField(ref _enableSliceVisualizer, value); }
+
         private string _visibleColumns = "0:1-63";
         public string VisibleColumns { get => _visibleColumns; set => SetField(ref _visibleColumns, value); }
 

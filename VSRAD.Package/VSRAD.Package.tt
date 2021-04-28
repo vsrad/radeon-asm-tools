@@ -64,6 +64,7 @@
           <LocCanonicalName>RadDebug.Visualizer</LocCanonicalName>
         </Strings>
       </Button>
+      <!--
       <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="sliceVisualizerIcon" />
@@ -75,6 +76,7 @@
           <LocCanonicalName>RadDebug.SliceVisualizer</LocCanonicalName>
         </Strings>
       </Button>
+      -->
       <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="optionsIcon" />
