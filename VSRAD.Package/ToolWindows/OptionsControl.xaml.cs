@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -137,6 +140,12 @@ namespace VSRAD.Package.ToolWindows
                     _projectOptions.VisualizerAppearance.NameColumnAlignment = alignment;
                     break;
             }
+        }
+
+        private void OpenSliceVusualizer(object sender, RoutedEventArgs e)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            ErrorHandler.ThrowOnFailure(((IVsWindowFrame)VSPackage.SliceVisualizerToolWindow.Frame).Show());
         }
     }
 

@@ -23,6 +23,7 @@
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
+            <utils:WpfBoolToVisibilityConverter x:Key="SliceButtonVisibilityConverter" TrueValue="Visible" FalseValue="Collapsed"/>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ControlStyle.xaml"/>
             </ResourceDictionary.MergedDictionaries>
@@ -76,6 +77,11 @@
                 </ContentControl.Style>
             </ContentControl>
             <StackPanel Margin="8,8">
+                <StackPanel Orientation="Horizontal" Height="25" Visibility="{Binding Options.SliceVisualizerOptions.EnableSliceVisualizer,
+                        Converter={StaticResource SliceButtonVisibilityConverter}, UpdateSourceTrigger=PropertyChanged}">
+                    <Button Content="Open Slice Visualizer" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Padding="4,0,0,0" Click="OpenSliceVusualizer"/>
+                </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Show hidden System variable" VerticalAlignment="Center" Padding="4,0,0,0"
                                 IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, UpdateSourceTrigger=PropertyChanged}"/>

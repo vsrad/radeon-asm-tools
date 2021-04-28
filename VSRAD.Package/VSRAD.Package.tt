@@ -65,6 +65,7 @@
           <ButtonText>Open Visualizer</ButtonText>
         </Strings>
       </Button>
+      <!--
       <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="sliceVisualizerIcon" />
@@ -74,6 +75,7 @@
           <ButtonText>Open Slice Visualizer</ButtonText>
         </Strings>
       </Button>
+      -->
       <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="optionsIcon" />
