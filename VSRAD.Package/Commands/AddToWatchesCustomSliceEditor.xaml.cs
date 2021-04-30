@@ -28,6 +28,7 @@ namespace VSRAD.Package.Commands
 
         public AddToWatchesCustomSliceEditor(CreateSlice createSliceHandler, string watchName)
         {
+            Loaded += (s, e) => MoveFocus(new TraversalRequest(FocusNavigationDirection.First));
             _watchName = watchName;
             _createSlice = createSliceHandler;
             InitializeComponent();
