@@ -27,9 +27,9 @@
             <TextBlock Text="Start:" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
             <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="StartControl" Focusable="True" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="0"/>
             <TextBlock Text="Step:" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1"/>
-            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="StepControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="1"/>
+            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="StepControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="1" Minimum="1"/>
             <TextBlock Text="Count:" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2"/>
-            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="CountControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="2"/>
+            <viz:NumberInput Margin="5,0,0,0" Width="40" x:Name="CountControl" HorizontalAlignment="Left" Grid.Column="1" Grid.Row="2" Minimum="1"/>
         </Grid>
         <StackPanel Margin="4" Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Bottom">
             <Button Content="OK" Width="61" Height="22" Click="HandleOK" IsDefault="True"/>
