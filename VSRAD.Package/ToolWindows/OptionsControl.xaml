@@ -159,16 +159,16 @@
                                             Value="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
-                            <TextBlock Text="Insert separator in binary/hex mode between each" VerticalAlignment="Center"/>
+                            <TextBlock Text="Insert separator in binary/hex mode between groups of" VerticalAlignment="Center"/>
                             <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
                                         Value="{Binding Options.VisualizerAppearance.BinHexSeparator, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text="numbers" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBlock Text="digits" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
-                            <TextBlock Text="Insert separator in int/uint mode between each" VerticalAlignment="Center"/>
+                            <TextBlock Text="Insert separator in int/uint mode between groups of" VerticalAlignment="Center"/>
                             <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
                                         Value="{Binding Options.VisualizerAppearance.IntUintSeparator, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBlock Text="numbers" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                            <TextBlock Text="digits" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Darken odd rows by" VerticalAlignment="Center"/>
