@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using VSRAD.Package.Options;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
@@ -19,20 +20,23 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private readonly SliceWatchView _view;
         private readonly VariableType _type;
+        private readonly VisualizerAppearance _visualizerAppearance;
         private readonly TypedWatchValue _minValue;
         private readonly TypedWatchValue _maxValue;
 
-        public TypedSliceWatchView(SliceWatchView view, VariableType type)
+        public TypedSliceWatchView(SliceWatchView view, VariableType type, VisualizerAppearance appearance)
         {
             _view = view;
             _type = type;
+            _visualizerAppearance = appearance;
 
             GetMinMaxValues(view, type, out _minValue, out _maxValue);
         }
 
         public string this[int row, int column]
         {
-            get => DataFormatter.FormatDword(_type, _view[row, column]);
+            get => DataFormatter.FormatDword(_type, _view[row, column], _visualizerAppearance.BinHexSeparator,
+                        _visualizerAppearance.IntUintSeparator, _visualizerAppearance.BinHexLeadingZeroes);
         }
 
         public bool IsInactiveCell(int row, int column) => _view.IsInactiveCell(row, column);

@@ -35,6 +35,7 @@
                  VerticalContentAlignment="Center" Height="24"
                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+                 GotKeyboardFocus="SetSelectionOnTexboxKeyboardFocus"/>
     </DockPanel>
 </UserControl>

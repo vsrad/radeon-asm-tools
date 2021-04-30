@@ -28,6 +28,12 @@ namespace VSRAD.Package.Options
         }
         #endregion
         #region diviers
+        private uint _laneGrouping;
+        public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
+
+        private bool _verticalSplit = true;
+        public bool VerticalSplit { get => _verticalSplit; set => SetField(ref _verticalSplit, value); }
+
         private int _laneSeparatorWidth = 3;
         public int LaneSeparatorWidth
         {
@@ -55,6 +61,16 @@ namespace VSRAD.Package.Options
             get => _sliceSubgroupSeparatorWidth;
             set => SetField(ref _sliceSubgroupSeparatorWidth, value);
         }
+        #endregion
+        #region number separators
+        private uint _binHexSeparator;
+        public uint BinHexSeparator { get => _binHexSeparator; set => SetField(ref _binHexSeparator, value); }
+
+        private uint _intUintSeparator;
+        public uint IntUintSeparator { get => _intUintSeparator; set => SetField(ref _intUintSeparator, value); }
+
+        private bool _binHexLeadingZeroes;
+        public bool BinHexLeadingZeroes { get => _binHexLeadingZeroes; set => SetField(ref _binHexLeadingZeroes, value); }
         #endregion
         private ScalingMode _scalingMode = ScalingMode.ResizeColumn;
 

@@ -24,7 +24,7 @@ namespace VSRAD.Package.DebugVisualizer
         private uint _groupSize;
         private uint _waveSize;
 
-        public void Recompute(VisualizerOptions options, ColumnStylingOptions styling, uint groupSize, uint waveSize, Server.WatchView system)
+        public void Recompute(VisualizerOptions options, VisualizerAppearance appearance, ColumnStylingOptions styling, uint groupSize, uint waveSize, Server.WatchView system)
         {
             _groupSize = groupSize;
             _waveSize = waveSize;
@@ -35,7 +35,7 @@ namespace VSRAD.Package.DebugVisualizer
                 ColumnState[i] |= ColumnStates.Visible;
 
             ComputeInactiveLanes(options, system);
-            ComputeLaneGrouping(options);
+            ComputeLaneGrouping(appearance);
             ComputeHiddenColumnSeparators();
         }
 
@@ -63,7 +63,7 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void ComputeLaneGrouping(VisualizerOptions options)
+        private void ComputeLaneGrouping(VisualizerAppearance options)
         {
             var laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
             if (laneGrouping == 0 || laneGrouping > _groupSize)

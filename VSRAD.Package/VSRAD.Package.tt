@@ -152,6 +152,14 @@
           <ButtonText>Add To Watches</ButtonText>
         </Strings>
       </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddToWatchesCustomCommandId" priority="0x1401" type="Button">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Custom</ButtonText>
+        </Strings>
+      </Button>
       <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
         <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -297,6 +305,7 @@
       <IDSymbol value="0x1025" name="AddArrayToWatchesMenuGroup" />
       <IDSymbol value="0x1030" name="AddArrayToWatchesMenuId" />
       <IDSymbol value="0x1031" name="AddArrayToWatchesFromHeaderId" />
+      <IDSymbol value="0x1900" name="AddToWatchesCustomCommandId" />
 <# for (int i = 0; i < 16; ++i) { #>
       <IDSymbol value="0x<#= (0x1100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Id" />
       <IDSymbol value="0x<#= (0x4100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Group" />
