@@ -5,29 +5,36 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using System;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.FindReferences;
+using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.IntelliSense.SignatureHelp;
+using IServiceProvider = System.IServiceProvider;
 
 namespace VSRAD.Syntax.IntelliSense
 {
-    internal class IntellisenseController : IOleCommandTarget
+    internal partial class IntellisenseController : IOleCommandTarget
     {
         private readonly ITextView _textView;
         private readonly INavigationTokenService _navigationService;
         private readonly IPeekBroker _peekBroker;
         private readonly ISignatureHelpBroker _signatureHelpBroker;
         private readonly SignatureConfig _signatureConfig;
+        private readonly FindReferencesPresenter _findReferencesPresenter;
         private ISignatureHelpSession _currentSignatureSession;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(IPeekBroker peekBroker, ISignatureHelpBroker signatureHelpBroker, INavigationTokenService navigationService, ITextView textView)
+        public IntellisenseController(IServiceProvider serviceProvider, Lazy<IDocumentFactory> documentFactory, 
+            IPeekBroker peekBroker, ISignatureHelpBroker signatureHelpBroker, 
+            INavigationTokenService navigationService, ITextView textView)
         {
             _peekBroker = peekBroker;
             _signatureHelpBroker = signatureHelpBroker;
             _textView = textView;
             _navigationService = navigationService;
+            _findReferencesPresenter = new FindReferencesPresenter(serviceProvider, documentFactory, navigationService);
 
             var asmType = _textView.TextSnapshot.GetAsmType();
             _signatureConfig = SignatureConfig.GetSignature(asmType);
@@ -37,10 +44,11 @@ namespace VSRAD.Syntax.IntelliSense
         {
             if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
             {
-                for (int i = 0; i < cCmds; i++)
+                for (var i = 0; i < cCmds; i++)
                 {
                     switch ((VSConstants.VSStd97CmdID)prgCmds[i].cmdID)
                     {
+                        case VSConstants.VSStd97CmdID.FindReferences:
                         case VSConstants.VSStd97CmdID.GotoDefn:
                             prgCmds[i].cmdf = (uint)(OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED);
                             return VSConstants.S_OK;
@@ -49,7 +57,7 @@ namespace VSRAD.Syntax.IntelliSense
             }
             else if (pguidCmdGroup == VSConstants.VsStd12)
             {
-                for (int i = 0; i < cCmds; i++)
+                for (var i = 0; i < cCmds; i++)
                 {
                     switch ((VSConstants.VSStd12CmdID)prgCmds[i].cmdID)
                     {
@@ -75,6 +83,9 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 switch ((VSConstants.VSStd97CmdID)nCmdID)
                 {
+                    case VSConstants.VSStd97CmdID.FindReferences:
+                        if (TryFindReferences()) return VSConstants.S_OK;
+                        break;
                     case VSConstants.VSStd97CmdID.GotoDefn:
                         if (TryGoToDefinition()) return VSConstants.S_OK;
                         break;
@@ -131,66 +142,6 @@ namespace VSRAD.Syntax.IntelliSense
             return res;
         }
 
-        private void StartSignatureSession()
-        {
-            if (_currentSignatureSession != null)
-                return;
-
-            if (_signatureHelpBroker.IsSignatureHelpActive(_textView))
-            {
-                _currentSignatureSession = _signatureHelpBroker.GetSessions(_textView)[0];
-            }
-            else
-            {
-                var point = _textView.Caret.Position.BufferPosition;
-                var snapshot = point.Snapshot;
-                var trackingPoint = snapshot.CreateTrackingPoint(point, PointTrackingMode.Positive);
-
-                _currentSignatureSession = _signatureHelpBroker.CreateSignatureHelpSession(_textView, trackingPoint, true);
-                _textView.TextBuffer.Properties.AddProperty(typeof(ISignatureHelpSession), _currentSignatureSession);
-            }
-
-            _currentSignatureSession.Dismissed += SignatureSessionDismissed;
-            _currentSignatureSession.Start();
-        }
-
-        private void ChangeParameterSignatureSession()
-        {
-            if (_currentSignatureSession == null) return;
-            if (_currentSignatureSession.Signatures.Count == 0) return;
-
-            // all signatures have the same applicable span
-            var trackingSpan = _currentSignatureSession.Signatures[0].ApplicableToSpan;
-            var currentPosition = _textView.Caret.Position.BufferPosition;
-            var trackingStart = trackingSpan.GetStartPoint(currentPosition.Snapshot);
-
-            // check left border of applicable span, it might be invalid token
-            if (trackingStart == currentPosition)
-            {
-                _currentSignatureSession.Recalculate();
-                // if there is no applicable token, then current signatureSession will be null
-                if (_currentSignatureSession == null) return;
-            }
-
-            var searchParam = new SnapshotSpan(trackingStart, currentPosition);
-            var currentParam = searchParam.GetCurrentParameter(_signatureConfig.TriggerParameterChar);
-
-            foreach (var signature in _currentSignatureSession.Signatures)
-            {
-                if (signature is ISyntaxSignature syntaxSignature)
-                    syntaxSignature.SetCurrentParameter(currentParam);
-            }
-        }
-
-        private void SignatureSessionDismissed(object sender, EventArgs e)
-        {
-            _textView.TextBuffer.Properties.RemoveProperty(typeof(ISignatureHelpSession));
-            _currentSignatureSession = null;
-        }
-
-        private void CancelSignatureSession() =>
-            _currentSignatureSession?.Dismiss();
-
         private static char GetTypeChar(IntPtr pvaIn)
         {
             return (char)(ushort)Marshal.GetObjectForNativeVariant(pvaIn);
@@ -198,13 +149,28 @@ namespace VSRAD.Syntax.IntelliSense
 
         private bool TryGoToDefinition()
         {
+            var result = TryGetAnalysisResult();
+            if (result == null) return false;
+
+            _navigationService.NavigateOrOpenNavigationList(result.Values);
+            return true;
+        }
+
+        private bool TryFindReferences()
+        {
+            var point = _textView.Caret.Position.BufferPosition;
+            _findReferencesPresenter.TryFindAllReferences(point);
+            return true;
+        }
+
+        private NavigationTokenServiceResult TryGetAnalysisResult()
+        {
             var point = _textView.Caret.Position.BufferPosition;
 
             var navigationServiceResult = ThreadHelper.JoinableTaskFactory.Run(() => _navigationService.GetNavigationsAsync(point));
-            if (navigationServiceResult == null || navigationServiceResult.Values.Count == 0) return false;
+            if (navigationServiceResult == null || navigationServiceResult.Values.Count == 0) return null;
 
-            _navigationService.NavigateOrOpenNavigationList(navigationServiceResult.Values);
-            return true;
+            return navigationServiceResult;
         }
     }
 }

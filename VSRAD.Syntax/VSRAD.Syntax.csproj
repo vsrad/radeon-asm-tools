@@ -141,8 +141,16 @@
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
+    <Compile Include="IntelliSense\FindReferences\Entries\DocumentSpanEntry.cs" />
+    <Compile Include="IntelliSense\FindReferences\Entries\Entry.cs" />
+    <Compile Include="IntelliSense\FindReferences\FindReferencesPresenter.cs" />
+    <Compile Include="IntelliSense\FindReferences\DefinitionBucket.cs" />
+    <Compile Include="IntelliSense\FindReferences\IInlinedEntry.cs" />
+    <Compile Include="IntelliSense\FindReferences\TableDataSourceContext.cs" />
+    <Compile Include="IntelliSense\FindReferences\TableEntriesSnapshot.cs" />
     <Compile Include="IntelliSense\Helper.cs" />
     <Compile Include="IntelliSense\IntellisenseController.cs" />
+    <Compile Include="IntelliSense\IntellisenseController.SignatureHelpSession.cs" />
     <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
