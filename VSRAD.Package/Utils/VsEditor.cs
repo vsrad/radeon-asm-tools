@@ -53,7 +53,9 @@ namespace VSRAD.Package.Utils
             {
                 var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
                 Assumes.Present(dte);
+                var activeFile = dte.ActiveDocument;
                 dte.ItemOperations.OpenFile(path);
+                dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
 
                 if (string.IsNullOrEmpty(lineMarker))
                     return;
@@ -63,6 +65,7 @@ namespace VSRAD.Package.Utils
                 var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
                 Assumes.Present(textManager);
 
+                dte.ItemOperations.OpenFile(path); // change active document if line marker set
                 textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
                 activeView.SetCaretPos(lineNumber, 0);
             }
