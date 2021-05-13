@@ -65,9 +65,10 @@ namespace VSRAD.Package.Utils
                 var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
                 Assumes.Present(textManager);
 
-                dte.ItemOperations.OpenFile(path); // change active document if line marker set
+                dte.ItemOperations.OpenFile(path); // change active document to set active line according to line marker
                 textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
                 activeView.SetCaretPos(lineNumber, 0);
+                dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
             }
             catch (Exception e)
             {
