@@ -54,20 +54,19 @@ namespace VSRAD.Package.Utils
                 var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
                 Assumes.Present(dte);
                 var activeFile = dte.ActiveDocument;
-                dte.ItemOperations.OpenFile(path);
-                dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
+                dte.ItemOperations.OpenFile(path); // open requested file in VS editor
 
-                if (string.IsNullOrEmpty(lineMarker))
-                    return;
+                if (!string.IsNullOrEmpty(lineMarker))
+                {
+                    var lineNumber = GetMarkedLineNumber(path, lineMarker);
 
-                var lineNumber = GetMarkedLineNumber(path, lineMarker);
+                    var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
+                    Assumes.Present(textManager);
 
-                var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
-                Assumes.Present(textManager);
+                    textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
+                    activeView.SetCaretPos(lineNumber, 0);
+                }
 
-                dte.ItemOperations.OpenFile(path); // change active document to set active line according to line marker
-                textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-                activeView.SetCaretPos(lineNumber, 0);
                 dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
             }
             catch (Exception e)
