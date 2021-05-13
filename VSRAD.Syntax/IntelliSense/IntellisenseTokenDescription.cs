@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Text.Adornments;
+﻿using System;
+using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
@@ -8,6 +9,7 @@ using VSRAD.Syntax.Core.Tokens;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
 using System.Threading;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -21,11 +23,13 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntellisenseDescriptionBuilder : IIntellisenseDescriptionBuilder
     {
         private readonly INavigationTokenService _navigationTokenService;
+        private readonly Lazy<IDocumentFactory> _documentFactoryLazy;
 
         [ImportingConstructor]
-        public IntellisenseDescriptionBuilder(INavigationTokenService navigationTokenService)
+        public IntellisenseDescriptionBuilder(INavigationTokenService navigationTokenService, Lazy<IDocumentFactory> documentFactory)
         {
             _navigationTokenService = navigationTokenService;
+            _documentFactoryLazy = documentFactory;
         }
 
         public async Task<object> GetColorizedDescriptionAsync(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken)
@@ -127,7 +131,7 @@ namespace VSRAD.Syntax.IntelliSense
             builder.SetAsElement();
             if (token.Definition is IDefinitionToken definitionToken)
             {
-                var description = definitionToken.GetDescription();
+                var description = definitionToken.GetDescription(_documentFactoryLazy.Value);
                 if (description != null)
                     builder.AddClassifiedText(description).SetAsElement();
             }

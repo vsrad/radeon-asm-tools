@@ -13,16 +13,33 @@ namespace VSRAD.Syntax.IntelliSense
     {
         /// <summary>
         /// Returns the description text of the definition in the comment to the right or above the definition.
+        /// Must be on UI thread
         /// </summary>
         /// <returns>Description text if exists otherwise null</returns>
         public static string GetDescription(this IDefinitionToken token)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
             var serviceProvider = ServiceProvider.GlobalProvider;
             var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
 
+            return documentFactory != null 
+                ? GetDescription(token, documentFactory)
+                : null;
+        }
+
+        /// <summary>
+        /// Returns the description text of the definition in the comment to the right or above the definition.
+        /// </summary>
+        /// <returns>Description text if exists otherwise null</returns>
+        public static string GetDescription(this IDefinitionToken token, IDocumentFactory documentFactory)
+        {
             var tokenEnd = token.Span.End;
             var snapshot = token.Span.Snapshot;
+
             var document = documentFactory.GetOrCreateDocument(snapshot.TextBuffer);
+            if (document == null)
+                return null;
+
             var tokenizer = document.DocumentTokenizer;
             var tokenizerResult = tokenizer.CurrentResult;
 
