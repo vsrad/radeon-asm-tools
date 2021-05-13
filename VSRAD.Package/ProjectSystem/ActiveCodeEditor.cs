@@ -28,10 +28,8 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ITextDocumentFactoryService _textDocumentService;
 
-        // this regular find matches like `\vargs[kernarg_1:kernarg_2]`
-        private static readonly Regex _activeWordWithBracketsRegular = new Regex(@"[\w\\$]*\[[^\[\]]*\]", RegexOptions.Compiled | RegexOptions.Singleline);
-        // this regular find empty brackets
-        private static readonly Regex _emptyBracketsRegex = new Regex(@"\[\s*\]", RegexOptions.Compiled);
+        // this regex matches words like `\vargs` without indices like [0]
+        private static readonly Regex _activeWordWithoutBracketsRegex = new Regex(@"[\w\\$]*", RegexOptions.Compiled | RegexOptions.Singleline);
 
         [ImportingConstructor]
         public ActiveCodeEditor(SVsServiceProvider serviceProvider, ITextDocumentFactoryService textDocumentService)
@@ -62,7 +60,7 @@ namespace VSRAD.Package.ProjectSystem
             if (activeWord.Length == 0)
             {
                 var wpfTextView = GetTextViewFromVsTextView(GetActiveTextView());
-                activeWord = _emptyBracketsRegex.Replace(GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition), "");
+                activeWord = GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition);
             }
             return activeWord.Trim();
         }
@@ -73,8 +71,8 @@ namespace VSRAD.Package.ProjectSystem
             var lineText = line.GetText();
             var caretIndex = position - line.Start;
 
-            // check actual word with open and close brackets
-            foreach (Match match in _activeWordWithBracketsRegular.Matches(lineText))
+            // check actual word
+            foreach (Match match in _activeWordWithoutBracketsRegex.Matches(lineText))
             {
                 if (match.Index <= caretIndex && (match.Index + match.Length) >= caretIndex)
                 {
