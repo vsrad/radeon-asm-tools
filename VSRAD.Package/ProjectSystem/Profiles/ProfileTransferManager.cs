@@ -43,6 +43,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var visualizerAppearance = json["VisualizerAppearance"].ToObject<VisualizerAppearance>();
             var visualizerColumnStyling = json["VisualizerColumnStyling"].ToObject<DebugVisualizer.ColumnStylingOptions>();
             var activeProfile = json["ActiveProfile"].ToString();
+            var breakArgs = json["DebuggerOptions"]["BreakArgs"].ToString();
+
+            if (breakArgs != null)
+                debuggerOptions.AppArgs2 = breakArgs;
 
             var options = new ProjectOptions(
                 debuggerOptions,
@@ -56,6 +60,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 foreach (var host in json["TargetHosts"].ToObject<List<string>>())
                     options.TargetHosts.Add(host);
 
+            foreach (var host in options.TargetHosts)
+                options.TargetHosts.Add(host);
             options.ActiveProfile = activeProfile;
 
             return options;
