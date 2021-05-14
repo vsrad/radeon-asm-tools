@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft;
 using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell.Settings;
 using Microsoft.VisualStudio.Threading;
-using VSRAD.Syntax.Helpers;
 using AsyncServiceProvider = Microsoft.VisualStudio.Shell.AsyncServiceProvider;
 using ThreadHelper = Microsoft.VisualStudio.Shell.ThreadHelper;
 
@@ -22,8 +18,10 @@ namespace VSRAD.Syntax.Options
     {
         private static readonly AsyncLazy<GeneralOptionModel> LiveModel = new AsyncLazy<GeneralOptionModel>(CreateAsync, ThreadHelper.JoinableTaskFactory);
         private static readonly AsyncLazy<ShellSettingsManager> SettingsManager = new AsyncLazy<ShellSettingsManager>(GetSettingsManagerAsync, ThreadHelper.JoinableTaskFactory);
-        private static readonly Regex FileExtensionRegular = new Regex(@"^\.\w+$", RegexOptions.Compiled);
         private readonly GeneralOptionProvider _generalOptionProvider;
+
+        public delegate void OptionsSavedEvent(GeneralOptionModel sender);
+        public event OptionsSavedEvent OptionsSaved;
 
         protected GeneralOptionModel(GeneralOptionProvider generalOptionProvider)
         {
@@ -63,12 +61,6 @@ namespace VSRAD.Syntax.Options
             var instance = new GeneralOptionModel(optionProvider);
 
             await instance.LoadAsync();
-
-            // required initialization before options
-            var serviceProvider = AsyncServiceProvider.GlobalProvider;
-            _ = await serviceProvider.GetMefServiceAsync<ContentTypeManager>();
-
-            optionProvider.OptionsUpdatedInvoke();
             return instance;
         }
 
@@ -149,7 +141,8 @@ namespace VSRAD.Syntax.Options
         /// </summary>
         public virtual async Task SaveAsync()
         {
-            if (!Validate()) return;
+            if (!_generalOptionProvider.Validate()) 
+                return;
 
             var manager = await SettingsManager.GetValueAsync();
             var settingsStore = manager.GetWritableSettingsStore(SettingsScope.UserSettings);
@@ -184,7 +177,7 @@ namespace VSRAD.Syntax.Options
                     nameof(_generalOptionProvider.InstructionsPaths));
             }
 
-            _generalOptionProvider.OptionsUpdatedInvoke();
+            OptionsSaved?.Invoke(this);
         }
 
         private T ReadSetting<T>(SettingsStore store, string name)
@@ -225,37 +218,6 @@ namespace VSRAD.Syntax.Options
                 var formatter = new BinaryFormatter { Binder = TypeOnlyBinder.Instance };
                 return formatter.Deserialize(stream);
             }
-        }
-
-        public bool Validate()
-        {
-            var sb = new StringBuilder();
-            foreach (var ext in _generalOptionProvider.Asm1FileExtensions)
-            {
-                if (!FileExtensionRegular.IsMatch(ext))
-                    sb.AppendLine($"Invalid file extension format \"{ext}\"");
-            }
-
-            foreach (var ext in _generalOptionProvider.Asm2FileExtensions)
-            {
-                if (!FileExtensionRegular.IsMatch(ext))
-                    sb.AppendLine($"Invalid file extension format \"{ext}\"");
-            }
-
-            var asm1Set = _generalOptionProvider.Asm1FileExtensions.ToHashSet();
-            var asm2Set = _generalOptionProvider.Asm2FileExtensions.ToHashSet();
-            asm1Set.IntersectWith(asm2Set);
-            foreach (var ext in asm1Set)
-                sb.AppendLine($"\"{ext}\" must be only in one syntax (asm1 or asm2)");
-
-            foreach (var path in _generalOptionProvider.InstructionsPaths)
-                if (!Directory.Exists(path))
-                    sb.AppendLine($"\"{path}\" is not exists");
-
-            if (sb.Length == 0) return true;
-
-            Error.ShowErrorMessage(sb.ToString());
-            return false;
         }
 
         private static async Task<ShellSettingsManager> GetSettingsManagerAsync()

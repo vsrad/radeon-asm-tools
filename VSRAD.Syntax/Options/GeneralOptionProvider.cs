@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.VisualStudio.Shell;
+using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options.Instructions;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Options
 {
     public class GeneralOptionProvider
     {
+        private static readonly Regex FileExtensionRegular = new Regex(@"^\.\w+$", RegexOptions.Compiled);
         private static readonly Lazy<GeneralOptionProvider> LazyInstance =
             new Lazy<GeneralOptionProvider>(() => new GeneralOptionProvider());
-        public static GeneralOptionProvider Instance => LazyInstance.Value;
+        private readonly Task<GeneralOptionModel> _optionModelInitTask;
+        private GeneralOptionModel OptionModel => _optionModelInitTask.Result;
 
         public GeneralOptionProvider()
         {
@@ -31,7 +41,26 @@ namespace VSRAD.Syntax.Options
             AutocompleteLabels = false;
             AutocompleteVariables = false;
             SignatureHelp = false;
+
+            _optionModelInitTask = Task.Run(async () =>
+            {
+                var optionModel = await GeneralOptionModel
+                    .GetInstanceAsync()
+                    .ConfigureAwait(false);
+
+                // required initialization before OptionsSaved event
+                var serviceProvider = AsyncServiceProvider.GlobalProvider;
+                _ = await serviceProvider.GetMefServiceAsync<ContentTypeManager>();
+                _ = await serviceProvider.GetMefServiceAsync<IInstructionListLoader>();
+
+                optionModel.OptionsSaved += OptionsUpdatedInvoke;
+                OptionsUpdatedInvoke(optionModel);
+
+                return optionModel;
+            });
         }
+
+        public static GeneralOptionProvider Instance => LazyInstance.Value;
 
         public GeneralOptionPage.SortState SortOptions;
         public bool AutoScroll;
@@ -55,7 +84,44 @@ namespace VSRAD.Syntax.Options
         public delegate void OptionsUpdate(GeneralOptionProvider sender);
         public event OptionsUpdate OptionsUpdated;
 
-        public void OptionsUpdatedInvoke() =>
+        public void Load() =>
+            OptionModel.Load();
+
+        public void Save() =>
+            OptionModel.Save();
+
+        public bool Validate()
+        {
+            var sb = new StringBuilder();
+            foreach (var ext in Asm1FileExtensions)
+            {
+                if (!FileExtensionRegular.IsMatch(ext))
+                    sb.AppendLine($"Invalid file extension format \"{ext}\"");
+            }
+
+            foreach (var ext in Asm2FileExtensions)
+            {
+                if (!FileExtensionRegular.IsMatch(ext))
+                    sb.AppendLine($"Invalid file extension format \"{ext}\"");
+            }
+
+            var asm1Set = Asm1FileExtensions.ToHashSet();
+            var asm2Set = Asm2FileExtensions.ToHashSet();
+            asm1Set.IntersectWith(asm2Set);
+            foreach (var ext in asm1Set)
+                sb.AppendLine($"\"{ext}\" must be only in one syntax (asm1 or asm2)");
+
+            foreach (var path in InstructionsPaths)
+                if (!Directory.Exists(path))
+                    sb.AppendLine($"\"{path}\" is not exists");
+
+            if (sb.Length == 0) return true;
+
+            Error.ShowErrorMessage(sb.ToString());
+            return false;
+        }
+
+        private void OptionsUpdatedInvoke(GeneralOptionModel sender) =>
             OptionsUpdated?.Invoke(this);
 
         public static IReadOnlyList<string> GetDefaultInstructionDirectoryPath()
