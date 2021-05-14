@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,6 +52,13 @@ namespace VSRAD.DebugServer.SharedUtils
 
         public async Task<IResponse> StartAndObserveAsync(ConfirmTerminationOnTimeout shouldTerminateOnTimeout, CancellationToken cancellationToken)
         {
+            if (!string.IsNullOrEmpty(_process.StartInfo.WorkingDirectory) && !Directory.Exists(_process.StartInfo.WorkingDirectory))
+                return new ExecutionCompleted
+                {
+                    Status = ExecutionStatus.CouldNotLaunch,
+                    Stderr = "Working directory \"" + _process.StartInfo.WorkingDirectory + "\" does not exist."
+                };
+
             if (!_waitForCompletion)
                 return RunWithoutAwaitingCompletion();
 

@@ -341,7 +341,7 @@ namespace VSRAD.PackageTests.Server
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("dvd-prepare process could not be started on the remote machine. The directory name is invalid.", result.StepResults[0].Warning);
-            Assert.Equal("The directory name is invalid.", result.StepResults[0].Log);
+            Assert.Equal("The directory name is invalid.\r\n", result.StepResults[0].Log);
 
             controller.Setup(c => c.ShouldTerminateProcessOnTimeoutAsync(It.IsAny<IList<ProcessTreeItem>>())).ReturnsAsync(true);
             channel.ThenRespond(new ExecutionTimedOutResponse { ProcessTree = new[] { new ProcessTreeItem(1, "systemd", 0) } });
@@ -388,6 +388,20 @@ namespace VSRAD.PackageTests.Server
             var output = File.ReadAllText(file);
             File.Delete(file);
             Assert.Equal("success\r\n", output);
+        }
+
+        [Fact]
+        public async Task ExecuteLocalErrorTestAsync()
+        {
+            var steps = new List<IActionStep>
+            {
+                new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = "", WorkingDirectory = @"A:\Non\Existent\Working\Directory\Path\" }
+            };
+            var runner = new ActionRunner(null, MockController(), null);
+            var result = await runner.RunAsync("", steps);
+            Assert.False(result.Successful);
+            Assert.Equal(@"python.exe process could not be started on the local machine. Working directory ""A:\Non\Existent\Working\Directory\Path\"" does not exist.", result.StepResults[0].Warning);
+            Assert.Equal(@"Working directory ""A:\Non\Existent\Working\Directory\Path\"" does not exist." + "\r\n", result.StepResults[0].Log);
         }
 
         [Fact]

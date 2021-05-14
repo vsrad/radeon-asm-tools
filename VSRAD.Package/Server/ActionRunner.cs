@@ -324,7 +324,7 @@ namespace VSRAD.Package.Server
                 else
                 {
                     // result.Stderr contains the error reason 
-                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. {result.Stderr}", result.Stderr);
+                    return new StepResult(false, $"{step.Executable} process could not be started on the {machine} machine. {result.Stderr}", result.Stderr + "\r\n");
                 }
             }
         }
