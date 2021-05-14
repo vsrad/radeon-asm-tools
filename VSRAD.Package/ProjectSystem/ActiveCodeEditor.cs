@@ -16,7 +16,7 @@ namespace VSRAD.Package.ProjectSystem
     {
         string GetAbsoluteSourcePath();
         uint GetCurrentLine();
-        string GetActiveWord();
+        string GetActiveWord(bool matchBrackets);
     }
 
     [Export(typeof(IActiveCodeEditor))]
@@ -30,6 +30,10 @@ namespace VSRAD.Package.ProjectSystem
 
         // this regex matches words like `\vargs` without indices like [0]
         private static readonly Regex _activeWordWithoutBracketsRegex = new Regex(@"[\w\\$]*", RegexOptions.Compiled | RegexOptions.Singleline);
+        // this regex find matches like `\vargs[kernarg_1:kernarg_2]`
+        private static readonly Regex _activeWordWithBracketsRegex = new Regex(@"[\w\\$]*\[[^\[\]]*\]", RegexOptions.Compiled | RegexOptions.Singleline);
+        // this regex find empty brackets
+        private static readonly Regex _emptyBracketsRegex = new Regex(@"\[\s*\]", RegexOptions.Compiled);
 
         [ImportingConstructor]
         public ActiveCodeEditor(SVsServiceProvider serviceProvider, ITextDocumentFactoryService textDocumentService)
@@ -53,30 +57,33 @@ namespace VSRAD.Package.ProjectSystem
             return (uint)line;
         }
 
-        string IActiveCodeEditor.GetActiveWord()
+        string IActiveCodeEditor.GetActiveWord(bool matchBrackets)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             GetActiveTextView().GetSelectedText(out var activeWord);
             if (activeWord.Length == 0)
             {
                 var wpfTextView = GetTextViewFromVsTextView(GetActiveTextView());
-                activeWord = GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition);
+                activeWord = GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition,
+                    matchBrackets);
             }
             return activeWord.Trim();
         }
 
-        private string GetWordOnPosition(ITextBuffer textBuffer, SnapshotPoint position)
+        private string GetWordOnPosition(ITextBuffer textBuffer, SnapshotPoint position, bool matchBrackets)
         {
             var line = textBuffer.CurrentSnapshot.GetLineFromPosition(position);
             var lineText = line.GetText();
             var caretIndex = position - line.Start;
 
             // check actual word
-            foreach (Match match in _activeWordWithoutBracketsRegex.Matches(lineText))
+            foreach (Match match in matchBrackets
+                            ? _activeWordWithBracketsRegex.Matches(lineText)
+                            : _activeWordWithoutBracketsRegex.Matches(lineText))
             {
                 if (match.Index <= caretIndex && (match.Index + match.Length) >= caretIndex)
                 {
-                    return match.Value;
+                    return matchBrackets ? _emptyBracketsRegex.Replace(match.Value, "") : match.Value;
                 }
             }
 
