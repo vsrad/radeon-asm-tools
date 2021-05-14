@@ -8,13 +8,11 @@ namespace VSRAD.Syntax.Options
 {
     public class GeneralOptionPage : DialogPage
     {
-        private readonly GeneralOptionProvider _generalOptionEventProvider;
-        private readonly GeneralOptionModel _model;
+        private readonly GeneralOptionProvider _optionProvider;
 
         public GeneralOptionPage()
         {
-            _generalOptionEventProvider = GeneralOptionProvider.Instance;
-            _model = GeneralOptionModel.Instance;
+            _optionProvider = GeneralOptionProvider.Instance;
         }
 
         [Category("Function list")]
@@ -22,8 +20,8 @@ namespace VSRAD.Syntax.Options
         [Description("Set default sort option for Function List")]
         public SortState SortOptions
         {
-            get => _generalOptionEventProvider.SortOptions;
-            set => _generalOptionEventProvider.SortOptions = value;
+            get => _optionProvider.SortOptions;
+            set => _optionProvider.SortOptions = value;
         }
 
         [Category("Function list")]
@@ -31,8 +29,8 @@ namespace VSRAD.Syntax.Options
         [Description("Scroll to current function in the function list automatically")]
         public bool AutoScroll
         {
-            get => _generalOptionEventProvider.AutoScroll;
-            set => _generalOptionEventProvider.AutoScroll = value;
+            get => _optionProvider.AutoScroll;
+            set => _optionProvider.AutoScroll = value;
         }
 
         [Category("Syntax highlight")]
@@ -40,8 +38,8 @@ namespace VSRAD.Syntax.Options
         [Description("Enable/disable indent guide lines")]
         public bool IsEnabledIndentGuides
         {
-            get => _generalOptionEventProvider.IsEnabledIndentGuides;
-            set => _generalOptionEventProvider.IsEnabledIndentGuides = value;
+            get => _optionProvider.IsEnabledIndentGuides;
+            set => _optionProvider.IsEnabledIndentGuides = value;
         }
 
 #if DEBUG
@@ -49,16 +47,16 @@ namespace VSRAD.Syntax.Options
         [DisplayName("Indent guide line thickness")]
         public double IndentGuideThickness
         {
-            get => _generalOptionEventProvider.IndentGuideThickness;
-            set => _generalOptionEventProvider.IndentGuideThickness = value;
+            get => _optionProvider.IndentGuideThickness;
+            set => _optionProvider.IndentGuideThickness = value;
         }
 
         [Category("Syntax highlight")]
         [DisplayName("Indent guide dash size")]
         public double IndentGuideDashSize
         {
-            get => _generalOptionEventProvider.IndentGuideDashSize;
-            set => _generalOptionEventProvider.IndentGuideDashSize = value;
+            get => _optionProvider.IndentGuideDashSize;
+            set => _optionProvider.IndentGuideDashSize = value;
         }
 
         [Category("Syntax highlight")]
@@ -66,24 +64,24 @@ namespace VSRAD.Syntax.Options
         [Description("Space size between indent lines")]
         public double IndentGuideSpaceSize
         {
-            get => _generalOptionEventProvider.IndentGuideSpaceSize;
-            set => _generalOptionEventProvider.IndentGuideSpaceSize = value;
+            get => _optionProvider.IndentGuideSpaceSize;
+            set => _optionProvider.IndentGuideSpaceSize = value;
         }
 
         [Category("Syntax highlight")]
         [DisplayName("Indent guide line offset X")]
         public double IndentGuideOffsetX
         {
-            get => _generalOptionEventProvider.IndentGuideOffsetX;
-            set => _generalOptionEventProvider.IndentGuideOffsetX = value;
+            get => _optionProvider.IndentGuideOffsetX;
+            set => _optionProvider.IndentGuideOffsetX = value;
         }
 
         [Category("Syntax highlight")]
         [DisplayName("Indent guide line offset Y")]
         public double IndentGuideOffsetY
         {
-            get => _generalOptionEventProvider.IndentGuideOffsetY;
-            set => _generalOptionEventProvider.IndentGuideOffsetY = value;
+            get => _optionProvider.IndentGuideOffsetY;
+            set => _optionProvider.IndentGuideOffsetY = value;
         }
 #endif
 
@@ -92,8 +90,8 @@ namespace VSRAD.Syntax.Options
         [Description("List of file extensions for the asm1 syntax")]
         public string Asm1FileExtensions
         {
-            get => ConvertListTo(_generalOptionEventProvider.Asm1FileExtensions);
-            set => _generalOptionEventProvider.Asm1FileExtensions = ConvertListFrom(value);
+            get => ConvertListTo(_optionProvider.Asm1FileExtensions);
+            set => _optionProvider.Asm1FileExtensions = ConvertListFrom(value);
         }
 
         [Category("Syntax file extensions")]
@@ -101,8 +99,8 @@ namespace VSRAD.Syntax.Options
         [Description("List of file extensions for the asm2 syntax")]
         public string Asm2FileExtensions
         {
-            get => ConvertListTo(_generalOptionEventProvider.Asm2FileExtensions);
-            set => _generalOptionEventProvider.Asm2FileExtensions = ConvertListFrom(value);
+            get => ConvertListTo(_optionProvider.Asm2FileExtensions);
+            set => _optionProvider.Asm2FileExtensions = ConvertListFrom(value);
         }
 
         [Category("Syntax instruction folder paths")]
@@ -111,8 +109,8 @@ namespace VSRAD.Syntax.Options
         [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
         public string InstructionsPaths
         {
-            get => ConvertListTo(_generalOptionEventProvider.InstructionsPaths);
-            set => _generalOptionEventProvider.InstructionsPaths = ConvertListFrom(value);
+            get => ConvertListTo(_optionProvider.InstructionsPaths);
+            set => _optionProvider.InstructionsPaths = ConvertListFrom(value);
         }
 
         [Category("Intellisense")]
@@ -120,8 +118,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete instructions")]
         public bool AutocompleteInstructions
         {
-            get => _generalOptionEventProvider.AutocompleteInstructions;
-            set => _generalOptionEventProvider.AutocompleteInstructions = value;
+            get => _optionProvider.AutocompleteInstructions;
+            set => _optionProvider.AutocompleteInstructions = value;
         }
 
         [Category("Intellisense")]
@@ -129,8 +127,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete function name")]
         public bool AutocompleteFunctions
         {
-            get => _generalOptionEventProvider.AutocompleteFunctions;
-            set => _generalOptionEventProvider.AutocompleteFunctions = value;
+            get => _optionProvider.AutocompleteFunctions;
+            set => _optionProvider.AutocompleteFunctions = value;
         }
 
         [Category("Intellisense")]
@@ -138,8 +136,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete labels")]
         public bool AutocompleteLabels
         {
-            get => _generalOptionEventProvider.AutocompleteLabels;
-            set => _generalOptionEventProvider.AutocompleteLabels = value;
+            get => _optionProvider.AutocompleteLabels;
+            set => _optionProvider.AutocompleteLabels = value;
         }
 
         [Category("Intellisense")]
@@ -147,16 +145,16 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete global variables, local variables, function arguments")]
         public bool AutocompleteVariables
         {
-            get => _generalOptionEventProvider.AutocompleteVariables;
-            set => _generalOptionEventProvider.AutocompleteVariables = value;
+            get => _optionProvider.AutocompleteVariables;
+            set => _optionProvider.AutocompleteVariables = value;
         }
 
         [Category("Intellisense")]
         [DisplayName("Signature help")]
         public bool SignatureHelp
         {
-            get => _generalOptionEventProvider.SignatureHelp;
-            set => _generalOptionEventProvider.SignatureHelp = value;
+            get => _optionProvider.SignatureHelp;
+            set => _optionProvider.SignatureHelp = value;
         }
 
         public enum SortState
@@ -171,16 +169,15 @@ namespace VSRAD.Syntax.Options
             ByNameDescending = 4,
         }
 
-        // hack to avoid installation errors when reinstalling the extension
         public override void LoadSettingsFromStorage() =>
-            _model.Load();
+            _optionProvider.Load();
 
         public override void SaveSettingsToStorage() =>
-            _model.Save();
+            _optionProvider.Save();
 
         protected override void OnApply(PageApplyEventArgs e)
         {
-            if (!_model.Validate())
+            if (!_optionProvider.Validate())
                 e.ApplyBehavior = ApplyKind.Cancel;
 
             base.OnApply(e);

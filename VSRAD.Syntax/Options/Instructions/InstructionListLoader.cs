@@ -43,9 +43,7 @@ namespace VSRAD.Syntax.Options.Instructions
             _sets = new Dictionary<string, IInstructionSet>(StringComparer.OrdinalIgnoreCase);
             _instructionSetPaths = new Dictionary<string, ITextDocument>(StringComparer.OrdinalIgnoreCase);
 
-            var optionProvider = GeneralOptionProvider.Instance;
-            optionProvider.OptionsUpdated += OptionsUpdated;
-            OptionsUpdated(optionProvider);
+            GeneralOptionProvider.Instance.OptionsUpdated += OptionsUpdated;
         }
 
         private void OptionsUpdated(GeneralOptionProvider provider)

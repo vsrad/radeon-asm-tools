@@ -8,7 +8,6 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using System.ComponentModel.Design;
-using System.Threading.Tasks;
 using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax
@@ -30,9 +29,6 @@ namespace VSRAD.Syntax
         {
             Instance = this;
             await base.InitializeAsync(cancellationToken, progress);
-            var thread = new Thread(() => GeneralOptionModel.GetInstanceAsync());
-            thread.Start();
-
             var commandService = await GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();

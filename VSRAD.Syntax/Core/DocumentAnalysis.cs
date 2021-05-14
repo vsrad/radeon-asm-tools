@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.Core
             if (_resultsRequests.TryGetValue(textSnapshot, out var task))
                 return await task.ConfigureAwait(false);
 
-            throw new TaskCanceledException("Buffer changes have not yet been processed");
+            throw new OperationCanceledException("Buffer changes have not yet been processed");
         }
 
         public void Rescan(RescanReason rescanReason, CancellationToken cancellationToken)
