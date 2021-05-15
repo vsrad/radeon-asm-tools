@@ -14,7 +14,7 @@ namespace VSRAD.Package.Options
         #endregion
         #region Debugger
         public const string DebuggerExecutable = "python.exe";
-        public const string DebuggerArguments = "script.py -w $(" + RadMacros.Watches + ") -l $(" + RadMacros.BreakLine + ") -v \"$(" + RadMacros.DebugAppArgs + ")\" -t $(" + RadMacros.Counter + ") -p \"$(" + RadMacros.DebugBreakArgs + ")\" -f \"$(" + RadMacros.ActiveSourceFile + ")\" -o \"$(" + RadMacros.DebuggerOutputPath + ")\"";
+        public const string DebuggerArguments = "script.py -w $(" + RadMacros.Watches + ") -l $(" + RadMacros.BreakLine + ") -v \"$(" + RadMacros.DebugAppArgs + ")\" -t $(" + RadMacros.Counter + ") -p \"$(" + RadMacros.DebugAppArgs2 + ")\" -f \"$(" + RadMacros.ActiveSourceFile + ")\" -o \"$(" + RadMacros.DebuggerOutputPath + ")\"";
         public const string DebuggerWorkingDirectory = "$(" + RadMacros.DeployDirectory + ")";
         public const string DebuggerOutputPath = "";
         public const bool DebuggerBinaryOutput = false;

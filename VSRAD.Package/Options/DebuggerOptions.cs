@@ -36,8 +36,11 @@ namespace VSRAD.Package.Options
         private string _appArgs = "";
         public string AppArgs { get => _appArgs; set => SetField(ref _appArgs, value); }
 
-        private string _breakArgs = "";
-        public string BreakArgs { get => _breakArgs; set => SetField(ref _breakArgs, value); }
+        private string _appArgs2 = "";
+        public string AppArgs2 { get => _appArgs2; set => SetField(ref _appArgs2, value); }
+
+        private string _appArgs3 = "";
+        public string AppArgs3 { get => _appArgs3; set => SetField(ref _appArgs3, value); }
 
         private bool _autosave = true;
         public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }

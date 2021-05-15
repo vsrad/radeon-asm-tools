@@ -41,13 +41,21 @@ namespace VSRAD.Package.Options
         [DefaultValue(true)]
         public bool ShowAppArgsField { get => _showAppArgsField; set => SetField(ref _showAppArgsField, value); }
 
-        private bool _showBreakArgsField;
+        private bool _showAppArgs2Field;
         [DefaultValue(true)]
-        public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
+        public bool ShowAppArgs2Field { get => _showAppArgs2Field; set => SetField(ref _showAppArgs2Field, value); }
+
+        private bool _showAppArgs3Field;
+        [DefaultValue(true)]
+        public bool ShowAppArgs3Field { get => _showAppArgs3Field; set => SetField(ref _showAppArgs3Field, value); }
 
         private bool _showWavemap;
         [DefaultValue(true)]
         public bool ShowWavemap { get => _showWavemap; set => SetField(ref _showWavemap, value); }
+
+        private bool _matchBracketsOnAddToWatches;
+        [DefaultValue(false)]
+        public bool MatchBracketsOnAddToWatches { get => _matchBracketsOnAddToWatches; set => SetField(ref _matchBracketsOnAddToWatches, value); }
     }
 
     public sealed class MagicNumberConverter : JsonConverter

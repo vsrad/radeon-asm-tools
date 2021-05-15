@@ -43,7 +43,7 @@ namespace VSRAD.Package.Commands
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            var watchName = _codeEditor.GetActiveWord();
+            var watchName = _codeEditor.GetActiveWord(_toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
             if (string.IsNullOrEmpty(watchName))
                 return;
 

@@ -79,7 +79,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string AWatches = "RadAWatches";
         public const string BreakLine = "RadBreakLine";
         public const string DebugAppArgs = "RadDebugAppArgs";
-        public const string DebugBreakArgs = "RadDebugBreakArgs";
+        public const string DebugAppArgs2 = "RadDebugAppArgs2";
+        public const string DebugAppArgs3 = "RadDebugAppArgs3";
         public const string Counter = "RadCounter";
         public const string NGroups = "RadNGroups";
         public const string GroupSize = "RadGroupSize";
@@ -134,7 +135,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
                 { RadMacros.BreakLine, string.Join(":", values.BreakLines ?? new[] { 0u }) },
                 { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
-                { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
+                { RadMacros.DebugAppArgs2, debuggerOptions.AppArgs2 },
+                { RadMacros.DebugAppArgs3, debuggerOptions.AppArgs3 },
                 { RadMacros.Counter, debuggerOptions.Counter.ToString() },
                 { RadMacros.NGroups, debuggerOptions.NGroups.ToString() },
                 { RadMacros.GroupSize, debuggerOptions.GroupSize.ToString() }
