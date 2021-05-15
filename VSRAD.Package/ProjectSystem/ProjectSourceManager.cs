@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -65,17 +66,18 @@ namespace VSRAD.Package.ProjectSystem
                         dte.ActiveDocument.Save();
                     break;
                 case DocumentSaveType.OpenDocuments:
-                    try
-                    {
-                        // TODO: try to find a better way to save open documents
-                        // The dte.Documents collection could be in invalid state
-                        // preventing any access to its Items or Count
-                        dte.Documents.SaveAll();
-                    }
-                    catch (Exception e) when (e.HResult == Microsoft.VisualStudio.VSConstants.E_FAIL)
-                    {
-                        Errors.ShowCritical("Unable to save opened files. Try to close tabs with deleted or unavailable files.");
-                    }
+                    var documentTable = new RunningDocumentTable(_serviceProvider);
+                    var vsDocumentTable = _serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
+                    Assumes.Present(vsDocumentTable);
+
+                    foreach (var document in documentTable)
+                        // save only files in the tabs
+                        if ((document.Flags & (uint)(_VSRDTFLAGS.RDT_VirtualDocument | _VSRDTFLAGS.RDT_CantSave)) == 0)
+                            vsDocumentTable.SaveDocuments(
+                                    (uint)__VSRDTSAVEOPTIONS.RDTSAVEOPT_SaveIfDirty,
+                                    document.Hierarchy,
+                                    document.ItemId,
+                                    document.DocCookie);
                     break;
                 case DocumentSaveType.ProjectDocuments:
                     if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
