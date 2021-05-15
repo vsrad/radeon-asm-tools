@@ -82,6 +82,7 @@ namespace VSRAD.Syntax.IntelliSense
             var snapshot = document.CurrentSnapshot;
 
             var builder = new ClassifiedTextBuilder();
+            builder.AddTokenIcon(token);
 
             if (token.Type == RadAsmTokenType.Instruction)
             {
@@ -141,21 +142,32 @@ namespace VSRAD.Syntax.IntelliSense
         public class ClassifiedTextBuilder
         {
             private readonly LinkedList<ClassifiedTextRun> _classifiedTextRuns;
-            private readonly LinkedList<ClassifiedTextElement> _classifiedTextElements;
+            private readonly LinkedList<object> _classifiedTextElements;
+            private readonly LinkedList<object> _containerElements;
 
             public ClassifiedTextBuilder()
             {
                 _classifiedTextRuns = new LinkedList<ClassifiedTextRun>();
-                _classifiedTextElements = new LinkedList<ClassifiedTextElement>();
+                _containerElements = new LinkedList<object>();
+                _classifiedTextElements = new LinkedList<object>();
             }
 
             public ContainerElement Build() =>
-                new ContainerElement(ContainerElementStyle.Stacked, _classifiedTextElements);
+                new ContainerElement(ContainerElementStyle.Stacked, _containerElements);
 
             public ClassifiedTextBuilder SetAsElement()
             {
                 _classifiedTextElements.AddLast(new ClassifiedTextElement(_classifiedTextRuns));
+                _containerElements.AddLast(new ContainerElement(ContainerElementStyle.Wrapped, _classifiedTextElements));
+
+                _classifiedTextElements.Clear();
                 _classifiedTextRuns.Clear();
+                return this;
+            }
+
+            public ClassifiedTextBuilder AddTokenIcon(INavigationToken navigationToken)
+            {
+                _classifiedTextElements.AddLast(navigationToken.Type.GetImageElement());
                 return this;
             }
 

@@ -70,29 +70,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         private bool ShouldTriggerCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation)
         {
-            if (triggerLocation == triggerLocation.Snapshot.Length)
+            if (triggerLocation < 3 || triggerLocation == triggerLocation.Snapshot.Length)
                 return false;
-
-            try
-            {
-                var currentToken = _document.DocumentTokenizer.CurrentResult.GetToken(triggerLocation);
-                var currentTokenType = _document.DocumentTokenizer.GetTokenType(currentToken.Type);
-                if (currentTokenType == RadAsmTokenType.Comment)
-                {
-                    return false;
-                }
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                // outdated parser results so you cannot get valid tokens for the trigger location
-                return false;
-            }
-
-            if (trigger.Reason == CompletionTriggerReason.Invoke
-                    || trigger.Reason == CompletionTriggerReason.InvokeAndCommitIfUnique)
-            {
-                return true;
-            }
 
             if (trigger.Reason == CompletionTriggerReason.Insertion && (trigger.Character == '\n' || trigger.Character == '\t')
                 || trigger.Reason == CompletionTriggerReason.Deletion
@@ -104,6 +83,44 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var extend = triggerLocation.GetExtent();
             if (extend.Span.Length < 3)
                 return false;
+
+            try
+            {
+                // currentLocation has the next position behind the cursor position
+                var currentLocation = triggerLocation - 1;
+                var currentToken = _document.DocumentTokenizer.CurrentResult.GetToken(currentLocation);
+
+                var currentTokenType = _document.DocumentTokenizer.GetTokenType(currentToken.Type);
+                if (currentTokenType == RadAsmTokenType.Comment 
+                    || currentTokenType == RadAsmTokenType.Whitespace)
+                {
+                    return false;
+                }
+
+                var currentLine = currentLocation.GetContainingLine();
+                var checkSpanEnd = currentToken.Start.GetPoint(currentLocation.Snapshot);
+                var checkSpan = new SnapshotSpan(currentLine.Start, checkSpanEnd);
+
+                var currentLineTokenTypes = _document.DocumentTokenizer
+                    .CurrentResult
+                    .GetTokens(checkSpan)
+                    .Select(t => _document.DocumentTokenizer.GetTokenType(t.Type))
+                    .Where(t => t != RadAsmTokenType.Whitespace);
+
+                // if current line is a function signature or variable declaration
+                // then do not trigger completion
+                var tokenTypes = currentLineTokenTypes.ToList();
+                if (tokenTypes.Any() && 
+                    tokenTypes.All(t => t == RadAsmTokenType.Keyword))
+                {
+                    return false;
+                }
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // outdated parser results so you cannot get valid tokens for the trigger location
+                return false;
+            }
 
             return true;
         }

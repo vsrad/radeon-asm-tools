@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +12,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
     internal class ScopedCompletionProvider : RadCompletionProvider
     {
-        private static readonly ImageElement LabelIcon = GetImageElement(KnownImageIds.Label);
-        private static readonly ImageElement GlobalVariableIcon = GetImageElement(KnownImageIds.GlobalVariable);
-        private static readonly ImageElement LocalVariableIcon = GetImageElement(KnownImageIds.LocalVariable);
-        private static readonly ImageElement ArgumentIcon = GetImageElement(KnownImageIds.Parameter);
+        private static readonly ImageElement LabelIcon = RadAsmTokenType.Label.GetImageElement();
+        private static readonly ImageElement GlobalVariableIcon = RadAsmTokenType.GlobalVariable.GetImageElement();
+        private static readonly ImageElement LocalVariableIcon = RadAsmTokenType.LocalVariable.GetImageElement();
         private readonly INavigationTokenService _navigationTokenService;
 
         private bool _autocompleteLabels;
@@ -60,7 +58,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
                     if (_autocompleteLabels && token.Type == RadAsmTokenType.Label)
                     {
-                        yield return CreateCompletionItem(token, LabelIcon); break;
+                        yield return CreateCompletionItem(token, LabelIcon);
                     }
                     else if (_autocompleteVariables)
                     {
@@ -69,9 +67,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                             case RadAsmTokenType.GlobalVariable:
                                 yield return CreateCompletionItem(token, GlobalVariableIcon); break;
                             case RadAsmTokenType.LocalVariable:
-                                yield return CreateCompletionItem(token, LocalVariableIcon); break;
                             case RadAsmTokenType.FunctionParameter:
-                                yield return CreateCompletionItem(token, ArgumentIcon); break;
+                                yield return CreateCompletionItem(token, LocalVariableIcon); break;
                         }
                     }
                 }

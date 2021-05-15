@@ -1,7 +1,4 @@
-﻿using Microsoft.VisualStudio.Core.Imaging;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Adornments;
-using System;
+﻿using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Options;
@@ -23,7 +20,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
     internal abstract class RadCompletionProvider
     {
-        public RadCompletionProvider(GeneralOptionProvider generalOptionProvider)
+        protected RadCompletionProvider(GeneralOptionProvider generalOptionProvider)
         {
             generalOptionProvider.OptionsUpdated += DisplayOptionsUpdated;
         }
@@ -31,10 +28,5 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         public abstract Task<RadCompletionContext> GetContextAsync(IDocument document, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken);
 
         public abstract void DisplayOptionsUpdated(GeneralOptionProvider sender);
-
-        public static ImageElement GetImageElement(int imageId) =>
-            new ImageElement(new ImageId(ImageCatalogGuid, imageId));
-
-        private static readonly Guid ImageCatalogGuid = Guid.Parse(/* image catalog guid */ "ae27a6b0-e345-4288-96df-5eaf394ee369");
     }
 }
