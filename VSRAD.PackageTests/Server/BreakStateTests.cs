@@ -196,19 +196,16 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task BreakStateWithLocalDataTestAsync()
         {
-            var data = new int[2 * 256];
-            for (int i = 0; i < 256; ++i)
+            var data = new uint[2 * 256];
+            for (uint i = 0; i < 256; ++i)
             {
                 data[2 * i + 0] = i; // system = global id
                 data[2 * i + 1] = i % 32; // first watch = local id
             }
 
-            var localData = new byte[2 * 256 * sizeof(int)];
-            Buffer.BlockCopy(data, 0, localData, 0, localData.Length);
-
             var watches = new ReadOnlyCollection<string>(new[] { "local_id" });
             var file = new BreakStateOutputFile("/home/kyubey/projects/madoka", binaryOutput: true, offset: 0, timestamp: default, dwordCount: 2 * 256);
-            var breakStateData = new BreakStateData(watches, file, localData);
+            var breakStateData = new BreakStateData(watches, file, data);
 
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: 1, groupSize: 64, waveSize: 32, nGroups: 2);
             Assert.Null(warning);

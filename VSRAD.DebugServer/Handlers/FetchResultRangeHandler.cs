@@ -28,7 +28,7 @@ namespace VSRAD.DebugServer.Handlers
             var timestamp = File.GetLastWriteTimeUtc(_filePath);
             var data = _command.BinaryOutput
                 ? await ParseDebuggerOutputBinaryAsync()
-                : await ParseDebuggerOutputTextAsync();
+                : ParseDebuggerOutputText();
 
             return new ResultRangeFetched { Status = FetchStatus.Successful, Data = data, Timestamp = timestamp };
         }
@@ -52,10 +52,17 @@ namespace VSRAD.DebugServer.Handlers
             return buffer;
         }
 
-        internal async Task<byte[]> ParseDebuggerOutputTextAsync()
+        internal byte[] ParseDebuggerOutputText()
         {
-            using var stream = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.Read, _bufferSize, FileOptions.SequentialScan);
-            return await TextDebuggerOutputParser.ReadTextOutputAsync(stream, _command.OutputOffset, _command.ByteOffset, _command.ByteCount);
+            var byteOffset = (_command.ByteOffset % 4 == 0) ? _command.ByteOffset : _command.ByteOffset - (4 - _command.ByteOffset % 4);
+            var lineOffset = _command.OutputOffset + (byteOffset / 4);
+            var lineCount = _command.ByteCount / 4;
+
+            var dataDwords = TextDebuggerOutputParser.ReadTextOutput(_filePath, lineOffset, lineCount);
+            var dataBytes = new byte[dataDwords.Count * 4];
+            Buffer.BlockCopy(dataDwords.ToArray(), 0, dataBytes, 0, dataBytes.Length);
+
+            return dataBytes;
         }
     }
 }
