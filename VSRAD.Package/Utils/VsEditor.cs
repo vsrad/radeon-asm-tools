@@ -1,6 +1,7 @@
-﻿using EnvDTE;
-using Microsoft;
+﻿using Microsoft;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Generic;
@@ -14,15 +15,19 @@ namespace VSRAD.Package.Utils
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
-            Assumes.Present(dte);
+            var logicalView = Guid.Empty;
+            if (!VsShellUtilities.IsDocumentOpen(serviceProvider, documentPath, logicalView, out _, out _, out var windowFrame))
+            {
+                var vsUIShellOpenDocument = serviceProvider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+                Assumes.Present(vsUIShellOpenDocument);
 
-            dte.ItemOperations.OpenFile(documentPath);
+                ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(documentPath, ref logicalView, out _, out _, out _, out windowFrame));
+            }
 
-            var document = (TextDocument)dte.ActiveDocument.Object("TextDocument");
-            var editPoint = document.StartPoint.CreateEditPoint();
-            editPoint.MoveToLineAndOffset((int)line + 1, 1);
-            editPoint.TryToShow(vsPaneShowHow.vsPaneShowCentered);
+            windowFrame.Show();
+
+            var vsTextView = VsShellUtilities.GetTextView(windowFrame);
+            vsTextView.CenterLines((int)line, 0);
         }
 
         public static IEnumerable<IVsTextLineMarker> GetLineMarkersOfTypeInActiveView(IServiceProvider serviceProvider, int type)
@@ -51,23 +56,20 @@ namespace VSRAD.Package.Utils
             ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
-                var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
-                Assumes.Present(dte);
-                var activeFile = dte.ActiveDocument;
-                dte.ItemOperations.OpenFile(path); // open requested file in VS editor
+                var vsUIShellOpenDocument = serviceProvider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+                Assumes.Present(vsUIShellOpenDocument);
+
+                var logicalView = Guid.Empty;
+                ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, ref logicalView, out _, out _, out _, out var windowFrame));
 
                 if (!string.IsNullOrEmpty(lineMarker))
                 {
                     var lineNumber = GetMarkedLineNumber(path, lineMarker);
-
-                    var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
-                    Assumes.Present(textManager);
-
-                    textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-                    activeView.SetCaretPos(lineNumber, 0);
+                    var vsTextView = VsShellUtilities.GetTextView(windowFrame);
+                    vsTextView.SetCaretPos(lineNumber, 0);
                 }
 
-                dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
+                ErrorHandler.ThrowOnFailure(windowFrame.ShowNoActivate());
             }
             catch (Exception e)
             {
