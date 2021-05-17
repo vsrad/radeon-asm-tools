@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.Settings;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell.Settings;
 using Microsoft.VisualStudio.Threading;
+using VSRAD.Syntax.Helpers;
 using AsyncServiceProvider = Microsoft.VisualStudio.Shell.AsyncServiceProvider;
 using ThreadHelper = Microsoft.VisualStudio.Shell.ThreadHelper;
 
@@ -68,6 +69,7 @@ namespace VSRAD.Syntax.Options
         /// The name of the options collection as stored in the registry.
         /// </summary>
         protected virtual string CollectionName { get; } = typeof(GeneralOptionModel).FullName;
+        private string InstructionCollectionName { get; } = typeof(Instructions.IInstructionListLoader).FullName;
 
         private async Task DeleteCollectionAsync()
         {
@@ -93,39 +95,52 @@ namespace VSRAD.Syntax.Options
         /// </summary>
         public virtual async Task LoadAsync()
         {
-            var manager = await SettingsManager.GetValueAsync();
+            var manager = await SettingsManager.GetValueAsync().ConfigureAwait(false);
             var settingsStore = manager.GetReadOnlySettingsStore(SettingsScope.UserSettings);
-
-            if (!settingsStore.CollectionExists(CollectionName))
-            {
-                return;
-            }
 
             try
             {
-                _generalOptionProvider.SortOptions = ReadSetting<GeneralOptionPage.SortState>(settingsStore, nameof(_generalOptionProvider.SortOptions));
-                _generalOptionProvider.AutoScroll = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutoScroll));
-                _generalOptionProvider.IsEnabledIndentGuides = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.IsEnabledIndentGuides));
-                _generalOptionProvider.IndentGuideThickness = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideThickness));
-                _generalOptionProvider.IndentGuideDashSize = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideDashSize));
-                _generalOptionProvider.IndentGuideSpaceSize = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideSpaceSize));
-                _generalOptionProvider.IndentGuideOffsetY = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideOffsetY));
-                _generalOptionProvider.IndentGuideOffsetX = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideOffsetX));
-                _generalOptionProvider.Asm1FileExtensions = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.Asm1FileExtensions));
-                _generalOptionProvider.Asm2FileExtensions = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.Asm2FileExtensions));
-                _generalOptionProvider.Asm1SelectedSet = ReadSetting<string>(settingsStore, nameof(_generalOptionProvider.Asm1SelectedSet));
-                _generalOptionProvider.Asm2SelectedSet = ReadSetting<string>(settingsStore, nameof(_generalOptionProvider.Asm2SelectedSet));
-                _generalOptionProvider.InstructionsPaths = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.InstructionsPaths));
-                _generalOptionProvider.AutocompleteInstructions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteInstructions));
-                _generalOptionProvider.AutocompleteFunctions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteFunctions));
-                _generalOptionProvider.AutocompleteLabels = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteLabels));
-                _generalOptionProvider.AutocompleteVariables = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteVariables));
-                _generalOptionProvider.SignatureHelp = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.SignatureHelp));
+                GeneralOptionLoad(settingsStore);
+                InstructionOptionLoad(settingsStore);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                System.Diagnostics.Debug.Write(ex);
+                Error.LogError(e, nameof(GeneralOptionModel));
             }
+        }
+
+        private void GeneralOptionLoad(SettingsStore settingsStore)
+        {
+            if (!settingsStore.CollectionExists(CollectionName))
+                return;
+
+            _generalOptionProvider.SortOptions = ReadSetting<GeneralOptionPage.SortState>(settingsStore, nameof(_generalOptionProvider.SortOptions));
+            _generalOptionProvider.AutoScroll = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutoScroll));
+            _generalOptionProvider.IsEnabledIndentGuides = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.IsEnabledIndentGuides));
+            _generalOptionProvider.IndentGuideThickness = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideThickness));
+            _generalOptionProvider.IndentGuideDashSize = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideDashSize));
+            _generalOptionProvider.IndentGuideSpaceSize = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideSpaceSize));
+            _generalOptionProvider.IndentGuideOffsetY = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideOffsetY));
+            _generalOptionProvider.IndentGuideOffsetX = ReadSetting<double>(settingsStore, nameof(_generalOptionProvider.IndentGuideOffsetX));
+            _generalOptionProvider.Asm1FileExtensions = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.Asm1FileExtensions));
+            _generalOptionProvider.Asm2FileExtensions = ReadSetting<IReadOnlyList<string>>(settingsStore, nameof(_generalOptionProvider.Asm2FileExtensions));
+            _generalOptionProvider.Asm1SelectedSet = ReadSetting<string>(settingsStore, nameof(_generalOptionProvider.Asm1SelectedSet));
+            _generalOptionProvider.Asm2SelectedSet = ReadSetting<string>(settingsStore, nameof(_generalOptionProvider.Asm2SelectedSet));
+            _generalOptionProvider.AutocompleteInstructions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteInstructions));
+            _generalOptionProvider.AutocompleteFunctions = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteFunctions));
+            _generalOptionProvider.AutocompleteLabels = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteLabels));
+            _generalOptionProvider.AutocompleteVariables = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.AutocompleteVariables));
+            _generalOptionProvider.SignatureHelp = ReadSetting<bool>(settingsStore, nameof(_generalOptionProvider.SignatureHelp));
+        }
+
+        private void InstructionOptionLoad(SettingsStore settingsStore)
+        {
+            if (!settingsStore.CollectionExists(InstructionCollectionName))
+                return;
+
+            _generalOptionProvider.InstructionsPaths = ReadSetting<IReadOnlyList<string>>(
+                settingsStore, InstructionCollectionName,
+                nameof(_generalOptionProvider.InstructionsPaths));
         }
 
         /// <summary>
@@ -141,16 +156,29 @@ namespace VSRAD.Syntax.Options
         /// </summary>
         public virtual async Task SaveAsync()
         {
-            if (!_generalOptionProvider.Validate()) 
+            if (!_generalOptionProvider.Validate())
                 return;
 
-            var manager = await SettingsManager.GetValueAsync();
+            var manager = await SettingsManager.GetValueAsync().ConfigureAwait(false);
             var settingsStore = manager.GetWritableSettingsStore(SettingsScope.UserSettings);
 
-            if (!settingsStore.CollectionExists(CollectionName))
+            try
             {
-                settingsStore.CreateCollection(CollectionName);
+                GeneralOptionSave(settingsStore);
+                InstructionOptionSave(settingsStore);
+
+                OptionsSaved?.Invoke(this);
             }
+            catch (Exception e)
+            {
+                Error.LogError(e, nameof(GeneralOptionModel));
+            }
+        }
+
+        private void GeneralOptionSave(WritableSettingsStore settingsStore)
+        {
+            if (!settingsStore.CollectionExists(CollectionName))
+                settingsStore.CreateCollection(CollectionName);
 
             WriteSetting(settingsStore, _generalOptionProvider.SortOptions, nameof(_generalOptionProvider.SortOptions));
             WriteSetting(settingsStore, _generalOptionProvider.AutoScroll, nameof(_generalOptionProvider.AutoScroll));
@@ -169,33 +197,51 @@ namespace VSRAD.Syntax.Options
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteLabels, nameof(_generalOptionProvider.AutocompleteLabels));
             WriteSetting(settingsStore, _generalOptionProvider.AutocompleteVariables, nameof(_generalOptionProvider.AutocompleteVariables));
             WriteSetting(settingsStore, _generalOptionProvider.SignatureHelp, nameof(_generalOptionProvider.SignatureHelp));
-
-            if (!_generalOptionProvider.InstructionsPaths.Equals(GeneralOptionProvider.GetDefaultInstructionDirectoryPath()))
-            {
-
-                WriteSetting(settingsStore, _generalOptionProvider.InstructionsPaths,
-                    nameof(_generalOptionProvider.InstructionsPaths));
-            }
-
-            OptionsSaved?.Invoke(this);
         }
 
-        private T ReadSetting<T>(SettingsStore store, string name)
+        private void InstructionOptionSave(WritableSettingsStore settingsStore)
         {
-            var serializedProp = store.GetString(CollectionName, name);
-            return (T)DeserializeValue(serializedProp, typeof(T));
+            if (GeneralOptionProvider.IsDefaultInstructionPaths(_generalOptionProvider.InstructionsPaths))
+                return;
+
+            if (!settingsStore.CollectionExists(InstructionCollectionName))
+                settingsStore.CreateCollection(InstructionCollectionName);
+
+            WriteSetting(settingsStore,
+                InstructionCollectionName,
+                _generalOptionProvider.InstructionsPaths,
+                nameof(_generalOptionProvider.InstructionsPaths));
         }
 
-        private void WriteSetting<T>(WritableSettingsStore store, T value, string name)
+
+        /// <summary>
+        /// Read setting from the current model collection 
+        /// </summary>
+        protected T ReadSetting<T>(SettingsStore store, string name) =>
+            ReadSetting<T>(store, CollectionName, name);
+
+        protected T ReadSetting<T>(SettingsStore store, string collectionName, string name)
+        {
+            var serializedProp = store.GetString(collectionName, name);
+            return (T)DeserializeValue(serializedProp);
+        }
+
+        /// <summary>
+        /// Write setting to the current model collection 
+        /// </summary>
+        protected void WriteSetting<T>(WritableSettingsStore store, T value, string name) =>
+            WriteSetting<T>(store, CollectionName, value, name);
+
+        protected void WriteSetting<T>(WritableSettingsStore store, string collectionName, T value, string name)
         {
             var output = SerializeValue(value);
-            store.SetString(CollectionName, name, output);
+            store.SetString(collectionName, name, output);
         }
 
         /// <summary>
         /// Serializes an object value to a string using the binary serializer.
         /// </summary>
-        protected virtual string SerializeValue(object value)
+        private static string SerializeValue(object value)
         {
             using (var stream = new MemoryStream())
             {
@@ -209,7 +255,7 @@ namespace VSRAD.Syntax.Options
         /// <summary>
         /// Deserializes a string to an object using the binary serializer.
         /// </summary>
-        protected virtual object DeserializeValue(string value, Type type)
+        private static object DeserializeValue(string value)
         {
             var b = Convert.FromBase64String(value);
 

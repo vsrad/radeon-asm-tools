@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.Options
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             Asm1SelectedSet = string.Empty;
             Asm2SelectedSet = string.Empty;
-            InstructionsPaths = GetDefaultInstructionDirectoryPath();
+            InstructionsPaths = DefaultInstructionPaths.Value;
             AutocompleteInstructions = false;
             AutocompleteFunctions = false;
             AutocompleteLabels = false;
@@ -124,10 +124,18 @@ namespace VSRAD.Syntax.Options
         private void OptionsUpdatedInvoke(GeneralOptionModel sender) =>
             OptionsUpdated?.Invoke(this);
 
-        public static IReadOnlyList<string> GetDefaultInstructionDirectoryPath()
+        public static readonly Lazy<IReadOnlyList<string>>
+            DefaultInstructionPaths = new Lazy<IReadOnlyList<string>>(() =>
+                {
+                    var assemblyFolder = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
+                    return new List<string>() { Path.GetDirectoryName(assemblyFolder) };
+                });
+
+        public static bool IsDefaultInstructionPaths(IEnumerable<string> paths)
         {
-            var assemblyFolder = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
-            return new List<string>() { Path.GetDirectoryName(assemblyFolder) };
+            var set = paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            set.SymmetricExceptWith(DefaultInstructionPaths.Value);
+            return set.Count == 0;
         }
     }
 }
