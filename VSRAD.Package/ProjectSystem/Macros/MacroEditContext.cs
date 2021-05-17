@@ -121,8 +121,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         {
             var macroData = (KeyValuePair<string, string>)macro;
             return string.IsNullOrEmpty(MacroPreviewFilter)
-                || macroData.Key.IndexOf(MacroPreviewFilter, StringComparison.OrdinalIgnoreCase) != -1
-                || macroData.Value.IndexOf(MacroPreviewFilter, StringComparison.OrdinalIgnoreCase) != -1;
+                || (macroData.Key != null && macroData.Key.IndexOf(MacroPreviewFilter, StringComparison.OrdinalIgnoreCase) != -1)
+                || (macroData.Value != null && macroData.Value.IndexOf(MacroPreviewFilter, StringComparison.OrdinalIgnoreCase) != -1);
         }
     }
 }
