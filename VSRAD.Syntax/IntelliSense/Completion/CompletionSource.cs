@@ -12,6 +12,7 @@ using VSRAD.Syntax.Core.Tokens;
 using System;
 using VSRAD.Syntax.IntelliSense.Completion.Providers;
 using CompletionItem = Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data.CompletionItem;
+using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -97,21 +98,22 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                     return false;
                 }
 
+                var snapshot = currentLocation.Snapshot;
                 var currentLine = currentLocation.GetContainingLine();
-                var checkSpanEnd = currentToken.Start.GetPoint(currentLocation.Snapshot);
+                var checkSpanEnd = currentToken.Start.GetPoint(snapshot);
                 var checkSpan = new SnapshotSpan(currentLine.Start, checkSpanEnd);
 
                 var currentLineTokenTypes = _document.DocumentTokenizer
                     .CurrentResult
                     .GetTokens(checkSpan)
-                    .Select(t => _document.DocumentTokenizer.GetTokenType(t.Type))
-                    .Where(t => t != RadAsmTokenType.Whitespace);
+                    .Where(t => _document.DocumentTokenizer.GetTokenType(t.Type) != RadAsmTokenType.Whitespace);
 
                 // if current line is a function signature or variable declaration
                 // then do not trigger completion
                 var tokenTypes = currentLineTokenTypes.ToList();
+                var dismissTokens = GetDismissTokens(snapshot.GetAsmType());
                 if (tokenTypes.Any() && 
-                    tokenTypes.All(t => t == RadAsmTokenType.Keyword))
+                    tokenTypes.All(t => dismissTokens.Contains(t.Type)))
                 {
                     return false;
                 }
@@ -123,6 +125,32 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             }
 
             return true;
+        }
+
+        private static ISet<int> GetDismissTokens(AsmType asmType)
+        {
+            switch (asmType)
+            {
+                case AsmType.RadAsm:
+                    return new HashSet<int>
+                    {
+                        RadAsmLexer.MACRO,
+                        RadAsmLexer.SET,
+                    };
+                case AsmType.RadAsm2:
+                    return new HashSet<int>
+                    {
+                        RadAsm2Lexer.FUNCTION,
+                        RadAsm2Lexer.VAR,
+                    };
+                case AsmType.RadAsmDoc:
+                    return new HashSet<int>
+                    {
+                        RadAsmDocLexer.LET,
+                    };
+                default:
+                    throw new ArgumentException(nameof(asmType));
+            }
         }
     }
 }
