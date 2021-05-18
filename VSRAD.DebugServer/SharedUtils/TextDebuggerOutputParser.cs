@@ -5,10 +5,16 @@ namespace VSRAD.DebugServer.SharedUtils
 {
     public static class TextDebuggerOutputParser
     {
+        // Amount of bytes to buffer while reading the file
+        // (In microbenchmarks for ReadTextOutput, smaller buffer sizes lead to a small slowdown, while larger buffer sizes don't seem to measurably improve performance)
+        private const int _readBufferSize = 16384;
+
+        private const int _charsInByte = 256;
+
         public static List<uint> ReadTextOutput(string filePath, int lineOffset, int lineCount = 0)
         {
-            sbyte[] hexDigitLookup = new sbyte[256];
-            for (int i = 0; i < 256; ++i)
+            sbyte[] hexDigitLookup = new sbyte[_charsInByte];
+            for (int i = 0; i < _charsInByte; ++i)
             {
                 if (i >= '0' && i <= '9')
                     hexDigitLookup[i] = (sbyte)(i - '0');
@@ -20,14 +26,14 @@ namespace VSRAD.DebugServer.SharedUtils
                     hexDigitLookup[i] = -1;
             }
 
-            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 16384, FileOptions.SequentialScan))
+            using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, _readBufferSize, FileOptions.SequentialScan))
             {
                 if (lineCount == 0)
                     lineCount = int.MaxValue; // Read until EOF
 
                 var values = new List<uint>();
 
-                byte[] buffer = new byte[16384];
+                byte[] buffer = new byte[_readBufferSize];
                 int bytesRead;
 
                 bool scannedCr = false, scanningValue = false;
