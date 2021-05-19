@@ -15,14 +15,11 @@ namespace VSRAD.Package.Utils
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var logicalView = Guid.Empty;
-            if (!VsShellUtilities.IsDocumentOpen(serviceProvider, documentPath, logicalView, out _, out _, out var windowFrame))
-            {
-                var vsUIShellOpenDocument = serviceProvider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
-                Assumes.Present(vsUIShellOpenDocument);
+            var vsUIShellOpenDocument = serviceProvider.GetService(typeof(SVsUIShellOpenDocument)) as IVsUIShellOpenDocument;
+            Assumes.Present(vsUIShellOpenDocument);
 
-                ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(documentPath, ref logicalView, out _, out _, out _, out windowFrame));
-            }
+            var logicalView = Guid.Empty;
+            ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(documentPath, ref logicalView, out _, out _, out _, out var windowFrame));
 
             windowFrame.Show();
 
@@ -62,10 +59,14 @@ namespace VSRAD.Package.Utils
                 var logicalView = Guid.Empty;
                 ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, ref logicalView, out _, out _, out _, out var windowFrame));
 
+                // Force VS to refresh document contents
+                var vsTextView = VsShellUtilities.GetTextView(windowFrame);
+                ErrorHandler.ThrowOnFailure(vsTextView.GetBuffer(out var vsTextLines));
+                ErrorHandler.ThrowOnFailure(vsTextLines.Reload(1));
+
                 if (!string.IsNullOrEmpty(lineMarker))
                 {
                     var lineNumber = GetMarkedLineNumber(path, lineMarker);
-                    var vsTextView = VsShellUtilities.GetTextView(windowFrame);
                     vsTextView.SetCaretPos(lineNumber, 0);
                 }
 
