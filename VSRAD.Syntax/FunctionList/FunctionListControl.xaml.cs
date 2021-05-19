@@ -133,12 +133,10 @@ namespace VSRAD.Syntax.FunctionList
 
         private void AutosizeColumns()
         {
-            /* This is a well know behaviour of GridView https://stackoverflow.com/questions/560581/how-to-autosize-and-right-align-gridviewcolumn-data-in-wpf/1931423#1931423 */
-            functionsGridView.Columns[0].Width = 0;
-            if (!hideLineNumber)
-                functionsGridView.Columns[0].Width = double.NaN;
-            functionsGridView.Columns[1].Width = 0;
-            functionsGridView.Columns[1].Width = double.NaN;
+            functionsGridView.Columns[0].Width = hideLineNumber
+                                               ? 0
+                                               : double.NaN;
+            functionsGridView.Columns[1].Width = FunctionListWindow.ActualWidth - functionsGridView.Columns[0].Width;
         }
 
         private void SetLineNumberColumnWidth()
