@@ -5,7 +5,6 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace VSRAD.Package.Utils
 {
@@ -66,8 +65,20 @@ namespace VSRAD.Package.Utils
 
                 if (!string.IsNullOrEmpty(lineMarker))
                 {
-                    var lineNumber = GetMarkedLineNumber(path, lineMarker);
-                    vsTextView.SetCaretPos(lineNumber, 0);
+                    ErrorHandler.ThrowOnFailure(vsTextLines.GetLineCount(out var numLines));
+                    for (int i = 0; i < numLines; ++i)
+                    {
+                        ErrorHandler.ThrowOnFailure(vsTextLines.GetLengthOfLine(i, out var lineLength));
+                        if (lineLength != lineMarker.Length)
+                            continue;
+
+                        ErrorHandler.ThrowOnFailure(vsTextLines.GetLineText(i, 0, i, lineLength, out var line));
+                        if (line != lineMarker)
+                            continue;
+
+                        ErrorHandler.ThrowOnFailure(vsTextView.SetCaretPos(i, 0));
+                        break;
+                    }
                 }
 
                 ErrorHandler.ThrowOnFailure(windowFrame.ShowNoActivate());
@@ -76,18 +87,6 @@ namespace VSRAD.Package.Utils
             {
                 throw new Exception($"Unable to open {path} in editor", e);
             }
-        }
-
-        private static int GetMarkedLineNumber(string file, string lineMarker)
-        {
-            var lineNumber = 0;
-            foreach (var line in File.ReadLines(file))
-            {
-                if (line == lineMarker)
-                    return lineNumber;
-                ++lineNumber;
-            }
-            return 0;
         }
     }
 }
