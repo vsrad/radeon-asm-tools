@@ -45,30 +45,39 @@ namespace VSRAD.DebugServerTests.Handlers
             Assert.Equal(data.Skip(offset).Take(count), response.Data);
         }
 
-        [Fact]
-        public async void FetchResultRangeTextTest()
+        [Theory]
+        [InlineData(0, 0, new uint[] { 0, 1, 2, 3, 4, 313_313_313, 0 })]
+        [InlineData(4, 666, new uint[] { 1, 2, 3, 4, 313_313_313, 0 })]
+        [InlineData(6, 8, new uint[] { 1, 2 })]
+        [InlineData(10, 4, new uint[] { 2 })]
+        public async void FetchResultRangeTextTest(int byteOffset, int byteCount, uint[] expectedData)
         {
             var tmpFile = Path.GetTempFileName();
-            var data = new string[] {
+            var data = new string[]
+            {
                 "Metadata",
-                "0x00000000",
+                "0x0",
                 "0x00000001",
-                "0x00000002",
-                "0x00000003",
-                "   ",
+                "00000002",    // 0x prefix is not required
+                "00000003h",   // h suffix is accepted
+                "   ",         // should be ignored
                 "0x00000004",
-                ""
+                "",            // should be ignored
+                @"¯\_(ツ)_/¯", // should be ignored
+                "12 AC c8 21", // spaces between digits are allowed
+                "",
+                "0x00000000"
             };
-            await File.WriteAllLinesAsync(tmpFile, data);
-            var timestamp = File.GetLastWriteTime(tmpFile).ToUniversalTime();
-            var byteData = new byte[8] { 1, 0, 0, 0, 2, 0, 0, 0 };
+            File.WriteAllLines(tmpFile, data);
+            var timestamp = File.GetLastWriteTimeUtc(tmpFile);
+            var byteData = expectedData.SelectMany(BitConverter.GetBytes).ToArray();
 
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
                     FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
-                    ByteOffset = 6,
-                    ByteCount = 8,
+                    ByteOffset = byteOffset,
+                    ByteCount = byteCount,
                     OutputOffset = 1,
                     BinaryOutput = false
                 }); ;
@@ -76,52 +85,33 @@ namespace VSRAD.DebugServerTests.Handlers
             Assert.Equal(timestamp, response.Timestamp);
             Assert.Equal(byteData, response.Data);
 
-            response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
-                new FetchResultRange
-                {
-                    FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
-                    ByteOffset = 0,
-                    ByteCount = 666,
-                    BinaryOutput = false
-                });
-            Assert.Equal(FetchStatus.Successful, response.Status);
-            Assert.Equal(20, response.Data.Length);
+            File.Delete(tmpFile);
         }
 
-        [Fact]
-        public async void FetchResultRangeTextShortHexTest()
+        [Theory]
+        [InlineData("0x1\r\n0x2\n0x3\n0x4\r0x5", 0, new uint[] { 1, 2, 3, 4, 5 })]
+        [InlineData("Meta\n\r\n0x0\n0x1\r\n", 3, new uint[] { 1 })]
+        public async void FetchResultRangeTextLineEndingsTest(string contents, int skipLines, uint[] expectedData)
         {
             var tmpFile = Path.GetTempFileName();
-            var data = new string[] {
-                "Metadata",
-                "0x313",
-                "0x42",
-                "0x69",
-                "0x1",
-                "0x0"
-            };
-            await File.WriteAllLinesAsync(tmpFile, data);
-            var timestamp = File.GetLastWriteTime(tmpFile).ToUniversalTime();
-            var byteData = new byte[20] {
-                19, 3, 0, 0,    // 0x313
-                66, 0, 0, 0,    // 0x42
-                105, 0, 0, 0,   // 0x69
-                1, 0, 0, 0,     // 0x1
-                0, 0, 0, 0      // 0x0
-            };
+            File.WriteAllText(tmpFile, contents);
+            var timestamp = File.GetLastWriteTimeUtc(tmpFile);
+            var byteData = expectedData.SelectMany(BitConverter.GetBytes).ToArray();
 
             var response = await Helper.DispatchCommandAsync<FetchResultRange, ResultRangeFetched>(
                 new FetchResultRange
                 {
                     FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
                     ByteOffset = 0,
-                    ByteCount = 20,
-                    OutputOffset = 1,
+                    ByteCount = 0,
+                    OutputOffset = skipLines,
                     BinaryOutput = false
                 }); ;
             Assert.Equal(FetchStatus.Successful, response.Status);
             Assert.Equal(timestamp, response.Timestamp);
             Assert.Equal(byteData, response.Data);
+
+            File.Delete(tmpFile);
         }
 
         [Fact]
@@ -166,7 +156,7 @@ namespace VSRAD.DebugServerTests.Handlers
         public async void FetchAllFileTextTestAsync()
         {
             var tmpFile = Path.GetTempFileName();
-            var data = new[] { "Metadata", "0x313", "0x42", "0x69", "0x1", "0x0" };
+            var data = new[] { "0x313", "0x42", "0x69", "0x1", "0x0" };
             await File.WriteAllLinesAsync(tmpFile, data);
             var byteData = new byte[20]
             {
@@ -183,7 +173,7 @@ namespace VSRAD.DebugServerTests.Handlers
                     FilePath = new string[] { Path.GetDirectoryName(tmpFile), Path.GetFileName(tmpFile) },
                     ByteOffset = 0,
                     ByteCount = 0,
-                    OutputOffset = 1,
+                    OutputOffset = 0,
                     BinaryOutput = false
                 }); ;
             Assert.Equal(FetchStatus.Successful, response.Status);

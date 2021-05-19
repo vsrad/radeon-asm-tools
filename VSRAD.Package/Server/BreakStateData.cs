@@ -129,19 +129,24 @@ namespace VSRAD.Package.Server
         private readonly bool _localData;
         private BitArray _fetchedDataWaves; // 1 bit per wavefront data
 
-        public BreakStateData(ReadOnlyCollection<string> watches, BreakStateOutputFile file, byte[] localData = null)
+        public BreakStateData(ReadOnlyCollection<string> watches, BreakStateOutputFile file, uint[] localData = null)
         {
             Watches = watches;
             _outputFile = file;
             _laneDataSize = 1 /* system */ + watches.Count;
 
-            _data = new uint[file.DwordCount];
             _localData = localData != null;
             if (_localData)
             {
                 if (file.Offset != 0)
-                    throw new ArgumentException("Trim the offset before passing output data to BreakStateData");
-                Buffer.BlockCopy(localData, file.Offset, _data, 0, file.DwordCount * 4);
+                    throw new ArgumentException("Trim the offset before passing local output data to BreakStateData");
+                if (localData.Length != file.DwordCount)
+                    throw new ArgumentException("Local output data size must match file size");
+                _data = localData;
+            }
+            else
+            {
+                _data = new uint[file.DwordCount];
             }
         }
 

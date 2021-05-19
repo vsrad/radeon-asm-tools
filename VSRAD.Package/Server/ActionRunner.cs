@@ -360,10 +360,9 @@ namespace VSRAD.Package.Server
                 var outputPath = step.OutputFile.Path;
                 var initOutputTimestamp = GetInitialFileTimestamp(outputPath);
 
-                int GetOutputDwordCount(int fileByteCount, out string warning)
+                int GetDispatchDwordCount(int fileDwordCount, out string warning)
                 {
                     warning = "";
-                    var fileDwordCount = fileByteCount / 4;
                     if (dispatchParams == null)
                         return fileDwordCount;
 
@@ -383,7 +382,7 @@ namespace VSRAD.Package.Server
                 }
 
                 BreakStateOutputFile outputFile;
-                byte[] localOutputData = null;
+                uint[] localOutputData = null;
                 string stepWarning;
 
                 if (step.OutputFile.IsRemote())
@@ -397,9 +396,9 @@ namespace VSRAD.Package.Server
                         return (new StepResult(false, $"Output file ({outputPath}) was not modified. Data may be stale.", ""), null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
-                    var dataByteCount = Math.Max(0, response.ByteCount - offset);
-                    var dataDwordCount = GetOutputDwordCount(dataByteCount, out stepWarning);
-                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
+                    var fileByteCount = Math.Max(0, response.ByteCount - offset);
+                    var dispatchDwordCount = GetDispatchDwordCount(fileDwordCount: fileByteCount / 4, out stepWarning);
+                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dispatchDwordCount);
                 }
                 else
                 {
@@ -407,14 +406,28 @@ namespace VSRAD.Package.Server
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
                         return (new StepResult(false, $"Output file ({outputPath}) was not modified. Data may be stale.", ""), null);
 
-                    var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
-                    if (!ReadLocalFile(outputPath, out localOutputData, out var readError, readOffset))
-                        return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
-                    if (!step.BinaryOutput)
-                        localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
+                    int dispatchDwordCount;
+                    if (step.BinaryOutput)
+                    {
+                        if (!ReadLocalFile(outputPath, out var outputBytes, out var readError))
+                            return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
 
-                    var dataDwordCount = GetOutputDwordCount(localOutputData.Length, out stepWarning);
-                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
+                        var fileByteCount = Math.Max(0, outputBytes.Length - step.OutputOffset);
+                        dispatchDwordCount = GetDispatchDwordCount(fileDwordCount: fileByteCount / 4, out stepWarning);
+                        localOutputData = new uint[dispatchDwordCount];
+                        Buffer.BlockCopy(outputBytes, step.OutputOffset, localOutputData, 0, dispatchDwordCount * 4);
+                    }
+                    else
+                    {
+                        var outputDwords = TextDebuggerOutputParser.ReadTextOutput(outputPath, step.OutputOffset);
+
+                        dispatchDwordCount = GetDispatchDwordCount(fileDwordCount: outputDwords.Count, out stepWarning);
+                        if (outputDwords.Count > dispatchDwordCount)
+                            outputDwords.RemoveRange(dispatchDwordCount, outputDwords.Count - dispatchDwordCount);
+                        localOutputData = outputDwords.ToArray();
+                    }
+
+                    outputFile = new BreakStateOutputFile(outputPath, step.BinaryOutput, offset: 0, timestamp, dispatchDwordCount);
                 }
 
                 var data = new BreakStateData(watches, outputFile, localOutputData);
@@ -447,25 +460,11 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private static bool ReadLocalFile(string fullPath, out byte[] data, out string error, int byteOffset = 0)
+        private static bool ReadLocalFile(string fullPath, out byte[] data, out string error)
         {
             try
             {
-                using (var stream = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
-                {
-                    stream.Seek(byteOffset, SeekOrigin.Begin);
-
-                    var bytesToRead = Math.Max(0, (int)(stream.Length - stream.Position));
-                    data = new byte[bytesToRead];
-
-                    int read = 0, bytesRead = 0;
-                    while (bytesRead != bytesToRead)
-                    {
-                        if ((read = stream.Read(data, 0, bytesToRead - bytesRead)) == 0)
-                            throw new IOException("Output file length does not match stream length");
-                        bytesRead += read;
-                    }
-                }
+                data = File.ReadAllBytes(fullPath);
                 error = "";
                 return true;
             }
