@@ -6,7 +6,6 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System;
 using System.ComponentModel.Composition;
 using System.Text.RegularExpressions;
 
@@ -19,12 +18,15 @@ namespace VSRAD.Package.ProjectSystem
         string GetActiveWord(bool matchBrackets);
     }
 
+    public sealed class NoFilesOpenInEditorException : UserException
+    {
+        public NoFilesOpenInEditorException() : base("No files open in the editor.") { }
+    }
+
     [Export(typeof(IActiveCodeEditor))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ActiveCodeEditor : IActiveCodeEditor
     {
-        public const string NoFilesOpenError = "No files open in the editor.";
-
         private readonly SVsServiceProvider _serviceProvider;
         private readonly ITextDocumentFactoryService _textDocumentService;
 
@@ -124,7 +126,7 @@ namespace VSRAD.Package.ProjectSystem
             Assumes.Present(textManager);
 
             textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-            return activeView ?? throw new UserException(NoFilesOpenError);
+            return activeView ?? throw new NoFilesOpenInEditorException();
         }
 
         private static IWpfTextView GetTextViewFromVsTextView(IVsTextView view)

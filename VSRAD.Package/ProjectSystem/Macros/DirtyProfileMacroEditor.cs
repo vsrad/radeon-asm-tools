@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -120,7 +119,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
                 return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
             }
-            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
+            catch (NoFilesOpenInEditorException)
             {
                 return new MacroEvaluatorTransientValues(0,
                     sourcePath: "<current source full path>",
