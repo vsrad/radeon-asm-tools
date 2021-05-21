@@ -253,6 +253,8 @@
 
   <KeyBindings>
     <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="D" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="W" mod1="Alt" editor="guidVSStd97" />
   </KeyBindings>
 
   <CommandPlacements>
