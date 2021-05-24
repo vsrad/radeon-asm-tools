@@ -52,7 +52,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.DebugAppArgs3, "<app args 3, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.Counter, "<counter, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.GroupSize, "<group size, set in visualizer>", userDefined: false)
+            new MacroItem(RadMacros.GroupSize, "<group size, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.CurrentTime, "<time at the start of the action run (" + RadMacros.CurrentTimeFormatString + ")>", userDefined: false),
+            new MacroItem(RadMacros.CurrentDate, "<date at the start of the action run (" + RadMacros.CurrentDateFormatString + ")>", userDefined: false),
         };
 
         public ICommand DeleteMacroCommand { get; }

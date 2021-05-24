@@ -20,6 +20,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public uint ActiveSourceLine { get; }
         public uint[] BreakLines { get; }
         public ReadOnlyCollection<string> Watches { get; }
+        public DateTime RunStartDateTime { get; }
 
         public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, uint[] breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
         {
@@ -29,6 +30,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             ActiveSourceLine = sourceLine;
             BreakLines = breakLines;
             Watches = watches;
+            RunStartDateTime = DateTime.Now;
         }
     }
 
@@ -62,6 +64,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string Counter = "RadCounter";
         public const string NGroups = "RadNGroups";
         public const string GroupSize = "RadGroupSize";
+
+        public const string CurrentTime = "RadCurrentTime";
+        public const string CurrentTimeFormatString = "HH-mm-ss-fff";
+        public const string CurrentDate = "RadCurrentDate";
+        public const string CurrentDateFormatString = "yyyy-MM-dd";
     }
 
     public interface IMacroEvaluator
@@ -106,7 +113,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 { RadMacros.DebugAppArgs3, debuggerOptions.AppArgs3 },
                 { RadMacros.Counter, debuggerOptions.Counter.ToString() },
                 { RadMacros.NGroups, debuggerOptions.NGroups.ToString() },
-                { RadMacros.GroupSize, debuggerOptions.GroupSize.ToString() }
+                { RadMacros.GroupSize, debuggerOptions.GroupSize.ToString() },
+                { RadMacros.CurrentTime, values.RunStartDateTime.ToString(RadMacros.CurrentTimeFormatString) },
+                { RadMacros.CurrentDate, values.RunStartDateTime.ToString(RadMacros.CurrentDateFormatString) }
             };
         }
 
