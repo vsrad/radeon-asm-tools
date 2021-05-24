@@ -37,7 +37,7 @@
               AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False"
               HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" Grid.Row="1" RowHeight="24">
         <DataGrid.Columns>
-            <DataGridTextColumn Header="Macro" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="*">
+            <DataGridTextColumn Header="Macro" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Width="3*">
                 <DataGridTextColumn.ElementStyle>
                     <Style TargetType="{x:Type TextBlock}">
                         <Setter Property="VerticalAlignment" Value="Center" />
@@ -62,7 +62,7 @@
                     </Style>
                 </DataGridTextColumn.EditingElementStyle>
             </DataGridTextColumn>
-            <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*">
+            <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="5*">
                 <DataGridTextColumn.ElementStyle>
                     <Style TargetType="TextBlock">
                         <Setter Property="VerticalAlignment" Value="Center" />
