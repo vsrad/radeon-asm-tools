@@ -43,23 +43,15 @@
             <ControlTemplate x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition />
-                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Border x:Name="Border"
-                            Grid.ColumnSpan="2"
                             CornerRadius="0"
                             Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                             BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
                             BorderThickness="1" />
-                    <Border Grid.Column="0"
-                            CornerRadius="0"
-                            Margin="1"
-                            Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
-                            BorderThickness="0,0,1,0" />
                     <Path x:Name="Arrow"
-                          Grid.Column="1"
+                          Grid.Column="0"
                           Fill="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
@@ -130,13 +122,15 @@
                             <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1" x:Name="Brd">
                                 <Grid x:Name="ComboGrid">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="22"/>
+                                        <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <ToggleButton Name="ToggleButton"
                                                   Template="{StaticResource ComboBoxToggleButton}"
-                                                  Grid.Column="1"
-                                                  Width="20"
+                                                  Height="24"
+                                                  Grid.Column="0"
+                                                  Margin="-1,-1,0,-1"
+                                                  Width="Auto"
                                                   Focusable="false"
                                                   IsChecked="{Binding Path=IsDropDownOpen,Mode=TwoWay,RelativeSource={RelativeSource TemplatedParent}}"
                                                   ClickMode="Press" Click="DropdownStateChanged"/>
@@ -151,7 +145,7 @@
                                              HorizontalAlignment="Stretch"
                                              VerticalAlignment="Center"
                                              VerticalContentAlignment="Center"
-                                             Grid.Column="0"
+                                             Grid.Column="1"
                                              Margin="0,0,0,0"
                                              Focusable="True"
                                              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
