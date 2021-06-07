@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
     internal class FunctionCompletionProvider : RadCompletionProvider
     {
-        private static readonly ImageElement FunctionIcon = GetImageElement(KnownImageIds.Method);
+        private static readonly ImageElement Icon = RadAsmTokenType.FunctionName.GetImageElement();
         private bool _autocompleteFunctions;
         private readonly INavigationTokenService _navigationTokenService;
 
@@ -35,10 +34,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             var completionItems = analysisResult.Root.Tokens
                 .AsParallel()
                 .WithCancellation(cancellationToken)
-                .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
+                .Where(t => t.Type == RadAsmTokenType.FunctionName)
                 .Cast<IDefinitionToken>()
                 .Select(t => _navigationTokenService.CreateToken(t, document))
-                .Select(t => new CompletionItem(t, FunctionIcon));
+                .Select(t => new CompletionItem(t, Icon));
 
             return new RadCompletionContext(completionItems.ToList());
         }
