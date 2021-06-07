@@ -134,6 +134,7 @@
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="IntelliSense\Completion\ItemManager.cs" />
     <Compile Include="IntelliSense\Completion\ItemManagerProvider.cs" />
+    <Compile Include="IntelliSense\Completion\TokenizerExtension.cs" />
     <Compile Include="IntelliSense\Completion\Providers\CompletionItem.cs" />
     <Compile Include="IntelliSense\Completion\Providers\RadCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\FunctionCompletionProvider.cs" />

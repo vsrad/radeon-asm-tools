@@ -60,7 +60,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         private async Task<ImmutableArray<RadCompletionContext>> ComputeNonEmptyCompletionContextsAsync(SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
         {
-            var completionContextTasks = _completionProviders.Select(provider => 
+            var completionContextTasks = _completionProviders.Select(provider =>
                 provider.GetContextAsync(_document, triggerLocation, applicableToSpan, cancellationToken))
                 .ToList();
 
@@ -70,40 +70,58 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         private bool ShouldTriggerCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation)
         {
-            if (triggerLocation == triggerLocation.Snapshot.Length)
+            // if trigger position is in the beginning or the end of file
+            // then completion should not trigger
+            if (triggerLocation < 3 || triggerLocation == triggerLocation.Snapshot.Length)
+                return false;
+
+            if (trigger.Reason == CompletionTriggerReason.Insertion &&
+                    (trigger.Character == '\n' || trigger.Character == '\t')
+                || trigger.Reason == CompletionTriggerReason.Deletion
+                || trigger.Reason == CompletionTriggerReason.Backspace)
+                return false;
+
+            // if length of triggered word less than 3
+            // then completion should not trigger
+            var extend = triggerLocation.GetExtent();
+            if (extend.Span.Length < 3)
                 return false;
 
             try
             {
-                var currentToken = _document.DocumentTokenizer.CurrentResult.GetToken(triggerLocation);
+                // currentLocation has the next position behind the cursor position
+                var currentLocation = triggerLocation - 1;
+                var currentToken = _document.DocumentTokenizer.CurrentResult.GetToken(currentLocation);
                 var currentTokenType = _document.DocumentTokenizer.GetTokenType(currentToken.Type);
-                if (currentTokenType == RadAsmTokenType.Comment)
-                {
+
+                if (currentTokenType == RadAsmTokenType.Comment 
+                    || currentTokenType == RadAsmTokenType.Whitespace)
                     return false;
-                }
+
+                // check tokens in the line before trigger position.
+                // if it's dismiss token (such as 'function' or '.macro' keywords)
+                // then should not trigger completion
+                var snapshot = currentLocation.Snapshot;
+                var currentLine = currentLocation.GetContainingLine();
+                var checkSpanEnd = currentToken.Start.GetPoint(snapshot);
+                var checkSpan = new SnapshotSpan(currentLine.Start, checkSpanEnd);
+
+                var tokenTypes = _document.DocumentTokenizer
+                    .CurrentResult
+                    .GetTokens(checkSpan)
+                    .Select(t => t.Type)
+                    .Where(t => _document.DocumentTokenizer.GetTokenType(t) != RadAsmTokenType.Whitespace)
+                    .ToList();
+
+                if (tokenTypes.Any() &&
+                    tokenTypes.All(_document.DocumentTokenizer.IsDismissToken))
+                    return false;
             }
             catch (ArgumentOutOfRangeException)
             {
                 // outdated parser results so you cannot get valid tokens for the trigger location
                 return false;
             }
-
-            if (trigger.Reason == CompletionTriggerReason.Invoke
-                    || trigger.Reason == CompletionTriggerReason.InvokeAndCommitIfUnique)
-            {
-                return true;
-            }
-
-            if (trigger.Reason == CompletionTriggerReason.Insertion && (trigger.Character == '\n' || trigger.Character == '\t')
-                || trigger.Reason == CompletionTriggerReason.Deletion
-                || trigger.Reason == CompletionTriggerReason.Backspace)
-            {
-                return false;
-            }
-
-            var extend = triggerLocation.GetExtent();
-            if (extend.Span.Length < 3)
-                return false;
 
             return true;
         }
