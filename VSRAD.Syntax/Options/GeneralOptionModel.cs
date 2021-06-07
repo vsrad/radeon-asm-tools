@@ -77,9 +77,10 @@ namespace VSRAD.Syntax.Options
             var settingsStore = manager.GetWritableSettingsStore(SettingsScope.UserSettings);
 
             if (settingsStore.CollectionExists(CollectionName))
-            {
                 settingsStore.DeleteCollection(CollectionName);
-            }
+
+            if (settingsStore.CollectionExists(InstructionCollectionName))
+                settingsStore.DeleteCollection(InstructionCollectionName);
         }
 
         /// <summary>
