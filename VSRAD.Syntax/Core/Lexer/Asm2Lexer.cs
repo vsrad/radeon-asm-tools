@@ -78,6 +78,9 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.TGID_Z_EN, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.ALLOC_LDS, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.WAVE_SIZE, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.ASSIGNED, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.LABEL, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.PRINT, RadAsmTokenType.Keyword },
 
             { RadAsm2Lexer.VAR, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.RETURN, RadAsmTokenType.Keyword },
