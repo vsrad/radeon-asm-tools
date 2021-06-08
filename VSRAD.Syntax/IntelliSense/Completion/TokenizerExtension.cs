@@ -31,7 +31,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 new HashSet<int>
                 {
                     RadAsm2Lexer.FUNCTION,
-                    RadAsm2Lexer.VAR
+                    RadAsm2Lexer.VAR,
+                    RadAsm2Lexer.LABEL
                 }
             },
             {
