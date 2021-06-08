@@ -34,9 +34,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         {
             var classificationSpans = new List<ClassificationSpan>();
             var analysisResult = _analysisResult;
-            if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
+            if (span.IsEmpty
+                || analysisResult == null 
+                || analysisResult.Snapshot != span.Snapshot) 
+                return classificationSpans;
 
-            var block = analysisResult.GetBlock(span.End);
+            // span is half-open interval with right exclude value.
+            // therefore, the right border included in the interval is:
+            var point = span.End - 1;
+
+            var block = analysisResult.GetBlock(point);
             if (block.Type == BlockType.Comment) return classificationSpans;
             if (block.Type == BlockType.Function)
             {
