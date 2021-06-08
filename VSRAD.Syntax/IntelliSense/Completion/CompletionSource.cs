@@ -70,9 +70,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         private bool ShouldTriggerCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation)
         {
-            // if trigger position is in the beginning or the end of file
+            // if triggered position is at the beginning of the text
             // then completion should not trigger
-            if (triggerLocation < 3 || triggerLocation == triggerLocation.Snapshot.Length)
+            if (triggerLocation < 3)
                 return false;
 
             if (trigger.Reason == CompletionTriggerReason.Insertion &&
