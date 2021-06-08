@@ -30,6 +30,9 @@ TGID_Y_EN   : 'tgid_y_en' ;
 TGID_Z_EN   : 'tgid_z_en' ;
 ALLOC_LDS   : 'alloc_lds' ;
 WAVE_SIZE   : 'wave_size' ;
+ASSIGNED    : 'assigned' ;
+LABEL       : 'label' ;
+PRINT       : 'print' ;
 
 VAR         : 'var' ;
 RETURN      : 'return' ;
