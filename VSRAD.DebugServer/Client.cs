@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,12 +67,6 @@ namespace VSRAD.DebugServer
                 try
                 {
                     var command = await ReadCommandAsync().ConfigureAwait(false);
-                    if (command == null)
-                    {
-                        Log.CliendDisconnected();
-                        _socket.Close();
-                        break;
-                    }
 
                     await _globalCommandLock.WaitAsync();
                     lockAcquired = true;
@@ -84,7 +79,7 @@ namespace VSRAD.DebugServer
                 }
                 catch (Exception e)
                 {
-                    if (e is OperationCanceledException || (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset))
+                    if (e is OperationCanceledException || e is EndOfStreamException || (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset))
                         Log.CliendDisconnected();
                     else
                         Log.FatalClientException(e);
