@@ -174,13 +174,22 @@ namespace VSRAD.Syntax.Core.Parser
                             currentBlock = currentBlock.GetParent();
                         }
                     }
-                    else if (token.Type == RadAsm2Lexer.VAR)
+                    else if (token.Type == RadAsm2Lexer.VAR || token.Type == RadAsm2Lexer.LABEL)
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm2Lexer.IDENTIFIER)
                         {
-                            var variableDefinition = (tokens.Length - i > 3 && tokens[i + 2].Type == RadAsm2Lexer.EQ && tokens[i + 3].Type == RadAsm2Lexer.CONSTANT)
-                                ? new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version, tokens[i + 3])
-                                : new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
+                            var symbol = tokens[i + 1];
+                            var scope = currentBlock.Type == BlockType.Root
+                                ? RadAsmTokenType.GlobalVariable
+                                : RadAsmTokenType.LocalVariable;
+
+                            var variableDefinition = (token.Type == RadAsm2Lexer.VAR 
+                                                                && tokens.Length - i > 3 
+                                                                && tokens[i + 2].Type == RadAsm2Lexer.EQ 
+                                                                && tokens[i + 3].Type == RadAsm2Lexer.CONSTANT)
+                                ? new VariableToken(scope, symbol, version, defaultValue: tokens[i + 3])
+                                : new VariableToken(scope, symbol, version);
+
                             _definitionContainer.Add(currentBlock, variableDefinition);
                             currentBlock.AddToken(variableDefinition);
                         }
