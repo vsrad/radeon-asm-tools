@@ -67,7 +67,7 @@ namespace VSRAD.Package.Utils
                     activeView.SetCaretPos(lineNumber, 0);
                 }
 
-                dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
+                //dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
             }
             catch (Exception e)
             {
