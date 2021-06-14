@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.FunctionList
             set 
             {
                 OnPropertyChanged(ref _showLineColumn, value);
-                OnFilterChanged();
+                RefreshView();
             }
         }
 
@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.FunctionList
             set
             {
                 OnPropertyChanged(ref _filterType, value);
-                OnFilterChanged();
+                RefreshView();
             }
         }
 
@@ -38,7 +38,7 @@ namespace VSRAD.Syntax.FunctionList
             set
             {
                 OnPropertyChanged(ref _filterText, value);
-                OnFilterChanged();
+                RefreshView();
             }
         }
 
@@ -68,7 +68,7 @@ namespace VSRAD.Syntax.FunctionList
             _viewItems.Source = _model.Items;
             _viewItems.Filter += ApplyFilter;
 
-            SortStateToFilter(_model.SortState);
+            ApplyOptionSort(_model.SortState);
             _model.PropertyChanged += ModelPropertyChanged;
 
             LineSortCommand = new NoParameterCommand(() => 
@@ -92,10 +92,10 @@ namespace VSRAD.Syntax.FunctionList
             switch (e.PropertyName)
             {
                 case nameof(FunctionListModel.Items):
-                    _viewItems.View.Refresh();
+                    RefreshView();
                     break;
                 case nameof(FunctionListModel.SortState):
-                    SortStateToFilter(_model.SortState);
+                    ApplyOptionSort(_model.SortState);
                     break;
                 default:
                     RaisePropertyChanged(e.PropertyName);
@@ -128,7 +128,7 @@ namespace VSRAD.Syntax.FunctionList
             ApplySort(propertyName, ref sortDirection, newValue);
         }
 
-        private void SortStateToFilter(GeneralOptionPage.SortState sortState)
+        private void ApplyOptionSort(GeneralOptionPage.SortState sortState)
         {
             switch (sortState)
             {
@@ -155,16 +155,15 @@ namespace VSRAD.Syntax.FunctionList
         private void ApplyFilter(object sender, FilterEventArgs e)
         {
             var item = (FunctionListItem)e.Item;
+            var applyTextFilter = string.IsNullOrWhiteSpace(_filterText) || item.Text.Contains(_filterText);
+            var applyTypeFilter = (FilterType == FilterTypeState.FL) 
+                                   || (FilterType == FilterTypeState.L && item.Type == FunctionListItemType.Label) 
+                                   || (FilterType == FilterTypeState.F && item.Type == FunctionListItemType.Function);
 
-            var isText = string.IsNullOrWhiteSpace(_filterText) || item.Text.Contains(_filterText);
-            var isType = (FilterType == FilterTypeState.FL)
-                         || (item.Type == FunctionListItemType.Label && FilterType == FilterTypeState.L)
-                         || (item.Type == FunctionListItemType.Function && FilterType == FilterTypeState.F);
-
-            e.Accepted = isType && isText;
+            e.Accepted = applyTypeFilter && applyTextFilter;
         }
 
-        private void OnFilterChanged() =>
+        private void RefreshView() =>
             _viewItems.View.Refresh();
     }
 
