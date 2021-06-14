@@ -8,6 +8,18 @@ namespace VSRAD.Syntax.FunctionList
 {
     public sealed class FunctionListContext : DefaultNotifyPropertyChanged
     {
+        private bool _showLineColumn;
+
+        public bool ShowLineColumn
+        {
+            get => _showLineColumn;
+            set 
+            {
+                OnPropertyChanged(ref _showLineColumn, value);
+                OnFilterChanged();
+            }
+        }
+
         private FilterTypeState _filterType;
         public FilterTypeState FilterType
         {
@@ -48,6 +60,7 @@ namespace VSRAD.Syntax.FunctionList
         {
             _model = FunctionListModel.CurrentModel;
             _filterType = FilterTypeState.FL;
+            _showLineColumn = true;
 
             _viewItems = new CollectionViewSource();
             _viewItems.Source = _model.Items;
@@ -62,10 +75,14 @@ namespace VSRAD.Syntax.FunctionList
             TextSortCommand = new NoParameterCommand(() =>
                 ApplySort(nameof(FunctionListItem.Text), ref _textSortDirection));
 
-            ChangeTypeCommand = new NoParameterCommand(ChangeFilterState);
+            ChangeLineVisibilityCommand = new NoParameterCommand(() =>
+                ShowLineColumn = !ShowLineColumn);
 
-            NavigateToCurrentItemCommand = new NoParameterCommand(() => 
+            NavigateToCurrentItemCommand = new NoParameterCommand(() =>
                 _model.NavigateToItem(SelectedItem));
+
+            ChangeFilterTypeCommand = new NoParameterCommand(ChangeFilterState);
+            ClearFilterTextCommand = new NoParameterCommand(() => FilterText = "");
         }
 
         private void ModelPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -86,7 +103,9 @@ namespace VSRAD.Syntax.FunctionList
 
         public INoParameterCommand LineSortCommand { get; }
         public INoParameterCommand TextSortCommand { get; }
-        public INoParameterCommand ChangeTypeCommand { get; }
+        public INoParameterCommand ChangeFilterTypeCommand { get; }
+        public INoParameterCommand ClearFilterTextCommand { get; }
+        public INoParameterCommand ChangeLineVisibilityCommand { get; }
         public INoParameterCommand NavigateToCurrentItemCommand { get; }
 
         private void ChangeFilterState()

@@ -113,9 +113,6 @@
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
-    <Compile Include="FunctionList\Commands\ClearSearchFieldCommand.cs" />
-    <Compile Include="FunctionList\Commands\SelectItemCommand.cs" />
-    <Compile Include="FunctionList\Commands\ShowHideLineNumberCommand.cs" />
     <Compile Include="FunctionList\FunctionListContext.cs" />
     <Compile Include="FunctionList\FunctionListItem.cs" />
     <Compile Include="FunctionList\FunctionListModel.cs" />
@@ -196,7 +193,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="FunctionList\FunctionListWindow.cs" />
-    <Compile Include="FunctionList\Commands\FunctionListCommand.cs" />
+    <Compile Include="FunctionList\Commands\FunctionListWindowCommand.cs" />
     <Compile Include="FunctionList\FunctionListControl.xaml.cs">
       <DependentUpon>FunctionListControl.xaml</DependentUpon>
     </Compile>

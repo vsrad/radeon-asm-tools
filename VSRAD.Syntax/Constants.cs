@@ -18,11 +18,6 @@ namespace VSRAD.Syntax
          * Command ID definition
          */
         internal const int FunctionListCommandId = 0x0100;
-        internal const int ClearSearchFieldCommandId = 0x0200;
-        internal const int SelectItemCommandId = 0x0201;
-        internal const int FunctionListMenu = 0x1000;
-        internal const int FunctionListGroup = 0x1100;
-        internal const int ShowHideLineNumberCommandId = 0x102;
         internal const int NavigationListCommandId = 0x0203;
         internal const int InstructionSetDropDownComboCommandId = 0x100;
         internal const int InstructionSetDropDownComboGetListCommandId = 0x101;
