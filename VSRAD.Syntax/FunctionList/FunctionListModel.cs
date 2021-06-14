@@ -24,6 +24,13 @@ namespace VSRAD.Syntax.FunctionList
             set => OnPropertyChanged(ref _selectedItem, value);
         }
 
+        private bool _autoScroll;
+        public bool AutoScroll
+        {
+            get => _autoScroll;
+            set => OnPropertyChanged(ref _autoScroll, value);
+        }
+
         private readonly RangeObservableCollection<FunctionListItem> _items;
         public readonly ReadOnlyObservableCollection<FunctionListItem> Items;
 
@@ -42,6 +49,8 @@ namespace VSRAD.Syntax.FunctionList
         {
             if (sender.SortOptions != SortState)
                 SortState = sender.SortOptions;
+            if (sender.AutoScroll != AutoScroll)
+                AutoScroll = sender.AutoScroll;
         }
 
         public void UpdateItems(IEnumerable<FunctionListItem> items) =>

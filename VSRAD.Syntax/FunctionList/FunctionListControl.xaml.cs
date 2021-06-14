@@ -43,7 +43,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ListView.SelectedItem != null)
+            if (_context.AutoScroll && ListView.SelectedItem != null)
                 ListView.ScrollIntoView(ListView.SelectedItem);
         }
 

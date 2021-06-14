@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows.Data;
 using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Helpers;
@@ -47,6 +47,8 @@ namespace VSRAD.Syntax.FunctionList
             get => _model.SelectedItem;
             set => _model.SelectedItem = value;
         }
+
+        public bool AutoScroll => _model.AutoScroll;
 
         private readonly CollectionViewSource _viewItems;
         public ICollectionView ViewItems => _viewItems.View;
