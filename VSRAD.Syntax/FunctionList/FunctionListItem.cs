@@ -1,23 +1,15 @@
 ﻿using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.FunctionList
 {
-    public class FunctionListItem : DefaultNotifyPropertyChanged
+    public class FunctionListItem
     {
         public FunctionListItemType Type { get; }
         public string Text { get; }
         public int LineNumber { get; }
 
-        private bool _isCurrentWorkingItem;
         private readonly INavigationToken _navigationToken;
-
-        public bool IsCurrentWorkingItem
-        {
-            get => _isCurrentWorkingItem;
-            set => OnPropertyChanged(ref _isCurrentWorkingItem, value);
-        }
 
         public FunctionListItem(INavigationToken navigationToken)
         {
@@ -25,7 +17,6 @@ namespace VSRAD.Syntax.FunctionList
             Text = navigationToken.Definition.GetText();
             // line number starts from 1
             LineNumber = navigationToken.GetLine().LineNumber + 1;
-            _isCurrentWorkingItem = false;
             _navigationToken = navigationToken;
         }
 

@@ -9,9 +9,8 @@
              Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
              d:DesignHeight="300" d:DesignWidth="300"
-             Name="FunctionListWindow"
              MouseRightButtonDown="FunctionListWindow_MouseRightButtonDown">
-    <Grid x:Name="functionListContentGrid" KeyDown="FunctionListContentGrid_KeyDown" Focusable="True" Loaded="FunctionListContentGridOnLoad">
+    <Grid KeyDown="FunctionListContentGrid_KeyDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto" />
@@ -24,12 +23,12 @@
                 <ColumnDefinition Width="2*" MaxWidth="50"/>
             </Grid.ColumnDefinitions>
 
-            <TextBox Grid.Column="0" x:Name="Search" TextChanged="Search_TextChanged" PreviewKeyDown="Search_KeyDown"
+            <TextBox Grid.Column="0" x:Name="Search" Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" PreviewKeyDown="Search_KeyDown"
                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
             </TextBox>
 
-            <Button Grid.Column="1" x:Name="typeFilter" Click="TypeFilter_Click"/>
+            <Button Grid.Column="1" x:Name="FilterType" Content="{Binding FilterType}" Command="{Binding ChangeTypeCommand}"/>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -38,26 +37,30 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <Button Content="Line" x:Name="byNumber" Click="ByNumber_Click" Grid.Column="0"/>
-            <Button Content="Name" x:Name="byName" Click="ByName_Click" Grid.Column="1" Width="Auto"/>
+            <Button Content="Line" x:Name="LineSortButton" Grid.Column="0" Command="{Binding LineSortCommand}"/>
+            <Button Content="Name" x:Name="TextSortButton" Grid.Column="1" Width="Auto" Command="{Binding TextSortCommand}"/>
         </Grid>
 
-        <ListView Name="tokens"
+        <ListView Name="ListView"
+                  ItemsSource="{Binding ViewItems}"
+                  SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
                   Grid.Row="2"
                   Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                   MouseDoubleClick="FunctionsName_MouseDoubleClick"
                   PreviewKeyDown="Functions_PreviewKeyDown"
-                  >
+                  HorizontalAlignment="Stretch"
+                  ScrollViewer.ScrollChanged="ListView_ScrollChanged"
+                  SelectionChanged="ListView_SelectionChanged">
             <ListView.Resources>
                 <Style TargetType="GridViewColumnHeader">
                     <Setter Property="Visibility" Value="Collapsed" />
                 </Style>
             </ListView.Resources>
             <ListView.View>
-                <GridView x:Name="functionsGridView">
-                    <GridViewColumn Header="Line" DisplayMemberBinding="{Binding Path=LineNumber}" Width="Auto"/>
-                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=Text}"/>
+                <GridView x:Name="GridView">
+                    <GridViewColumn Header="Line" DisplayMemberBinding="{Binding LineNumber}" Width="Auto"/>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Text}"/>
                 </GridView>
             </ListView.View>
         </ListView>
@@ -115,14 +118,14 @@
                 </Setter.Value>
             </Setter>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Path=Type}" Value="{x:Static local:FunctionListItemType.Label}">
+                <DataTrigger Binding="{Binding Type}" Value="{x:Static local:FunctionListItemType.Label}">
                     <Setter Property="Foreground" Value="DarkGoldenrod" />
                 </DataTrigger>
 
-                <DataTrigger Binding="{Binding Path=IsCurrentWorkingItem, NotifyOnSourceUpdated=True}" Value="True">
+                <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ActiveBorderKey}}"/>
                     <Setter Property="Foreground" Value="White" />
-                </DataTrigger>
+                </Trigger>
 
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarSelectedBorderKey}}" />
