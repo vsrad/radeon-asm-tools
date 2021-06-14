@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows.Data;
 using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Helpers;
@@ -98,7 +98,7 @@ namespace VSRAD.Syntax.FunctionList
                     SortStateToFilter(_model.SortState);
                     break;
                 default:
-                    RaisePropertyChanged(nameof(e.PropertyName));
+                    RaisePropertyChanged(e.PropertyName);
                     break;
             }
         }

@@ -27,7 +27,7 @@
                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
             </TextBox>
 
-            <Button Grid.Column="1" x:Name="FilterType" Content="{Binding FilterType}" Command="{Binding ChangeTypeCommand}"/>
+            <Button Grid.Column="1" x:Name="FilterType" Content="{Binding FilterType}" Command="{Binding ChangeFilterTypeCommand}"/>
         </Grid>
 
         <Grid Grid.Row="1">
