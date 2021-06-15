@@ -46,15 +46,50 @@ namespace VSRAD.Package.Utils
             return markers;
         }
 
-        public static void OpenFileInEditor(SVsServiceProvider serviceProvider, string path, string lineMarker)
+        public static void OpenFileInEditor(SVsServiceProvider serviceProvider, string path, string lineMarker,
+            bool forceOppositeTab, bool preserveActiveDoc)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
                 var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
                 Assumes.Present(dte);
-                var activeFile = dte.ActiveDocument;
-                dte.ItemOperations.OpenFile(path); // open requested file in VS editor
+
+                // HACK: VS have some issues with saving focus
+                // on the initial active doc after execution of
+                // commands, that manipulate with tab groups.
+                // However, toggling pin state of active tab
+                // seems to solve this problem.
+                if (preserveActiveDoc)
+                {
+                    dte.ExecuteCommand("Window.PinTab");
+                    dte.ExecuteCommand("Window.PinTab");
+                }
+
+                var orgNext = dte.Commands.Item("Window.MovetoNextTabGroup").IsAvailable;
+                var orgPrev = dte.Commands.Item("Window.MovetoPreviousTabGroup").IsAvailable;
+
+                var orgActiveFile = dte.ActiveDocument;
+
+                if (orgActiveFile.FullName != path)
+                {
+                    dte.ExecuteCommand("File.OpenFile", path);
+                    if (forceOppositeTab)
+                    {
+                        var curNext = dte.Commands.Item("Window.MovetoNextTabGroup").IsAvailable;
+                        var curPrev = dte.Commands.Item("Window.MovetoPreviousTabGroup").IsAvailable;
+
+                        if (curNext == orgNext && curPrev == orgPrev)
+                        {
+                            if (curNext)
+                                dte.ExecuteCommand("Window.MovetoNextTabGroup");
+                            else if (curPrev)
+                                dte.ExecuteCommand("Window.MovetoPreviousTabGroup");
+                            else if (dte.Commands.Item("Window.NewVerticalTabGroup").IsAvailable)
+                                dte.ExecuteCommand("Window.NewVerticalTabGroup");
+                        }
+                    }
+                }
 
                 if (!string.IsNullOrEmpty(lineMarker))
                 {
@@ -63,11 +98,12 @@ namespace VSRAD.Package.Utils
                     var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
                     Assumes.Present(textManager);
 
-                    textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
+                    textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
                     activeView.SetCaretPos(lineNumber, 0);
                 }
 
-                //dte.ItemOperations.OpenFile(activeFile.FullName); // preserving old active document
+                if (preserveActiveDoc)
+                    dte.ExecuteCommand("File.OpenFile", orgActiveFile.FullName);
             }
             catch (Exception e)
             {

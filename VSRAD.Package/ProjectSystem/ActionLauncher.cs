@@ -248,7 +248,8 @@ namespace VSRAD.Package.ProjectSystem
         async Task IActionRunController.OpenFileInVsEditorAsync(string path, string lineMarker)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, path, lineMarker);
+            VsEditor.OpenFileInEditor(_serviceProvider, path, lineMarker,
+                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
         }
     }
 }

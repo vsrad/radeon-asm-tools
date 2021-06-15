@@ -126,6 +126,14 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Open in Editor: Force new document to be opened in the opposite tab" VerticalAlignment="Center" Padding="4,0,0,0"
+                                IsChecked="{Binding Options.DebuggerOptions.ForceOppositeTab, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Open in Editor: Preserve active document" VerticalAlignment="Center" Padding="4,0,0,0"
+                                IsChecked="{Binding Options.DebuggerOptions.PreserveActiveDoc, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
                 <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
                     <StackPanel Margin="0,6,0,0">
                         <StackPanel Orientation="Horizontal" Height="25">
