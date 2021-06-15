@@ -1,4 +1,4 @@
-﻿using VSRAD.Syntax.FunctionList.Commands;
+using VSRAD.Syntax.FunctionList.Commands;
 using static VSRAD.Syntax.Options.GeneralOptionPage;
 using Microsoft.VisualStudio.Shell;
 using System;
@@ -140,6 +140,8 @@ namespace VSRAD.Syntax.FunctionList
             tokens.Items.Clear();
             foreach (var token in functionListTokens)
                 tokens.Items.Add(token);
+
+            ApplySort();
 
             /* Needs to update line number column width after adding new items */
             AutosizeColumns();
