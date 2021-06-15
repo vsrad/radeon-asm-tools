@@ -11,6 +11,7 @@ using Task = System.Threading.Tasks.Task;
 using System.Threading;
 using System.Linq;
 using VSRAD.Syntax.Options;
+using System.ComponentModel;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -32,14 +33,14 @@ namespace VSRAD.Syntax.FunctionList
             items = new List<FunctionListItem>();
             hideLineNumber = false;
             searchText = string.Empty;
-            SortState = generalOptionProvider.SortOptions;
-            Autoscroll = generalOptionProvider.AutoScroll;
             _commandService = service;
 
             InitializeComponent();
             tokens.LayoutUpdated += (s, e) => SetLineNumberColumnWidth();
-            generalOptionProvider.OptionsUpdated += OptionsUpdated;
             typeFilter.Content = TypeFilterState.ToString();
+
+            OptionsUpdated(generalOptionProvider);
+            generalOptionProvider.OptionsUpdated += OptionsUpdated;
         }
 
         private void OptionsUpdated(GeneralOptionProvider sender)
@@ -47,7 +48,7 @@ namespace VSRAD.Syntax.FunctionList
             if (sender.SortOptions != SortState)
             {
                 SortState = sender.SortOptions;
-                SortAndReloadFunctionList();
+                ApplySort();
             }
             Autoscroll = sender.AutoScroll;
         }
@@ -70,7 +71,7 @@ namespace VSRAD.Syntax.FunctionList
         public async Task UpdateListAsync(List<FunctionListItem> newTokens, CancellationToken cancellationToken)
         {
             items = newTokens;
-            var filteredTokens = Helper.FilterAndSort(items, SortState, TypeFilterState, searchText);
+            var filteredTokens = Helper.Filter(items, TypeFilterState, searchText);
             if (cancellationToken.IsCancellationRequested) return;
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
@@ -112,13 +113,26 @@ namespace VSRAD.Syntax.FunctionList
         }
         #endregion
 
-        private void SortAndReloadFunctionList()
+        private void ApplyFilter()
         {
-            var filteredTokens = Helper.FilterAndSort(items, SortState, TypeFilterState, searchText);
-            ReloadFunctionList(filteredTokens);
+            var filteredTokens = Helper.Filter(items, TypeFilterState, searchText);
+            AddTokensToView(filteredTokens);
         }
 
-        private void ReloadFunctionList(IEnumerable<FunctionListItem> tokens) => AddTokensToView(tokens);
+        private void ApplySort()
+        {
+            tokens.Items.SortDescriptions.Clear();
+
+            var property = SortState == SortState.ByLine || SortState == SortState.ByLineDescending
+                ? nameof(FunctionListItem.LineNumber)
+                : nameof(FunctionListItem.Text);
+            var direction = SortState == SortState.ByLine || SortState == SortState.ByName
+                ? ListSortDirection.Ascending
+                : ListSortDirection.Descending;
+
+            var sortDescription = new SortDescription(property, direction);
+            tokens.Items.SortDescriptions.Add(sortDescription);
+        }
 
         private void AddTokensToView(IEnumerable<FunctionListItem> functionListTokens)
         {
@@ -161,7 +175,7 @@ namespace VSRAD.Syntax.FunctionList
                 ? SortState.ByLine
                 : SortState.ByLineDescending;
 
-            SortAndReloadFunctionList();
+            ApplySort();
         }
 
         private void ByName_Click(object sender, RoutedEventArgs e)
@@ -170,7 +184,7 @@ namespace VSRAD.Syntax.FunctionList
                 ? SortState.ByName
                 : SortState.ByNameDescending;
 
-            SortAndReloadFunctionList();
+            ApplySort();
         }
 
         private void FunctionsName_MouseDoubleClick(object sender, MouseButtonEventArgs e) => GoToSelectedItem();
@@ -203,8 +217,7 @@ namespace VSRAD.Syntax.FunctionList
         private void Search_TextChanged(object sender, TextChangedEventArgs e)
         {
             searchText = Search.Text;
-            var filteredTokens = Helper.FilterText(items, searchText);
-            ReloadFunctionList(filteredTokens);
+            ApplyFilter();
         }
 
         private void TypeFilter_Click(object sender, RoutedEventArgs e)
@@ -217,7 +230,7 @@ namespace VSRAD.Syntax.FunctionList
             }
 
             typeFilter.Content = TypeFilterState.ToString();
-            SortAndReloadFunctionList();
+            ApplyFilter();
         }
         #endregion
     }
