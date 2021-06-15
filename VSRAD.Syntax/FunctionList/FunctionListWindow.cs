@@ -1,7 +1,5 @@
-﻿using System.ComponentModel.Design;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
-using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -17,10 +15,7 @@ namespace VSRAD.Syntax.FunctionList
 
         protected override void Initialize()
         {
-            var optionsEventProvider = GeneralOptionProvider.Instance;
-            var commandService = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
-
-            FunctionListControl = new FunctionListControl(optionsEventProvider, commandService);
+            FunctionListControl = new FunctionListControl();
             Content = FunctionListControl;
         }
 

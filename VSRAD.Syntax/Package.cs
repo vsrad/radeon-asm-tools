@@ -33,10 +33,7 @@ namespace VSRAD.Syntax
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             NavigationListCommand.Initialize(this, commandService);
-            FunctionListCommand.Initialize(this, commandService);
-            ClearSearchFieldCommand.Initialize(this, commandService);
-            SelectItemCommand.Initialize(this, commandService);
-            ShowHideLineNumberCommand.Initialize(this, commandService);
+            FunctionListWindowCommand.Initialize(this, commandService);
             InstructionSetSelector.Initialize(commandService);
         }
     }

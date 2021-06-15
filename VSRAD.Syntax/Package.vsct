@@ -6,12 +6,6 @@
 
   <Commands package="guidExtensionPackage">
     <Menus>
-      <Menu guid="guidExtensionPackageCmdSet" id="FunctionListMenu" type="Context">
-        <Strings>
-          <ButtonText>Show/Hide line number</ButtonText>
-          <CommandName>ShowHideLineNumber</CommandName>
-        </Strings>
-      </Menu>
       <Menu guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorMenu" priority="0x0000" type="Toolbar">
         <Strings>
           <ButtonText>Instruction sets</ButtonText>
@@ -20,9 +14,6 @@
     </Menus>
 
     <Groups>
-      <Group guid="guidExtensionPackageCmdSet" id="FunctionListGroup" priority="0x0100">
-        <Parent guid="guidExtensionPackageCmdSet" id="FunctionListMenu" />
-      </Group>
       <Group guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorGroup" priority="0x0100">
         <Parent guid="guidInstructionSetSelectorCmdSet" id="instructionSetSelectorMenu" />
       </Group>
@@ -44,27 +35,6 @@
         <Strings>
           <ButtonText>Radeon Asm Function List</ButtonText>
           <LocCanonicalName>FunctionList</LocCanonicalName>
-        </Strings>
-      </Button>
-
-      <Button guid="guidExtensionPackageCmdSet" id="FunctionListClearSearchId" priority="0x0100" type="Button">
-        <Strings>
-          <ButtonText>Clear Search Function List Field</ButtonText>
-          <LocCanonicalName>FunctionList.Clear</LocCanonicalName>
-        </Strings>
-      </Button>
-
-      <Button guid="guidExtensionPackageCmdSet" id="FunctionListSelectItemCommandId" priority="0x0100" type="Button">
-        <Strings>
-          <ButtonText>Select function list item</ButtonText>
-          <LocCanonicalName>FunctionList.Select</LocCanonicalName>
-        </Strings>
-      </Button>
-
-      <Button guid="guidExtensionPackageCmdSet" id="cmdidShowHideLineNumber" priority="1" type="Button">
-        <Parent guid="guidExtensionPackageCmdSet" id="FunctionListGroup" />
-        <Strings>
-          <ButtonText>Show/Hide line number</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -102,12 +72,6 @@
     
   </Commands>
 
-  <KeyBindings>
-    <KeyBinding guid="guidExtensionPackageCmdSet" id="FunctionListClearSearchId" editor="guidFunctionListWindowPane" key1="VK_ESCAPE" />
-
-    <KeyBinding guid="guidExtensionPackageCmdSet" id="FunctionListSelectItemCommandId" editor="guidFunctionListWindowPane" key1="VK_RETURN" mod1="Control" />
-  </KeyBindings>
-
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidExtensionPackage" value="{bb4a9205-af03-4a7e-8d30-7a8649cc70a4}" />
@@ -117,11 +81,6 @@
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidExtensionPackageCmdSet" value="{a1d46795-2324-4b58-9f8c-aa69414c3e9e}">
       <IDSymbol name="FunctionListCommandId" value="0x0100" />
-      <IDSymbol name="FunctionListClearSearchId" value="0x0200" />
-      <IDSymbol name="FunctionListSelectItemCommandId" value="0x0201" />
-      <IDSymbol name="FunctionListMenu" value="0x1000" />
-      <IDSymbol name="FunctionListGroup" value="0x1100" />
-      <IDSymbol name="cmdidShowHideLineNumber" value="0x102" />
     </GuidSymbol>
 
     <GuidSymbol name="guidNavigationListCmdSet" value="{0c7aa63d-bc2a-4d0e-83c2-80bbb30a5ceb}">

@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading;
+using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
@@ -24,6 +24,7 @@ namespace VSRAD.Syntax.FunctionList
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
         private readonly Dictionary<IDocument, ITextView> _documentTextViews;
+        private readonly FunctionListModel _model;
         private IAnalysisResult _lastResult;
 
         private static FunctionListProvider _instance;
@@ -39,6 +40,7 @@ namespace VSRAD.Syntax.FunctionList
 
             _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
+            _model = FunctionListModel.CurrentModel;
             _instance = this;
         }
 
@@ -61,17 +63,18 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
                 var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
-                var functionBlock = analysisResult.TryGetFunctionBlock(point);
 
-                if (functionBlock != null)
+                var functionBlock = analysisResult.TryGetFunctionBlock(point);
+                if (functionBlock == null)
                 {
-                    var lineNumber = analysisResult.Snapshot.GetLineNumberFromPosition(functionBlock.Name.Span.Start) + 1;
-                    _functionListControl.HighlightItemAtLine(lineNumber);
+                    _model.SelectedItem = null;
+                    return;
                 }
-                else
-                {
-                    _functionListControl.ClearHighlightItem();
-                }
+
+                var lineNumber = analysisResult.Snapshot.GetLineNumberFromPosition(functionBlock.Name.Span.Start) + 1;
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                _model.SelectedItem = _model.Items.FirstOrDefault(f => f.LineNumber == lineNumber);
             });
         }
 
@@ -97,7 +100,7 @@ namespace VSRAD.Syntax.FunctionList
             document.CurrentSnapshot.TextBuffer.Properties.RemoveProperty(typeof(FunctionListWindow));
             textView.Caret.PositionChanged -= OnCaretPositionChanged;
             if (_lastResult != null && _lastResult.Snapshot.TextBuffer == document.CurrentSnapshot.TextBuffer)
-                ClearFunctionList();
+                CleanContext();
 
             _documentTextViews.Remove(document);
         }
@@ -112,7 +115,7 @@ namespace VSRAD.Syntax.FunctionList
 
             if (activeDocument == null)
             {
-                ClearFunctionList();
+                CleanContext();
             }
             else
             {
@@ -120,11 +123,8 @@ namespace VSRAD.Syntax.FunctionList
             }
         }
 
-        private void ClearFunctionList()
-        {
-            _functionListControl?.ClearList();
-            _lastResult = null;
-        }
+        private void CleanContext() =>
+            _model.UpdateItems(Enumerable.Empty<FunctionListItem>());
 
         private void UpdateFunctionList(IDocument document)
         {
@@ -143,12 +143,9 @@ namespace VSRAD.Syntax.FunctionList
         {
             _lastResult = analysisResult;
 
-            // if document analyzed before Function List view initialization
-            if (_functionListControl == null) return;
-
             ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
             {
-                var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
+                var items = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
                     .Cast<IDefinitionToken>()
                     .Select(t => _navigationTokenService.Value.CreateToken(t, _lastResult.Document))
@@ -157,7 +154,25 @@ namespace VSRAD.Syntax.FunctionList
                     .WithCancellation(cancellationToken)
                     .ToList();
 
-                await _functionListControl.UpdateListAsync(tokens, cancellationToken);
+                
+                FunctionListItem selectedItem = null;
+                if (_documentTextViews.TryGetValue(analysisResult.Document, out var textView))
+                {
+                    var point = textView.Caret.Position.BufferPosition;
+                    if (point.Snapshot == analysisResult.Snapshot)
+                    {
+                        var functionBlock = analysisResult.TryGetFunctionBlock(point);
+                        if (functionBlock != null)
+                        {
+                            var lineNumber = analysisResult.Snapshot.GetLineNumberFromPosition(functionBlock.Name.Span.Start) + 1;
+                            selectedItem = items.FirstOrDefault(f => f.LineNumber == lineNumber);
+                        }
+                    }
+                }
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                _model.UpdateItems(items);
+                _model.SelectedItem = selectedItem;
             });
         }
 
