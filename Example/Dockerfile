@@ -22,7 +22,7 @@ ENV PATH "${PATH}:/opt/rocm/bin:/opt/rocm/llvm/bin"
 
 WORKDIR /
 
-ENV VERSION=2021.03.03
+ENV VERSION=2021.05.19
 
 # compile example application
 RUN curl -L https://github.com/vsrad/radeon-asm-tools/archive/${VERSION}.zip -o source.zip && \
