@@ -27,7 +27,6 @@ export VADDPATH=`realpath $SCRIPTPATH/../../`
 
 export BREAKPOINT_SCRIPT_OPTIONS="-l $line -t $counter $perl_args"
 export BREAKPOINT_SCRIPT_WATCHES="$watches"
-export DBG_BUF_SIZE=4194304
 
 GFX=`/opt/rocm/bin/rocminfo | grep -om1 gfx9..`
 CLANG="$VADDPATH/common/debugger/dbg_clang_wrapper.sh"
@@ -35,12 +34,13 @@ CLANG_ARGS="-x assembler -target amdgcn--amdhsa -mcpu=$GFX -I$VADDPATH/gfx9/incl
 
 CO_PATH="$TMPPATH/fp32_v_add.co"
 ASM_CMD="cat $src_path | $CLANG $CLANG_ARGS -o $CO_PATH"
+DBG_BUF_SIZE=4194304
 
 "$VADDPATH/build/gfx9/fp32_v_add" \
 	-asm "$ASM_CMD"               \
 	-c 	 "$CO_PATH"               \
 	-b   "$buffer_path"           \
-	-bsz "$ASM_DBG_BUF_SIZE"      \
+	-bsz "$DBG_BUF_SIZE"      	  \
 	$app_args
 
 echo

@@ -41,7 +41,7 @@
           },
           {
             "Environment": "Remote",
-            "Executable": "bash",
+            "Executable": "/bin/bash",
             "Arguments": "-c \"/opt/rocm/llvm/bin/clang -x assembler -target amdgcn--amdhsa -mcpu=`/opt/rocm/bin/rocminfo | grep -om1 gfx9..`  -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)\"",
             "WorkingDirectory": "$(RadRemoteWorkDir)",
             "RunAsAdmin": false,
@@ -61,7 +61,7 @@
           },
           {
             "Environment": "Remote",
-            "Executable": "bash",
+            "Executable": "/bin/bash",
             "Arguments": "$(RadRemoteWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -t $(RadCounter) -f \"$(RadDeployDir)/$(RadActiveSourceFile)\" -w \"$(RadWatches)\" -o \"$(RadDebugDataOutputPath)\"",
             "WorkingDirectory": "$(RadRemoteWorkDir)",
             "RunAsAdmin": false,
