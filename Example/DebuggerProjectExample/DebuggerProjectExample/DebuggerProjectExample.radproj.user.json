@@ -26,29 +26,31 @@
     "NGroups": 0,
     "Counter": 0,
     "AppArgs": "",
-    "BreakArgs": "",
+    "AppArgs2": null,
+    "AppArgs3": null,
     "Autosave": true,
     "SingleActiveBreakpoint": false,
-    "GroupSize": 256,
+    "GroupSize": 64,
     "WaveSize": 64,
     "BreakMode": 0
   },
   "VisualizerOptions": {
-    "ShowSystemVariable": false,
+    "ShowSystemVariable": true,
     "MaskLanes": false,
     "NDRange3D": false,
-    "VerticalSplit": true,
-    "LaneGrouping": 4,
     "WavemapElementSize": 8,
     "CheckMagicNumber": true,
     "MagicNumber": "0x7777777",
     "ManualMode": true,
     "ShowColumnsField": false,
-    "ShowAppArgsField": false,
-    "ShowBreakArgsField": false,
-    "ShowWavemap": false
+    "ShowAppArgsField": true,
+    "ShowAppArgs2Field": false,
+    "ShowAppArgs3Field": false,
+    "ShowWavemap": false,
+    "MatchBracketsOnAddToWatches": false
   },
   "SliceVisualizerOptions": {
+    "EnableSliceVisualizer": false,
     "VisibleColumns": "0:1-63",
     "SubgroupSize": 0,
     "UseHeatMap": false,
@@ -59,10 +61,15 @@
     "NameColumnAlignment": 0,
     "HeadersAlignment": 2,
     "DataColumnAlignment": 2,
+    "LaneGrouping": 0,
+    "VerticalSplit": false,
     "LaneSeparatorWidth": 3,
     "HiddenColumnSeparatorWidth": 8,
     "SliceHiddenColumnSeparatorWidth": 1,
     "SliceSubgroupSeparatorWidth": 1,
+    "BinHexSeparator": 0,
+    "IntUintSeparator": 0,
+    "BinHexLeadingZeroes": false,
     "ScalingMode": 1,
     "DarkenAlternatingRowsBy": 0
   },
@@ -74,7 +81,7 @@
   "TargetHosts": [
     "localhost:9339"
   ],
-  "ActiveProfile": "Default",
+  "ActiveProfile": "vaddDebug",
   "RemoteMachine": "localhost",
   "Port": 9339
 }
