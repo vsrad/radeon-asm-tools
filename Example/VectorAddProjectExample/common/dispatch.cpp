@@ -1,52 +1,13 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// The University of Illinois/NCSA
-// Open Source License (NCSA)
-//
-// Copyright (c) 2016, Advanced Micro Devices, Inc. All rights reserved.
-//
-// Developed by:
-//
-//                 AMD Research and AMD HSA Software Development
-//
-//                 Advanced Micro Devices, Inc.
-//
-//                 www.amd.com
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to
-// deal with the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the
-// Software is furnished to do so, subject to the following conditions:
-//
-//  - Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimers.
-//  - Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimers in
-//    the documentation and/or other materials provided with the distribution.
-//  - Neither the names of Advanced Micro Devices, Inc,
-//    nor the names of its contributors may be used to endorse or promote
-//    products derived from this Software without specific prior written
-//    permission.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-// THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS WITH THE SOFTWARE.
-//
-////////////////////////////////////////////////////////////////////////////////
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <atomic>
+#include <cassert>
+#include <algorithm>
 
 #include "dispatch.hpp"
-#include "hsa.h"
-#include "hsa_ext_amd.h"
-#include <cstring>
-#include <fstream>
-#include <cstdlib>
-#include <iostream>
+
+using namespace std;
 
 static inline bool check(hsa_status_t status, const char* msg)
 {
@@ -55,405 +16,309 @@ static inline bool check(hsa_status_t status, const char* msg)
 
     const char* err = 0;
     hsa_status_string(status, &err);
-    std::cerr << msg << " failed: " << (err ? err : "hsa_status_string() failed") << std::endl;
+    cerr << msg << " failed: " << (err ? err : "hsa_status_string() failed") << endl;
 
     return false;
 }
+
 #define CHECK(x) check(x, #x)
 
 namespace amd {
 namespace dispatch {
 
-Dispatch::Dispatch(int argc, const char** argv)
-  : queue_size(0),
-    queue(0)
+Dispatch::Dispatch() : queue_size(0), queue(0)
 {
-  agent.handle = 0;
-  cpu_agent.handle = 0;
-  signal.handle = 0;
-  kernarg_region.handle = 0;
-  system_region.handle = 0;
-  local_region.handle = 0;
-  gpu_local_region.handle = 0;
+    agent.handle = 0;
+    cpu_agent.handle = 0;
+    signal.handle = 0;
+    kernarg_region.handle = 0;
+    system_region.handle = 0;
+    local_region.handle = 0;
+    gpu_local_region.handle = 0;
 }
 
-hsa_status_t find_gpu_device(hsa_agent_t agent, void *data)
+hsa_status_t find_gpu_devices(hsa_agent_t agent, void* data)
 {
-  if (data == NULL) { return HSA_STATUS_ERROR_INVALID_ARGUMENT; }
+    if (data == NULL) { return HSA_STATUS_ERROR_INVALID_ARGUMENT; }
 
-  hsa_device_type_t hsa_device_type;
-  if (!CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &hsa_device_type)))
-    return HSA_STATUS_ERROR;
+    hsa_device_type_t hsa_device_type;
+    hsa_status_t status = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &hsa_device_type);
+    if (status != HSA_STATUS_SUCCESS)
+        return status;
 
-  if (hsa_device_type == HSA_DEVICE_TYPE_GPU) {
-    Dispatch* dispatch = static_cast<Dispatch*>(data);
-    if (!dispatch->HasAgent()) {
-      dispatch->SetAgent(agent);
-    }
-  }
+    Dispatch* hsa = static_cast<Dispatch*>(data);
+    if (hsa_device_type == HSA_DEVICE_TYPE_GPU)
+            hsa->gpu_agents.push_back(agent);
 
-  if (hsa_device_type == HSA_DEVICE_TYPE_CPU) {
-    Dispatch* dispatch = static_cast<Dispatch*>(data);
-    if (!dispatch->HasCpuAgent()) {
-      dispatch->SetCpuAgent(agent);
-    }
-  }
+    if (hsa_device_type == HSA_DEVICE_TYPE_CPU && hsa->cpu_agent.handle == 0)
+            hsa->cpu_agent = agent;
 
-  return HSA_STATUS_SUCCESS;
-}
-
-hsa_status_t FindRegions(hsa_region_t region, void* data)
-{
-  hsa_region_segment_t segment_id;
-  hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment_id);
-
-  if (segment_id != HSA_REGION_SEGMENT_GLOBAL) {
     return HSA_STATUS_SUCCESS;
-  }
+}
 
-  hsa_region_global_flag_t flags;
-  bool host_accessible_region = false;
-  hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flags);
-  hsa_region_get_info(region, (hsa_region_info_t)HSA_AMD_REGION_INFO_HOST_ACCESSIBLE, &host_accessible_region);
+hsa_status_t find_regions(hsa_region_t region, void* data)
+{
+    hsa_region_segment_t segment_id;
 
-  Dispatch* dispatch = static_cast<Dispatch*>(data);
+    hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment_id);
+    if (segment_id != HSA_REGION_SEGMENT_GLOBAL)
+        return HSA_STATUS_SUCCESS;
 
-  if (flags & HSA_REGION_GLOBAL_FLAG_FINE_GRAINED) {
-    dispatch->SetSystemRegion(region);
-  }
+    hsa_region_global_flag_t flags;
+    bool host_accessible_region = false;
+    size_t size, max_alloc, gran, align;
+    bool runtime_alloc;
+    hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flags);
+    hsa_region_get_info(region, (hsa_region_info_t)HSA_AMD_REGION_INFO_HOST_ACCESSIBLE, &host_accessible_region);
+    hsa_region_get_info(region, HSA_REGION_INFO_SIZE, &size);
+    hsa_region_get_info(region, HSA_REGION_INFO_ALLOC_MAX_SIZE, &max_alloc);
+    hsa_region_get_info(region, HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &runtime_alloc);
+    hsa_region_get_info(region, HSA_REGION_INFO_RUNTIME_ALLOC_GRANULE, &gran);
+    hsa_region_get_info(region, HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &align);
 
-  if (flags & HSA_REGION_GLOBAL_FLAG_COARSE_GRAINED) {
-    if(host_accessible_region){
-      dispatch->SetLocalRegion(region);
-    }else{
-      dispatch->SetGPULocalRegion(region);
+    Dispatch* hsa = static_cast<Dispatch*>(data);
+
+    if (flags & HSA_REGION_GLOBAL_FLAG_FINE_GRAINED)
+        hsa->system_region = region;
+
+    if (flags & HSA_REGION_GLOBAL_FLAG_COARSE_GRAINED) {
+        if (host_accessible_region)
+            hsa->local_region = region;
+        else
+            hsa->gpu_local_region = region;
     }
-  }
 
-  if (flags & HSA_REGION_GLOBAL_FLAG_KERNARG) {
-    dispatch->SetKernargRegion(region);
-  }
+    if (flags & HSA_REGION_GLOBAL_FLAG_KERNARG)
+        hsa->kernarg_region = region;
 
-  return HSA_STATUS_SUCCESS;
+    return HSA_STATUS_SUCCESS;
 }
 
-bool Dispatch::Init()
+bool Dispatch::run_kernel(const kernel* kern, const dispatch_params* params, uint64_t timeout)
 {
-  if (!CHECK(hsa_init())
-      || !CHECK(hsa_iterate_agents(find_gpu_device, this))
-      || !CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_QUEUE_MAX_SIZE, &queue_size)) 
-      || !CHECK(hsa_queue_create(agent, queue_size, HSA_QUEUE_TYPE_MULTI, NULL, NULL, UINT32_MAX, UINT32_MAX, &queue)) 
-      || !CHECK(hsa_signal_create(1, 0, NULL, &signal)) 
-      || !CHECK(hsa_agent_iterate_regions(agent, FindRegions, this)) 
-      || !kernarg_region.handle)
-      return false;
+    if (params->kernarg_size > kernarg_size)
+    {
+        cout << "Recreating kernarg (old size " << kernarg_size
+            << ", new size " << params->kernarg_size << ")\n";
+        kernarg_size = params->kernarg_size;
+        void* new_ptr = AllocateKernargMemory(kernarg_size);
+        if(!new_ptr || !CHECK(hsa_memory_free(kernarg)))
+            exit(-1);
+        kernarg = new_ptr;
+    }
+    if (params->kernarg)
+        memcpy(kernarg, params->kernarg, params->kernarg_size);
+    
+    const uint32_t queue_mask = queue->size - 1;
+    const CodeObjectHSA *co = &cobjects[kern->handle];
+    packet_index = hsa_queue_add_write_index_relaxed(queue, 1);
+    aql = (hsa_kernel_dispatch_packet_t*)(queue->base_address) + (packet_index & queue_mask);
+    memset((uint8_t*)aql + 4, 0, sizeof(*aql) - 4);
+    aql->completion_signal = signal;
+    aql->workgroup_size_x = params->wg_size[0];
+    aql->workgroup_size_y = params->wg_size[1];
+    aql->workgroup_size_z = params->wg_size[2];
+    aql->grid_size_x = params->grid_size[0];
+    aql->grid_size_y = params->grid_size[1];
+    aql->grid_size_z = params->grid_size[2];
+    aql->private_segment_size = co->private_size;
 
-  std::string agent_name;
-  if (!GetAgentName(agent_name)) return false;
-  output << "Using agent: " << agent_name << std::endl;
+    uint16_t header =
+        (HSA_PACKET_TYPE_KERNEL_DISPATCH << HSA_PACKET_HEADER_TYPE) |
+        (1 << HSA_PACKET_HEADER_BARRIER) |
+        (HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_ACQUIRE_FENCE_SCOPE) |
+        (HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_RELEASE_FENCE_SCOPE);
+    uint16_t dim = 1;
+    if (aql->grid_size_y > 1)
+        dim = 2;
+    if (aql->grid_size_z > 1)
+        dim = 3;
 
-  return true;
-}
+    aql->group_segment_size = co->lds_size + params->dynamic_lds;
+    aql->kernarg_address = kernarg;
+    aql->kernel_object = co->kern_obj;
 
-bool Dispatch::InitDispatch()
-{
-  const uint32_t queue_mask = queue->size - 1;
-  packet_index = hsa_queue_add_write_index_relaxed(queue, 1);
-  aql = (hsa_kernel_dispatch_packet_t*) (hsa_kernel_dispatch_packet_t*)(queue->base_address) + (packet_index & queue_mask);
-  memset((uint8_t*)aql + 4, 0, sizeof(*aql) - 4);
-  aql->completion_signal = signal;
-  aql->workgroup_size_x = 1;
-  aql->workgroup_size_y = 1;
-  aql->workgroup_size_z = 1;
-  aql->grid_size_x = 1;
-  aql->grid_size_y = 1;
-  aql->grid_size_z = 1;
-  aql->group_segment_size = 0;
-  aql->private_segment_size = 0;
-  return true;
-}
-
-bool Dispatch::RunDispatch()
-{
-  uint16_t header =
-    (HSA_PACKET_TYPE_KERNEL_DISPATCH << HSA_PACKET_HEADER_TYPE) |
-    (1 << HSA_PACKET_HEADER_BARRIER) |
-    (HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_ACQUIRE_FENCE_SCOPE) |
-    (HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_RELEASE_FENCE_SCOPE);
-  uint16_t dim = 1;
-  if (aql->grid_size_y > 1)
-    dim = 2;
-  if (aql->grid_size_z > 1)
-    dim = 3;
-  aql->group_segment_size = group_static_size + group_dynamic_size;
-  uint16_t setup = dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
-  uint32_t header32 = header | (setup << 16);
-  #if defined(_WIN32) || defined(_WIN64)  // Windows
+    uint16_t setup = dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
+    uint32_t header32 = header | (setup << 16);
+    std::atomic_thread_fence(std::memory_order_release);
+#if defined(_WIN32) || defined(_WIN64)  // Windows
     _InterlockedExchange(aql, header32);
-  #else // Linux
+#else // Linux
     __atomic_store_n((uint32_t*)aql, header32, __ATOMIC_RELEASE);
-  #endif
-  // Ring door bell
-  hsa_signal_store_relaxed(queue->doorbell_signal, packet_index);
+#endif
+    // Ring door bell
+    hsa_signal_store_relaxed(queue->doorbell_signal, packet_index);
 
-  return true;
+    // Wait for completion
+    clock_t beg = clock();
+    hsa_signal_value_t result;
+    do {
+        result = hsa_signal_wait_acquire(signal, HSA_SIGNAL_CONDITION_EQ, 0, timeout, HSA_WAIT_STATE_ACTIVE);
+        clock_t clocks = clock() - beg;
+        if (result != 0 && clocks > (int64_t)timeout * CLOCKS_PER_SEC / 1000) {
+            cout << "Kernel execution timed out, elapsed time: " << (long)clocks << endl;
+            cout << "Signal value: " << hsa_signal_load_scacquire(signal) << endl;
+            
+            if (!DestroySignalsAndQueue() || !CreateSignalsAndQueue())
+            {
+                cout << "Fatal Error: unable to reinitialize signals and queue" << endl;
+                exit(-1);
+            }
+            
+            return false;
+        }
+    } while (result != 0);
+
+    // reset signal
+    hsa_signal_store_release(signal, 1);
+    return true;
 }
 
-void Dispatch::SetWorkgroupSize(uint16_t sizeX, uint16_t sizeY, uint16_t sizeZ)
+bool Dispatch::CreateSignalsAndQueue()
 {
-  aql->workgroup_size_x = sizeX;
-  aql->workgroup_size_y = sizeY;
-  aql->workgroup_size_z = sizeZ;
-  std::cout << "Workgroup size [" << sizeX << ", " << sizeY << ", " << sizeZ << "]\n";
+    return CHECK(hsa_queue_create(agent, queue_size, HSA_QUEUE_TYPE_MULTI, NULL, NULL, UINT32_MAX, UINT32_MAX, &queue))
+        && CHECK(hsa_signal_create(1, 0, NULL, &signal));
 }
 
-void Dispatch::SetGridSize(uint32_t sizeX, uint32_t sizeY, uint32_t sizeZ)
+bool Dispatch::DestroySignalsAndQueue()
 {
-  aql->grid_size_x = sizeX;
-  aql->grid_size_y = sizeY;
-  aql->grid_size_z = sizeZ;
-  std::cout << "Grid size [" << sizeX << ", " << sizeY << ", " << sizeZ << "]\n";
+    return CHECK(hsa_queue_inactivate(queue))
+        && CHECK(hsa_signal_destroy(signal))
+        && CHECK(hsa_queue_destroy(queue));
 }
 
-void Dispatch::SetSystemRegion(hsa_region_t region)
+bool Dispatch::init(uint gpu_id)
 {
-  system_region = region;
-}
+    cobjects.reserve(30);
 
-void Dispatch::SetKernargRegion(hsa_region_t region)
-{
-  kernarg_region = region;
-}
+    if (!CHECK(hsa_init()) ||
+        !CHECK(hsa_iterate_agents(find_gpu_devices, this)))
+        return false;
 
-void Dispatch::SetGPULocalRegion(hsa_region_t region)
-{
-  gpu_local_region = region;
-}
-
-void Dispatch::SetLocalRegion(hsa_region_t region)
-{
-  local_region = region;
-}
-
-void Dispatch::SetDynamicGroupSegmentSize(uint32_t size)
-{
-  group_dynamic_size = size;
-}
-
-bool Dispatch::AllocateKernarg(uint32_t size)
-{
-  if (!CHECK(hsa_memory_allocate(kernarg_region, size, &kernarg)))
-    return false;
-
-  aql->kernarg_address = kernarg;
-  kernarg_offset = 0;
-  return true;
-}
-
-bool Dispatch::LoadCodeObjectFromFile(const std::string& filename)
-{
-  std::ifstream in(filename.c_str(), std::ios::binary | std::ios::ate);
-  if (!in) { output << "Error: failed to load " << filename << std::endl; return false; }
-  size_t size = std::string::size_type(in.tellg());
-  char *ptr = (char*) AllocateSystemMemory(size);
-  if (!ptr) {
-    output << "Error: failed to allocate memory for code object." << std::endl;
-    return false;
-  }
-  in.seekg(0, std::ios::beg);
-  std::copy(std::istreambuf_iterator<char>(in),
-            std::istreambuf_iterator<char>(),
-            ptr);
-
-  return CHECK(hsa_code_object_reader_create_from_memory(ptr, size, &co_reader));
-}
-
-bool Dispatch::SetupCodeObject()
-{
-  return false;
-}
-
-bool Dispatch::SetupDebugBuffer()
-{
-  return true;
-}
-
-bool Dispatch::SetupExecutable()
-{
-  hsa_executable_symbol_t kernel_symbol;
-  uint64_t code_handle;
-
-  if (!SetupCodeObject()) 
-    return false;
-  if (!CHECK(hsa_executable_create(HSA_PROFILE_FULL, HSA_EXECUTABLE_STATE_UNFROZEN, NULL, &executable)) 
-      || !CHECK(hsa_executable_load_agent_code_object(executable, agent, co_reader, NULL, NULL)) 
-      || !CHECK(hsa_executable_freeze(executable, NULL)) 
-      || !CHECK(hsa_executable_get_symbol(executable, NULL, "hello_world", agent, 0, &kernel_symbol)) 
-      || !CHECK(hsa_executable_symbol_get_info(kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle)) 
-      || !CHECK(hsa_executable_symbol_get_info(kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &group_static_size)))
-    return false;
-
-  aql->kernel_object = code_handle;
-  return true;
-}
-
-uint64_t TIMEOUT = 120;
-
-bool Dispatch::Wait()
-{
-  clock_t beg = clock();
-  hsa_signal_value_t result;
-  do {
-    result = hsa_signal_wait_acquire(signal,
-      HSA_SIGNAL_CONDITION_EQ, 0, ~0ULL, HSA_WAIT_STATE_ACTIVE);
-    clock_t clocks = clock() - beg;
-    if (clocks > (clock_t) TIMEOUT * CLOCKS_PER_SEC) {
-      output << "Kernel execution timed out, elapsed time: " << (long) clocks << std::endl;
-      return false;
+    if (gpu_id >= gpu_agents.size())
+    {
+        cerr << "unable to detect requested gpu device #" << gpu_id << "\n";
+        return false;
     }
-  } while (result != 0);
-  return true;
+    agent = gpu_agents[gpu_id];
+
+    char aname[64] = {};
+    if (!(CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, aname))
+       && CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_QUEUE_MAX_SIZE, &queue_size))
+       && CHECK(hsa_agent_iterate_regions(agent, find_regions, this))
+       && CreateSignalsAndQueue()))
+        return false;
+
+    kernarg_size = 4096;
+    kernarg = AllocateKernargMemory(kernarg_size);
+    if (!kernarg)
+        return false;
+
+    return true;
 }
 
-bool Dispatch::Destroy()
+bool Dispatch::shutdown()
 {
-  return CHECK(hsa_queue_inactivate(queue)) 
-      && CHECK(hsa_signal_destroy(signal));
+    return CHECK(hsa_shut_down());
 }
 
-void* Dispatch::AllocateGPULocalMemory(size_t size)
+void* Dispatch::AllocateKernargMemory(size_t size)
 {
-  assert(gpu_local_region.handle != 0);
-  void *p = NULL;
+    void* p = NULL;
+    if (!CHECK(hsa_memory_allocate(kernarg_region, size, (void**)&p)))
+        return 0;
 
-  return CHECK(hsa_memory_allocate(gpu_local_region, size, (void **)&p)) ? p : 0;
+    cout << "Allocation at " << p << " kernarg, size 0x" << std::hex << size << " (" << std::dec << size << ")\n";
+    return p;
 }
 
-void* Dispatch::AllocateLocalMemory(size_t size)
+hsa_status_t GetKernelName(hsa_executable_t executable, hsa_executable_symbol_t symbol, void* data)
 {
-  assert(local_region.handle != 0);
-  void *p = NULL;
+    string* kernel_name = (string*)data;
+    uint32_t len = 0;
 
-  return CHECK(hsa_memory_allocate(local_region, size, (void **)&p)) ? p : 0;
+    if (!CHECK(hsa_executable_symbol_get_info(symbol, HSA_EXECUTABLE_SYMBOL_INFO_NAME_LENGTH, &len)))
+        return HSA_STATUS_ERROR;
+
+    kernel_name->resize(len);
+
+    return CHECK(hsa_executable_symbol_get_info(symbol, HSA_EXECUTABLE_SYMBOL_INFO_NAME, (void*)kernel_name->c_str()))
+        ? HSA_STATUS_SUCCESS : HSA_STATUS_ERROR;
 }
 
-void* Dispatch::AllocateSystemMemory(size_t size)
+static bool delete_co(CodeObjectHSA& co)
 {
-  void *p = NULL;
-  return CHECK(hsa_memory_allocate(system_region, size, (void **)&p)) ? p : 0;
+    bool status = (!co.executable.handle || CHECK(hsa_executable_destroy(co.executable)))
+        && (!co.code_object.handle || CHECK(hsa_code_object_destroy(co.code_object)));
+
+    co.code_object.handle = 0;
+    co.executable.handle = 0;
+    co.name = "deleted";
+
+    return status;
 }
 
-bool Dispatch::CopyToLocal(void* dest, void* src, size_t size)
+bool Dispatch::load_kernel_from_memory(kernel* kern, void* bin, size_t size)
 {
-  return CHECK(hsa_memory_copy(dest, src, size));
+    CodeObjectHSA co;
+    hsa_executable_symbol_t kern_symbol;
+    if (!(CHECK(hsa_code_object_deserialize(bin, size, NULL, &co.code_object))
+        && CHECK(hsa_executable_create(HSA_PROFILE_FULL, HSA_EXECUTABLE_STATE_UNFROZEN, NULL, &co.executable))
+        && CHECK(hsa_executable_load_code_object(co.executable, agent, co.code_object, NULL))
+        && CHECK(hsa_executable_freeze(co.executable, NULL))
+        && CHECK(hsa_executable_iterate_symbols(co.executable, GetKernelName, &co.name))
+        && CHECK(hsa_executable_get_symbol(co.executable, NULL, co.name.c_str(), agent, 0, &kern_symbol))
+        && CHECK(hsa_executable_symbol_get_info(kern_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &co.kern_obj))
+        && CHECK(hsa_executable_symbol_get_info(kern_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &co.lds_size))
+        && CHECK(hsa_executable_symbol_get_info(kern_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_PRIVATE_SEGMENT_SIZE, &co.private_size))))
+    {
+        delete_co(co);
+        return false;
+    }
+
+    kern->name = co.name;
+    kern->handle = cobjects.size();
+    cout << "Kernel loaded: " << co.name << "\n";
+
+    cobjects.push_back(co);
+
+    return true;
 }
 
-bool Dispatch::CopyFromLocal(void* dest, void* src, size_t size)
+bool Dispatch::memcpyDtoH(void* dst, const void* src, size_t size) const
 {
-  return CHECK(hsa_memory_assign_agent(src, cpu_agent, HSA_ACCESS_PERMISSION_RW)) 
-      && CHECK(hsa_memory_copy(dest, src, size));
+    return CHECK(hsa_memory_copy(dst, src, size));
 }
 
-Buffer* Dispatch::AllocateBuffer(size_t size, bool prefer_gpu_local)
+bool Dispatch::memcpyHtoD(void* dst, const void* src, size_t size) const
 {
-  void* system_ptr = AllocateSystemMemory(size);
-  if (!system_ptr) { return 0; }
-
-  if (prefer_gpu_local && gpu_local_region.handle != 0) {
-    void* local_ptr = AllocateGPULocalMemory(size);
-    if (!local_ptr) { free(system_ptr); return 0; }
-    return new Buffer(size, local_ptr, system_ptr);
-  }
-
-  if (local_region.handle != 0) {
-    void* local_ptr = AllocateLocalMemory(size);
-    if (!local_ptr) { free(system_ptr); return 0; }
-    return new Buffer(size, local_ptr, system_ptr);
-  } else if (gpu_local_region.handle != 0) {
-    void* local_ptr = AllocateGPULocalMemory(size);
-    if (!local_ptr) { free(system_ptr); return 0; }
-    return new Buffer(size, local_ptr, system_ptr);
-  } else {
-    return new Buffer(size, system_ptr);
-  }
+    return CHECK(hsa_memory_copy(dst, src, size));
 }
 
-bool Dispatch::FreeBuffer(Buffer* buffer)
+void* Dispatch::allocate_gpumem(size_t size)
 {
-  return CHECK(hsa_memory_free(buffer->Ptr<void>()));
+    void* p = NULL;
+    return CHECK(hsa_memory_allocate(gpu_local_region, size, (void**)&p)) ? p : 0;
 }
 
-bool Dispatch::CopyTo(Buffer* buffer)
+bool Dispatch::free_gpumem(void* ptr)
 {
-  if (buffer->IsLocal()) {
-    return CopyToLocal(buffer->LocalPtr(), buffer->SystemPtr(), buffer->Size());
-  }
-  return true;
+    return CHECK(hsa_memory_free(ptr));
 }
 
-bool Dispatch::CopyFrom(Buffer* buffer)
+void* Dispatch::allocate_cpumem(size_t size)
 {
-  if (buffer->IsLocal()) {
-    return CopyFromLocal(buffer->SystemPtr(), buffer->LocalPtr(), buffer->Size());
-  }
-  return true;
+    if (size == 0)
+        return NULL;
+
+    void* p = NULL;
+    return CHECK(hsa_memory_allocate(system_region, size, (void**)&p)) ? p : 0;
 }
 
-void Dispatch::KernargRaw(const void* ptr, size_t size, size_t align)
+bool Dispatch::free_cpumem(void* ptr)
 {
-  assert((align & (align - 1)) == 0);
-  kernarg_offset = ((kernarg_offset + align - 1) / align) * align;
-  memcpy((char*) kernarg + kernarg_offset, ptr, size);
-  kernarg_offset += size;
+    return CHECK(hsa_memory_free(ptr));
 }
 
-void Dispatch::Kernarg(Buffer* buffer)
-{
-  void* localPtr = buffer->LocalPtr();
-  Kernarg(&localPtr);
-}
-
-bool Dispatch::Run()
-{
-  bool res =
-    Init() &&
-    InitDispatch() &&
-    SetupDebugBuffer() &&
-    SetupExecutable() &&
-    Setup() &&
-    RunDispatch() &&
-    Wait() &&
-    Verify() &&
-    Destroy();
-  std::string out = output.str();
-  if (!out.empty()) {
-    std::cout << out << std::endl;
-  }
-  std::cout << (res ? "Success" : "Failed") << std::endl;
-  return res;
-}
-
-int Dispatch::RunMain()
-{
-  return Run() ? 0 : 1;
-}
-
-bool Dispatch::GetAgentName(std::string& agent_name)
-{
-  char agent_name_buf[64];
-  if (!CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, agent_name_buf)))
-    return false;
-
-  agent_name = std::string(agent_name_buf);
-  return true;
-}
-
-uint64_t Dispatch::GetTimestampFrequency()
-{
-  uint64_t frequency;
-  return CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY, &frequency)) ? frequency : 0;
-}
-
-}
-}
-
+} // namespace dispatch
+} // namespace amd
