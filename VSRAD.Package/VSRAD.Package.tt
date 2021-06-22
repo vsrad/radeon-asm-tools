@@ -16,7 +16,6 @@
         <Parent guid="guidSHLMainMenu" id="IDG_VS_TOOLS_OTHER2"/>
         <Strings>
           <ButtonText>RAD Debug</ButtonText>
-          <CommandName>RAD Debug</CommandName>
         </Strings>
       </Menu>
       <!-- Tools -> RAD Debug -> Actions -->
@@ -24,7 +23,6 @@
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
         <Strings>
           <ButtonText>Actions</ButtonText>
-          <CommandName>Actions</CommandName>
         </Strings>
       </Menu>
       <!-- View -> Toolbars -> RAD Debug -->
@@ -39,7 +37,6 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add To Watches As Array</ButtonText>
-          <CommandName>Add To Watches As Array</CommandName>
         </Strings>
       </Menu>
       <!-- Editor context menu -> Add to watches as array -> From 0..15 -->
@@ -62,7 +59,9 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Open Visualizer</ButtonText>
+          <ButtonText>Visualizer</ButtonText>
+          <CanonicalName>RadDebug.Visualizer</CanonicalName>
+          <LocCanonicalName>RadDebug.Visualizer</LocCanonicalName>
         </Strings>
       </Button>
       <!--
@@ -72,7 +71,9 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Open Slice Visualizer</ButtonText>
+          <ButtonText>Slice Visualizer</ButtonText>
+          <CanonicalName>RadDebug.SliceVisualizer</CanonicalName>
+          <LocCanonicalName>RadDebug.SliceVisualizer</LocCanonicalName>
         </Strings>
       </Button>
       -->
@@ -83,6 +84,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Options</ButtonText>
+          <CanonicalName>RadDebug.Options</CanonicalName>
+          <LocCanonicalName>RadDebug.Options</LocCanonicalName>
         </Strings>
       </Button>
       <!-- Tools menu -->
@@ -102,7 +105,9 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Launch Remote Profiling</ButtonText>
+          <ButtonText>Profile</ButtonText>
+          <CanonicalName>RadDebug.ProfileAction</CanonicalName>
+          <LocCanonicalName>RadDebug.ProfileAction</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="6" type="Button">
@@ -112,7 +117,9 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Disassemble file</ButtonText>
+          <ButtonText>Disassemble File</ButtonText>
+          <CanonicalName>RadDebug.DisassembleAction</CanonicalName>
+          <LocCanonicalName>RadDebug.DisassembleAction</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="7" type="Button">
@@ -122,7 +129,9 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Preprocess file</ButtonText>
+          <ButtonText>Preprocess File</ButtonText>
+          <CanonicalName>RadDebug.PreprocessAction</CanonicalName>
+          <LocCanonicalName>RadDebug.PreprocessAction</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DebugActionCommandId" priority="8" type="Button">
@@ -133,6 +142,8 @@
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Debug</ButtonText>
+          <CanonicalName>RadDebug.DebugAction</CanonicalName>
+          <LocCanonicalName>RadDebug.DebugAction</LocCanonicalName>
         </Strings>
       </Button>
       <!-- Editor context menu -->
@@ -142,6 +153,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Force Run To Cursor</ButtonText>
+          <CanonicalName>RadDebug.ForceRunToCursor</CanonicalName>
+          <LocCanonicalName>RadDebug.ForceRunToCursor</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" priority="0x0100" type="Button">
@@ -150,6 +163,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add To Watches</ButtonText>
+          <CanonicalName>RadDebug.AddToWatches</CanonicalName>
+          <LocCanonicalName>RadDebug.AddToWatches</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
@@ -246,6 +261,8 @@
 
   <KeyBindings>
     <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="D" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="W" mod1="Alt" editor="guidVSStd97" />
   </KeyBindings>
 
   <CommandPlacements>
