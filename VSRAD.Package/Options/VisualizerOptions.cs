@@ -54,6 +54,10 @@ namespace VSRAD.Package.Options
         private bool _showWavemap;
         [DefaultValue(true)]
         public bool ShowWavemap { get => _showWavemap; set => SetField(ref _showWavemap, value); }
+
+        private bool _matchBracketsOnAddToWatches;
+        [DefaultValue(false)]
+        public bool MatchBracketsOnAddToWatches { get => _matchBracketsOnAddToWatches; set => SetField(ref _matchBracketsOnAddToWatches, value); }
     }
 
     public sealed class MagicNumberConverter : JsonConverter
