@@ -17,6 +17,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         private readonly ITextBuffer buffer;
         private readonly object updateLock;
         private readonly ITextDocument textDocument;
+        private readonly ErrorHighlighterTaggerProvider _provider;
         private List<ErrorMessage> requestedErrorList;
         private IEnumerable<TagSpan<IErrorTag>> currentErrorSnapshotList;
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -26,12 +27,21 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             view = textView;
             buffer = sourceBuffer;
             updateLock = new object();
+            _provider = provider;
 
-            var rc = buffer.Properties.TryGetProperty<ITextDocument>(typeof(ITextDocument), out textDocument);
+            var rc = buffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
             if (!rc) throw new InvalidOperationException("Cannot find text document for this view");
 
-            provider.ErrorsUpdated += ErrorsUpdatedEvent;
+            view.Closed += ViewClosedEventHandler;
+            _provider.ErrorsUpdated += ErrorsUpdatedEvent;
         }
+
+        private void ViewClosedEventHandler(object sender, EventArgs e)
+        {
+            view.Closed -= ViewClosedEventHandler;
+            _provider.ErrorsUpdated -= ErrorsUpdatedEvent;
+        }
+
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {
             if (currentErrorSnapshotList == null)

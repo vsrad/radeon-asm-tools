@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
@@ -27,6 +26,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
                 return null;
 
             var document = _documentFactory.GetOrCreateDocument(buffer);
+            if (document == null)
+                return null;
+
             return new BraceHighlighter(textView, buffer, document.DocumentTokenizer) as ITagger<T>;
         }
     }

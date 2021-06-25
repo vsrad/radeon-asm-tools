@@ -30,8 +30,10 @@ namespace VSRAD.Syntax.Guide
         public void TextViewCreated(IWpfTextView textView)
         {
             var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
-            if (document != null)
-                textView.Properties.AddProperty(typeof(IndentGuide), new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider));
+            if (document == null)
+                return;
+
+            var _ = new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider);
         }
     }
 }
