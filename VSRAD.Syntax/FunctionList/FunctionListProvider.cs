@@ -24,7 +24,8 @@ namespace VSRAD.Syntax.FunctionList
         private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
-        private KeyValuePair<IDocument, IAnalysisResult>? lastResult;
+        private readonly List<IDocument> _managedDocuments;
+        private Tuple<IDocument, IAnalysisResult> _lastResult;
 
         private static FunctionListProvider _instance;
         private static FunctionListControl _functionListControl;
@@ -35,6 +36,7 @@ namespace VSRAD.Syntax.FunctionList
             _editorAdaptersFactoryService = serviceProvider.EditorAdaptersFactoryService;
             _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
+            _managedDocuments = new List<IDocument>();
 
             _documentFactory.DocumentCreated += DocumentCreated;
             _documentFactory.DocumentDisposed += DocumentDisposed;
@@ -51,7 +53,6 @@ namespace VSRAD.Syntax.FunctionList
 
             if (TryGetDocument(textView.TextBuffer, out var document))
                 AssignDocumentToFunctionList(document);
-
         }
 
         private void CaretPositionChanged(SnapshotPoint point)
@@ -86,18 +87,31 @@ namespace VSRAD.Syntax.FunctionList
         #region update function list
         private void AssignDocumentToFunctionList(IDocument document)
         {
-            if (!document.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
-            {
-                document.DocumentAnalysis.AnalysisUpdated += (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
-                document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
-            }
+            // hack to avoid IDocumentAnalysis memory leaks
+            // TODO: FunctionList needs to be refactored (see https://github.com/vsrad/radeon-asm-tools/pull/220)
+            if (_managedDocuments.Contains(document))
+                return;
+
+            document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
+            _managedDocuments.Add(document);
+
             ActiveDocumentChanged(document);
         }
 
         private void DocumentCreated(IDocument document) => AssignDocumentToFunctionList(document);
 
-        private void DocumentDisposed(IDocument document) =>
-            document.DocumentAnalysis.AnalysisUpdated -= (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
+        private void DocumentDisposed(IDocument document)
+        {
+            if (!_managedDocuments.Contains(document))
+                return;
+
+            document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
+            _managedDocuments.Remove(document);
+
+            var lastDocument = _lastResult?.Item1;
+            if (lastDocument == document)
+                ClearFunctionList();
+        }
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
@@ -116,26 +130,30 @@ namespace VSRAD.Syntax.FunctionList
         private void ClearFunctionList()
         {
             _functionListControl.ClearList();
-            lastResult = null;
+            _lastResult = null;
         }
 
         private void UpdateFunctionList(IDocument document)
         {
             var analysisResult = document.DocumentAnalysis.CurrentResult;
+            var lastAnalysisResult = _lastResult?.Item2;
 
-            if (analysisResult == null || analysisResult == lastResult?.Value) return;
-            UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
+            if (analysisResult == null || analysisResult == lastAnalysisResult) return;
+            UpdateFunctionList(document, analysisResult, CancellationToken.None);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            if (reason == RescanReason.ContentChanged)
-                UpdateFunctionList(document, analysisResult, cancellationToken);
+            if (reason != RescanReason.ContentChanged)
+                return;
+
+            var document = _documentFactory.GetOrCreateDocument(analysisResult.Snapshot.TextBuffer);
+            UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            lastResult = new KeyValuePair<IDocument, IAnalysisResult>(document, analysisResult);
+            _lastResult = new Tuple<IDocument, IAnalysisResult>(document, analysisResult);
 
             // if document analyzed before Function List view initialization
             if (_functionListControl == null) return;
@@ -156,12 +174,11 @@ namespace VSRAD.Syntax.FunctionList
 
         private void SetLastResultFunctionList(CancellationToken cancellationToken)
         {
-            if (lastResult.HasValue)
-            {
-                var document = lastResult.Value.Key;
-                var analysisResult = lastResult.Value.Value;
-                UpdateFunctionList(document, analysisResult, cancellationToken);
-            }
+            if (_lastResult == null)
+                return;
+
+            var (document, analysisResult) = _lastResult;
+            UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
         public static void FunctionListWindowCreated(FunctionListControl functionListControl)

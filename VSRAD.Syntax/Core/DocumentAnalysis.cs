@@ -13,6 +13,7 @@ namespace VSRAD.Syntax.Core
     internal class DocumentAnalysis : IDocumentAnalysis
     {
         private readonly IDocument _document;
+        private readonly IDocumentTokenizer _tokenizer;
         private readonly IParser _parser;
         private readonly FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>> _resultsRequests;
 
@@ -22,11 +23,12 @@ namespace VSRAD.Syntax.Core
         public DocumentAnalysis(IDocument document, IDocumentTokenizer tokenizer, IParser parser)
         {
             _document = document;
+            _tokenizer = tokenizer;
             _parser = parser;
             _resultsRequests = new FixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(100);
 
-            tokenizer.TokenizerUpdated += TokenizerUpdated;
-            TokenizerUpdated(tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+            _tokenizer.TokenizerUpdated += TokenizerUpdated;
+            TokenizerUpdated(_tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
@@ -71,6 +73,11 @@ namespace VSRAD.Syntax.Core
             {
                 throw new OperationCanceledException();
             }
+        }
+
+        public void Dispose()
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
         }
     }
 }

@@ -22,8 +22,10 @@ namespace VSRAD.Syntax.Collapse
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
+            if (document == null)
+                return null;
 
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new OutliningTagger(document.DocumentAnalysis) as ITagger<T>);
+            return new OutliningTagger(document) as ITagger<T>;
         }
     }
 }

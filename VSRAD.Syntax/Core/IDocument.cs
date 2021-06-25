@@ -4,6 +4,7 @@ using System;
 namespace VSRAD.Syntax.Core
 {
     public delegate void DocumentRenamedEventHandler(IDocument document, string oldPath, string newPath);
+    public delegate void DocumentClosedEventHandler(IDocument document);
 
     public interface IDocument : IDisposable
     {
@@ -11,9 +12,9 @@ namespace VSRAD.Syntax.Core
         IDocumentTokenizer DocumentTokenizer { get; }
         string Path { get; }
         ITextSnapshot CurrentSnapshot { get; }
-        bool IsDisposed { get; }
 
         event DocumentRenamedEventHandler DocumentRenamed;
+        event DocumentClosedEventHandler DocumentClosed;
         void OpenDocumentInEditor();
         void NavigateToPosition(int position);
     }

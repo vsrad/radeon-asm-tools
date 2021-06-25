@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public IClassifier GetClassifier(ITextBuffer textBuffer)
         {
             var document = _documentFactory.GetOrCreateDocument(textBuffer);
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new AnalysisClassifier(document.DocumentAnalysis, _classificationTypeRegistryService));
+            return new AnalysisClassifier(document, _classificationTypeRegistryService);
         }
     }
 
@@ -43,7 +43,9 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         private readonly IDocumentFactory _documentFactory;
 
         [ImportingConstructor]
-        public TokenizerClassifierProvider(IStandardClassificationService classificationService, IDocumentFactory documentFactory)
+        public TokenizerClassifierProvider(
+            IStandardClassificationService classificationService, 
+            IDocumentFactory documentFactory)
         {
             _classificationService = classificationService;
             _documentFactory = documentFactory;
@@ -52,7 +54,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            return buffer.Properties.GetOrCreateSingletonProperty(() => new TokenizerClassifier(document.DocumentTokenizer, _classificationService)) as ITagger<T>;
+            return new TokenizerClassifier(document, _classificationService) as ITagger<T>;
         }
     }
 }

@@ -13,6 +13,7 @@ namespace VSRAD.Syntax.Core
     internal class DocumentTokenizer : IDocumentTokenizer
     {
         private readonly TrackingToken.NonOverlappingComparer _comparer;
+        private readonly ITextBuffer _buffer;
         private readonly ILexer _lexer;
         private TokenizerCollection CurrentTokens;
         private CancellationTokenSource _cts;
@@ -28,13 +29,14 @@ namespace VSRAD.Syntax.Core
 
         public DocumentTokenizer(ITextBuffer buffer, ILexer lexer)
         {
+            _buffer = buffer;
             _lexer = lexer;
             _comparer = new TrackingToken.NonOverlappingComparer();
             CurrentSnapshot = buffer.CurrentSnapshot;
             _cts = new CancellationTokenSource();
 
             Initialize();
-            buffer.Changed += BufferChanged;
+            _buffer.Changed += BufferChanged;
         }
 
         private void Initialize() => Rescan(RescanReason.ContentChanged);
@@ -206,6 +208,12 @@ namespace VSRAD.Syntax.Core
             public int OldLength { get { throw new NotImplementedException(); } }
             public int OldPosition { get { throw new NotImplementedException(); } }
             public string OldText { get { throw new NotImplementedException(); } }
+        }
+
+        public void Dispose()
+        {
+            _buffer.Changed -= BufferChanged;
+            _cts?.Dispose();
         }
     }
 }
