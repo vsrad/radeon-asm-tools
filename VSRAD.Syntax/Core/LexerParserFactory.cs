@@ -1,4 +1,5 @@
-﻿using VSRAD.Syntax.Core.Lexer;
+﻿using System.Collections.Generic;
+using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
 
@@ -14,32 +15,50 @@ namespace VSRAD.Syntax.Core
 
     internal partial class DocumentFactory
     {
+        private Dictionary<AsmType, LexerParser> _asmSpecificLexerParser;
+
         private LexerParser? GetLexerParser(AsmType asmType)
         {
-            var instructionManager = _instructionManager.Value;
+            InitializeLexerParser();
 
-            switch (asmType)
+            if (_asmSpecificLexerParser.TryGetValue(asmType, out var lexerParser))
+                return lexerParser;
+
+            return null;
+        }
+
+        private void InitializeLexerParser()
+        {
+            if (_asmSpecificLexerParser != null)
+                return;
+
+            _asmSpecificLexerParser = new Dictionary<AsmType, LexerParser>()
             {
-                case AsmType.RadAsm:
-                    return new LexerParser()
+                {
+                    AsmType.RadAsm,
+                    new LexerParser()
                     {
-                        Lexer = new AsmLexer(),
-                        Parser = new Asm1Parser(this, instructionManager)
-                    };
-                case AsmType.RadAsm2:
-                    return new LexerParser()
+                        Lexer = Asm1Lexer.Instance,
+                        Parser = Asm1Parser.Instance
+                    }
+                },
+                {
+                    AsmType.RadAsm2,
+                    new LexerParser()
                     {
-                        Lexer = new Asm2Lexer(),
-                        Parser = new Asm2Parser(this, instructionManager)
-                    };
-                case AsmType.RadAsmDoc:
-                    return new LexerParser()
+                        Lexer = Asm2Lexer.Instance,
+                        Parser = Asm2Parser.Instance
+                    }
+                },
+                {
+                    AsmType.RadAsmDoc,
+                    new LexerParser()
                     {
-                        Lexer = new AsmDocLexer(),
-                        Parser = new AsmDocParser()
-                    };
-                default: return null;
-            }
+                        Lexer = AsmDocLexer.Instance,
+                        Parser = AsmDocParser.Instance
+                    }
+                }
+            };
         }
     }
 }

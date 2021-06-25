@@ -6,8 +6,10 @@ using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.Lexer
 {
-    public class AsmLexer : ILexer
+    public class Asm1Lexer : ILexer
     {
+        public static ILexer Instance = new Asm1Lexer();
+
         public IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset)
         {
             var lexer = new RadAsmLexer(new UnbufferedCharStream(new TextSegmentsCharStream(textSegments)));

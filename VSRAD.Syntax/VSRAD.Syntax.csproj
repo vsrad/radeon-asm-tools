@@ -86,7 +86,7 @@
     <Compile Include="Core\LexerParserFactory.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
-    <Compile Include="Core\Lexer\AsmLexer.cs" />
+    <Compile Include="Core\Lexer\Asm1Lexer.cs" />
     <Compile Include="Core\Lexer\Lexer.cs" />
     <Compile Include="Core\Parser\AbstractCodeParser.cs" />
     <Compile Include="Core\Parser\Asm2Parser.cs" />

@@ -15,34 +15,31 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal abstract class AbstractCodeParser : IParser
     {
-        abstract protected AsmType AsmType { get; }
         protected HashSet<string> OtherInstructions { get; private set; }
 
         private readonly IDocumentFactory _documentFactory;
+        private readonly AsmType _asmType;
         private HashSet<string> _instructions;
-        protected readonly DefinitionContainer _definitionContainer;
-        protected readonly LinkedList<(string text, TrackingToken trackingToken, IBlock block)> _referenceCandidates;
 
-        public AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, AsmType asmType)
         {
+            _asmType = asmType;
             _documentFactory = documentFactory;
-            _definitionContainer = new DefinitionContainer();
-            _referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
             _instructions = new HashSet<string>();
             OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
-            InstructionsUpdated(instructionListManager, AsmType);
+            InstructionsUpdated(instructionListManager, _asmType);
         }
 
         public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {
-            if ((asmType & AsmType) == AsmType)
+            if ((asmType & _asmType) == _asmType)
             {
-                var instructions = sender.GetInstructions(AsmType);
-                var selectedSetInstructions = sender.GetSelectedSetInstructions(AsmType);
+                var instructions = sender.GetInstructions(_asmType);
+                var selectedSetInstructions = sender.GetSelectedSetInstructions(_asmType);
 
                 _instructions = selectedSetInstructions
                     .Select(i => i.Text)
@@ -58,7 +55,7 @@ namespace VSRAD.Syntax.Core.Parser
             }
         }
 
-        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block)
+        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
         {
             try
             {
@@ -74,16 +71,16 @@ namespace VSRAD.Syntax.Core.Parser
                         .ConfigureAwait(false);
 
                     foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
-                        _definitionContainer.Add(block, externalDefinition);
+                        definitionContainer.Add(block, externalDefinition);
                 }
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }
         }
 
-        protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version, CancellationToken cancellation)
+        protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version, DefinitionContainer definitionContainer, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
-            if (_definitionContainer.TryGetDefinition(tokenText, out var definitionToken))
+            if (definitionContainer.TryGetDefinition(tokenText, out var definitionToken))
             {
                 RadAsmTokenType referenceType;
                 switch (definitionToken.Type)

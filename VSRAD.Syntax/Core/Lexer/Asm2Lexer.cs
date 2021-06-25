@@ -9,6 +9,8 @@ namespace VSRAD.Syntax.Core.Lexer
 {
     public class Asm2Lexer : ILexer
     {
+        public static ILexer Instance = new Asm2Lexer();
+
         public IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset)
         {
             var lexer = new RadAsm2Lexer(new UnbufferedCharStream(new TextSegmentsCharStream(textSegments)));
