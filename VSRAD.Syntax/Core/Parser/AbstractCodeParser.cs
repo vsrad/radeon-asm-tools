@@ -103,7 +103,13 @@ namespace VSRAD.Syntax.Core.Parser
                     default: return true;
                 }
 
-                block.AddToken(new ReferenceToken(referenceType, token, version, definitionToken));
+                var referenceToken = new ReferenceToken(referenceType, token, version, definitionToken);
+
+                // definition contains only references from the same document
+                if (referenceToken.Snapshot == definitionToken.Snapshot)
+                    definitionToken.AddReference(referenceToken);
+
+                block.AddToken(referenceToken);
                 return true;
             }
 
