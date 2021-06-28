@@ -50,6 +50,7 @@ namespace VSRAD.Package.Utils
             {
                 UpdateElementsOrder();
                 this[Count - 1].Value = newElement.Value;
+                if (_pinnedCount != Count - 1) Move(Count - 1, _pinnedCount);
                 return;
             }
             Insert(_pinnedCount, newElement);
