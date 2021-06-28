@@ -86,6 +86,8 @@ namespace VSRAD.Syntax.FunctionList
             ThreadHelper.ThrowIfNotOnUIThread();
             items = new List<FunctionListItem>();
             tokens.Items.Clear();
+
+            ClearHighlightItem();
         }
 
         public void HighlightItemAtLine(int lineNumber)

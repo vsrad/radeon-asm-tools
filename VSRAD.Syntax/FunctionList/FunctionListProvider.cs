@@ -1,4 +1,4 @@
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
@@ -137,7 +137,7 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ClearFunctionList()
         {
-            _functionListControl.ClearList();
+            _functionListControl?.ClearList();
             _lastResult = null;
         }
 
