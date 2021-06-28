@@ -29,7 +29,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             if (document == null)
                 return null;
 
-            return new BraceHighlighter(textView, buffer, document.DocumentTokenizer) as ITagger<T>;
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new BraceHighlighter(textView, buffer, document.DocumentTokenizer)) as ITagger<T>;
         }
     }
 

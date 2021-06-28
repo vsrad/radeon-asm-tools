@@ -33,7 +33,8 @@ namespace VSRAD.Syntax.Guide
             if (document == null)
                 return;
 
-            var _ = new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider);
+            textView.Properties.GetOrCreateSingletonProperty(() => 
+                new IndentGuide(textView, document.DocumentAnalysis, _optionsProvider));
         }
     }
 }

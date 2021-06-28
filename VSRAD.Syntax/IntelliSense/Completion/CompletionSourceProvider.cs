@@ -48,7 +48,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
             if (document == null) return null;
 
-            return new CompletionSource(document, _descriptionBuilder, _providers);
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new CompletionSource(document, _descriptionBuilder, _providers));
         }
     }
 }

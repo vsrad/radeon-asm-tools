@@ -25,7 +25,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             var document = _documentFactory.GetOrCreateDocument(buffer);
             if (document == null) return null;
 
-            return new SyntaxErrorHighlighterTagger(document) as ITagger<T>;
+            return buffer.Properties.GetOrCreateSingletonProperty(() =>  
+                new SyntaxErrorHighlighterTagger(document)) as ITagger<T>;
         }
     }
 }

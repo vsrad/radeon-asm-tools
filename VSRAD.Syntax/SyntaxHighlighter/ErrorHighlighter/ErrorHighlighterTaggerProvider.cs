@@ -45,7 +45,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             if (textView.TextBuffer != buffer)
                 return null;
 
-            return new ErrorHighlighterTagger(this, textView, buffer) as ITagger<T>;
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new ErrorHighlighterTagger(this, textView, buffer)) as ITagger<T>;
         }
     }
 

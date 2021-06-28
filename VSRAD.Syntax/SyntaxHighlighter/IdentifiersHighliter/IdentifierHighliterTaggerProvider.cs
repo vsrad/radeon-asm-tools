@@ -29,7 +29,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
             if (document == null)
                 return null;
 
-            return new HighlightWordTagger(textView, buffer, document.DocumentAnalysis) as ITagger<T>;
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new HighlightWordTagger(textView, buffer, document.DocumentAnalysis)) as ITagger<T>;
         }
     }
 }

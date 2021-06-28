@@ -25,7 +25,8 @@ namespace VSRAD.Syntax.Collapse
             if (document == null)
                 return null;
 
-            return new OutliningTagger(document) as ITagger<T>;
+            return buffer.Properties.GetOrCreateSingletonProperty(() => 
+                new OutliningTagger(document)) as ITagger<T>;
         }
     }
 }
