@@ -7,7 +7,7 @@
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <DockPanel>
-        <local:VisualizerHeaderControl DataContext="{Binding}" DockPanel.Dock="Top" x:Name="HeaderHost"/>
+        <local:VisualizerHeaderControl DebugOptions="{Binding Options.DebuggerOptions}" DataContext="{Binding}" DockPanel.Dock="Top"  x:Name="HeaderHost"/>
         <local:VisualizerTableHost DockPanel.Dock="Bottom" x:Name="TableHost"/>
     </DockPanel>
 </UserControl>

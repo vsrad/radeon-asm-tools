@@ -100,6 +100,8 @@ namespace VSRAD.Package.ProjectSystem
                 _currentlyRunningActionName = action.Name;
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
+                _project.Options.DebuggerOptions.UpdateLastAppArgs();
+
                 var projectProperties = _project.GetProjectProperties();
                 var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
                     ? null

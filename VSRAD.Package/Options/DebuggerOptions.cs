@@ -19,6 +19,7 @@ namespace VSRAD.Package.Options
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
         public List<Watch> Watches { get; } = new List<Watch>();
+        public PinnableMruCollection<string> LastAppArgs { get; } = new PinnableMruCollection<string>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Where(w => !w.IsEmpty).Select(w => w.Name).Distinct().ToList());
@@ -57,6 +58,12 @@ namespace VSRAD.Package.Options
 
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
+
+        public void UpdateLastAppArgs()
+        {
+            if (string.IsNullOrWhiteSpace(AppArgs)) return;
+            LastAppArgs.AddElement(AppArgs);
+        }
     }
 
     public sealed class BackwardsCompatibilityWatchConverter : JsonConverter
