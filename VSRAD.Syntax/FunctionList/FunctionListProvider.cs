@@ -1,8 +1,6 @@
-﻿using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
@@ -16,12 +14,11 @@ using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.FunctionList
 {
-    [Export(typeof(IVsTextViewCreationListener))]
-    [ContentType("text")]
-    [TextViewRole(PredefinedTextViewRoles.Interactive)]
-    internal sealed class FunctionListProvider : IVsTextViewCreationListener
+    [Export(typeof(IWpfTextViewCreationListener))]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [TextViewRole(PredefinedTextViewRoles.Document)]
+    internal sealed class FunctionListProvider : IWpfTextViewCreationListener
     {
-        private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
         private readonly List<IDocument> _managedDocuments;
@@ -31,40 +28,32 @@ namespace VSRAD.Syntax.FunctionList
         private static FunctionListControl _functionListControl;
 
         [ImportingConstructor]
-        public FunctionListProvider(RadeonServiceProvider serviceProvider, IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
+        public FunctionListProvider(IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
         {
-            _editorAdaptersFactoryService = serviceProvider.EditorAdaptersFactoryService;
             _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
             _managedDocuments = new List<IDocument>();
 
-            _documentFactory.DocumentCreated += DocumentCreated;
-            _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
             _instance = this;
         }
 
-        public void VsTextViewCreated(IVsTextView textViewAdapter)
-        {
-            var textView = _editorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
-            if (textView == null) return;
+        public void TextViewCreated(IWpfTextView textView) =>
+            AssignViewToFunctionList(textView);
 
-            textView.Caret.PositionChanged += (sender, e) => CaretPositionChanged(e.NewPosition.BufferPosition);
-
-            if (TryGetDocument(textView.TextBuffer, out var document))
-                AssignDocumentToFunctionList(document);
-        }
-
-        private void CaretPositionChanged(SnapshotPoint point)
+        private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e)
         {
             if (_functionListControl == null) return;
 
-            if (TryGetDocument(point.Snapshot.TextBuffer, out var document))
+            var position = e.NewPosition.BufferPosition;
+            var snapshot = position.Snapshot;
+
+            if (TryGetDocument(snapshot.TextBuffer, out var document))
             {
                 ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
                 {
-                    var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
-                    var functionBlock = analysisResult.TryGetFunctionBlock(point);
+                    var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(snapshot);
+                    var functionBlock = analysisResult.TryGetFunctionBlock(position);
 
                     if (functionBlock != null)
                     {
@@ -85,6 +74,25 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         #region update function list
+        private void AssignViewToFunctionList(ITextView textView)
+        {
+            if (!TryGetDocument(textView.TextBuffer, out var document))
+                return;
+
+            AssignDocumentToFunctionList(document);
+
+            textView.Closed += ViewClosed;
+            textView.Caret.PositionChanged += CaretPositionChanged;
+        }
+
+        private void ViewClosed(object sender, EventArgs e)
+        {
+            var textView = (ITextView)sender;
+
+            textView.Closed -= ViewClosed;
+            textView.Caret.PositionChanged -= CaretPositionChanged;
+        }
+
         private void AssignDocumentToFunctionList(IDocument document)
         {
             // hack to avoid IDocumentAnalysis memory leaks
@@ -92,19 +100,19 @@ namespace VSRAD.Syntax.FunctionList
             if (_managedDocuments.Contains(document))
                 return;
 
+            document.DocumentClosed += DocumentClosed;
             document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
             _managedDocuments.Add(document);
 
             ActiveDocumentChanged(document);
         }
 
-        private void DocumentCreated(IDocument document) => AssignDocumentToFunctionList(document);
-
-        private void DocumentDisposed(IDocument document)
+        private void DocumentClosed(IDocument document)
         {
             if (!_managedDocuments.Contains(document))
                 return;
 
+            document.DocumentClosed -= DocumentClosed;
             document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
             _managedDocuments.Remove(document);
 
