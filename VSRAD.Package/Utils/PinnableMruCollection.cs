@@ -45,8 +45,14 @@ namespace VSRAD.Package.Utils
                 Move(oldIndex, newIndex);
                 return;
             }
+            if (_pinnedCount == MAX_COUNT) return; // all elemetns are pinned, do not add new
+            if (Count == MAX_COUNT) // at least one unpinned element, but MAX_COUNT reached, replace value of last unpinned element
+            {
+                UpdateElementsOrder();
+                this[Count - 1].Value = newElement.Value;
+                return;
+            }
             Insert(_pinnedCount, newElement);
-            if (Count > MAX_COUNT) RemoveAt(MAX_COUNT);
         }
 
         public void TogglePinnedState(PinnableElement<T> element)
