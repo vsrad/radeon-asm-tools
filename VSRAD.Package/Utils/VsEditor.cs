@@ -8,6 +8,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace VSRAD.Package.Utils
 {
@@ -49,10 +50,6 @@ namespace VSRAD.Package.Utils
             return markers;
         }
 
-        private static readonly Type _sVsWindowManagerType = Type.GetType("Microsoft.Internal.VisualStudio.Shell.Interop.SVsWindowManager, Microsoft.VisualStudio.Platform.WindowManagement");
-        private static readonly Type _viewManagerType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.ViewManager, Microsoft.VisualStudio.Shell.ViewManager");
-        private static readonly Type _viewDockOperationsType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockOperations, Microsoft.VisualStudio.Shell.ViewManager");
-
         public static void OpenFileInEditor(SVsServiceProvider serviceProvider, string path, string lineMarker, bool forceOppositeTab, bool preserveActiveDoc)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -64,20 +61,40 @@ namespace VSRAD.Package.Utils
                 Assumes.Present(vsUIShellOpenDocument);
 
                 IVsWindowFrame newDocumentFrame;
-                var windowManager = serviceProvider.GetService(_sVsWindowManagerType);
-                Assumes.Present(windowManager);
-                // Using GetType() because _sVsWindowManagerType is just an interface; ActiveDocumentFrame is present only in the actual implementation class
-                dynamic originalDocumentFrame = windowManager.GetType().GetProperty("ActiveDocumentFrame", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(windowManager);
 
-                ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, Guid.Empty, out _, out _, out _, out newDocumentFrame));
+                var docItemId = new uint[1];
+                ErrorHandler.ThrowOnFailure(vsRunningDocumentTable.FindAndLockDocument((uint)_VSRDTFLAGS.RDT_NoLock, path, out var vsHier, out docItemId[0], out var docData, out _));
+                if (docData != IntPtr.Zero) // Is the document already open?
+                {
+                    try
+                    {
+                        var doc = (IVsPersistDocData)Marshal.GetObjectForIUnknown(docData);
+                        ErrorHandler.ThrowOnFailure(doc.ReloadDocData(0));
 
-                if (forceOppositeTab)
-                    MoveToOppositeTab(newDocumentFrame, originalDocumentFrame, preserveActiveDoc);
+                        var openDocumentFlags = __VSIDOFLAGS.IDO_IgnoreLogicalView;
+                        if (!preserveActiveDoc) // Bring the document into focus
+                            openDocumentFlags |= __VSIDOFLAGS.IDO_ActivateIfOpen;
 
-                if (preserveActiveDoc)
-                    ErrorHandler.ThrowOnFailure(newDocumentFrame.ShowNoActivate());
+                        ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.IsDocumentOpen((IVsUIHierarchy)vsHier, docItemId[0], path, Guid.Empty,
+                            (uint)openDocumentFlags, out _, docItemId, out newDocumentFrame, out _));
+                    }
+                    finally
+                    {
+                        Marshal.Release(docData);
+                    }
+                }
                 else
-                    ErrorHandler.ThrowOnFailure(newDocumentFrame.Show());
+                {
+                    ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, Guid.Empty, out _, out _, out _, out newDocumentFrame));
+
+                    if (forceOppositeTab)
+                        MoveToOppositeTab(newDocumentFrame);
+
+                    if (preserveActiveDoc)
+                        ErrorHandler.ThrowOnFailure(newDocumentFrame.ShowNoActivate());
+                    else
+                        ErrorHandler.ThrowOnFailure(newDocumentFrame.Show());
+                }
 
                 if (!string.IsNullOrEmpty(lineMarker))
                     SetCaretAtLineMarker(newDocumentFrame, lineMarker);
@@ -88,7 +105,10 @@ namespace VSRAD.Package.Utils
             }
         }
 
-        private static void MoveToOppositeTab(IVsWindowFrame newDocumentFrame, dynamic originalDocumentFrame, bool preserveActiveDoc)
+        private static readonly Type _viewManagerType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.ViewManager, Microsoft.VisualStudio.Shell.ViewManager");
+        private static readonly Type _viewDockOperationsType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockOperations, Microsoft.VisualStudio.Shell.ViewManager");
+
+        private static void MoveToOppositeTab(IVsWindowFrame newDocumentFrame)
         {
             dynamic newDocumentFrameView = ((dynamic)newDocumentFrame).FrameView;
             dynamic newDocumentTabGroup = newDocumentFrameView.Parent;
@@ -114,10 +134,6 @@ namespace VSRAD.Package.Utils
 
             // Assign the document to the new tab group
             _viewDockOperationsType.GetMethod("Dock").Invoke(null, new[] { newTabGroup, newDocumentFrameView, 0 });
-
-            // The document automatically becomes selected in the new tab group; if it matches the original document's tab group, we need to restore SelectedElement
-            if (preserveActiveDoc && originalDocumentFrame != null && originalDocumentFrame.FrameView.Parent == newTabGroup)
-                newTabGroup.SelectedElement = originalDocumentFrame.FrameView;
         }
 
         private static void SetCaretAtLineMarker(IVsWindowFrame documentFrame, string lineMarker)
