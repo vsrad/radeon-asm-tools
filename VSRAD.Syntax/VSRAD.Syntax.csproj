@@ -83,6 +83,7 @@
     <Compile Include="Core\IDocumentFactory.cs" />
     <Compile Include="Core\IDocumentTokenizer.cs" />
     <Compile Include="Core\CodeDocument.cs" />
+    <Compile Include="Core\InvisibleTextDocumentFactory.cs" />
     <Compile Include="Core\LexerParserFactory.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
@@ -108,7 +109,6 @@
     <Compile Include="Core\Tokens\TokenType.cs" />
     <Compile Include="Core\Tokens\TrackingToken.cs" />
     <Compile Include="Core\Tokens\VariableToken.cs" />
-    <Compile Include="Core\InvisibleDocument.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
