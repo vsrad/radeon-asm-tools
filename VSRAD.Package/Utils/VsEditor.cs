@@ -75,7 +75,7 @@ namespace VSRAD.Package.Utils
                 else
                     ErrorHandler.ThrowOnFailure(newDocumentFrame.Show());
 
-                if (forceOppositeTab && newDocumentFrame != originalDocumentFrame)
+                if (forceOppositeTab && originalDocumentFrame != null && originalDocumentFrame != newDocumentFrame)
                     MoveToOppositeTab(newDocumentFrame, originalDocumentFrame, preserveActiveDoc);
             }
             catch (Exception e)
@@ -115,8 +115,31 @@ namespace VSRAD.Package.Utils
                 // Assign the document to the new tab group
                 _viewDockOperationsType.GetMethod("Dock").Invoke(null, new[] { newTabGroup, newDocumentFrameView, 0 });
 
-                if (preserveActiveDoc) // Docking operations may cause the original document to lose focus
-                    originalDocumentFrame.GetType().GetMethod("RestoreFocusNextLoad", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(originalDocumentFrame, null);
+                if (preserveActiveDoc)
+                {
+                    // There's a race condition in Visual Studio 2019 which makes the new document frame steal focus from the original document
+                    // _after_ we exit from OpenFileInEditor, caused by WindowFrame using the FrameworkElement.Loaded event to move focus into itself.
+                    // The hack below listens to this event and restores focus to the original document frame.
+                    // This happens only when performing docking operations. To reproduce the bug:
+                    // 1. Create an action that opens a file in the editor, enable forceOppositeTab and preserveActiveDoc.
+                    // 2. Open a different source file in the editor, which becomes the active (or "original") document. There should be a single tab group in the editor at this point.
+                    // 3. Run the action once. A tab group will be created on the right with the new document.
+                    // 4. Move the new document to the left tab group and switch to the original document's tab. There should be a single tab group in the editor at this point.
+                    // 5. Run the action again. A tab group will be created on the right and the new document will receive focus despite preserveActiveDoc.
+                    // Repeat steps 4-5 if you can't reproduce it at first try.
+                    var innerContentProperty = newDocumentFrame.GetType().GetProperty("InnerContent", BindingFlags.NonPublic | BindingFlags.Instance);
+                    var newFrameContent = (System.Windows.FrameworkElement)innerContentProperty.GetValue(newDocumentFrame);
+                    var originalFrameContent = (System.Windows.FrameworkElement)innerContentProperty.GetValue(originalDocumentFrame);
+                    void NewDocumentFrameLoaded(object sender, System.Windows.RoutedEventArgs e)
+                    {
+                        newFrameContent.Loaded -= NewDocumentFrameLoaded;
+                        var originalFrameRoot = System.Windows.PresentationSource.FromVisual(originalFrameContent).RootVisual;
+                        System.Windows.Input.FocusManager.SetFocusedElement(originalFrameRoot, null);
+                        System.Windows.Input.Keyboard.Focus((System.Windows.IInputElement)originalFrameRoot);
+                        Microsoft.VisualStudio.PlatformUI.FocusHelper.MoveFocusInto(originalFrameContent);
+                    }
+                    newFrameContent.Loaded += NewDocumentFrameLoaded;
+                }
             }
             // Otherwise, make the document active in its tab group without changing the global active document
             else
