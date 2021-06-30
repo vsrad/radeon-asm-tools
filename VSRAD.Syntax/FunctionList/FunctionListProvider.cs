@@ -1,8 +1,6 @@
-﻿using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
@@ -16,54 +14,46 @@ using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.FunctionList
 {
-    [Export(typeof(IVsTextViewCreationListener))]
-    [ContentType("text")]
-    [TextViewRole(PredefinedTextViewRoles.Interactive)]
-    internal sealed class FunctionListProvider : IVsTextViewCreationListener
+    [Export(typeof(IWpfTextViewCreationListener))]
+    [ContentType(Constants.RadeonAsmSyntaxContentType)]
+    [TextViewRole(PredefinedTextViewRoles.Document)]
+    internal sealed class FunctionListProvider : IWpfTextViewCreationListener
     {
-        private readonly IVsEditorAdaptersFactoryService _editorAdaptersFactoryService;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
-        private KeyValuePair<IDocument, IAnalysisResult>? lastResult;
+        private readonly List<IDocument> _managedDocuments;
+        private Tuple<IDocument, IAnalysisResult> _lastResult;
 
         private static FunctionListProvider _instance;
         private static FunctionListControl _functionListControl;
 
         [ImportingConstructor]
-        public FunctionListProvider(RadeonServiceProvider serviceProvider, IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
+        public FunctionListProvider(IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
         {
-            _editorAdaptersFactoryService = serviceProvider.EditorAdaptersFactoryService;
             _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
+            _managedDocuments = new List<IDocument>();
 
-            _documentFactory.DocumentCreated += DocumentCreated;
-            _documentFactory.DocumentDisposed += DocumentDisposed;
             _documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
             _instance = this;
         }
 
-        public void VsTextViewCreated(IVsTextView textViewAdapter)
-        {
-            var textView = _editorAdaptersFactoryService.GetWpfTextView(textViewAdapter);
-            if (textView == null) return;
+        public void TextViewCreated(IWpfTextView textView) =>
+            AssignViewToFunctionList(textView);
 
-            textView.Caret.PositionChanged += (sender, e) => CaretPositionChanged(e.NewPosition.BufferPosition);
-
-            if (TryGetDocument(textView.TextBuffer, out var document))
-                AssignDocumentToFunctionList(document);
-
-        }
-
-        private void CaretPositionChanged(SnapshotPoint point)
+        private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e)
         {
             if (_functionListControl == null) return;
 
-            if (TryGetDocument(point.Snapshot.TextBuffer, out var document))
+            var position = e.NewPosition.BufferPosition;
+            var snapshot = position.Snapshot;
+
+            if (TryGetDocument(snapshot.TextBuffer, out var document))
             {
                 ThreadHelper.JoinableTaskFactory.RunAsync(async () =>
                 {
-                    var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
-                    var functionBlock = analysisResult.TryGetFunctionBlock(point);
+                    var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(snapshot);
+                    var functionBlock = analysisResult.TryGetFunctionBlock(position);
 
                     if (functionBlock != null)
                     {
@@ -84,20 +74,52 @@ namespace VSRAD.Syntax.FunctionList
         }
 
         #region update function list
+        private void AssignViewToFunctionList(ITextView textView)
+        {
+            if (!TryGetDocument(textView.TextBuffer, out var document))
+                return;
+
+            AssignDocumentToFunctionList(document);
+
+            textView.Closed += ViewClosed;
+            textView.Caret.PositionChanged += CaretPositionChanged;
+        }
+
+        private void ViewClosed(object sender, EventArgs e)
+        {
+            var textView = (ITextView)sender;
+
+            textView.Closed -= ViewClosed;
+            textView.Caret.PositionChanged -= CaretPositionChanged;
+        }
+
         private void AssignDocumentToFunctionList(IDocument document)
         {
-            if (!document.CurrentSnapshot.TextBuffer.Properties.ContainsProperty(typeof(FunctionListWindow)))
-            {
-                document.DocumentAnalysis.AnalysisUpdated += (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
-                document.CurrentSnapshot.TextBuffer.Properties.AddProperty(typeof(FunctionListWindow), true);
-            }
+            // hack to avoid IDocumentAnalysis memory leaks
+            // TODO: FunctionList needs to be refactored (see https://github.com/vsrad/radeon-asm-tools/pull/220)
+            if (_managedDocuments.Contains(document))
+                return;
+
+            document.DocumentClosed += DocumentClosed;
+            document.DocumentAnalysis.AnalysisUpdated += UpdateFunctionList;
+            _managedDocuments.Add(document);
+
             ActiveDocumentChanged(document);
         }
 
-        private void DocumentCreated(IDocument document) => AssignDocumentToFunctionList(document);
+        private void DocumentClosed(IDocument document)
+        {
+            if (!_managedDocuments.Contains(document))
+                return;
 
-        private void DocumentDisposed(IDocument document) =>
-            document.DocumentAnalysis.AnalysisUpdated -= (result, rs, ct) => UpdateFunctionList(document, result, rs, ct);
+            document.DocumentClosed -= DocumentClosed;
+            document.DocumentAnalysis.AnalysisUpdated -= UpdateFunctionList;
+            _managedDocuments.Remove(document);
+
+            var lastDocument = _lastResult?.Item1;
+            if (lastDocument == document)
+                ClearFunctionList();
+        }
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
@@ -115,27 +137,31 @@ namespace VSRAD.Syntax.FunctionList
 
         private void ClearFunctionList()
         {
-            _functionListControl.ClearList();
-            lastResult = null;
+            _functionListControl?.ClearList();
+            _lastResult = null;
         }
 
         private void UpdateFunctionList(IDocument document)
         {
             var analysisResult = document.DocumentAnalysis.CurrentResult;
+            var lastAnalysisResult = _lastResult?.Item2;
 
-            if (analysisResult == null || analysisResult == lastResult?.Value) return;
-            UpdateFunctionList(document, analysisResult, RescanReason.ContentChanged, CancellationToken.None);
+            if (analysisResult == null || analysisResult == lastAnalysisResult) return;
+            UpdateFunctionList(document, analysisResult, CancellationToken.None);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            if (reason == RescanReason.ContentChanged)
-                UpdateFunctionList(document, analysisResult, cancellationToken);
+            if (reason != RescanReason.ContentChanged)
+                return;
+
+            var document = _documentFactory.GetOrCreateDocument(analysisResult.Snapshot.TextBuffer);
+            UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            lastResult = new KeyValuePair<IDocument, IAnalysisResult>(document, analysisResult);
+            _lastResult = new Tuple<IDocument, IAnalysisResult>(document, analysisResult);
 
             // if document analyzed before Function List view initialization
             if (_functionListControl == null) return;
@@ -156,12 +182,11 @@ namespace VSRAD.Syntax.FunctionList
 
         private void SetLastResultFunctionList(CancellationToken cancellationToken)
         {
-            if (lastResult.HasValue)
-            {
-                var document = lastResult.Value.Key;
-                var analysisResult = lastResult.Value.Value;
-                UpdateFunctionList(document, analysisResult, cancellationToken);
-            }
+            if (_lastResult == null)
+                return;
+
+            var (document, analysisResult) = _lastResult;
+            UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
         public static void FunctionListWindowCreated(FunctionListControl functionListControl)

@@ -10,7 +10,6 @@ namespace VSRAD.Syntax.Core.Tokens
             : base (tokenType, trackingToken, snapshot)
         {
             Definition = definitionToken;
-            Definition.AddReference(this);
         }
     }
 }

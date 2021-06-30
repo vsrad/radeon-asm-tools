@@ -10,7 +10,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     [Export(typeof(IViewTaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TagType(typeof(IErrorTag))]
-    public sealed class SyntaxErrorHighlighterTaggerProvider : IViewTaggerProvider
+    internal sealed class SyntaxErrorHighlighterTaggerProvider : IViewTaggerProvider
     {
         private readonly IDocumentFactory _documentFactory;
 
@@ -25,7 +25,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             var document = _documentFactory.GetOrCreateDocument(buffer);
             if (document == null) return null;
 
-            return new SyntaxErrorHighlighterTagger(document.DocumentAnalysis) as ITagger<T>;
+            return buffer.Properties.GetOrCreateSingletonProperty(() =>  
+                new SyntaxErrorHighlighterTagger(document)) as ITagger<T>;
         }
     }
 }

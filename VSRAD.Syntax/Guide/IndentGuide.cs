@@ -24,6 +24,7 @@ namespace VSRAD.Syntax.Guide
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
         private readonly IDocumentAnalysis _documentAnalysis;
+        private readonly OptionsProvider _optionsProvider;
         private double _thickness;
         private double _dashSize;
         private double _spaceSize;
@@ -38,6 +39,7 @@ namespace VSRAD.Syntax.Guide
         {
             _textView = textView ?? throw new NullReferenceException();
             _documentAnalysis = documentAnalysis;
+            _optionsProvider = optionsProvider;
 
             _currentAdornments = new List<Line>();
             _canvas = new Canvas
@@ -47,16 +49,31 @@ namespace VSRAD.Syntax.Guide
             };
 
             _layer = _textView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
-            _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
-            _textView.LayoutChanged += (sender, args) => UpdateIndentGuides();
+            _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, null);
 
+            _textView.LayoutChanged += LayoutChanged;
             _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
-            optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
-            textView.Options.OptionChanged += TabSizeOptionsChanged;
+            _optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
+            _textView.Options.OptionChanged += TabSizeOptionsChanged;
+            _textView.Closed += ViewClosedEventHandler;
 
             _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
             IndentGuideOptionsUpdated(optionsProvider);
         }
+
+        private void ViewClosedEventHandler(object sender, EventArgs e)
+        {
+            _optionsProvider.OptionsUpdated -= IndentGuideOptionsUpdated;
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
+            _textView.Options.OptionChanged -= TabSizeOptionsChanged;
+            _textView.LayoutChanged -= LayoutChanged;
+            _textView.Closed -= ViewClosedEventHandler;
+
+            _layer.RemoveAdornment(_canvas);
+        }
+
+        private void LayoutChanged(object s, TextViewLayoutChangedEventArgs e) =>
+            UpdateIndentGuides();
 
         private void TabSizeOptionsChanged(object sender, EditorOptionChangedEventArgs e)
         {
@@ -95,9 +112,6 @@ namespace VSRAD.Syntax.Guide
                     CleanupIndentGuidesAsync().ConfigureAwait(false);
             }
         }
-
-        private void CanvasRemoved(object tag, UIElement element) =>
-            _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
 
         private void UpdateIndentGuides()
         {

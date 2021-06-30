@@ -12,17 +12,20 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Collapse
 {
-    internal sealed class OutliningTagger : ITagger<IOutliningRegionTag>
+    internal sealed class OutliningTagger : DocumentObserver, ITagger<IOutliningRegionTag>
     {
         private ITextSnapshot currentSnapshot;
         private IReadOnlyList<Span> currentSpans;
+        private readonly IDocumentAnalysis _documentAnalysis;
 
-        public OutliningTagger(IDocumentAnalysis documentAnalysis)
+        public OutliningTagger(IDocument document) : base(document)
         {
             currentSpans = new List<Span>();
-            documentAnalysis.AnalysisUpdated += AnalysisUpdated;
-            if (documentAnalysis.CurrentResult != null) 
-                AnalysisUpdated(documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+            _documentAnalysis = document.DocumentAnalysis;
+
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
+            if (_documentAnalysis.CurrentResult != null) 
+                AnalysisUpdated(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -137,6 +140,11 @@ namespace VSRAD.Syntax.Collapse
             public bool IsDefaultCollapsed => false;
 
             public bool IsImplementation => true;
+        }
+
+        protected override void OnClosingDocument(IDocument document)
+        {
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
         }
     }
 }

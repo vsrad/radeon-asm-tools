@@ -4,22 +4,28 @@ using Microsoft.VisualStudio.Text.Classification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Language.StandardClassification;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class AnalysisClassifier : IClassifier
+    internal class AnalysisClassifier : DocumentObserver, IClassifier
     {
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private IAnalysisResult _analysisResult;
+        private readonly IDocumentAnalysis _documentAnalysis;
 
-        public AnalysisClassifier(IDocumentAnalysis documentAnalysis, IClassificationTypeRegistryService typeRegistryService)
+        public AnalysisClassifier(IDocument document, IClassificationTypeRegistryService typeRegistryService)
+            : base(document)
         {
-            _analysisResult = documentAnalysis.CurrentResult;
-            documentAnalysis.AnalysisUpdated += (result, rs, cancellation) => AnalysisUpdated(result, rs);
+            _documentAnalysis = document.DocumentAnalysis;
+            _analysisResult = _documentAnalysis.CurrentResult;
+
+            _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
 
             InitializeClassifierDictonary(typeRegistryService);
         }
@@ -68,28 +74,34 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason)
+        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
         {
             _analysisResult = analysisResult;
 
             if (reason != RescanReason.ContentChanged)
                 ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(analysisResult.Snapshot, 0, analysisResult.Snapshot.Length)));
         }
+
+        protected override void OnClosingDocument(IDocument document)
+        {
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
+        }
     }
 
-    internal class TokenizerClassifier : ITagger<ClassificationTag>
+    internal class TokenizerClassifier : DocumentObserver, ITagger<ClassificationTag>
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentTokenizer _tokenizer;
         private ITokenizerResult _currentResult;
 
-        public TokenizerClassifier(IDocumentTokenizer tokenizer, IStandardClassificationService standardClassificationService)
+        public TokenizerClassifier(IDocument document, IStandardClassificationService standardClassificationService)
+            : base(document)
         {
-            _tokenizer = tokenizer;
-            _tokenizer.TokenizerUpdated += (result, rs, ct) => TokenizerUpdated(result);
+            _tokenizer = document.DocumentTokenizer;
+            _tokenizer.TokenizerUpdated += TokenizerUpdated;
 
             InitializeClassifierDictionary(standardClassificationService);
-            TokenizerUpdated(_tokenizer.CurrentResult);
+            TokenizerUpdated(_tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -139,7 +151,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokenizerUpdated(ITokenizerResult result)
+        private void TokenizerUpdated(ITokenizerResult result, RescanReason rs, CancellationToken ct)
         {
             var tokens = result.UpdatedTokens;
             if (!tokens.Any())
@@ -149,6 +161,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var start = tokens.First().GetStart(result.Snapshot);
             var end = tokens.Last().GetEnd(result.Snapshot);
             TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(result.Snapshot, new Span(start, end - start))));
+        }
+
+        protected override void OnClosingDocument(IDocument document)
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
         }
     }
 }

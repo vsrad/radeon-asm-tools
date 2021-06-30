@@ -38,6 +38,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
             _view.Caret.PositionChanged += CaretPositionChanged;
             _view.LayoutChanged += ViewLayoutChanged;
+            _view.Closed += ViewClosedEventHandler;
+        }
+
+        private void ViewClosedEventHandler(object sender, EventArgs e)
+        {
+            _view.Caret.PositionChanged -= CaretPositionChanged;
+            _view.LayoutChanged -= ViewLayoutChanged;
+            _view.Closed -= ViewClosedEventHandler;
+
+            indentCts?.Dispose();
         }
 
         private void ViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)

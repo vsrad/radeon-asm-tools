@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
@@ -86,7 +86,7 @@
     <Compile Include="Core\LexerParserFactory.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
-    <Compile Include="Core\Lexer\AsmLexer.cs" />
+    <Compile Include="Core\Lexer\Asm1Lexer.cs" />
     <Compile Include="Core\Lexer\Lexer.cs" />
     <Compile Include="Core\Parser\AbstractCodeParser.cs" />
     <Compile Include="Core\Parser\Asm2Parser.cs" />
@@ -120,6 +120,7 @@
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
+    <Compile Include="Helpers\DocumentObserver.cs" />
     <Compile Include="Helpers\Error.cs" />
     <Compile Include="Helpers\NotifyPropertyChanged.cs" />
     <Compile Include="Helpers\AnalysisResultExtension.cs" />

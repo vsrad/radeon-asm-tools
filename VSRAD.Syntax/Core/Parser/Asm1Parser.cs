@@ -1,8 +1,10 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using System;
+using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
@@ -12,12 +14,21 @@ using VSRAD.SyntaxParser;
 
 namespace VSRAD.Syntax.Core.Parser
 {
-    internal class Asm1Parser : AbstractCodeParser
+    internal sealed class Asm1Parser : AbstractCodeParser
     {
-        protected override AsmType AsmType => AsmType.RadAsm;
+        public static IParser Instance => LazyInstance.Value;
 
-        public Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager) { }
+        private static readonly Lazy<IParser> LazyInstance = new Lazy<IParser>(() =>
+        {
+            var serviceProvider = ServiceProvider.GlobalProvider;
+            var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
+            var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
+
+            return new Asm1Parser(documentFactory, instructionListManager);
+        });
+
+        private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
+            : base(documentFactory, instructionListManager, AsmType.RadAsm) { }
 
         public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
@@ -28,8 +39,9 @@ namespace VSRAD.Syntax.Core.Parser
                 .WithCancellation(cancellation)
                 .ToArray();
 
-            _referenceCandidates.Clear();
-            _definitionContainer.Clear();
+            var definitionContainer = new DefinitionContainer();
+            var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
+
             var blocks = new List<IBlock>();
             var errors = new List<IErrorToken>();
             IBlock currentBlock = new Block(version);
@@ -70,7 +82,7 @@ namespace VSRAD.Syntax.Core.Parser
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.IDENTIFIER)
                         {
                             var funcDefinition = new DefinitionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
-                            _definitionContainer.Add(currentBlock, funcDefinition);
+                            definitionContainer.Add(currentBlock, funcDefinition);
                             currentBlock = blocks.AppendBlock(new FunctionBlock(currentBlock, BlockType.Function, token, funcDefinition));
                             parserState = ParserState.SearchArguments;
                             i += 1;
@@ -79,7 +91,7 @@ namespace VSRAD.Syntax.Core.Parser
                     else if (token.Type == RadAsmLexer.ENDM && currentBlock.Type == BlockType.Function)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
-                        _definitionContainer.ClearScope(currentBlock);
+                        definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
 
                         parserState = ParserState.SearchInScope;
@@ -98,7 +110,7 @@ namespace VSRAD.Syntax.Core.Parser
                             && tokens[i + 3].Type == RadAsmLexer.EOL)
                         {
                             var labelDefinition = new DefinitionToken(RadAsmTokenType.Label, tokens[i + 1], version);
-                            _definitionContainer.Add(currentBlock, labelDefinition);
+                            definitionContainer.Add(currentBlock, labelDefinition);
                             currentBlock.AddToken(labelDefinition);
                             i += 2;
                         }
@@ -125,7 +137,7 @@ namespace VSRAD.Syntax.Core.Parser
                     else if ((token.Type == RadAsmLexer.ELSEIF || token.Type == RadAsmLexer.ELSE) && currentBlock.Type == BlockType.Condition)
                     {
                         currentBlock.SetEnd(tokens[i - 1].Start.GetPosition(version), token);
-                        _definitionContainer.ClearScope(currentBlock);
+                        definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
 
                         currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
@@ -134,7 +146,7 @@ namespace VSRAD.Syntax.Core.Parser
                     else if (token.Type == RadAsmLexer.ENDIF && currentBlock.Type == BlockType.Condition)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
-                        _definitionContainer.ClearScope(currentBlock);
+                        definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
                     }
                     else if (token.Type == RadAsmLexer.REPT
@@ -147,7 +159,7 @@ namespace VSRAD.Syntax.Core.Parser
                     else if (token.Type == RadAsmLexer.ENDR && currentBlock.Type == BlockType.Repeat)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
-                        _definitionContainer.ClearScope(currentBlock);
+                        definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
                     }
                     else if (token.Type == RadAsmLexer.SET)
@@ -157,7 +169,7 @@ namespace VSRAD.Syntax.Core.Parser
                             var variableDefinition = (tokens.Length - i > 3 && tokens[i + 2].Type == RadAsmLexer.COMMA && tokens[i + 3].Type == RadAsmLexer.CONSTANT)
                                 ? new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version, tokens[i + 3])
                                 : new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
-                            _definitionContainer.Add(currentBlock, variableDefinition);
+                            definitionContainer.Add(currentBlock, variableDefinition);
                             currentBlock.AddToken(variableDefinition);
                         }
                     }
@@ -165,17 +177,17 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         var tokenText = token.GetText(version);
                         if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
-                            !TryAddReference(tokenText, token, currentBlock, version, cancellation))
+                            !TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.EQ)
                             {
                                 var variableDefinition = new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
-                                _definitionContainer.Add(currentBlock, variableDefinition);
+                                definitionContainer.Add(currentBlock, variableDefinition);
                                 currentBlock.AddToken(variableDefinition);
                             }
                             else
                             {
-                                _referenceCandidates.AddLast((tokenText, token, currentBlock));
+                                referenceCandidates.AddLast((tokenText, token, currentBlock));
                             }
                         }
                     }
@@ -184,7 +196,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
                         {
-                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock);
+                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock, definitionContainer);
                             i += 1;
                         }
                     }
@@ -201,15 +213,15 @@ namespace VSRAD.Syntax.Core.Parser
                     if (token.Type == RadAsmLexer.IDENTIFIER)
                     {
                         var functionDefinition = new DefinitionToken(RadAsmTokenType.FunctionParameter, token, version);
-                        _definitionContainer.Add(currentBlock, functionDefinition, $"\\{functionDefinition.GetText()}");
+                        definitionContainer.Add(currentBlock, functionDefinition, $"\\{functionDefinition.GetText()}");
                         currentBlock.AddToken(functionDefinition);
                     }
                 }
             }
 
-            foreach (var (text, trackingToken, block) in _referenceCandidates)
+            foreach (var (text, trackingToken, block) in referenceCandidates)
             {
-                if (!TryAddReference(text, trackingToken, block, version, cancellation) && OtherInstructions.Contains(text))
+                if (!TryAddReference(text, trackingToken, block, version, definitionContainer, cancellation) && OtherInstructions.Contains(text))
                     errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
             }
 

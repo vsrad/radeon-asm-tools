@@ -12,6 +12,8 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal class AsmDocParser : IParser
     {
+        public static IParser Instance = new AsmDocParser();
+
         public Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();

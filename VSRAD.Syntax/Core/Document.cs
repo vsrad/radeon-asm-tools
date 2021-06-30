@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System;
 using System.Runtime.InteropServices;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
@@ -11,7 +10,7 @@ using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Core
 {
-    internal class Document : IDocument, IDisposable
+    internal class Document : IDocument
     {
         public IDocumentAnalysis DocumentAnalysis { get; }
         public IDocumentTokenizer DocumentTokenizer { get; }
@@ -20,6 +19,7 @@ namespace VSRAD.Syntax.Core
         public bool IsDisposed { get; private set; }
 
         public event DocumentRenamedEventHandler DocumentRenamed;
+        public event DocumentClosedEventHandler DocumentClosed;
 
         protected readonly ITextDocument _textDocument;
         protected readonly ILexer _lexer;
@@ -73,20 +73,18 @@ namespace VSRAD.Syntax.Core
             if (hr != VSConstants.S_OK) throw Marshal.GetExceptionForHR(hr);
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
-            if (!IsDisposed)
-            {
-                _textDocument.FileActionOccurred -= FileActionOccurred;
-                _textDocument.Dispose();
-                IsDisposed = true;
-                GC.SuppressFinalize(this);
-            }
-        }
+            if (IsDisposed) return;
 
-        ~Document()
-        {
-            Dispose();
+            _textDocument.FileActionOccurred -= FileActionOccurred;
+
+            _textDocument.Dispose();
+            DocumentAnalysis.Dispose();
+            DocumentTokenizer.Dispose();
+
+            IsDisposed = true;
+            DocumentClosed?.Invoke(this);
         }
     }
 }

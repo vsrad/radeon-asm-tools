@@ -1,6 +1,5 @@
 ﻿using Antlr4.Runtime;
 using Microsoft.VisualStudio.Text;
-using System;
 using System.Collections.Generic;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.SyntaxParser;
@@ -9,6 +8,8 @@ namespace VSRAD.Syntax.Core.Lexer
 {
     class AsmDocLexer : ILexer
     {
+        public static ILexer Instance = new AsmDocLexer();
+
         public IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset)
         {
             var lexer = new RadAsmDocLexer(new UnbufferedCharStream(new TextSegmentsCharStream(textSegments)));

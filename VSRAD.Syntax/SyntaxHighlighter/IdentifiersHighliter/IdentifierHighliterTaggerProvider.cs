@@ -3,9 +3,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Core;
-using EnvDTE;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
 {
@@ -28,7 +26,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.IdentifiersHighliter
                 return null;
 
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            return new HighlightWordTagger(textView, buffer, document.DocumentAnalysis) as ITagger<T>;
+            if (document == null)
+                return null;
+
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new HighlightWordTagger(textView, buffer, document.DocumentAnalysis)) as ITagger<T>;
         }
     }
 }
