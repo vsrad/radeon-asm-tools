@@ -1,4 +1,4 @@
-using EnvDTE;
+﻿using EnvDTE;
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.Core
             _instructionManager = instructionManager;
             _invisibleDocumentFactory = invisibleDocumentFactory;
 
-            _documents = new Dictionary<string, IDocument>();
+            _documents = new Dictionary<string, IDocument>(StringComparer.OrdinalIgnoreCase);
             _contentTypeManager = contentTypeManager;
             _serviceProvider = serviceProvider;
             _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += TextDocumentDisposed;
