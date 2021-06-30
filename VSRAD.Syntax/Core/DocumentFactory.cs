@@ -1,8 +1,9 @@
-﻿using EnvDTE;
+using EnvDTE;
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
@@ -18,6 +19,7 @@ namespace VSRAD.Syntax.Core
         private readonly RadeonServiceProvider _serviceProvider;
         private readonly Dictionary<string, IDocument> _documents;
         private readonly Lazy<IInstructionListManager> _instructionManager;
+        private readonly Lazy<IInvisibleTextDocumentFactory> _invisibleDocumentFactory;
 
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
@@ -27,9 +29,11 @@ namespace VSRAD.Syntax.Core
         [ImportingConstructor]
         public DocumentFactory(RadeonServiceProvider serviceProvider,
             ContentTypeManager contentTypeManager,
-            Lazy<IInstructionListManager> instructionManager)
+            Lazy<IInstructionListManager> instructionManager,
+            Lazy<IInvisibleTextDocumentFactory> invisibleDocumentFactory)
         {
             _instructionManager = instructionManager;
+            _invisibleDocumentFactory = invisibleDocumentFactory;
 
             _documents = new Dictionary<string, IDocument>();
             _contentTypeManager = contentTypeManager;
@@ -42,44 +46,43 @@ namespace VSRAD.Syntax.Core
 
         public IDocument GetOrCreateDocument(string path)
         {
-            if (_documents.TryGetValue(path, out var document))
+            var fullPath = Path.GetFullPath(path);
+
+            if (_documents.TryGetValue(fullPath, out var document))
                 return document;
 
-            if (!System.IO.File.Exists(path))
-                return null;
+            return File.Exists(fullPath)
+                ? CreateDocument(fullPath)
+                : null;
+        }
 
+        private IDocument CreateDocument(string path)
+        {
             var contentType = _contentTypeManager.DetermineContentType(path);
             if (contentType == null)
                 return null;
 
-            var textDocument = _serviceProvider
-                .TextDocumentFactoryService
-                .CreateAndLoadTextDocument(path, contentType);
-
-            return CreateDocument(textDocument, (lexer, parser) => new InvisibleDocument(this, textDocument, lexer, parser));
-        }
-
-        public IDocument GetOrCreateDocument(ITextBuffer buffer)
-        {
-            if (buffer.Properties.TryGetProperty(typeof(IDocument), out IDocument document))
-                return document;
-
-            if (!buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument))
-                return null;
+            var textDocument = CustomThreadHelper.RunOnMainThread(() =>
+                _invisibleDocumentFactory.Value.CreateAndLoadTextDocument(path, contentType));
 
             var factory = GetDocumentFactory(textDocument);
             if (factory == null) return null;
 
-            if (_documents.TryGetValue(textDocument.FilePath, out document)
-                && document is InvisibleDocument invisibleDocument)
-            {
-                document = invisibleDocument.ToVisibleDocument(factory);
-                ObserveDocument(document, textDocument);
-            }
-            else
-            {
-                document = CreateDocument(textDocument, factory);
-            }
+            return CreateDocument(textDocument, factory);
+        }
+
+        public IDocument GetOrCreateDocument(ITextBuffer buffer)
+        {
+            if (!buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument textDocument))
+                return null;
+
+            if (_documents.TryGetValue(textDocument.FilePath, out var document))
+                return document;
+
+            var factory = GetDocumentFactory(textDocument);
+            if (factory == null) return null;
+
+            document = CreateDocument(textDocument, factory);
 
             // CreateDocument can return null if document does not belong to RadAsmSyntax
             if (document != null) DocumentCreated?.Invoke(document);
@@ -106,16 +109,14 @@ namespace VSRAD.Syntax.Core
             if (!lexerParser.HasValue) return null;
 
             var document = creator(lexerParser.Value.Lexer, lexerParser.Value.Parser);
-            ObserveDocument(document, textDocument);
+            ObserveDocument(document);
 
             return document;
         }
 
-        private void ObserveDocument(IDocument document, ITextDocument textDocument)
+        private void ObserveDocument(IDocument document)
         {
             document.DocumentRenamed += DocumentRenamed;
-            textDocument.TextBuffer.Properties.AddProperty(typeof(IDocument), document);
-
             _documents.Add(document.Path, document);
         }
 
