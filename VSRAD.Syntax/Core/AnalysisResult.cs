@@ -9,21 +9,17 @@ namespace VSRAD.Syntax.Core
 {
     internal class AnalysisResult : IAnalysisResult
     {
-        public AnalysisResult(IParserResult parserResult,
-            IReadOnlyList<IDocument> includes, 
-            ITextSnapshot snapshot)
+        public AnalysisResult(IParserResult parserResult, ITextSnapshot snapshot)
         {
             Root = parserResult.RootBlock;
             Scopes = parserResult.Blocks;
             Errors = parserResult.Errors;
-            Includes = includes;
             Snapshot = snapshot;
         }
 
         public IBlock Root { get; }
         public IReadOnlyList<IBlock> Scopes { get; }
         public IReadOnlyList<IErrorToken> Errors { get; }
-        public IReadOnlyList<IDocument> Includes { get; }
         public ITextSnapshot Snapshot { get; }
 
         public AnalysisToken GetToken(int point)

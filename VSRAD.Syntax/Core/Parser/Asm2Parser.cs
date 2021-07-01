@@ -30,7 +30,22 @@ namespace VSRAD.Syntax.Core.Parser
         private Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
             : base(documentFactory, instructionListManager, AsmType.RadAsm2) { }
 
-        public override async Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
+            ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        {
+            try
+            {
+                return ParseAsync(document, version, trackingTokens, cancellation);
+            }
+            catch (AggregateException)
+            {
+                // An AggregateException is thrown if the text of the document has changed (tokenizer changed too)
+                // while iterating over the ITokenizerCollection. This is equivalent to canceling.
+                throw new OperationCanceledException();
+            }
+        }
+
+        private async Task<IParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsm2Lexer.WHITESPACE && t.Type != RadAsm2Lexer.LINE_COMMENT)
