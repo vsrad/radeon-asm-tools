@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text;
 using System;
 using System.Linq;
 using System.Threading;
@@ -68,13 +68,9 @@ namespace VSRAD.Syntax.Core
             try
             {
                 var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
+            var analysisResult = new AnalysisResult(parserResult, tokenizerResult.Snapshot);
 
-                var includes = parserResult.RootBlock.Tokens
-                    .Where(t => t.Type == RadAsmTokenType.Include)
-                    .Cast<IncludeToken>()
-                    .Select(i => i.Document)
-                    .ToList();
-
+            
                 var analysisResult = new AnalysisResult(parserResult, includes, tokenizerResult.Snapshot);
 
                 CurrentResult = analysisResult;
