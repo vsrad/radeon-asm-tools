@@ -1,4 +1,4 @@
-﻿grammar RadAsmDoc;
+grammar RadAsmDoc;
 
 rule    : LET  ;
 
@@ -11,6 +11,9 @@ COLON      : ':' ;
 
 IDENTIFIER
     : [a-zA-Z] [a-zA-Z0-9_]*
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
     ;
 
 WHITESPACE
@@ -19,10 +22,6 @@ WHITESPACE
 
 EOL
     : '\r'? '\n'
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
     ;
 
 UNKNOWN

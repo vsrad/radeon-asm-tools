@@ -1,4 +1,4 @@
-﻿grammar RadAsm;
+grammar RadAsm;
 
 function
     : MACRO ENDM
@@ -177,20 +177,20 @@ IDENTIFIER
     : [.\\]? [a-zA-Z_] [a-zA-Z0-9_]*
     ;
 
+LINE_COMMENT
+    : ('//' | ';') ~[\r\n]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
+    ;
+
 WHITESPACE
     : [ \t]+
     ;
 
 EOL
     : '\r'? '\n'
-    ;
-
-LINE_COMMENT
-    : '//' ~[\r\n]*
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
     ;
 
 UNKNOWN
