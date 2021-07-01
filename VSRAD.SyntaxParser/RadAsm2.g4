@@ -104,6 +104,7 @@ RCURVEBRACKET    : '}' ;
 
 CONSTANT
     : INT_CONSTANT
+    | FLOAT_CONSTANT
     ;
 
 fragment
@@ -112,6 +113,11 @@ INT_CONSTANT
     | [+-]? '0' [oO] [0-7]+
     | [+-]? '0' [xX] [0-9a-fA-F]+
     | [+-]? [0-9] [0-9]*
+    ;
+
+fragment
+FLOAT_CONSTANT
+    : [+-]? ([0-9]*[.]) [0-9]+
     ;
 
 STRING_LITERAL
