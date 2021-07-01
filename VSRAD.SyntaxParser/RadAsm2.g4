@@ -1,23 +1,42 @@
-grammar RadAsm2;
+﻿grammar RadAsm2;
 
 function
     : FUNCTION END
     ;
 
 /* Keywords */
-VAR     : 'var' ;
-VMCNT   : 'vmcnt' ;
-EXPCNT  : 'expcnt' ;
-LGKMCNT : 'lgkmcnt' ;
-HWREG   : 'hwreg' ;
-SENDMSG : 'sendmsg' ;
-ASIC    : 'asic' ;
-TYPE    : 'type' ;
-ASSERT  : 'assert' ;
-SHADER  : 'shader' ;
-RETURN  : 'return' ;
+VMCNT       : 'vmcnt' ;
+EXPCNT      : 'expcnt' ;
+LGKMCNT     : 'lgkmcnt' ;
+HWREG       : 'hwreg' ;
+SENDMSG     : 'sendmsg' ;
+ASIC        : 'asic' ;
+TYPE        : 'type' ;
+ASSERT      : 'assert' ;
+SHADER      : 'shader' ;
+LEN         : 'len' ;
+ABS         : 'abs' ;
+ONES        : 'ones' ;
+ZEROS       : 'zeros' ;
+ZEROES      : 'zeroes' ;
+USGPR_COUNT : 'user_sgpr_count' ;
+SGPR_COUNT  : 'sgpr_count' ;
+VGPR_COUNT  : 'vgpr_count' ;
+BLOCK_SIZE  : 'block_size' ;
+GROUP_SIZE  : 'group_size' ;
+TG_SIZE_EN  : 'tg_size_en' ;
+TGID_X_EN   : 'tgid_x_en' ;
+TGID_Y_EN   : 'tgid_y_en' ;
+TGID_Z_EN   : 'tgid_z_en' ;
+ALLOC_LDS   : 'alloc_lds' ;
+WAVE_SIZE   : 'wave_size' ;
+ASSIGNED    : 'assigned' ;
+LABEL       : 'label' ;
+PRINT       : 'print' ;
 
-FUNCTION: 'function' ;
+VAR         : 'var' ;
+RETURN      : 'return' ;
+FUNCTION    : 'function' ;
 
 IF      : 'if' ;
 ELSIF   : 'elsif' ;
@@ -53,46 +72,39 @@ PP_ELIF     : '#elif'    ;
 PP_ENDIF    : '#endif'   ;
 
 /* Expression-operator symbols */
-EQ      : '='   ;
-LT      : '<'   ;
+PLUSEQ  : '+='  ;
 LE      : '<='  ;
 EQEQ    : '=='  ;
 NE      : '!='  ;
 GE      : '>='  ;
-GT      : '>'   ;
-ANDAND  : '&&'  ;
-OROR    : '||'  ;
-NOT     : '!'   ;
-TILDE   : '~'   ;
-PLUS    : '+'   ;
-MINUS   : '-'   ;
-STAR    : '*'   ;
-SLASH   : '/'   ;
-PERCENT : '%'   ;
-CARET   : '^'   ;
-AND     : '&'   ;
-OR      : '|'   ;
 SHL     : '<<'  ;
 SHR     : '>>'  ;
-
-BINOP
-    : PLUS
-    | SLASH
-    | MINUS
-    | STAR
-    | PERCENT
-    | CARET
-    | AND
-    | OR
-    | SHL
-    | SHR
-    ;
+LOGOR   : '||'  ;
+LOGAND  : '&&'  ;
+LOGXOR  : '^^'  ;
+LOGNOT  : '!'   ;
+REDMIN  : '<:'  ;
+REDMAX  : '>:'  ;
+EQ      : '='   ;
+LT      : '<'   ;
+GT      : '>'   ;
+PLUS    : '+'   ;
+MINUS   : '-'   ;
+PROD    : '*'   ;
+DIV     : '/'   ;
+MOD     : '%'   ;
+BITOR   : '|'   ;
+BITAND  : '&'   ;
+BITXOR  : '^'   ;
+BITNOT  : '~'   ;
 
 /* "Structural symbols" */
 
 COMMA      : ',' ;
 SEMI       : ';' ;
 COLON      : ':' ;
+QUEST      : '?' ;
+SHARP      : '#' ;
 LPAREN     : '(' ;
 RPAREN     : ')' ;
 LSQUAREBRACKET   : '[' ;
@@ -145,5 +157,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]{}=<>!&|~+\\-*%^/]+
+    : ~[ \t\r\n,:;#?()[\]{}=<>!&|~+\\-*%^/]+
     ;

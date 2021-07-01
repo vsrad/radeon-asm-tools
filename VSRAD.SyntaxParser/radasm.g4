@@ -1,4 +1,4 @@
-grammar RadAsm;
+﻿grammar RadAsm;
 
 function
     : MACRO ENDM
@@ -83,65 +83,28 @@ AMD_HSA_KERNEL      : '.amdgpu_hsa_kernel'       ;
 AMD_KERNEL_CODE     : '.amd_kernel_code_t'       ;
 AMD_END_KERNEL_CODE : '.end_amd_kernel_code_t'   ;
 
-STARTIF
-    : IF
-    | IFDEF
-    | IFNDEF
-    | IFNOTDEF
-    | IFB
-    | IFC
-    | IFEQ
-    | IFEQS
-    | IFGE
-    | IFGT
-    | IFLE
-    | IFLT
-    | IFNB
-    | IFNC
-    | IFNE
-    | IFNES
-    ;
-
-MIDDLEIF
-    : ELSEIF
-    | ELSE
-    ;
-
 /* Expression-operator symbols */
-EQ      : '='   ;
-LT      : '<'   ;
 LE      : '<='  ;
 EQEQ    : '=='  ;
 NE      : '!='  ;
 GE      : '>='  ;
+LOGAND  : '&&'  ;
+LOGOR   : '||'  ;
+SHL     : '<<'  ;
+SHR     : '>>'  ;
+EQ      : '='   ;
+LT      : '<'   ;
 GT      : '>'   ;
-ANDAND  : '&&'  ;
-OROR    : '||'  ;
 NOT     : '!'   ;
 TILDE   : '~'   ;
 PLUS    : '+'   ;
 MINUS   : '-'   ;
-STAR    : '*'   ;
-SLASH   : '/'   ;
-PERCENT : '%'   ;
-CARET   : '^'   ;
-AND     : '&'   ;
-OR      : '|'   ;
-SHL     : '<<'  ;
-SHR     : '>>'  ;
-
-BINOP
-    : PLUS
-    | SLASH
-    | MINUS
-    | STAR
-    | PERCENT
-    | CARET
-    | AND
-    | OR
-    | SHL
-    | SHR
-    ;
+PROD    : '*'   ;
+DIV     : '/'   ;
+MOD     : '%'   ;
+BITXOR  : '^'   ;
+BITAND  : '&'   ;
+BITOR   : '|'   ;
 
 /* "Structural symbols" */
 
