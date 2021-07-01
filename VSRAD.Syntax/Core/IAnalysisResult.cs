@@ -10,7 +10,6 @@ namespace VSRAD.Syntax.Core
         IBlock Root { get; }
         IReadOnlyList<IBlock> Scopes { get; }
         IReadOnlyList<IErrorToken> Errors { get; }
-        IReadOnlyList<IDocument> Includes { get; }
         ITextSnapshot Snapshot { get; }
         AnalysisToken GetToken(int point);
         IBlock GetBlock(int point);
