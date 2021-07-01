@@ -1,9 +1,7 @@
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Core.Tokens;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Core.Parser;
 
@@ -16,6 +14,8 @@ namespace VSRAD.Syntax.Core
         private readonly IParser _parser;
         private AnalysisRequest _currentRequest;
         private AnalysisRequest _previousRequest;
+
+        private readonly object _updateResultLock = new object();
 
         public IAnalysisResult CurrentResult { get; private set; }
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
@@ -59,27 +59,28 @@ namespace VSRAD.Syntax.Core
             };
         }
 
-        private Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, 
+        private Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason,
             CancellationToken cancellationToken) =>
             Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken);
 
         private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            try
-            {
-                var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
+            var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
             var analysisResult = new AnalysisResult(parserResult, tokenizerResult.Snapshot);
 
+            cancellationToken.ThrowIfCancellationRequested();
+            SynchronousUpdate(analysisResult, reason, cancellationToken);
             
-                var analysisResult = new AnalysisResult(parserResult, includes, tokenizerResult.Snapshot);
+            return analysisResult;
+        }
 
+        private void SynchronousUpdate(IAnalysisResult analysisResult, RescanReason reason, 
+            CancellationToken cancellationToken)
+        {
+            lock (_updateResultLock)
+            {
                 CurrentResult = analysisResult;
                 AnalysisUpdated?.Invoke(analysisResult, reason, cancellationToken);
-                return analysisResult;
-            }
-            catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)
-            {
-                throw new OperationCanceledException();
             }
         }
 
