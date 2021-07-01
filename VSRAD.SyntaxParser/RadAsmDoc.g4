@@ -1,4 +1,4 @@
-grammar RadAsmDoc;
+﻿grammar RadAsmDoc;
 
 rule    : LET  ;
 
@@ -6,11 +6,13 @@ LET     : 'let';
 
 /* "Structural symbols" */
 
-COMMA      : ',' ;
-COLON      : ':' ;
+COMMA           : ',' ;
+LCURVEBRACKET   : '{' ;
+RCURVEBRACKET   : '}' ;
 
 IDENTIFIER
-    : [a-zA-Z] [a-zA-Z0-9_]*
+    : [a-zA-Z] [a-zA-Z0-9_:[\]]*
+    ;
 
 BLOCK_COMMENT
     : '/*' .*? ('*/' | EOF)
@@ -25,5 +27,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:]+
+    : ~[ \t\r\n,{}]+
     ;
