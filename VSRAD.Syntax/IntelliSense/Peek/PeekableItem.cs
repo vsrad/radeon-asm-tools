@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using System.Collections.Generic;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
@@ -20,7 +21,14 @@ namespace VSRAD.Syntax.IntelliSense.Peek
         public IEnumerable<IPeekRelationship> Relationships =>
             new List<IPeekRelationship>() { PredefinedPeekRelationships.Definitions };
 
-        public IPeekResultSource GetOrCreateResultSource(string relationshipName) =>
-            new PeekResultSource(_peekResultFactory, _navigationToken);
+        public IPeekResultSource GetOrCreateResultSource(string relationshipName)
+        {
+            // TODO: is it possible to avoid this hack?
+            // Visual Studio requires the view to be open in a window
+            // before presenting the Peek Definition result.
+            // Otherwise, user will see the error "the result cannot be viewed inline".
+            Utils.OpenHiddenView(_navigationToken.Path);
+            return new PeekResultSource(_peekResultFactory, _navigationToken);
+        }
     }
 }
