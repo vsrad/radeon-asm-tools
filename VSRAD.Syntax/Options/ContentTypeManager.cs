@@ -1,5 +1,4 @@
 ﻿using EnvDTE;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
@@ -21,7 +20,6 @@ namespace VSRAD.Syntax.Options
         public readonly IContentType Asm2ContentType;
         public readonly IContentType AsmDocContentType;
 
-        private readonly SVsServiceProvider _serviceProvider;
         private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
         private readonly DTE _dte;
@@ -36,7 +34,6 @@ namespace VSRAD.Syntax.Options
             IFileExtensionRegistryService fileExtensionRegistryService,
             OptionsProvider optionsEventProvider)
         {
-            _serviceProvider = serviceProvider;
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
             _fileExtensionRegistryService = fileExtensionRegistryService;
             _dte = (DTE)serviceProvider.GetService(typeof(DTE));
@@ -51,8 +48,8 @@ namespace VSRAD.Syntax.Options
             _asmDocExtensions = new List<string>() { Constants.FileExtensionAsm1Doc, Constants.FileExtensionAsm2Doc };
         }
 
-        private void OnChangeActivatedWindow(Window GotFocus, Window _) =>
-            UpdateWindowContentType(GotFocus);
+        private void OnChangeActivatedWindow(Window gotFocus, Window _) =>
+            UpdateWindowContentType(gotFocus.Document);
 
         public IContentType DetermineContentType(string path)
         {
@@ -69,13 +66,16 @@ namespace VSRAD.Syntax.Options
             return null;
         }
 
-        private void UpdateWindowContentType(Window window)
+        private void UpdateWindowContentType(Document document)
         {
-            var vsTextBuffer = Utils.GetWindowVisualBuffer(window, _serviceProvider);
+            if (document == null) return;
+            var filepath = Utils.GetDteDocumentPath(document);
+            var vsTextBuffer = Utils.GetBufferAdapter(filepath);
+
             if (vsTextBuffer == null) return;
 
             var textBuffer = _textEditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
-            UpdateTextBufferContentType(textBuffer, window.Document.Name);
+            UpdateTextBufferContentType(textBuffer, filepath);
         }
 
         public async Task ChangeRadeonExtensionsAsync(IEnumerable<string> asm1Extensions, IEnumerable<string> asm2Extensions)
@@ -90,9 +90,7 @@ namespace VSRAD.Syntax.Options
                 ChangeExtensions(Asm1ContentType, asm1Extensions);
                 ChangeExtensions(Asm2ContentType, asm2Extensions);
 
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                if (_dte.ActiveDocument != null)
-                    UpdateWindowContentType(_dte.ActiveDocument.ActiveWindow);
+                await ChangeActiveWindowContentTypeAsync();
             }
             catch (InvalidOperationException e)
             {
@@ -117,7 +115,10 @@ namespace VSRAD.Syntax.Options
 
         private void UpdateTextBufferContentType(ITextBuffer textBuffer, string path)
         {
-            if (textBuffer == null || textBuffer.ContentType == Asm1ContentType || textBuffer.ContentType == Asm2ContentType || textBuffer.ContentType == AsmDocContentType)
+            if (textBuffer == null ||
+                textBuffer.ContentType == Asm1ContentType ||
+                textBuffer.ContentType == Asm2ContentType ||
+                textBuffer.ContentType == AsmDocContentType)
                 return;
 
             var contentType = DetermineContentType(path);
@@ -125,6 +126,14 @@ namespace VSRAD.Syntax.Options
                 return;
 
             UpdateTextBufferContentType(textBuffer, contentType);
+        }
+
+        private async Task ChangeActiveWindowContentTypeAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            if (_dte.ActiveDocument != null)
+                UpdateWindowContentType(_dte.ActiveDocument);
         }
 
         private static void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)
