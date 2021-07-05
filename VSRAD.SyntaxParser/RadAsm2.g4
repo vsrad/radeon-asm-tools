@@ -5,34 +5,38 @@ function
     ;
 
 /* Keywords */
-VMCNT       : 'vmcnt' ;
-EXPCNT      : 'expcnt' ;
-LGKMCNT     : 'lgkmcnt' ;
-HWREG       : 'hwreg' ;
-SENDMSG     : 'sendmsg' ;
-ASIC        : 'asic' ;
-TYPE        : 'type' ;
-ASSERT      : 'assert' ;
+BUILDIN_FUNCTION
+    : 'vmcnt'
+    | 'expcnt'
+    | 'hwreg'
+    | 'sendmsg'
+    | 'asic'
+    | 'type'
+    | 'assert'
+    | 'shader'
+    | 'len'
+    | 'abs'
+    | 'ones'
+    | 'zeros'
+    | 'zeroes'
+    | 'user_sgpr_count'
+    | 'sgpr_count'
+    | 'vgpr_count'
+    | 'block_size'
+    | 'group_size'
+    | 'tg_size_en'
+    | 'tgid_x_en'
+    | 'tgid_y_en'
+    | 'tgid_z_en'
+    | 'alloc_lds'
+    | 'wave_size'
+    | 'assigned'
+    | 'label'
+    | 'print'
+    ;
+
 SHADER      : 'shader' ;
-LEN         : 'len' ;
-ABS         : 'abs' ;
-ONES        : 'ones' ;
-ZEROS       : 'zeros' ;
-ZEROES      : 'zeroes' ;
-USGPR_COUNT : 'user_sgpr_count' ;
-SGPR_COUNT  : 'sgpr_count' ;
-VGPR_COUNT  : 'vgpr_count' ;
-BLOCK_SIZE  : 'block_size' ;
-GROUP_SIZE  : 'group_size' ;
-TG_SIZE_EN  : 'tg_size_en' ;
-TGID_X_EN   : 'tgid_x_en' ;
-TGID_Y_EN   : 'tgid_y_en' ;
-TGID_Z_EN   : 'tgid_z_en' ;
-ALLOC_LDS   : 'alloc_lds' ;
-WAVE_SIZE   : 'wave_size' ;
-ASSIGNED    : 'assigned' ;
 LABEL       : 'label' ;
-PRINT       : 'print' ;
 
 VAR         : 'var' ;
 RETURN      : 'return' ;
