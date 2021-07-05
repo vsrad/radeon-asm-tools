@@ -5,7 +5,7 @@ function
     ;
 
 /* Keywords */
-BUILDIN_FUNCTION
+BUILTIN_FUNCTION
     : 'vmcnt'
     | 'expcnt'
     | 'lgkmcnt'
@@ -14,7 +14,6 @@ BUILDIN_FUNCTION
     | 'asic'
     | 'type'
     | 'assert'
-    | 'shader'
     | 'len'
     | 'lit'
     | 'abs'
@@ -56,7 +55,6 @@ BUILDIN_FUNCTION
     | 'alloc_lds'
     | 'wave_size'
     | 'assigned'
-    | 'label'
     | 'print'
     | 'set_ps'
     | 'set_vs'

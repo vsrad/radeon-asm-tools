@@ -28,7 +28,7 @@ namespace VSRAD.Syntax.Core.Lexer
 
         private static readonly Dictionary<int, RadAsmTokenType> _tt = new Dictionary<int, RadAsmTokenType>()
         {
-            { RadAsm2Lexer.BUILDIN_FUNCTION, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.BUILTIN_FUNCTION, RadAsmTokenType.Keyword },
 
             { RadAsm2Lexer.SHADER, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.LABEL, RadAsmTokenType.Keyword },
