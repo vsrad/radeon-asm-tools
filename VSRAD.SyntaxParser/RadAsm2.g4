@@ -16,6 +16,7 @@ BUILTIN_FUNCTION
     | 'assert'
     | 'len'
     | 'lit'
+    | 'data'
     | 'abs'
     | 'abs_lo'
     | 'abs_hi'
@@ -38,6 +39,7 @@ BUILTIN_FUNCTION
     | 'block_size'
     | 'group_size'
     | 'group_size3d'
+    | 'tidig_comp_cnt'
     | 'tg_size_en'
     | 'tgid_x_en'
     | 'tgid_y_en'
@@ -66,6 +68,9 @@ BUILTIN_FUNCTION
     | 'load_collision_waveid'
     | 'load_intrawave_collision'
     | 'align'
+    | 'label_offset'
+    | 'label_diff'
+    | 'label_diff_eq'
     ;
 
 SHADER      : 'shader' ;
