@@ -28,7 +28,8 @@ namespace VSRAD.Syntax.Core.Lexer
         {
             { RadAsmDocLexer.LET, RadAsmTokenType.Keyword },
             { RadAsmDocLexer.COMMA, RadAsmTokenType.Comma },
-            { RadAsmDocLexer.COLON, RadAsmTokenType.Colon },
+            { RadAsmDocLexer.LCURVEBRACKET, RadAsmTokenType.LcurveBracket },
+            { RadAsmDocLexer.RCURVEBRACKET, RadAsmTokenType.RcurveBracket },
             { RadAsmDocLexer.IDENTIFIER, RadAsmTokenType.Identifier },
             { RadAsmDocLexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
             { RadAsmDocLexer.WHITESPACE, RadAsmTokenType.Whitespace },

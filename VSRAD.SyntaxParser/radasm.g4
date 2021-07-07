@@ -83,65 +83,28 @@ AMD_HSA_KERNEL      : '.amdgpu_hsa_kernel'       ;
 AMD_KERNEL_CODE     : '.amd_kernel_code_t'       ;
 AMD_END_KERNEL_CODE : '.end_amd_kernel_code_t'   ;
 
-STARTIF
-    : IF
-    | IFDEF
-    | IFNDEF
-    | IFNOTDEF
-    | IFB
-    | IFC
-    | IFEQ
-    | IFEQS
-    | IFGE
-    | IFGT
-    | IFLE
-    | IFLT
-    | IFNB
-    | IFNC
-    | IFNE
-    | IFNES
-    ;
-
-MIDDLEIF
-    : ELSEIF
-    | ELSE
-    ;
-
 /* Expression-operator symbols */
-EQ      : '='   ;
-LT      : '<'   ;
 LE      : '<='  ;
 EQEQ    : '=='  ;
 NE      : '!='  ;
 GE      : '>='  ;
+LOGAND  : '&&'  ;
+LOGOR   : '||'  ;
+SHL     : '<<'  ;
+SHR     : '>>'  ;
+EQ      : '='   ;
+LT      : '<'   ;
 GT      : '>'   ;
-ANDAND  : '&&'  ;
-OROR    : '||'  ;
 NOT     : '!'   ;
 TILDE   : '~'   ;
 PLUS    : '+'   ;
 MINUS   : '-'   ;
-STAR    : '*'   ;
-SLASH   : '/'   ;
-PERCENT : '%'   ;
-CARET   : '^'   ;
-AND     : '&'   ;
-OR      : '|'   ;
-SHL     : '<<'  ;
-SHR     : '>>'  ;
-
-BINOP
-    : PLUS
-    | SLASH
-    | MINUS
-    | STAR
-    | PERCENT
-    | CARET
-    | AND
-    | OR
-    | SHL
-    | SHR
-    ;
+PROD    : '*'   ;
+DIV     : '/'   ;
+MOD     : '%'   ;
+BITXOR  : '^'   ;
+BITAND  : '&'   ;
+BITOR   : '|'   ;
 
 /* "Structural symbols" */
 
@@ -159,6 +122,7 @@ RCURVEBRACKET    : '}' ;
 
 CONSTANT
     : INT_CONSTANT
+    | FLOAT_CONSTANT
     ;
 
 fragment
@@ -169,12 +133,25 @@ INT_CONSTANT
     | [+-]? [0-9] [0-9]*
     ;
 
+fragment
+FLOAT_CONSTANT
+    : [+-]? ([0-9]*[.]) [0-9]+
+    ;
+
 STRING_LITERAL
     : '"' .*? ('"'| EOF)
     ;
 
 IDENTIFIER
     : [.\\]? [a-zA-Z_] [a-zA-Z0-9_]*
+    ;
+
+LINE_COMMENT
+    : ('//' | ';') ~[\r\n]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
     ;
 
 WHITESPACE
@@ -185,14 +162,6 @@ EOL
     : '\r'? '\n'
     ;
 
-LINE_COMMENT
-    : '//' ~[\r\n]*
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
-    ;
-
 UNKNOWN
-    : ~[ \t\r\n,:;()[\]{}=<>!&|~+*%^]+
+    : ~[ \t\r\n,:;()[\]{}=<>!&|~+\\-*%^/]+
     ;
