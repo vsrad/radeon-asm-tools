@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* Visual Studio 2017/2019
+* Visual Studio 2019
 * [RadeonAsmDebugger Extension for Visual Studio](../README.md#Installation)
 
 ## Building and Running
@@ -54,11 +54,11 @@ make
 2. Go to *Tools* -> *RAD Debug* -> *Options*
 3. Click the *Edit* button in the opened window to edit the active debug profile
 4. In the *General* tab, set *Remote Machine Address* to the IP address of your remote machine
-5. In the *Macro* tab, set *RadDebugWorkDir* to the absolute path
+5. In the *Macros* tab, set *RadDebugWorkDir* to the absolute path
 to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` in the **Docker container**)
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 
-* **Note:** All RAD buttons can be added to main window: *View* -> *Toolbars* -> *RAD Debug*)
+* **Note:** All RAD buttons can be added to main window: *View* -> *Toolbars* -> *RAD Debug*
 
 ### Build your shader
 
@@ -76,14 +76,22 @@ to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` i
 ### Launch the Debugger
 
 1. Open `fp32_v_add.s` in *Solution Explorer*
-2. Set a breakpoint on line 79
-3. Start debugging by pressing F5 (alternatively, clicking on the *RAD Debugger* button with a green arrow)
+2. Set a breakpoint on line 57
+3. Start debugging by running *Tools* -> *RAD Debug* -> *Actions* -> *Debug* or clicking on *Debug* button in the toolbar (*View* -> *Toolbars* -> *RAD Debug* to enable).
 4. Go to *Tools* -> *RAD Debug* -> *Open Visualizer* to open debug visualizer. You should
 see the values of watched VGPRs:
 ![Visualizer output](docs/visualizer-output.gif)
 
 * You can set your debug options *Tools* -> *RAD Debug* -> *Options* -> *Edit* -> *Actions/Debug*
     ![Debugger options](docs/debug-options.gif)
+
+## Known Issues
+
+If you encounter error with description containing `/VectorAddProjectExample/common/debugger/vadd_debug.sh: line 2: $'\r': command not found` in the Output window,
+then you need to manually change the `vadd_debug.sh`, `dbg_clang_wrapper.sh` and `breakpoint_gcnasm.pl` files from `Example\VectorAddProjectExample\common\debugger\` directory
+line endings from CRLF to LF and transfer the new version to the `/VectorAddProjectExample/common/debugger` directory on the remote machine.
+
+This is the common issue on windows hosts.
 
 ## Notes and Remarks
 
