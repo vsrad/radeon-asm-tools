@@ -47,7 +47,7 @@
     "ShowAppArgsField": false,
     "ShowBreakArgsField": false,
     "ShowWavemap": false,
-    "MatchBracketsOnAddToWatches": false
+    "MatchBracketsOnAddToWatches": true
   },
   "SliceVisualizerOptions": {
     "VisibleColumns": "0:1-63"
