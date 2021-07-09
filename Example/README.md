@@ -76,7 +76,7 @@ to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` i
 ### Launch the Debugger
 
 1. Open `fp32_v_add.s` in *Solution Explorer*
-2. Set a breakpoint on line 57
+2. Set a breakpoint on line 56
 3. Start debugging by running *Tools* -> *RAD Debug* -> *Actions* -> *Debug* or clicking on *Debug* button in the toolbar (*View* -> *Toolbars* -> *RAD Debug* to enable).
 4. Go to *Tools* -> *RAD Debug* -> *Open Visualizer* to open debug visualizer. You should
 see the values of watched VGPRs:
