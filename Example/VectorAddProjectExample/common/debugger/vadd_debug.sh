@@ -29,7 +29,7 @@ export BREAKPOINT_SCRIPT_OPTIONS="-l $line -t $counter $perl_args"
 export BREAKPOINT_SCRIPT_WATCHES="$watches"
 
 GFX=`/opt/rocm/bin/rocminfo | grep -om1 gfx9..`
-CLANG="$VADDPATH/common/debugger/dbg_clang_wrapper.sh"
+CLANG="bash $VADDPATH/common/debugger/dbg_clang_wrapper.sh"
 CLANG_ARGS="-x assembler -target amdgcn--amdhsa -mcpu=$GFX -I$VADDPATH/gfx9/include"
 
 CO_PATH="$TMPPATH/fp32_v_add.co"
