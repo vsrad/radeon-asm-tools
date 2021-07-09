@@ -85,25 +85,12 @@ see the values of watched VGPRs:
 * You can set your debug options *Tools* -> *RAD Debug* -> *Options* -> *Edit* -> *Actions/Debug*
     ![Debugger options](docs/debug-options.gif)
 
-## Known Issues
-
-If you encounter error with description containing `/VectorAddProjectExample/common/debugger/vadd_debug.sh: line 2: $'\r': command not found` in the Output window,
-then you need to manually change the `vadd_debug.sh`, `dbg_clang_wrapper.sh` and `breakpoint_gcnasm.pl` files from `Example\VectorAddProjectExample\common\debugger\` directory
-line endings from CRLF to LF and transfer the new version to the `/VectorAddProjectExample/common/debugger` directory on the remote machine.
-
-This is the common issue on windows hosts.
-
 ## Notes and Remarks
 
 * To troubleshoot errors, open the *Output* window (*View* -> *Output*) and select *RAD Debug* in the *Show output from* dropdown.
 
 * Upon reaching the breakpoint, the host-side will output validation failure messages. This is expected because the kernel execution is aborted at the breakpoint, so no output is written to the destination address.
 ![Visualizer output](docs/output-window.gif)
-
-* If you see *Permissions denied* messages in the output, make sure that the following files have the executable bit set (`chmod +x`):
-  - `VectorAddProjectExample/common/debugger/dbg_clang_wrapper.sh`
-  - `VectorAddProjectExample/common/debugger/vadd_debug.sh`
-  - `VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl`
 
 * Workgroup size is hardcoded in this example (see [breakpoint_gcnasm.pl](VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl#L129)):
     ```
