@@ -74,12 +74,7 @@ namespace VSRAD.Syntax.IntelliSense
                 switch ((VSConstants.VSStd12CmdID)nCmdID)
                 {
                     case VSConstants.VSStd12CmdID.PeekDefinition:
-                        if (!_textView.Roles.Contains(PredefinedTextViewRoles.EmbeddedPeekTextView) &&
-                            !_textView.Roles.Contains(PredefinedTextViewRoles.CodeDefinitionView))
-                        {
-                            _editorService.PeekBroker.TriggerPeekSession(_textView, PredefinedPeekRelationships.Definitions.Name);
-                            return VSConstants.S_OK;
-                        }
+                        if (TryTriggerPeekDefinition()) return VSConstants.S_OK;
                         break;
                 }
             }
@@ -96,6 +91,19 @@ namespace VSRAD.Syntax.IntelliSense
 
             _navigationService.NavigateOrOpenNavigationList(navigationServiceResult.Values);
             return true;
+        }
+
+        private bool TryTriggerPeekDefinition()
+        {
+            if (_textView.Roles.Contains(PredefinedTextViewRoles.EmbeddedPeekTextView) ||
+                _textView.Roles.Contains(PredefinedTextViewRoles.CodeDefinitionView)) 
+                return false;
+
+            var peekSession = _editorService
+                .PeekBroker.TriggerPeekSession(_textView, 
+                    PredefinedPeekRelationships.Definitions.Name);
+
+            return peekSession != null;
         }
     }
 }
