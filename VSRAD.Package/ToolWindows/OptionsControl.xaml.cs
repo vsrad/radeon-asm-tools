@@ -109,20 +109,7 @@ namespace VSRAD.Package.ToolWindows
 
     public sealed class BreakModeConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            switch (value)
-            {
-                case BreakMode.SingleRoundRobin:
-                    return "Single active breakpoint, round-robin";
-                case BreakMode.SingleRerun:
-                    return "Single active breakpoint, rerun same line";
-                case BreakMode.Multiple:
-                    return "Multiple active breakpoints";
-                default:
-                    return DependencyProperty.UnsetValue;
-            }
-        }
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => Utils.BreakModeConverter.BreakModeToString((BreakMode)value);
 
         public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
     }

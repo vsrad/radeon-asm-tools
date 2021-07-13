@@ -34,50 +34,20 @@ namespace VSRAD.Package.Commands
             {
                 if (variantOut != IntPtr.Zero) /* list available items */
                 {
-                    var items = new[] { "Single active breakpoint, round-robin",
-                                        "Single active breakpoint, rerun same line",
-                                        "Multiple active breakpoints" };
-                    Marshal.GetNativeVariantForObject(items, variantOut);
+                    Marshal.GetNativeVariantForObject(Utils.BreakModeConverter.BreakModeOptions, variantOut);
                 }
             }
             if (commandId == Constants.BreakModeDropdownId)
             {
                 if (variantOut != IntPtr.Zero) /* get current item */
                 {
-                    string currentMode;
-                    switch (_project.Options.DebuggerOptions.BreakMode)
-                    {
-                        case Options.BreakMode.SingleRoundRobin:
-                            currentMode = "Single active breakpoint, round-robin";
-                            break;
-                        case Options.BreakMode.SingleRerun:
-                            currentMode = "Single active breakpoint, rerun same line";
-                            break;
-                        case Options.BreakMode.Multiple:
-                            currentMode = "Multiple active breakpoints";
-                            break;
-                        default:
-                            throw new ArgumentException($"Unknown break mode: {_project.Options.DebuggerOptions.BreakMode}");
-                    }
-                                
+                    var currentMode = Utils.BreakModeConverter.BreakModeToString(_project.Options.DebuggerOptions.BreakMode);
                     Marshal.GetNativeVariantForObject(currentMode, variantOut);
                 }
                 else if (variantIn != IntPtr.Zero) /* set new item */
                 {
                     var selected = (string)Marshal.GetObjectForNativeVariant(variantIn);
-
-                    switch (selected)
-                    {
-                        case "Single active breakpoint, round-robin":
-                            _project.Options.DebuggerOptions.BreakMode = Options.BreakMode.SingleRoundRobin;
-                            break;
-                        case "Single active breakpoint, rerun same line":
-                            _project.Options.DebuggerOptions.BreakMode = Options.BreakMode.SingleRerun;
-                            break;
-                        case "Multiple active breakpoints":
-                            _project.Options.DebuggerOptions.BreakMode = Options.BreakMode.Multiple;
-                            break;
-                    }
+                    _project.Options.DebuggerOptions.BreakMode = Utils.BreakModeConverter.FromString(selected);
                 }
             }
         }
