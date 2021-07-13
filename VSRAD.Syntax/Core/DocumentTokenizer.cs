@@ -67,7 +67,7 @@ namespace VSRAD.Syntax.Core
                 // in some cases the text buffer may cause ContentChanged with 0 changes
                 if (args.Changes.Count == 0) return;
 
-                ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes));
+                ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes, args.Before));
             }
             catch (Exception ex)
             {
@@ -187,10 +187,14 @@ namespace VSRAD.Syntax.Core
 
         private class JoinedTextChange : ITextChange
         {
-            public JoinedTextChange(INormalizedTextChangeCollection changes)
+            public JoinedTextChange(INormalizedTextChangeCollection changes, ITextSnapshot before)
             {
                 var oldStart = changes[0].OldSpan.Start;
                 var oldEnd = changes[changes.Count - 1].OldEnd;
+
+                // apply the change to the whole first line
+                oldStart = before.GetLineFromPosition(oldStart).Start;
+
                 OldSpan = new Span(oldStart, oldEnd - oldStart);
                 Delta = changes[changes.Count - 1].NewEnd - changes[changes.Count - 1].OldEnd;
             }
