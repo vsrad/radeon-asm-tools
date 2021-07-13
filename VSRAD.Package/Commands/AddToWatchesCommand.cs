@@ -47,7 +47,8 @@ namespace VSRAD.Package.Commands
             else if (commandId >= Constants.AddArrayToWatchesToIdOffset)
             {
                 var fromIndex = Math.DivRem(commandId - Constants.AddArrayToWatchesToIdOffset, Constants.AddArrayToWatchesToFromOffset, out var toIndex);
-                var arrayRangeWatch = ArrayRange.FormatArrayRangeWatch(watchName, (int)fromIndex, (int)toIndex);
+                var arrayRangeWatch = ArrayRange.FormatArrayRangeWatch(watchName, (int)fromIndex, (int)toIndex,
+                                        _toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
 
                 foreach (var watch in arrayRangeWatch)
                     _toolIntegration.AddWatchFromEditor(watch);
