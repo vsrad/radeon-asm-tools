@@ -41,7 +41,7 @@ namespace VSRAD.Package.Commands
             {
                 if (variantOut != IntPtr.Zero) /* get current item */
                 {
-                    var currentMode = Utils.BreakModeConverter.BreakModeToString(_project.Options.DebuggerOptions.BreakMode);
+                    var currentMode = Utils.BreakModeConverter.BreakModeToString(_project.Options.DebuggerOptions.BreakMode, shortForm: true);
                     Marshal.GetNativeVariantForObject(currentMode, variantOut);
                 }
                 else if (variantIn != IntPtr.Zero) /* set new item */

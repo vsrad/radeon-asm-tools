@@ -256,7 +256,7 @@
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
       </Combo>
-      <Combo guid="guidCmdSetBreakMode" id="BreakModeDropdownId" priority="100" type="DropDownCombo" defaultWidth="240" idCommandList="BreakModeDropdownListId">
+      <Combo guid="guidCmdSetBreakMode" id="BreakModeDropdownId" priority="100" type="DropDownCombo" defaultWidth="90" idCommandList="BreakModeDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>

@@ -8,16 +8,10 @@ namespace VSRAD.Package.Utils
                                                                     "Single active breakpoint, rerun same line",
                                                                     "Multiple active breakpoints" };
 
-        public static String BreakModeToString(Options.BreakMode value)
-        {
-            switch (value)
-            {
-                case Options.BreakMode.SingleRoundRobin: return BreakModeOptions[0];
-                case Options.BreakMode.SingleRerun: return BreakModeOptions[1];
-                case Options.BreakMode.Multiple: return BreakModeOptions[2];
-                default: throw new ArgumentException($"Unknown break mode: {value}");
-            }
-        }
+        static public readonly string[] ShortBreakModeOptions = new[] { "Round-robin", "Rerun line", "Multiple" };
+
+        public static String BreakModeToString(Options.BreakMode value, bool shortForm = false)
+                                => shortForm ? ShortBreakModeOptions[(int)value] : BreakModeOptions[(int)value];
 
         public static Options.BreakMode FromString(string value)
         {
