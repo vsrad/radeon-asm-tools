@@ -107,13 +107,6 @@ namespace VSRAD.Package.ToolWindows
         }
     }
 
-    public sealed class BreakModeConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => Utils.BreakModeConverter.BreakModeToString((BreakMode)value);
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
-    }
-
     public sealed class ScalingModeConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
