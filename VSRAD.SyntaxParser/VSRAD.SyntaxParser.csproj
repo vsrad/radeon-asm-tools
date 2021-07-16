@@ -52,7 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Antlr4 Include="RadAsm.g4">
+    <Antlr4 Include="RadAsm1.g4">
       <Generator>MSBuild:Compile</Generator>
       <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
       <Listener>True</Listener>
@@ -62,6 +62,10 @@
       <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
       <Listener>True</Listener>
     </Antlr4>
+    <Antlr4 Include="RadAsmDoc.g4">
+      <Generator>MSBuild:Compile</Generator>
+      <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
+    </Antlr4>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="RadAsmLexer.g4.cs" />
@@ -69,10 +73,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />
-    <Antlr4 Include="RadAsmDoc.g4">
-      <Generator>MSBuild:Compile</Generator>
-      <CustomToolNamespace>VSRAD.SyntaxParser</CustomToolNamespace>
-    </Antlr4>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Antlr4">

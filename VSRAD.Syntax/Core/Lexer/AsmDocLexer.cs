@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.Core.Lexer
             while (true)
             {
                 IToken current = lexer.NextToken();
-                if (current.Type == RadAsm2Lexer.Eof)
+                if (current.Type == RadAsmDocLexer.Eof)
                     break;
                 yield return new TokenSpan(current.Type, new Span(current.StartIndex + offset, current.StopIndex - current.StartIndex + 1));
             }
