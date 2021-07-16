@@ -22,6 +22,7 @@
         "IsAVGPR": false
       }
     ],
+    "LastAppArgs": [],
     "NGroups": 0,
     "Counter": 0,
     "AppArgs": "",
@@ -45,7 +46,8 @@
     "ShowColumnsField": false,
     "ShowAppArgsField": false,
     "ShowBreakArgsField": false,
-    "ShowWavemap": false
+    "ShowWavemap": false,
+    "MatchBracketsOnAddToWatches": true
   },
   "SliceVisualizerOptions": {
     "VisibleColumns": "0:1-63"
@@ -65,13 +67,13 @@
     "ForegroundColors": null
   },
   "TargetHosts": [
-    "localhost:9339"
+    "127.0.0.1:9339"
   ],
-  "ActiveProfile": "Default",
+  "ActiveProfile": "vaddDebug",
   "Profiles": {
-    "Default": {
+    "vaddDebug": {
       "General": {
-        "RemoteMachine": "localhost",
+        "RemoteMachine": "127.0.0.1",
         "Port": 9339,
         "RunActionsLocally": false,
         "ContinueActionExecOnError": false,
@@ -85,7 +87,7 @@
         ],
         [
           "RadDebugDataOutputPath",
-          "$(RadDebugWorkDir)/tmp_dir/debug_result"
+          "$(RadDebugWorkDir)/tmp/debug_result"
         ],
         [
           "RadDeployDir",
@@ -145,7 +147,7 @@
             {
               "Environment": "Remote",
               "Executable": "/opt/rocm/llvm/bin/clang",
-              "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
+              "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
               "WorkingDirectory": "$(RadDebugWorkDir)",
               "RunAsAdmin": false,
               "WaitForCompletion": true,

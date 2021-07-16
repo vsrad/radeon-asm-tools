@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* Visual Studio 2017/2019
+* Visual Studio 2019
 * [RadeonAsmDebugger Extension for Visual Studio](../README.md#Installation)
 
 ## Building and Running
@@ -54,11 +54,11 @@ make
 2. Go to *Tools* -> *RAD Debug* -> *Options*
 3. Click the *Edit* button in the opened window to edit the active debug profile
 4. In the *General* tab, set *Remote Machine Address* to the IP address of your remote machine
-5. In the *Macro* tab, set *RadDebugWorkDir* to the absolute path
+5. In the *Macros* tab, set *RadDebugWorkDir* to the absolute path
 to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` in the **Docker container**)
 6. Press *Apply* to save the changes and *OK* to close the profile editor
 
-* **Note:** All RAD buttons can be added to main window: *View* -> *Toolbars* -> *RAD Debug*)
+* **Note:** All RAD buttons can be added to main window: *View* -> *Toolbars* -> *RAD Debug*
 
 ### Build your shader
 
@@ -76,8 +76,8 @@ to `VectorAddProjectExample` on the remote machine (`/VectorAddProjectExample` i
 ### Launch the Debugger
 
 1. Open `fp32_v_add.s` in *Solution Explorer*
-2. Set a breakpoint on line 79
-3. Start debugging by pressing F5 (alternatively, clicking on the *RAD Debugger* button with a green arrow)
+2. Set a breakpoint on line 56
+3. Start debugging by running *Tools* -> *RAD Debug* -> *Actions* -> *Debug* or clicking on *Debug* button in the toolbar (*View* -> *Toolbars* -> *RAD Debug* to enable).
 4. Go to *Tools* -> *RAD Debug* -> *Open Visualizer* to open debug visualizer. You should
 see the values of watched VGPRs:
 ![Visualizer output](docs/visualizer-output.gif)
@@ -91,11 +91,6 @@ see the values of watched VGPRs:
 
 * Upon reaching the breakpoint, the host-side will output validation failure messages. This is expected because the kernel execution is aborted at the breakpoint, so no output is written to the destination address.
 ![Visualizer output](docs/output-window.gif)
-
-* If you see *Permissions denied* messages in the output, make sure that the following files have the executable bit set (`chmod +x`):
-  - `VectorAddProjectExample/common/debugger/dbg_clang_wrapper.sh`
-  - `VectorAddProjectExample/common/debugger/vadd_debug.sh`
-  - `VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl`
 
 * Workgroup size is hardcoded in this example (see [breakpoint_gcnasm.pl](VectorAddProjectExample/common/debugger/breakpoint_gcnasm.pl#L129)):
     ```

@@ -1,20 +1,23 @@
 #!/bin/bash
 set -o pipefail
 
-clang="/opt/rocm/llvm/bin/clang -mno-code-object-v3"
+CLANG="/opt/rocm/llvm/bin/clang"
 
 if [ -n "$ASM_DBG_BUF_ADDR" ]
 then
-	cat > tmp_dir/tmp_gcn_src.s
-	perl $VADD_DIR/common/debugger/breakpoint_gcnasm.pl tmp_dir/tmp_gcn_src.s -w "$BREAKPOINT_SCRIPT_WATCHES" $BREAKPOINT_SCRIPT_OPTIONS
+	SRC_PATH="$TMPPATH/tmp_src.s"
+	PLUG_PATH="$TMPPATH/tmp_breakpoint_pl.s"
+
+	cat > $SRC_PATH
+	perl $VADDPATH/common/debugger/breakpoint_gcnasm.pl $SRC_PATH -w "$BREAKPOINT_SCRIPT_WATCHES" -o $PLUG_PATH $BREAKPOINT_SCRIPT_OPTIONS
 	if [ $? -ne 0 ]; then
 		echo "ERROR: breakpoint_gcnasm preprocessing failed"
 		exit -1
 	fi
-	tmp_breakpoint=tmp_dir/tmp_gcn_breakpoint_pl.s
-	cat "$tmp_breakpoint" | ${clang} $@
+
+	cat $PLUG_PATH | ${CLANG} $@ -
 else
-	cat | ${clang} $@
+	cat | ${CLANG} $@ -
 fi
 
 exit $?
