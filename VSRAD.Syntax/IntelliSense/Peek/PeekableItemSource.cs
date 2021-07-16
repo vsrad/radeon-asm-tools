@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 
 namespace VSRAD.Syntax.IntelliSense.Peek
 {
@@ -38,8 +39,19 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             var tokensResult = ThreadHelper.JoinableTaskFactory.Run(
                 () => _navigationTokenService.GetNavigationsAsync(triggerPoint.Value));
 
-            if (tokensResult == null || tokensResult.Values.Count != 1) return;
-            peekableItems.Add(new PeekableItem(_peekResultFactory, tokensResult.Values[0]));
+            if (tokensResult == null || tokensResult.Values.Count == 0)
+                return;
+
+            if (tokensResult.Values.Count == 1)
+            {
+                var peekableToken = tokensResult.Values[0];
+                var peekableItem = new PeekableItem(_peekResultFactory, peekableToken);
+                peekableItems.Add(peekableItem);
+            }
+            else
+            {
+                NavigationList.UpdateNavigationList(tokensResult.Values);
+            }
         }
 
         public void Dispose() { }
