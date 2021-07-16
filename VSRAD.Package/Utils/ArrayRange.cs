@@ -38,5 +38,26 @@ namespace VSRAD.Package.Utils
             }
             return result;
         }
+
+        public static string[] FormatCustomSlice(string name, int start, int step, int count)
+        {
+            var numericMatch = _numericIndexPattern.Match(name);
+            var symbolMatch = _symbolIndexPattern.Match(name);
+
+            var result = new string[count];
+            if (numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success))
+            {
+                for (int i = 0; i < count; i++)
+                    result[i] = $"{name}[{start + (i * step)}]";
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                    result[i] = start + (i * step) < 0
+                        ? name.Replace(symbolMatch.Value, $"{symbolMatch.Value.TrimEnd(']')}{start + (i * step)}]")
+                        : name.Replace(symbolMatch.Value, $"{symbolMatch.Value.TrimEnd(']')}+{start + (i * step)}]");
+            }
+            return result;
+        }
     }
 }

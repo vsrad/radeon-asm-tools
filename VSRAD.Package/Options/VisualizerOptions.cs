@@ -18,12 +18,6 @@ namespace VSRAD.Package.Options
         private bool _ndrange3d = false;
         public bool NDRange3D { get => _ndrange3d; set => SetField(ref _ndrange3d, value); }
 
-        private bool _verticalSplit = true;
-        public bool VerticalSplit { get => _verticalSplit; set => SetField(ref _verticalSplit, value); }
-
-        private uint _laneGrouping;
-        public uint LaneGrouping { get => _laneGrouping; set => SetField(ref _laneGrouping, value); }
-
         private int _wavemapElementSize = 8;
         [DefaultValue(8)]
         public int WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
