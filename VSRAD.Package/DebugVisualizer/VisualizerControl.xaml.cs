@@ -168,7 +168,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         private void AddWatch(string watchName)
         {
             _table.RemoveNewWatchRow();
-            _table.AppendVariableRow(new Watch(watchName, VariableType.Hex, isAVGPR: false));
+            _table.AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
             _table.PrepareNewWatchRow();
             _context.Options.DebuggerOptions.Watches.Clear();
             _context.Options.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
