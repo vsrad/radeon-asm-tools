@@ -115,7 +115,7 @@
                     <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
                         <ComboBox.Resources>
-                            <local:BreakModeConverter x:Key="BreakModeConverter" />
+                            <utils:BreakModeConverter x:Key="BreakModeConverter" />
                         </ComboBox.Resources>
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
