@@ -146,7 +146,6 @@ COMMA      : ',' ;
 SEMI       : ';' ;
 COLON      : ':' ;
 QUEST      : '?' ;
-SHARP      : '#' ;
 LPAREN     : '(' ;
 RPAREN     : ')' ;
 LSQUAREBRACKET   : '[' ;
@@ -178,8 +177,17 @@ STRING_LITERAL
     : '"' .*? ('"'| EOF)
     ;
 
-IDENTIFIER
+fragment
+SYMBOL_IDENTIFIER
     : '.'? [a-zA-Z_] [a-zA-Z0-9_]*
+    ;
+
+CLOSURE_IDENTIFIER
+    : '#' SYMBOL_IDENTIFIER
+    ;
+
+IDENTIFIER
+    : SYMBOL_IDENTIFIER
     ;
 
 LINE_COMMENT
@@ -199,5 +207,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;#?()[\]{}=<>!&|~+\\-*%^/]+
+    : ~[ \t\r\n,:;?()[\]{}=<>!&|~+\\-*%^/]+
     ;
