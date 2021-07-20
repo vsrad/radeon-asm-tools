@@ -31,7 +31,6 @@ namespace VSRAD.Syntax.Options.Instructions
         private readonly List<IInstructionSet> _radAsm2InstructionSets;
         private readonly List<Instruction> _radAsm1Instructions;
         private readonly List<Instruction> _radAsm2Instructions;
-        private readonly GeneralOptions _options;
 
         private AsmType activeDocumentAsm;
         private IInstructionSet radAsm1SelectedSet;
@@ -52,8 +51,6 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm1Instructions = new List<Instruction>();
             _radAsm2Instructions = new List<Instruction>();
             activeDocumentAsm = AsmType.Unknown;
-
-            _options = GeneralOptions.Instance;
         }
 
         private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructions)
@@ -75,11 +72,15 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm1Instructions.AddRange(_radAsm1InstructionSets.SelectMany(s => s.Select(i => i)));
             _radAsm2Instructions.AddRange(_radAsm2InstructionSets.SelectMany(s => s.Select(i => i)));
 
-            radAsm1SelectedSet = SelectInstructionSet(_radAsm1InstructionSets, _options.Asm1InstructionSet);
-            radAsm2SelectedSet = SelectInstructionSet(_radAsm2InstructionSets, _options.Asm2InstructionSet);
+            CustomThreadHelper.RunOnMainThread(() =>
+            {
+                var options = GeneralOptions.Instance;
+                radAsm1SelectedSet = SelectInstructionSet(_radAsm1InstructionSets, options.Asm1InstructionSet);
+                radAsm2SelectedSet = SelectInstructionSet(_radAsm2InstructionSets, options.Asm2InstructionSet);
 
-            AsmTypeChanged?.Invoke();
-            InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
+                AsmTypeChanged?.Invoke();
+                InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
+            });
         }
 
         public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
@@ -131,14 +132,18 @@ namespace VSRAD.Syntax.Options.Instructions
                 }
             }
 
-            switch (activeDocumentAsm)
+            CustomThreadHelper.RunOnMainThread(() =>
             {
-                case AsmType.RadAsm: _options.Asm1InstructionSet = selected ?? string.Empty; break;
-                case AsmType.RadAsm2: _options.Asm2InstructionSet = selected ?? string.Empty; break;
-            }
-            _options.Save();
+                var options = GeneralOptions.Instance;
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: options.Asm1InstructionSet = selected ?? string.Empty; break;
+                    case AsmType.RadAsm2: options.Asm2InstructionSet = selected ?? string.Empty; break;
+                }
+                options.Save();
 
-            InstructionsUpdated?.Invoke(this, activeDocumentAsm);
+                InstructionsUpdated?.Invoke(this, activeDocumentAsm);
+            });
         }
 
         private void ChangeInstructionSet(string setName, List<IInstructionSet> sets, ref IInstructionSet selectedSet)
