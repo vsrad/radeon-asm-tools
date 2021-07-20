@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell.Settings;
 using Microsoft.VisualStudio.Threading;
+using VSRAD.Syntax.Helpers;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Options
@@ -44,10 +45,7 @@ namespace VSRAD.Syntax.Options
 
         protected virtual string CollectionName { get; } = typeof(T).FullName;
 
-        public virtual void Load()
-        {
-            ThreadHelper.JoinableTaskFactory.Run(LoadAsync);
-        }
+        public virtual void Load() => ThreadHelper.JoinableTaskFactory.Run(LoadAsync);
 
         public virtual async Task LoadAsync()
         {
@@ -55,29 +53,24 @@ namespace VSRAD.Syntax.Options
             var settingsStore = manager.GetReadOnlySettingsStore(SettingsScope.UserSettings);
 
             if (!settingsStore.CollectionExists(CollectionName))
-            {
                 return;
-            }
 
             foreach (PropertyInfo property in GetOptionProperties())
             {
                 try
                 {
-                    string serializedProp = settingsStore.GetString(CollectionName, property.Name);
-                    object value = DeserializeValue(serializedProp, property.PropertyType);
+                    var serializedProp = settingsStore.GetString(CollectionName, property.Name);
+                    var value = DeserializeValue(serializedProp, property.PropertyType);
                     property.SetValue(this, value);
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.Write(ex);
+                    Error.LogError(ex);
                 }
             }
         }
 
-        public virtual void Save()
-        {
-            ThreadHelper.JoinableTaskFactory.Run(SaveAsync);
-        }
+        public virtual void Save() => ThreadHelper.JoinableTaskFactory.Run(SaveAsync);
 
         public virtual async Task SaveAsync()
         {
@@ -85,9 +78,7 @@ namespace VSRAD.Syntax.Options
             WritableSettingsStore settingsStore = manager.GetWritableSettingsStore(SettingsScope.UserSettings);
 
             if (!settingsStore.CollectionExists(CollectionName))
-            {
                 settingsStore.CreateCollection(CollectionName);
-            }
 
             foreach (PropertyInfo property in GetOptionProperties())
             {
@@ -98,9 +89,7 @@ namespace VSRAD.Syntax.Options
             T liveModel = await GetInstanceAsync();
 
             if (this != liveModel)
-            {
                 await liveModel.LoadAsync();
-            }
         }
 
         protected virtual string SerializeValue(object value)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Options
@@ -15,10 +14,9 @@ namespace VSRAD.Syntax.Options
 
         protected override void OnApply(PageApplyEventArgs e)
         {
-            base.OnApply(e);
-
             try
             {
+                base.OnApply(e);
                 _optionsEventProvider.OptionsUpdatedInvoke();
             }
             catch (Exception ex)
