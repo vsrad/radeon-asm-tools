@@ -31,6 +31,7 @@ namespace VSRAD.Syntax.Options.Instructions
         private readonly List<IInstructionSet> _radAsm2InstructionSets;
         private readonly List<Instruction> _radAsm1Instructions;
         private readonly List<Instruction> _radAsm2Instructions;
+        private readonly GeneralOptions _options;
 
         private AsmType activeDocumentAsm;
         private IInstructionSet radAsm1SelectedSet;
@@ -51,6 +52,8 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm1Instructions = new List<Instruction>();
             _radAsm2Instructions = new List<Instruction>();
             activeDocumentAsm = AsmType.Unknown;
+
+            _options = GeneralOptions.Instance;
         }
 
         private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructions)
@@ -71,8 +74,9 @@ namespace VSRAD.Syntax.Options.Instructions
 
             _radAsm1Instructions.AddRange(_radAsm1InstructionSets.SelectMany(s => s.Select(i => i)));
             _radAsm2Instructions.AddRange(_radAsm2InstructionSets.SelectMany(s => s.Select(i => i)));
-            radAsm1SelectedSet = null;
-            radAsm2SelectedSet = null;
+
+            radAsm1SelectedSet = SelectInstructionSet(_radAsm1InstructionSets, _options.Asm1InstructionSet);
+            radAsm2SelectedSet = SelectInstructionSet(_radAsm2InstructionSets, _options.Asm2InstructionSet);
 
             AsmTypeChanged?.Invoke();
             InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
@@ -127,6 +131,13 @@ namespace VSRAD.Syntax.Options.Instructions
                 }
             }
 
+            switch (activeDocumentAsm)
+            {
+                case AsmType.RadAsm: _options.Asm1InstructionSet = selected ?? string.Empty; break;
+                case AsmType.RadAsm2: _options.Asm2InstructionSet = selected ?? string.Empty; break;
+            }
+            _options.Save();
+
             InstructionsUpdated?.Invoke(this, activeDocumentAsm);
         }
 
@@ -158,5 +169,8 @@ namespace VSRAD.Syntax.Options.Instructions
                 default: return null;
             }
         }
+
+        private static IInstructionSet SelectInstructionSet(IEnumerable<IInstructionSet> sets, string name) =>
+            sets.FirstOrDefault(s => s.SetName.Equals(name, System.StringComparison.OrdinalIgnoreCase));
     }
 }
