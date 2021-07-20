@@ -1,5 +1,5 @@
 ﻿using VSRAD.Syntax.FunctionList.Commands;
-using static VSRAD.Syntax.Options.GeneralOptionPage;
+using VSRAD.Syntax.Options;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,6 @@ using System.Windows.Input;
 using Task = System.Threading.Tasks.Task;
 using System.Threading;
 using System.Linq;
-using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {

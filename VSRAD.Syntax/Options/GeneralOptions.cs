@@ -3,13 +3,24 @@ using System.Text;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using static VSRAD.Syntax.Options.GeneralOptionPage;
 using Microsoft.VisualStudio.Settings;
 using System;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Options
 {
+    public enum SortState
+    {
+        [Description("by line number")]
+        ByLine = 1,
+        [Description("by line number descending")]
+        ByLineDescending = 2,
+        [Description("by name")]
+        ByName = 3,
+        [Description("by name descending")]
+        ByNameDescending = 4,
+    }
+
     public class GeneralOptions : BaseOptionModel<GeneralOptions>
     {
         private const string InstructionCollectionName = "RadeonAsmInstructionCollection";

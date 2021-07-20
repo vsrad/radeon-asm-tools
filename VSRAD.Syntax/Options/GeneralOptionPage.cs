@@ -26,17 +26,5 @@ namespace VSRAD.Syntax.Options
                 Error.ShowWarning(ex);
             }
         }
-
-        public enum SortState
-        {
-            [Description("by line number")]
-            ByLine = 1,
-            [Description("by line number descending")]
-            ByLineDescending = 2,
-            [Description("by name")]
-            ByName = 3,
-            [Description("by name descending")]
-            ByNameDescending = 4,
-        }
     }
 }

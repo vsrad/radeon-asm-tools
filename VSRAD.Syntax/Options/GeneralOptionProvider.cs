@@ -20,7 +20,7 @@ namespace VSRAD.Syntax.Options
     {
         public OptionsProvider()
         {
-            SortOptions = GeneralOptionPage.SortState.ByName;
+            SortOptions = SortState.ByName;
             Autoscroll = true;
             IsEnabledIndentGuides = false;
             IndentGuideThickness = 0.9;
@@ -37,7 +37,7 @@ namespace VSRAD.Syntax.Options
             AutocompleteVariables = false;
         }
 
-        public GeneralOptionPage.SortState SortOptions;
+        public SortState SortOptions;
         public bool Autoscroll;
         public bool IsEnabledIndentGuides;
         public double IndentGuideThickness;
