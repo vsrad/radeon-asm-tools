@@ -65,17 +65,26 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             {
                 _asm1InstructionCompletions.Clear();
                 _asm1InstructionCompletions.AddRange(
-                    sender.GetSelectedSetInstructions(AsmType.RadAsm)
-                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+                    GetInstructionCompletions(sender, AsmType.RadAsm));
             }
 
             if ((asmType & AsmType.RadAsm2) != 0)
             {
                 _asm2InstructionCompletions.Clear();
                 _asm2InstructionCompletions.AddRange(
-                    sender.GetSelectedSetInstructions(AsmType.RadAsm2)
-                          .Select(i => new MultipleCompletionItem(i.Text, i.Navigations, Icon)));
+                    GetInstructionCompletions(sender, AsmType.RadAsm2));
             }
         }
+
+        private static IEnumerable<MultipleCompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
+            manager.GetSelectedSetInstructions(asmType)
+              .GroupBy(i => i.Text)
+              .Select(g =>
+              {
+                  var instructionName = g.Key;
+                  var navigationList = g.SelectMany(i => i.Navigations).ToList();
+
+                  return new MultipleCompletionItem(instructionName, navigationList, Icon);
+              });
     }
 }
