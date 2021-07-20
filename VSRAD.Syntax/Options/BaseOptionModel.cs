@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 using Microsoft;
@@ -106,7 +107,10 @@ namespace VSRAD.Syntax.Options
         {
             using (var stream = new MemoryStream())
             {
-                var formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter 
+                { 
+                    Binder = TypeOnlyBinder.Instance
+                };
                 formatter.Serialize(stream, value);
                 stream.Flush();
                 return Convert.ToBase64String(stream.ToArray());
@@ -119,7 +123,10 @@ namespace VSRAD.Syntax.Options
 
             using (var stream = new MemoryStream(b))
             {
-                var formatter = new BinaryFormatter();
+                var formatter = new BinaryFormatter 
+                { 
+                    Binder = TypeOnlyBinder.Instance
+                };
                 return formatter.Deserialize(stream);
             }
         }
@@ -137,6 +144,22 @@ namespace VSRAD.Syntax.Options
             return GetType()
                 .GetProperties()
                 .Where(p => p.PropertyType.IsSerializable && p.PropertyType.IsPublic);
+        }
+
+        private class TypeOnlyBinder : SerializationBinder
+        {
+            public static SerializationBinder Instance = new TypeOnlyBinder();
+
+            public override Type BindToType(string assemblyName, string typeName)
+            {
+                return assemblyName.Equals("NA", StringComparison.Ordinal) ? Type.GetType(typeName) : null;
+            }
+
+            public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
+            {
+                assemblyName = "NA";
+                typeName = serializedType.FullName;
+            }
         }
     }
 }
