@@ -261,8 +261,8 @@
 
   <KeyBindings>
     <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="E" key2="A" mod1="Control" mod2="Control" editor="guidVSStd97" />
-    <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="E" key2="D" mod1="Control" mod2="Control" editor="guidVSStd97" />
-    <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="E" key2="S" mod1="Control" mod2="Control" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="D" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="W" mod1="Alt" editor="guidVSStd97" />
   </KeyBindings>
 
   <CommandPlacements>
