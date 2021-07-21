@@ -20,10 +20,8 @@ namespace VSRAD.Syntax.Options
     public abstract class BaseOptionModel<T> where T : BaseOptionModel<T>, new()
     {
         private static readonly AsyncLazy<T> _liveModel = new AsyncLazy<T>(CreateAsync, ThreadHelper.JoinableTaskFactory);
-        protected static readonly AsyncLazy<ShellSettingsManager> _settingsManager = new AsyncLazy<ShellSettingsManager>(GetSettingsManagerAsync, ThreadHelper.JoinableTaskFactory);
-
-        protected BaseOptionModel()
-        { }
+        // ReSharper disable once StaticMemberInGenericType
+        protected static readonly AsyncLazy<ShellSettingsManager> SettingsManager = new AsyncLazy<ShellSettingsManager>(GetSettingsManagerAsync, ThreadHelper.JoinableTaskFactory);
 
         public static T Instance
         {
@@ -49,13 +47,13 @@ namespace VSRAD.Syntax.Options
 
         public virtual async Task LoadAsync()
         {
-            var manager = await _settingsManager.GetValueAsync();
+            var manager = await SettingsManager.GetValueAsync();
             var settingsStore = manager.GetReadOnlySettingsStore(SettingsScope.UserSettings);
 
             if (!settingsStore.CollectionExists(CollectionName))
                 return;
 
-            foreach (PropertyInfo property in GetOptionProperties())
+            foreach (var property in GetOptionProperties())
             {
                 try
                 {
@@ -74,19 +72,19 @@ namespace VSRAD.Syntax.Options
 
         public virtual async Task SaveAsync()
         {
-            ShellSettingsManager manager = await _settingsManager.GetValueAsync();
-            WritableSettingsStore settingsStore = manager.GetWritableSettingsStore(SettingsScope.UserSettings);
+            var manager = await SettingsManager.GetValueAsync();
+            var settingsStore = manager.GetWritableSettingsStore(SettingsScope.UserSettings);
 
             if (!settingsStore.CollectionExists(CollectionName))
                 settingsStore.CreateCollection(CollectionName);
 
-            foreach (PropertyInfo property in GetOptionProperties())
+            foreach (var property in GetOptionProperties())
             {
-                string output = SerializeValue(property.GetValue(this));
+                var output = SerializeValue(property.GetValue(this));
                 settingsStore.SetString(CollectionName, property.Name, output);
             }
 
-            T liveModel = await GetInstanceAsync();
+            var liveModel = await GetInstanceAsync();
 
             if (this != liveModel)
                 await liveModel.LoadAsync();
@@ -108,7 +106,7 @@ namespace VSRAD.Syntax.Options
 
         protected virtual object DeserializeValue(string value, Type type)
         {
-            byte[] b = Convert.FromBase64String(value);
+            var b = Convert.FromBase64String(value);
 
             using (var stream = new MemoryStream(b))
             {
@@ -137,7 +135,8 @@ namespace VSRAD.Syntax.Options
 
         private class TypeOnlyBinder : SerializationBinder
         {
-            public static SerializationBinder Instance = new TypeOnlyBinder();
+            // ReSharper disable once MemberHidesStaticFromOuterClass
+            public static readonly SerializationBinder Instance = new TypeOnlyBinder();
 
             public override Type BindToType(string assemblyName, string typeName)
             {

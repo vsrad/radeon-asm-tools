@@ -24,7 +24,7 @@ namespace VSRAD.Syntax.Options
     public class GeneralOptions : BaseOptionModel<GeneralOptions>
     {
         private const string InstructionCollectionName = "RadeonAsmInstructionCollection";
-        private static readonly Regex fileExtensionRegular = new Regex(@"^\.\w+$");
+        private static readonly Regex _fileExtensionRegular = new Regex(@"^\.\w+$");
         private readonly OptionsProvider _optionsProvider;
 
         public GeneralOptions()
@@ -38,8 +38,8 @@ namespace VSRAD.Syntax.Options
         [Description("Set default sort option for Function List")]
         public SortState SortOptions
         {
-            get { return _optionsProvider.SortOptions; }
-            set { _optionsProvider.SortOptions = value; }
+            get => _optionsProvider.SortOptions;
+            set => _optionsProvider.SortOptions = value;
         }
 
         [Category("Function list")]
@@ -47,8 +47,8 @@ namespace VSRAD.Syntax.Options
         [Description("Scroll to current function in the function list automatically")]
         public bool Autoscroll
         {
-            get { return _optionsProvider.Autoscroll; }
-            set { _optionsProvider.Autoscroll = value; }
+            get => _optionsProvider.Autoscroll;
+            set => _optionsProvider.Autoscroll = value;
         }
 
         [Category("Syntax highlight")]
@@ -56,8 +56,8 @@ namespace VSRAD.Syntax.Options
         [Description("Enable/disable indent guide lines")]
         public bool IsEnabledIndentGuides
         {
-            get { return _optionsProvider.IsEnabledIndentGuides; }
-            set { _optionsProvider.IsEnabledIndentGuides = value; }
+            get => _optionsProvider.IsEnabledIndentGuides;
+            set => _optionsProvider.IsEnabledIndentGuides = value;
         }
 
         [Category("Syntax file extensions")]
@@ -65,7 +65,7 @@ namespace VSRAD.Syntax.Options
         [Description("List of file extensions for the asm1 syntax")]
         public string Asm1FileExtensions
         {
-            get { return ConvertExtensionsTo(_optionsProvider.Asm1FileExtensions); }
+            get => ConvertExtensionsTo(_optionsProvider.Asm1FileExtensions);
             set { var extensions = ConvertExtensionsFrom(value); if (ValidateExtensions(extensions)) _optionsProvider.Asm1FileExtensions = extensions; }
         }
 
@@ -74,7 +74,7 @@ namespace VSRAD.Syntax.Options
         [Description("List of file extensions for the asm2 syntax")]
         public string Asm2FileExtensions
         {
-            get { return ConvertExtensionsTo(_optionsProvider.Asm2FileExtensions); }
+            get => ConvertExtensionsTo(_optionsProvider.Asm2FileExtensions);
             set { var extensions = ConvertExtensionsFrom(value); if (ValidateExtensions(extensions)) _optionsProvider.Asm2FileExtensions = extensions; }
         }
 
@@ -84,8 +84,8 @@ namespace VSRAD.Syntax.Options
         [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
         public string InstructionsPaths
         {
-            get { return _optionsProvider.InstructionsPaths; }
-            set { _optionsProvider.InstructionsPaths = value; }
+            get => _optionsProvider.InstructionsPaths;
+            set => _optionsProvider.InstructionsPaths = value;
         }
 
         [Category("Autocompletion")]
@@ -93,8 +93,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete instructions")]
         public bool AutocompleteInstructions
         {
-            get { return _optionsProvider.AutocompleteInstructions; }
-            set { _optionsProvider.AutocompleteInstructions = value; }
+            get => _optionsProvider.AutocompleteInstructions;
+            set => _optionsProvider.AutocompleteInstructions = value;
         }
 
         [Category("Autocompletion")]
@@ -102,8 +102,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete function name")]
         public bool AutocompleteFunctions
         {
-            get { return _optionsProvider.AutocompleteFunctions; }
-            set { _optionsProvider.AutocompleteFunctions = value; }
+            get => _optionsProvider.AutocompleteFunctions;
+            set => _optionsProvider.AutocompleteFunctions = value;
         }
 
         [Category("Autocompletion")]
@@ -111,8 +111,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete labels")]
         public bool AutocompleteLabels
         {
-            get { return _optionsProvider.AutocompleteLabels; }
-            set { _optionsProvider.AutocompleteLabels = value; }
+            get => _optionsProvider.AutocompleteLabels;
+            set => _optionsProvider.AutocompleteLabels = value;
         }
 
         [Category("Autocompletion")]
@@ -120,8 +120,8 @@ namespace VSRAD.Syntax.Options
         [Description("Autocomplete global variables, local variables, function arguments")]
         public bool AutocompleteVariables
         {
-            get { return _optionsProvider.AutocompleteVariables; }
-            set { _optionsProvider.AutocompleteVariables = value; }
+            get => _optionsProvider.AutocompleteVariables;
+            set => _optionsProvider.AutocompleteVariables = value;
         }
         #endregion
 
@@ -129,7 +129,7 @@ namespace VSRAD.Syntax.Options
         {
             await base.LoadAsync();
 
-            var settingsManager = await _settingsManager.GetValueAsync();
+            var settingsManager = await SettingsManager.GetValueAsync();
             var userSettingsStore = settingsManager.GetWritableSettingsStore(SettingsScope.UserSettings);
 
             if (!userSettingsStore.CollectionExists(InstructionCollectionName))
@@ -144,7 +144,7 @@ namespace VSRAD.Syntax.Options
         {
             await base.SaveAsync();
 
-            var settingsManager = await _settingsManager.GetValueAsync();
+            var settingsManager = await SettingsManager.GetValueAsync();
             var userSettingsStore = settingsManager.GetWritableSettingsStore(SettingsScope.UserSettings);
 
             if (!userSettingsStore.CollectionExists(InstructionCollectionName))
@@ -158,27 +158,27 @@ namespace VSRAD.Syntax.Options
             }
         }
 
-        private static List<string> ConvertExtensionsFrom(string str) =>
+        private static IReadOnlyList<string> ConvertExtensionsFrom(string str) =>
             str.Split(';').Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
-        private static string ConvertExtensionsTo(IReadOnlyList<string> extensions) =>
+        private static string ConvertExtensionsTo(IEnumerable<string> extensions) =>
             string.Join(";", extensions.ToArray());
 
-        private static bool ValidateExtensions(List<string> extensions)
+        private static bool ValidateExtensions(IEnumerable<string> extensions)
         {
             var sb = new StringBuilder();
             foreach (var ext in extensions)
             {
-                if (!fileExtensionRegular.IsMatch(ext))
+                if (!_fileExtensionRegular.IsMatch(ext))
                     sb.AppendLine($"Invalid file extension format \"{ext}\"");
             }
-            if (sb.Length != 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine("Format example: .asm");
-                return false;
-            }
-            return true;
+
+            if (sb.Length == 0)
+                return true;
+
+            sb.AppendLine();
+            sb.AppendLine("Format example: .asm");
+            return false;
         }
     }
 }
