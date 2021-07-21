@@ -71,11 +71,16 @@ namespace VSRAD.Syntax.Options.Instructions
 
             _radAsm1Instructions.AddRange(_radAsm1InstructionSets.SelectMany(s => s.Select(i => i)));
             _radAsm2Instructions.AddRange(_radAsm2InstructionSets.SelectMany(s => s.Select(i => i)));
-            radAsm1SelectedSet = null;
-            radAsm2SelectedSet = null;
 
-            AsmTypeChanged?.Invoke();
-            InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
+            CustomThreadHelper.RunOnMainThread(() =>
+            {
+                var options = GeneralOptions.Instance;
+                radAsm1SelectedSet = SelectInstructionSet(_radAsm1InstructionSets, options.Asm1InstructionSet);
+                radAsm2SelectedSet = SelectInstructionSet(_radAsm2InstructionSets, options.Asm2InstructionSet);
+
+                AsmTypeChanged?.Invoke();
+                InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
+            });
         }
 
         public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
@@ -127,7 +132,18 @@ namespace VSRAD.Syntax.Options.Instructions
                 }
             }
 
-            InstructionsUpdated?.Invoke(this, activeDocumentAsm);
+            CustomThreadHelper.RunOnMainThread(() =>
+            {
+                var options = GeneralOptions.Instance;
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: options.Asm1InstructionSet = selected ?? string.Empty; break;
+                    case AsmType.RadAsm2: options.Asm2InstructionSet = selected ?? string.Empty; break;
+                }
+                options.Save();
+
+                InstructionsUpdated?.Invoke(this, activeDocumentAsm);
+            });
         }
 
         private void ChangeInstructionSet(string setName, List<IInstructionSet> sets, ref IInstructionSet selectedSet)
@@ -158,5 +174,8 @@ namespace VSRAD.Syntax.Options.Instructions
                 default: return null;
             }
         }
+
+        private static IInstructionSet SelectInstructionSet(IEnumerable<IInstructionSet> sets, string name) =>
+            sets.FirstOrDefault(s => s.SetName.Equals(name, System.StringComparison.OrdinalIgnoreCase));
     }
 }

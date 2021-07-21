@@ -78,7 +78,7 @@ namespace VSRAD.Syntax.Options
             set { var extensions = ConvertExtensionsFrom(value); if (ValidateExtensions(extensions)) _optionsProvider.Asm2FileExtensions = extensions; }
         }
 
-        [Category("Syntax instruction folder paths")]
+        [Category("Instructions")]
         [DisplayName("Instruction folder paths")]
         [Description("List of folder path separated by semicolon wit assembly instructions with .radasm file extension")]
         [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
@@ -86,6 +86,24 @@ namespace VSRAD.Syntax.Options
         {
             get => _optionsProvider.InstructionsPaths;
             set => _optionsProvider.InstructionsPaths = value;
+        }
+
+        [Category("Instructions")]
+        [DisplayName("Asm1 selected set")]
+        [Browsable(false)]
+        public string Asm1InstructionSet
+        {
+            get { return _optionsProvider.Asm1InstructionSet; }
+            set { _optionsProvider.Asm1InstructionSet = value; }
+        }
+
+        [Category("Instructions")]
+        [DisplayName("Asm2 selected set")]
+        [Browsable(false)]
+        public string Asm2InstructionSet
+        {
+            get { return _optionsProvider.Asm2InstructionSet; }
+            set { _optionsProvider.Asm2InstructionSet = value; }
         }
 
         [Category("Autocompletion")]

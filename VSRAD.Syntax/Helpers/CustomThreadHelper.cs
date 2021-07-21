@@ -9,12 +9,23 @@ namespace VSRAD.Syntax.Helpers
         public static T RunOnMainThread<T>(Func<T> func) =>
             RunOnMainThread(func, CancellationToken.None);
 
+        public static void RunOnMainThread(Action func) =>
+            RunOnMainThread(func, CancellationToken.None);
+
         public static T RunOnMainThread<T>(Func<T> func, CancellationToken ct) =>
             ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(ct);
                 ThreadHelper.ThrowIfNotOnUIThread();
                 return func();
+            });
+
+        public static void RunOnMainThread(Action func, CancellationToken ct) =>
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(ct);
+                ThreadHelper.ThrowIfNotOnUIThread();
+                func();
             });
     }
 }
