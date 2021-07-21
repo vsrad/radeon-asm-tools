@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Windows.Data;
 
 namespace VSRAD.Package.Utils
 {
-    class BreakModeConverter : IValueConverter
+    class BreakModeConverter
     {
         static public readonly string[] BreakModeOptions = new[] {  "Single active breakpoint, round-robin",
                                                                     "Single active breakpoint, rerun same line",
@@ -21,9 +20,5 @@ namespace VSRAD.Package.Utils
             if (value == BreakModeOptions[2]) return Options.BreakMode.Multiple;
             throw new ArgumentException($"Unknown break mode description: {value}");
         }
-
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => BreakModeToString((Options.BreakMode)value);
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
     }
 }

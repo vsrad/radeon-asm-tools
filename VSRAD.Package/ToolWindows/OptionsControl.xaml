@@ -7,7 +7,6 @@
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              xmlns:local="clr-namespace:VSRAD.Package.ToolWindows"
-             xmlns:opts="clr-namespace:VSRAD.Package.Options"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
@@ -15,11 +14,6 @@
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ScalingMode"/>
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="opts:BreakMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
@@ -109,20 +103,6 @@
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Match brackets on Add To Watches" VerticalAlignment="Center" Padding="4,0,0,0"
                                 IsChecked="{Binding Options.VisualizerOptions.MatchBracketsOnAddToWatches, UpdateSourceTrigger=PropertyChanged}"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Height="25">
-                    <Label Content="Break mode:" VerticalAlignment="Center" Margin="15,0,0,0"/>
-                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
-                        <ComboBox.Resources>
-                            <utils:BreakModeConverter x:Key="BreakModeConverter" />
-                        </ComboBox.Resources>
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource BreakModeConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
                 </StackPanel>
                 <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
                     <StackPanel Margin="0,6,0,0">
