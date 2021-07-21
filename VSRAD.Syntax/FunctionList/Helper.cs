@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static VSRAD.Syntax.Options.GeneralOptionPage;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.FunctionList
 {
