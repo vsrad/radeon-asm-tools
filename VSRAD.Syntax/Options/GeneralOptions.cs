@@ -12,13 +12,13 @@ namespace VSRAD.Syntax.Options
     public enum SortState
     {
         [Description("by line number")]
-        ByLine = 1,
+        ByLine,
         [Description("by line number descending")]
-        ByLineDescending = 2,
+        ByLineDescending,
         [Description("by name")]
-        ByName = 3,
+        ByName,
         [Description("by name descending")]
-        ByNameDescending = 4,
+        ByNameDescending,
     }
 
     public class GeneralOptions : BaseOptionModel<GeneralOptions>
