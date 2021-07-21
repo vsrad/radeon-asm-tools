@@ -89,7 +89,7 @@ namespace VSRAD.Syntax.Options
         }
 
         [Category("Autocompletion")]
-        [DisplayName("Instruction autocompletion")]
+        [DisplayName("Instruction auto-completion")]
         [Description("Autocomplete instructions")]
         public bool AutocompleteInstructions
         {
@@ -98,7 +98,7 @@ namespace VSRAD.Syntax.Options
         }
 
         [Category("Autocompletion")]
-        [DisplayName("Function autocompletion")]
+        [DisplayName("Function auto-completion")]
         [Description("Autocomplete function name")]
         public bool AutocompleteFunctions
         {
@@ -107,7 +107,7 @@ namespace VSRAD.Syntax.Options
         }
 
         [Category("Autocompletion")]
-        [DisplayName("Label autocompletion")]
+        [DisplayName("Label auto-completion")]
         [Description("Autocomplete labels")]
         public bool AutocompleteLabels
         {
@@ -116,7 +116,7 @@ namespace VSRAD.Syntax.Options
         }
 
         [Category("Autocompletion")]
-        [DisplayName("Variable autocompletion")]
+        [DisplayName("Variable auto-completion")]
         [Description("Autocomplete global variables, local variables, function arguments")]
         public bool AutocompleteVariables
         {

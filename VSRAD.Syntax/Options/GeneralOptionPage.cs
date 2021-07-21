@@ -7,7 +7,7 @@ namespace VSRAD.Syntax.Options
     {
         private readonly OptionsProvider _optionsEventProvider;
 
-        public GeneralOptionPage() : base()
+        public GeneralOptionPage()
         {
             _optionsEventProvider = Package.Instance.GetMEFComponent<OptionsProvider>();
         }
