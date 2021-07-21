@@ -93,8 +93,8 @@ namespace VSRAD.Syntax.Options
         [Browsable(false)]
         public string Asm1InstructionSet
         {
-            get { return _optionsProvider.Asm1InstructionSet; }
-            set { _optionsProvider.Asm1InstructionSet = value; }
+            get => _optionsProvider.Asm1InstructionSet;
+            set => _optionsProvider.Asm1InstructionSet = value;
         }
 
         [Category("Instructions")]
@@ -102,8 +102,8 @@ namespace VSRAD.Syntax.Options
         [Browsable(false)]
         public string Asm2InstructionSet
         {
-            get { return _optionsProvider.Asm2InstructionSet; }
-            set { _optionsProvider.Asm2InstructionSet = value; }
+            get => _optionsProvider.Asm2InstructionSet;
+            set => _optionsProvider.Asm2InstructionSet = value;
         }
 
         [Category("Autocompletion")]
