@@ -193,6 +193,14 @@ namespace VSRAD.Syntax.Core.Parser
                             currentBlock.AddToken(variableDefinition);
                         }
                     }
+                    else if (token.Type == RadAsm2Lexer.CLOSURE_IDENTIFIER)
+                    {
+                        var tokenText = token.GetText(version).Substring(1); // remove first '#' symbol
+                        if (!TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
+                        {
+                            referenceCandidates.AddLast((tokenText, token, currentBlock));
+                        }
+                    }
                     else if (token.Type == RadAsm2Lexer.IDENTIFIER)
                     {
                         var tokenText = token.GetText(version);

@@ -56,6 +56,14 @@ namespace VSRAD.Package.Options
         private BreakMode _breakMode;
         public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
 
+        [DefaultValue(true)]
+        private bool _forceOppositeTab;
+        public bool ForceOppositeTab { get => _forceOppositeTab; set => SetField(ref _forceOppositeTab, value); }
+
+        [DefaultValue(false)]
+        private bool _preserveActiveDoc;
+        public bool PreserveActiveDoc { get => _preserveActiveDoc; set => SetField(ref _preserveActiveDoc, value); }
+
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
 

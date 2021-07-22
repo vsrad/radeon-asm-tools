@@ -41,7 +41,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[9] = (uint)tmp[0];
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(),
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: 64, waveSize: 64, system: GetSystemView(system, groupSize: 64, waveSize: 64));
 
             for (int i = 0; i < 5; i++)
@@ -56,7 +56,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             for (int i = 46; i < 64; i++)
                 Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
 
-            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new ColumnStylingOptions(),
+            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: 64, waveSize: 64, system: GetSystemView(system, groupSize: 64, waveSize: 64));
 
             for (int i = 0; i < 64; i++)
@@ -72,7 +72,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
         {
             var system = new uint[waveSize];
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(),
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: (uint)waveSize, waveSize: (uint)waveSize, system: GetSystemView(system, groupSize: waveSize, waveSize: waveSize));
 
             for (int i = 0; i < waveSize; ++i)
@@ -86,7 +86,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[8] = 0b11_0111_0111;
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new ColumnStylingOptions(),
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: 12, waveSize: 10, system: GetSystemView(system, groupSize: 12, waveSize: 10));
 
             Assert.True((styling.ColumnState[0] & ColumnStates.Inactive) == 0); // 1 = active
@@ -112,7 +112,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var system = new uint[dataSize];
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = true, MagicNumber = 0 }, new ColumnStylingOptions(),
+            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = true, MagicNumber = 0 }, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: (uint)groupSize, waveSize: (uint)waveSize, system: GetSystemView(system, groupSize: groupSize, waveSize: waveSize, groupIndex: groupIndex));
 
             for (int i = 0; i < 12; ++i)
@@ -124,7 +124,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
         {
             // No assertions, this test simply hangs if we don't handle groupSize < laneGrouping in the code
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { LaneGrouping = 4 }, new ColumnStylingOptions(), groupSize: 3, waveSize: 3, system: null);
+            styling.Recompute(new VisualizerOptions(), new VisualizerAppearance { LaneGrouping = 4 }, new ColumnStylingOptions(), groupSize: 3, waveSize: 3, system: null);
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
 
             var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
             var styling = new ComputedColumnStyling();
-            styling.Recompute(visualizerOptions, new ColumnStylingOptions(),
+            styling.Recompute(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: 256, waveSize: 64, system: GetSystemView(system, groupSize: 256, waveSize: 64));
 
             for (int i = 0; i < 63; i++)
@@ -162,7 +162,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
 
             var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
             var styling = new ComputedColumnStyling();
-            styling.Recompute(visualizerOptions, new ColumnStylingOptions(),
+            styling.Recompute(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(),
                 groupSize: 144, waveSize: 32, system: GetSystemView(system, groupSize: 144, waveSize: 32));
 
             for (int i = 0; i < 32; i++)

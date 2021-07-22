@@ -97,7 +97,6 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.SEMI, RadAsmTokenType.Semi },
             { RadAsm2Lexer.COLON, RadAsmTokenType.Colon },
             { RadAsm2Lexer.QUEST, RadAsmTokenType.Structural },
-            { RadAsm2Lexer.SHARP, RadAsmTokenType.Structural },
             { RadAsm2Lexer.LPAREN, RadAsmTokenType.Lparen },
             { RadAsm2Lexer.RPAREN, RadAsmTokenType.Rparen },
             { RadAsm2Lexer.LSQUAREBRACKET, RadAsmTokenType.LsquareBracket },
@@ -107,6 +106,7 @@ namespace VSRAD.Syntax.Core.Lexer
 
             { RadAsm2Lexer.CONSTANT, RadAsmTokenType.Number },
             { RadAsm2Lexer.STRING_LITERAL, RadAsmTokenType.String },
+            { RadAsm2Lexer.CLOSURE_IDENTIFIER, RadAsmTokenType.Identifier },
             { RadAsm2Lexer.IDENTIFIER, RadAsmTokenType.Identifier },
 
             { RadAsm2Lexer.LINE_COMMENT, RadAsmTokenType.Comment },

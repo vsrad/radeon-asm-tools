@@ -34,6 +34,13 @@ namespace VSRAD.Package.Commands
             return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
         }
 
+        private void HandleCustomSlice(uint start, uint step, uint count, string watchName)
+        {
+            var arrayRangeWatch = ArrayRange.FormatCustomSlice(watchName, (int)start, (int)step, (int)count);
+            foreach (var watch in arrayRangeWatch)
+                _toolIntegration.AddWatchFromEditor(watch);
+        }
+
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
             var watchName = _codeEditor.GetActiveWord(_toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
@@ -44,10 +51,15 @@ namespace VSRAD.Package.Commands
             {
                 _toolIntegration.AddWatchFromEditor(watchName);
             }
+            else if (commandId == Constants.AddToWatchesArrayCustomCommandId)
+            {
+                new AddToWatchesCustomSliceEditor(HandleCustomSlice, watchName) { ShowInTaskbar = false }.ShowModal();
+            }
             else if (commandId >= Constants.AddArrayToWatchesToIdOffset)
             {
                 var fromIndex = Math.DivRem(commandId - Constants.AddArrayToWatchesToIdOffset, Constants.AddArrayToWatchesToFromOffset, out var toIndex);
-                var arrayRangeWatch = ArrayRange.FormatArrayRangeWatch(watchName, (int)fromIndex, (int)toIndex);
+                var arrayRangeWatch = ArrayRange.FormatArrayRangeWatch(watchName, (int)fromIndex, (int)toIndex,
+                                        _toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
 
                 foreach (var watch in arrayRangeWatch)
                     _toolIntegration.AddWatchFromEditor(watch);

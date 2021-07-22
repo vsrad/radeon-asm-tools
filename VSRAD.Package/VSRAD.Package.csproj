@@ -137,6 +137,9 @@
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
+    <Compile Include="Commands\AddToWatchesCustomSliceEditor.xaml.cs">
+      <DependentUpon>AddToWatchesCustomSliceEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DebugVisualizer\CellStyling.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
@@ -400,6 +403,10 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Commands\AddToWatchesCustomSliceEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DebugVisualizer\NumberInputStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

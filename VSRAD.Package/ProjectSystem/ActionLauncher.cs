@@ -120,7 +120,7 @@ namespace VSRAD.Package.ProjectSystem
                 _projectSources.SaveProjectState();
 
                 var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches);
-                var runner = new ActionRunner(_channel, _serviceProvider, env);
+                var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
                 return new ActionExecution(actionError, transients, runResult);
