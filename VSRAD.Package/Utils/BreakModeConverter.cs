@@ -4,8 +4,8 @@ namespace VSRAD.Package.Utils
 {
     class BreakModeConverter
     {
-        static public readonly string[] BreakModeOptions = new[] {  "Single active breakpoint, round-robin",
-                                                                    "Single active breakpoint, rerun same line",
+        static public readonly string[] BreakModeOptions = new[] {  "Round-robin, single active breakpoint",
+                                                                    "Rerun line, single active breakpoint",
                                                                     "Multiple active breakpoints" };
 
         static public readonly string[] ShortBreakModeOptions = new[] { "Round-robin", "Rerun line", "Multiple" };

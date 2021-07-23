@@ -36,7 +36,8 @@ namespace VSRAD.Package.Commands
 
         private void HandleCustomSlice(uint start, uint step, uint count, string watchName)
         {
-            var arrayRangeWatch = ArrayRange.FormatCustomSlice(watchName, (int)start, (int)step, (int)count);
+            var arrayRangeWatch = ArrayRange.FormatCustomSlice(watchName, (int)start, (int)step, (int)count,
+                _toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
             foreach (var watch in arrayRangeWatch)
                 _toolIntegration.AddWatchFromEditor(watch);
         }

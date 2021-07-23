@@ -39,13 +39,13 @@ namespace VSRAD.Package.Utils
             return result;
         }
 
-        public static string[] FormatCustomSlice(string name, int start, int step, int count)
+        public static string[] FormatCustomSlice(string name, int start, int step, int count, bool matchBrackets)
         {
             var numericMatch = _numericIndexPattern.Match(name);
             var symbolMatch = _symbolIndexPattern.Match(name);
 
             var result = new string[count];
-            if (numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success))
+            if ((numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success)) || !matchBrackets)
             {
                 for (int i = 0; i < count; i++)
                     result[i] = $"{name}[{start + (i * step)}]";
