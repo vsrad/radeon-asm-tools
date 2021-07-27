@@ -40,7 +40,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var analysisResult = _analysisResult;
             if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            var block = analysisResult.GetBlock(span.End);
+            var point = span.End - 1; // span is right exclusive
+            var block = analysisResult.GetBlock(point);
             if (block.Type == BlockType.Comment) return classificationSpans;
             if (block.Type == BlockType.Function)
             {
