@@ -140,6 +140,8 @@ namespace VSRAD.Package.Utils
                     }
                     newFrameContent.Loaded += NewDocumentFrameLoaded;
                 }
+                
+                newTabGroup.SelectedElement = newDocumentFrameView;
             }
             // Otherwise, make the document active in its tab group without changing the global active document
             else
