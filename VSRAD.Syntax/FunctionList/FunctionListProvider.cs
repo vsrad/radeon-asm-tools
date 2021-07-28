@@ -176,7 +176,8 @@ namespace VSRAD.Syntax.FunctionList
                     .WithCancellation(cancellationToken)
                     .ToList();
 
-                await _functionListControl.UpdateListAsync(tokens, cancellationToken);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+                _functionListControl.ReplaceListItems(tokens);
             });
         }
 
