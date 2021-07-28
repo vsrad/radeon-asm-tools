@@ -1,9 +1,9 @@
 ﻿namespace VSRAD.SyntaxParser
 {
     using Antlr4.Runtime;
-    partial class RadAsmLexer : Lexer
+    partial class RadAsm1Lexer : Lexer
     {
-        public RadAsmLexer(string input) : this(new AntlrInputStream(input)) { }
+        public RadAsm1Lexer(string input) : this(new AntlrInputStream(input)) { }
     }
 
     partial class RadAsm2Lexer : Lexer

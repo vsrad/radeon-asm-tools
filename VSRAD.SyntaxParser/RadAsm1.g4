@@ -1,4 +1,4 @@
-﻿grammar RadAsm;
+﻿grammar RadAsm1;
 
 function
     : MACRO ENDM
