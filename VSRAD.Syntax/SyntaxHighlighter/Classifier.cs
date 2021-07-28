@@ -40,8 +40,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var analysisResult = _analysisResult;
             if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            var block = analysisResult.GetBlock(span.Start);
+            var point = span.End - 1; // span is right exclusive
+            var block = analysisResult.GetBlock(point);
             if (block.Type == BlockType.Comment) return classificationSpans;
+            if (block.Type == BlockType.Function)
+            {
+                var funcBlock = (FunctionBlock)block;
+                var funcToken = funcBlock.Name;
+                var funcClassificationSpan = new ClassificationSpan(funcToken.Span, _tokenClassification[funcToken.Type]);
+                classificationSpans.Add(funcClassificationSpan);
+            }
 
             foreach (var scopeToken in block.Tokens)
             {
