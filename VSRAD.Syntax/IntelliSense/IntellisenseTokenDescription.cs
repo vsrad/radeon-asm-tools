@@ -11,6 +11,7 @@ using VSRAD.Syntax.Core.Blocks;
 using System.Threading;
 using Microsoft.VisualStudio.Text;
 using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.Language.StandardClassification;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -75,9 +76,11 @@ namespace VSRAD.Syntax.IntelliSense
             cancellationToken.ThrowIfCancellationRequested();
 
             var typeName = token.Type.GetName();
+            var typeImage = token.Type.GetImageElement();
             var document = _documentFactory.GetOrCreateDocument(token.AnalysisToken.Snapshot.TextBuffer);
 
             var builder = new ClassifiedTextBuilder();
+            builder.AddElement(typeImage);
 
             if (token.Type == RadAsmTokenType.Instruction)
             {
@@ -191,38 +194,61 @@ namespace VSRAD.Syntax.IntelliSense
         public class ClassifiedTextBuilder
         {
             private readonly LinkedList<ClassifiedTextRun> _classifiedTextRuns;
-            private readonly LinkedList<ClassifiedTextElement> _classifiedTextElements;
+            private readonly LinkedList<ContainerElement> _containers;
+            private readonly LinkedList<object> _elements;
 
             public ClassifiedTextBuilder()
             {
                 _classifiedTextRuns = new LinkedList<ClassifiedTextRun>();
-                _classifiedTextElements = new LinkedList<ClassifiedTextElement>();
+                _containers = new LinkedList<ContainerElement>();
+                _elements = new LinkedList<object>();
             }
 
             public ContainerElement Build() =>
-                new ContainerElement(ContainerElementStyle.Stacked, _classifiedTextElements);
+                new ContainerElement(ContainerElementStyle.Stacked, _containers);
 
             public ClassifiedTextBuilder SetAsElement()
             {
-                _classifiedTextElements.AddLast(new ClassifiedTextElement(_classifiedTextRuns));
-                _classifiedTextRuns.Clear();
+                if (_classifiedTextRuns.Count > 0)
+                {
+                    var textElement = new ClassifiedTextElement(_classifiedTextRuns);
+                    _elements.AddLast(textElement);
+                    _classifiedTextRuns.Clear();
+                }
+
+                var container = new ContainerElement(ContainerElementStyle.Wrapped, _elements);
+                _containers.AddLast(container);
+                _elements.Clear();
+
                 return this;
             }
 
-            public ClassifiedTextBuilder AddClassifiedText(NavigationToken navigationToken)
+            public ClassifiedTextBuilder AddElement(object element)
             {
-                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.GetText(), navigationToken.Navigate));
+                _elements.AddLast(element);
                 return this;
             }
 
-            public ClassifiedTextBuilder AddClassifiedText(RadAsmTokenType tokenType, string text)
+            public ClassifiedTextBuilder AddClassifiedText(string classificationName, string text)
             {
-                _classifiedTextRuns.AddLast(new ClassifiedTextRun(tokenType.GetClassificationTypeName(), text));
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(classificationName, text));
+                return this;
+            }
+
+            public ClassifiedTextBuilder AddClassifiedText(string classificationName, string text, System.Action navigation)
+            {
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(classificationName, text, navigation));
                 return this;
             }
 
             public ClassifiedTextBuilder AddClassifiedText(string text) =>
-                AddClassifiedText(RadAsmTokenType.Identifier, text);
+                AddClassifiedText(PredefinedClassificationTypeNames.Other, text);
+
+            public ClassifiedTextBuilder AddClassifiedText(NavigationToken navigationToken) =>
+                AddClassifiedText(navigationToken.Type.GetClassificationTypeName(), navigationToken.GetText(), navigationToken.Navigate);
+
+            public ClassifiedTextBuilder AddClassifiedText(RadAsmTokenType tokenType, string text) =>
+                AddClassifiedText(tokenType.GetClassificationTypeName(), text);
         }
     }
 }
