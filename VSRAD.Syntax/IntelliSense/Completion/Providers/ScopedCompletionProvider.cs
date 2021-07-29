@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +12,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
     internal class ScopedCompletionProvider : RadCompletionProvider
     {
-        private static readonly ImageElement LabelIcon = GetImageElement(KnownImageIds.Label);
-        private static readonly ImageElement GlobalVariableIcon = GetImageElement(KnownImageIds.GlobalVariable);
-        private static readonly ImageElement LocalVariableIcon = GetImageElement(KnownImageIds.LocalVariable);
-        private static readonly ImageElement ArgumentIcon = GetImageElement(KnownImageIds.Parameter);
+        private static readonly ImageElement LabelIcon = RadAsmTokenType.Label.GetImageElement();
+        private static readonly ImageElement GlobalVariableIcon = RadAsmTokenType.GlobalVariable.GetImageElement();
+        private static readonly ImageElement LocalVariableIcon = RadAsmTokenType.LocalVariable.GetImageElement();
+        private static readonly ImageElement ParameterIcon = RadAsmTokenType.FunctionParameter.GetImageElement();
         private readonly INavigationTokenService _navigationTokenService;
 
         private bool _autocompleteLabels;
@@ -71,7 +70,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                             case RadAsmTokenType.LocalVariable:
                                 yield return CreateCompletionItem(token, LocalVariableIcon); break;
                             case RadAsmTokenType.FunctionParameter:
-                                yield return CreateCompletionItem(token, ArgumentIcon); break;
+                                yield return CreateCompletionItem(token, ParameterIcon); break;
                         }
                     }
                 }

@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +8,13 @@ using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.Syntax.Helpers;
 using System.Threading;
+using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
     internal class InstructionCompletionProvider : RadCompletionProvider
     {
-        private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
+        private static readonly ImageElement Icon = RadAsmTokenType.Instruction.GetImageElement();
         private bool _autocomplete;
         private readonly List<MultipleCompletionItem> _asm1InstructionCompletions;
         private readonly List<MultipleCompletionItem> _asm2InstructionCompletions;
