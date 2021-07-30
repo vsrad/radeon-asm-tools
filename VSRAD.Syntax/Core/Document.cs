@@ -38,7 +38,7 @@ namespace VSRAD.Syntax.Core
 
         private void FileActionOccurred(object sender, TextDocumentFileActionEventArgs e)
         {
-            if (e.FileActionType == FileActionTypes.DocumentRenamed)
+            if (e.FileActionType.HasFlag(FileActionTypes.DocumentRenamed))
             {
                 var oldPath = Path;
                 Path = e.FilePath;
