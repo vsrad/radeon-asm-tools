@@ -64,10 +64,20 @@ namespace VSRAD.Syntax.Core
         {
             try
             {
-                // in some cases the text buffer may cause ContentChanged with 0 changes
-                if (args.Changes.Count == 0) return;
-
-                ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes));
+                // In some cases the text buffer may cause ContentChanged with 0 changes
+                // This usually happens when the file is reloaded from disk,
+                //    but the content is unchanged(e.g.when using Disassemble/ Preprocess actions from VSRAD.Package)
+                // CurrentSnapshot and CurrentResult still need to be updated because the snapshot version is incremented
+                // (otherwise the snapshot in IAnalysisResult won't match the snapshot VS provides to IClassifier)
+                if (args.Changes.Count == 0)
+                {
+                    CurrentSnapshot = args.After;
+                    RaiseTokensChanged(updated: new List<TrackingToken>(), RescanReason.ContentChanged);
+                }
+                else
+                {
+                    ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes));
+                }
             }
             catch (Exception ex)
             {

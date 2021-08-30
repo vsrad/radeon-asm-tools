@@ -137,9 +137,9 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     break;
                 case nameof(Options.DebuggerOptions.GroupSize):
                 case nameof(Options.VisualizerOptions.MaskLanes):
-                case nameof(Options.VisualizerOptions.LaneGrouping):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
-                case nameof(Options.VisualizerOptions.VerticalSplit):
+                case nameof(Options.VisualizerAppearance.LaneGrouping):
+                case nameof(Options.VisualizerAppearance.VerticalSplit):
                 case nameof(Options.VisualizerAppearance.LaneSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
@@ -162,13 +162,19 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         _context.Options.VisualizerAppearance.HeadersAlignment
                     );
                     break;
+                case nameof(Options.VisualizerAppearance.BinHexSeparator):
+                case nameof(Options.VisualizerAppearance.IntUintSeparator):
+                case nameof(Options.VisualizerAppearance.BinHexLeadingZeroes):
+                    foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
+                        SetRowContentsFromBreakState(row);
+                    break;
             }
         }
 
         private void AddWatch(string watchName)
         {
             _table.RemoveNewWatchRow();
-            _table.AppendVariableRow(new Watch(watchName, VariableType.Hex, isAVGPR: false));
+            _table.AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
             _table.PrepareNewWatchRow();
             _context.Options.DebuggerOptions.Watches.Clear();
             _context.Options.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
@@ -180,14 +186,18 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 return;
             if (row.Index == 0)
             {
-                RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem());
+                RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem(),
+                    _context.Options.VisualizerAppearance.BinHexSeparator, _context.Options.VisualizerAppearance.IntUintSeparator,
+                    _context.Options.VisualizerAppearance.BinHexLeadingZeroes);
             }
             else
             {
                 var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
                 var watchData = _context.BreakData.GetWatch(watch);
                 if (watchData != null)
-                    RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData);
+                    RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData,
+                        _context.Options.VisualizerAppearance.BinHexSeparator, _context.Options.VisualizerAppearance.IntUintSeparator,
+                        _context.Options.VisualizerAppearance.BinHexLeadingZeroes);
                 else
                     EraseRowData(row, _table.DataColumnCount);
             }
@@ -199,11 +209,12 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
         }
 
-        private static void RenderRowData(System.Windows.Forms.DataGridViewRow row, uint groupSize, WatchView data)
+        private static void RenderRowData(System.Windows.Forms.DataGridViewRow row, uint groupSize, WatchView data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
         {
             var variableType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
             for (int i = 0; i < groupSize; i++)
-                row.Cells[i + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(variableType, data[i]);
+                row.Cells[i + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(variableType, data[i],
+                                                                            binHexSeparator, intSeparator, leadingZeroes);
         }
     }
 }

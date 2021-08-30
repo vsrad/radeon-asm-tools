@@ -48,7 +48,7 @@ namespace VSRAD.Syntax.Core.Parser
         private async Task<IParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var tokens = trackingTokens
-                .Where(t => t.Type != RadAsmLexer.WHITESPACE && t.Type != RadAsmLexer.LINE_COMMENT)
+                .Where(t => t.Type != RadAsm1Lexer.WHITESPACE && t.Type != RadAsm1Lexer.LINE_COMMENT)
                 .AsParallel()
                 .AsOrdered()
                 .WithCancellation(cancellation)
@@ -70,31 +70,31 @@ namespace VSRAD.Syntax.Core.Parser
                 cancellation.ThrowIfCancellationRequested();
                 var token = tokens[i];
 
-                if (token.Type == RadAsmLexer.PP_ELSE || token.Type == RadAsmLexer.PP_ELSIF || token.Type == RadAsmLexer.PP_ELIF)
+                if (token.Type == RadAsm1Lexer.PP_ELSE || token.Type == RadAsm1Lexer.PP_ELSIF || token.Type == RadAsm1Lexer.PP_ELIF)
                 {
                     preprocessBlock = true;
                 }
-                else if (token.Type == RadAsmLexer.PP_ENDIF)
+                else if (token.Type == RadAsm1Lexer.PP_ENDIF)
                 {
                     preprocessBlock = false;
                 }
 
                 if (preprocessBlock)
                 {
-                    if (token.Type == RadAsmLexer.IDENTIFIER)
+                    if (token.Type == RadAsm1Lexer.IDENTIFIER)
                         TryAddInstruction(token.GetText(version), token, currentBlock, version);
 
                     continue;
                 }
                 else if (parserState == ParserState.SearchInScope)
                 {
-                    if (token.Type == RadAsmLexer.BLOCK_COMMENT)
+                    if (token.Type == RadAsm1Lexer.BLOCK_COMMENT)
                     {
                         blocks.AppendBlock(new Block(currentBlock, BlockType.Comment, token, token));
                     }
-                    else if (token.Type == RadAsmLexer.MACRO)
+                    else if (token.Type == RadAsm1Lexer.MACRO)
                     {
-                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.IDENTIFIER)
+                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
                         {
                             var funcDefinition = new DefinitionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, funcDefinition);
@@ -103,7 +103,7 @@ namespace VSRAD.Syntax.Core.Parser
                             i += 1;
                         }
                     }
-                    else if (token.Type == RadAsmLexer.ENDM && currentBlock.Type == BlockType.Function)
+                    else if (token.Type == RadAsm1Lexer.ENDM && currentBlock.Type == BlockType.Function)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
                         definitionContainer.ClearScope(currentBlock);
@@ -111,7 +111,7 @@ namespace VSRAD.Syntax.Core.Parser
 
                         parserState = ParserState.SearchInScope;
                     }
-                    else if (token.Type == RadAsmLexer.EOL)
+                    else if (token.Type == RadAsm1Lexer.EOL)
                     {
                         if (searchInCondition)
                         {
@@ -120,9 +120,9 @@ namespace VSRAD.Syntax.Core.Parser
                         }
 
                         if (tokens.Length - i > 3
-                            && tokens[i + 1].Type == RadAsmLexer.IDENTIFIER
-                            && tokens[i + 2].Type == RadAsmLexer.COLON
-                            && tokens[i + 3].Type == RadAsmLexer.EOL)
+                            && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER
+                            && tokens[i + 2].Type == RadAsm1Lexer.COLON
+                            && tokens[i + 3].Type == RadAsm1Lexer.EOL)
                         {
                             var labelDefinition = new DefinitionToken(RadAsmTokenType.Label, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, labelDefinition);
@@ -130,26 +130,26 @@ namespace VSRAD.Syntax.Core.Parser
                             i += 2;
                         }
                     }
-                    else if (token.Type == RadAsmLexer.IF
-                        || token.Type == RadAsmLexer.IFDEF
-                        || token.Type == RadAsmLexer.IFNOTDEF
-                        || token.Type == RadAsmLexer.IFB
-                        || token.Type == RadAsmLexer.IFC
-                        || token.Type == RadAsmLexer.IFEQ
-                        || token.Type == RadAsmLexer.IFEQS
-                        || token.Type == RadAsmLexer.IFGE
-                        || token.Type == RadAsmLexer.IFGT
-                        || token.Type == RadAsmLexer.IFLE
-                        || token.Type == RadAsmLexer.IFLT
-                        || token.Type == RadAsmLexer.IFNB
-                        || token.Type == RadAsmLexer.IFNC
-                        || token.Type == RadAsmLexer.IFNE
-                        || token.Type == RadAsmLexer.IFNES)
+                    else if (token.Type == RadAsm1Lexer.IF
+                        || token.Type == RadAsm1Lexer.IFDEF
+                        || token.Type == RadAsm1Lexer.IFNOTDEF
+                        || token.Type == RadAsm1Lexer.IFB
+                        || token.Type == RadAsm1Lexer.IFC
+                        || token.Type == RadAsm1Lexer.IFEQ
+                        || token.Type == RadAsm1Lexer.IFEQS
+                        || token.Type == RadAsm1Lexer.IFGE
+                        || token.Type == RadAsm1Lexer.IFGT
+                        || token.Type == RadAsm1Lexer.IFLE
+                        || token.Type == RadAsm1Lexer.IFLT
+                        || token.Type == RadAsm1Lexer.IFNB
+                        || token.Type == RadAsm1Lexer.IFNC
+                        || token.Type == RadAsm1Lexer.IFNE
+                        || token.Type == RadAsm1Lexer.IFNES)
                     {
                         currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
                         searchInCondition = true;
                     }
-                    else if ((token.Type == RadAsmLexer.ELSEIF || token.Type == RadAsmLexer.ELSE) && currentBlock.Type == BlockType.Condition)
+                    else if ((token.Type == RadAsm1Lexer.ELSEIF || token.Type == RadAsm1Lexer.ELSE) && currentBlock.Type == BlockType.Condition)
                     {
                         currentBlock.SetEnd(tokens[i - 1].Start.GetPosition(version), token);
                         definitionContainer.ClearScope(currentBlock);
@@ -158,43 +158,43 @@ namespace VSRAD.Syntax.Core.Parser
                         currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Condition, token));
                         searchInCondition = true;
                     }
-                    else if (token.Type == RadAsmLexer.ENDIF && currentBlock.Type == BlockType.Condition)
+                    else if (token.Type == RadAsm1Lexer.ENDIF && currentBlock.Type == BlockType.Condition)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
                         definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
                     }
-                    else if (token.Type == RadAsmLexer.REPT
-                        || token.Type == RadAsmLexer.IRP
-                        || token.Type == RadAsmLexer.IRPC)
+                    else if (token.Type == RadAsm1Lexer.REPT
+                        || token.Type == RadAsm1Lexer.IRP
+                        || token.Type == RadAsm1Lexer.IRPC)
                     {
                         currentBlock = blocks.AppendBlock(new Block(currentBlock, BlockType.Repeat, token));
                         searchInCondition = true;
                     }
-                    else if (token.Type == RadAsmLexer.ENDR && currentBlock.Type == BlockType.Repeat)
+                    else if (token.Type == RadAsm1Lexer.ENDR && currentBlock.Type == BlockType.Repeat)
                     {
                         currentBlock.SetEnd(token.GetEnd(version), token);
                         definitionContainer.ClearScope(currentBlock);
                         currentBlock = currentBlock.GetParent();
                     }
-                    else if (token.Type == RadAsmLexer.SET)
+                    else if (token.Type == RadAsm1Lexer.SET)
                     {
-                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.IDENTIFIER)
+                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
                         {
-                            var variableDefinition = (tokens.Length - i > 3 && tokens[i + 2].Type == RadAsmLexer.COMMA && tokens[i + 3].Type == RadAsmLexer.CONSTANT)
+                            var variableDefinition = (tokens.Length - i > 3 && tokens[i + 2].Type == RadAsm1Lexer.COMMA && tokens[i + 3].Type == RadAsm1Lexer.CONSTANT)
                                 ? new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version, tokens[i + 3])
                                 : new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, variableDefinition);
                             currentBlock.AddToken(variableDefinition);
                         }
                     }
-                    else if (token.Type == RadAsmLexer.IDENTIFIER)
+                    else if (token.Type == RadAsm1Lexer.IDENTIFIER)
                     {
                         var tokenText = token.GetText(version);
                         if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
                             !TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
                         {
-                            if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.EQ)
+                            if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.EQ)
                             {
                                 var variableDefinition = new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
                                 definitionContainer.Add(currentBlock, variableDefinition);
@@ -206,10 +206,10 @@ namespace VSRAD.Syntax.Core.Parser
                             }
                         }
                     }
-                    else if (token.Type == RadAsmLexer.INCLUDE
-                        || token.Type == RadAsmLexer.PP_INCLUDE)
+                    else if (token.Type == RadAsm1Lexer.INCLUDE
+                        || token.Type == RadAsm1Lexer.PP_INCLUDE)
                     {
-                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsmLexer.STRING_LITERAL)
+                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.STRING_LITERAL)
                         {
                             await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock, definitionContainer);
                             i += 1;
@@ -218,14 +218,14 @@ namespace VSRAD.Syntax.Core.Parser
                 }
                 else if (parserState == ParserState.SearchArguments)
                 {
-                    if (token.Type == RadAsmLexer.EOL)
+                    if (token.Type == RadAsm1Lexer.EOL)
                     {
                         currentBlock.SetStart(tokens[i - 1].GetEnd(version));
                         parserState = ParserState.SearchInScope;
                         continue;
                     }
 
-                    if (token.Type == RadAsmLexer.IDENTIFIER)
+                    if (token.Type == RadAsm1Lexer.IDENTIFIER)
                     {
                         var functionDefinition = new DefinitionToken(RadAsmTokenType.FunctionParameter, token, version);
                         definitionContainer.Add(currentBlock, functionDefinition, $"\\{functionDefinition.GetText()}");

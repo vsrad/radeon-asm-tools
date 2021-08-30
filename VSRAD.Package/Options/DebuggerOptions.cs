@@ -56,6 +56,16 @@ namespace VSRAD.Package.Options
         private BreakMode _breakMode;
         public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
 
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue(true)]
+        private bool _forceOppositeTab = true;
+        public bool ForceOppositeTab { get => _forceOppositeTab; set => SetField(ref _forceOppositeTab, value); }
+        
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue(true)]
+        private bool _preserveActiveDoc = true;
+        public bool PreserveActiveDoc { get => _preserveActiveDoc; set => SetField(ref _preserveActiveDoc, value); }
+
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
 

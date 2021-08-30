@@ -8,6 +8,7 @@ using VSRAD.DebugServer;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 using Task = System.Threading.Tasks.Task;
 
@@ -19,12 +20,14 @@ namespace VSRAD.Package.Server
         private readonly SVsServiceProvider _serviceProvider;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
         private readonly ActionEnvironment _environment;
+        private readonly IProject _project;
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ActionEnvironment environment)
+        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ActionEnvironment environment, IProject project)
         {
             _channel = channel;
             _serviceProvider = serviceProvider;
             _environment = environment;
+            _project = project;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
@@ -173,7 +176,8 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker);
+            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker,
+                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
             return new StepResult(true, "", "");
         }
 

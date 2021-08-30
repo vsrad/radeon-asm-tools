@@ -131,11 +131,15 @@
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
+    <Compile Include="Commands\BreakModeDropdownCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
+    <Compile Include="Commands\AddToWatchesCustomSliceEditor.xaml.cs">
+      <DependentUpon>AddToWatchesCustomSliceEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="DebugVisualizer\CellStyling.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStyling.cs" />
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
@@ -242,6 +246,7 @@
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\BreakModeConverter.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
     <Compile Include="Utils\MruCollection.cs" />
@@ -398,6 +403,10 @@
     </XamlPropertyRule>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Commands\AddToWatchesCustomSliceEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="DebugVisualizer\NumberInputStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

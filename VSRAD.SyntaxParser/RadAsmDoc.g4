@@ -6,11 +6,16 @@ LET     : 'let';
 
 /* "Structural symbols" */
 
-COMMA      : ',' ;
-COLON      : ':' ;
+COMMA           : ',' ;
+LCURVEBRACKET   : '{' ;
+RCURVEBRACKET   : '}' ;
 
 IDENTIFIER
-    : [a-zA-Z] [a-zA-Z0-9_]*
+    : [a-zA-Z] [a-zA-Z0-9_:[\]]*
+    ;
+
+BLOCK_COMMENT
+    : '/*' .*? ('*/' | EOF)
     ;
 
 WHITESPACE
@@ -21,10 +26,6 @@ EOL
     : '\r'? '\n'
     ;
 
-BLOCK_COMMENT
-    : '/*' .*? ('*/' | EOF)
-    ;
-
 UNKNOWN
-    : ~[ \t\r\n,:]+
+    : ~[ \t\r\n,{}]+
     ;

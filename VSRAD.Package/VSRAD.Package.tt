@@ -167,6 +167,14 @@
           <LocCanonicalName>RadDebug.AddToWatches</LocCanonicalName>
         </Strings>
       </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddToWatchesCustomCommandId" priority="0x1401" type="Button">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Custom</ButtonText>
+        </Strings>
+      </Button>
       <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
         <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -256,11 +264,21 @@
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
       </Combo>
+      <Combo guid="guidCmdSetBreakMode" id="BreakModeDropdownId" priority="100" type="DropDownCombo" defaultWidth="90" idCommandList="BreakModeDropdownListId">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Break Mode</ButtonText>
+          <ToolTipText>Select the breakpoints placement mode</ToolTipText>
+        </Strings>
+      </Combo>
     </Combos>
   </Commands>
 
   <KeyBindings>
-    <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="E" key2="A" mod1="Control" mod2="Control" editor="guidVSStd97" />
     <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="D" mod1="Alt" editor="guidVSStd97" />
     <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="W" mod1="Alt" editor="guidVSStd97" />
   </KeyBindings>
@@ -315,6 +333,7 @@
       <IDSymbol value="0x1025" name="AddArrayToWatchesMenuGroup" />
       <IDSymbol value="0x1030" name="AddArrayToWatchesMenuId" />
       <IDSymbol value="0x1031" name="AddArrayToWatchesFromHeaderId" />
+      <IDSymbol value="0x1900" name="AddToWatchesCustomCommandId" />
 <# for (int i = 0; i < 16; ++i) { #>
       <IDSymbol value="0x<#= (0x1100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Id" />
       <IDSymbol value="0x<#= (0x4100 + i).ToString("x") #>" name="AddArrayToWatchesMenuFrom<#= i #>Group" />
@@ -329,6 +348,11 @@
       <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
       <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
     </GuidSymbol>-->
+    <GuidSymbol name="guidCmdSetBreakMode" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
+      <IDSymbol name="BreakModeDropdownId" value="0x11" />
+      <IDSymbol name="BreakModeDropdownListId" value="0x101" />
+    </GuidSymbol>
+    
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
       <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
       <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />

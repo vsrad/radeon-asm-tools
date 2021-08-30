@@ -1,9 +1,9 @@
-﻿using Microsoft.VisualStudio;
+﻿using Microsoft;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System.Runtime.InteropServices;
 using VSRAD.Syntax.Core.Lexer;
 using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
@@ -21,20 +21,16 @@ namespace VSRAD.Syntax.Core
         public event DocumentRenamedEventHandler DocumentRenamed;
         public event DocumentClosedEventHandler DocumentClosed;
 
-        protected readonly ITextDocument _textDocument;
-        protected readonly ILexer _lexer;
-        protected readonly IParser _parser;
+        private readonly ITextDocument _textDocument;
         private readonly ITextBuffer _textBuffer;
 
         public Document(ITextDocument textDocument, ILexer lexer, IParser parser)
         {
-            _lexer = lexer;
-            _parser = parser;
             _textDocument = textDocument;
             _textBuffer = _textDocument.TextBuffer;
             Path = _textDocument.FilePath;
-            DocumentTokenizer = new DocumentTokenizer(_textBuffer, _lexer);
-            DocumentAnalysis = new DocumentAnalysis(this, DocumentTokenizer, _parser);
+            DocumentTokenizer = new DocumentTokenizer(_textBuffer, lexer);
+            DocumentAnalysis = new DocumentAnalysis(this, DocumentTokenizer, parser);
             IsDisposed = false;
 
             _textDocument.FileActionOccurred += FileActionOccurred;
@@ -42,7 +38,7 @@ namespace VSRAD.Syntax.Core
 
         private void FileActionOccurred(object sender, TextDocumentFileActionEventArgs e)
         {
-            if (e.FileActionType == FileActionTypes.DocumentRenamed)
+            if (e.FileActionType.HasFlag(FileActionTypes.DocumentRenamed))
             {
                 var oldPath = Path;
                 Path = e.FilePath;
@@ -58,19 +54,23 @@ namespace VSRAD.Syntax.Core
             VsShellUtilities.OpenDocument(serviceProvider, Path);
         }
 
-        public virtual void NavigateToPosition(int position)
+        public void NavigateToPosition(int position)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-
             var serviceProvider = ServiceProvider.GlobalProvider;
+
             var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager;
             var adapterService = serviceProvider.GetMefService<IVsEditorAdaptersFactoryService>();
-
-            if (IsDisposed) OpenDocumentInEditor();
+            Assumes.Present(textManager);
+            Assumes.Present(adapterService);
 
             var vsTextBuffer = adapterService.GetBufferAdapter(_textBuffer);
-            var hr = textManager.NavigateToPosition(vsTextBuffer, VSConstants.LOGVIEWID.TextView_guid, position, 0);
-            if (hr != VSConstants.S_OK) throw Marshal.GetExceptionForHR(hr);
+            Assumes.NotNull(vsTextBuffer);
+
+            ErrorHandler.ThrowOnFailure(textManager.NavigateToPosition(vsTextBuffer, 
+                VSConstants.LOGVIEWID.TextView_guid, 
+                iPos: position, 
+                iLen: 0));
         }
 
         public virtual void Dispose()

@@ -7,7 +7,6 @@
              xmlns:viz="clr-namespace:VSRAD.Package.DebugVisualizer"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              xmlns:local="clr-namespace:VSRAD.Package.ToolWindows"
-             xmlns:opts="clr-namespace:VSRAD.Package.Options"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="340">
     <UserControl.Resources>
@@ -15,11 +14,6 @@
             <ObjectDataProvider x:Key="ScalingMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="viz:ScalingMode"/>
-                </ObjectDataProvider.MethodParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider x:Key="BreakMode" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
-                <ObjectDataProvider.MethodParameters>
-                    <x:Type TypeName="opts:BreakMode"/>
                 </ObjectDataProvider.MethodParameters>
             </ObjectDataProvider>
             <utils:MagicNumberConverter x:Key="MagicNumberConverter"/>
@@ -92,13 +86,6 @@
                              Text="{Binding Options.VisualizerOptions.MagicNumber, Converter={StaticResource MagicNumberConverter}, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
-                    <CheckBox Content="Vertical separator between each" VerticalAlignment="Center" Padding="4,0,0,0"
-                            IsChecked="{Binding Options.VisualizerOptions.VerticalSplit, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBox Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
-                                        Text="{Binding Options.VisualizerOptions.LaneGrouping, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="columns" VerticalAlignment="Center" Margin="5,0,0,0"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Autosave opened files" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.DebuggerOptions.Autosave, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
@@ -111,18 +98,12 @@
                                 IsChecked="{Binding Options.VisualizerOptions.MatchBracketsOnAddToWatches, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
-                    <Label Content="Break mode:" VerticalAlignment="Center" Margin="15,0,0,0"/>
-                    <ComboBox SelectedItem="{Binding Options.DebuggerOptions.BreakMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource BreakMode}}" VerticalContentAlignment="Center">
-                        <ComboBox.Resources>
-                            <local:BreakModeConverter x:Key="BreakModeConverter" />
-                        </ComboBox.Resources>
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Converter={StaticResource BreakModeConverter}}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
+                    <CheckBox Content="Open in Editor: Force new document to be opened in the opposite tab" VerticalAlignment="Center" Padding="4,0,0,0"
+                                IsChecked="{Binding Options.DebuggerOptions.ForceOppositeTab, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <CheckBox Content="Open in Editor: Preserve active document" VerticalAlignment="Center" Padding="4,0,0,0"
+                                IsChecked="{Binding Options.DebuggerOptions.PreserveActiveDoc, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
                     <StackPanel Margin="0,6,0,0">
@@ -145,6 +126,17 @@
                             <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
+                            <CheckBox Content="Vertical separator between each" VerticalAlignment="Center"
+                                IsChecked="{Binding Options.VisualizerAppearance.VerticalSplit, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBox Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                                        Text="{Binding Options.VisualizerAppearance.LaneGrouping, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="columns" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <CheckBox Content="Append leading zeroes to binary/hex numbers" VerticalAlignment="Center"
+                                      IsChecked="{Binding Options.VisualizerAppearance.BinHexLeadingZeroes, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Column Separator Width:" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.LaneSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -153,6 +145,18 @@
                             <TextBlock Text="Hidden Column Separator Width:" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Insert separator in binary/hex mode between groups of" VerticalAlignment="Center"/>
+                            <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                                        Value="{Binding Options.VisualizerAppearance.BinHexSeparator, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="digits" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <TextBlock Text="Insert separator in int/uint mode between groups of" VerticalAlignment="Center"/>
+                            <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                                        Value="{Binding Options.VisualizerAppearance.IntUintSeparator, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="digits" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Darken odd rows by" VerticalAlignment="Center"/>

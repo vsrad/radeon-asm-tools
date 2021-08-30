@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Moq;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using Xunit;
 
@@ -16,6 +18,8 @@ namespace VSRAD.PackageTests.Server
 {
     public class ActionRunnerTests
     {
+        private readonly IProject _project = new Mock<IProject>().Object;
+
         [Fact]
         public async Task SucessfulRunTestAsync()
         {
@@ -26,7 +30,7 @@ namespace VSRAD.PackageTests.Server
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             var localTempFile = Path.GetRandomFileName();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) }, (FetchMetadata command) =>
             {
@@ -52,7 +56,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyRLRemoteErrorTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep>
             {
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/mizu/machete/key3_49" },
@@ -78,7 +82,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyRLMissingParentDirectoryTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
 
             var parentDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Assert.False(Directory.Exists(parentDir));
@@ -97,7 +101,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyRLLocalErrorTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
 
             var file = Path.GetTempFileName();
             File.SetAttributes(file, FileAttributes.ReadOnly);
@@ -130,7 +134,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyLRRemoteErrorTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = Path.GetTempFileName(), TargetPath = "raw3" } };
 
             channel.ThenRespond(new PutFileResponse { Status = PutFileStatus.PermissionDenied });
@@ -148,7 +152,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyLRLocalErrorTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
 
             var localPath = Path.GetTempFileName();
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "", CheckTimestamp = true } };
@@ -183,7 +187,7 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task CopyLLTestAsync()
         {
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""));
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""), _project);
 
             var file = Path.GetTempFileName();
             var target = Path.GetTempFileName();
@@ -212,7 +216,7 @@ namespace VSRAD.PackageTests.Server
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" },
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
             };
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/parker/audio"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/parker/audio"), _project);
 
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stdout = "", Stderr = "" });
             var result = await runner.RunAsync("UFOW", steps, false);
@@ -247,7 +251,7 @@ namespace VSRAD.PackageTests.Server
             {
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = $"-c \"print('success', file=open(r'{file}', 'w'))\"" }
             };
-            var runner = new ActionRunner(channel: null, serviceProvider: null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""));
+            var runner = new ActionRunner(channel: null, serviceProvider: null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""), _project);
             var result = await runner.RunAsync("", steps);
             Assert.True(result.Successful);
             Assert.Equal("", result.StepResults[0].Warning);
@@ -266,7 +270,7 @@ namespace VSRAD.PackageTests.Server
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = $"-c \"import os; print(os.getcwd())\"" }
             };
             var env = new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "");
-            var runner = new ActionRunner(channel: null, serviceProvider: null, env);
+            var runner = new ActionRunner(channel: null, serviceProvider: null, env, _project);
             var result = await runner.RunAsync("", steps);
             Assert.True(result.Successful);
 
@@ -288,7 +292,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var steps = new List<IActionStep> { new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "exe" } };
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/action/env/remote/dir"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/action/env/remote/dir"), _project);
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted(), command =>
             {
@@ -340,7 +344,7 @@ namespace VSRAD.PackageTests.Server
             });
             // 4. Level 1 Copy File
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var result = await runner.RunAsync("HTMT", level1Steps);
 
             Assert.True(result.Successful);
@@ -367,7 +371,7 @@ namespace VSRAD.PackageTests.Server
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "output" }, initTimestampFetch.FilePath));
@@ -413,7 +417,7 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
@@ -459,7 +463,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"), _project);
 
             /* File not found */
 
@@ -517,7 +521,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
                     binaryOutput: true, outputOffset)
             };
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""));
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""), _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
@@ -556,7 +560,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
                     binaryOutput: false, outputOffset: 1)
             };
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })));
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })), _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
@@ -587,7 +591,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""), _project);
 
             /* File not changed (GetTempFileName creates an empty file) */
 
@@ -641,7 +645,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                 readDebugData
             };
 
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/parker"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/parker"), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(100) }, (FetchMetadata command) =>
                 Assert.Equal(new[] { "/home/parker", "/home/parker/audio/checked" }, command.FilePath));

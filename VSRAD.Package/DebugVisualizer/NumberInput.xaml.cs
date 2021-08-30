@@ -115,5 +115,8 @@ namespace VSRAD.Package.DebugVisualizer
             // When the control loses focus, the displayed value should match the external binding (Value).
             RawValue = Value.ToString();
         }
+
+        private void SetSelectionOnTexboxKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e) =>
+            ((TextBox)sender).SelectAll();
     }
 }

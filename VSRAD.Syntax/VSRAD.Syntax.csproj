@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <MinimumVisualStudioVersion>15.0</MinimumVisualStudioVersion>
@@ -82,6 +82,7 @@
     <Compile Include="Core\IDocumentFactory.cs" />
     <Compile Include="Core\IDocumentTokenizer.cs" />
     <Compile Include="Core\CodeDocument.cs" />
+    <Compile Include="Core\InvisibleTextDocumentFactory.cs" />
     <Compile Include="Core\LexerParserFactory.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
@@ -107,7 +108,6 @@
     <Compile Include="Core\Tokens\TokenType.cs" />
     <Compile Include="Core\Tokens\TrackingToken.cs" />
     <Compile Include="Core\Tokens\VariableToken.cs" />
-    <Compile Include="Core\InvisibleDocument.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
@@ -119,6 +119,7 @@
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
+    <Compile Include="Helpers\CustomThreadHelper.cs" />
     <Compile Include="Helpers\DocumentObserver.cs" />
     <Compile Include="Helpers\Error.cs" />
     <Compile Include="Helpers\NotifyPropertyChanged.cs" />
@@ -154,6 +155,12 @@
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
+    <Compile Include="Options\BaseOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Options\BaseOptionModel.cs" />
+    <Compile Include="Options\GeneralOptions.cs" />
+    <Compile Include="Options\GeneralOptionProvider.cs" />
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
     <Compile Include="Options\Instructions\Instruction.cs" />
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
@@ -161,7 +168,9 @@
     <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="Options\GeneralOptionPage.cs" />
+    <Compile Include="Options\GeneralOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />

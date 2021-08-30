@@ -11,7 +11,7 @@ namespace VSRAD.PackageTests.Utils
             var name = "eva-syncro-levels[1][2]";
             var from = -3;
             var to = 4;
-            var results = ArrayRange.FormatArrayRangeWatch(name, from, to);
+            var results = ArrayRange.FormatArrayRangeWatch(name, from, to, true);
             Assert.Equal("eva-syncro-levels[1][2][-3]", results[0]);
             Assert.Equal("eva-syncro-levels[1][2][-2]", results[1]);
             Assert.Equal("eva-syncro-levels[1][2][-1]", results[2]);
@@ -22,7 +22,7 @@ namespace VSRAD.PackageTests.Utils
             Assert.Equal("eva-syncro-levels[1][2][4]", results[7]);
 
             name = "eva-internal-battery-countdown";
-            results = ArrayRange.FormatArrayRangeWatch(name, from, to);
+            results = ArrayRange.FormatArrayRangeWatch(name, from, to, true);
             Assert.Equal("eva-internal-battery-countdown[-3]", results[0]);
             Assert.Equal("eva-internal-battery-countdown[-2]", results[1]);
             Assert.Equal("eva-internal-battery-countdown[-1]", results[2]);
@@ -39,7 +39,7 @@ namespace VSRAD.PackageTests.Utils
             var name = "eva-pilot-pulse[offset]";
             var from = -3;
             var to = 4;
-            var results = ArrayRange.FormatArrayRangeWatch(name, from, to);
+            var results = ArrayRange.FormatArrayRangeWatch(name, from, to, true);
             Assert.Equal("eva-pilot-pulse[offset-3]", results[0]);
             Assert.Equal("eva-pilot-pulse[offset-2]", results[1]);
             Assert.Equal("eva-pilot-pulse[offset-1]", results[2]);
@@ -50,7 +50,7 @@ namespace VSRAD.PackageTests.Utils
             Assert.Equal("eva-pilot-pulse[offset+4]", results[7]);
 
             name = "eva-gun-voltage[0][offset]";
-            results = ArrayRange.FormatArrayRangeWatch(name, from, to);
+            results = ArrayRange.FormatArrayRangeWatch(name, from, to, true);
             Assert.Equal("eva-gun-voltage[0][offset-3]", results[0]);
             Assert.Equal("eva-gun-voltage[0][offset-2]", results[1]);
             Assert.Equal("eva-gun-voltage[0][offset-1]", results[2]);
@@ -59,6 +59,35 @@ namespace VSRAD.PackageTests.Utils
             Assert.Equal("eva-gun-voltage[0][offset+2]", results[5]);
             Assert.Equal("eva-gun-voltage[0][offset+3]", results[6]);
             Assert.Equal("eva-gun-voltage[0][offset+4]", results[7]);
+        }
+
+        [Fact]
+        public void AppendNewBracketsToManualSelection()
+        {
+            var name = "eva-cooling-system-temp[offset]";
+            var from = -3;
+            var to = 4;
+            var results = ArrayRange.FormatArrayRangeWatch(name, from, to, false);
+            Assert.Equal("eva-cooling-system-temp[offset][-3]", results[0]);
+            Assert.Equal("eva-cooling-system-temp[offset][-2]", results[1]);
+            Assert.Equal("eva-cooling-system-temp[offset][-1]", results[2]);
+            Assert.Equal("eva-cooling-system-temp[offset][0]", results[3]);
+            Assert.Equal("eva-cooling-system-temp[offset][1]", results[4]);
+            Assert.Equal("eva-cooling-system-temp[offset][2]", results[5]);
+            Assert.Equal("eva-cooling-system-temp[offset][3]", results[6]);
+            Assert.Equal("eva-cooling-system-temp[offset][4]", results[7]);
+
+            name = "eva-cores-info[0][offset]";
+            results = ArrayRange.FormatArrayRangeWatch(name, from, to, false);
+            Assert.Equal("eva-cores-info[0][offset][-3]", results[0]);
+            Assert.Equal("eva-cores-info[0][offset][-2]", results[1]);
+            Assert.Equal("eva-cores-info[0][offset][-1]", results[2]);
+            Assert.Equal("eva-cores-info[0][offset][0]", results[3]);
+            Assert.Equal("eva-cores-info[0][offset][1]", results[4]);
+            Assert.Equal("eva-cores-info[0][offset][2]", results[5]);
+            Assert.Equal("eva-cores-info[0][offset][3]", results[6]);
+            Assert.Equal("eva-cores-info[0][offset][4]", results[7]);
+
         }
     }
 }
