@@ -154,7 +154,7 @@
             {
               "Environment": "Remote",
               "Executable": "/opt/rocm/llvm/bin/clang",
-              "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
+              "Arguments": "-x assembler -target amdgcn--amdhsa -mno-xnack -mcpu=gfx900 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
               "WorkingDirectory": "$(RadDebugWorkDir)",
               "RunAsAdmin": false,
               "WaitForCompletion": true,
