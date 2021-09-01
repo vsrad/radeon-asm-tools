@@ -1,5 +1,7 @@
 {
   "DebuggerOptions": {
+    "_forceOppositeTab": false,
+    "_preserveActiveDoc": false,
     "Watches": [
       {
         "Name": "v[tid]",
@@ -31,19 +33,19 @@
     "SingleActiveBreakpoint": false,
     "GroupSize": 256,
     "WaveSize": 64,
-    "BreakMode": 0
+    "BreakMode": 0,
+    "ForceOppositeTab": false,
+    "PreserveActiveDoc": false
   },
   "VisualizerOptions": {
     "ShowSystemVariable": false,
     "MaskLanes": false,
     "NDRange3D": false,
-    "VerticalSplit": true,
-    "LaneGrouping": 4,
     "WavemapElementSize": 8,
     "CheckMagicNumber": true,
     "MagicNumber": "0x7777777",
     "ManualMode": true,
-    "ShowColumnsField": false,
+    "ShowColumnsField": true,
     "ShowAppArgsField": false,
     "ShowBreakArgsField": false,
     "ShowWavemap": false,
@@ -56,14 +58,19 @@
     "NameColumnAlignment": 0,
     "HeadersAlignment": 2,
     "DataColumnAlignment": 2,
+    "LaneGrouping": 0,
+    "VerticalSplit": false,
     "LaneSeparatorWidth": 3,
     "HiddenColumnSeparatorWidth": 8,
+    "BinHexSeparator": 0,
+    "IntUintSeparator": 0,
+    "BinHexLeadingZeroes": false,
     "ScalingMode": 1,
     "DarkenAlternatingRowsBy": 0
   },
   "VisualizerColumnStyling": {
-    "VisibleColumns": "0-63",
-    "BackgroundColors": null,
+    "VisibleColumns": "0-3:16-19:32-35:48-51",
+    "BackgroundColors": "bbbbbbbbbbbbbbbbggggggggggggggggrrrrrrrrrrrrrrrr                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ",
     "ForegroundColors": null
   },
   "TargetHosts": [
