@@ -1,7 +1,5 @@
 {
   "DebuggerOptions": {
-    "_forceOppositeTab": false,
-    "_preserveActiveDoc": false,
     "Watches": [
       {
         "Name": "v[tid]",
