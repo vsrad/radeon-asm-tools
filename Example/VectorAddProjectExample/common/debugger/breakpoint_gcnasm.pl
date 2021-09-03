@@ -206,7 +206,7 @@ my @m = @lines [0..$line-1] if $line > 0;
 my @merge = ($plug_macro, @m, $insert, @lines [$line..scalar @lines - 1]);
 foreach(@merge) {
 	$_ = qq[m_dbg_gpr_alloc\n$_] if $_ =~ /\.GPR_ALLOC_END/;
-	$_ .= qq(\nm_dbg_init gid_x\n) if $_ =~ /\.end_amd_kernel_code_t/;
+	$_ .= qq(\nm_dbg_init gid_x\n) if $_ =~ /KERNEL_PROLOG/;
 }
 #$_ .= qq(\nm_dbg_init gid_x\n) if $_ eq qq[.end_amd_kernel_code_t\n];
 
