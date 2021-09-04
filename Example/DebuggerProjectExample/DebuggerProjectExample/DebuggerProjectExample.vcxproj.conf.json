@@ -22,6 +22,7 @@
         "IsAVGPR": false
       }
     ],
+    "LastAppArgs": [],
     "NGroups": 0,
     "Counter": 0,
     "AppArgs": "",
@@ -30,22 +31,23 @@
     "SingleActiveBreakpoint": false,
     "GroupSize": 256,
     "WaveSize": 64,
-    "BreakMode": 0
+    "BreakMode": 0,
+    "ForceOppositeTab": false,
+    "PreserveActiveDoc": false
   },
   "VisualizerOptions": {
     "ShowSystemVariable": false,
     "MaskLanes": false,
     "NDRange3D": false,
-    "VerticalSplit": true,
-    "LaneGrouping": 4,
     "WavemapElementSize": 8,
     "CheckMagicNumber": true,
     "MagicNumber": "0x7777777",
     "ManualMode": true,
-    "ShowColumnsField": false,
+    "ShowColumnsField": true,
     "ShowAppArgsField": false,
     "ShowBreakArgsField": false,
-    "ShowWavemap": false
+    "ShowWavemap": false,
+    "MatchBracketsOnAddToWatches": true
   },
   "SliceVisualizerOptions": {
     "VisibleColumns": "0:1-63"
@@ -54,24 +56,29 @@
     "NameColumnAlignment": 0,
     "HeadersAlignment": 2,
     "DataColumnAlignment": 2,
+    "LaneGrouping": 0,
+    "VerticalSplit": false,
     "LaneSeparatorWidth": 3,
     "HiddenColumnSeparatorWidth": 8,
+    "BinHexSeparator": 0,
+    "IntUintSeparator": 0,
+    "BinHexLeadingZeroes": false,
     "ScalingMode": 1,
     "DarkenAlternatingRowsBy": 0
   },
   "VisualizerColumnStyling": {
-    "VisibleColumns": "0-63",
-    "BackgroundColors": null,
+    "VisibleColumns": "0-3:16-19:32-35:48-51",
+    "BackgroundColors": "bbbbbbbbbbbbbbbbggggggggggggggggrrrrrrrrrrrrrrrr                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ",
     "ForegroundColors": null
   },
   "TargetHosts": [
-    "localhost:9339"
+    "127.0.0.1:9339"
   ],
-  "ActiveProfile": "Default",
+  "ActiveProfile": "vaddDebug",
   "Profiles": {
-    "Default": {
+    "vaddDebug": {
       "General": {
-        "RemoteMachine": "localhost",
+        "RemoteMachine": "127.0.0.1",
         "Port": 9339,
         "RunActionsLocally": false,
         "ContinueActionExecOnError": false,
@@ -85,7 +92,7 @@
         ],
         [
           "RadDebugDataOutputPath",
-          "$(RadDebugWorkDir)/tmp_dir/debug_result"
+          "$(RadDebugWorkDir)/tmp/debug_result"
         ],
         [
           "RadDeployDir",
@@ -145,7 +152,7 @@
             {
               "Environment": "Remote",
               "Executable": "/opt/rocm/llvm/bin/clang",
-              "Arguments": "-x assembler -target amdgcn--amdhsa -mcpu=gfx900 -mno-code-object-v3 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
+              "Arguments": "-x assembler -target amdgcn--amdhsa -mno-xnack -mcpu=gfx900 -I$(RadDeployDir)/include -o fp32_v_add_build.co $(RadDeployDir)/$(RadActiveSourceFile)",
               "WorkingDirectory": "$(RadDebugWorkDir)",
               "RunAsAdmin": false,
               "WaitForCompletion": true,
