@@ -68,9 +68,9 @@ private:
     void *dbg_buf_ptr;
 
 public:
-    VectorAdd(string &co_path, string &build_cmd, int gpu_id, int dbg_size, string &dbg_path)
+    VectorAdd(string &co_path, string &build_cmd, int gpu_id, unsigned length, int dbg_size, string &dbg_path)
         : Dispatch(),
-            length(64),
+            length(length),
             gpu_id(gpu_id),
             dbg_size(dbg_size),
             dbg_path{std::move(dbg_path)},
@@ -157,7 +157,7 @@ public:
         params.wg_size[1] = 1;
         params.wg_size[2] = 1;
     
-        params.grid_size[0] = params.wg_size[0];
+        params.grid_size[0] = length;
         params.grid_size[1] = params.wg_size[1];
         params.grid_size[2] = params.wg_size[2];
 
@@ -245,7 +245,7 @@ int main(int argc, const char **argv)
     std::string build_cmd;
     int dbg_size;
     std::string dbg_path;
-
+    unsigned length;
     Options cli_ops(10);
 
     cli_ops.Add(&gpu_id, "-gpu-id", "", 0, "GPU agent id", atoi);
@@ -253,7 +253,7 @@ int main(int argc, const char **argv)
     cli_ops.Add(&build_cmd, "-asm", "", string(""), "Shader build cmd", str2str);
     cli_ops.Add(&dbg_size, "-bsz", "", 0, "Debug buffer size", atoi);
     cli_ops.Add(&dbg_path, "-b", "", string(""), "Debug buffer path", str2str);
-
+    cli_ops.Add(&length,  "-l", "", 64u, "Vector length", str2u);
     for (int i = 1; i <= argc - 1; i += 2)
     {
         if (!strcmp(argv[i], "-?") || !strcmp(argv[i], "-help"))
@@ -285,5 +285,5 @@ int main(int argc, const char **argv)
         }
     }
 
-    return VectorAdd(co_path, build_cmd, gpu_id, dbg_size, dbg_path).Run();
+    return VectorAdd(co_path, build_cmd, gpu_id, length, dbg_size, dbg_path).Run();
 }
