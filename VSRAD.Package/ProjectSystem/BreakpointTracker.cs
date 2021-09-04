@@ -109,7 +109,8 @@ namespace VSRAD.Package.ProjectSystem
                     return (file, breakpointLines.ToArray());
                 case BreakMode.SingleRerun:
                     if (_breakTargets.TryGetValue(file, out var prevTarget))
-                        return (file, prevTarget);
+                        if (breakpointLines.Contains(prevTarget[0]))
+                            return (file, prevTarget);
 
                     return (file, new[] { breakpointLines[0] });
                 default:
