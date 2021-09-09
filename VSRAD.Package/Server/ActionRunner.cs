@@ -109,10 +109,10 @@ namespace VSRAD.Package.Server
                 if (targetFiles.Count > 0 && targetFiles[0].IsDirectory)
                     return new StepResult(false, $"File \"{step.SourcePath}\" cannot be copied: the target path is a directory.", "");
 
-                if (step.FailIfNotModified && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
-                    return new StepResult(false, "File was not changed after executing the previous steps. Disable Check Timestamp in step options to skip the modification date check.", "");
+                if (step.IfNotModified == ActionIfNotModified.Fail && sourceFiles[0].LastWriteTimeUtc == GetInitialFileTimestamp(step.SourcePath))
+                    return new StepResult(false, "File was not changed after executing the previous steps. Set If not Modified property in step options to Copy or Do Not Copy to skip the modification date check.", "");
 
-                if (step.SkipIfNotModified
+                if (step.IfNotModified == ActionIfNotModified.DoNotCopy
                     && targetFiles.Count == 1
                     && sourceFiles[0].Size == targetFiles[0].Size
                     && sourceFiles[0].LastWriteTimeUtc == targetFiles[0].LastWriteTimeUtc)
@@ -140,7 +140,7 @@ namespace VSRAD.Package.Server
             var filesToGet = new List<string>();
             foreach (var src in sourceFiles)
             {
-                if (!src.IsDirectory && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                if (!src.IsDirectory && !(step.IfNotModified == ActionIfNotModified.DoNotCopy && SourceIdenticalToTarget(src)))
                     filesToGet.Add(src.RelativePath);
             }
             if (filesToGet.Count > 0)
@@ -165,7 +165,7 @@ namespace VSRAD.Package.Server
             foreach (var src in sourceFiles)
             {
                 // ./ indicates the root directory
-                if (src.IsDirectory && src.RelativePath != "./" && !(step.SkipIfNotModified && SourceIdenticalToTarget(src)))
+                if (src.IsDirectory && src.RelativePath != "./" && !(step.IfNotModified == ActionIfNotModified.DoNotCopy && SourceIdenticalToTarget(src)))
                     files.Add(new PackedFile(Array.Empty<byte>(), src.RelativePath, src.LastWriteTimeUtc));
             }
             /* Write source files and directories to the target directory */
@@ -488,7 +488,7 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyFileStep copyFile && copyFile.FailIfNotModified)
+                if (step is CopyFileStep copyFile && copyFile.IfNotModified == ActionIfNotModified.Fail)
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(

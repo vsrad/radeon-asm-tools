@@ -28,7 +28,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, FailIfNotModified = true, SourcePath = "tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             var localTempFile = Path.GetRandomFileName();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
@@ -61,7 +61,7 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, FailIfNotModified = true, SourcePath = "/home/mizu/machete/key3_49", TargetPath = Path.GetRandomFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/key3_49", TargetPath = Path.GetRandomFileName() },
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" } // should not be run
             };
 
@@ -77,7 +77,7 @@ namespace VSRAD.PackageTests.Server
             result = await runner.RunAsync("HTMT", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("File was not changed after executing the previous steps. Disable Check Timestamp in step options to skip the modification date check.", result.StepResults[0].Warning);
+            Assert.Equal("File was not changed after executing the previous steps. Set If not Modified property in step options to Copy or Do Not Copy to skip the modification date check.", result.StepResults[0].Warning);
         }
 
         [Fact]
@@ -162,13 +162,13 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
 
             var localPath = Path.GetTempFileName();
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = localPath, FailIfNotModified = true, TargetPath = Path.GetRandomFileName() } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = localPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
             var result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal("File was not changed after executing the previous steps. Disable Check Timestamp in step options to skip the modification date check.", result.StepResults[0].Warning);
+            Assert.Equal("File was not changed after executing the previous steps. Set If not Modified property in step options to Copy or Do Not Copy to skip the modification date check.", result.StepResults[0].Warning);
 
             var nonexistentPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
-            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = nonexistentPath, FailIfNotModified = true, TargetPath = Path.GetRandomFileName() } };
+            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = nonexistentPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal($@"Path ""C:\Non\Existent\Path\To\Users\mizu\raw3"" does not exist{"\r\n"}Working directory: ""{Path.GetTempPath()}""", result.StepResults[0].Warning);
@@ -203,7 +203,7 @@ namespace VSRAD.PackageTests.Server
             {
                 // update file timestamp
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "cmd.exe", Arguments = $@"/C ""copy /b {Path.GetFileName(file)} +,,""" },
-                new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = Path.GetFileName(file), TargetPath = Path.GetFileName(target), FailIfNotModified = true }
+                new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = Path.GetFileName(file), TargetPath = Path.GetFileName(target), IfNotModified = ActionIfNotModified.Fail }
             };
 
             var result = await runner.RunAsync("HTMT", steps);
@@ -226,7 +226,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfNotModified = true, IncludeSubdirectories = true } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", IfNotModified = ActionIfNotModified.DoNotCopy, IncludeSubdirectories = true } };
 
             // t is unchanged, t2's size is different, empty/ is missing
             channel.ThenRespond(new ListFilesResponse
@@ -263,7 +263,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfNotModified = true } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // Path does not exist
             var result = await runner.RunAsync("HTMT", steps);
@@ -297,7 +297,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfNotModified = true } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // t is unchanged, t2's size is different
             channel.ThenRespond(new ListFilesResponse
@@ -335,7 +335,7 @@ namespace VSRAD.PackageTests.Server
 
             var channel = new MockCommunicationChannel();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfNotModified = true } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // t's size is changed => it'll be requested
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata("./", default, default), new FileMetadata("t", 1, default) } });
@@ -362,7 +362,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, FailIfNotModified = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
             };
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/parker/audio"), _project);
 
@@ -476,7 +476,7 @@ namespace VSRAD.PackageTests.Server
             var level1Steps = new List<IActionStep>
             {
                 new RunActionStep(level2Steps) { Name = "level2" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, FailIfNotModified = true, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             // 1. Initial timestamp fetch
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) });
@@ -789,8 +789,8 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             readDebugData.WatchesFile.Path = "/home/parker/audio/copy";
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, FailIfNotModified = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, FailIfNotModified = false, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
                 readDebugData
             };
 

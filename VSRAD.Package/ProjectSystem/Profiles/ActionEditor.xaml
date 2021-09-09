@@ -28,6 +28,7 @@
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
+        <local:ActionEditorIfNotModifiedConverter x:Key="IfNotModifiedConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
         <utils:WpfInverseBoolConverter x:Key="InverseBoolConverter"/>
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
@@ -137,7 +138,6 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
@@ -160,26 +160,24 @@
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="2" Grid.Column="2"
                                     Tag="TargetPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
 
-                            <Label Content="Fail if not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
-                                      IsChecked="{Binding FailIfNotModified, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      IsEnabled="{Binding SkipIfNotModified, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
+                            <Label Content="If not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
+                            <ComboBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
+                                      SelectedIndex="{Binding IfNotModified, Converter={StaticResource IfNotModifiedConverter}, Mode=TwoWay}">
+                                <ComboBoxItem Content="Copy"/>
+                                <ComboBoxItem Content="Do Not Copy"/>
+                                <ComboBoxItem Content="Fail"/>
+                            </ComboBox>
 
-                            <Label Content="Skip if not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <Label Content="Preserve Timestamps:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"
-                                      IsChecked="{Binding SkipIfNotModified, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                      IsEnabled="{Binding CheckTimestamp, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
-
-                            <Label Content="Preserve Timestamps:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
                                       IsChecked="{Binding PreserveTimestamps, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             
-                            <Label Content="Include Subdirectories:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"
+                            <Label Content="Include Subdirectories:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="5" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="5" Grid.Column="1"
                                       IsChecked="{Binding IncludeSubdirectories, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-                            <Label Content="Use Compression:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="7" Grid.Column="0"/>
-                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="7" Grid.Column="1"
+                            <Label Content="Use Compression:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="6" Grid.Column="0"/>
+                            <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="6" Grid.Column="1"
                                       IsChecked="{Binding UseCompression, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </Grid>
                     </DataTemplate>

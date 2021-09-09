@@ -25,6 +25,15 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             throw new NotImplementedException();
     }
 
+    public sealed class ActionEditorIfNotModifiedConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => (int)value;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => (ActionIfNotModified)value;
+    }
+
     public sealed class ActionEditorStepDescription : DefaultNotifyPropertyChanged
     {
         private string _description;
