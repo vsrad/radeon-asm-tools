@@ -162,7 +162,7 @@
 
                             <Label Content="Fail if not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <CheckBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
-                                      IsChecked="{Binding CheckTimestamp, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      IsChecked="{Binding FailIfNotModified, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       IsEnabled="{Binding SkipIfNotModified, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
 
                             <Label Content="Skip if not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
