@@ -115,7 +115,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 Direction = FileCopyDirection.RemoteToLocal,
                 SourcePath = (string)conf["OutputPath"],
                 TargetPath = (string)conf["LocalOutputCopyPath"],
-                CheckTimestamp = true
+                FailIfNotModified = true
             });
             action.Steps.Add(new OpenInEditorStep
             {
@@ -145,7 +145,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 Direction = FileCopyDirection.RemoteToLocal,
                 SourcePath = (string)conf["OutputPath"],
                 TargetPath = (string)conf["LocalOutputCopyPath"],
-                CheckTimestamp = true
+                FailIfNotModified = true
             });
             action.Steps.Add(new ExecuteStep
             {

@@ -225,7 +225,7 @@ namespace VSRAD.PackageTests.Server
             File.SetLastWriteTimeUtc(tmpDir + "\\t2", new DateTime(1990, 1, 1));
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfNotModified = true, IncludeSubdirectories = true } };
 
             // t is unchanged, t2's size is different, empty/ is missing
@@ -262,7 +262,7 @@ namespace VSRAD.PackageTests.Server
             var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "rawdir", SkipIfNotModified = true } };
 
             // Path does not exist
@@ -296,7 +296,7 @@ namespace VSRAD.PackageTests.Server
             File.SetLastWriteTimeUtc(tmpDir + "\\t2", new DateTime(1990, 1, 1));
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfNotModified = true } };
 
             // t is unchanged, t2's size is different
@@ -334,7 +334,7 @@ namespace VSRAD.PackageTests.Server
             File.WriteAllText(tmpDir + "\\t", "test");
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"));
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rawdir", TargetPath = tmpDir, SkipIfNotModified = true } };
 
             // t's size is changed => it'll be requested

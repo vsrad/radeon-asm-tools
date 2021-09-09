@@ -112,7 +112,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Direction = FileCopyDirection.RemoteToLocal,
                 SourcePath = "$(RadPpOutputPath)",
                 TargetPath = "C:\\Users\\h\\local_pp",
-                CheckTimestamp = true
+                FailIfNotModified = true
             }, action.Steps[1]);
             Assert.Equal(new OpenInEditorStep
             {
@@ -144,7 +144,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Direction = FileCopyDirection.RemoteToLocal,
                 SourcePath = "$(RadDisasmWorkDir)/src.s",
                 TargetPath = "C:\\Users\\h\\local_src.s",
-                CheckTimestamp = true
+                FailIfNotModified = true
             }, action.Steps[1]);
             Assert.Equal(new OpenInEditorStep
             {
@@ -177,7 +177,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Direction = FileCopyDirection.RemoteToLocal,
                 SourcePath = "$(RadProfileOutputPath)",
                 TargetPath = "$(RadProfileLocalCopyPath)",
-                CheckTimestamp = true
+                FailIfNotModified = true
             }, action.Steps[1]);
             Assert.Equal(new ExecuteStep
             {
