@@ -36,6 +36,12 @@ namespace VSRAD.Package.Options
         RemoteToLocal, LocalToRemote, LocalToLocal
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ActionIfNotModified
+    {
+        Copy, DoNotCopy, Fail
+    }
+
     public static class ActionExtensions
     {
         public static bool IsRemote(this BuiltinActionFile file) =>
@@ -56,11 +62,8 @@ namespace VSRAD.Package.Options
         private string _targetPath = "";
         public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
-        private bool _failIfNotModified;
-        public bool FailIfNotModified { get => _failIfNotModified; set => SetField(ref _failIfNotModified, value); }
-
-        private bool _skipIfNotModified;
-        public bool SkipIfNotModified { get => _skipIfNotModified; set => SetField(ref _skipIfNotModified, value); }
+        private ActionIfNotModified _ifNotModified;
+        public ActionIfNotModified IfNotModified { get => _ifNotModified; set => SetField(ref _ifNotModified, value); }
 
         private bool _preserveTimestamps;
         public bool PreserveTimestamps { get => _preserveTimestamps; set => SetField(ref _preserveTimestamps, value); }
@@ -87,8 +90,7 @@ namespace VSRAD.Package.Options
             obj is CopyFileStep step &&
             SourcePath == step.SourcePath &&
             TargetPath == step.TargetPath &&
-            FailIfNotModified == step.FailIfNotModified &&
-            SkipIfNotModified == step.SkipIfNotModified &&
+            IfNotModified == step.IfNotModified &&
             PreserveTimestamps == step.PreserveTimestamps &&
             IncludeSubdirectories == step.IncludeSubdirectories &&
             UseCompression == step.UseCompression;
@@ -121,8 +123,7 @@ namespace VSRAD.Package.Options
                 Direction = direction,
                 SourcePath = evaluatedSourcePath,
                 TargetPath = evaluatedTargetPath,
-                FailIfNotModified = FailIfNotModified,
-                SkipIfNotModified = SkipIfNotModified,
+                IfNotModified = IfNotModified,
                 PreserveTimestamps = PreserveTimestamps,
                 IncludeSubdirectories = IncludeSubdirectories,
                 UseCompression = UseCompression
