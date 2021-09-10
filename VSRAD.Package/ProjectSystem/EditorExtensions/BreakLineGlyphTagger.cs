@@ -90,6 +90,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         private readonly ITextBuffer _buffer;
         private readonly ITextDocument _document;
         private readonly BreakLineGlyphTaggerProvider _provider;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
         private readonly List<TagSpan<BreakLineGlyphTag>> _tagSpans = new List<TagSpan<BreakLineGlyphTag>>();
 
@@ -99,7 +100,8 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
             _buffer = buffer;
             _document = document;
             _provider = provider;
-            textDocumentFactoryService.TextDocumentDisposed += DocumentDisposed;
+            _textDocumentFactoryService = textDocumentFactoryService;
+            _textDocumentFactoryService.TextDocumentDisposed += DocumentDisposed;
             _provider.DebugExecutionCompleted += DebugExecutionCompleted;
         }
 
@@ -107,7 +109,10 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         private void DocumentDisposed(object sender, TextDocumentEventArgs e)
         {
             if (e.TextDocument == _document)
+            {
                 _provider.DebugExecutionCompleted -= DebugExecutionCompleted;
+                _textDocumentFactoryService.TextDocumentDisposed -= DocumentDisposed;
+            }
         }
 
         private void DebugExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
