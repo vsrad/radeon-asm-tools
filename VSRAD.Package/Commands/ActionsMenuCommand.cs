@@ -62,7 +62,7 @@ namespace VSRAD.Package.Commands
                     if (result.Error is Error e)
                         Errors.Show(e);
                     if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
-                        && _actionLauncher.IsDebugAction(action))
+                        && _actionLauncher.IsDebugAction(action, new System.Collections.Generic.List<string>()))
                         _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);
                 });
             }
