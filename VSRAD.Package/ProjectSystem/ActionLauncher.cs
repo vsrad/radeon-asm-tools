@@ -54,7 +54,7 @@ namespace VSRAD.Package.ProjectSystem
     {
         Error? TryLaunchActionByName(string actionName, bool moveToNextDebugTarget = false, bool isDebugSteppingEnabled = false);
         void CancelRunningAction();
-        bool IsDebugAction(ActionProfileOptions action);
+        bool IsDebugAction(ActionProfileOptions action, List<string> actionsTraversed);
 
         event EventHandler<ActionCompletedEventArgs> ActionCompleted;
         event EventHandler<ActionExecutionStateChangedEventArgs> ActionExecutionStateChanged;
@@ -121,7 +121,7 @@ namespace VSRAD.Package.ProjectSystem
                     $"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
                     "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
 
-            if (moveToNextDebugTarget && !IsDebugAction(action))
+            if (moveToNextDebugTarget && !IsDebugAction(action, new List<string>()))
                 return new Error(
                     $"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
@@ -217,17 +217,22 @@ namespace VSRAD.Package.ProjectSystem
             return new ActionCompletedEventArgs(actionError, action, transients, runResult);
         }
 
-        public bool IsDebugAction(ActionProfileOptions action)
+        public bool IsDebugAction(ActionProfileOptions action, List<string> actionstraversed)
         {
             foreach (var step in action.Steps)
             {
                 if (step is ReadDebugDataStep)
                     return true;
-                if (step is RunActionStep runAction
-                    && _project.Options.Profile.Actions.FirstOrDefault(a => a.Name == runAction.Name) is ActionProfileOptions nestedAction
-                    && IsDebugAction(nestedAction))
-                    return true;
+                if (step is RunActionStep runAction)
+                {
+                    if (actionstraversed.Contains(runAction.Name)) continue; // skip RunAction's that contain circular dependencies
+                    actionstraversed.Add(runAction.Name);
+                    if (_project.Options.Profile.Actions.FirstOrDefault(a => a.Name == runAction.Name) is ActionProfileOptions nestedAction
+                        && IsDebugAction(nestedAction, actionstraversed))
+                        return true;
+                }
             }
+            actionstraversed.Clear();
             return false;
         }
 
