@@ -229,7 +229,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public void AddAction()
         {
-            var newAction = new ActionProfileOptions { Name = "New Action" };
+            var newAction = new ActionProfileOptions { Name = ActionHelper.GetNextActionName(SelectedProfile.Actions) };
             SelectedProfile.Actions.Add(newAction);
             SelectedPage = newAction;
         }
