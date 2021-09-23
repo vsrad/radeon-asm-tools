@@ -384,6 +384,73 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 Assert.Null(r.Target);
         }
 
+        [Fact]
+        public void DefaultActionNamesSuffixTest()
+        {
+            var project = CreateTestProject();
+            // Emulate adding 5 actions with '+' button
+            for (var _i = 0; _i < 5; ++_i)
+            {
+                project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions
+                {
+                    Name = Package.Utils.ActionHelper.GetNextActionName(project.Options.Profiles["kana"].Actions)
+                });
+            }
+
+            Assert.Collection(project.Options.Profiles["kana"].Actions,
+                a0 => Assert.Equal("Debug", a0.Name),
+                a1 => Assert.Equal("New Action", a1.Name),
+                a2 => Assert.Equal("New Action 1", a2.Name),
+                a3 => Assert.Equal("New Action 2", a3.Name),
+                a4 => Assert.Equal("New Action 3", a4.Name),
+                a5 => Assert.Equal("New Action 4", a5.Name));
+
+            // Rename "Debug" -> "New Action 5"
+            project.Options.Profiles["kana"].Actions[0].Name = "New Action 5";
+
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions
+            {
+                Name = Package.Utils.ActionHelper.GetNextActionName(project.Options.Profiles["kana"].Actions)
+            });
+
+            Assert.Collection(project.Options.Profiles["kana"].Actions,
+                a0 => Assert.Equal("New Action 5", a0.Name),
+                a1 => Assert.Equal("New Action", a1.Name),
+                a2 => Assert.Equal("New Action 1", a2.Name),
+                a3 => Assert.Equal("New Action 2", a3.Name),
+                a4 => Assert.Equal("New Action 3", a4.Name),
+                a5 => Assert.Equal("New Action 4", a5.Name),
+                a6 => Assert.Equal("New Action 6", a6.Name));
+
+            // Remove some actions
+            project.Options.Profiles["kana"].Actions.RemoveAt(3); // New Action 2
+            project.Options.Profiles["kana"].Actions.RemoveAt(3); // New Action 3
+            project.Options.Profiles["kana"].Actions.RemoveAt(3); // New Action 4
+
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions
+            {
+                Name = Package.Utils.ActionHelper.GetNextActionName(project.Options.Profiles["kana"].Actions)
+            });
+
+            Assert.Collection(project.Options.Profiles["kana"].Actions,
+                a0 => Assert.Equal("New Action 5", a0.Name),
+                a1 => Assert.Equal("New Action", a1.Name),
+                a2 => Assert.Equal("New Action 1", a2.Name),
+                a3 => Assert.Equal("New Action 6", a3.Name),
+                a4 => Assert.Equal("New Action 2", a4.Name));
+        }
+
+        [Fact]
+        public void ActionRenamingValidationTest()
+        {
+            var project = CreateTestProject();
+            project.Options.Profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "New Action" });
+
+            var context = new ProfileOptionsWindowContext(project, null, null);
+            var exception = Assert.Throws<ArgumentException>(() => GetDirtyProfile(context, "kana").Actions[1].Name = "Debug");
+            Assert.Equal("Action \"Debug\" already exist in current profile", exception.Message);
+        }
+
         #region Profile Transfer
         [Fact]
         public void ImportExportTest()

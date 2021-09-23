@@ -104,5 +104,45 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             breakLineTagger.Verify(t => t.OnExecutionCompleted(execCompletedEvent));
         }
+
+        [Fact]
+        public void ProperHandlingOfCircularDepsTest()
+        {
+            TestHelper.InitializePackageTaskFactory();
+
+            /* Create a test project */
+
+            var projectMock = new Mock<IProject>();
+            var options = new ProjectOptions();
+            options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
+            projectMock.Setup((p) => p.Options).Returns(options);
+            var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>();
+            projectMock.Setup((p) => p.GetExportByMetadataAndType(It.IsAny<Predicate<IAppliesToMetadataView>>(), It.IsAny<Predicate<IViewTaggerProvider>>()))
+                .Returns(breakLineTagger.Object);
+            var project = projectMock.Object;
+            project.Options.Profile.MenuCommands.DebugAction = "Debug";
+            project.Options.Profile.General.LocalWorkDir = "local/dir";
+            project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
+            project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
+            project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "New Action" });
+            // Create circular dependency
+            project.Options.Profile.Actions[0].Steps.Add(new RunActionStep { Name = "New Action" });
+            project.Options.Profile.Actions[1].Steps.Add(new RunActionStep { Name = "Debug" });
+
+            var codeEditor = new Mock<IActiveCodeEditor>();
+            var breakpointTracker = new Mock<IBreakpointTracker>();
+
+            var serviceProvider = new Mock<SVsServiceProvider>();
+
+            var channel = new MockCommunicationChannel();
+            var sourceManager = new Mock<IProjectSourceManager>();
+            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
+                codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
+            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object);
+
+            var engine = debuggerIntegration.RegisterEngine();
+            // Should not throw StackOverflow
+            engine.Execute(false);
+        }
     }
 }
