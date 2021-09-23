@@ -217,7 +217,7 @@ namespace VSRAD.Package.ProjectSystem
             return new ActionCompletedEventArgs(actionError, action, transients, runResult);
         }
 
-        public bool IsDebugAction(ActionProfileOptions action, List<string> actionstraversed)
+        public bool IsDebugAction(ActionProfileOptions action, List<string> actionsTraversed)
         {
             foreach (var step in action.Steps)
             {
@@ -225,14 +225,14 @@ namespace VSRAD.Package.ProjectSystem
                     return true;
                 if (step is RunActionStep runAction)
                 {
-                    if (actionstraversed.Contains(runAction.Name)) continue; // skip RunAction's that contain circular dependencies
-                    actionstraversed.Add(runAction.Name);
+                    if (actionsTraversed.Contains(runAction.Name)) continue; // skip RunAction's that contain circular dependencies
+                    actionsTraversed.Add(runAction.Name);
                     if (_project.Options.Profile.Actions.FirstOrDefault(a => a.Name == runAction.Name) is ActionProfileOptions nestedAction
-                        && IsDebugAction(nestedAction, actionstraversed))
+                        && IsDebugAction(nestedAction, actionsTraversed))
                         return true;
                 }
             }
-            actionstraversed.Clear();
+            actionsTraversed.Clear();
             return false;
         }
 
