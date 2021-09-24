@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC.Responses
 {
@@ -11,7 +13,12 @@ namespace VSRAD.DebugServer.IPC.Responses
         MetadataFetched = 1,
         ResultRangeFetched = 2,
         EnvironmentVariablesListed = 3,
-        PutFile = 4
+        PutFile = 4,
+        PutDirectory = 5,
+        ListFiles = 6,
+        GetFiles = 7,
+
+        CompressedResponse = 0xFF
     }
 #pragma warning restore CA1028
 
@@ -32,6 +39,11 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
                 case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
+                case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
+                case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
+                case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
+
+                case ResponseType.CompressedResponse: return CompressedResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -46,6 +58,11 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
                 case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
                 case PutFileResponse _: type = ResponseType.PutFile; break;
+                case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
+                case ListFilesResponse _: type = ResponseType.ListFiles; break;
+                case GetFilesResponse _: type = ResponseType.GetFiles; break;
+
+                case CompressedResponse _: type = ResponseType.CompressedResponse; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -177,6 +194,83 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
+    public sealed class PutDirectoryResponse : IResponse
+    {
+        public PutDirectoryStatus Status { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "PutDirectoryResponse",
+            $"Status = {Status}",
+        });
+
+        public static PutDirectoryResponse Deserialize(IPCReader reader) => new PutDirectoryResponse
+        {
+            Status = (PutDirectoryStatus)reader.ReadByte()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+        }
+    }
+
+    public sealed class ListFilesResponse : IResponse
+    {
+        public FileMetadata[] Files { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "ListFilesResponse",
+            $"Files = <{Files.Length} items>",
+        });
+
+        public static ListFilesResponse Deserialize(IPCReader reader)
+        {
+            var length = reader.Read7BitEncodedInt();
+            var files = new FileMetadata[length];
+            for (int i = 0; i < length; ++i)
+                files[i] = new FileMetadata(reader.ReadString(), reader.ReadInt64(), reader.ReadDateTime());
+            return new ListFilesResponse { Files = files };
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write7BitEncodedInt(Files.Length);
+            foreach (var file in Files)
+            {
+                writer.Write(file.RelativePath);
+                writer.Write(file.Size);
+                writer.Write(file.LastWriteTimeUtc);
+            }
+        }
+    }
+
+    public sealed class GetFilesResponse : IResponse
+    {
+        public GetFilesStatus Status { get; set; }
+        public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "GetFilesResponse",
+            $"Status = {Status}",
+            $"Files = <{Files.Length} files>",
+        });
+
+        public static GetFilesResponse Deserialize(IPCReader reader) => new GetFilesResponse
+        {
+            Status = (GetFilesStatus)reader.ReadByte(),
+            Files = reader.ReadLengthPrefixedFileArray()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+            writer.WriteLengthPrefixedFileArray(Files);
+        }
+    }
+
     public sealed class EnvironmentVariablesListed : IResponse
     {
         public IReadOnlyDictionary<string, string> Variables { get; set; }
@@ -194,6 +288,46 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public void Serialize(IPCWriter writer) =>
             writer.WriteLengthPrefixedDict(Variables);
+    }
+
+    public sealed class CompressedResponse : IResponse
+    {
+        public IResponse InnerResponse { get; }
+
+        public CompressedResponse(IResponse response)
+        {
+            InnerResponse = response;
+        }
+
+        public override string ToString() =>
+            "CompressedResponse: " + InnerResponse.ToString();
+
+        public static IResponse Deserialize(IPCReader reader)
+        {
+            var commandData = reader.ReadLengthPrefixedBlob();
+            using (var uncompresedStream = new MemoryStream())
+            {
+                using (var inputStream = new MemoryStream(commandData))
+                using (var dstream = new DeflateStream(inputStream, CompressionMode.Decompress))
+                    dstream.CopyTo(uncompresedStream);
+
+                uncompresedStream.Seek(0, SeekOrigin.Begin);
+                using (var uncompressedReader = new IPCReader(uncompresedStream))
+                    return uncompressedReader.ReadResponse();
+            }
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            using (var outputStream = new MemoryStream())
+            {
+                using (var dstream = new DeflateStream(outputStream, CompressionLevel.Optimal))
+                using (var compressedWriter = new IPCWriter(dstream))
+                    compressedWriter.WriteResponse(InnerResponse);
+
+                writer.WriteLengthPrefixedBlob(outputStream.ToArray());
+            }
+        }
     }
 
 #pragma warning disable CA1028 // Using byte for enum storage because it is transferred over the wire
@@ -215,6 +349,22 @@ namespace VSRAD.DebugServer.IPC.Responses
         Successful = 0,
         PermissionDenied = 1,
         OtherIOError = 2
+    }
+
+    public enum PutDirectoryStatus : byte
+    {
+        Successful = 0,
+        PermissionDenied = 1,
+        TargetPathIsFile = 2,
+        OtherIOError = 3
+    }
+
+    public enum GetFilesStatus : byte
+    {
+        Successful = 0,
+        FileNotFound = 1,
+        PermissionDenied = 2,
+        OtherIOError = 3
     }
 #pragma warning restore CA1028
 }

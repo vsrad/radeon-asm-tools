@@ -36,6 +36,12 @@ namespace VSRAD.Package.Options
         RemoteToLocal, LocalToRemote, LocalToLocal
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ActionIfNotModified
+    {
+        Copy, DoNotCopy, Fail
+    }
+
     public static class ActionExtensions
     {
         public static bool IsRemote(this BuiltinActionFile file) =>
@@ -56,13 +62,22 @@ namespace VSRAD.Package.Options
         private string _targetPath = "";
         public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
-        private bool _checkTimestamp;
-        public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
+        private ActionIfNotModified _ifNotModified;
+        public ActionIfNotModified IfNotModified { get => _ifNotModified; set => SetField(ref _ifNotModified, value); }
+
+        private bool _preserveTimestamps;
+        public bool PreserveTimestamps { get => _preserveTimestamps; set => SetField(ref _preserveTimestamps, value); }
+
+        private bool _includeSubdirectories;
+        public bool IncludeSubdirectories { get => _includeSubdirectories; set => SetField(ref _includeSubdirectories, value); }
+
+        private bool _useCompression;
+        public bool UseCompression { get => _useCompression; set => SetField(ref _useCompression, value); }
 
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(SourcePath) || string.IsNullOrWhiteSpace(TargetPath))
-                return "Copy File";
+                return "Copy File/Directory";
 
             var dir = Direction == FileCopyDirection.LocalToRemote ? "to Remote"
                     : Direction == FileCopyDirection.RemoteToLocal ? "from Remote"
@@ -75,7 +90,10 @@ namespace VSRAD.Package.Options
             obj is CopyFileStep step &&
             SourcePath == step.SourcePath &&
             TargetPath == step.TargetPath &&
-            CheckTimestamp == step.CheckTimestamp;
+            IfNotModified == step.IfNotModified &&
+            PreserveTimestamps == step.PreserveTimestamps &&
+            IncludeSubdirectories == step.IncludeSubdirectories &&
+            UseCompression == step.UseCompression;
 
         public override int GetHashCode() => 1;
 
@@ -103,9 +121,12 @@ namespace VSRAD.Package.Options
             return new CopyFileStep
             {
                 Direction = direction,
-                CheckTimestamp = CheckTimestamp,
                 SourcePath = evaluatedSourcePath,
-                TargetPath = evaluatedTargetPath
+                TargetPath = evaluatedTargetPath,
+                IfNotModified = IfNotModified,
+                PreserveTimestamps = PreserveTimestamps,
+                IncludeSubdirectories = IncludeSubdirectories,
+                UseCompression = UseCompression
             };
         }
     }
@@ -181,7 +202,9 @@ namespace VSRAD.Package.Options
                 Arguments = evaluatedArguments,
                 WorkingDirectory = evaluatedWorkdir,
                 RunAsAdmin = RunAsAdmin,
-                WaitForCompletion = WaitForCompletion,
+                // The option to wait for completion is hidden in the UI for remote execution (because IPC.Commands.Execute does not support it).
+                // Hence it is always true for a remote ExecuteStep. If it's forced to run locally, we should respect this behavior.
+                WaitForCompletion = Environment == StepEnvironment.Remote || WaitForCompletion,
                 TimeoutSecs = TimeoutSecs
             };
         }

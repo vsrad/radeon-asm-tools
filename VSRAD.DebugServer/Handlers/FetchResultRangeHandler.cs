@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.Handlers
 {
@@ -24,7 +25,7 @@ namespace VSRAD.DebugServer.Handlers
                 return new ResultRangeFetched { Status = FetchStatus.FileNotFound };
             }
 
-            var timestamp = File.GetLastWriteTime(_filePath).ToUniversalTime();
+            var timestamp = File.GetLastWriteTimeUtc(_filePath);
             var data = _command.BinaryOutput
                 ? await ParseDebuggerOutputBinaryAsync()
                 : await ParseDebuggerOutputTextAsync();

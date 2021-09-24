@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.Handlers
 {

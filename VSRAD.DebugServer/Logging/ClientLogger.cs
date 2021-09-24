@@ -21,9 +21,9 @@ namespace VSRAD.DebugServer
         public void ConnectionEstablished(EndPoint clientEndpoint) =>
             Print($"Connection with {clientEndpoint} has been established.");
 
-        public void CommandReceived(IPC.Commands.ICommand c)
+        public void CommandReceived(IPC.Commands.ICommand c, int bytesReceived)
         {
-            Print($"Command received: {c}");
+            Print($"Command received ({bytesReceived} bytes): {c}");
             if (_verbose)
                 _timer.Restart();
         }
