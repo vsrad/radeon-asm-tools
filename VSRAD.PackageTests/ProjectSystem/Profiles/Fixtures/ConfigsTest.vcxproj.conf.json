@@ -1,0 +1,441 @@
+{
+  "DebuggerOptions": {
+    "_forceOppositeTab": true,
+    "_preserveActiveDoc": true,
+    "Watches": [
+      {
+        "Name": "v0",
+        "Type": "Hex",
+        "IsAVGPR": false
+      },
+      {
+        "Name": " ",
+        "Type": "Uint",
+        "IsAVGPR": false
+      },
+      {
+        "Name": "v2",
+        "Type": "Float",
+        "IsAVGPR": false
+      }
+    ],
+    "LastAppArgs": [],
+    "NGroups": 0,
+    "Counter": 42,
+    "AppArgs": "app args",
+    "BreakArgs": "break args",
+    "Autosave": true,
+    "SingleActiveBreakpoint": false,
+    "GroupSize": 512,
+    "WaveSize": 64,
+    "BreakMode": 0,
+    "ForceOppositeTab": true,
+    "PreserveActiveDoc": true
+  },
+  "VisualizerOptions": {
+    "ShowSystemVariable": true,
+    "MaskLanes": true,
+    "NDRange3D": false,
+    "WavemapElementSize": 8,
+    "CheckMagicNumber": true,
+    "MagicNumber": "0x313313",
+    "ManualMode": false,
+    "ShowColumnsField": true,
+    "ShowAppArgsField": true,
+    "ShowBreakArgsField": true,
+    "ShowWavemap": false,
+    "MatchBracketsOnAddToWatches": false
+  },
+  "SliceVisualizerOptions": {
+    "VisibleColumns": "0:1-63"
+  },
+  "VisualizerAppearance": {
+    "NameColumnAlignment": 0,
+    "HeadersAlignment": 2,
+    "DataColumnAlignment": 2,
+    "LaneGrouping": 0,
+    "VerticalSplit": true,
+    "LaneSeparatorWidth": 3,
+    "HiddenColumnSeparatorWidth": 8,
+    "BinHexSeparator": 0,
+    "IntUintSeparator": 0,
+    "BinHexLeadingZeroes": false,
+    "ScalingMode": 1,
+    "DarkenAlternatingRowsBy": 0
+  },
+  "VisualizerColumnStyling": {
+    "VisibleColumns": "0-3:16-19:32-35:48-51:64-67:80-83:96-99:112-115:128-131:144-147:160-163:176-179:192-195:208-211:224-227:240-243:256-259:272-275:288-291:304-307:320-323:336-339:352-355:368-371:384-387:400-403:416-419:432-435:448-451:464-467:480-483:496-499",
+    "BackgroundColors": "gggg            rrrr            bbbb                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ",
+    "ForegroundColors": null
+  },
+  "TargetHosts": [
+    "245.42.3.13:1111",
+    "245.42.3.13:9339",
+    "127.0.0.1:9339"
+  ],
+  "ActiveProfile": "miho",
+  "Profiles": {
+    "hiroshi": {
+      "General": {
+        "RemoteMachine": "245.42.3.13",
+        "Port": 1022,
+        "RunActionsLocally": false,
+        "ContinueActionExecOnError": false,
+        "LocalWorkDir": "$(RadLocalWorkDir)",
+        "RemoteWorkDir": "$(RadRemoteWorkDir)"
+      },
+      "Macros": [
+        [
+          "RadLocalWorkDir",
+          "C:\\Users\\Odokawa\\code"
+        ],
+        [
+          "RadRemoteWorkDir",
+          "/home/odokawa/code"
+        ],
+        [
+          "RadMarker1",
+          "_odd"
+        ]
+      ],
+      "Actions": [
+        {
+          "Name": "Debug",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "cargo",
+              "Arguments": "run debug",
+              "WorkingDirectory": "$(RadRemoteWorkDir)/src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 0,
+              "Type": "Execute"
+            },
+            {
+              "OutputFile": {
+                "Location": "Remote",
+                "Path": "src/dbg/debug_result",
+                "CheckTimestamp": true
+              },
+              "WatchesFile": {
+                "Location": "Remote",
+                "Path": "src/dbg/valid_watches",
+                "CheckTimestamp": true
+              },
+              "DispatchParamsFile": {
+                "Location": "Remote",
+                "Path": "src/dbg/dispatch_params",
+                "CheckTimestamp": true
+              },
+              "BinaryOutput": true,
+              "OutputOffset": 4,
+              "Type": "ReadDebugData"
+            }
+          ]
+        },
+        {
+          "Name": "Preprocess",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "$(RadRemoteWorkDir)/src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "cargo",
+              "Arguments": "run pp",
+              "WorkingDirectory": "$(RadRemoteWorkDir)/src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 0,
+              "Type": "Execute"
+            },
+            {
+              "Direction": "RemoteToLocal",
+              "SourcePath": "src/pp/pp_result",
+              "TargetPath": "pp_result_local",
+              "CheckTimestamp": true,
+              "Type": "CopyFile"
+            },
+            {
+              "Path": "pp_result_local",
+              "LineMarker": "LINE",
+              "Type": "OpenInEditor"
+            }
+          ]
+        },
+        {
+          "Name": "Disassemble",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "cargo",
+              "Arguments": "run disasm",
+              "WorkingDirectory": "$(RadRemoteWorkDir)/src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 0,
+              "Type": "Execute"
+            },
+            {
+              "Direction": "RemoteToLocal",
+              "SourcePath": "src/dsm/dsm_src.s",
+              "TargetPath": "dsm_src_local.s",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Path": "dsm_src_local.s",
+              "LineMarker": "START",
+              "Type": "OpenInEditor"
+            }
+          ]
+        },
+        {
+          "Name": "Profile",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "cargo",
+              "Arguments": "run profile",
+              "WorkingDirectory": "src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 0,
+              "Type": "Execute"
+            },
+            {
+              "Direction": "RemoteToLocal",
+              "SourcePath": "src/prf/prf_out",
+              "TargetPath": "prf_out_local",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Local",
+              "Executable": "profviewer.exe",
+              "Arguments": "prf_out_local",
+              "WorkingDirectory": "",
+              "RunAsAdmin": false,
+              "WaitForCompletion": false,
+              "TimeoutSecs": 0,
+              "Type": "Execute"
+            }
+          ]
+        }
+      ],
+      "MenuCommands": {
+        "DebugAction": "Debug",
+        "ProfileAction": "Profile",
+        "DisassembleAction": "Disassemble",
+        "PreprocessAction": "Preprocess"
+      }
+    },
+    "miho": {
+      "General": {
+        "RemoteMachine": "245.42.3.13",
+        "Port": 1111,
+        "RunActionsLocally": false,
+        "ContinueActionExecOnError": false,
+        "LocalWorkDir": "$(RadLocalWorkDir)",
+        "RemoteWorkDir": "$(RadRemoteWorkDir)"
+      },
+      "Macros": [
+        [
+          "RadLocalWorkDir",
+          "C:\\Users\\Shirakawa\\code"
+        ],
+        [
+          "RadRemoteWorkDir",
+          "/home/shirakawa/code"
+        ],
+        [
+          "RadMarker2",
+          "taxi:"
+        ]
+      ],
+      "Actions": [
+        {
+          "Name": "Debug",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "stack",
+              "Arguments": "exec debug",
+              "WorkingDirectory": "$(RadRemoteWorkDir)/src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 10,
+              "Type": "Execute"
+            },
+            {
+              "OutputFile": {
+                "Location": "Remote",
+                "Path": "src/dbg/debug_result",
+                "CheckTimestamp": true
+              },
+              "WatchesFile": {
+                "Location": "Remote",
+                "Path": "src/dbg/valid_watches",
+                "CheckTimestamp": true
+              },
+              "DispatchParamsFile": {
+                "Location": "Remote",
+                "Path": "src/dbg/dispatch_params",
+                "CheckTimestamp": true
+              },
+              "BinaryOutput": false,
+              "OutputOffset": 2,
+              "Type": "ReadDebugData"
+            }
+          ]
+        },
+        {
+          "Name": "Preprocess",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "$(RadRemoteWorkDir)/src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "stack",
+              "Arguments": "exec pp",
+              "WorkingDirectory": "$(RadRemoteWorkDir)/src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 10,
+              "Type": "Execute"
+            },
+            {
+              "Direction": "RemoteToLocal",
+              "SourcePath": "src/pp/pp_result",
+              "TargetPath": "pp_result_local",
+              "CheckTimestamp": true,
+              "Type": "CopyFile"
+            },
+            {
+              "Path": "pp_result_local",
+              "LineMarker": "line:",
+              "Type": "OpenInEditor"
+            }
+          ]
+        },
+        {
+          "Name": "Disassemble",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "stack",
+              "Arguments": "exec disasm",
+              "WorkingDirectory": "$(RadRemoteWorkDir)/src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 10,
+              "Type": "Execute"
+            },
+            {
+              "Direction": "RemoteToLocal",
+              "SourcePath": "src/dsm/dsm_src.s",
+              "TargetPath": "dsm_src_local.s",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Path": "dsm_src_local.s",
+              "LineMarker": "_start",
+              "Type": "OpenInEditor"
+            }
+          ]
+        },
+        {
+          "Name": "Profile",
+          "Steps": [
+            {
+              "Direction": "LocalToRemote",
+              "SourcePath": "$(RadActiveSourceFullPath)",
+              "TargetPath": "src/$(RadActiveSourceFile)",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Remote",
+              "Executable": "stack",
+              "Arguments": "exec profile",
+              "WorkingDirectory": "src",
+              "RunAsAdmin": false,
+              "WaitForCompletion": true,
+              "TimeoutSecs": 10,
+              "Type": "Execute"
+            },
+            {
+              "Direction": "RemoteToLocal",
+              "SourcePath": "src/prf/prf_out",
+              "TargetPath": "prf_out_local",
+              "CheckTimestamp": false,
+              "Type": "CopyFile"
+            },
+            {
+              "Environment": "Local",
+              "Executable": "prof_viewer.exe",
+              "Arguments": "prf_out_local",
+              "WorkingDirectory": "",
+              "RunAsAdmin": false,
+              "WaitForCompletion": false,
+              "TimeoutSecs": 0,
+              "Type": "Execute"
+            }
+          ]
+        }
+      ],
+      "MenuCommands": {
+        "DebugAction": "Debug",
+        "ProfileAction": "Profile",
+        "DisassembleAction": "Disassemble",
+        "PreprocessAction": "Preprocess"
+      }
+    }
+  }
+}
