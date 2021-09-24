@@ -26,7 +26,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                     foreach (var step in action["Steps"])
                     {
                         if (step["Type"].ToString() != "CopyFile") continue;
-                        ((JObject)step).Add("IfNotModified", (bool)step["CheckTimestamp"] ? "Fail" : "DoNotCopy");
+                        var checkTimestamp = ((JObject)step).ContainsKey("CheckTimestamp") && (bool)step["CheckTimestamp"];
+                        ((JObject)step).Add("IfNotModified", checkTimestamp ? "Fail" : "DoNotCopy");
                     }
                 }
             }
