@@ -18,6 +18,19 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public static Dictionary<string, ProfileOptions> ImportObsolete(string path)
         {
             var json = JObject.Parse(File.ReadAllText(path));
+            // convert copy file steps to new format
+            foreach (var profile in (JObject)json["Profiles"])
+            {
+                foreach (var action in profile.Value["Actions"])
+                {
+                    foreach (var step in action["Steps"])
+                    {
+                        if (step["Type"].ToString() != "CopyFile") continue;
+                        var checkTimestamp = ((JObject)step).ContainsKey("CheckTimestamp") && (bool)step["CheckTimestamp"];
+                        ((JObject)step).Add("IfNotModified", checkTimestamp ? "Fail" : "DoNotCopy");
+                    }
+                }
+            }
             return json["Profiles"].ToObject<Dictionary<string, ProfileOptions>>();
         }
 

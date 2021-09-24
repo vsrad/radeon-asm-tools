@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
 
 namespace VSRAD.PackageTests.ProjectSystem.Profiles
@@ -86,7 +80,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                IfNotModified = ActionIfNotModified.DoNotCopy,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -112,11 +106,11 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
             Assert.Equal("src/dbg/valid_watches", readDebugData.WatchesFile.Path);
-            Assert.True(readDebugData.OutputFile.CheckTimestamp);
+            Assert.False(readDebugData.WatchesFile.CheckTimestamp);
 
             Assert.Equal(StepEnvironment.Remote, readDebugData.DispatchParamsFile.Location);
             Assert.Equal("src/dbg/dispatch_params", readDebugData.DispatchParamsFile.Path);
-            Assert.True(readDebugData.OutputFile.CheckTimestamp);
+            Assert.True(readDebugData.DispatchParamsFile.CheckTimestamp);
         }
 
         [Theory]
@@ -136,7 +130,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                IfNotModified = ActionIfNotModified.DoNotCopy,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "$(RadRemoteWorkDir)/src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -153,7 +147,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = true,
+                IfNotModified = ActionIfNotModified.Fail,
                 SourcePath = "src/pp/pp_result",
                 TargetPath = "pp_result_local"
             }, action.Steps[2]);
@@ -181,7 +175,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                IfNotModified = ActionIfNotModified.DoNotCopy,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -198,7 +192,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = false,
+                IfNotModified = ActionIfNotModified.DoNotCopy,
                 SourcePath = "src/dsm/dsm_src.s",
                 TargetPath = "dsm_src_local.s"
             }, action.Steps[2]);
@@ -225,7 +219,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                IfNotModified = ActionIfNotModified.DoNotCopy,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -242,7 +236,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = false,
+                IfNotModified = ActionIfNotModified.DoNotCopy,
                 SourcePath = "src/prf/prf_out",
                 TargetPath = "prf_out_local"
             }, action.Steps[2]);
