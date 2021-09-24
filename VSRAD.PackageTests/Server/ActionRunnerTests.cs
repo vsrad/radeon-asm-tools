@@ -31,7 +31,7 @@ namespace VSRAD.PackageTests.Server
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             var localTempFile = Path.GetRandomFileName();
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) }, (FetchMetadata command) =>
             {
@@ -58,7 +58,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyFileRLRemoteErrorTestAsync()
         {
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var steps = new List<IActionStep>
             {
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Fail, SourcePath = "/home/mizu/machete/key3_49", TargetPath = Path.GetRandomFileName() },
@@ -84,7 +84,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyFileRLMissingParentDirectoryTestAsync()
         {
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             var parentDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
             Assert.False(Directory.Exists(parentDir));
@@ -104,7 +104,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyFileRLLocalErrorTestAsync()
         {
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             var file = Path.GetTempFileName();
             File.SetAttributes(file, FileAttributes.ReadOnly);
@@ -121,7 +121,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyFileLRRemoteErrorTestAsync()
         {
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = Path.GetTempFileName(), TargetPath = "/home/mizu/machete/raw3" } };
 
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", default, default) } });
@@ -141,7 +141,7 @@ namespace VSRAD.PackageTests.Server
         public async Task CopyFileLocalErrorTestAsync()
         {
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             var localPath = Path.GetTempFileName();
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = localPath, IfNotModified = ActionIfNotModified.Fail, TargetPath = Path.GetRandomFileName() } };
@@ -170,7 +170,7 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task CopyFileLLTestAsync()
         {
-            var runner = new ActionRunner(null, null, null);
+            var runner = new ActionRunner(null, null, null, _project);
 
             var file = Path.GetTempFileName();
             var target = Path.GetTempFileName();
@@ -201,7 +201,7 @@ namespace VSRAD.PackageTests.Server
             File.SetLastWriteTimeUtc(tmpDir + "\\t2", new DateTime(1990, 1, 1));
 
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "/home/mizu/rawdir", IfNotModified = ActionIfNotModified.DoNotCopy, IncludeSubdirectories = true } };
 
             // t is unchanged, t2's size is different, empty/ is missing
@@ -237,7 +237,7 @@ namespace VSRAD.PackageTests.Server
             var tmpDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
 
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = tmpDir, TargetPath = "/home/mizu/rawdir", IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // Path does not exist
@@ -271,7 +271,7 @@ namespace VSRAD.PackageTests.Server
             File.SetLastWriteTimeUtc(tmpDir + "\\t2", new DateTime(1990, 1, 1));
 
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // t is unchanged, t2's size is different
@@ -308,7 +308,7 @@ namespace VSRAD.PackageTests.Server
             File.WriteAllText(tmpDir + "\\t", "test");
 
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/home/mizu/rawdir", TargetPath = tmpDir, IfNotModified = ActionIfNotModified.DoNotCopy } };
 
             // t's size is changed => it'll be requested
@@ -338,7 +338,7 @@ namespace VSRAD.PackageTests.Server
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" },
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
             };
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch, Stdout = "", Stderr = "" });
             var result = await runner.RunAsync("UFOW", steps, false);
@@ -373,7 +373,7 @@ namespace VSRAD.PackageTests.Server
             {
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "python.exe", Arguments = $"-c \"print('success', file=open(r'{file}', 'w'))\"", WorkingDirectory = Path.GetTempPath() }
             };
-            var runner = new ActionRunner(null, null, null);
+            var runner = new ActionRunner(null, null, null, _project);
             var result = await runner.RunAsync("", steps);
             Assert.True(result.Successful);
             Assert.Equal("", result.StepResults[0].Warning);
@@ -389,7 +389,7 @@ namespace VSRAD.PackageTests.Server
         {
             var channel = new MockCommunicationChannel();
             var steps = new List<IActionStep> { new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "exe", WorkingDirectory = "/action/env/remote/dir" } };
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             channel.ThenRespond<Execute, ExecutionCompleted>(new ExecutionCompleted(), command =>
             {
@@ -434,7 +434,7 @@ namespace VSRAD.PackageTests.Server
             // 4. Level 1 Copy File
             channel.ThenRespond(new ListFilesResponse { Files = new[] { new FileMetadata(".", default, DateTime.FromBinary(101)) } });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("file-contents") });
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
             var result = await runner.RunAsync("HTMT", level1Steps);
 
             Assert.True(result.Successful);
@@ -461,7 +461,7 @@ namespace VSRAD.PackageTests.Server
             };
 
             var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
                 Assert.Equal(new[] { "/glitch/city/output" }, initTimestampFetch.FilePath));
@@ -507,7 +507,7 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
@@ -553,7 +553,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             /* File not found */
 
@@ -611,7 +611,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
                     binaryOutput: true, outputOffset)
             };
-            var runner = new ActionRunner(null, null, null);
+            var runner = new ActionRunner(null, null, null, _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
@@ -650,7 +650,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
                     binaryOutput: false, outputOffset: 1)
             };
-            var runner = new ActionRunner(null, null, new ReadOnlyCollection<string>(new[] { "const" }));
+            var runner = new ActionRunner(null, null, new ReadOnlyCollection<string>(new[] { "const" }), _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
@@ -680,7 +680,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             /* File not changed (GetTempFileName creates an empty file) */
 
@@ -727,7 +727,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                 readDebugData
             };
 
-            var runner = new ActionRunner(channel.Object, null, null);
+            var runner = new ActionRunner(channel.Object, null, null, _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(100) }, (FetchMetadata command) =>
                 Assert.Equal(new[] { "/home/parker/audio/checked" }, command.FilePath));

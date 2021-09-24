@@ -125,7 +125,7 @@ namespace VSRAD.Package.ProjectSystem
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 _projectSources.SaveProjectState();
 
-                var runner = new ActionRunner(_channel, _serviceProvider, transients.Watches);
+                var runner = new ActionRunner(_channel, _serviceProvider, transients.Watches, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
                 return new ActionExecution(actionError, transients, runResult);

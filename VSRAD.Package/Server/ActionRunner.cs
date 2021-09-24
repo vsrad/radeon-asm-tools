@@ -21,12 +21,14 @@ namespace VSRAD.Package.Server
         private readonly SVsServiceProvider _serviceProvider;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
         private readonly ReadOnlyCollection<string> _debugWatches;
+        private readonly IProject _project;
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ReadOnlyCollection<string> debugWatches)
+        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ReadOnlyCollection<string> debugWatches, IProject project)
         {
             _channel = channel;
             _serviceProvider = serviceProvider;
             _debugWatches = debugWatches;
+            _project = project;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
