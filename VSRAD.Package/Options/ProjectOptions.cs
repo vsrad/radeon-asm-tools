@@ -164,7 +164,7 @@ namespace VSRAD.Package.Options
                                                                         // to read it's contents to do this check, so we are doing it
                                                                         // only in case if the file is read-only to avoid extra warning
                 }
-                catch (UnauthorizedAccessException) { }; // If we don't have permissions to read the profile, treat it as changed
+                catch (Exception) { }; // If we can't read the profile, treat it as changed
                 DialogResult res = MessageBox.Show($"RAD Debug is unable to save configuration, because {destPath} is read-only. Make it writable?", "Warning", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning);
                 if (res == DialogResult.OK)
                 {
@@ -177,7 +177,15 @@ namespace VSRAD.Package.Options
                         Errors.ShowWarning("Cannot make file writable: " + ex.Message);
                         return;
                     }
-                    WriteAtomic(destPath, contents);
+                    try
+                    {
+                        WriteAtomic(destPath, contents);
+                    }
+                    catch (Exception ex)
+                    {
+                        Errors.ShowWarning("Project options could not be saved: " + ex.Message);
+                        return;
+                    }
                 }
             }
             catch (SystemException e)
