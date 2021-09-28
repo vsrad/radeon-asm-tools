@@ -128,7 +128,7 @@
               "WatchesFile": {
                 "Location": "Remote",
                 "Path": "src/dbg/valid_watches",
-                "CheckTimestamp": true
+                "CheckTimestamp": false
               },
               "DispatchParamsFile": {
                 "Location": "Remote",
@@ -309,7 +309,7 @@
               "WatchesFile": {
                 "Location": "Remote",
                 "Path": "src/dbg/valid_watches",
-                "CheckTimestamp": true
+                "CheckTimestamp": false
               },
               "DispatchParamsFile": {
                 "Location": "Remote",

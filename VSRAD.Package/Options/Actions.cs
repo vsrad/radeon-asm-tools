@@ -95,7 +95,7 @@ namespace VSRAD.Package.Options
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ActionIfNotModified
     {
-        Copy, DoNotCopy, Fail
+        DoNotCopy, Copy, Fail
     }
 
     public static class ActionExtensions

@@ -163,8 +163,8 @@
                             <Label Content="If not Modified:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="3" Grid.Column="0"/>
                             <ComboBox VerticalContentAlignment="Center" Height="22" Grid.Row="3" Grid.Column="1"
                                       SelectedIndex="{Binding IfNotModified, Converter={StaticResource IfNotModifiedConverter}, Mode=TwoWay}">
-                                <ComboBoxItem Content="Copy"/>
                                 <ComboBoxItem Content="Do Not Copy"/>
+                                <ComboBoxItem Content="Copy"/>
                                 <ComboBoxItem Content="Fail"/>
                             </ComboBox>
 
