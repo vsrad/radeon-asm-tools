@@ -137,6 +137,7 @@
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
+    <Compile Include="Commands\DebugProfileDropdownCommand.cs" />
     <Compile Include="Commands\BreakModeDropdownCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />
