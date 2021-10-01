@@ -500,6 +500,16 @@ namespace VSRAD.Package.DebugVisualizer
                 base.OnMouseMove(e);
         }
 
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            if (!System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl))
+            {
+                base.OnMouseWheel(e);
+                return;
+            }
+            _mouseMoveController.HandleMouseWheel(e);
+        }
+
         protected override void OnColumnWidthChanged(DataGridViewColumnEventArgs e)
         {
             if (!_state.TableShouldSuppressOnColumnWidthChangedEvent)

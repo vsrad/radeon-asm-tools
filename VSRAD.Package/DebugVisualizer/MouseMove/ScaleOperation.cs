@@ -9,7 +9,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private TableState _tableState;
 
         private const int _maxDistanceFromDivider = 7;
-        
+
 
         private bool _operationStarted;
 
@@ -30,15 +30,15 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool OperationStarted() => _operationStarted;
 
-        public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
+        public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit, bool overrideHitTest = false)
         {
-            if (!ShouldChangeCursor(hit, _tableState, e.X))
+            if (!ShouldChangeCursor(hit, _tableState, e.X) && !overrideHitTest)
                 return false;
 
-            bool leftedge = (e.X - hit.ColumnX) < (_tableState.ColumnWidth/2);
-            if (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex())
+            bool leftedge = (e.X - hit.ColumnX) < (_tableState.ColumnWidth / 2);
+            if (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex() && !overrideHitTest)
                 return false;
-            
+
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
@@ -85,14 +85,28 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
+        public bool HandleMouseWheel(MouseEventArgs e)
+        {
+            AppliesOnMouseDown(e, _table.HitTest(e.X, e.Y), true);
+            Scale(e.Delta / 120); // WHEEL_DELTA
+            return true;
+        }
+
         public bool HandleMouseMove(MouseEventArgs e)
         {
             if ((e.Button & MouseButtons.Left) != MouseButtons.Left)
                 return false;
 
+            Scale(Cursor.Position.X - _orgMouseX);
+            
+            _operationStarted = true;
+            return true;
+        }
+
+        private void Scale(int diff)
+        {
             var minWidth = _tableState.minAllowedWidth;
 
-            int diff = Cursor.Position.X - _orgMouseX;
             if (_tableState.ScalingMode == ScalingMode.ResizeTable
                 || (_tableState.ScalingMode == ScalingMode.ResizeQuad && !_lefthalf)
                 || (_tableState.ScalingMode == ScalingMode.ResizeHalf && !_lefthalf))
@@ -134,8 +148,6 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 int curScroll = _orgScroll + (_orgNColumns - 1) * (curWidth - _orgWidth);
                 _tableState.SetWidthAndScroll(curWidth, curScroll);
             }
-            _operationStarted = true;
-            return true;
         }
     }
 }

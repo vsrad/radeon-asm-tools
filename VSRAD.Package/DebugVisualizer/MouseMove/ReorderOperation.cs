@@ -20,7 +20,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _table = table;
         }
 
-        public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
+        public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit, bool _)
         {
             _newWatchRowIndex = _table.RowCount - 1;
             if (hit.Type != DataGridViewHitTestType.RowHeader
@@ -82,6 +82,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             return true;
         }
+
+        public bool HandleMouseWheel(MouseEventArgs _) => false;
 
         public bool OperationStarted() => _operationStarted;
     }

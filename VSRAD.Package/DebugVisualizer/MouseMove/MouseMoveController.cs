@@ -35,6 +35,15 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
+        public bool HandleMouseWheel(MouseEventArgs e)
+        {
+            foreach (var op in _operations)
+            {
+                if (op.HandleMouseWheel(e)) return true;
+            }
+            return false;
+        }
+
         public bool HandleMouseMove(MouseEventArgs e)
         {
             if (_currentOperation == null) return false;

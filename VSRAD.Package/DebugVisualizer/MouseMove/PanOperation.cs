@@ -21,7 +21,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _state = state;
         }
 
-        public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
+        public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit, bool _)
         {
             if (e.Button != MouseButtons.Left) return false;
             if (_state.ScalingMode == ScalingMode.ResizeQuad)
@@ -68,5 +68,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             return true;
         }
+
+        public bool HandleMouseWheel(MouseEventArgs _) => false;
     }
 }
