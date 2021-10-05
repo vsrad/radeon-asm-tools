@@ -36,7 +36,7 @@ namespace VSRAD.Package.DebugVisualizer
         }
     }
 
-    public sealed class VisualizerContext : DefaultNotifyPropertyChanged, IDisposable
+    public sealed class VisualizerContext : DefaultNotifyPropertyChanged
     {
         public event EventHandler<GroupFetchingEventArgs> GroupFetching;
         public event EventHandler<GroupFetchedEventArgs> GroupFetched;
