@@ -16,20 +16,21 @@ namespace VSRAD.PackageTests.ProjectSystem
         [Fact]
         public async Task NestedRunResultLoggingTestAsync()
         {
-            var profile = new ProfileOptions();
-            profile.Actions.Add(new ActionProfileOptions { Name = "Exchange Soul" });
-            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "cleanup", Arguments = "--skip" });
-            profile.Actions.Add(new ActionProfileOptions { Name = "Sign Contract" });
-            profile.Actions[1].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "obtain-contract", Arguments = "-i -mm" });
-            profile.Actions[1].Steps.Add(new RunActionStep { Name = "Exchange Soul" });
-            profile.Actions.Add(new ActionProfileOptions { Name = "Transform" });
-            profile.Actions[2].Steps.Add(new RunActionStep { Name = "Sign Contract" });
-            profile.Actions[2].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, IfNotModified = ActionIfNotModified.Fail, TargetPath = "incubator", SourcePath = "soul" });
+            var actions = new ActionProfileOptions[3];
+            actions[0] = new ActionProfileOptions { Name = "Exchange Soul" };
+            actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "cleanup", Arguments = "--skip" });
+            actions[1] = new ActionProfileOptions { Name = "Sign Contract" };
+            actions[1].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "obtain-contract", Arguments = "-i -mm" });
+            actions[1].Steps.Add(new RunActionStep { Name = "Exchange Soul" });
+            actions[2] = new ActionProfileOptions { Name = "Transform" };
+            actions[2].Steps.Add(new RunActionStep { Name = "Sign Contract" });
+            actions[2].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, IfNotModified = ActionIfNotModified.Fail, TargetPath = "incubator", SourcePath = "soul" });
 
             var evaluator = new Mock<IMacroEvaluator>();
             evaluator.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s));
 
-            Assert.True((await profile.Actions[2].EvaluateAsync(evaluator.Object, profile)).TryGetResult(out var level1action, out _));
+            var env = new ActionEvaluationEnvironment("", "", false, new DebugServer.IPC.CapabilityInfo(default, default, default), actions);
+            Assert.True((await actions[2].EvaluateAsync(evaluator.Object, env)).TryGetResult(out var level1action, out _));
             var level2action = (RunActionStep)level1action.Steps[0];
             var level3action = (RunActionStep)level2action.EvaluatedSteps[1];
 
@@ -96,16 +97,16 @@ Captured stdout (exit code 2):
         [Fact]
         public async Task ContinueOnErrorTestAsync()
         {
-            var profile = new ProfileOptions();
-            profile.Actions.Add(new ActionProfileOptions { Name = "Shibahama Yūfō Taisen!" });
-            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "draw_anime", Arguments = "--dont-miss-deadlines" });
-            profile.Actions[0].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, TargetPath = "ending_theme.wav", SourcePath = "some_dudes_email" });
-            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "combine_ending_animation_and_music", Arguments = "--hope-music-fits" });
-            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "rework_ending", Arguments = "--one-night" });
-            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "comet_a", Arguments = "--showcase" });
-            profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "sell_dvds", Arguments = "--lots" });
+            var actions = new ActionProfileOptions[1];
+            actions[0] = new ActionProfileOptions { Name = "Shibahama Yūfō Taisen!" };
+            actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "draw_anime", Arguments = "--dont-miss-deadlines" });
+            actions[0].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, IfNotModified = ActionIfNotModified.Copy, TargetPath = "ending_theme.wav", SourcePath = "some_dudes_email" });
+            actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "combine_ending_animation_and_music", Arguments = "--hope-music-fits" });
+            actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "rework_ending", Arguments = "--one-night" });
+            actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "comet_a", Arguments = "--showcase" });
+            actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "sell_dvds", Arguments = "--lots" });
 
-            var actionResult = new ActionRunResult(profile.Actions[0].Name, profile.Actions[0].Steps, false);
+            var actionResult = new ActionRunResult(actions[0].Name, actions[0].Steps, false);
 
             actionResult.StepResults[0] = new StepResult(true, "", "");
             actionResult.StepResults[1] = new StepResult(true, "", "");
@@ -141,8 +142,8 @@ Captured stdout (exit code 2):
 ";
             Assert.Equal(expectedMessage, logMessage);
 
-            profile.Actions[0].Name += " (without difficulties)";
-            TestHelper.SetReadOnlyProp(actionResult, nameof(actionResult.ActionName), profile.Actions[0].Name);
+            actions[0].Name += " (without difficulties)";
+            TestHelper.SetReadOnlyProp(actionResult, nameof(actionResult.ActionName), actions[0].Name);
             TestHelper.SetReadOnlyProp(actionResult, nameof(actionResult.ContinueOnError), true);
 
             warnings = await logger.LogActionWithWarningsAsync(actionResult);

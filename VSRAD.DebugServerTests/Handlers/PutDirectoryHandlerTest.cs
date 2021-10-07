@@ -26,8 +26,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
                 Files = files,
-                Path = Path.GetFileName(tmpPath),
-                WorkDir = Path.GetDirectoryName(tmpPath),
+                Path = tmpPath,
                 PreserveTimestamps = true
             });
 
@@ -60,8 +59,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
                 Files = Array.Empty<PackedFile>(),
-                Path = Path.GetFileName(tmpPath),
-                WorkDir = Path.GetDirectoryName(tmpPath)
+                Path = tmpPath
             });
 
             Assert.Equal(PutDirectoryStatus.TargetPathIsFile, response.Status);
@@ -83,8 +81,7 @@ namespace VSRAD.DebugServerTests.Handlers
             var response = await Helper.DispatchCommandAsync<PutDirectoryCommand, PutDirectoryResponse>(new PutDirectoryCommand
             {
                 Files = files,
-                Path = tmpPath,
-                WorkDir = ""
+                Path = tmpPath
             });
 
             Assert.Equal(PutDirectoryStatus.PermissionDenied, response.Status);

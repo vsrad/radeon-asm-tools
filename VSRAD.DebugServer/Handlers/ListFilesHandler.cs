@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.DebugServer.SharedUtils;
@@ -17,8 +16,7 @@ namespace VSRAD.DebugServer.Handlers
 
         public Task<IResponse> RunAsync()
         {
-            var path = Path.Combine(_command.WorkDir, _command.Path);
-            var files = FileMetadata.GetMetadataForPath(path, _command.IncludeSubdirectories);
+            var files = FileMetadata.GetMetadataForPath(_command.Path, _command.IncludeSubdirectories);
             return Task.FromResult<IResponse>(new ListFilesResponse { Files = files.ToArray() });
         }
     }

@@ -29,7 +29,7 @@ namespace VSRAD.DebugServerTests.Handlers
             {
                 UseCompression = false,
                 Paths = new[] { "k/s", "h/b/w", "empty/" },
-                RootPath = new[] { tmpPath }
+                RootPath = tmpPath
             });
 
             Assert.Equal(GetFilesStatus.Successful, response.Status);
@@ -61,7 +61,7 @@ namespace VSRAD.DebugServerTests.Handlers
             {
                 UseCompression = true,
                 Paths = new[] { "test" },
-                RootPath = new[] { tmpPath }
+                RootPath = tmpPath
             });
             Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
 
@@ -72,7 +72,7 @@ namespace VSRAD.DebugServerTests.Handlers
             {
                 UseCompression = true,
                 Paths = new[] { "test" },
-                RootPath = new[] { tmpPath }
+                RootPath = tmpPath
             });
             Assert.Equal(GetFilesStatus.FileNotFound, response.Status);
         }
