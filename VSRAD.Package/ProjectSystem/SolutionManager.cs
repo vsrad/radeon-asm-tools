@@ -27,6 +27,20 @@ namespace VSRAD.Package.ProjectSystem
             vsMonitorSelection.AdviseSelectionEvents(this, out _);
         }
 
+        private bool TryGetDteProject(Solution sln, string project, out EnvDTE.Project dteProject)
+        {
+            try
+            {
+                dteProject = sln.Item(project);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                dteProject = null;
+                return false;
+            }
+        }
+
         // VS can load our extension after opening a solution (and raising OnElementValueChanged),
         // so we need to check the startup project manually after the extension is loaded
         public void LoadCurrentSolution(DTE dte)
@@ -34,7 +48,7 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
             if (dte.Solution is Solution sln && sln.SolutionBuild.StartupProjects is Array sp && sp.GetValue(0) is string startupProject)
             {
-                var dteProject = sln.Item(startupProject);
+                if (!TryGetDteProject(sln, startupProject, out var dteProject)) return;
                 if (GetCpsProject(dteProject) is UnconfiguredProject cpsProject)
                     LoadRadProject(cpsProject);
             }
