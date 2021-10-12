@@ -3,6 +3,11 @@
     "VSRAD.DebugServer": {
       "commandName": "Project",
       "commandLineArgs": "9339"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "environmentVariables": {},
+      "distributionName": ""
     }
   }
 }
