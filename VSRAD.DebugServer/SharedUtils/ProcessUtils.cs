@@ -32,14 +32,16 @@ namespace VSRAD.DebugServer.SharedUtils
     {
         public static bool IsParentOf(this Process parentProcess, Process otherProcess)
         {
-#if NETCORE
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var linuxPpidLine = File.ReadLines($"/proc/{otherProcess.Id}/status").Skip(6).First();
-                var otherProcessParentId = int.Parse(linuxPpidLine.Replace("PPid:\t", ""));
-                return parentProcess.Id == otherProcessParentId;
+                foreach (var line in File.ReadLines($"/proc/{otherProcess.Id}/status"))
+                {
+                    if (!line.StartsWith("PPid:", StringComparison.InvariantCultureIgnoreCase)) continue;
+                    var otherProcessParentId = int.Parse(line.Replace("PPid:\t", ""));
+                    return parentProcess.Id == otherProcessParentId;
+                }
+                return false;
             }
-#endif
 
             return parentProcess.StartTime < otherProcess.StartTime && parentProcess.Id == otherProcess.GetParentProcessId();
         }
