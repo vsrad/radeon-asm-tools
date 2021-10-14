@@ -60,7 +60,7 @@ namespace VSRAD.Package.DebugVisualizer
     }
 
     [Guid(Constants.FontAndColorDefaultsServiceId)]
-    sealed class FontAndColorService : IVsFontAndColorDefaults, IVsFontAndColorDefaultsProvider, IVsFontAndColorEvents
+    sealed class FontAndColorService : IVsFontAndColorDefaults, IVsFontAndColorDefaultsProvider//, IVsFontAndColorEvents
     {
         public event Action ItemsChanged;
         private bool _itemsChangedBeforeApply = false;
@@ -189,8 +189,8 @@ namespace VSRAD.Package.DebugVisualizer
             pPriority = 0;
             return VSConstants.E_NOTIMPL;
         }
-
-        int IVsFontAndColorEvents.OnFontChanged(ref Guid category, FontInfo[] _1, LOGFONTW[] _2, uint _3) => OnChange(ref category);
+        /*
+        int IVsFontAndColorEvents.OnFontChanged(ref Guid category, FontInfo[] _1, LOGFONTW[] _2, IntPtr _3) => OnChange(ref category);
 
         int IVsFontAndColorEvents.OnItemChanged(ref Guid category, string _1, int _2, ColorableItemInfo[] _3, uint _4, uint _5) => OnChange(ref category);
 
@@ -212,5 +212,6 @@ namespace VSRAD.Package.DebugVisualizer
             _itemsChangedBeforeApply = _itemsChangedBeforeApply || category == Constants.FontAndColorsCategoryGuid;
             return VSConstants.S_OK;
         }
+        */
     }
 }

@@ -8,6 +8,8 @@
     <AssemblyName>VSRAD.DebugServerTests</AssemblyName>
 
     <RootNamespace>VSRAD.DebugServerTests</RootNamespace>
+
+    <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

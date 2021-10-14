@@ -13,6 +13,25 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>CODE_ANALYSIS;TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -493,79 +512,80 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="EnvDTE80">
-      <Version>8.0.3</Version>
+      <Version>17.0.0-previews-4-31709-430</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Build">
-      <Version>16.4.0</Version>
+      <Version>16.11.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Build.Tasks.Core">
-      <Version>16.4.0</Version>
+      <Version>16.11.0</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers">
-      <Version>2.9.9</Version>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers">
+      <Version>5.0.3</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Composition">
-      <Version>16.4.11</Version>
+      <Version>16.9.20</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Editor">
-      <Version>16.4.280</Version>
+      <Version>17.0.391-preview-g5e248c9073</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Imaging.Interop.14.0.DesignTime">
-      <Version>14.3.26930</Version>
+    <PackageReference Include="Microsoft.VisualStudio.Interop">
+      <Version>17.0.0-previews-5-31722-452</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.OLE.Interop">
-      <Version>7.10.6071</Version>
+      <Version>17.0.0-previews-4-31709-430</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem">
-      <Version>16.2.133-pre</Version>
+      <Version>17.0.667-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk">
-      <Version>16.2.133-pre</Version>
+      <Version>17.0.667-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.ProjectSystem.Sdk.Tools">
-      <Version>16.2.133-pre</Version>
+      <Version>17.0.667-pre</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers">
-      <Version>16.5.5</Version>
+      <Version>16.10.10</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.SDK.EmbedInteropTypes">
-      <Version>15.0.30</Version>
+      <Version>15.0.36</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop">
-      <Version>1.16.30</Version>
+      <Version>2.3.2262-g94fae01e</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Shell.15.0">
-      <Version>16.5.29911.84</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Shell.Interop.14.0.DesignTime">
-      <Version>14.3.26929</Version>
+      <Version>17.0.0-previews-4-31709-430</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
-      <Version>16.5.132</Version>
+      <Version>17.0.63</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers">
-      <Version>16.5.132</Version>
+      <Version>17.0.63</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
-      <Version>16.5.2044</Version>
+      <Version>17.0.5232</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.2</Version>
+      <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="System.Collections.Immutable">
-      <Version>1.5.0</Version>
+      <Version>6.0.0-rc.2.21480.5</Version>
     </PackageReference>
     <PackageReference Include="System.Composition">
-      <Version>1.4.1</Version>
+      <Version>6.0.0-rc.2.21480.5</Version>
     </PackageReference>
     <PackageReference Include="System.Reflection.Metadata">
-      <Version>1.6.0</Version>
+      <Version>6.0.0-rc.2.21480.5</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup />
