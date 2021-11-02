@@ -115,6 +115,7 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Profile Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
@@ -154,6 +155,13 @@
                                     Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"
                                     IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
+
+                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                                <Label Content="Continue action execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" HorizontalContentAlignment="Left"/>
+                                <CheckBox VerticalContentAlignment="Center" Height="22"
+                                      IsChecked="{Binding ContinueActionExecOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      ToolTip="Continue action execution on errors"/>
+                            </StackPanel>
                         </Grid>
                     </ScrollViewer>
                 </DataTemplate>
@@ -215,7 +223,6 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
-                                <RowDefinition Height="26"/>
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Label Content="Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
@@ -237,13 +244,10 @@
                                     </Style>
                                 </TextBox.Style>
                             </TextBox>
-                            <Label Content="Continue execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
-                            <CheckBox IsChecked="{Binding ContinueOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22"
-                                      Grid.Row="1" Grid.Column="1" ToolTip="Continue action execution on errors" />
-                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="2" Grid.ColumnSpan="2" ActionName="{Binding Name}"
-                                            AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
-                                            MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
-                                            CurrentProfile="{Binding DataContext.SelectedProfile, ElementName=Root}" />
+                            <local:ActionEditor Steps="{Binding Steps}" Grid.Row="1" Grid.ColumnSpan="2" ActionName="{Binding Name}"
+                                                AllActionNames="{Binding DataContext.ActionsPage.ActionNames, ElementName=Root}"
+                                                MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
+                                                CurrentProfile="{Binding DataContext.SelectedProfile, ElementName=Root}" />
                         </Grid>
                     </ScrollViewer>
                 </DataTemplate>

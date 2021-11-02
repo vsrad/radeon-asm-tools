@@ -71,9 +71,6 @@ namespace VSRAD.Package.Options
             }
         }
 
-        private bool _continueOnError = false;
-        public bool ContinueOnError { get => _continueOnError; set => SetField(ref _continueOnError, value); }
-
         public const string BuiltinActionDebug = "Debug";
 
         [JsonProperty(ItemConverterType = typeof(ActionStepJsonConverter))]
@@ -81,7 +78,7 @@ namespace VSRAD.Package.Options
 
         public async Task<Result<ActionProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator, ActionEvaluationEnvironment env)
         {
-            var evaluated = new ActionProfileOptions { Name = Name, ContinueOnError = ContinueOnError };
+            var evaluated = new ActionProfileOptions { Name = Name };
             foreach (var step in Steps)
             {
                 if ((await step.EvaluateAsync(evaluator, env, Name)).TryGetResult(out var evaluatedStep, out var error))
@@ -101,6 +98,9 @@ namespace VSRAD.Package.Options
 
         private bool _runActionsLocally = false;
         public bool RunActionsLocally { get => _runActionsLocally; set => SetField(ref _runActionsLocally, value); }
+
+        private bool _continueActionExecOnError = false;
+        public bool ContinueActionExecOnError { get => _continueActionExecOnError; set => SetField(ref _continueActionExecOnError, value); }
 
         private string _localWorkDir = "$(" + CleanProfileMacros.LocalWorkDir + ")";
         public string LocalWorkDir { get => _localWorkDir; set => SetField(ref _localWorkDir, value); }
