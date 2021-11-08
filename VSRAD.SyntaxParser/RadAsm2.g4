@@ -1,4 +1,4 @@
-grammar RadAsm2;
+﻿grammar RadAsm2;
 
 function
     : FUNCTION END
@@ -154,6 +154,7 @@ BITOR   : '|'   ;
 BITAND  : '&'   ;
 BITXOR  : '^'   ;
 BITNOT  : '~'   ;
+RARROW  : '->'  ;
 
 /* "Structural symbols" */
 
