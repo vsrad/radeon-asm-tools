@@ -1,4 +1,4 @@
-﻿grammar RadAsm2;
+grammar RadAsm2;
 
 function
     : FUNCTION END
@@ -142,6 +142,7 @@ BITNOT  : '~'   ;
 
 /* "Structural symbols" */
 
+ESCAPE     : '\\';
 COMMA      : ',' ;
 SEMI       : ';' ;
 COLON      : ':' ;
@@ -207,5 +208,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;?()[\]{}=<>!&|~+\\-*%^/]+
+    : ~[ \t\r\n,:;?()[\]{}=<>!&|~+\\-*%^/\\]+
     ;

@@ -93,6 +93,7 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.BITXOR, RadAsmTokenType.Operation },
             { RadAsm2Lexer.BITNOT, RadAsmTokenType.Operation },
 
+            { RadAsm2Lexer.ESCAPE, RadAsmTokenType.Structural },
             { RadAsm2Lexer.COMMA, RadAsmTokenType.Comma },
             { RadAsm2Lexer.SEMI, RadAsmTokenType.Semi },
             { RadAsm2Lexer.COLON, RadAsmTokenType.Colon },
