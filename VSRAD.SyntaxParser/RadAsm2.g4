@@ -1,4 +1,4 @@
-﻿grammar RadAsm2;
+grammar RadAsm2;
 
 function
     : FUNCTION END
@@ -73,7 +73,7 @@ BUILTIN_FUNCTION
     | 'float'
     | 'floor'
     | 'map'
-    | 'zip_with'
+    | 'zip'
     | 'head'
     | 'tail'
     | 'take'
