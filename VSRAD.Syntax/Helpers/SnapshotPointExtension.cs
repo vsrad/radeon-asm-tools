@@ -34,7 +34,7 @@ namespace VSRAD.Syntax.Helpers
         private static bool IsSuitableChar(this SnapshotPoint snapshotPoint)
         {
             var pointChar = snapshotPoint.GetChar();
-            return char.IsLetterOrDigit(pointChar) || pointChar == '_' || pointChar == '\\' || pointChar == '.';
+            return char.IsLetterOrDigit(pointChar) || pointChar == '_' || pointChar == '.';
         }
     }
 }
