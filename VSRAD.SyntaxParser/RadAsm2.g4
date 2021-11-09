@@ -13,10 +13,8 @@ BUILTIN_FUNCTION
     | 'sendmsg'
     | 'asic'
     | 'type'
-    | 'assert'
     | 'len'
     | 'lit'
-    | 'data'
     | 'abs'
     | 'abs_lo'
     | 'abs_hi'
@@ -67,10 +65,27 @@ BUILTIN_FUNCTION
     | 'set_cs'
     | 'load_collision_waveid'
     | 'load_intrawave_collision'
+    | 'assert'
     | 'align'
-    | 'label_offset'
+    | 'data'
     | 'label_diff'
     | 'label_diff_eq'
+    | 'float'
+    | 'floor'
+    | 'map'
+    | 'zip'
+    | 'head'
+    | 'tail'
+    | 'take'
+    | 'drop'
+    | 'rotate'
+    | 'replicate'
+    | 'reverse'
+    | 'cons'
+    | 'concat'
+    | 'list'
+    | 's_list'
+    | 'v_list'
     ;
 
 SHADER      : 'shader' ;
@@ -139,9 +154,11 @@ BITOR   : '|'   ;
 BITAND  : '&'   ;
 BITXOR  : '^'   ;
 BITNOT  : '~'   ;
+RARROW  : '->'  ;
 
 /* "Structural symbols" */
 
+ESCAPE     : '\\';
 COMMA      : ',' ;
 SEMI       : ';' ;
 COLON      : ':' ;
@@ -207,5 +224,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;?()[\]{}=<>!&|~+\\-*%^/]+
+    : ~[ \t\r\n,:;?()[\]{}=<>!&|~+\\-*%^/\\]+
     ;

@@ -1,4 +1,4 @@
-﻿using Antlr4.Runtime;
+using Antlr4.Runtime;
 using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
 using VSRAD.Syntax.Core.Tokens;
@@ -92,7 +92,9 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.BITAND, RadAsmTokenType.Operation },
             { RadAsm2Lexer.BITXOR, RadAsmTokenType.Operation },
             { RadAsm2Lexer.BITNOT, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.RARROW, RadAsmTokenType.Operation },
 
+            { RadAsm2Lexer.ESCAPE, RadAsmTokenType.Structural },
             { RadAsm2Lexer.COMMA, RadAsmTokenType.Comma },
             { RadAsm2Lexer.SEMI, RadAsmTokenType.Semi },
             { RadAsm2Lexer.COLON, RadAsmTokenType.Colon },
