@@ -248,7 +248,6 @@ namespace VSRAD.Package.DebugVisualizer
                 HeaderText = "Name",
                 ReadOnly = false,
                 Frozen = true,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
             CreateMissingDataColumns(DataColumnCount);
