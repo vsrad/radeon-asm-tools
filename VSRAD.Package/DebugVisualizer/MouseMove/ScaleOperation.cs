@@ -44,7 +44,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
-            _orgWidth = _isNameColumn ? _table.Columns[0].Width : _tableState.ColumnWidth;
+            _orgWidth = _isNameColumn
+                            ? _table.Columns[_tableState.NameColumnIndex].Width
+                            : _tableState.ColumnWidth;
             _orgScroll = _tableState.GetCurrentScroll();
             _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, !leftedge);
             _orgSColumns = _orgScroll / _orgWidth;
@@ -56,6 +58,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x)
         {
+            // match the right edge of the name column regardless of its position
+            if (Math.Abs(x - state.NameColumnEdge) < _maxDistanceFromDivider)
+                return true;
+
             if (state.ScalingMode == ScalingMode.ResizeQuad)
             {
                 float f = state.GetNormalizedXCoordinate(x);
