@@ -78,7 +78,7 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            _state = new TableState(this, columnWidth: 60);
+            _state = new TableState(this, columnWidth: 60, NameColumnIndex);
             SetupColumns();
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
