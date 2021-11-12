@@ -10,7 +10,7 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public DataGridView Table { get; }
         public int DataColumnOffset { get; private set; } = 1;
-        public int minAllowedWidth {get; } = 30;
+        public int minAllowedWidth { get; } = 30;
         public IReadOnlyList<DataGridViewColumn> DataColumns => _dataColumns;
         public int ColumnWidth { get; set; }
         public ScalingMode ScalingMode { get; set; } = ScalingMode.ResizeColumn;
@@ -120,6 +120,11 @@ namespace VSRAD.Package.DebugVisualizer
             AdditionalScrollOffset = Math.Min(0, s);
             ColumnWidth = w;
             Table.HorizontalScrollingOffset = Math.Max(0, s);
+        }
+
+        public void ScaleNameColumn(int w)
+        {
+            Table.Columns[0].Width = w;
         }
 
         public int CountVisibleDataColumns(int index, bool include_current)

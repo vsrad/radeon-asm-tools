@@ -22,6 +22,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private bool _lefthalf; // mouse is in left half of the data columns region
         private float _orgSPixels; // number of scrolled pixels in first displayed column
 
+        private bool _isNameColumn;
+
         public ScaleOperation(DataGridView table, TableState state)
         {
             _table = table;
@@ -36,19 +38,18 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 return false;
 
             bool leftedge = (e.X - hit.ColumnX) < (_tableState.ColumnWidth/2);
-            if (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex())
-                return false;
-            
+
+            _isNameColumn = (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex())
+                || hit.ColumnIndex < _tableState.GetFirstVisibleDataColumnIndex();
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
-            _orgWidth = _tableState.ColumnWidth;
+            _orgWidth = _isNameColumn ? _table.Columns[0].Width : _tableState.ColumnWidth;
             _orgScroll = _tableState.GetCurrentScroll();
             _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, !leftedge);
             _orgSColumns = _orgScroll / _orgWidth;
             _orgSPixels = _orgScroll % _orgWidth;
             _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < 0.5;
-
 
             return true;
         }
@@ -106,7 +107,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     curWidth = Math.Max(minWidth, curWidth);
                     s = (float)curWidth / _orgWidth;
                     int curScroll = _orgSColumns * curWidth + (int)(s * _orgSPixels);
-                    _tableState.SetWidthAndScroll(curWidth, curScroll);
+                    if (_isNameColumn)
+                        _tableState.ScaleNameColumn(curWidth);
+                    else
+                        _tableState.SetWidthAndScroll(curWidth, curScroll);
                 }
             }
             else if ((_tableState.ScalingMode == ScalingMode.ResizeQuad && _lefthalf)
@@ -121,7 +125,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     curWidth = Math.Max(minWidth, curWidth);
                     s = (float)curWidth / _orgWidth;
                     int curScroll = (int)(_orgScroll * s + _tableState.GetDataRegionWidth() * (s - 1));
-                    _tableState.SetWidthAndScroll(curWidth, curScroll);
+                    if (_isNameColumn)
+                        _tableState.ScaleNameColumn(curWidth);
+                    else
+                        _tableState.SetWidthAndScroll(curWidth, curScroll);
                 }
             }
             else if (_tableState.ScalingMode == ScalingMode.ResizeColumn || _tableState.ScalingMode == ScalingMode.ResizeColumnAllowWide)
@@ -132,7 +139,10 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 int curWidth = (int)(s * _orgWidth);
                 curWidth = Math.Max(minWidth, curWidth);
                 int curScroll = _orgScroll + (_orgNColumns - 1) * (curWidth - _orgWidth);
-                _tableState.SetWidthAndScroll(curWidth, curScroll);
+                if (_isNameColumn)
+                    _tableState.ScaleNameColumn(curWidth);
+                else
+                    _tableState.SetWidthAndScroll(curWidth, curScroll);
             }
             _operationStarted = true;
             return true;
