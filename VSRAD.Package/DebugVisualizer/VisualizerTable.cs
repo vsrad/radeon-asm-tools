@@ -106,6 +106,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
 
+        public void SetNameColumnScalingEnabled(bool nameColumnScalingEnabled) => _state.NameColumnScalingEnabled = nameColumnScalingEnabled;
+
         public void ScaleControls(float scaleFactor)
         {
             var rowHeight = (int)(scaleFactor * 20);

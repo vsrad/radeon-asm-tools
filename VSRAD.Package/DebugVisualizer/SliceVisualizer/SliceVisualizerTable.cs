@@ -28,7 +28,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             HeatMapMode = false;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
-            _state = new TableState(this, 60, 0); // todo: verify that name column scaling does not break slice
+            _state = new TableState(this, 60, 0);
+            _state.NameColumnScalingEnabled = false; // slice does not have name column
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
