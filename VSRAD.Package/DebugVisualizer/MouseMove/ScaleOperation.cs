@@ -44,7 +44,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
-            _orgWidth = _isNameColumn
+            _orgWidth = _isNameColumn && _tableState.NameColumnScalingEnabled
                             ? _table.Columns[_tableState.NameColumnIndex].Width
                             : _tableState.ColumnWidth;
             _orgScroll = _tableState.GetCurrentScroll();
@@ -58,8 +58,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public static bool ShouldChangeCursor(DataGridView.HitTestInfo hit, TableState state, int x)
         {
-            // match the right edge of the name column regardless of its position
-            if (Math.Abs(x - state.NameColumnEdge) < _maxDistanceFromDivider)
+            // match the right edge of the name column regardless of its position if name column scaling is enabled
+            if ((Math.Abs(x - state.NameColumnEdge) < _maxDistanceFromDivider) && state.NameColumnScalingEnabled)
                 return true;
 
             if (state.ScalingMode == ScalingMode.ResizeQuad)
@@ -113,7 +113,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     curWidth = Math.Max(minWidth, curWidth);
                     s = (float)curWidth / _orgWidth;
                     int curScroll = _orgSColumns * curWidth + (int)(s * _orgSPixels);
-                    if (_isNameColumn)
+                    if (_isNameColumn && _tableState.NameColumnScalingEnabled)
                         _tableState.ScaleNameColumn(curWidth);
                     else
                         _tableState.SetWidthAndScroll(curWidth, curScroll);
@@ -131,7 +131,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     curWidth = Math.Max(minWidth, curWidth);
                     s = (float)curWidth / _orgWidth;
                     int curScroll = (int)(_orgScroll * s + _tableState.GetDataRegionWidth() * (s - 1));
-                    if (_isNameColumn)
+                    if (_isNameColumn && _tableState.NameColumnScalingEnabled)
                         _tableState.ScaleNameColumn(curWidth);
                     else
                         _tableState.SetWidthAndScroll(curWidth, curScroll);
@@ -145,7 +145,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 int curWidth = (int)(s * _orgWidth);
                 curWidth = Math.Max(minWidth, curWidth);
                 int curScroll = _orgScroll + (_orgNColumns - 1) * (curWidth - _orgWidth);
-                if (_isNameColumn)
+                if (_isNameColumn && _tableState.NameColumnScalingEnabled)
                     _tableState.ScaleNameColumn(curWidth);
                 else
                     _tableState.SetWidthAndScroll(curWidth, curScroll);

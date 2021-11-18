@@ -47,6 +47,7 @@ namespace VSRAD.Package.DebugVisualizer
                         SetRowContentsFromBreakState(row);
             };
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
+            _table.SetNameColumnScalingEnabled(_context.Options.VisualizerAppearance.ScaleNameColumn);
             TableHost.Setup(_table);
             RestoreSavedState();
         }
@@ -134,6 +135,9 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     break;
                 case nameof(Options.VisualizerAppearance.ScalingMode):
                     _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
+                    break;
+                case nameof(Options.VisualizerAppearance.ScaleNameColumn):
+                    _table.SetNameColumnScalingEnabled(_context.Options.VisualizerAppearance.ScaleNameColumn);
                     break;
                 case nameof(Options.DebuggerOptions.GroupSize):
                 case nameof(Options.VisualizerOptions.MaskLanes):

@@ -66,6 +66,10 @@ namespace VSRAD.Package.Options
             set => SetField(ref _scalingMode, value);
         }
 
+        private bool _scaleNameColumn = true;
+
+        public bool ScaleNameColumn { get => _scaleNameColumn; set => SetField(ref _scaleNameColumn, value); }
+
         private int _darkenAlternatingRowsBy = 0;
         public int DarkenAlternatingRowsBy { get => _darkenAlternatingRowsBy; set => SetField(ref _darkenAlternatingRowsBy, value); }
     }
