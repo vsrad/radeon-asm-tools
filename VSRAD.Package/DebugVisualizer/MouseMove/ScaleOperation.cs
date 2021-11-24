@@ -104,7 +104,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 || (_tableState.ScalingMode == ScalingMode.ResizeQuad && !_lefthalf)
                 || (_tableState.ScalingMode == ScalingMode.ResizeHalf && !_lefthalf))
             {
-                int orgL = _orgNColumns * _orgWidth - _orgScroll;
+                int orgL = _isNameColumn ? _orgWidth
+                                         : _orgNColumns * _orgWidth - _orgScroll;
                 int curL = orgL + diff;
                 if (orgL > 0)
                 {
@@ -122,8 +123,9 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             else if ((_tableState.ScalingMode == ScalingMode.ResizeQuad && _lefthalf)
                 || (_tableState.ScalingMode == ScalingMode.ResizeHalf && _lefthalf))
             {
-                int orgL = _tableState.Table.Width - _orgeX;
-                int curL = orgL - diff;
+                int orgL = _isNameColumn ? _orgWidth
+                                         : _tableState.Table.Width - _orgeX;
+                int curL = _isNameColumn ? orgL + diff : orgL - diff;
                 if (orgL > 0)
                 {
                     float s = (float)curL / orgL;
