@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.Collections.Generic;
 using VSRAD.Package.Commands;
 
 namespace VSRAD.Package.ProjectSystem
@@ -20,6 +21,8 @@ namespace VSRAD.Package.ProjectSystem
         public event EventHandler<ProjectLoadedEventArgs> ProjectLoaded;
 
         private Project _currentRadProject;
+
+        private Dictionary<string, Options.ProjectOptions> _options = new Dictionary<string, Options.ProjectOptions>();
 
         public SolutionManager(IVsMonitorSelection vsMonitorSelection)
         {
@@ -84,7 +87,15 @@ namespace VSRAD.Package.ProjectSystem
             if (_currentRadProject == null)
                 return;
 
-            _currentRadProject.Load();
+            if (_options.TryGetValue(cpsProject.FullPath, out var options))
+            {
+                _currentRadProject.Load(options);
+            }
+            else
+            {
+                _currentRadProject.Load(null);
+                _options.Add(cpsProject.FullPath, _currentRadProject.Options);
+            }
 
             var exportProvider = cpsProject.Services.ExportProvider;
             var loadedEventArgs = new ProjectLoadedEventArgs
