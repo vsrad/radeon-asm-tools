@@ -61,6 +61,12 @@ namespace VSRAD.Package.Commands
                 else
                     SetNewTargetMachine(selected);
             }
+            if (commandId == Constants.ProfileDropdownListId && variantOut != IntPtr.Zero)
+                Marshal.GetNativeVariantForObject(_project.Options.Profiles.Keys.Cast<string>().ToArray(), variantOut);
+            if (commandId == Constants.ProfileDropdownId && variantOut != IntPtr.Zero)
+                Marshal.GetNativeVariantForObject(_project.Options.ActiveProfile, variantOut);
+            if (commandId == Constants.ProfileDropdownId && variantIn != IntPtr.Zero)
+                _project.Options.ActiveProfile = (string)Marshal.GetObjectForNativeVariant(variantIn);
         }
 
         private void ListTargetMachines(IntPtr variantOut)
