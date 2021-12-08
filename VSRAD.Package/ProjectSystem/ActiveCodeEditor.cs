@@ -107,7 +107,7 @@ namespace VSRAD.Package.ProjectSystem
             for (indexEnd = caretIndex; indexEnd < lineText.Length; indexEnd++)
             {
                 var ch = lineText[indexEnd];
-                if (!(char.IsLetterOrDigit(ch) || ch == '_' || ch == '$' || ch == '\\'))
+                if (!(char.IsLetterOrDigit(ch) || ch == '_' || ch == '$'))
                 {
                     break;
                 }
