@@ -36,7 +36,7 @@ namespace VSRAD.DebugServer.SharedUtils
             {
                 foreach (var line in File.ReadLines($"/proc/{otherProcess.Id}/status"))
                 {
-                    if (!line.StartsWith("PPid:", StringComparison.InvariantCultureIgnoreCase)) continue;
+                    if (!line.StartsWith("PPid:", StringComparison.OrdinalIgnoreCase)) continue;
                     var otherProcessParentId = int.Parse(line.Replace("PPid:\t", ""));
                     return parentProcess.Id == otherProcessParentId;
                 }

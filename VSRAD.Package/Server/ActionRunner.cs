@@ -28,19 +28,15 @@ namespace VSRAD.Package.Server
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
-        private readonly SVsServiceProvider _serviceProvider;
         private readonly IActionRunController _controller;
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
         private readonly ReadOnlyCollection<string> _debugWatches;
-        private readonly IProject _project;
 
-        public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, IActionRunController controller, ReadOnlyCollection<string> debugWatches, IProject project)
+        public ActionRunner(ICommunicationChannel channel, IActionRunController controller, ReadOnlyCollection<string> debugWatches)
         {
             _channel = channel;
-            _serviceProvider = serviceProvider;
             _controller = controller;
             _debugWatches = debugWatches;
-            _project = project;
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>
@@ -270,13 +266,6 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
-        {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker,
-                _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
-            return new StepResult(true, "", "");
-        }
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
         {
             var command = new Execute

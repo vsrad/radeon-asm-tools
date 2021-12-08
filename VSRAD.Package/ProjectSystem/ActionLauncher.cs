@@ -211,7 +211,7 @@ namespace VSRAD.Package.ProjectSystem
             _project.Options.DebuggerOptions.UpdateLastAppArgs();
             _projectSources.SaveProjectState();
 
-            var runner = new ActionRunner(_channel, _serviceProvider, this, transients.Watches, _project);
+            var runner = new ActionRunner(_channel, this, transients.Watches);
             var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
             var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
 
