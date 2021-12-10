@@ -48,7 +48,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.Watches, "<visualizer watches, colon-separated>", userDefined: false),
             new MacroItem(RadMacros.BreakLine, "<next breakpoint line(s), colon-separated>", userDefined: false),
             new MacroItem(RadMacros.DebugAppArgs, "<app args, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.DebugBreakArgs, "<break args, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.DebugAppArgs2, "<app args 2, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.DebugAppArgs3, "<app args 3, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.Counter, "<counter, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.GroupSize, "<group size, set in visualizer>", userDefined: false)

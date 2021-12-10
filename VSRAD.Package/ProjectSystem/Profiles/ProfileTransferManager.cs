@@ -43,6 +43,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var visualizerAppearance = json["VisualizerAppearance"].ToObject<VisualizerAppearance>();
             var visualizerColumnStyling = json["VisualizerColumnStyling"].ToObject<DebugVisualizer.ColumnStylingOptions>();
             var activeProfile = json["ActiveProfile"].ToString();
+            var breakArgs = json["DebuggerOptions"]["BreakArgs"].ToString();
+
+            if (breakArgs != null)
+                debuggerOptions.AppArgs2 = breakArgs;
 
             var options = new ProjectOptions(
                 debuggerOptions,

@@ -9,7 +9,7 @@
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              mc:Ignorable="d"
              x:Name="Root"
-             d:DesignHeight="140" d:DesignWidth="720">
+             d:DesignHeight="200" d:DesignWidth="720">
     <UserControl.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Show hidden system variable" IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, Mode=TwoWay}" IsCheckable="True"/>
@@ -18,7 +18,8 @@
             <MenuItem IsEnabled="False" Header="Show:"/>
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="App args" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgsField, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="Break args" IsChecked="{Binding Options.VisualizerOptions.ShowBreakArgsField, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="App args 2" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgs2Field, Mode=TwoWay}" IsCheckable="True"/>
+            <MenuItem Header="App args 3" IsChecked="{Binding Options.VisualizerOptions.ShowAppArgs3Field, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="Wavemap" IsChecked="{Binding Options.VisualizerOptions.ShowWavemap, Mode=TwoWay}" IsCheckable="True"/>
         </ContextMenu>
     </UserControl.ContextMenu>
@@ -286,7 +287,19 @@
                         <Style TargetType="RowDefinition">
                             <Setter Property="Height" Value="Auto" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowBreakArgsField}" Value="False">
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowAppArgs2Field}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="RowDefinition">
+                            <Setter Property="Height" Value="Auto" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Options.VisualizerOptions.ShowAppArgs3Field}" Value="False">
                                     <Setter Property="Height" Value="0" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -308,7 +321,8 @@
             </Grid.RowDefinitions>
             <Label Grid.Row="0" Grid.Column="0" Content="Columns:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <Label Grid.Row="1" Grid.Column="0" Content="App args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <Label Grid.Row="2" Grid.Column="0" Content="Break args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Grid.Row="2" Grid.Column="0" Content="App args 2:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Grid.Row="3" Grid.Column="0" Content="App args 3:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             <TextBox Text="{Binding Options.VisualizerColumnStyling.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
                      Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
@@ -318,12 +332,17 @@
                       IsEditable="True" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                       ItemsSource="{Binding Options.DebuggerOptions.LastAppArgs, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
                       DisplayMemberPath="Value" x:Name="LastAppArgsCombo" Grid.Row="1" IsTextSearchEnabled="False"/>
-            <TextBox Text="{Binding Options.DebuggerOptions.BreakArgs, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding Options.DebuggerOptions.AppArgs2, UpdateSourceTrigger=PropertyChanged}"
                      Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch">
+            <TextBox Text="{Binding Options.DebuggerOptions.AppArgs3, UpdateSourceTrigger=PropertyChanged}"
+                     Grid.Row="3" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
+                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+            <Grid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="85"/>
                     <ColumnDefinition Width="*"/>
