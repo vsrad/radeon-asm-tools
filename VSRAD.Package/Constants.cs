@@ -42,6 +42,8 @@ namespace VSRAD.Package
         public const int ProfileTargetMachineDropdownListId = 0x100;
         public const int BreakModeDropdownId = 0x11;
         public const int BreakModeDropdownListId = 0x101;
+        public const int ProfileDropdownId = 0x12;
+        public const int ProfileDropdownListId = 0x102;
         public static readonly Guid ToolWindowCommandSet = new Guid("03c8f3ba-2e44-4159-ac37-b08fc295a0cc");
         public static readonly Guid ForceRunToCursorCommandSet = new Guid("cefc8250-7cd1-46c1-b4f6-46a0a22a1c81");
         public static readonly Guid AddToWatchesCommandSet = new Guid("8560BD12-1D31-40BA-B300-1A31FC901E93");

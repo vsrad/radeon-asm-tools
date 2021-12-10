@@ -274,6 +274,16 @@
           <ToolTipText>Select the breakpoints placement mode</ToolTipText>
         </Strings>
       </Combo>
+	    <Combo guid="guidCmdSetProfileDropdown" id="ProfileDropdownId" priority="100" type="DropDownCombo" defaultWidth="90" idCommandList="ProfileDropdownListId">
+		  <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+		  <CommandFlag>CommandWellOnly</CommandFlag>
+		  <CommandFlag>DefaultInvisible</CommandFlag>
+		  <CommandFlag>DynamicVisibility</CommandFlag>
+		  <Strings>
+			 <ButtonText>Profile</ButtonText>
+		     <ToolTipText>Select the debug profile</ToolTipText>
+		  </Strings>
+	  </Combo>
     </Combos>
   </Commands>
 
@@ -356,6 +366,8 @@
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
       <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
       <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
+	  <IDSymbol name="ProfileDropdownId" value="0x12" />
+	  <IDSymbol name="ProfileDropdownListId" value="0x102" />
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">
