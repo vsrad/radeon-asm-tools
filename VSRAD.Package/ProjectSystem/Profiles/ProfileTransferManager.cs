@@ -60,8 +60,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
                 foreach (var host in json["TargetHosts"].ToObject<List<string>>())
                     options.TargetHosts.Add(host);
 
-            foreach (var host in options.TargetHosts)
-                options.TargetHosts.Add(host);
             options.ActiveProfile = activeProfile;
 
             return options;
