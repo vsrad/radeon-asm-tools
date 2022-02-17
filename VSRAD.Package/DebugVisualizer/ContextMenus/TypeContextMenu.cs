@@ -7,7 +7,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 {
     public sealed class TypeContextMenu : IContextMenu
     {
-        public delegate void TypeChanged(int rowIndex, VariableType type);
+        public delegate void TypeChanged(int rowIndex, VariableInfo type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
         public delegate void InsertRow(int rowIndex, bool after);
         public delegate void AddWatchRange(string name, int from, int to);
@@ -22,8 +22,10 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         {
             _table = table;
 
-            var typeItems = ((VariableType[])Enum.GetValues(typeof(VariableType)))
-                .Select(type => new MenuItem(type.ToString(), (s, e) => typeChanged(_currentRow, type)));
+            var typeItems = Array.Empty<MenuItem>(); // TODO: manually add corresponding values
+
+            //var typeItems = ((VariableType[])Enum.GetValues(typeof(VariableType)))
+            //    .Select(type => new MenuItem(type.ToString(), (s, e) => typeChanged(_currentRow, type)));
 
             var fgColor = new MenuItem("Font Color", new[]
             {
@@ -90,7 +92,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 item.Checked = false;
 
             var selectedWatch = VisualizerTable.GetRowWatchState(_table.Rows[hit.RowIndex]);
-            _menu.MenuItems[(int)selectedWatch.Type].Checked = true;
+            _menu.MenuItems[(int)selectedWatch.Info.Type].Checked = true;
             _avgprButton.Enabled = _currentRow != 0 || !_table.ShowSystemRow;
             _avgprButton.Checked = selectedWatch.IsAVGPR;
 

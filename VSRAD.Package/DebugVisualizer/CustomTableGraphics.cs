@@ -37,7 +37,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (!selectedWatch.IsEmpty)
             {
                 var typeTextPos = new PointF((float)e.RowBounds.Left + 7, (float)e.RowBounds.Top + 4);
-                e.Graphics.DrawString(selectedWatch.Type.ShortName(),
+                e.Graphics.DrawString(selectedWatch.Info.ShortName(),
                     _table.RowHeadersDefaultCellStyle.Font,
                     new SolidBrush(_table.RowHeadersDefaultCellStyle.ForeColor),
                     typeTextPos);
