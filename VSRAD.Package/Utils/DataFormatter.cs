@@ -26,9 +26,9 @@ namespace VSRAD.Package.Utils
             return sb.ToString();
         }
 
-        public static string FormatDword(VariableType variableType, uint data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
+        public static string FormatDword(VariableInfo varInfo, uint data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
         {
-            switch (variableType)
+            switch (varInfo.Type)
             {
                 case VariableType.Hex:
                     var hex = data.ToString("x");

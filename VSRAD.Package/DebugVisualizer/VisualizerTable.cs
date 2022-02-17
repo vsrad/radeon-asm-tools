@@ -131,7 +131,7 @@ namespace VSRAD.Package.DebugVisualizer
             ProcessInsertKey(Keys.Control | Keys.C);
         }
 
-        private void VariableTypeChanged(int rowIndex, VariableType type)
+        private void VariableTypeChanged(int rowIndex, VariableInfo type)
         {
             var changedRows = _selectionController.GetClickTargetRows(rowIndex);
             foreach (var row in changedRows)
@@ -196,7 +196,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var index = Rows.Add();
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
-            Rows[index].HeaderCell.Value = watch.Type.ShortName();
+            Rows[index].HeaderCell.Value = watch.Info.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
             Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
             LockWatchRowForEditing(Rows[index], canBeRemoved);
@@ -266,7 +266,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var scrollingOffset = HorizontalScrollingOffset;
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
-                    Rows[e.RowIndex].HeaderCell.Value = VariableType.Hex.ShortName();
+                    Rows[e.RowIndex].HeaderCell.Value = new VariableInfo { Type = VariableType.Hex, Size = 32 }.ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
                     LockWatchRowForEditing(row);
