@@ -97,11 +97,23 @@ namespace VSRAD.Package.Options
                     var name = reader.Value.ToString();
 
                     if (!reader.Read()) continue;
-                    if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "Info") continue;
+                    if (reader.TokenType != JsonToken.PropertyName) continue;
 
-                    if (!reader.Read()) continue;
-                    if (reader.TokenType != JsonToken.StartObject) continue;
-                    var info = JObject.Load(reader).ToObject<VariableInfo>();
+                    VariableInfo info;
+
+                    if (reader.Value.ToString() == "Info")
+                    {
+                        if (!reader.Read()) continue;
+                        if (reader.TokenType != JsonToken.StartObject) continue;
+                        info = JObject.Load(reader).ToObject<VariableInfo>();
+                    }
+                    else
+                    {
+                        if (reader.Value.ToString() != "Type") continue;
+                        if (!reader.Read()) continue;
+                        if (reader.TokenType != JsonToken.String) continue;
+                        info = new VariableInfo((VariableType)Enum.Parse(typeof(VariableType), reader.Value.ToString()), 32);
+                    }
 
                     if (!reader.Read()) continue;
                     if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "IsAVGPR") continue;
