@@ -79,8 +79,10 @@ namespace VSRAD.Package.Utils
                     return $"({firstHalf}; {secondHalf})";
                 case VariableType.Bin:
                     var bin = Convert.ToString(data, 2);
+                    if (varInfo.Size != 32) bin = bin.Substring(0, varInfo.Size);
+                    if (string.IsNullOrEmpty(bin)) bin = "0";
                     if (leadingZeroes)
-                        bin = bin.PadLeft(32, '0');
+                        bin = bin.PadLeft(varInfo.Size, '0');
                     if (binHexSeparator != 0)
                         bin = InsertNumberSeparators(bin, binHexSeparator);
                     return "0b" + bin;
