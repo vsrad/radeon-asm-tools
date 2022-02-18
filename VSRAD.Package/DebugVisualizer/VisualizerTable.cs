@@ -55,7 +55,7 @@ namespace VSRAD.Package.DebugVisualizer
             _computedStyling = new ComputedColumnStyling();
             _getValidWatches = getValidWatches;
 
-            RowHeadersWidth = 30;
+            RowHeadersWidth = 35;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             RowHeadersVisible = true;

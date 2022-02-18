@@ -31,7 +31,7 @@ namespace VSRAD.Package.DebugVisualizer
                     | DataGridViewPaintParts.Border
                     | DataGridViewPaintParts.Focus
                     | DataGridViewPaintParts.SelectionBackground
-                    | DataGridViewPaintParts.ContentForeground
+                    //| DataGridViewPaintParts.ContentForeground // not needed because we are using custom string painter below
                 );
 
             if (!selectedWatch.IsEmpty)
