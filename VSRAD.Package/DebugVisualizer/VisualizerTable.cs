@@ -266,7 +266,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var scrollingOffset = HorizontalScrollingOffset;
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
-                    Rows[e.RowIndex].HeaderCell.Value = new VariableInfo { Type = VariableType.Hex, Size = 32 }.ShortName();
+                    Rows[e.RowIndex].HeaderCell.Value = new VariableInfo(VariableType.Hex, 32).ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
                     LockWatchRowForEditing(row);
