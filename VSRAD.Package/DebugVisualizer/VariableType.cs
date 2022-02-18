@@ -1,5 +1,9 @@
-﻿namespace VSRAD.Package.DebugVisualizer
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace VSRAD.Package.DebugVisualizer
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum VariableType
     {
 #pragma warning disable CA1720 // Identifier contains type name
@@ -7,10 +11,17 @@
 #pragma warning restore CA1720 // Identifier contains type name
     };
 
-    public struct VariableInfo : System.IEquatable<VariableInfo>
+    public readonly struct VariableInfo : System.IEquatable<VariableInfo>
     {
-        public VariableType Type;
-        public int Size;
+        [JsonConstructor]
+        public VariableInfo(VariableType type, int size)
+        {
+            Type = type;
+            Size = size;
+        }
+
+        public readonly VariableType Type;
+        public readonly int Size;
 
         public bool Equals(VariableInfo other) =>
             other.Type == Type && other.Size == Size;
@@ -53,17 +64,17 @@
             switch (shortName[0])
             {
                 case 'B':
-                    return new VariableInfo { Type = VariableType.Bin,   Size = int.Parse(shortName.Substring(1)) };
+                    return new VariableInfo(VariableType.Bin, int.Parse(shortName.Substring(1)));
                 case 'F':
-                    return new VariableInfo { Type = VariableType.Float, Size = int.Parse(shortName.Substring(1)) };
+                    return new VariableInfo(VariableType.Float, int.Parse(shortName.Substring(1)));
                 case 'h':
-                    return new VariableInfo { Type = VariableType.Half,  Size = 0 /*we dont use size for half's*/ };
+                    return new VariableInfo(VariableType.Half, 0); // we dont use size for half's
                 case 'H':
-                    return new VariableInfo { Type = VariableType.Hex,   Size = int.Parse(shortName.Substring(1)) };
+                    return new VariableInfo(VariableType.Hex, int.Parse(shortName.Substring(1)));
                 case 'I':
-                    return new VariableInfo { Type = VariableType.Int,   Size = int.Parse(shortName.Substring(1)) };
+                    return new VariableInfo(VariableType.Int, int.Parse(shortName.Substring(1)));
                 default:
-                    return new VariableInfo { Type = VariableType.Uint,  Size = int.Parse(shortName.Substring(1)) };
+                    return new VariableInfo(VariableType.Uint, int.Parse(shortName.Substring(1)));
             }
         }
     }

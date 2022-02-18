@@ -86,7 +86,7 @@ namespace VSRAD.Package.Options
             while (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 if (reader.TokenType == JsonToken.String)
-                    watches.Add(new Watch((string)reader.Value, new VariableInfo { Type = VariableType.Hex, Size = 32 }, isAVGPR: false));
+                    watches.Add(new Watch((string)reader.Value, new VariableInfo(VariableType.Hex, 32), isAVGPR: false));
                 else if (reader.TokenType == JsonToken.StartObject)
                     watches.Add(JObject.Load(reader).ToObject<Watch>());
             }
