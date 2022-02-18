@@ -47,7 +47,18 @@ namespace VSRAD.Package.Utils
                             return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
                     }
                 case VariableType.Uint:
-                    return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
+                    var uIntBytes = BitConverter.GetBytes(data);
+                    switch (varInfo.Size)
+                    {
+                        case 32:
+                            return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
+                        case 16:
+                            var res16 = BitConverter.ToUInt16(uIntBytes, 0);
+                            return intSeparator == 0 ? res16.ToString() : InsertNumberSeparators(res16.ToString(), intSeparator);
+                        default: // 8
+                            var res8 = uIntBytes[0].ToString();
+                            return intSeparator == 0 ? res8.ToString() : InsertNumberSeparators(res8.ToString(), intSeparator);
+                    }
                 case VariableType.Int:
                     return intSeparator == 0 ? ((int)data).ToString() : InsertNumberSeparators(((int)data).ToString(), intSeparator);
                 case VariableType.Half:
