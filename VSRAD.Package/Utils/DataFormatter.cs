@@ -39,7 +39,13 @@ namespace VSRAD.Package.Utils
                         hex = InsertNumberSeparators(hex, binHexSeparator);
                     return "0x" + hex;
                 case VariableType.Float:
-                    return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
+                    switch (varInfo.Size)
+                    {
+                        case 16:
+                            return Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(data), 0)).ToString();
+                        default: // 32
+                            return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
+                    }
                 case VariableType.Uint:
                     return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
                 case VariableType.Int:
