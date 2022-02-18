@@ -31,9 +31,10 @@ namespace VSRAD.Package.Utils
             switch (varInfo.Type)
             {
                 case VariableType.Hex:
-                    var hex = data.ToString("x");
+                    var hex = data.ToString("x").Substring(0, varInfo.Size / 4);
+                    if (string.IsNullOrEmpty(hex)) hex = "0";
                     if (leadingZeroes)
-                        hex = hex.PadLeft(8, '0');
+                        hex = hex.PadLeft(varInfo.Size / 4, '0');
                     if (binHexSeparator != 0)
                         hex = InsertNumberSeparators(hex, binHexSeparator);
                     return "0x" + hex;
