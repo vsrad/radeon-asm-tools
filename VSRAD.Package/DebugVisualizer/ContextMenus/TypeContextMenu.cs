@@ -22,11 +22,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         {
             _table = table;
 
-            //var typeItems = Array.Empty<MenuItem>(); // TODO: manually add corresponding values
-
-            //var typeItems = ((VariableType[])Enum.GetValues(typeof(VariableType)))
-            //    .Select(type => new MenuItem(type.ToString(), (s, e) => typeChanged(_currentRow, type)));
-
             var typeItems = new MenuItem[]
             {
                 new MenuItem("Hex", new MenuItem[]
@@ -54,9 +49,9 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 }),
                 new MenuItem("Bin", new MenuItem[]
                 {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Float, Size = 32 })),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Float, Size = 16 })),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Float, Size = 8  }))
+                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Bin, Size = 32 })),
+                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Bin, Size = 16 })),
+                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Bin, Size = 8  }))
                 }),
                 new MenuItem("Half", (s, e) => typeChanged(_currentRow, new VariableInfo { Type = VariableType.Half, Size = 0 }))
             };
@@ -126,7 +121,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 item.Checked = false;
 
             var selectedWatch = VisualizerTable.GetRowWatchState(_table.Rows[hit.RowIndex]);
-            //_menu.MenuItems[(int)selectedWatch.Info.Type].Checked = true;
             _avgprButton.Enabled = _currentRow != 0 || !_table.ShowSystemRow;
             _avgprButton.Checked = selectedWatch.IsAVGPR;
 
