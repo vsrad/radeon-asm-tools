@@ -91,7 +91,30 @@ namespace VSRAD.Package.Options
                 if (reader.TokenType == JsonToken.String)
                     watches.Add(new Watch((string)reader.Value, new VariableInfo(VariableType.Hex, 32), isAVGPR: false));
                 else if (reader.TokenType == JsonToken.StartObject)
-                    watches.Add(JObject.Load(reader).ToObject<Watch>());
+                {
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "Name") continue;
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.String) continue;
+                    var name = reader.Value.ToString();
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "Info") continue;
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.StartObject) continue;
+                    var info = JObject.Load(reader).ToObject<VariableInfo>();
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "IsAVGPR") continue;
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.Boolean) continue;
+                    var isAVGPR = (bool)reader.Value;
+
+                    watches.Add(new Watch(name, info, isAVGPR));
+                }
             }
 
             return watches;
