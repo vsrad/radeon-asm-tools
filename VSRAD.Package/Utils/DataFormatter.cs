@@ -31,7 +31,8 @@ namespace VSRAD.Package.Utils
             switch (varInfo.Type)
             {
                 case VariableType.Hex:
-                    var hex = data.ToString("x").Substring(0, varInfo.Size / 4);
+                    var hex = data.ToString("x");
+                    if (varInfo.Size != 32) hex = hex.Substring(8 - (varInfo.Size / 4), varInfo.Size / 4);
                     if (string.IsNullOrEmpty(hex)) hex = "0";
                     if (leadingZeroes)
                         hex = hex.PadLeft(varInfo.Size / 4, '0');
@@ -79,7 +80,7 @@ namespace VSRAD.Package.Utils
                     return $"({firstHalf}; {secondHalf})";
                 case VariableType.Bin:
                     var bin = Convert.ToString(data, 2);
-                    if (varInfo.Size != 32) bin = bin.Substring(0, varInfo.Size);
+                    if (varInfo.Size != 32) bin = bin.Substring(32 - varInfo.Size, varInfo.Size);
                     if (string.IsNullOrEmpty(bin)) bin = "0";
                     if (leadingZeroes)
                         bin = bin.PadLeft(varInfo.Size, '0');
