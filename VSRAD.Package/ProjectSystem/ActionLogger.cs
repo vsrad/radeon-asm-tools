@@ -27,6 +27,8 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task<Error?> LogActionWithWarningsAsync(ActionRunResult runResult)
         {
+            await _outputWriter.ClearAsync();
+
             var title = runResult.ActionName + " action " + (runResult.Successful ? "SUCCEEDED" : "FAILED") + $" in {runResult.TotalMillis}ms";
 
             var log = new StringBuilder();
