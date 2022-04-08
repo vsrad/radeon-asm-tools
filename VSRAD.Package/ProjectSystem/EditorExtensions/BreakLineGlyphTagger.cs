@@ -33,6 +33,14 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         // ExecutionCompleted event directly.
         internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
 
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
+
+        [ImportingConstructor]
+        public BreakLineGlyphTaggerProvider(ITextDocumentFactoryService textDocumentFactoryService)
+        {
+            _textDocumentFactoryService = textDocumentFactoryService;
+        }
+
         public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs execCompleted)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
@@ -69,7 +77,8 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
         {
             if (buffer != null && buffer.Properties.TryGetProperty(typeof(ITextDocument), out ITextDocument document))
-                return buffer.Properties.GetOrCreateSingletonProperty(() => new BreakLineGlyphTagger(buffer, document, this) as ITagger<T>);
+                return buffer.Properties.GetOrCreateSingletonProperty(() => new BreakLineGlyphTagger(buffer, document, this,
+                    _textDocumentFactoryService) as ITagger<T>);
             return null;
         }
     }
@@ -80,14 +89,30 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
         private readonly ITextBuffer _buffer;
         private readonly ITextDocument _document;
+        private readonly BreakLineGlyphTaggerProvider _provider;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
         private readonly List<TagSpan<BreakLineGlyphTag>> _tagSpans = new List<TagSpan<BreakLineGlyphTag>>();
 
-        public BreakLineGlyphTagger(ITextBuffer buffer, ITextDocument document, BreakLineGlyphTaggerProvider provider)
+        public BreakLineGlyphTagger(ITextBuffer buffer, ITextDocument document, BreakLineGlyphTaggerProvider provider,
+            ITextDocumentFactoryService textDocumentFactoryService)
         {
             _buffer = buffer;
             _document = document;
-            provider.DebugExecutionCompleted += DebugExecutionCompleted;
+            _provider = provider;
+            _textDocumentFactoryService = textDocumentFactoryService;
+            _textDocumentFactoryService.TextDocumentDisposed += DocumentDisposed;
+            _provider.DebugExecutionCompleted += DebugExecutionCompleted;
+        }
+
+        // Unsubscribe from DebugExecutionCompleted to prevent possible memory leaks
+        private void DocumentDisposed(object sender, TextDocumentEventArgs e)
+        {
+            if (e.TextDocument == _document)
+            {
+                _provider.DebugExecutionCompleted -= DebugExecutionCompleted;
+                _textDocumentFactoryService.TextDocumentDisposed -= DocumentDisposed;
+            }
         }
 
         private void DebugExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
