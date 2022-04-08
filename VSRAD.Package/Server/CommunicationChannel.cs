@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
@@ -119,6 +120,7 @@ namespace VSRAD.Package.Server
             }
             catch (Exception e) when (!cancellationToken.IsCancellationRequested && !(e is UnsupportedServerVersionException)) // Don't attempt to reconnect to an unsupported server
             {
+                ForceDisconnect(); // At this point, the stream may be corrupted while we are still connected (e.g. in case of EndOfStreamException), so close the connection first
                 if (tryReconnect)
                 {
                     await _outputWindowWriter.PrintMessageAsync($"Connection to {ConnectionOptions} lost, attempting to reconnect...").ConfigureAwait(false);
@@ -127,7 +129,6 @@ namespace VSRAD.Package.Server
                 }
                 else
                 {
-                    ForceDisconnect();
                     await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to {ConnectionOptions}").ConfigureAwait(false);
                     throw;
                 }
@@ -180,13 +181,16 @@ namespace VSRAD.Package.Server
 
                     var capCommand = new GetServerCapabilitiesCommand { ExtensionCapabilities = DebugServer.IPC.CapabilityInfo.LatestExtensionCapabilities };
                     await client.GetStream().WriteSerializedMessageAsync(capCommand).ConfigureAwait(false);
-                    var (response, _) = await client.GetStream().ReadSerializedResponseAsync<GetServerCapabilitiesResponse>().ConfigureAwait(false);
-                    if (response == null)
+                    try
+                    {
+                        var (response, _) = await client.GetStream().ReadSerializedResponseAsync<GetServerCapabilitiesResponse>().ConfigureAwait(false);
+                        ServerCapabilities = response.Info;
+                    }
+                    catch (EndOfStreamException)
                     {
                         ConnectionState = ClientState.Disconnected;
                         throw new UnsupportedServerVersionException(ConnectionOptions);
                     }
-                    ServerCapabilities = response.Info;
                 }
 
                 if (!ServerCapabilities.IsUpToDate())
