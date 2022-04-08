@@ -100,7 +100,6 @@ namespace VSRAD.Package.ProjectSystem
             _projectSources = projectSources;
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
-
             _project.RunWhenLoaded((_) => VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunActionLoopAsync));
         }
 

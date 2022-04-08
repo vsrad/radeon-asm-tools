@@ -1,6 +1,7 @@
 ﻿using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using System;
 using System.ComponentModel.Composition;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.DebugVisualizer.SliceVisualizer;
@@ -28,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem
 
     [Export(typeof(IToolWindowIntegration))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class ToolWindowIntegration : IToolWindowIntegration
+    public sealed class ToolWindowIntegration : IToolWindowIntegration, IDisposable
     {
         public IProject Project { get; }
         public ProjectOptions ProjectOptions => Project.Options;
@@ -75,5 +76,13 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);
+
+        public void Dispose()
+        {
+            _visualizerContext?.Dispose();
+            _visualizerContext = null;
+            _sliceVisualizerContext?.Dispose();
+            _sliceVisualizerContext = null;
+        }
     }
 }

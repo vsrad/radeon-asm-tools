@@ -16,7 +16,7 @@ namespace VSRAD.PackageTests
             new Queue<(IResponse response, Action<ICommand> callback)>();
         private readonly CapabilityInfo _capabilityInfo;
 
-        public event Action ConnectionStateChanged;
+        public event EventHandler ConnectionStateChanged;
 
         public bool AllInteractionsHandled => _interactions.Count == 0;
 
@@ -24,7 +24,7 @@ namespace VSRAD.PackageTests
 
         public ClientState ConnectionState => throw new NotImplementedException();
 
-        public void RaiseConnectionStateChanged() => ConnectionStateChanged();
+        public void RaiseConnectionStateChanged() => ConnectionStateChanged(null, null);
 
         public MockCommunicationChannel(ServerPlatform platform = ServerPlatform.Windows)
         {

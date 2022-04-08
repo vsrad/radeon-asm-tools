@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 {
-    public sealed class SliceVisualizerContext : INotifyPropertyChanged
+    public sealed class SliceVisualizerContext : INotifyPropertyChanged, IDisposable
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<TypedSliceWatchView> WatchSelected;
@@ -46,6 +46,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             _windowVisibilityEvents = visibilityEvents;
             _windowVisibilityEvents.WindowShowing += OnToolWindowVisibilityChanged;
             _windowVisibilityEvents.WindowHiding += OnToolWindowVisibilityChanged;
+        }
+
+        public void Dispose()
+        {
+            _windowVisibilityEvents.WindowShowing -= OnToolWindowVisibilityChanged;
+            _windowVisibilityEvents.WindowHiding -= OnToolWindowVisibilityChanged;
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)

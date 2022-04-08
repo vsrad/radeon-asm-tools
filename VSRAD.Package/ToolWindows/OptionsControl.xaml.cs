@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,7 +13,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ToolWindows
 {
-    public partial class OptionsControl : UserControl
+    public sealed partial class OptionsControl : UserControl
     {
         public sealed class Context : DefaultNotifyPropertyChanged
         {
@@ -48,24 +49,25 @@ namespace VSRAD.Package.ToolWindows
             public Context(ProjectOptions options, ICommunicationChannel channel, IActionLauncher actionLauncher)
             {
                 Options = options;
-                Options.PropertyChanged += OptionsChanged;
                 _channel = (CommunicationChannel)channel;
-                _channel.ConnectionStateChanged += ConnectionStateChanged;
-                actionLauncher.ActionExecutionStateChanged += ActionExecutionStateChanged;
+
+                PropertyChangedEventManager.AddHandler(options, ProfileChanged, nameof(Options.Profiles));
+                WeakEventManager<CommunicationChannel, EventArgs>.AddHandler(
+                    _channel, nameof(CommunicationChannel.ConnectionStateChanged), ConnectionStateChanged);
+                WeakEventManager<IActionLauncher, ActionExecutionStateChangedEventArgs>.AddHandler(
+                    actionLauncher, nameof(ActionLauncher.ActionExecutionStateChanged), ActionExecutionStateChanged);
+
                 DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
                 CancelActionCommand = new WpfDelegateCommand((_) => actionLauncher.CancelRunningAction());
             }
 
-            private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+            private void ProfileChanged(object sender, PropertyChangedEventArgs e)
             {
-                if (e.PropertyName == nameof(Options.Profiles))
-                {
-                    RaisePropertyChanged(nameof(ProfileNames));
-                    ConnectionStateChanged();
-                }
+                RaisePropertyChanged(nameof(ProfileNames));
+                ConnectionStateChanged(null, null);
             }
 
-            private void ConnectionStateChanged()
+            private void ConnectionStateChanged(object sender, EventArgs e)
             {
                 RaisePropertyChanged(nameof(ConnectionInfo));
                 RaisePropertyChanged(nameof(ServerInfo));

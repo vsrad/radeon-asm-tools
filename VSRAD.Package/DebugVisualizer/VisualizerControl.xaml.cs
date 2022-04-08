@@ -3,15 +3,18 @@ using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
+using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public sealed partial class VisualizerControl : UserControl
+    public sealed partial class VisualizerControl : UserControl, IDisposableToolWindow
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
         private readonly WavemapImage _wavemap;
+        private readonly FontAndColorProvider _fontAndColorProvider;
+        private readonly IToolWindowIntegration _integration;
 
         public VisualizerControl(IToolWindowIntegration integration)
         {
@@ -26,17 +29,18 @@ namespace VSRAD.Package.DebugVisualizer
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
-            integration.AddWatch += AddWatch;
-            integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
-            integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
-            integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
-            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
+            _integration = integration;
+            _integration.AddWatch += AddWatch;
+            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerOptions, OptionsChanged, "");
+            PropertyChangedEventManager.AddHandler(_context.Options.DebuggerOptions, OptionsChanged, "");
+            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerAppearance, OptionsChanged, "");
+            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerColumnStyling, VisualizerColumnStylingPropertyChanged, "");
 
-            var tableFontAndColor = new FontAndColorProvider();
-            tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
+            _fontAndColorProvider = new FontAndColorProvider();
+            _fontAndColorProvider.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
                 _context.Options,
-                tableFontAndColor,
+                _fontAndColorProvider,
                 getValidWatches: () => _context?.BreakData?.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
@@ -50,6 +54,15 @@ namespace VSRAD.Package.DebugVisualizer
             _table.SetNameColumnScalingEnabled(_context.Options.VisualizerAppearance.ScaleNameColumn);
             TableHost.Setup(_table);
             RestoreSavedState();
+        }
+
+        void IDisposableToolWindow.DisposeToolWindow()
+        {
+            ((DockPanel)Content).Children.Clear();
+            TableHost.Dispose();
+            _fontAndColorProvider.Dispose();
+
+            _integration.AddWatch -= AddWatch;
         }
 
         private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
@@ -122,6 +135,9 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 _table.AppendVariableRow(watch);
             _table.PrepareNewWatchRow();
         }
+
+        private void VisualizerColumnStylingPropertyChanged(object sender, PropertyChangedEventArgs e) =>
+            RefreshDataStyling();
 
         private void OptionsChanged(object sender, PropertyChangedEventArgs e)
         {

@@ -19,6 +19,7 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class SolutionManager : IVsSelectionEvents
     {
         public event EventHandler<ProjectLoadedEventArgs> ProjectLoaded;
+        public event EventHandler SolutionUnloaded;
 
         private Project _currentRadProject;
 
@@ -72,7 +73,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (varValueNew is IVsProject vsProject && GetCpsProject(vsProject) is UnconfiguredProject cpsProject)
                     LoadRadProject(cpsProject);
                 else
-                    VSPackage.SolutionUnloaded();
+                    SolutionUnloaded?.Invoke(this, null);
             }
 
             return VSConstants.S_OK;
