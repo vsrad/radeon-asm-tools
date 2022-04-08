@@ -26,23 +26,53 @@ namespace VSRAD.Package.Utils
             return sb.ToString();
         }
 
-        public static string FormatDword(VariableType variableType, uint data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
+        public static string FormatDword(VariableInfo varInfo, uint data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
         {
-            switch (variableType)
+            switch (varInfo.Type)
             {
                 case VariableType.Hex:
                     var hex = data.ToString("x");
+                    if (varInfo.Size != 32) hex = hex.Substring(8 - (varInfo.Size / 4), varInfo.Size / 4);
+                    if (string.IsNullOrEmpty(hex)) hex = "0";
                     if (leadingZeroes)
-                        hex = hex.PadLeft(8, '0');
+                        hex = hex.PadLeft(varInfo.Size / 4, '0');
                     if (binHexSeparator != 0)
                         hex = InsertNumberSeparators(hex, binHexSeparator);
                     return "0x" + hex;
                 case VariableType.Float:
-                    return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
+                    switch (varInfo.Size)
+                    {
+                        case 16:
+                            return Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(data), 0)).ToString();
+                        default: // 32
+                            return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
+                    }
                 case VariableType.Uint:
-                    return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
+                    var uIntBytes = BitConverter.GetBytes(data);
+                    switch (varInfo.Size)
+                    {
+                        case 32:
+                            return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
+                        case 16:
+                            var res16 = BitConverter.ToUInt16(uIntBytes, 0);
+                            return intSeparator == 0 ? res16.ToString() : InsertNumberSeparators(res16.ToString(), intSeparator);
+                        default: // 8
+                            var res8 = uIntBytes[3].ToString(); // little endian
+                            return intSeparator == 0 ? res8.ToString() : InsertNumberSeparators(res8.ToString(), intSeparator);
+                    }
                 case VariableType.Int:
-                    return intSeparator == 0 ? ((int)data).ToString() : InsertNumberSeparators(((int)data).ToString(), intSeparator);
+                    var intBytes = BitConverter.GetBytes(data);
+                    switch (varInfo.Size)
+                    {
+                        case 32:
+                            return intSeparator == 0 ? ((int)data).ToString() : InsertNumberSeparators(((int)data).ToString(), intSeparator);
+                        case 16:
+                            var res16 = BitConverter.ToInt16(intBytes, 0);
+                            return intSeparator == 0 ? res16.ToString() : InsertNumberSeparators(res16.ToString(), intSeparator);
+                        default: // 8
+                            var res8 = ((sbyte)intBytes[3]).ToString(); // little endian
+                            return intSeparator == 0 ? res8.ToString() : InsertNumberSeparators(res8.ToString(), intSeparator);
+                    }
                 case VariableType.Half:
                     byte[] bytes = BitConverter.GetBytes(data);
                     float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
@@ -50,8 +80,10 @@ namespace VSRAD.Package.Utils
                     return $"({firstHalf}; {secondHalf})";
                 case VariableType.Bin:
                     var bin = Convert.ToString(data, 2);
+                    if (varInfo.Size != 32) bin = bin.Substring(32 - varInfo.Size, varInfo.Size);
+                    if (string.IsNullOrEmpty(bin)) bin = "0";
                     if (leadingZeroes)
-                        bin = bin.PadLeft(32, '0');
+                        bin = bin.PadLeft(varInfo.Size, '0');
                     if (binHexSeparator != 0)
                         bin = InsertNumberSeparators(bin, binHexSeparator);
                     return "0b" + bin;

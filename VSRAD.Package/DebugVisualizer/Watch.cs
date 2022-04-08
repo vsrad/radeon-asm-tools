@@ -7,8 +7,8 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public string Name { get; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
-        public VariableType Type { get; }
+        //[JsonConverter(typeof(StringEnumConverter))]
+        public VariableInfo Info { get; }
 
         public bool IsAVGPR { get; }
 
@@ -16,16 +16,16 @@ namespace VSRAD.Package.DebugVisualizer
         public bool IsEmpty => string.IsNullOrWhiteSpace(Name);
 
         [JsonConstructor]
-        public Watch(string name, VariableType type, bool isAVGPR)
+        public Watch(string name, VariableInfo type, bool isAVGPR)
         {
             Name = name;
-            Type = type;
+            Info = type;
             IsAVGPR = isAVGPR;
         }
 
-        public bool Equals(Watch w) => Name == w.Name && Type == w.Type && IsAVGPR == w.IsAVGPR;
+        public bool Equals(Watch w) => Name == w.Name && Info == w.Info && IsAVGPR == w.IsAVGPR;
         public override bool Equals(object o) => o is Watch w && Equals(w);
-        public override int GetHashCode() => (Name, Type, IsAVGPR).GetHashCode();
+        public override int GetHashCode() => (Name, Info, IsAVGPR).GetHashCode();
         public static bool operator ==(Watch left, Watch right) => left.Equals(right);
         public static bool operator !=(Watch left, Watch right) => !(left == right);
     }

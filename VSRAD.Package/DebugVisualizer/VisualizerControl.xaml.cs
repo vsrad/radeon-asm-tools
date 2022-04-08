@@ -124,7 +124,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         {
             RefreshDataStyling();
             _table.Rows.Clear();
-            _table.AppendVariableRow(new Watch("System", VariableType.Hex, isAVGPR: false), canBeRemoved: false);
+            _table.AppendVariableRow(new Watch("System", new VariableInfo(VariableType.Hex, 32), isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
             _table.AlignmentChanged(
                     _context.Options.VisualizerAppearance.NameColumnAlignment,
@@ -194,7 +194,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         private void AddWatch(string watchName)
         {
             _table.RemoveNewWatchRow();
-            _table.AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
+            _table.AppendVariableRow(new Watch(watchName, new VariableInfo(VariableType.Int, 32), isAVGPR: false));
             _table.PrepareNewWatchRow();
             _context.Options.DebuggerOptions.Watches.Clear();
             _context.Options.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
