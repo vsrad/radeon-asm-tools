@@ -78,7 +78,7 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            _state = new TableState(this, columnWidth: 60);
+            _state = new TableState(this, columnWidth: 60, NameColumnIndex);
             SetupColumns();
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
@@ -105,6 +105,8 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
+
+        public void SetNameColumnScalingEnabled(bool nameColumnScalingEnabled) => _state.NameColumnScalingEnabled = nameColumnScalingEnabled;
 
         public void ScaleControls(float scaleFactor)
         {
@@ -248,7 +250,6 @@ namespace VSRAD.Package.DebugVisualizer
                 HeaderText = "Name",
                 ReadOnly = false,
                 Frozen = true,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
             CreateMissingDataColumns(DataColumnCount);
