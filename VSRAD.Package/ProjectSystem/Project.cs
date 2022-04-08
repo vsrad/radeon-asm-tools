@@ -64,15 +64,22 @@ namespace VSRAD.Package.ProjectSystem
                 _onLoadCallbacks.Add(callback);
         }
 
-        public void Load()
+        public void Load(ProjectOptions projectOptions)
         {
-            Options = ProjectOptions.Read(_visualOptionsFilePath, _profilesFilePath, _oldOptionsFilePath);
+            if (projectOptions == null)
+            {
+                Options = ProjectOptions.Read(_visualOptionsFilePath, _profilesFilePath, _oldOptionsFilePath);
 
-            Options.PropertyChanged += OptionsPropertyChanged;
-            Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
+                Options.PropertyChanged += OptionsPropertyChanged;
+                Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
+                Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
+                Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
+                Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
+            }
+            else
+            {
+                Options = projectOptions;
+            }
 
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<StatusBarIntegration>();
