@@ -29,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly ITextDocumentFactoryService _textDocumentService;
 
         // this regex matches words like `\vargs` without indices like [0]
-        private static readonly Regex _activeWordWithoutBracketsRegex = new Regex(@"[\w\\$]*", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex _activeWordWithoutBracketsRegex = new Regex(@"[\w$]*", RegexOptions.Compiled | RegexOptions.Singleline);
         // this regex find matches like `\vargs[kernarg_1:kernarg_2]`
         private static readonly Regex _activeWordWithBracketsRegex = new Regex(@"[\w\\$]*\[[^\[\]]*\]", RegexOptions.Compiled | RegexOptions.Singleline);
         // this regex find empty brackets
@@ -107,7 +107,7 @@ namespace VSRAD.Package.ProjectSystem
             for (indexEnd = caretIndex; indexEnd < lineText.Length; indexEnd++)
             {
                 var ch = lineText[indexEnd];
-                if (!(char.IsLetterOrDigit(ch) || ch == '_' || ch == '$' || ch == '\\'))
+                if (!(char.IsLetterOrDigit(ch) || ch == '_' || ch == '$'))
                 {
                     break;
                 }
