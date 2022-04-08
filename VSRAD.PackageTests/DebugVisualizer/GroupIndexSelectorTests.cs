@@ -18,11 +18,11 @@ namespace VSRAD.PackageTests.DebugVisualizer
             selector.PropertyChanged += (s, e) => changedPropertyName = e.PropertyName;
 
             selector.DimX = 2;
-            Assert.Equal(nameof(selector.DimX), changedPropertyName);
+            Assert.Equal(nameof(selector.MaximumX), changedPropertyName);
 
             selector.X = 3;
             Assert.Equal(nameof(selector.X), changedPropertyName);
-            Assert.Equal<uint>(1, selector.X); // clipped to DimX - 1
+            Assert.Equal<uint>(1, selector.MaximumX); // clipped to DimX - 1
         }
 
         [Fact]
