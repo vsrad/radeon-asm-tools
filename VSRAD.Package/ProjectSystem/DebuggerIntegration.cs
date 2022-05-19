@@ -48,7 +48,7 @@ namespace VSRAD.Package.ProjectSystem
             if (e.RunResult == null) // RunResult is null when an error has occurred
                 return;
 
-            if (_actionLauncher.IsDebugAction(e.Action))
+            if (_actionLauncher.IsDebugAction(e.Action, new System.Collections.Generic.List<string>()))
                 RaiseExecutionCompleted(e.Transients.ActiveSourceFullPath ?? "", e.Transients.BreakLines ?? new[] { 0u }, isStepping: false, e.RunResult.BreakState);
         }
 

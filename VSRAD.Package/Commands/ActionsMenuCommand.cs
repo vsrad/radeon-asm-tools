@@ -52,7 +52,8 @@ namespace VSRAD.Package.Commands
         {
             if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out var error))
             {
-                var isDebugAction = actionName == SelectedProfile.MenuCommands.DebugAction;
+                var isDebugAction = (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
+                        && _actionLauncher.IsDebugAction(action, new System.Collections.Generic.List<string>()));
                 if (_actionLauncher.TryLaunchActionByName(actionName, moveToNextDebugTarget: isDebugAction) is Error e)
                     Errors.Show(e);
             }

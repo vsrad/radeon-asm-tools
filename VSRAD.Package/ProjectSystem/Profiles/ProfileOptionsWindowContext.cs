@@ -91,6 +91,9 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void OnActionNameChanged(object sender, ActionNameChangedEventArgs e)
         {
+            if (ActionNames.Contains(e.NewName.Trim()))
+                throw new ArgumentException($"Action \"{e.NewName}\" already exist in current profile");
+
             foreach (var page in Pages)
             {
                 foreach (var step in page.Steps)
@@ -229,7 +232,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         public void AddAction()
         {
-            var newAction = new ActionProfileOptions { Name = "New Action" };
+            var newAction = new ActionProfileOptions { Name = ActionHelper.GetNextActionName(SelectedProfile.Actions) };
             SelectedProfile.Actions.Add(newAction);
             SelectedPage = newAction;
         }
