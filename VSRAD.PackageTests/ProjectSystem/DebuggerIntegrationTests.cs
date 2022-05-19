@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Tagging;
 using Moq;
 using System;
@@ -33,7 +34,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             projectMock.Setup((p) => p.Options).Returns(options);
             projectMock.Setup(p => p.RunWhenLoaded(It.IsAny<Action<ProjectOptions>>())).Callback((Action<ProjectOptions> a) => a(options));
-            var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>();
+            var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>(new Mock<ITextDocumentFactoryService>().Object);
             projectMock.Setup((p) => p.GetExportByMetadataAndType(It.IsAny<Predicate<IAppliesToMetadataView>>(), It.IsAny<Predicate<IViewTaggerProvider>>()))
                 .Returns(breakLineTagger.Object);
             var project = projectMock.Object;
@@ -41,9 +42,9 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.Profile.General.LocalWorkDir = "local/dir";
             project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
             project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
-            project.Options.DebuggerOptions.Watches.Add(new Watch("a", VariableType.Hex, false));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("c", VariableType.Hex, false));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", VariableType.Hex, false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableInfo(VariableType.Hex, 32), false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableInfo(VariableType.Hex, 32), false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableInfo(VariableType.Hex, 32), false));
 
             var readDebugDataStep = new ReadDebugDataStep { BinaryOutput = false, OutputOffset = 1 };
             readDebugDataStep.OutputFile.CheckTimestamp = true;
@@ -117,7 +118,8 @@ namespace VSRAD.PackageTests.ProjectSystem
             var options = new ProjectOptions();
             options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             projectMock.Setup((p) => p.Options).Returns(options);
-            var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>();
+            var _iTextDocumentFactoryServiceMock = new Mock<ITextDocumentFactoryService>();
+            var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>(new Mock<ITextDocumentFactoryService>().Object);
             projectMock.Setup((p) => p.GetExportByMetadataAndType(It.IsAny<Predicate<IAppliesToMetadataView>>(), It.IsAny<Predicate<IViewTaggerProvider>>()))
                 .Returns(breakLineTagger.Object);
             var project = projectMock.Object;
@@ -137,13 +139,14 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             var channel = new MockCommunicationChannel();
             var sourceManager = new Mock<IProjectSourceManager>();
-            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
+            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel, sourceManager.Object,
                 codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
             var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object);
 
             var engine = debuggerIntegration.RegisterEngine();
-            // Should not throw StackOverflow
-            engine.Execute(false);
+            // Should trigger Errors.Show(e) on DebuggerIntegration.cs:95
+            var e = Assert.Throws<InvalidOperationException>(() => engine.Execute(false));
+            Assert.Equal("Unable to identify the UI thread's Dispatcher object.", e.Message);
         }
     }
 }
