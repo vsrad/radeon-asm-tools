@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -47,10 +48,12 @@ namespace VSRAD.Package.Options
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
-        private string _remoteMachine = "127.0.0.1";
+        private string _remoteMachine = DefaultOptionValues.RemoteMachineAdress;
+        [DefaultValue(DefaultOptionValues.RemoteMachineAdress)]
         public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
 
-        private int _port = 9339;
+        private int _port = DefaultOptionValues.Port;
+        [DefaultValue(DefaultOptionValues.Port)]
         public int Port { get => _port; set => SetField(ref _port, value); }
 
         [JsonIgnore]
