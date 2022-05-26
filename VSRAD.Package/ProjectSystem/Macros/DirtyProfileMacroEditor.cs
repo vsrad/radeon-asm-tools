@@ -120,7 +120,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
                 return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
             }
-            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
+            catch (UserException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
             {
                 return new MacroEvaluatorTransientValues(0,
                     sourcePath: "<current source full path>",
