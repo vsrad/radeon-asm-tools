@@ -77,7 +77,7 @@ namespace VSRAD.Package.Utils
                     byte[] bytes = BitConverter.GetBytes(data);
                     float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
                     float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
-                    return $"({firstHalf}; {secondHalf})";
+                    return $"{firstHalf}; {secondHalf}";
                 case VariableType.Bin:
                     var bin = Convert.ToString(data, 2);
                     if (varInfo.Size != 32) bin = bin.Substring(32 - varInfo.Size, varInfo.Size);
