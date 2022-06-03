@@ -277,6 +277,8 @@ namespace VSRAD.Package.Server
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
             };
+            command.EnvironmentVariables.Add("MESSAGE", "Hello");
+            command.EnvironmentVariables.Add("MESSAGE2", "world");
             IResponse response;
             if (step.Environment == StepEnvironment.Local)
             {

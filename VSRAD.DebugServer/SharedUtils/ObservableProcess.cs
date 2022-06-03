@@ -45,6 +45,9 @@ namespace VSRAD.DebugServer.SharedUtils
                 _process.StartInfo.RedirectStandardOutput = true;
                 _process.StartInfo.RedirectStandardError = true;
             }
+            foreach (KeyValuePair<string, string> envVar in command.EnvironmentVariables)
+                _process.StartInfo.EnvironmentVariables.Add(envVar.Key, envVar.Value);
+
             _waitForCompletion = command.WaitForCompletion;
             _timeout = command.ExecutionTimeoutSecs;
         }

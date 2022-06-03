@@ -100,6 +100,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public int ExecutionTimeoutSecs { get; set; }
 
+        public Dictionary<string, string> EnvironmentVariables { get; private set; } = new Dictionary<string, string>();
+
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "Execute",
@@ -117,7 +119,8 @@ namespace VSRAD.DebugServer.IPC.Commands
             Executable = reader.ReadString(),
             Arguments = reader.ReadString(),
             RunAsAdministrator = reader.ReadBoolean(),
-            ExecutionTimeoutSecs = reader.ReadInt32()
+            ExecutionTimeoutSecs = reader.ReadInt32(),
+            EnvironmentVariables = reader.ReadLengthPrefixedStringDict()
         };
 
         public void Serialize(IPCWriter writer)
@@ -127,6 +130,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(Arguments);
             writer.Write(RunAsAdministrator);
             writer.Write(ExecutionTimeoutSecs);
+            writer.WriteLengthPrefixedDict(EnvironmentVariables);
         }
     }
 
