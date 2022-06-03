@@ -220,6 +220,9 @@ namespace VSRAD.Package.Options
         private bool _confirmTerminationOnTimeout = true;
         public bool ConfirmTerminationOnTimeout { get => _confirmTerminationOnTimeout; set => SetField(ref _confirmTerminationOnTimeout, value); }
 
+        private string _environmentVariables = "";
+        public string EnvironmentVariables { get => _environmentVariables; set => SetField(ref _environmentVariables, value); }
+
         public override string ToString()
         {
             if (string.IsNullOrWhiteSpace(Executable))
@@ -281,7 +284,8 @@ namespace VSRAD.Package.Options
                 // Hence it is always true for a remote ExecuteStep. If it's forced to run locally, we should respect this behavior.
                 WaitForCompletion = Environment == StepEnvironment.Remote || WaitForCompletion,
                 TimeoutSecs = TimeoutSecs,
-                ConfirmTerminationOnTimeout = ConfirmTerminationOnTimeout
+                ConfirmTerminationOnTimeout = ConfirmTerminationOnTimeout,
+                EnvironmentVariables = EnvironmentVariables
             };
         }
     }

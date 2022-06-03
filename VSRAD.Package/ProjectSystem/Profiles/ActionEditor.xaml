@@ -31,6 +31,7 @@
         <local:ActionEditorIfNotModifiedConverter x:Key="IfNotModifiedConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
         <utils:WpfInverseBoolConverter x:Key="InverseBoolConverter"/>
+        <utils:WpfEvironmentVariableConverter x:Key="EnvironmentVariableConverter"/>
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenFalseConverter" TrueValue="Collapsed" FalseValue="Visible" />
     </UserControl.Resources>
@@ -209,6 +210,7 @@
                                 </RowDefinition>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Environment:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">
@@ -254,6 +256,10 @@
                                 <ComboBoxItem Content="Ask" ToolTip="Show a dialog with a choice to wait for the process to finish or terminate it"/>
                                 <ComboBoxItem Content="Terminate" ToolTip="Terminate the process and its subprocesses immediately"/>
                             </ComboBox>
+
+                            <Label Content="Environment Variables:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="8" Grid.Column="0"/>
+                            <TextBox Text="{Binding EnvironmentVariables, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" HorizontalAlignment="Left"
+                                     Height="22" Width="160" Grid.Row="8" Grid.Column="1"/>
                         </Grid>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:OpenInEditorStep}">
