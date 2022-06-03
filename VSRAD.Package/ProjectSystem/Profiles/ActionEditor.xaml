@@ -31,7 +31,6 @@
         <local:ActionEditorIfNotModifiedConverter x:Key="IfNotModifiedConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
         <utils:WpfInverseBoolConverter x:Key="InverseBoolConverter"/>
-        <utils:WpfEvironmentVariableConverter x:Key="EnvironmentVariableConverter"/>
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenFalseConverter" TrueValue="Collapsed" FalseValue="Visible" />
     </UserControl.Resources>
