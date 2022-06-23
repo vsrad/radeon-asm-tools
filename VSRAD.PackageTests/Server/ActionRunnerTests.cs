@@ -455,6 +455,33 @@ namespace VSRAD.PackageTests.Server
             Assert.Null(result.StepResults[1].SubAction);
         }
 
+        [Fact]
+        public async Task SetsEnvironmentVarialbesLocalAsync()
+        {
+            var channel = new MockCommunicationChannel();
+            var cmd = "cmd.exe";
+            var env = "A1=\"A system of cells.\";A2=\"Within cells interlinked.\"";
+
+            var question = new ExecuteStep();
+            question.Arguments = "/C \"echo %A1%\"";
+            question.Executable = cmd;
+            question.Environment = StepEnvironment.Local;
+            question.EnvironmentVariables = env;
+
+            var answer = new ExecuteStep();
+            answer.Arguments = "/C \"echo %A2%\"";
+            answer.Executable = cmd;
+            answer.Environment = StepEnvironment.Local;
+            answer.EnvironmentVariables = env;
+
+            var runner = new ActionRunner(channel, MockController(), null);
+            var response = await runner.RunAsync("Baseline Test", new List<IActionStep>() { question, answer });
+
+            Assert.True(response.Successful);
+            Assert.Equal("Captured stdout (exit code 0):\r\n\"A system of cells.\"\r\n", response.StepResults[0].Log);
+            Assert.Equal("Captured stdout (exit code 0):\r\n\"Within cells interlinked.\"\r\n", response.StepResults[1].Log);
+        }
+
         #region ReadDebugDataStep
         [Fact]
         public async Task ReadDebugDataRemoteTestAsync()
