@@ -121,7 +121,7 @@ namespace VSRAD.Syntax.FunctionList
                 ClearFunctionList();
         }
 
-        private void ActiveDocumentChanged(IDocument activeDocument) // KEKER TODO
+        private void ActiveDocumentChanged(IDocument activeDocument)
         {
             if (_functionListControl == null) return;
 
