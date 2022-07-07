@@ -121,7 +121,7 @@ namespace VSRAD.Syntax.FunctionList
                 ClearFunctionList();
         }
 
-        private void ActiveDocumentChanged(IDocument activeDocument)
+        private void ActiveDocumentChanged(IDocument activeDocument) // KEKER TODO
         {
             if (_functionListControl == null) return;
 
@@ -156,7 +156,10 @@ namespace VSRAD.Syntax.FunctionList
                 return;
 
             var document = _documentFactory.GetOrCreateDocument(analysisResult.Snapshot.TextBuffer);
-            UpdateFunctionList(document, analysisResult, cancellationToken);
+            // there is cases, when new document is opened, but it do not become active (see Open in Editor: Preserve active document)
+            // in this case we don't want to update function list, so check that target document is in fact active
+            if (_documentFactory.GetActiveDocumentPath() == document.Path)
+                UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
         private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)

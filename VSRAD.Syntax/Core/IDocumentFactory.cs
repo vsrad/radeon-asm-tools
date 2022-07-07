@@ -8,6 +8,8 @@ namespace VSRAD.Syntax.Core
 
     public interface IDocumentFactory
     {
+        string GetActiveDocumentPath();
+
         /// <summary>
         /// Gets <see cref="IDocument"/> or creates if doesn't exist
         /// </summary>
