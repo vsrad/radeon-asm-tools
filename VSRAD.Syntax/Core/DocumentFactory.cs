@@ -20,6 +20,7 @@ namespace VSRAD.Syntax.Core
         private readonly Dictionary<string, IDocument> _documents;
         private readonly Lazy<IInstructionListManager> _instructionManager;
         private readonly Lazy<IInvisibleTextDocumentFactory> _invisibleDocumentFactory;
+        private readonly DTE _dte;
 
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
@@ -42,7 +43,11 @@ namespace VSRAD.Syntax.Core
 
             var dte = _serviceProvider.ServiceProvider.GetService(typeof(DTE)) as DTE;
             dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+
+            _dte = dte;
         }
+
+        public string GetActiveDocumentPath() => _dte.ActiveDocument.FullName;
 
         public IDocument GetOrCreateDocument(string path)
         {
