@@ -36,12 +36,12 @@ namespace VSRAD.DebugServer.IPC.Commands
         // TODO: Rename commands and responses to follow a predictable pattern of XCommand -> XResponse
         // (e.g. ExecuteCommand and ExecuteResponse instead of Execute and ExecutionFinished)
 
-        public static ICommand ReadCommand(this IPCReader reader)
+        public static ICommand ReadCommand(this IPCReader reader, HashSet<ExtensionCapability> extensionCapabilities)
         {
             var type = reader.ReadByte();
             switch ((CommandType)type)
             {
-                case CommandType.Execute: return Execute.Deserialize(reader);
+                case CommandType.Execute: return Execute.Deserialize(reader, extensionCapabilities.Contains(ExtensionCapability.EnvVarSet));
                 case CommandType.FetchMetadata: return FetchMetadata.Deserialize(reader);
                 case CommandType.FetchResultRange: return FetchResultRange.Deserialize(reader);
                 case CommandType.Deploy: return Deploy.Deserialize(reader);
@@ -113,14 +113,14 @@ namespace VSRAD.DebugServer.IPC.Commands
             $"ExecutionTimeoutSecs = {ExecutionTimeoutSecs}"
         });
 
-        public static Execute Deserialize(IPCReader reader) => new Execute
+        public static Execute Deserialize(IPCReader reader, bool envVarSet) => new Execute
         {
             WorkingDirectory = reader.ReadString(),
             Executable = reader.ReadString(),
             Arguments = reader.ReadString(),
             RunAsAdministrator = reader.ReadBoolean(),
             ExecutionTimeoutSecs = reader.ReadInt32(),
-            EnvironmentVariables = reader.ReadLengthPrefixedStringDict()
+            EnvironmentVariables = envVarSet ? reader.ReadLengthPrefixedStringDict() : new Dictionary<string, string>() // old extension/new debug server case, this field will be absent in the command
         };
 
         public void Serialize(IPCWriter writer)
@@ -388,7 +388,7 @@ namespace VSRAD.DebugServer.IPC.Commands
 
                 uncompresedStream.Seek(0, SeekOrigin.Begin);
                 using (var uncompressedReader = new IPCReader(uncompresedStream))
-                    return uncompressedReader.ReadCommand();
+                    return uncompressedReader.ReadCommand(LatestExtensionCapabilities);
             }
         }
 

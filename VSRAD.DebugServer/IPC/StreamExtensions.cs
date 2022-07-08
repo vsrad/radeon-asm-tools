@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace VSRAD.DebugServer
         // Since every command and response contains at least one byte (message type), zero-length messages are treated as pings
         private static readonly byte[] _pingMessage = new byte[] { 0, 0, 0, 0 };
 
-        public static async Task<(T, int)> ReadSerializedCommandAsync<T>(this Stream stream) where T : ICommand
+        public static async Task<(T, int)> ReadSerializedCommandAsync<T>(this Stream stream, HashSet<ExtensionCapability> extensionCapabilities) where T : ICommand
         {
             while (true) // Loop to reply to pings (sent in case of long-running commands)
             {
@@ -40,7 +41,7 @@ namespace VSRAD.DebugServer
                 }
                 using (var memStream = new MemoryStream(messageBytes))
                 using (var reader = new IPCReader(memStream))
-                    return ((T)reader.ReadCommand(), messageLength);
+                    return ((T)reader.ReadCommand(extensionCapabilities), messageLength);
             }
         }
 

@@ -97,7 +97,7 @@ namespace VSRAD.DebugServer
 
         private async Task<ICommand> ReadCommandAsync()
         {
-            var (command, bytesReceived) = await _socket.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
+            var (command, bytesReceived) = await _socket.GetStream().ReadSerializedCommandAsync<ICommand>(Capabilities).ConfigureAwait(false);
             if (command != null)
                 Log.CommandReceived(command, bytesReceived);
 
