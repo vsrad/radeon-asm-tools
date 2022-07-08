@@ -8,6 +8,10 @@ namespace VSRAD.Syntax.Core
 
     public interface IDocumentFactory
     {
+        /// <summary>
+        /// Returns current active document full path
+        /// </summary>
+        /// <returns>String, active document full path</returns>
         string GetActiveDocumentPath();
 
         /// <summary>
