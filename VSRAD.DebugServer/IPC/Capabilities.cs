@@ -6,13 +6,15 @@ namespace VSRAD.DebugServer.IPC
 #pragma warning disable CA1028 // Using byte for enum storage because it's used for binary serialization
     public enum ServerCapability : byte
     {
-        Base = 0
+        Base = 0,
+        EnvVarSet = 1
     }
 
     public enum ExtensionCapability : byte
     {
         Base = 0,
-        ExecutionTimedOutResponse = 1 // The extension accepts ExecutionTimedOutResponse and replies with ExecutionTimedOutActionCommand. When this capability is absent, the server defaults to TerminateProcesses = true
+        ExecutionTimedOutResponse = 1, // The extension accepts ExecutionTimedOutResponse and replies with ExecutionTimedOutActionCommand. When this capability is absent, the server defaults to TerminateProcesses = true
+        EnvVarSet = 2
     }
 
     public enum ServerPlatform : byte
@@ -31,12 +33,14 @@ namespace VSRAD.DebugServer.IPC
         public static readonly HashSet<ExtensionCapability> LatestExtensionCapabilities = new HashSet<ExtensionCapability>(new[]
         {
             ExtensionCapability.Base,
-            ExtensionCapability.ExecutionTimedOutResponse
+            ExtensionCapability.ExecutionTimedOutResponse,
+            ExtensionCapability.EnvVarSet
         });
 
         public static readonly HashSet<ServerCapability> LatestServerCapabilities = new HashSet<ServerCapability>(new[]
         {
-            ServerCapability.Base
+            ServerCapability.Base,
+            ServerCapability.EnvVarSet
         });
 
         public CapabilityInfo(string version, ServerPlatform platform, HashSet<ServerCapability> capabilities)

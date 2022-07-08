@@ -250,6 +250,11 @@ namespace VSRAD.Package.Options
             if (string.IsNullOrWhiteSpace(Executable))
                 return EvaluationError(sourceAction, "Execute", "No executable specified");
 
+            if (env.ServerCapabilities.Capabilities != null && // server capabilities is null while we editing action without running debug session
+                !string.IsNullOrWhiteSpace(EnvironmentVariables) &&
+                !env.ServerCapabilities.Capabilities.Contains(ServerCapability.EnvVarSet))
+                return EvaluationError(sourceAction, "Execute", "Remote environment variables are set, but Debug Server does not support this functionality. Please, get the latest Debug Server.");
+
             var executableResult = await evaluator.EvaluateAsync(Executable);
             if (!executableResult.TryGetResult(out var evaluatedExecutable, out var error))
                 return error;

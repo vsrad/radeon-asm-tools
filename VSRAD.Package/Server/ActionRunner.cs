@@ -277,10 +277,14 @@ namespace VSRAD.Package.Server
                 WaitForCompletion = step.WaitForCompletion,
                 ExecutionTimeoutSecs = step.TimeoutSecs
             };
-            foreach (var envVar in step.EnvironmentVariables.Split(';'))
+            if (!string.IsNullOrWhiteSpace(step.EnvironmentVariables))
             {
-                var keyValue = envVar.Split('=');
-                command.EnvironmentVariables.Add(keyValue[0], keyValue[1]);
+                foreach (var envVar in step.EnvironmentVariables.Split(';'))
+                {
+                    var keyValue = envVar.Split('=');
+                    if (keyValue.Length != 2) continue; // skip invalid variables
+                    command.EnvironmentVariables.Add(keyValue[0], keyValue[1]);
+                }
             }
             IResponse response;
             if (step.Environment == StepEnvironment.Local)
