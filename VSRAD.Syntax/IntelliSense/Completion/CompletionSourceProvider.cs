@@ -16,25 +16,27 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     [Name(nameof(CompletionSourceProvider))]
     internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
     {
+        private readonly OptionsProvider _optionsEventProvider;
         private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
         private readonly IDocumentFactory _documentFactory;
         private readonly IReadOnlyList<RadCompletionProvider> _providers;
 
         [ImportingConstructor]
-        public CompletionSourceProvider(IInstructionListManager instructionListManager,
+        public CompletionSourceProvider(OptionsProvider optionsEventProvider,
+            IInstructionListManager instructionListManager,
             IIntellisenseDescriptionBuilder descriptionBuilder,
             IDocumentFactory documentFactory, 
             INavigationTokenService navigationTokenService)
         {
+            _optionsEventProvider = optionsEventProvider;
             _descriptionBuilder = descriptionBuilder;
             _documentFactory = documentFactory;
-            
-            var optionProvider = GeneralOptionProvider.Instance;
+
             _providers = new List<RadCompletionProvider>()
             {
-                new InstructionCompletionProvider(optionProvider, instructionListManager),
-                new FunctionCompletionProvider(optionProvider, navigationTokenService),
-                new ScopedCompletionProvider(optionProvider, navigationTokenService),
+                new InstructionCompletionProvider(optionsEventProvider, instructionListManager),
+                new FunctionCompletionProvider(optionsEventProvider, navigationTokenService),
+                new ScopedCompletionProvider(optionsEventProvider, navigationTokenService),
             };
         }
 
@@ -46,7 +48,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             var document = _documentFactory.GetOrCreateDocument(textView.TextBuffer);
             if (document == null) return null;
 
-            return new CompletionSource(document, _descriptionBuilder, _providers);
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new CompletionSource(document, _descriptionBuilder, _providers));
         }
     }
 }

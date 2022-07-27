@@ -1,4 +1,4 @@
-﻿using Antlr4.Runtime;
+using Antlr4.Runtime;
 using Microsoft.VisualStudio.Text;
 using System.Collections.Generic;
 using VSRAD.Syntax.Core.Tokens;
@@ -9,6 +9,8 @@ namespace VSRAD.Syntax.Core.Lexer
 {
     public class Asm2Lexer : ILexer
     {
+        public static ILexer Instance = new Asm2Lexer();
+
         public IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset)
         {
             var lexer = new RadAsm2Lexer(new UnbufferedCharStream(new TextSegmentsCharStream(textSegments)));
@@ -26,58 +28,10 @@ namespace VSRAD.Syntax.Core.Lexer
 
         private static readonly Dictionary<int, RadAsmTokenType> _tt = new Dictionary<int, RadAsmTokenType>()
         {
-            { RadAsm2Lexer.EQ, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.PLUSEQ, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.LT, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.LE, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.EQEQ, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.NE, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.GE, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.GT, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.SHL, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.SHR, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.LOGOR, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.LOGAND, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.LOGXOR, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.LOGNOT, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.REDMIN, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.REDMAX, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.PLUS, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.MINUS, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.PROD, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.DIV, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.MOD, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.BITOR, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.BITAND, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.BITXOR, RadAsmTokenType.Operation },
-            { RadAsm2Lexer.BITNOT, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.BUILTIN_FUNCTION, RadAsmTokenType.Keyword },
 
-
-            { RadAsm2Lexer.VMCNT, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.EXPCNT, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.LGKMCNT, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.HWREG, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.SENDMSG, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ASIC, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.TYPE, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ASSERT, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.SHADER, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.LEN, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ABS, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ONES, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ZEROS, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ZEROES, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.USGPR_COUNT, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.SGPR_COUNT, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.VGPR_COUNT, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.BLOCK_SIZE, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.GROUP_SIZE, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.TG_SIZE_EN, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.TGID_X_EN, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.TGID_Y_EN, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.TGID_Z_EN, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.ALLOC_LDS, RadAsmTokenType.Keyword },
-            { RadAsm2Lexer.WAVE_SIZE, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.LABEL, RadAsmTokenType.Keyword },
 
             { RadAsm2Lexer.VAR, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.RETURN, RadAsmTokenType.Keyword },
@@ -86,9 +40,12 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.IF, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.ELSIF, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.ELSE, RadAsmTokenType.Keyword },
+
             { RadAsm2Lexer.FOR, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.WHILE, RadAsmTokenType.Keyword },
+
             { RadAsm2Lexer.END, RadAsmTokenType.Keyword },
+
             { RadAsm2Lexer.REPEAT, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.UNTIL, RadAsmTokenType.Keyword },
 
@@ -110,11 +67,38 @@ namespace VSRAD.Syntax.Core.Lexer
             { RadAsm2Lexer.PP_ELIF, RadAsmTokenType.Preprocessor },
             { RadAsm2Lexer.PP_ENDIF, RadAsmTokenType.Preprocessor },
 
+            { RadAsm2Lexer.PLUSEQ, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.LE, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.EQEQ, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.NE, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.GE, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.SHL, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.SHR, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.LOGOR, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.LOGAND, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.LOGXOR, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.LOGNOT, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.REDMIN, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.REDMAX, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.EQ, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.LT, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.GT, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.PLUS, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.MINUS, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.PROD, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.DIV, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.MOD, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.BITOR, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.BITAND, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.BITXOR, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.BITNOT, RadAsmTokenType.Operation },
+            { RadAsm2Lexer.RARROW, RadAsmTokenType.Operation },
+
+            { RadAsm2Lexer.ESCAPE, RadAsmTokenType.Structural },
             { RadAsm2Lexer.COMMA, RadAsmTokenType.Comma },
             { RadAsm2Lexer.SEMI, RadAsmTokenType.Semi },
             { RadAsm2Lexer.COLON, RadAsmTokenType.Colon },
             { RadAsm2Lexer.QUEST, RadAsmTokenType.Structural },
-            { RadAsm2Lexer.SHARP, RadAsmTokenType.Structural },
             { RadAsm2Lexer.LPAREN, RadAsmTokenType.Lparen },
             { RadAsm2Lexer.RPAREN, RadAsmTokenType.Rparen },
             { RadAsm2Lexer.LSQUAREBRACKET, RadAsmTokenType.LsquareBracket },
@@ -124,13 +108,14 @@ namespace VSRAD.Syntax.Core.Lexer
 
             { RadAsm2Lexer.CONSTANT, RadAsmTokenType.Number },
             { RadAsm2Lexer.STRING_LITERAL, RadAsmTokenType.String },
+            { RadAsm2Lexer.CLOSURE_IDENTIFIER, RadAsmTokenType.Identifier },
             { RadAsm2Lexer.IDENTIFIER, RadAsmTokenType.Identifier },
+
+            { RadAsm2Lexer.LINE_COMMENT, RadAsmTokenType.Comment },
+            { RadAsm2Lexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
 
             { RadAsm2Lexer.WHITESPACE, RadAsmTokenType.Whitespace },
             { RadAsm2Lexer.EOL, RadAsmTokenType.Whitespace },
-
-            { RadAsm2Lexer.BLOCK_COMMENT, RadAsmTokenType.Comment },
-            { RadAsm2Lexer.LINE_COMMENT, RadAsmTokenType.Comment },
             { RadAsm2Lexer.UNKNOWN, RadAsmTokenType.Unknown },
         };
     }

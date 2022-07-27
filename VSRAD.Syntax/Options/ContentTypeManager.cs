@@ -1,5 +1,4 @@
 ﻿using EnvDTE;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
@@ -21,7 +20,6 @@ namespace VSRAD.Syntax.Options
         public readonly IContentType Asm2ContentType;
         public readonly IContentType AsmDocContentType;
 
-        private readonly RadeonServiceProvider _serviceProvider;
         private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
         private readonly DTE _dte;
@@ -30,30 +28,28 @@ namespace VSRAD.Syntax.Options
         private readonly List<string> _asmDocExtensions;
 
         [ImportingConstructor]
-        public ContentTypeManager(RadeonServiceProvider serviceProvider, 
-            IFileExtensionRegistryService fileExtensionRegistryService, 
-            IContentTypeRegistryService contentTypeRegistryService)
+        public ContentTypeManager(SVsServiceProvider serviceProvider,
+            IVsEditorAdaptersFactoryService editorAdaptersFactoryService,
+            IContentTypeRegistryService contentTypeRegistryService,
+            IFileExtensionRegistryService fileExtensionRegistryService,
+            OptionsProvider optionsEventProvider)
         {
-            _serviceProvider = serviceProvider;
-            _textEditorAdaptersFactoryService = serviceProvider.EditorAdaptersFactoryService;
+            _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
             _fileExtensionRegistryService = fileExtensionRegistryService;
-            _dte = serviceProvider.Dte;
+            _dte = (DTE)serviceProvider.GetService(typeof(DTE));
 
+            _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+            optionsEventProvider.OptionsUpdated += FileExtensionChanged;
             Asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
             Asm2ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
             AsmDocContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmDocumentationContentType);
-
-            var optionProvider = GeneralOptionProvider.Instance;
-            _asm1Extensions = optionProvider.Asm1FileExtensions;
-            _asm2Extensions = optionProvider.Asm2FileExtensions;
+            _asm1Extensions = optionsEventProvider.Asm1FileExtensions;
+            _asm2Extensions = optionsEventProvider.Asm2FileExtensions;
             _asmDocExtensions = new List<string>() { Constants.FileExtensionAsm1Doc, Constants.FileExtensionAsm2Doc };
-
-            _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
-            optionProvider.OptionsUpdated += FileExtensionChanged;
         }
 
-        private void OnChangeActivatedWindow(Window GotFocus, Window _) =>
-            UpdateWindowContentType(GotFocus);
+        private void OnChangeActivatedWindow(Window gotFocus, Window _) =>
+            UpdateWindowContentType(gotFocus.Document);
 
         public IContentType DetermineContentType(string path)
         {
@@ -70,59 +66,44 @@ namespace VSRAD.Syntax.Options
             return null;
         }
 
-        private void UpdateWindowContentType(Window window)
+        private void UpdateWindowContentType(Document document)
         {
-            var vsTextBuffer = Utils.GetWindowVisualBuffer(window, _serviceProvider.ServiceProvider);
+            if (document == null) return;
+            var filepath = Utils.GetDteDocumentPath(document);
+            var vsTextBuffer = Utils.GetBufferAdapter(filepath);
+
             if (vsTextBuffer == null) return;
 
             var textBuffer = _textEditorAdaptersFactoryService.GetDocumentBuffer(vsTextBuffer);
-            UpdateTextBufferContentType(textBuffer, window.Document.Name);
+            UpdateTextBufferContentType(textBuffer, filepath);
         }
 
-        public async Task ChangeRadeonExtensionsAsync(IReadOnlyList<string> asm1Extensions, IReadOnlyList<string> asm2Extensions)
+        public async Task ChangeRadeonExtensionsAsync(IEnumerable<string> asm1Extensions, IEnumerable<string> asm2Extensions)
         {
-            var forRemove = _asm1Extensions.Except(asm1Extensions).Concat(_asm2Extensions.Except(asm2Extensions));
-            var forAddAsm1 = asm1Extensions.Except(_asm1Extensions);
-            var forAddAsm2 = asm2Extensions.Except(_asm2Extensions);
-
+            _asm1Extensions = asm1Extensions;
+            _asm2Extensions = asm2Extensions;
             try
             {
-                DeleteExtensions(forRemove);
+                DeleteExtensions(Asm1ContentType);
+                DeleteExtensions(Asm2ContentType);
 
-                ChangeExtensions(Asm1ContentType, forAddAsm1);
-                ChangeExtensions(Asm2ContentType, forAddAsm2);
+                ChangeExtensions(Asm1ContentType, asm1Extensions);
+                ChangeExtensions(Asm2ContentType, asm2Extensions);
 
-                _asm1Extensions = asm1Extensions;
-                _asm2Extensions = asm2Extensions;
+                await ChangeActiveWindowContentTypeAsync();
             }
             catch (InvalidOperationException e)
             {
-                // revert content types
-                DeleteExtensions(Asm1ContentType);
-                DeleteExtensions(Asm2ContentType);
-                ChangeExtensions(Asm1ContentType, _asm1Extensions);
-                ChangeExtensions(Asm2ContentType, _asm2Extensions);
-
                 Error.ShowWarning(e);
             }
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (_dte.ActiveDocument != null)
-                UpdateWindowContentType(_dte.ActiveDocument.ActiveWindow);
         }
 
-        private void FileExtensionChanged(GeneralOptionProvider generalOptionProvider) =>
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(generalOptionProvider.Asm1FileExtensions, generalOptionProvider.Asm2FileExtensions));
+        private void FileExtensionChanged(OptionsProvider optionsProvider) =>
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => ChangeRadeonExtensionsAsync(optionsProvider.Asm1FileExtensions, optionsProvider.Asm2FileExtensions));
 
         private void DeleteExtensions(IContentType contentType)
         {
             foreach (var ext in _fileExtensionRegistryService.GetExtensionsForContentType(contentType))
-                _fileExtensionRegistryService.RemoveFileExtension(ext);
-        }
-
-        private void DeleteExtensions(IEnumerable<string> extensions)
-        {
-            foreach (var ext in extensions)
                 _fileExtensionRegistryService.RemoveFileExtension(ext);
         }
 
@@ -134,7 +115,10 @@ namespace VSRAD.Syntax.Options
 
         private void UpdateTextBufferContentType(ITextBuffer textBuffer, string path)
         {
-            if (textBuffer == null || textBuffer.ContentType == Asm1ContentType || textBuffer.ContentType == Asm2ContentType || textBuffer.ContentType == AsmDocContentType)
+            if (textBuffer == null ||
+                textBuffer.ContentType == Asm1ContentType ||
+                textBuffer.ContentType == Asm2ContentType ||
+                textBuffer.ContentType == AsmDocContentType)
                 return;
 
             var contentType = DetermineContentType(path);
@@ -142,6 +126,14 @@ namespace VSRAD.Syntax.Options
                 return;
 
             UpdateTextBufferContentType(textBuffer, contentType);
+        }
+
+        private async Task ChangeActiveWindowContentTypeAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            if (_dte.ActiveDocument != null)
+                UpdateWindowContentType(_dte.ActiveDocument);
         }
 
         private static void UpdateTextBufferContentType(ITextBuffer textBuffer, IContentType contentType)

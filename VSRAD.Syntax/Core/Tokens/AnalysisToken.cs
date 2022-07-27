@@ -2,29 +2,23 @@
 
 namespace VSRAD.Syntax.Core.Tokens
 {
-    public interface IAnalysisToken
-    {
-        RadAsmTokenType Type { get; }
-        TrackingToken TrackingToken { get; }
-        SnapshotSpan Span { get; }
-
-        string GetText();
-    }
-
-    public class AnalysisToken : IAnalysisToken
+    public class AnalysisToken
     {
         public RadAsmTokenType Type { get; }
         public TrackingToken TrackingToken { get; }
-        public SnapshotSpan Span { get; }
+        public ITextSnapshot Snapshot { get; }
 
         public AnalysisToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot)
         {
             Type = tokenType;
             TrackingToken = trackingToken;
-            Span = new SnapshotSpan(snapshot, TrackingToken.GetSpan(snapshot));
+            Snapshot = snapshot;
+            Span = new SnapshotSpan(Snapshot, TrackingToken.GetSpan(Snapshot));
         }
 
-        public virtual string GetText() =>
+        public SnapshotSpan Span { get; }
+
+        public string GetText() =>
             Span.GetText();
     }
 }

@@ -1,48 +1,49 @@
-﻿using System;
-using Microsoft.VisualStudio.Text.Adornments;
+﻿using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using VSRAD.Syntax.IntelliSense.Navigation;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Core;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
 using System.Threading;
-using VSRAD.Syntax.Core;
+using Microsoft.VisualStudio.Text;
+using System.Text.RegularExpressions;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntellisenseDescriptionBuilder
     {
-        Task<object> GetColorizedDescriptionAsync(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken);
-        Task<object> GetColorizedDescriptionAsync(INavigationToken token, CancellationToken cancellationToken);
+        Task<object> GetColorizedDescriptionAsync(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken);
+        Task<object> GetColorizedDescriptionAsync(NavigationToken token, CancellationToken cancellationToken);
     }
 
     [Export(typeof(IIntellisenseDescriptionBuilder))]
     internal class IntellisenseDescriptionBuilder : IIntellisenseDescriptionBuilder
     {
+        private readonly IDocumentFactory _documentFactory;
         private readonly INavigationTokenService _navigationTokenService;
-        private readonly Lazy<IDocumentFactory> _documentFactoryLazy;
 
         [ImportingConstructor]
-        public IntellisenseDescriptionBuilder(INavigationTokenService navigationTokenService, Lazy<IDocumentFactory> documentFactory)
+        public IntellisenseDescriptionBuilder(IDocumentFactory documentFactory, INavigationTokenService navigationTokenService)
         {
+            _documentFactory = documentFactory;
             _navigationTokenService = navigationTokenService;
-            _documentFactoryLazy = documentFactory;
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken)
+        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken)
         {
             if (tokens == null || tokens.Count == 0) return null;
-            if (tokens.Count == 1) return await GetColorizedDescriptionAsync(tokens[0], cancellationToken);
-            return GetColorizedDescriptions(tokens, cancellationToken);
+            else if (tokens.Count == 1) return await GetColorizedDescriptionAsync(tokens[0], cancellationToken);
+            else return GetColorizedDescriptions(tokens, cancellationToken);
         }
 
-        private object GetColorizedDescriptions(IReadOnlyList<INavigationToken> tokens, CancellationToken cancellationToken)
+        private object GetColorizedDescriptions(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken)
         {
             var builder = new ClassifiedTextBuilder();
-            foreach (var tokenGroup in tokens.GroupBy(t => t.Document.Path))
+            foreach (var tokenGroup in tokens.GroupBy(t => t.Path))
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -53,13 +54,9 @@ namespace VSRAD.Syntax.IntelliSense
                 builder.AddClassifiedText(filePath).SetAsElement();
                 foreach (var token in tokenGroup)
                 {
-                    var tokenLine = token.GetLine();
-                    var tokenLineText = tokenLine.LineText;
-                    var lineTokenStart = token.GetStart() - tokenLine.LineStart;
-                    var lineTokenEnd = token.GetEnd() - tokenLine.LineStart;
                     var typeName = token.Type.GetName();
-                    var textBeforeToken = tokenLineText.Substring(0, lineTokenStart);
-                    var textAfterToken = tokenLineText.Substring(lineTokenEnd);
+                    var textBeforeToken = token.LineText.Substring(0, token.LineTokenStart);
+                    var textAfterToken = token.LineText.Substring(token.LineTokenEnd);
 
                     builder.AddClassifiedText($"({typeName}) ")
                         .AddClassifiedText(textBeforeToken)
@@ -72,14 +69,13 @@ namespace VSRAD.Syntax.IntelliSense
             return builder.Build();
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(INavigationToken token, CancellationToken cancellationToken)
+        public async Task<object> GetColorizedDescriptionAsync(NavigationToken token, CancellationToken cancellationToken)
         {
-            if (token == null) return null;
+            if (token == NavigationToken.Empty) return null;
             cancellationToken.ThrowIfCancellationRequested();
 
             var typeName = token.Type.GetName();
-            var document = token.Document;
-            var snapshot = document.CurrentSnapshot;
+            var document = _documentFactory.GetOrCreateDocument(token.AnalysisToken.Snapshot.TextBuffer);
 
             var builder = new ClassifiedTextBuilder();
 
@@ -87,7 +83,7 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 builder
                     .AddClassifiedText($"({typeName} ")
-                    .AddClassifiedText(RadAsmTokenType.Instruction, Path.GetFileNameWithoutExtension(document.Path))
+                    .AddClassifiedText(RadAsmTokenType.Instruction, Path.GetFileNameWithoutExtension(token.Path))
                     .AddClassifiedText(") ");
             }
             else
@@ -99,8 +95,8 @@ namespace VSRAD.Syntax.IntelliSense
             if (token.Type == RadAsmTokenType.FunctionName)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(snapshot);
-                var block = analysisResult.GetBlock(token.GetEnd());
+                var documentAnalysis = await document.DocumentAnalysis.GetAnalysisResultAsync(token.AnalysisToken.Snapshot);
+                var block = documentAnalysis.GetBlock(token.GetEnd());
 
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -117,25 +113,79 @@ namespace VSRAD.Syntax.IntelliSense
             }
             else if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.LocalVariable)
             {
-                var variableToken = (VariableToken)token.Definition;
+                var variableToken = (VariableToken)token.AnalysisToken;
                 if (variableToken.DefaultValue != default)
                 {
-                    var defaultValueText = variableToken.DefaultValue.GetText(snapshot);
+                    var defaultValue = variableToken.DefaultValue.GetText(variableToken.Snapshot);
                     builder.AddClassifiedText(" = ")
-                        .AddClassifiedText(RadAsmTokenType.Number, defaultValueText);
+                        .AddClassifiedText(RadAsmTokenType.Number, defaultValue);
                 }
             }
 
-            cancellationToken.ThrowIfCancellationRequested();
-
             builder.SetAsElement();
-            if (token.Definition is IDefinitionToken definitionToken)
-            {
-                var description = definitionToken.GetDescription(_documentFactoryLazy.Value);
-                if (description != null)
-                    builder.AddClassifiedText(description).SetAsElement();
-            }
+            if (TryGetCommentDescription(document.DocumentTokenizer, token.GetEnd(), cancellationToken, out var message))
+                builder.AddClassifiedText(message).SetAsElement();
             return builder.Build();
+        }
+
+        private bool TryGetCommentDescription(IDocumentTokenizer documentTokenizer, SnapshotPoint tokenEnd, CancellationToken cancellationToken, out string message)
+        {
+            var snapshot = tokenEnd.Snapshot;
+            var currentLine = tokenEnd.GetContainingLine();
+            var tokenizerResult = documentTokenizer.CurrentResult;
+
+            var tokenLineComment = tokenizerResult
+                .GetTokens(new Span(tokenEnd, currentLine.End - tokenEnd))
+                .Where(t => documentTokenizer.GetTokenType(t.Type) == RadAsmTokenType.Comment);
+
+            if (tokenLineComment.Any())
+            {
+                var text = tokenLineComment.First().GetText(snapshot);
+                message = GetCommentText(text);
+                return true;
+            }
+
+            var lines = new LinkedList<string>();
+            var currentLineNumber = currentLine.LineNumber - 1;
+            while (currentLineNumber >= 0)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                currentLine = snapshot.GetLineFromLineNumber(currentLineNumber);
+                var tokensAtLine = tokenizerResult
+                    .GetTokens(new Span(currentLine.Start, currentLine.Length))
+                    .Where(t => documentTokenizer.GetTokenType(t.Type) != RadAsmTokenType.Whitespace);
+
+                if (tokensAtLine.Count() == 1)
+                {
+                    var trackingToken = tokensAtLine.First();
+                    if (documentTokenizer.GetTokenType(trackingToken.Type) == RadAsmTokenType.Comment)
+                    {
+                        var tokenSpan = new SnapshotSpan(snapshot, trackingToken.GetSpan(snapshot));
+
+                        lines.AddFirst(tokenSpan.GetText());
+                        currentLineNumber = tokenSpan.Start.GetContainingLine().LineNumber - 1;
+                        continue;
+                    }
+                }
+
+                break;
+            }
+
+            if (lines.Count != 0)
+            {
+                message = GetCommentText(string.Join(System.Environment.NewLine, lines));
+                return true;
+            }
+
+            message = null;
+            return false;
+        }
+
+        private static string GetCommentText(string text)
+        {
+            var comment = text.Trim('/', '*', ' ', '\t', '\r', '\n', '\f');
+            return Regex.Replace(comment, @"(?<=\n)\s*(\*|\/\/)", "", RegexOptions.Compiled);
         }
 
         public class ClassifiedTextBuilder
@@ -159,9 +209,9 @@ namespace VSRAD.Syntax.IntelliSense
                 return this;
             }
 
-            public ClassifiedTextBuilder AddClassifiedText(INavigationToken navigationToken)
+            public ClassifiedTextBuilder AddClassifiedText(NavigationToken navigationToken)
             {
-                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.Definition.GetText(), navigationToken.Navigate));
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.GetText(), navigationToken.Navigate));
                 return this;
             }
 

@@ -25,9 +25,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public INavigableSymbolSource TryCreateNavigableSymbolSource(ITextView textView, ITextBuffer buffer)
         {
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            return (document != null)
-                ? new NavigableSymbolSource(_navigationService)
-                : null;
+            if (document == null)
+                return null;
+
+            return buffer.Properties.GetOrCreateSingletonProperty(() => 
+                new NavigableSymbolSource(_navigationService));
         }
     }
 }

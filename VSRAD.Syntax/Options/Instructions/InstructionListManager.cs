@@ -2,7 +2,6 @@
 using System.ComponentModel.Composition;
 using System.Linq;
 using VSRAD.Syntax.Core;
-using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.Options.Instructions
@@ -15,6 +14,7 @@ namespace VSRAD.Syntax.Options.Instructions
         event InstructionsUpdateDelegate InstructionsUpdated;
     }
 
+    public delegate void AsmTypeChange();
     public interface IInstructionSetManager
     {
         void ChangeInstructionSet(string selectedSetName);
@@ -23,22 +23,18 @@ namespace VSRAD.Syntax.Options.Instructions
         event AsmTypeChange AsmTypeChanged;
     }
 
-    public delegate void AsmTypeChange();
-
     [Export(typeof(IInstructionListManager))]
     [Export(typeof(IInstructionSetManager))]
     internal sealed class InstructionListManager : IInstructionListManager, IInstructionSetManager
     {
-        public static IInstructionSetManager Instance;
-
         private readonly List<IInstructionSet> _radAsm1InstructionSets;
         private readonly List<IInstructionSet> _radAsm2InstructionSets;
         private readonly List<Instruction> _radAsm1Instructions;
         private readonly List<Instruction> _radAsm2Instructions;
 
-        private AsmType _activeDocumentType;
-        private IInstructionSet _radAsm1SelectedSet;
-        private IInstructionSet _radAsm2SelectedSet;
+        private AsmType activeDocumentAsm;
+        private IInstructionSet radAsm1SelectedSet;
+        private IInstructionSet radAsm2SelectedSet;
 
         public event InstructionsUpdateDelegate InstructionsUpdated;
         public event AsmTypeChange AsmTypeChanged;
@@ -48,17 +44,16 @@ namespace VSRAD.Syntax.Options.Instructions
         {
             instructionListLoader.InstructionsUpdated += InstructionsLoaded;
             documentFactory.ActiveDocumentChanged += ActiveDocumentChanged;
+            documentFactory.DocumentCreated += ActiveDocumentChanged;
 
             _radAsm1InstructionSets = new List<IInstructionSet>();
             _radAsm2InstructionSets = new List<IInstructionSet>();
             _radAsm1Instructions = new List<Instruction>();
             _radAsm2Instructions = new List<Instruction>();
-            _activeDocumentType = AsmType.Unknown;
-            InstructionsLoaded(instructionListLoader.InstructionSets);
-            Instance = this;
+            activeDocumentAsm = AsmType.Unknown;
         }
 
-        private void InstructionsLoaded(IEnumerable<IInstructionSet> instructions)
+        private void InstructionsLoaded(IReadOnlyList<IInstructionSet> instructions)
         {
             _radAsm1InstructionSets.Clear();
             _radAsm2InstructionSets.Clear();
@@ -77,21 +72,23 @@ namespace VSRAD.Syntax.Options.Instructions
             _radAsm1Instructions.AddRange(_radAsm1InstructionSets.SelectMany(s => s.Select(i => i)));
             _radAsm2Instructions.AddRange(_radAsm2InstructionSets.SelectMany(s => s.Select(i => i)));
 
-            var optionProvider = GeneralOptionProvider.Instance;
+            CustomThreadHelper.RunOnMainThread(() =>
+            {
+                var options = GeneralOptions.Instance;
+                radAsm1SelectedSet = SelectInstructionSet(_radAsm1InstructionSets, options.Asm1InstructionSet);
+                radAsm2SelectedSet = SelectInstructionSet(_radAsm2InstructionSets, options.Asm2InstructionSet);
 
-            _radAsm1SelectedSet = _radAsm1InstructionSets.FirstOrDefault(s => s.ToString() == optionProvider.Asm1SelectedSet);
-            _radAsm2SelectedSet = _radAsm2InstructionSets.FirstOrDefault(s => s.ToString() == optionProvider.Asm2SelectedSet);
-
-            AsmTypeChanged?.Invoke();
-            InstructionsUpdatedInvoke(AsmType.RadAsmCode);
+                AsmTypeChanged?.Invoke();
+                InstructionsUpdated?.Invoke(this, AsmType.RadAsmCode);
+            });
         }
 
         public IEnumerable<Instruction> GetSelectedSetInstructions(AsmType asmType)
         {
             switch (asmType)
             {
-                case AsmType.RadAsm: return _radAsm1SelectedSet ?? (IEnumerable<Instruction>)_radAsm1Instructions;
-                case AsmType.RadAsm2: return _radAsm2SelectedSet ?? (IEnumerable<Instruction>)_radAsm2Instructions;
+                case AsmType.RadAsm: return radAsm1SelectedSet ?? (IEnumerable<Instruction>)_radAsm1Instructions;
+                case AsmType.RadAsm2: return radAsm2SelectedSet ?? (IEnumerable<Instruction>)_radAsm2Instructions;
                 default: return Enumerable.Empty<Instruction>();
             }
         }
@@ -108,66 +105,77 @@ namespace VSRAD.Syntax.Options.Instructions
 
         private void ActiveDocumentChanged(IDocument activeDocument)
         {
-            var newActiveDocumentAsm = activeDocument?.CurrentSnapshot.GetAsmType() ?? AsmType.Unknown;
-            if (newActiveDocumentAsm == _activeDocumentType) return;
-
-            _activeDocumentType = newActiveDocumentAsm;
-            AsmTypeChanged?.Invoke();
+            var newActiveDocumentAsm = activeDocument == null ? AsmType.Unknown : activeDocument.CurrentSnapshot.GetAsmType();
+            if (newActiveDocumentAsm != activeDocumentAsm)
+            {
+                activeDocumentAsm = newActiveDocumentAsm;
+                AsmTypeChanged?.Invoke();
+            }
         }
 
         public void ChangeInstructionSet(string selected)
         {
-            switch (_activeDocumentType)
+            if (selected == null)
             {
-                case AsmType.RadAsm: _radAsm1SelectedSet = GetInstructionSetByName(selected, _radAsm1InstructionSets); break;
-                case AsmType.RadAsm2: _radAsm2SelectedSet = GetInstructionSetByName(selected, _radAsm2InstructionSets); break;
-                default: return;
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: radAsm1SelectedSet = null; break;
+                    case AsmType.RadAsm2: radAsm2SelectedSet = null; break;
+                }
+            }
+            else
+            {
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: ChangeInstructionSet(selected, _radAsm1InstructionSets, ref radAsm1SelectedSet);  break;
+                    case AsmType.RadAsm2: ChangeInstructionSet(selected, _radAsm2InstructionSets, ref radAsm2SelectedSet); break;
+                }
             }
 
-            var optionProvider = GeneralOptionProvider.Instance;
-            var optionModel = GeneralOptionModel.Instance;
-
-            switch (_activeDocumentType)
+            CustomThreadHelper.RunOnMainThread(() =>
             {
-                case AsmType.RadAsm: optionProvider.Asm1SelectedSet = _radAsm1SelectedSet == null ? string.Empty : _radAsm1SelectedSet.ToString(); break;
-                case AsmType.RadAsm2: optionProvider.Asm2SelectedSet = _radAsm2SelectedSet == null ? string.Empty : _radAsm2SelectedSet.ToString(); break;
-            }
+                var options = GeneralOptions.Instance;
+                switch (activeDocumentAsm)
+                {
+                    case AsmType.RadAsm: options.Asm1InstructionSet = selected ?? string.Empty; break;
+                    case AsmType.RadAsm2: options.Asm2InstructionSet = selected ?? string.Empty; break;
+                }
+                options.Save();
 
-            optionModel.Save();
-            InstructionsUpdatedInvoke(_activeDocumentType);
+                InstructionsUpdated?.Invoke(this, activeDocumentAsm);
+            });
         }
 
-        private static IInstructionSet GetInstructionSetByName(string setName, List<IInstructionSet> sets)
+        private void ChangeInstructionSet(string setName, List<IInstructionSet> sets, ref IInstructionSet selectedSet)
         {
-            if (setName == null) return null;
-
             var set = sets.Find(s => s.SetName == setName);
-            if (set != null) return set;
-            Error.ShowErrorMessage($"Cannot find selected instruction set: {setName}", "Instruction set selector");
-            return null;
-        }
+            if (set == null)
+            {
+                Error.ShowErrorMessage($"Cannot find selected instruction set: {setName}", "Instruction set selector");
+                selectedSet = null;
+                return;
+            }
 
-        private void InstructionsUpdatedInvoke(AsmType type)
-        {
-            Asm1Parser.UpdateInstructions(this, type);
-            Asm2Parser.UpdateInstructions(this, type);
-            InstructionsUpdated?.Invoke(this, type);
+            selectedSet = set;
         }
 
         public IReadOnlyList<IInstructionSet> GetInstructionSets() =>
-            _activeDocumentType == AsmType.RadAsm
+            activeDocumentAsm == AsmType.RadAsm
                 ? _radAsm1InstructionSets
-                : _activeDocumentType == AsmType.RadAsm2
+                : activeDocumentAsm == AsmType.RadAsm2
                     ? _radAsm2InstructionSets : new List<IInstructionSet>();
 
         public IInstructionSet GetInstructionSet()
         {
-            switch (_activeDocumentType)
+            switch (activeDocumentAsm)
             {
-                case AsmType.RadAsm: return _radAsm1SelectedSet;
-                case AsmType.RadAsm2: return _radAsm2SelectedSet;
+                case AsmType.RadAsm: return radAsm1SelectedSet;
+                case AsmType.RadAsm2: return radAsm2SelectedSet;
                 default: return null;
             }
         }
+
+        private static IInstructionSet SelectInstructionSet(IEnumerable<IInstructionSet> sets, string name) =>
+            sets.FirstOrDefault(s => s.SetName.Equals(name, System.StringComparison.OrdinalIgnoreCase));
     }
 }

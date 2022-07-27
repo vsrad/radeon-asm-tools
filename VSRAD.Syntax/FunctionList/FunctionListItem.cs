@@ -11,7 +11,7 @@ namespace VSRAD.Syntax.FunctionList
         public int LineNumber { get; }
 
         private bool _isCurrentWorkingItem;
-        private readonly INavigationToken _navigationToken;
+        private readonly NavigationToken _navigationToken;
 
         public bool IsCurrentWorkingItem
         {
@@ -19,12 +19,11 @@ namespace VSRAD.Syntax.FunctionList
             set => OnPropertyChanged(ref _isCurrentWorkingItem, value);
         }
 
-        public FunctionListItem(INavigationToken navigationToken)
+        public FunctionListItem(NavigationToken navigationToken)
         {
             Type = GetType(navigationToken.Type);
-            Text = navigationToken.Definition.GetText();
-            // line number starts from 1
-            LineNumber = navigationToken.GetLine().LineNumber + 1;
+            Text = navigationToken.GetText();
+            LineNumber = navigationToken.Line + 1;
             _isCurrentWorkingItem = false;
             _navigationToken = navigationToken;
         }

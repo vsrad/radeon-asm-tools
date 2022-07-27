@@ -14,27 +14,28 @@ namespace VSRAD.Syntax.Core
 
     internal partial class DocumentFactory
     {
-        private LexerParser? GetLexerParser(AsmType asmType)
+        private static LexerParser? GetLexerParser(AsmType asmType)
         {
+
             switch (asmType)
             {
                 case AsmType.RadAsm:
                     return new LexerParser()
                     {
-                        Lexer = new AsmLexer(),
-                        Parser = new Asm1Parser(this)
+                        Lexer = Asm1Lexer.Instance,
+                        Parser = Asm1Parser.Instance
                     };
                 case AsmType.RadAsm2:
                     return new LexerParser()
                     {
-                        Lexer = new Asm2Lexer(),
-                        Parser = new Asm2Parser(this)
+                        Lexer = Asm2Lexer.Instance,
+                        Parser = Asm2Parser.Instance
                     };
                 case AsmType.RadAsmDoc:
                     return new LexerParser()
                     {
-                        Lexer = new AsmDocLexer(),
-                        Parser = new AsmDocParser()
+                        Lexer = AsmDocLexer.Instance,
+                        Parser = AsmDocParser.Instance
                     };
                 default: return null;
             }

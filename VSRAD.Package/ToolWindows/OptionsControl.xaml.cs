@@ -1,9 +1,5 @@
-﻿using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,7 +12,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ToolWindows
 {
-    public sealed partial class OptionsControl : UserControl
+    public partial class OptionsControl : UserControl
     {
         public sealed class Context : DefaultNotifyPropertyChanged
         {
@@ -26,11 +22,8 @@ namespace VSRAD.Package.ToolWindows
             public string ConnectionInfo =>
                 Options.Profile?.General?.RunActionsLocally == true ? "Local" : _channel.ConnectionOptions.ToString();
 
-            public string ServerInfo =>
-                _channel.ServerCapabilities?.ToString() ?? "";
-
             public Visibility DisconnectButtonVisible =>
-                Options.Profile?.General?.RunActionsLocally == true ? Visibility.Collapsed : Visibility.Visible;
+                Options.Profile?.General?.RunActionsLocally == true ? Visibility.Hidden : Visibility.Visible;
 
             public string DisconnectLabel
             {
@@ -38,63 +31,34 @@ namespace VSRAD.Package.ToolWindows
                      : _channel.ConnectionState == ClientState.Connecting ? "Connecting..." : "Disconnected";
             }
 
-            private string _actionStatusLabel;
-            public string ActionStatusLabel { get => _actionStatusLabel; private set => SetField(ref _actionStatusLabel, value); }
-
-            private Visibility _cancelActionButtonVisible = Visibility.Collapsed;
-            public Visibility CancelActionButtonVisible { get => _cancelActionButtonVisible; private set => SetField(ref _cancelActionButtonVisible, value); }
-
             public ICommand DisconnectCommand { get; }
-            public ICommand CancelActionCommand { get; }
 
-            private readonly CommunicationChannel _channel;
+            private readonly ICommunicationChannel _channel;
 
-            public Context(ProjectOptions options, ICommunicationChannel channel, IActionLauncher actionLauncher)
+            public Context(ProjectOptions options, ICommunicationChannel channel)
             {
                 Options = options;
-                _channel = (CommunicationChannel)channel;
-
-                PropertyChangedEventManager.AddHandler(options, ProfileChanged, nameof(Options.Profiles));
-                WeakEventManager<CommunicationChannel, EventArgs>.AddHandler(
-                    _channel, nameof(CommunicationChannel.ConnectionStateChanged), ConnectionStateChanged);
-                WeakEventManager<IActionLauncher, ActionExecutionStateChangedEventArgs>.AddHandler(
-                    actionLauncher, nameof(ActionLauncher.ActionExecutionStateChanged), ActionExecutionStateChanged);
-
+                Options.PropertyChanged += OptionsChanged;
+                _channel = channel;
+                _channel.ConnectionStateChanged += ConnectionStateChanged;
                 DisconnectCommand = new WpfDelegateCommand((_) => _channel.ForceDisconnect(), isEnabled: _channel.ConnectionState == ClientState.Connected);
-                CancelActionCommand = new WpfDelegateCommand((_) => actionLauncher.CancelRunningAction());
             }
 
-            private void ProfileChanged(object sender, PropertyChangedEventArgs e)
+            private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
             {
-                RaisePropertyChanged(nameof(ProfileNames));
-                ConnectionStateChanged(null, null);
+                if (e.PropertyName == nameof(Options.Profiles))
+                {
+                    RaisePropertyChanged(nameof(ProfileNames));
+                    ConnectionStateChanged();
+                }
             }
 
-            private void ConnectionStateChanged(object sender, EventArgs e)
+            private void ConnectionStateChanged()
             {
                 RaisePropertyChanged(nameof(ConnectionInfo));
-                RaisePropertyChanged(nameof(ServerInfo));
                 RaisePropertyChanged(nameof(DisconnectLabel));
                 RaisePropertyChanged(nameof(DisconnectButtonVisible));
                 ((WpfDelegateCommand)DisconnectCommand).IsEnabled = _channel.ConnectionState == ClientState.Connected;
-            }
-
-            private void ActionExecutionStateChanged(object sender, ActionExecutionStateChangedEventArgs e)
-            {
-                switch (e.State)
-                {
-                    case ActionExecutionState.Started:
-                        ActionStatusLabel = $"Action {e.ActionName} is running";
-                        break;
-                    case ActionExecutionState.Cancelling:
-                        ActionStatusLabel = $"Cancelling {e.ActionName} action...";
-                        break;
-                    case ActionExecutionState.Finished:
-                    case ActionExecutionState.Idle:
-                        ActionStatusLabel = "";
-                        break;
-                }
-                CancelActionButtonVisible = e.State == ActionExecutionState.Started ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -105,7 +69,7 @@ namespace VSRAD.Package.ToolWindows
         {
             _integration = integration;
             _projectOptions = integration.ProjectOptions;
-            DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel, integration.ActionLauncher);
+            DataContext = new Context(integration.ProjectOptions, integration.CommunicationChannel);
             InitializeComponent();
         }
 
@@ -141,32 +105,6 @@ namespace VSRAD.Package.ToolWindows
                     break;
             }
         }
-
-        private void OpenSliceVusualizer(object sender, RoutedEventArgs e)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            ErrorHandler.ThrowOnFailure(((IVsWindowFrame)VSPackage.SliceVisualizerToolWindow.Frame).Show());
-        }
-    }
-
-    public sealed class BreakModeConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            switch (value)
-            {
-                case BreakMode.SingleRoundRobin:
-                    return "Single active breakpoint, round-robin";
-                case BreakMode.SingleRerun:
-                    return "Single active breakpoint, rerun same line";
-                case BreakMode.Multiple:
-                    return "Multiple active breakpoints";
-                default:
-                    return DependencyProperty.UnsetValue;
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) => value;
     }
 
     public sealed class ScalingModeConverter : IValueConverter

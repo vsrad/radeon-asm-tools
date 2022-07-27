@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using VSRAD.Package.DebugVisualizer;
@@ -12,8 +13,10 @@ namespace VSRAD.PackageTests.DebugVisualizer
     {
         private WatchView GetSystemView(uint[] system, int groupSize, int waveSize, int groupIndex = 0)
         {
+            byte[] systemBytes = new byte[system.Length * 4];
+            Buffer.BlockCopy(system, 0, systemBytes, 0, systemBytes.Length);
             var data = new BreakStateData(new ReadOnlyCollection<string>(new List<string>()),
-                new BreakStateOutputFile("", false, 0, default, dwordCount: system.Length), system);
+                new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), systemBytes);
             _ = data.ChangeGroupWithWarningsAsync(null, groupIndex: groupIndex, groupSize: groupSize, waveSize: waveSize, nGroups: 0).Result;
             var view = data.GetSystem();
             Assert.NotNull(view);

@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.Collections.Generic;
 using VSRAD.Package.Commands;
 
 namespace VSRAD.Package.ProjectSystem
@@ -18,14 +19,29 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class SolutionManager : IVsSelectionEvents
     {
         public event EventHandler<ProjectLoadedEventArgs> ProjectLoaded;
-        public event EventHandler SolutionUnloaded;
 
         private Project _currentRadProject;
+
+        private Dictionary<string, Options.ProjectOptions> _options = new Dictionary<string, Options.ProjectOptions>();
 
         public SolutionManager(IVsMonitorSelection vsMonitorSelection)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             vsMonitorSelection.AdviseSelectionEvents(this, out _);
+        }
+
+        private bool TryGetDteProject(Solution sln, string project, out EnvDTE.Project dteProject)
+        {
+            try
+            {
+                dteProject = sln.Item(project);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                dteProject = null;
+                return false;
+            }
         }
 
         // VS can load our extension after opening a solution (and raising OnElementValueChanged),
@@ -35,7 +51,7 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
             if (dte.Solution is Solution sln && sln.SolutionBuild.StartupProjects is Array sp && sp.GetValue(0) is string startupProject)
             {
-                var dteProject = sln.Item(startupProject);
+                if (!TryGetDteProject(sln, startupProject, out var dteProject)) return;
                 if (GetCpsProject(dteProject) is UnconfiguredProject cpsProject)
                     LoadRadProject(cpsProject);
             }
@@ -56,7 +72,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (varValueNew is IVsProject vsProject && GetCpsProject(vsProject) is UnconfiguredProject cpsProject)
                     LoadRadProject(cpsProject);
                 else
-                    SolutionUnloaded?.Invoke(this, null);
+                    VSPackage.SolutionUnloaded();
             }
 
             return VSConstants.S_OK;
@@ -71,7 +87,15 @@ namespace VSRAD.Package.ProjectSystem
             if (_currentRadProject == null)
                 return;
 
-            _currentRadProject.Load();
+            if (_options.TryGetValue(cpsProject.FullPath, out var options))
+            {
+                _currentRadProject.Load(options);
+            }
+            else
+            {
+                _currentRadProject.Load(null);
+                _options.Add(cpsProject.FullPath, _currentRadProject.Options);
+            }
 
             var exportProvider = cpsProject.Services.ExportProvider;
             var loadedEventArgs = new ProjectLoadedEventArgs

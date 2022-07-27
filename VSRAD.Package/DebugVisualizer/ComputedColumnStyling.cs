@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Linq;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -12,8 +11,7 @@ namespace VSRAD.Package.DebugVisualizer
         Visible = 2,
         Inactive = 4,
         HasLaneSeparator = 8,
-        HasHiddenColumnSeparator = 16,
-        HasSubgroupSeparator = 32
+        HasHiddenColumnSeparator = 16
     }
 
     public sealed class ComputedColumnStyling

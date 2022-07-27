@@ -6,7 +6,7 @@ namespace VSRAD.Syntax.Core.Tokens
 {
     public readonly struct TrackingToken : IEquatable<TrackingToken>
     {
-        public static TrackingToken Empty => new TrackingToken();
+        public static TrackingToken Empty { get { return new TrackingToken(); } }
 
         public class NonOverlappingComparer : IComparer<TrackingToken>
         {
@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Core.Tokens
 
             public int Compare(TrackingToken x, TrackingToken y)
             {
-                var result = x.Start.GetPosition(Version).CompareTo(y.Start.GetPosition(Version));
+                int result = x.Start.GetPosition(Version).CompareTo(y.Start.GetPosition(Version));
                 return result;
             }
         }
@@ -22,7 +22,7 @@ namespace VSRAD.Syntax.Core.Tokens
         public ITrackingPoint Start { get; }
         public int Length { get; }
         public int Type { get; }
-        public bool IsEmpty => Start == null;
+        public bool IsEmpty { get { return Start == null; } }
 
         public TrackingToken(ITextSnapshot snapshot, TokenSpan tokenSpan) : this()
         {

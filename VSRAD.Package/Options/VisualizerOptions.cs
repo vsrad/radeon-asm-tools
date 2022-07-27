@@ -41,13 +41,9 @@ namespace VSRAD.Package.Options
         [DefaultValue(true)]
         public bool ShowAppArgsField { get => _showAppArgsField; set => SetField(ref _showAppArgsField, value); }
 
-        private bool _showAppArgs2Field;
+        private bool _showBreakArgsField;
         [DefaultValue(true)]
-        public bool ShowAppArgs2Field { get => _showAppArgs2Field; set => SetField(ref _showAppArgs2Field, value); }
-
-        private bool _showAppArgs3Field;
-        [DefaultValue(true)]
-        public bool ShowAppArgs3Field { get => _showAppArgs3Field; set => SetField(ref _showAppArgs3Field, value); }
+        public bool ShowBreakArgsField { get => _showBreakArgsField; set => SetField(ref _showBreakArgsField, value); }
 
         private bool _showWavemap;
         [DefaultValue(true)]

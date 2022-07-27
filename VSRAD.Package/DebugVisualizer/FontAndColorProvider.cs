@@ -5,7 +5,6 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Drawing;
-using System.Windows;
 using System.Windows.Forms;
 using static Microsoft.VisualStudio.Shell.Package;
 
@@ -16,13 +15,12 @@ namespace VSRAD.Package.DebugVisualizer
         FontAndColorState FontAndColorState { get; }
     }
 
-    public sealed class FontAndColorProvider : IFontAndColorProvider, IDisposable
+    public sealed class FontAndColorProvider : IFontAndColorProvider
     {
         public event Action FontAndColorInfoChanged;
 
         public FontAndColorState FontAndColorState { get; private set; }
 
-        private readonly FontAndColorService _service;
         private readonly IVsFontAndColorStorage _storage;
         private const uint _storageFlags = (uint)(__FCSTORAGEFLAGS.FCSF_LOADDEFAULTS
             | __FCSTORAGEFLAGS.FCSF_PROPAGATECHANGES
@@ -35,20 +33,14 @@ namespace VSRAD.Package.DebugVisualizer
             Assumes.Present(_storage);
             ErrorHandler.ThrowOnFailure(_storage.OpenCategory(Constants.FontAndColorsCategoryGuid, _storageFlags));
 
-            _service = (FontAndColorService)GetGlobalService(typeof(FontAndColorService));
-            _service.ItemsChanged += FontAndColorItemsChanged;
-            FontAndColorState = new FontAndColorState(this);
-        }
+            var fontAndColorService = (FontAndColorService)GetGlobalService(typeof(FontAndColorService));
+            fontAndColorService.ItemsChanged += () =>
+            {
+                FontAndColorState = new FontAndColorState(this);
+                FontAndColorInfoChanged?.Invoke();
+            };
 
-        public void Dispose()
-        {
-            _service.ItemsChanged -= FontAndColorItemsChanged;
-        }
-
-        private void FontAndColorItemsChanged()
-        {
             FontAndColorState = new FontAndColorState(this);
-            FontAndColorInfoChanged?.Invoke();
         }
 
         public (string name, float size) GetFontInfo()

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using VSRAD.Package.Options;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
@@ -10,44 +9,31 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
     {
         public int RowCount => _view.RowCount;
         public int ColumnCount => _view.ColumnCount;
-        public string Name => _view.Name;
-        public int GetGroupIndex(int row, int column) => _view.GetGroupIndex(row, column);
-        public int GetLaneIndex(int column) => _view.GetLaneIndex(column);
 
         public bool IsSingleWordValue => _type == VariableType.Half;
 
-        public bool AllValuesEqual => _minValue.uintValue == _maxValue.uintValue;
-
         private readonly SliceWatchView _view;
         private readonly VariableType _type;
-        private readonly VisualizerAppearance _visualizerAppearance;
         private readonly TypedWatchValue _minValue;
         private readonly TypedWatchValue _maxValue;
 
-        public TypedSliceWatchView(SliceWatchView view, VariableType type, VisualizerAppearance appearance)
+        public TypedSliceWatchView(SliceWatchView view, VariableType type)
         {
             _view = view;
             _type = type;
-            _visualizerAppearance = appearance;
 
             GetMinMaxValues(view, type, out _minValue, out _maxValue);
         }
 
         public string this[int row, int column]
         {
-            get => DataFormatter.FormatDword(_type, _view[row, column], _visualizerAppearance.BinHexSeparator,
-                        _visualizerAppearance.IntUintSeparator, _visualizerAppearance.BinHexLeadingZeroes);
+            get => DataFormatter.FormatDword(_type, _view[row, column], 2, 0, true); // TODO: remove hardcode
         }
 
         public bool IsInactiveCell(int row, int column) => _view.IsInactiveCell(row, column);
 
         public float GetRelativeValue(int row, int column, int word = 0)
         {
-            // we want all the cells to be in the middle of color spectre if all values are equal, but we need a proper
-            // handling of NaN's and Infinities.
-            if (AllValuesEqual && !float.IsNaN(_view[row, column])
-                               && !float.IsInfinity(_view[row, column])
-                               && _type != VariableType.Half) return 0.5f;
             switch (_type)
             {
                 case VariableType.Uint:
@@ -61,8 +47,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
                 case VariableType.Half:
                     floatValue = Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(_view[row, column]), startIndex: word * 2));
-                    if (float.IsInfinity(floatValue) || float.IsNaN(floatValue)) return float.NaN;
-                    if (AllValuesEqual) return 0.5f;
                     return (floatValue - _minValue.floatValue) / (_maxValue.floatValue - _minValue.floatValue);
             }
             throw new NotImplementedException();
@@ -81,7 +65,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     {
                         for (int col = 0; col < view.ColumnCount; ++col)
                         {
-                            if (view.IsInactiveCell(row, col)) continue; // skip placeholder zeros that can be appended to last row
                             uint value = view[row, col];
                             if (value < umin)
                                 umin = value;
@@ -99,7 +82,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     {
                         for (int col = 0; col < view.ColumnCount; ++col)
                         {
-                            if (view.IsInactiveCell(row, col)) continue; // skip placeholder zeros that can be appended to last row
                             int value = (int)view[row, col];
                             if (value < imin)
                                 imin = value;
@@ -117,7 +99,6 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     {
                         for (int col = 0; col < view.ColumnCount; ++col)
                         {
-                            if (view.IsInactiveCell(row, col)) continue; // skip placeholder zeros that can be appended to last row
                             float value = BitConverter.ToSingle(BitConverter.GetBytes(view[row, col]), 0);
                             if (float.IsNaN(value))
                                 continue;
@@ -137,18 +118,17 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                     {
                         for (int col = 0; col < view.ColumnCount; ++col)
                         {
-                            if (view.IsInactiveCell(row, col)) continue; // skip placeholder zeros that can be appended to last row
                             byte[] bytes = BitConverter.GetBytes(view[row, col]);
                             float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
                             float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
-                            if (!float.IsNaN(firstHalf) && !float.IsInfinity(firstHalf))
+                            if (!float.IsNaN(firstHalf))
                             {
                                 if (firstHalf < fmin)
                                     fmin = firstHalf;
                                 if (firstHalf > fmax)
                                     fmax = firstHalf;
                             }
-                            if (!float.IsNaN(secondHalf) && !float.IsInfinity(secondHalf))
+                            if (!float.IsNaN(secondHalf))
                             {
                                 if (secondHalf < fmin)
                                     fmin = secondHalf;

@@ -26,14 +26,10 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var triggerPoint = session.GetTriggerPoint(snapshot);
             if (!triggerPoint.HasValue) return null;
 
-            var navigationsResult = await _navigationTokenService
-                .GetNavigationsAsync(triggerPoint.Value)
-                .ConfigureAwait(false);
+            var navigationsResult = await _navigationTokenService.GetNavigationsAsync(triggerPoint.Value);
             if (navigationsResult == null) return null;
 
-            var dataElement = await _descriptionBuilder
-                .GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken)
-                .ConfigureAwait(false);
+            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
             if (dataElement == null) return null;
 
             var tokenSpan = navigationsResult.ApplicableToken.Span;

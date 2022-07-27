@@ -12,10 +12,12 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal class AsmDocParser : IParser
     {
+        public static IParser Instance = new AsmDocParser();
+
         public Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();
-            IBlock rootBlock = new Block();
+            IBlock rootBlock = new Block(version);
             var blocks = new List<IBlock>() { rootBlock };
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsmDocLexer.WHITESPACE && t.Type != RadAsmDocLexer.BLOCK_COMMENT)
@@ -23,8 +25,6 @@ namespace VSRAD.Syntax.Core.Parser
                 .AsOrdered()
                 .WithCancellation(cancellation)
                 .ToArray();
-
-            InstructionToken currentInstruction = null;
 
             for (int i = 0; i < tokens.Length; i++)
             {
@@ -42,29 +42,13 @@ namespace VSRAD.Syntax.Core.Parser
                 }
                 else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
                 {
-                    currentInstruction = new InstructionToken(RadAsmTokenType.Instruction, tokens[i + 1], version);
-                    rootBlock.AddToken(currentInstruction);
-                    i += 1;
+                    rootBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
                 }
                 else if (token.Type == RadAsmDocLexer.IDENTIFIER)
                 {
                     var text = token.GetText(version);
-
                     if (definitions.TryGetValue(text, out var definition))
-                    {
-                        var reference = new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition);
-                        rootBlock.AddToken(reference);
-                        currentInstruction?.Parameters.Add(reference);
-                    }
-                    else if (currentInstruction != null)
-                    {
-                        var parameter = new AnalysisToken(RadAsmTokenType.GlobalVariableReference, token, version);
-                        currentInstruction.Parameters.Add(parameter);
-                    }
-                }
-                else if (token.Type == RadAsmDocLexer.LCURVEBRACKET || token.Type == RadAsmDocLexer.EOL)
-                {
-                    currentInstruction = null;
+                        rootBlock.AddToken(new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition));
                 }
             }
 

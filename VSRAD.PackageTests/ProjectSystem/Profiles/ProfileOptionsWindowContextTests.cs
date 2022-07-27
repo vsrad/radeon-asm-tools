@@ -22,8 +22,8 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 { "kana", new ProfileOptions() },
                 { "asa", new ProfileOptions() }
             };
-            profiles["kana"].General.RemoteWorkDir = "~money/code";
-            profiles["asa"].General.RemoteWorkDir = "~setting/code";
+            profiles["kana"].General.RemoteMachine = "money";
+            profiles["asa"].General.RemoteMachine = "setting";
 
             profiles["kana"].Actions.Add(new ActionProfileOptions { Name = "Debug" });
             profiles["asa"].Actions.Add(new ActionProfileOptions { Name = "Debug" });
@@ -108,14 +108,14 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                 .Returns("kana").Verifiable();
 
             Assert.Equal(2, context.DirtyProfiles.Count);
-            var oldRemoteDir = GetDirtyProfile(context, "kana").General.RemoteWorkDir;
+            var oldProfileMachine = GetDirtyProfile(context, "kana").General.RemoteMachine;
 
             context.CreateNewProfile();
             nameResolver.Verify();
 
             Assert.Equal(2, context.DirtyProfiles.Count);
-            var newRemoteDir = GetDirtyProfile(context, "kana").General.RemoteWorkDir;
-            Assert.NotEqual(oldRemoteDir, newRemoteDir);
+            var newProfileMachine = GetDirtyProfile(context, "kana").General.RemoteMachine;
+            Assert.NotEqual(oldProfileMachine, newProfileMachine);
         }
 
         [Fact]
@@ -170,10 +170,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var context = new ProfileOptionsWindowContext(project, null, nameResolver.Object);
 
             var kana = GetDirtyProfile(context, "kana");
-            kana.General.RemoteWorkDir = "~kana-edited/code";
+            kana.General.RemoteMachine = "kana-edited";
             var asa = GetDirtyProfile(context, "asa");
             asa.General.ProfileName = "kana";
-            asa.General.RemoteWorkDir = "~asa-edited/code";
+            asa.General.RemoteMachine = "asa-edited";
 
             nameResolver.Setup(n => n("Rename", "Profile kana already exists. Enter a new name or leave it as is to overwrite the profile:", It.IsAny<IEnumerable<string>>(), "kana"))
                 .Returns("asa-renamed").Verifiable();
@@ -183,13 +183,13 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             Assert.Equal(2, project.Options.Profiles.Count);
             Assert.True(project.Options.Profiles.TryGetValue("kana", out var kanaSaved));
-            Assert.Equal("~kana-edited/code", kanaSaved.General.RemoteWorkDir);
+            Assert.Equal("kana-edited", kanaSaved.General.RemoteMachine);
             Assert.True(project.Options.Profiles.TryGetValue("asa-renamed", out var asaSaved));
-            Assert.Equal("~asa-edited/code", asaSaved.General.RemoteWorkDir);
+            Assert.Equal("asa-edited", asaSaved.General.RemoteMachine);
 
             // Don't forget to synchronize dirty profiles!
-            Assert.Equal("~kana-edited/code", GetDirtyProfile(context, "kana").General.RemoteWorkDir);
-            Assert.Equal("~asa-edited/code", GetDirtyProfile(context, "asa-renamed").General.RemoteWorkDir);
+            Assert.Equal("kana-edited", GetDirtyProfile(context, "kana").General.RemoteMachine);
+            Assert.Equal("asa-edited", GetDirtyProfile(context, "asa-renamed").General.RemoteMachine);
         }
 
         [Fact]
@@ -206,7 +206,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             context.SelectedProfile = GetDirtyProfile(context, "kana");
             var asa = GetDirtyProfile(context, "asa");
             asa.General.ProfileName = "kana";
-            asa.General.RemoteWorkDir = "~asa-edited/code";
+            asa.General.RemoteMachine = "asa-edited";
 
             nameResolver.Setup(n => n("Rename", It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), "kana")).Returns("kana");
 
@@ -219,7 +219,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 
             Assert.Equal(2, project.Options.Profiles.Count);
             Assert.True(project.Options.Profiles.TryGetValue("kana", out var renamed));
-            Assert.Equal("~asa-edited/code", renamed.General.RemoteWorkDir);
+            Assert.Equal("asa-edited", renamed.General.RemoteMachine);
             Assert.True(project.Options.Profiles.ContainsKey("miz"));
         }
 

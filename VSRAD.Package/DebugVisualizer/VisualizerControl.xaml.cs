@@ -1,53 +1,42 @@
-﻿using System;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
-using VSRAD.Package.ToolWindows;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public sealed partial class VisualizerControl : UserControl, IDisposableToolWindow
+    public sealed partial class VisualizerControl : UserControl
     {
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
         private readonly WavemapImage _wavemap;
-        private readonly FontAndColorProvider _fontAndColorProvider;
-        private readonly IToolWindowIntegration _integration;
 
-        public delegate void ActivateWindow();
-
-        private ActivateWindow _activateWindow;
-
-        public VisualizerControl(IToolWindowIntegration integration, ActivateWindow activateWindow)
+        public VisualizerControl(IToolWindowIntegration integration)
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += ContextPropertyChanged;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
-            _context.CellSelectionEvent += CellSelected;
             DataContext = _context;
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
-            _activateWindow = activateWindow;
 
-            _integration = integration;
-            _integration.AddWatch += AddWatch;
-            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerOptions, OptionsChanged, "");
-            PropertyChangedEventManager.AddHandler(_context.Options.DebuggerOptions, OptionsChanged, "");
-            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerAppearance, OptionsChanged, "");
-            PropertyChangedEventManager.AddHandler(_context.Options.VisualizerColumnStyling, VisualizerColumnStylingPropertyChanged, "");
+            integration.AddWatch += AddWatch;
+            integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
+            integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
 
-            _fontAndColorProvider = new FontAndColorProvider();
-            _fontAndColorProvider.FontAndColorInfoChanged += RefreshDataStyling;
+            var tableFontAndColor = new FontAndColorProvider();
+            tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
             _table = new VisualizerTable(
                 _context.Options,
-                _fontAndColorProvider,
+                tableFontAndColor,
                 getValidWatches: () => _context?.BreakData?.Watches);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
@@ -62,15 +51,6 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
-        void IDisposableToolWindow.DisposeToolWindow()
-        {
-            ((DockPanel)Content).Children.Clear();
-            TableHost.Dispose();
-            _fontAndColorProvider.Dispose();
-
-            _integration.AddWatch -= AddWatch;
-        }
-
         private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
         {
             _context.GroupIndex.GoToGroup(e.GroupIdx);
@@ -81,12 +61,6 @@ namespace VSRAD.Package.DebugVisualizer
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
         {
             e.FetchWholeFile |= _context.Options.VisualizerOptions.ShowWavemap;
-        }
-        private void CellSelected(object sender, CellSelectionEventArgs e)
-        {
-            _activateWindow();
-            _table.SelectCell(e.WatchName, e.LaneIndex, _context.Options.VisualizerColumnStyling);
-            RefreshDataStyling();
         }
 
         public void WindowFocusChanged(bool hasFocus) =>
@@ -148,9 +122,6 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             _table.PrepareNewWatchRow();
         }
 
-        private void VisualizerColumnStylingPropertyChanged(object sender, PropertyChangedEventArgs e) =>
-            RefreshDataStyling();
-
         private void OptionsChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
@@ -203,7 +174,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         private void AddWatch(string watchName)
         {
             _table.RemoveNewWatchRow();
-            _table.AppendVariableRow(new Watch(watchName, VariableType.Hex, isAVGPR: false));
+            _table.AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
             _table.PrepareNewWatchRow();
             _context.Options.DebuggerOptions.Watches.Clear();
             _context.Options.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());

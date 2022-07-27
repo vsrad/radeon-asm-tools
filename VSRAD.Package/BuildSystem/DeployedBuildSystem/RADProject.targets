@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <SourceFile Include="**/*"/>
-    <SourceFile Remove="*.radproj; *.radproj.user; *.radproj.user.json; *.radproj.conf.json; *.radproj.profiles.json"/>
+    <SourceFile Remove="*.radproj; *.radproj.user; *.radproj.user.json; *.radproj.conf.json"/>
   </ItemGroup>
 
   <ItemGroup>

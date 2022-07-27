@@ -60,9 +60,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         private async Task<ImmutableArray<RadCompletionContext>> ComputeNonEmptyCompletionContextsAsync(SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
         {
-            var completionContextTasks = _completionProviders.Select(provider => 
-                provider.GetContextAsync(_document, triggerLocation, applicableToSpan, cancellationToken))
-                .ToList();
+            var completionContextTasks = new List<Task<RadCompletionContext>>();
+            foreach (var provider in _completionProviders)
+                completionContextTasks
+                    .Add(provider.GetContextAsync(_document, triggerLocation, applicableToSpan, cancellationToken));
 
             var completionContexts = await Task.WhenAll(completionContextTasks).ConfigureAwait(false);
             return completionContexts.Where(c => c.Items.Count > 0).ToImmutableArray();

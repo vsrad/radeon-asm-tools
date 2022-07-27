@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 
@@ -54,40 +53,28 @@ namespace VSRAD.Package.Server
     {
         public int ColumnCount { get; }
         public int RowCount { get; }
-        public string Name { get; }
-        public int GroupSize { get; }
 
         private readonly int _laneDataOffset;
         private readonly int _laneDataSize;
         private readonly int _lastValidIndex;
-        private readonly int _groupsInRow;
-        private readonly int _groupSize;
-        private readonly int _inactiveLanesCount;
 
         private readonly uint[] _data;
 
-        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int waveSize, int groupCount, int laneDataOffset, int laneDataSize, string watchName)
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize)
         {
             _data = data;
             _laneDataOffset = laneDataOffset;
             _laneDataSize = laneDataSize;
-            _groupsInRow = groupsInRow;
-            _groupSize = groupSize;
-            _inactiveLanesCount = Math.Max(waveSize - groupSize, 0);
-            _lastValidIndex = (groupSize + _inactiveLanesCount) * groupCount * laneDataSize - (laneDataSize - _laneDataOffset);
+            _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
 
-            Name = watchName;
             ColumnCount = groupsInRow * groupSize;
-            RowCount = ((_data.Length - (_inactiveLanesCount * groupCount * _laneDataSize)) / _laneDataSize / ColumnCount) + (groupCount % groupsInRow == 0 ? 0 : 1); // one extra row for partial groups
+            RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
         }
-
-        public int GetGroupIndex(int row, int column) => _groupsInRow * row + column / _groupSize;
-        public int GetLaneIndex(int column) => column % _groupSize;
 
         public bool IsInactiveCell(int row, int column)
         {
             var groupIdx = row * ColumnCount + column;
-            var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset + _inactiveLanesCount * _laneDataSize * GetGroupIndex(row, column);
+            var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
             return dwordIdx > _lastValidIndex;
         }
 
@@ -96,7 +83,7 @@ namespace VSRAD.Package.Server
             get
             {
                 var groupIdx = row * ColumnCount + column;
-                var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset + _inactiveLanesCount * _laneDataSize * GetGroupIndex(row, column);
+                var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
                 return dwordIdx <= _lastValidIndex ? _data[dwordIdx] : 0;
             }
         }
@@ -129,24 +116,19 @@ namespace VSRAD.Package.Server
         private readonly bool _localData;
         private BitArray _fetchedDataWaves; // 1 bit per wavefront data
 
-        public BreakStateData(ReadOnlyCollection<string> watches, BreakStateOutputFile file, uint[] localData = null)
+        public BreakStateData(ReadOnlyCollection<string> watches, BreakStateOutputFile file, byte[] localData = null)
         {
             Watches = watches;
             _outputFile = file;
             _laneDataSize = 1 /* system */ + watches.Count;
 
+            _data = new uint[file.DwordCount];
             _localData = localData != null;
             if (_localData)
             {
                 if (file.Offset != 0)
-                    throw new ArgumentException("Trim the offset before passing local output data to BreakStateData");
-                if (localData.Length != file.DwordCount)
-                    throw new ArgumentException("Local output data size must match file size");
-                _data = localData;
-            }
-            else
-            {
-                _data = new uint[file.DwordCount];
+                    throw new ArgumentException("Trim the offset before passing output data to BreakStateData");
+                Buffer.BlockCopy(localData, file.Offset, _data, 0, file.DwordCount * 4);
             }
         }
 
@@ -189,8 +171,7 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-
-            return new SliceWatchView(_data, groupsInRow, GroupSize, WaveSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize, watch);
+            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize);
         }
 
         public WavemapView GetWavemapView()
@@ -232,12 +213,12 @@ namespace VSRAD.Package.Server
             var response = await channel.SendWithReplyAsync<DebugServer.IPC.Responses.ResultRangeFetched>(
                 new DebugServer.IPC.Commands.FetchResultRange
                 {
-                    FilePath = new[] { _outputFile.Path },
+                    FilePath = _outputFile.Path,
                     BinaryOutput = _outputFile.BinaryOutput,
                     ByteOffset = requestedByteOffset,
                     ByteCount = requestedByteCount,
                     OutputOffset = _outputFile.Offset
-                }, CancellationToken.None).ConfigureAwait(false);
+                }).ConfigureAwait(false);
 
             if (response.Status != DebugServer.IPC.Responses.FetchStatus.Successful)
                 return "Output file could not be opened.";

@@ -16,21 +16,21 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     {
         private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
         private bool _autocomplete;
-        private readonly List<InstructionCompletionItem> _asm1InstructionCompletions;
-        private readonly List<InstructionCompletionItem> _asm2InstructionCompletions;
+        private readonly List<MultipleCompletionItem> _asm1InstructionCompletions;
+        private readonly List<MultipleCompletionItem> _asm2InstructionCompletions;
 
-        public InstructionCompletionProvider(GeneralOptionProvider generalOptionProvider, IInstructionListManager instructionListManager)
-            : base(generalOptionProvider)
+        public InstructionCompletionProvider(OptionsProvider optionsProvider, IInstructionListManager instructionListManager)
+            : base(optionsProvider)
         {
-            _autocomplete = generalOptionProvider.AutocompleteInstructions;
-            _asm1InstructionCompletions = new List<InstructionCompletionItem>();
-            _asm2InstructionCompletions = new List<InstructionCompletionItem>();
+            _autocomplete = optionsProvider.AutocompleteInstructions;
+            _asm1InstructionCompletions = new List<MultipleCompletionItem>();
+            _asm2InstructionCompletions = new List<MultipleCompletionItem>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
             InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
         }
 
-        public override void DisplayOptionsUpdated(GeneralOptionProvider sender) =>
+        public override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocomplete = sender.AutocompleteInstructions;
 
         public override Task<RadCompletionContext> GetContextAsync(IDocument _, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
@@ -42,17 +42,21 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             var startSpan = new SnapshotSpan(line.Start, applicableToSpan.Start);
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!string.IsNullOrWhiteSpace(startSpan.GetText())) return Task.FromResult(RadCompletionContext.Empty);
-
-            switch (triggerLocation.Snapshot.GetAsmType())
+            if (string.IsNullOrWhiteSpace(startSpan.GetText()))
             {
-                case AsmType.RadAsm:
-                    return Task.FromResult(new RadCompletionContext(_asm1InstructionCompletions));
-                case AsmType.RadAsm2:
-                    return Task.FromResult(new RadCompletionContext(_asm2InstructionCompletions));
-                default:
-                    return Task.FromResult(RadCompletionContext.Empty);
+                var type = triggerLocation.Snapshot.GetAsmType();
+                switch (type)
+                {
+                    case AsmType.RadAsm:
+                        return Task.FromResult(new RadCompletionContext(_asm1InstructionCompletions));
+                    case AsmType.RadAsm2:
+                        return Task.FromResult(new RadCompletionContext(_asm2InstructionCompletions));
+                    default:
+                        return Task.FromResult(RadCompletionContext.Empty);
+                }
             }
+
+            return Task.FromResult(RadCompletionContext.Empty);
         }
 
         private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
@@ -61,21 +65,26 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             {
                 _asm1InstructionCompletions.Clear();
                 _asm1InstructionCompletions.AddRange(
-                    sender.GetSelectedSetInstructions(AsmType.RadAsm)
-                        .GroupBy(i => i.Text)
-                        .Select(g => new InstructionCompletionItem(g, g.Key, Icon))
-                    );
+                    GetInstructionCompletions(sender, AsmType.RadAsm));
             }
 
             if ((asmType & AsmType.RadAsm2) != 0)
             {
                 _asm2InstructionCompletions.Clear();
                 _asm2InstructionCompletions.AddRange(
-                    sender.GetSelectedSetInstructions(AsmType.RadAsm2)
-                        .GroupBy(i => i.Text)
-                        .Select(g => new InstructionCompletionItem(g, g.Key, Icon))
-                    );
+                    GetInstructionCompletions(sender, AsmType.RadAsm2));
             }
         }
+
+        private static IEnumerable<MultipleCompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
+            manager.GetSelectedSetInstructions(asmType)
+              .GroupBy(i => i.Text)
+              .Select(g =>
+              {
+                  var instructionName = g.Key;
+                  var navigationList = g.SelectMany(i => i.Navigations).ToList();
+
+                  return new MultipleCompletionItem(instructionName, navigationList, Icon);
+              });
     }
 }

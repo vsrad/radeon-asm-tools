@@ -4,6 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Task = System.Threading.Tasks.Task;
+using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
@@ -24,20 +25,28 @@ namespace VSRAD.Syntax
     public sealed class Package : AsyncPackage
     {
         public static Package Instance { get; private set; }
+        private IComponentModel _componentModel;
+
+        public T GetMEFComponent<T>() where T : class =>
+            _componentModel.GetService<T>();
 
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
             Instance = this;
             await base.InitializeAsync(cancellationToken, progress);
-            var commandService = await GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
+            _componentModel = await GetServiceAsync(typeof(SComponentModel)) as IComponentModel;
+            var commandService = await GetServiceAsync((typeof(IMenuCommandService))) as OleMenuCommandService;
 
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            NavigationListCommand.Initialize(this, commandService);
+            var options = GetMEFComponent<IOptions>();
+            await options.LoadAsync();
+
+            await NavigationListCommand.InitializeAsync(this);
+
             FunctionListCommand.Initialize(this, commandService);
             ClearSearchFieldCommand.Initialize(this, commandService);
             SelectItemCommand.Initialize(this, commandService);
             ShowHideLineNumberCommand.Initialize(this, commandService);
-            InstructionSetSelector.Initialize(commandService);
+            InstructionSetSelector.Initialize(this, commandService);
         }
     }
 }

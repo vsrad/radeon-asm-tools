@@ -9,13 +9,13 @@ namespace VSRAD.Syntax.FunctionList.Commands
         public static readonly Guid CommandSet = new Guid(Constants.FunctionListCommandSetGuid);
         protected readonly AsyncPackage package;
 
-        protected AbstractFunctionListCommand(AsyncPackage package, OleMenuCommandService commandService, int commandId)
+        public AbstractFunctionListCommand(AsyncPackage package, OleMenuCommandService commandService, int commandId)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
-            var menuCommandId = new CommandID(CommandSet, commandId);
-            var menuItem = new MenuCommand(Execute, menuCommandId);
+            var menuCommandID = new CommandID(CommandSet, commandId);
+            var menuItem = new MenuCommand(Execute, menuCommandID);
 
             commandService.AddCommand(menuItem);
         }

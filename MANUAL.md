@@ -58,7 +58,6 @@ Other chapters will reference these sections as needed.
 ### General Properties
 
 * **Profile Name**: name of the current profile.
-* **Deploy Directory**: directory on the remote machine where the project is deployed before starting the debugger.
 * **Remote Machine Address**: IP address of the remote machine. To debug kernels locally, start the debug server on your
 local machine and enter `127.0.0.1` in this field.
 * **Port**: port on the remote machine the debug server is listening on. (When started without arguments, the server
@@ -70,9 +69,6 @@ remote commands (debug, disassemble, profile, etc.).
   - When set to **OpenDocuments**, all source files the are open in the editor are automatically saved.
   - When set to **ProjectDocuments**, all source files that belong to the current project are automatically saved.
   - When set to **SolutionDocuments**, all source file that belong to the solution are automatically saved.
-* **Additional Sources**: a semicolon-separated list of out-of-project paths that are copied to the remote machine
-(see **Deploy Directory**).
-* **Copy Sources to Remote**: enables or disables remote deployment.
 
 ### Debugger Properties
 
@@ -130,7 +126,7 @@ are extracted from the file and used to update locations in error messages.
 
 ### Prerequisities
 
-* **Visual Studio 2017** or **2019** with installed extension on host machine
+* **Visual Studio 2019** with installed extension on host machine
 * `DebugServer` running on remote machine
 * Internet connection between host and remote machines
 

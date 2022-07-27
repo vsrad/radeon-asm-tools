@@ -2,13 +2,13 @@
 
 rule    : LET  ;
 
-LET : 'let';
+LET     : 'let';
 
 /* "Structural symbols" */
 
-COMMA      : ',' ;
-LCURVEBRACKET    : '{' ;
-RCURVEBRACKET    : '}' ;
+COMMA           : ',' ;
+LCURVEBRACKET   : '{' ;
+RCURVEBRACKET   : '}' ;
 
 IDENTIFIER
     : [a-zA-Z] [a-zA-Z0-9_:[\]]*

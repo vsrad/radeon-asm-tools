@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Composition;
-using VSRAD.DebugServer.IPC.Responses;
 using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
@@ -18,6 +17,8 @@ namespace VSRAD.Package.ProjectSystem
     public interface IOutputWindowWriter
     {
         Task PrintMessageAsync(string title, string contents = null);
+
+        Task ClearAsync();
     }
 
     [Export(typeof(IOutputWindowManager))]
@@ -46,6 +47,21 @@ namespace VSRAD.Package.ProjectSystem
         private readonly string _paneTitle;
 
         private IVsOutputWindowPane _pane;
+        private IVsOutputWindowPane Pane
+        {
+            get
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                if (_pane == null)
+                {
+                    var outputWindow = _serviceProvider.GetService(typeof(SVsOutputWindow)) as IVsOutputWindow;
+                    Assumes.Present(outputWindow);
+                    outputWindow.CreatePane(_paneGuid, _paneTitle, fInitVisible: 1, fClearWithSolution: 1);
+                    outputWindow.GetPane(_paneGuid, out _pane);
+                }
+                return _pane;
+            }
+        }
 
         public OutputWindowWriter(SVsServiceProvider provider, Guid outputPaneGuid, string outputPaneTitle)
         {
@@ -56,19 +72,17 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task PrintMessageAsync(string title, string contents = null)
         {
-            if (_pane == null)
-            {
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                var outputWindow = _serviceProvider.GetService(typeof(SVsOutputWindow)) as IVsOutputWindow;
-                Assumes.Present(outputWindow);
-                outputWindow.CreatePane(_paneGuid, _paneTitle, fInitVisible: 1, fClearWithSolution: 1);
-                outputWindow.GetPane(_paneGuid, out _pane);
-            }
-
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
             var message = contents == null
                 ? "=== " + title + Environment.NewLine + Environment.NewLine
                 : "=== " + title + Environment.NewLine + contents + Environment.NewLine + Environment.NewLine;
-            _pane.OutputStringThreadSafe(message);
+            Pane.OutputStringThreadSafe(message);
+        }
+
+        public async Task ClearAsync()
+        {
+            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            Pane.Clear();
         }
     }
 }

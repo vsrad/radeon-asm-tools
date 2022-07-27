@@ -1,68 +1,78 @@
-﻿using System;
+﻿using Moq;
+using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.DebugServer.IPC;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
-using VSRAD.Package.Options;
 using VSRAD.Package.Server;
+using Xunit;
 
 namespace VSRAD.PackageTests
 {
-    class MockCommunicationChannel : ICommunicationChannel
+    class MockCommunicationChannel
     {
-        private readonly Queue<(IResponse response, Action<ICommand> callback)> _interactions =
+        public ICommunicationChannel Object => _mock.Object;
+
+        private readonly Mock<ICommunicationChannel> _mock;
+
+        private readonly Queue<(IResponse response, Action<ICommand> callback)> _replyInteractions =
             new Queue<(IResponse response, Action<ICommand> callback)>();
-        private readonly CapabilityInfo _capabilityInfo;
 
-        public event EventHandler ConnectionStateChanged;
+        private readonly Queue<Action<ICommand>> _nonReplyInteractions =
+            new Queue<Action<ICommand>>();
 
-        public bool AllInteractionsHandled => _interactions.Count == 0;
+        private readonly Queue<(IResponse[] response, Action<List<ICommand>>)> _bundledInteractions =
+            new Queue<(IResponse[] response, Action<List<ICommand>>)>();
 
-        public ServerConnectionOptions ConnectionOptions => throw new NotImplementedException();
+        public bool AllInteractionsHandled => _replyInteractions.Count == 0 && _nonReplyInteractions.Count == 0 && _bundledInteractions.Count == 0;
 
-        public ClientState ConnectionState => throw new NotImplementedException();
+        public void RaiseConnectionStateChanged() => _mock.Raise((m) => m.ConnectionStateChanged += null);
 
-        public void RaiseConnectionStateChanged() => ConnectionStateChanged(null, null);
-
-        public MockCommunicationChannel(ServerPlatform platform = ServerPlatform.Windows)
+        public MockCommunicationChannel()
         {
-            _capabilityInfo = new CapabilityInfo("", platform, CapabilityInfo.LatestServerCapabilities);
+            _mock = new Mock<ICommunicationChannel>();
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<ExecutionCompleted>(It.IsAny<Execute>()))
+                .Returns<ICommand>((c) => Task.FromResult((ExecutionCompleted)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<MetadataFetched>(It.IsAny<FetchMetadata>()))
+                .Returns<ICommand>((c) => Task.FromResult((MetadataFetched)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<ResultRangeFetched>(It.IsAny<FetchResultRange>()))
+                .Returns<ICommand>((c) => Task.FromResult((ResultRangeFetched)HandleCommand(c)));
+            _mock
+                .Setup((c) => c.SendWithReplyAsync<PutFileResponse>(It.IsAny<PutFileCommand>()))
+                .Returns<ICommand>((c) => Task.FromResult((PutFileResponse)HandleCommand(c)));
         }
 
         public void ThenRespond<TCommand, TResponse>(TResponse response, Action<TCommand> processCallback)
             where TCommand : ICommand where TResponse : IResponse =>
-            _interactions.Enqueue((response, (c) => processCallback((TCommand)c)));
+            _replyInteractions.Enqueue((response, (c) => processCallback((TCommand)c)));
 
         public void ThenRespond<TResponse>(TResponse response)
             where TResponse : IResponse =>
-            _interactions.Enqueue((response, null));
+            _replyInteractions.Enqueue((response, null));
 
-        public Task<T> SendWithReplyAsync<T>(ICommand command, CancellationToken cancellationToken) where T : IResponse
+        public void ThenRespond(IResponse[] response, Action<List<ICommand>> callback = null) =>
+            _bundledInteractions.Enqueue((response, callback));
+
+        public void ThenExpect<TCommand>(Action<TCommand> processCallback)
+            where TCommand : ICommand =>
+            _nonReplyInteractions.Enqueue((c) => processCallback((TCommand)c));
+
+        public void ThenExpect<TCommand>()
+            where TCommand : ICommand =>
+            _nonReplyInteractions.Enqueue((c) => Assert.IsType<TCommand>(c));
+
+        private IResponse HandleCommand(ICommand command)
         {
-            if (_interactions.Count == 0)
+            if (_replyInteractions.Count == 0)
             {
                 throw new Xunit.Sdk.XunitException("The test method has sent a request (and is waiting for a reply) when none was expected.");
             }
-            var (response, callback) = _interactions.Dequeue();
+            var (response, callback) = _replyInteractions.Dequeue();
             callback?.Invoke(command);
-            return Task.FromResult((T)response);
-        }
-
-        public Task<IReadOnlyDictionary<string, string>> GetRemoteEnvironmentAsync()
-        {
-            return Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
-        }
-
-        public Task<CapabilityInfo> GetServerCapabilityInfoAsync(CancellationToken cancellationToken)
-        {
-            return Task.FromResult(_capabilityInfo);
-        }
-
-        public void ForceDisconnect()
-        {
-            throw new NotImplementedException();
+            return response;
         }
     }
 }

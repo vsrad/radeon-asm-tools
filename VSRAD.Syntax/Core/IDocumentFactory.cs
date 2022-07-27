@@ -9,12 +9,17 @@ namespace VSRAD.Syntax.Core
     public interface IDocumentFactory
     {
         /// <summary>
+        /// Returns current active document full path
+        /// </summary>
+        /// <returns>String, active document full path</returns>
+        string GetActiveDocumentPath();
+
+        /// <summary>
         /// Gets <see cref="IDocument"/> or creates if doesn't exist
         /// </summary>
         /// <param name="path"></param>
-        /// <param name="observe">If true then document is managed with factory otherwise it's should managed with caller</param>
         /// <returns><see cref="IDocument"/> if <paramref name="path"/> is RadAsm content type otherwise null</returns>
-        IDocument GetOrCreateDocument(string path, bool observe = true);
+        IDocument GetOrCreateDocument(string path);
 
         /// <summary>
         /// Gets <see cref="IDocument"/> or creates if doesn't exist

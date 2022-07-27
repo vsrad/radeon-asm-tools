@@ -10,81 +10,83 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Core
 {
-    internal class DocumentTokenizer : IDocumentTokenizer, IReplaceableSnapshot
+    internal class DocumentTokenizer : IDocumentTokenizer
     {
         private readonly TrackingToken.NonOverlappingComparer _comparer;
+        private readonly ITextBuffer _buffer;
         private readonly ILexer _lexer;
         private TokenizerCollection CurrentTokens;
+        private CancellationTokenSource _cts;
 
         public ITokenizerResult CurrentResult { get; private set; }
-
         public event TokenizerUpdatedEventHandler TokenizerUpdated;
 
         public ITextSnapshot CurrentSnapshot
         {
-            get => _comparer.Version;
-            set => _comparer.Version = value;
+            get { return _comparer.Version; }
+            set { _comparer.Version = value; }
         }
 
-        public DocumentTokenizer(ITextBuffer buffer, ILexer lexer, CancellationToken cancellation)
+        public DocumentTokenizer(ITextBuffer buffer, ILexer lexer)
         {
+            _buffer = buffer;
             _lexer = lexer;
             _comparer = new TrackingToken.NonOverlappingComparer();
             CurrentSnapshot = buffer.CurrentSnapshot;
+            _cts = new CancellationTokenSource();
 
-            FullRescan(cancellation);
+            Initialize();
+            _buffer.Changed += BufferChanged;
         }
 
-        public void OnDestroy() { }
+        private void Initialize() => Rescan(RescanReason.ContentChanged);
 
-        public void OnDocumentChanged(ITextSnapshot oldSnapshot, ITextSnapshot newSnapshot, CancellationToken cancellation)
-        {
-            var pervSnapshot = CurrentSnapshot;
-            CurrentSnapshot = newSnapshot;
-
-            if (oldSnapshot != pervSnapshot)
-            {
-                FullRescan(cancellation);
-            }
-            else
-            {
-                var changedSnapshotTokens = CurrentTokens.Select(t =>
-                    new TrackingToken(CurrentSnapshot, t.GetSpan(pervSnapshot), t.Type));
-
-                CurrentTokens = new TokenizerCollection(changedSnapshotTokens, _comparer);
-                RaiseTokensChanged(CurrentTokens.ToList(), cancellation);
-            }
-        }
-
-        private void FullRescan(CancellationToken ct)
+        public void Rescan(RescanReason reason)
         {
             var initialTextSegment = new[] { CurrentSnapshot.GetText() };
             var lexerTokens = _lexer.Run(textSegments: initialTextSegment, offset: 0).Select(t => new TrackingToken(CurrentSnapshot, t));
 
             CurrentTokens = new TokenizerCollection(lexerTokens, _comparer);
-            RaiseTokensChanged(CurrentTokens.ToList(), ct);
+            RaiseTokensChanged(CurrentTokens.ToList(), reason);
         }
 
         public RadAsmTokenType GetTokenType(int type) =>
             _lexer.LexerTokenToRadAsmToken(type);
 
-        public void ApplyTextChanges(TextContentChangedEventArgs args, CancellationToken ct)
+        private void BufferChanged(object src, TextContentChangedEventArgs arg)
+        {
+            _cts.Cancel();
+            _cts = new CancellationTokenSource();
+            ApplyTextChanges(arg);
+        }
+
+        private void ApplyTextChanges(TextContentChangedEventArgs args) 
         {
             try
             {
-                // in some cases the text buffer may cause ContentChanged with 0 changes
-                if (args.Changes.Count == 0) return;
-
-                ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes), ct);
+                // In some cases the text buffer may cause ContentChanged with 0 changes
+                // This usually happens when the file is reloaded from disk,
+                //    but the content is unchanged(e.g.when using Disassemble/ Preprocess actions from VSRAD.Package)
+                // CurrentSnapshot and CurrentResult still need to be updated because the snapshot version is incremented
+                // (otherwise the snapshot in IAnalysisResult won't match the snapshot VS provides to IClassifier)
+                if (args.Changes.Count == 0)
+                {
+                    CurrentSnapshot = args.After;
+                    RaiseTokensChanged(updated: new List<TrackingToken>(), RescanReason.ContentChanged);
+                }
+                else
+                {
+                    ApplyTextChange(args.Before, args.After, new JoinedTextChange(args.Changes));
+                }
             }
             catch (Exception ex)
             {
                 Error.LogError(ex, "Document analysis apply changes");
-                FullRescan(ct);
+                Initialize();
             }
         }
 
-        private void ApplyTextChange(ITextSnapshot before, ITextSnapshot after, ITextChange change, CancellationToken ct)
+        private void ApplyTextChange(ITextSnapshot before, ITextSnapshot after, ITextChange change)
         {
             List<TrackingToken> forRemoval = GetInvalidated(before, change);
             // Some of the tokens marked for removal must be deleted before applying a new version,
@@ -98,14 +100,13 @@ namespace VSRAD.Syntax.Core
                 CurrentTokens.Remove(forRemoval[i]);
             foreach (var token in updated)
                 CurrentTokens.Add(token);
-
-            RaiseTokensChanged(updated, ct);
+            RaiseTokensChanged(updated, RescanReason.ContentChanged);
         }
 
-        private void RaiseTokensChanged(IList<TrackingToken> updated, CancellationToken cancellation)
+        private void RaiseTokensChanged(IList<TrackingToken> updated, RescanReason reason)
         {
             CurrentResult = new TokenizerResult(CurrentSnapshot, tokens: CurrentTokens, updatedTokens: updated);
-            TokenizerUpdated?.Invoke(CurrentResult, cancellation);
+            TokenizerUpdated?.Invoke(CurrentResult, reason, _cts.Token);
         }
 
         private List<TrackingToken> GetInvalidated(ITextSnapshot oldSnapshot, ITextChange change) =>
@@ -127,7 +128,7 @@ namespace VSRAD.Syntax.Core
             var excessText = CurrentTokens.InOrderAfter(CurrentSnapshot, invalidatedSpan.End)
                                  .Select(t => GetTextAndMarkForRemoval(t, ref removalCandidates))
                                  .TakeWhile(s => s != null);
-            var tokens = _lexer.Run(new[] { invalidatedText }.Concat(excessText), invalidatedSpan.Start);
+            var tokens = _lexer.Run(new string[] { invalidatedText }.Concat(excessText), invalidatedSpan.Start);
             foreach (var token in tokens)
             {
                 newlyCreated.Add(new TrackingToken(CurrentSnapshot, token));
@@ -207,16 +208,22 @@ namespace VSRAD.Syntax.Core
             public Span OldSpan { get; }
             public int Delta { get; }
 
-            public int LineCountDelta => throw new NotImplementedException();
-            public int NewEnd => throw new NotImplementedException();
-            public int NewLength => throw new NotImplementedException();
-            public int NewPosition => throw new NotImplementedException();
-            public Span NewSpan => throw new NotImplementedException();
-            public string NewText => throw new NotImplementedException();
-            public int OldEnd => throw new NotImplementedException();
-            public int OldLength => throw new NotImplementedException();
-            public int OldPosition => throw new NotImplementedException();
-            public string OldText => throw new NotImplementedException();
+            public int LineCountDelta { get { throw new NotImplementedException(); } }
+            public int NewEnd { get { throw new NotImplementedException(); } }
+            public int NewLength { get { throw new NotImplementedException(); } }
+            public int NewPosition { get { throw new NotImplementedException(); } }
+            public Span NewSpan { get { throw new NotImplementedException(); } }
+            public string NewText { get { throw new NotImplementedException(); } }
+            public int OldEnd { get { throw new NotImplementedException(); } }
+            public int OldLength { get { throw new NotImplementedException(); } }
+            public int OldPosition { get { throw new NotImplementedException(); } }
+            public string OldText { get { throw new NotImplementedException(); } }
+        }
+
+        public void Dispose()
+        {
+            _buffer.Changed -= BufferChanged;
+            _cts?.Dispose();
         }
     }
 }

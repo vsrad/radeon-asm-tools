@@ -8,13 +8,15 @@ namespace VSRAD.Syntax.Core.Lexer
 {
     class AsmDocLexer : ILexer
     {
+        public static ILexer Instance = new AsmDocLexer();
+
         public IEnumerable<TokenSpan> Run(IEnumerable<string> textSegments, int offset)
         {
             var lexer = new RadAsmDocLexer(new UnbufferedCharStream(new TextSegmentsCharStream(textSegments)));
             while (true)
             {
                 IToken current = lexer.NextToken();
-                if (current.Type == RadAsm2Lexer.Eof)
+                if (current.Type == RadAsmDocLexer.Eof)
                     break;
                 yield return new TokenSpan(current.Type, new Span(current.StartIndex + offset, current.StopIndex - current.StartIndex + 1));
             }

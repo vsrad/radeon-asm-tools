@@ -16,11 +16,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation.NavigationList
 
     public class NavigationListItemNode : NavigationListNode
     {
-        public INavigationToken NavigationToken { get; }
-        public NavigationListItemNode(INavigationToken token) 
-            : base($"{token.GetLine().LineNumber + 1}: {token.GetLine().LineText}")
+        public NavigationToken NavigationToken { get; }
+        public NavigationListItemNode(NavigationToken navigationToken) 
+            : base($"{navigationToken.Line + 1}: {navigationToken.LineText}")
         {
-            NavigationToken = token;
+            NavigationToken = navigationToken;
         }
     }
 }

@@ -8,9 +8,9 @@ namespace VSRAD.Syntax.IntelliSense.Peek
     internal sealed class PeekResultSource : IPeekResultSource
     {
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly INavigationToken _token;
+        private readonly NavigationToken _token;
 
-        public PeekResultSource(IPeekResultFactory peekResultFactory, INavigationToken navigationToken)
+        public PeekResultSource(IPeekResultFactory peekResultFactory, NavigationToken navigationToken)
         {
             _peekResultFactory = peekResultFactory;
             _token = navigationToken;
@@ -29,23 +29,23 @@ namespace VSRAD.Syntax.IntelliSense.Peek
 
         private IDocumentPeekResult CreateResult()
         {
-            var tokenLine = _token.GetLine();
-            var lineNumber = tokenLine.LineNumber;
+            var tokenEnd = _token.GetEnd();
+            var line = tokenEnd.GetContainingLine();
+            var lineNumber = line.LineNumber;
 
-            const int startLineIndex = 0;
-            var endLineIndex = tokenLine.LineEnd;
-            var idIndex = _token.GetStart() - tokenLine.LineStart;
-            var path = _token.Document.Path;
+            var startLineIndex = 0;
+            var endLineIndex = line.End - line.Start;
+            var idIndex = tokenEnd - line.Start;
 
             var displayInfo = new PeekResultDisplayInfo(
-                label: path,
-                labelTooltip: path,
-                title: path,
-                titleTooltip: path);
+                label: _token.Path,
+                labelTooltip: _token.Path,
+                title: _token.Path,
+                titleTooltip: _token.Path);
 
             return _peekResultFactory.Create(
                 displayInfo,
-                path,
+                _token.Path,
                 lineNumber,
                 startLineIndex,
                 lineNumber,

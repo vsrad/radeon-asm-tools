@@ -22,15 +22,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
 
-        public ScopedCompletionProvider(GeneralOptionProvider generalOptionProvider, INavigationTokenService navigationTokenService)
-            : base(generalOptionProvider)
+        public ScopedCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
+            : base(optionsProvider)
         {
             _navigationTokenService = navigationTokenService;
-            _autocompleteLabels = generalOptionProvider.AutocompleteLabels;
-            _autocompleteVariables = generalOptionProvider.AutocompleteVariables;
+            _autocompleteLabels = optionsProvider.AutocompleteLabels;
+            _autocompleteVariables = optionsProvider.AutocompleteVariables;
         }
 
-        public override void DisplayOptionsUpdated(GeneralOptionProvider sender)
+        public override void DisplayOptionsUpdated(OptionsProvider sender)
         {
             _autocompleteLabels = sender.AutocompleteLabels;
             _autocompleteVariables = sender.AutocompleteVariables;
@@ -48,8 +48,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
         private IEnumerable<CompletionItem> GetScopedCompletions(IDocument document, IAnalysisResult analysisResult, SnapshotPoint triggerPoint, CancellationToken cancellationToken)
         {
-            CompletionItem CreateCompletionItem(IAnalysisToken analysisToken, ImageElement imageElement) =>
-                new CompletionItem(_navigationTokenService.CreateToken((IDefinitionToken)analysisToken, document), imageElement);
+            CompletionItem CreateCompletionItem(AnalysisToken analysisToken, ImageElement imageElement) =>
+                new CompletionItem(_navigationTokenService.CreateToken(analysisToken, document), imageElement);
 
             var currentBlock = analysisResult.GetBlock(triggerPoint);
             while (currentBlock != null)

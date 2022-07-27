@@ -5,7 +5,7 @@ namespace VSRAD.Syntax.Core.Blocks
 {
     public readonly struct TrackingBlock : IEquatable<TrackingBlock>
     {
-        public static TrackingBlock Empty => new TrackingBlock();
+        public static TrackingBlock Empty { get { return new TrackingBlock(); } }
 
         public TrackingBlock(ITextSnapshot snapshot, Span span) : this()
         {

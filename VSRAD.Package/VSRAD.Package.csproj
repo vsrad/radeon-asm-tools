@@ -106,9 +106,6 @@
     <Compile Include="..\VSRAD.BuildTools\IPCBuildResult.cs">
       <Link>BuildTools\IPCBuildResult.cs</Link>
     </Compile>
-    <Compile Include="..\VSRAD.DebugServer\IPC\Capabilities.cs">
-      <Link>Server\IPC\Capabilities.cs</Link>
-    </Compile>
     <Compile Include="..\VSRAD.DebugServer\IPC\Commands.cs">
       <Link>Server\IPC\Commands.cs</Link>
     </Compile>
@@ -121,23 +118,11 @@
     <Compile Include="..\VSRAD.DebugServer\IPC\StreamExtensions.cs">
       <Link>Server\IPC\StreamExtensions.cs</Link>
     </Compile>
-    <Compile Include="..\VSRAD.DebugServer\SharedUtils\FileMetadata.cs">
-      <Link>Server\SharedUtils\FileMetadata.cs</Link>
+    <Compile Include="..\VSRAD.DebugServer\ObservableProcess.cs">
+      <Link>Server\IPC\ObservableProcess.cs</Link>
     </Compile>
-    <Compile Include="..\VSRAD.DebugServer\SharedUtils\NativeMethods.cs">
-      <Link>Server\SharedUtils\NativeMethods.cs</Link>
-    </Compile>
-    <Compile Include="..\VSRAD.DebugServer\SharedUtils\ObservableProcess.cs">
-      <Link>Server\SharedUtils\ObservableProcess.cs</Link>
-    </Compile>
-    <Compile Include="..\VSRAD.DebugServer\SharedUtils\PackedFile.cs">
-      <Link>Server\SharedUtils\PackedFile.cs</Link>
-    </Compile>
-    <Compile Include="..\VSRAD.DebugServer\SharedUtils\ProcessUtils.cs">
-      <Link>Server\SharedUtils\ProcessUtils.cs</Link>
-    </Compile>
-    <Compile Include="..\VSRAD.DebugServer\SharedUtils\TextDebuggerOutputParser.cs">
-      <Link>Server\SharedUtils\TextDebuggerOutputParser.cs</Link>
+    <Compile Include="..\VSRAD.DebugServer\TextDebuggerOutputParser.cs">
+      <Link>Server\TextDebuggerOutputParser.cs</Link>
     </Compile>
     <Compile Include="BuildTools\BuildErrorProcessor.cs" />
     <Compile Include="BuildTools\Errors\LineMapper.cs" />
@@ -146,6 +131,7 @@
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BaseRemoteCommand.cs" />
+    <Compile Include="Commands\BreakModeDropdownCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
@@ -166,7 +152,6 @@
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
     <Compile Include="DebugVisualizer\FontAndColorProvider.cs" />
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceCellStyling.cs" />
-    <Compile Include="DebugVisualizer\SliceVisualizer\SliceColumnStyling.cs" />
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceRowStyling.cs" />
     <Compile Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml.cs">
       <DependentUpon>SliceVisualizerControl.xaml</DependentUpon>
@@ -230,13 +215,14 @@
     <Compile Include="ProjectSystem\Profiles\ExtendedTreeView.xaml.cs">
       <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ProjectSystem\Profiles\LegacyProfileImporter.cs" />
+    <Compile Include="ProjectSystem\Profiles\LegacyProfileOptionsMigrator.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
     <Compile Include="ProjectSystem\Profiles\TargetHostsEditor.xaml.cs">
       <DependentUpon>TargetHostsEditor.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />
-    <Compile Include="ProjectSystem\StatusBarIntegration.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -260,12 +246,13 @@
     <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\BreakModeConverter.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
     <Compile Include="Utils\MruCollection.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
-    <Compile Include="Utils\StringExtensions.cs" />
     <Compile Include="Utils\VsEditor.cs" />
+    <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Options\ProfileOptions.cs" />

@@ -65,8 +65,8 @@ namespace VSRAD.Package.DebugVisualizer
         public GroupIndexSelector(Options.ProjectOptions options)
         {
             _projectOptions = options;
-            PropertyChangedEventManager.AddHandler(_projectOptions.VisualizerOptions, OptionsChanged, "");
-            PropertyChangedEventManager.AddHandler(_projectOptions.DebuggerOptions, OptionsChanged, "");
+            _projectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
+            _projectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
         }
 
         private void OptionsChanged(object sender, PropertyChangedEventArgs e)
@@ -112,11 +112,7 @@ namespace VSRAD.Package.DebugVisualizer
             _projectOptions.DebuggerOptions.NGroups = _currentDispatchParams.NDRange3D
                 ? _currentDispatchParams.DimX * _currentDispatchParams.DimY * _currentDispatchParams.DimZ
                 : _currentDispatchParams.DimX;
-
-            if (_currentDispatchParams.GroupSizeX > 8192)
-                Errors.ShowWarning("Group Size from dispatch params exceeded the limit - 8192. Proceeding with 8192.");
-
-            _projectOptions.DebuggerOptions.GroupSize = Math.Min(_currentDispatchParams.GroupSizeX, 8192);
+            _projectOptions.DebuggerOptions.GroupSize = _currentDispatchParams.GroupSizeX;
 
             _updateOptions = true;
             Update();

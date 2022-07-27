@@ -14,10 +14,10 @@ namespace VSRAD.Syntax.FunctionList.Commands
 
         protected override void Execute(FunctionListWindow window)
         {
-            if (window?.Frame == null)
+            if (window == null || window.Frame == null)
                 throw new NotSupportedException("Cannot create function list window");
 
-            var windowFrame = (IVsWindowFrame)window.Frame;
+            IVsWindowFrame windowFrame = (IVsWindowFrame)window.Frame;
             ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
 

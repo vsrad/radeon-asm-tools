@@ -1,20 +1,21 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 using VSRAD.Syntax.Core.Parser;
-using VSRAD.Syntax.Core.Helper;
 
 namespace VSRAD.Syntax.Core
 {
     internal class DocumentAnalysis : IDocumentAnalysis
     {
         private readonly IDocument _document;
-        private readonly IParser _parser;
-        private readonly OrderedFixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>> _resultsRequests;
         private readonly IDocumentTokenizer _tokenizer;
+        private readonly IParser _parser;
+        private AnalysisRequest _currentRequest;
+        private AnalysisRequest _previousRequest;
+
+        private readonly object _updateResultLock = new object();
 
         public IAnalysisResult CurrentResult { get; private set; }
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
@@ -24,68 +25,74 @@ namespace VSRAD.Syntax.Core
             _document = document;
             _tokenizer = tokenizer;
             _parser = parser;
-            _resultsRequests = new OrderedFixedSizeDictionary<ITextSnapshot, Task<IAnalysisResult>>(10);
 
-            tokenizer.TokenizerUpdated += TokenizerUpdated;
-            TokenizerUpdated(tokenizer.CurrentResult, CancellationToken.None);
+            _tokenizer.TokenizerUpdated += TokenizerUpdated;
+            TokenizerUpdated(_tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
-        public async Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
+        public Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
         {
-            if (_resultsRequests.TryGetValue(textSnapshot, out var task))
-                return await task.ConfigureAwait(false);
+            if (textSnapshot == null)
+                throw new ArgumentNullException(nameof(textSnapshot));
+            if (textSnapshot.TextBuffer != _document.CurrentSnapshot.TextBuffer)
+                throw new ArgumentException("TextSnapshot does not belong to document");
+            if (textSnapshot.Version.VersionNumber < _previousRequest.Snapshot?.Version.VersionNumber)
+                throw new OperationCanceledException("Old TextSnapshot version requested");
+
+            if (_currentRequest.Snapshot == textSnapshot)
+                return _currentRequest.Request;
+            if (_previousRequest.Snapshot == textSnapshot)
+                return _previousRequest.Request;
 
             throw new OperationCanceledException("Buffer changes have not yet been processed");
         }
 
-        public void Rescan(RescanReason rescanReason, CancellationToken cancellationToken)
+        private void TokenizerUpdated(ITokenizerResult tokenizerResult, RescanReason reason,
+            CancellationToken cancellationToken)
         {
-            if (_tokenizer.CurrentResult == null) return;
-            ForceRescan(_tokenizer.CurrentResult, rescanReason, cancellationToken);
+            var analysisResultTask = RunAnalysisAsync(tokenizerResult, reason, cancellationToken);
+            _previousRequest = _currentRequest;
+            _currentRequest = new AnalysisRequest()
+            {
+                Snapshot = tokenizerResult.Snapshot,
+                Request = analysisResultTask,
+            };
         }
 
-        public void OnDestroy()
-        {
-            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
-        }
-
-        private void TokenizerUpdated(ITokenizerResult tokenizerResult, CancellationToken cancellationToken) =>
-            Rescan(tokenizerResult, RescanReason.ContentChanged, cancellationToken);
-
-        private void Rescan(ITokenizerResult tokenizerResult, RescanReason rescanReason, CancellationToken cancellationToken)
-        {
-            if (_resultsRequests.ContainsKey(tokenizerResult.Snapshot))
-                return;
-
-            _resultsRequests.Add(tokenizerResult.Snapshot, RunAnalysisAsync(tokenizerResult, rescanReason, cancellationToken));
-        }
-
-        private void ForceRescan(ITokenizerResult tokenizerResult, RescanReason rescanReason, CancellationToken cancellationToken)
-        {
-            _resultsRequests.Remove(tokenizerResult.Snapshot);
-            _resultsRequests.Add(tokenizerResult.Snapshot, RunAnalysisAsync(tokenizerResult, rescanReason, cancellationToken));
-        }
-
-        private Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken) =>
+        private Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason,
+            CancellationToken cancellationToken) =>
             Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken);
 
         private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
-            // TODO: for the future  "GoTo include" feature
-            var includes = new List<IDocument>();
-            try
-            {
-                var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
-                var analysisResult = new AnalysisResult(_document, parserResult, includes, tokenizerResult.Snapshot);
+            var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
+            var analysisResult = new AnalysisResult(parserResult, tokenizerResult.Snapshot);
 
+            cancellationToken.ThrowIfCancellationRequested();
+            SynchronousUpdate(analysisResult, reason, cancellationToken);
+            
+            return analysisResult;
+        }
+
+        private void SynchronousUpdate(IAnalysisResult analysisResult, RescanReason reason, 
+            CancellationToken cancellationToken)
+        {
+            lock (_updateResultLock)
+            {
                 CurrentResult = analysisResult;
                 AnalysisUpdated?.Invoke(analysisResult, reason, cancellationToken);
-                return analysisResult;
-            }
-            catch (AggregateException /* tokenizer changed but plinq haven't checked CancellationToken yet */)
-            {
-                throw new OperationCanceledException();
             }
         }
+
+        public void Dispose()
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
+        }
+    }
+
+    internal struct AnalysisRequest
+    {
+        public ITextSnapshot Snapshot;
+        public Task<IAnalysisResult> Request;
     }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using VSRAD.Syntax.Core;
+﻿using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Helpers;
 using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.IntelliSense.Navigation;
@@ -9,15 +8,17 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
+using System;
 using System.Linq;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     public interface INavigationTokenService
     {
-        INavigationToken CreateToken(IDefinitionToken analysisToken, IDocument document);
+        NavigationToken CreateToken(AnalysisToken analysisToken, string path);
+        NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document);
         Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
-        void NavigateOrOpenNavigationList(IReadOnlyList<INavigationToken> navigations);
+        void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
     }
 
     [Export(typeof(INavigationTokenService))]
@@ -33,61 +34,81 @@ namespace VSRAD.Syntax.IntelliSense
             _instructionListManager = instructionListManager;
         }
 
-        public INavigationToken CreateToken(IDefinitionToken analysisToken, IDocument document)
+        public NavigationToken CreateToken(AnalysisToken analysisToken, string path)
         {
-            if (analysisToken == null) throw new ArgumentNullException(nameof(analysisToken));
-            return new NavigationToken(analysisToken, document);
+            var document = _documentFactory.GetOrCreateDocument(analysisToken.Snapshot.TextBuffer);
+            return CreateToken(analysisToken, document);
         }
+
+        public NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document)
+        {
+            if (document == null) return NavigationToken.Empty;
+
+            var navigateAction = GetNavigateAction(analysisToken, document);
+            return new NavigationToken(analysisToken, document.Path, navigateAction);
+        }
+
+        private Action GetNavigateAction(AnalysisToken analysisToken, IDocument document) =>
+            () =>
+            {
+                try
+                {
+                    // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
+                    var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
+                    document.NavigateToPosition(navigatePosition);
+                }catch (Exception e)
+                {
+                    Error.ShowError(e, "Navigation service");
+                }
+            };
 
         public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
         {
             var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
             if (document == null) return null;
 
-            var analysisResult = await document.DocumentAnalysis
-                .GetAnalysisResultAsync(point.Snapshot)
-                .ConfigureAwait(false);
+            var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
             var analysisToken = analysisResult.GetToken(point);
 
             if (analysisToken == null) return null;
-            var tokens = new List<INavigationToken>();
+            var tokens = new List<NavigationToken>();
 
-            switch (analysisToken)
+            if (analysisToken is DefinitionToken definitionToken)
             {
-                case DefinitionToken definitionToken:
-                    {
-                        tokens.Add(CreateToken(definitionToken, document));
-                        break;
-                    }
-                case ReferenceToken referenceToken:
-                    {
-                        var definition = referenceToken.Definition;
-                        var textBuffer = definition.Span.Snapshot.TextBuffer;
-                        var definitionDocument = _documentFactory.GetOrCreateDocument(textBuffer);
+                tokens.Add(CreateToken(definitionToken, document));
+            }
+            else if (analysisToken is ReferenceToken referenceToken)
+            {
+                var definition = referenceToken.Definition;
+                var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
+                tokens.Add(CreateToken(definition, definitionDocument));
+            }
+            else
+            {
+                if (analysisToken.Type == RadAsmTokenType.Instruction)
+                {
+                    var asmType = analysisToken.Snapshot.GetAsmType();
+                    var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
+                    var instructionText = analysisToken.GetText();
+                    var instructionNavigations = new List<NavigationToken>();
 
-                        // if document is closed
-                        if (definitionDocument == null) return null;
-
-                        tokens.Add(CreateToken(definition, definitionDocument));
-                        break;
-                    }
-                default:
-                    {
-                        if (analysisToken.Type != RadAsmTokenType.Instruction) return null;
-
-                        var asmType = analysisResult.Snapshot.GetAsmType();
-                        var instructionText = analysisToken.GetText();
-                        var navigations = _instructionListManager.GetInstructionsByName(asmType, instructionText);
-
-                        tokens.AddRange(navigations);
-                        break;
-                    }
+                    var navigations = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations);
+                    instructionNavigations.AddRange(navigations);
+                    
+                    if (instructionNavigations.Count != 0)
+                        return new NavigationTokenServiceResult(instructionNavigations, analysisToken);
+                    
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             return new NavigationTokenServiceResult(tokens, analysisToken);
         }
 
-        public void NavigateOrOpenNavigationList(IReadOnlyList<INavigationToken> navigations)
+        public void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations)
         {
             if (navigations.Count == 1) navigations[0].Navigate();
             else if (navigations.Count > 1) NavigationList.UpdateNavigationList(navigations);

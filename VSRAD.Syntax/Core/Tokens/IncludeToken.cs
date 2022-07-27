@@ -1,16 +1,15 @@
-﻿using System;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 
 namespace VSRAD.Syntax.Core.Tokens
 {
     public class IncludeToken : AnalysisToken
     {
-        public readonly IDocument IncludeDocument;
+        public readonly IDocument Document;
 
-        public IncludeToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot)
+        public IncludeToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot, IDocument document)
             : base(tokenType, trackingToken, snapshot)
         {
-            throw new NotImplementedException();
+            Document = document;
         }
     }
 }

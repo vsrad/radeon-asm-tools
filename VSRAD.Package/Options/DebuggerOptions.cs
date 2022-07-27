@@ -36,11 +36,8 @@ namespace VSRAD.Package.Options
         private string _appArgs = "";
         public string AppArgs { get => _appArgs; set => SetField(ref _appArgs, value); }
 
-        private string _appArgs2 = "";
-        public string AppArgs2 { get => _appArgs2; set => SetField(ref _appArgs2, value); }
-
-        private string _appArgs3 = "";
-        public string AppArgs3 { get => _appArgs3; set => SetField(ref _appArgs3, value); }
+        private string _breakArgs = "";
+        public string BreakArgs { get => _breakArgs; set => SetField(ref _breakArgs, value); }
 
         private bool _autosave = true;
         public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }
@@ -58,6 +55,16 @@ namespace VSRAD.Package.Options
 
         private BreakMode _breakMode;
         public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue(true)]
+        private bool _forceOppositeTab = true;
+        public bool ForceOppositeTab { get => _forceOppositeTab; set => SetField(ref _forceOppositeTab, value); }
+        
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue(true)]
+        private bool _preserveActiveDoc = true;
+        public bool PreserveActiveDoc { get => _preserveActiveDoc; set => SetField(ref _preserveActiveDoc, value); }
 
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;

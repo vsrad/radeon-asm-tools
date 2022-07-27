@@ -1,0 +1,1736 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--This is the file that defines the IDs for all the commands exposed by VisualStudio. -->
+  <Extern href="stdidcmd.h" />
+
+  <!--This header contains the command ids for the menus provided by the shell. -->
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidVSPackage">
+    <Menus>
+      <!-- Tools -> RAD Debug -->
+      <Menu guid="guidCmdSetToolsMenu" id="ToolsMenuId" priority="0x700" type="Menu">
+        <Parent guid="guidSHLMainMenu" id="IDG_VS_TOOLS_OTHER2"/>
+        <Strings>
+          <ButtonText>RAD Debug</ButtonText>
+        </Strings>
+      </Menu>
+      <!-- Tools -> RAD Debug -> Actions -->
+      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="10" type="Menu">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
+        <Strings>
+          <ButtonText>Actions</ButtonText>
+        </Strings>
+      </Menu>
+      <!-- View -> Toolbars -> RAD Debug -->
+      <Menu guid="guidCmdSetToolbar" id="ToolbarId" type="Toolbar">
+        <Strings>
+          <ButtonText>RAD Debug</ButtonText>
+        </Strings>
+      </Menu>
+      <!-- Editor context menu -> Add to watches as array -->
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuId" priority="0x1000" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="EditorContextMenuAddToWatchesGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Add To Watches As Array</ButtonText>
+        </Strings>
+      </Menu>
+      <!-- Editor context menu -> Add to watches as array -> From 0..15 -->
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Id" priority="0x1100" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>0</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Id" priority="0x1101" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>1</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Id" priority="0x1102" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>2</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Id" priority="0x1103" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>3</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Id" priority="0x1104" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>4</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Id" priority="0x1105" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Id" priority="0x1106" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Id" priority="0x1107" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Id" priority="0x1108" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Id" priority="0x1109" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Id" priority="0x110a" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Id" priority="0x110b" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Id" priority="0x110c" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Id" priority="0x110d" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom14Id" priority="0x110e" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Menu>
+      <Menu guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom15Id" priority="0x110f" type="Menu">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <!--<CommandFlag>DynamicVisibility</CommandFlag>-->
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Buttons>
+      <!-- Tool window commands -->
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowVisualizerCommandId" priority="1" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Visualizer</ButtonText>
+          <CanonicalName>RadDebug.Visualizer</CanonicalName>
+          <LocCanonicalName>RadDebug.Visualizer</LocCanonicalName>
+        </Strings>
+      </Button>
+      <!--
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="visualizerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Slice Visualizer</ButtonText>
+          <CanonicalName>RadDebug.SliceVisualizer</CanonicalName>
+          <LocCanonicalName>RadDebug.SliceVisualizer</LocCanonicalName>
+        </Strings>
+      </Button>
+      -->
+      <Button guid="guidCmdSetToolWindow" id="ToolWindowOptionsCommandId" priority="3" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="optionsIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Options</ButtonText>
+          <CanonicalName>RadDebug.Options</CanonicalName>
+          <LocCanonicalName>RadDebug.Options</LocCanonicalName>
+        </Strings>
+      </Button>
+      <!-- Tools menu -->
+      <Button guid="guidCmdSetActionsMenu" id="ActionCommandId" priority="4" type="Button">
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" />
+        <CommandFlag>DynamicItemStart</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>(No actions available)</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="ProfileCommandId" priority="5" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="profilerIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Profile</ButtonText>
+          <CanonicalName>RadDebug.ProfileAction</CanonicalName>
+          <LocCanonicalName>RadDebug.ProfileAction</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="6" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="disassemblyIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Disassemble File</ButtonText>
+          <CanonicalName>RadDebug.DisassembleAction</CanonicalName>
+          <LocCanonicalName>RadDebug.DisassembleAction</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="7" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="preprocessIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Preprocess File</ButtonText>
+          <CanonicalName>RadDebug.PreprocessAction</CanonicalName>
+          <LocCanonicalName>RadDebug.PreprocessAction</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="DebugActionCommandId" priority="8" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="debugActionIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Debug</ButtonText>
+          <CanonicalName>RadDebug.DebugAction</CanonicalName>
+          <LocCanonicalName>RadDebug.DebugAction</LocCanonicalName>
+        </Strings>
+      </Button>
+      <!-- Editor context menu -->
+      <Button guid="guidCmdSetFRTC" id="ForceRunToCursorCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Force Run To Cursor</ButtonText>
+          <CanonicalName>RadDebug.ForceRunToCursor</CanonicalName>
+          <LocCanonicalName>RadDebug.ForceRunToCursor</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdSetAddToWatches" id="EditorContextMenuAddToWatchesGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Add To Watches</ButtonText>
+          <CanonicalName>RadDebug.AddToWatches</CanonicalName>
+          <LocCanonicalName>RadDebug.AddToWatches</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddToWatchesCustomCommandId" priority="0x1401" type="Button">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Custom</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFromHeaderId" priority="0x1000">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>From</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0ToHeaderId" priority="0x1200">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To0Id" priority="0x1400">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>0</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To1Id" priority="0x1401">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>1</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To2Id" priority="0x1402">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>2</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To3Id" priority="0x1403">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>3</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To4Id" priority="0x1404">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>4</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To5Id" priority="0x1405">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To6Id" priority="0x1406">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To7Id" priority="0x1407">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To8Id" priority="0x1408">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To9Id" priority="0x1409">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To10Id" priority="0x140a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To11Id" priority="0x140b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To12Id" priority="0x140c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To13Id" priority="0x140d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To14Id" priority="0x140e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom0To15Id" priority="0x140f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1ToHeaderId" priority="0x1201">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To1Id" priority="0x1501">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>1</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To2Id" priority="0x1502">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>2</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To3Id" priority="0x1503">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>3</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To4Id" priority="0x1504">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>4</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To5Id" priority="0x1505">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To6Id" priority="0x1506">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To7Id" priority="0x1507">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To8Id" priority="0x1508">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To9Id" priority="0x1509">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To10Id" priority="0x150a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To11Id" priority="0x150b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To12Id" priority="0x150c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To13Id" priority="0x150d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To14Id" priority="0x150e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom1To15Id" priority="0x150f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2ToHeaderId" priority="0x1202">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To2Id" priority="0x1602">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>2</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To3Id" priority="0x1603">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>3</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To4Id" priority="0x1604">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>4</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To5Id" priority="0x1605">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To6Id" priority="0x1606">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To7Id" priority="0x1607">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To8Id" priority="0x1608">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To9Id" priority="0x1609">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To10Id" priority="0x160a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To11Id" priority="0x160b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To12Id" priority="0x160c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To13Id" priority="0x160d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To14Id" priority="0x160e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom2To15Id" priority="0x160f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3ToHeaderId" priority="0x1203">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To3Id" priority="0x1703">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>3</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To4Id" priority="0x1704">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>4</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To5Id" priority="0x1705">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To6Id" priority="0x1706">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To7Id" priority="0x1707">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To8Id" priority="0x1708">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To9Id" priority="0x1709">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To10Id" priority="0x170a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To11Id" priority="0x170b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To12Id" priority="0x170c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To13Id" priority="0x170d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To14Id" priority="0x170e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom3To15Id" priority="0x170f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4ToHeaderId" priority="0x1204">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To4Id" priority="0x1804">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>4</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To5Id" priority="0x1805">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To6Id" priority="0x1806">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To7Id" priority="0x1807">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To8Id" priority="0x1808">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To9Id" priority="0x1809">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To10Id" priority="0x180a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To11Id" priority="0x180b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To12Id" priority="0x180c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To13Id" priority="0x180d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To14Id" priority="0x180e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom4To15Id" priority="0x180f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5ToHeaderId" priority="0x1205">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To5Id" priority="0x1905">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>5</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To6Id" priority="0x1906">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To7Id" priority="0x1907">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To8Id" priority="0x1908">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To9Id" priority="0x1909">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To10Id" priority="0x190a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To11Id" priority="0x190b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To12Id" priority="0x190c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To13Id" priority="0x190d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To14Id" priority="0x190e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom5To15Id" priority="0x190f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6ToHeaderId" priority="0x1206">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To6Id" priority="0x1a06">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>6</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To7Id" priority="0x1a07">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To8Id" priority="0x1a08">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To9Id" priority="0x1a09">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To10Id" priority="0x1a0a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To11Id" priority="0x1a0b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To12Id" priority="0x1a0c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To13Id" priority="0x1a0d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To14Id" priority="0x1a0e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom6To15Id" priority="0x1a0f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7ToHeaderId" priority="0x1207">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To7Id" priority="0x1b07">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>7</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To8Id" priority="0x1b08">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To9Id" priority="0x1b09">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To10Id" priority="0x1b0a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To11Id" priority="0x1b0b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To12Id" priority="0x1b0c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To13Id" priority="0x1b0d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To14Id" priority="0x1b0e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom7To15Id" priority="0x1b0f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8ToHeaderId" priority="0x1208">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To8Id" priority="0x1c08">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>8</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To9Id" priority="0x1c09">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To10Id" priority="0x1c0a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To11Id" priority="0x1c0b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To12Id" priority="0x1c0c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To13Id" priority="0x1c0d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To14Id" priority="0x1c0e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom8To15Id" priority="0x1c0f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9ToHeaderId" priority="0x1209">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To9Id" priority="0x1d09">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>9</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To10Id" priority="0x1d0a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To11Id" priority="0x1d0b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To12Id" priority="0x1d0c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To13Id" priority="0x1d0d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To14Id" priority="0x1d0e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom9To15Id" priority="0x1d0f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10ToHeaderId" priority="0x120a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10To10Id" priority="0x1e0a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>10</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10To11Id" priority="0x1e0b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10To12Id" priority="0x1e0c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10To13Id" priority="0x1e0d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10To14Id" priority="0x1e0e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom10To15Id" priority="0x1e0f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom11ToHeaderId" priority="0x120b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom11To11Id" priority="0x1f0b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>11</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom11To12Id" priority="0x1f0c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom11To13Id" priority="0x1f0d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom11To14Id" priority="0x1f0e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom11To15Id" priority="0x1f0f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom12ToHeaderId" priority="0x120c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom12To12Id" priority="0x200c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>12</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom12To13Id" priority="0x200d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom12To14Id" priority="0x200e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom12To15Id" priority="0x200f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom13ToHeaderId" priority="0x120d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom13To13Id" priority="0x210d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>13</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom13To14Id" priority="0x210e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom13To15Id" priority="0x210f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom14ToHeaderId" priority="0x120e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom14Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom14To14Id" priority="0x220e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom14Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>14</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom14To15Id" priority="0x220f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom14Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom15ToHeaderId" priority="0x120f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom15Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>To</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetAddToWatches" id="AddArrayToWatchesFrom15To15Id" priority="0x230f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom15Group" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>15</ButtonText>
+        </Strings>
+      </Button>
+      <!--<Button guid="guidCmdEvaluateSelected" id="EvaluateSelectedCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Evaluate Selected</ButtonText>
+        </Strings>
+      </Button>-->
+    </Buttons>
+
+    <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
+    <Bitmaps>
+      <!--  The bitmap id is defined in a way that is a little bit different from the others:
+            the declaration starts with a guid for the bitmap strip, then there is the resource id of the
+            bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
+            inside a button definition. An important aspect of this declaration is that the element id
+            must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png"
+              usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, debugActionIcon" />
+    </Bitmaps>
+
+    <Groups>
+      <!-- Toolbar -->
+      <Group guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
+      </Group>
+      <!-- Tools menu -->
+      <Group guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0600">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
+      </Group>
+      <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="0x0600">
+        <Parent guid="guidCmdSetActionsMenu" id="ActionsMenuId" />
+      </Group>
+      <!-- Editor context menu -->
+      <Group guid="guidCmdSetFRTC" id="EditorContextMenuFRTCGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="EditorContextMenuAddToWatchesGroup" priority="0x4000">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuGroup" priority="0x4000">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuId" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Group" priority="0x4100">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom0Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Group" priority="0x4101">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom1Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Group" priority="0x4102">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom2Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Group" priority="0x4103">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom3Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Group" priority="0x4104">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom4Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Group" priority="0x4105">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom5Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Group" priority="0x4106">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom6Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Group" priority="0x4107">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom7Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Group" priority="0x4108">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom8Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Group" priority="0x4109">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom9Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Group" priority="0x410a">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom10Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Group" priority="0x410b">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom11Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Group" priority="0x410c">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom12Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Group" priority="0x410d">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom13Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom14Group" priority="0x410e">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom14Id" />
+      </Group>
+      <Group guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom15Group" priority="0x410f">
+        <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom15Id" />
+      </Group>
+      <!--<Group guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
+      </Group>-->
+    </Groups>
+
+    <Combos>
+       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="120" idCommandList="ProfileTargetMachineDropdownListId">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Target Host</ButtonText>
+          <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
+        </Strings>
+      </Combo>
+      <Combo guid="guidCmdSetBreakMode" id="BreakModeDropdownId" priority="100" type="DropDownCombo" defaultWidth="90" idCommandList="BreakModeDropdownListId">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Break Mode</ButtonText>
+          <ToolTipText>Select the breakpoints placement mode</ToolTipText>
+        </Strings>
+      </Combo>
+    </Combos>
+  </Commands>
+
+  <KeyBindings>
+    <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="E" key2="A" mod1="Control" mod2="Control" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="D" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="W" mod1="Alt" editor="guidVSStd97" />
+  </KeyBindings>
+
+  <CommandPlacements>
+    <CommandPlacement guid="guidCmdSetToolbar" id="ToolbarGroup" priority="0x0100">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
+    <CommandPlacement guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0100">
+      <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
+    </CommandPlacement>
+  </CommandPlacements>
+
+  <Symbols>
+    <GuidSymbol name="guidVSPackage" value="{033a507d-aaaa-4a75-b906-895d8cc0616e}" />
+
+    <GuidSymbol name="guidCmdSetToolbar" value="{E1436EB5-1D47-4714-85CB-6177E62AB2AD}">
+      <IDSymbol name="ToolbarId" value="0x1000"/>
+      <IDSymbol name="ToolbarGroup" value="0x0600" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidCmdSetToolsMenu" value="{E57C1D19-4B4F-4824-8C4B-3B08C52348B7}">
+      <IDSymbol name="ToolsMenuId" value="0x1021" />
+      <IDSymbol name="ToolsMenuGroup" value="0x0600" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetActionsMenu" value="{7CF54FFE-BCAC-4751-BEEC-D103FD953C8B}">
+      <IDSymbol name="ActionsMenuId" value="0x900" />
+      <IDSymbol name="ActionsMenuGroup" value="0x0700" />
+
+      <IDSymbol name="ActionCommandId" value="0x100" />
+      <IDSymbol name="ProfileCommandId" value="0x10" />
+      <IDSymbol name="DisassembleCommandId" value="0x11" />
+      <IDSymbol name="PreprocessCommandId" value="0x12" />
+      <IDSymbol name="DebugActionCommandId" value="0x13" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
+      <IDSymbol name="ToolWindowVisualizerCommandId" value="0x0100" />
+      <IDSymbol name="ToolWindowOptionsCommandId" value="0x0101" />
+      <IDSymbol name="ToolWindowSliceVisualizerCommandId" value="0x0102" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetFRTC" value="{cefc8250-7cd1-46c1-b4f6-46a0a22a1c81}">
+      <IDSymbol value="0x0100" name="ForceRunToCursorCommandId" />
+      <IDSymbol value="4128" name="EditorContextMenuFRTCGroup" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetAddToWatches" value="{8560BD12-1D31-40BA-B300-1A31FC901E93}">
+      <IDSymbol value="0x1020" name="EditorContextMenuAddToWatchesGroup" />
+      <IDSymbol value="0x0100" name="AddSelectionToWatchesCommandId" />
+      <IDSymbol value="0x1025" name="AddArrayToWatchesMenuGroup" />
+      <IDSymbol value="0x1030" name="AddArrayToWatchesMenuId" />
+      <IDSymbol value="0x1031" name="AddArrayToWatchesFromHeaderId" />
+      <IDSymbol value="0x1900" name="AddToWatchesCustomCommandId" />
+      <IDSymbol value="0x1100" name="AddArrayToWatchesMenuFrom0Id" />
+      <IDSymbol value="0x4100" name="AddArrayToWatchesMenuFrom0Group" />
+      <IDSymbol value="0x1200" name="AddArrayToWatchesFrom0ToHeaderId" />
+      <IDSymbol value="0x1400" name="AddArrayToWatchesFrom0To0Id" />
+      <IDSymbol value="0x1401" name="AddArrayToWatchesFrom0To1Id" />
+      <IDSymbol value="0x1402" name="AddArrayToWatchesFrom0To2Id" />
+      <IDSymbol value="0x1403" name="AddArrayToWatchesFrom0To3Id" />
+      <IDSymbol value="0x1404" name="AddArrayToWatchesFrom0To4Id" />
+      <IDSymbol value="0x1405" name="AddArrayToWatchesFrom0To5Id" />
+      <IDSymbol value="0x1406" name="AddArrayToWatchesFrom0To6Id" />
+      <IDSymbol value="0x1407" name="AddArrayToWatchesFrom0To7Id" />
+      <IDSymbol value="0x1408" name="AddArrayToWatchesFrom0To8Id" />
+      <IDSymbol value="0x1409" name="AddArrayToWatchesFrom0To9Id" />
+      <IDSymbol value="0x140a" name="AddArrayToWatchesFrom0To10Id" />
+      <IDSymbol value="0x140b" name="AddArrayToWatchesFrom0To11Id" />
+      <IDSymbol value="0x140c" name="AddArrayToWatchesFrom0To12Id" />
+      <IDSymbol value="0x140d" name="AddArrayToWatchesFrom0To13Id" />
+      <IDSymbol value="0x140e" name="AddArrayToWatchesFrom0To14Id" />
+      <IDSymbol value="0x140f" name="AddArrayToWatchesFrom0To15Id" />
+      <IDSymbol value="0x1101" name="AddArrayToWatchesMenuFrom1Id" />
+      <IDSymbol value="0x4101" name="AddArrayToWatchesMenuFrom1Group" />
+      <IDSymbol value="0x1201" name="AddArrayToWatchesFrom1ToHeaderId" />
+      <IDSymbol value="0x1501" name="AddArrayToWatchesFrom1To1Id" />
+      <IDSymbol value="0x1502" name="AddArrayToWatchesFrom1To2Id" />
+      <IDSymbol value="0x1503" name="AddArrayToWatchesFrom1To3Id" />
+      <IDSymbol value="0x1504" name="AddArrayToWatchesFrom1To4Id" />
+      <IDSymbol value="0x1505" name="AddArrayToWatchesFrom1To5Id" />
+      <IDSymbol value="0x1506" name="AddArrayToWatchesFrom1To6Id" />
+      <IDSymbol value="0x1507" name="AddArrayToWatchesFrom1To7Id" />
+      <IDSymbol value="0x1508" name="AddArrayToWatchesFrom1To8Id" />
+      <IDSymbol value="0x1509" name="AddArrayToWatchesFrom1To9Id" />
+      <IDSymbol value="0x150a" name="AddArrayToWatchesFrom1To10Id" />
+      <IDSymbol value="0x150b" name="AddArrayToWatchesFrom1To11Id" />
+      <IDSymbol value="0x150c" name="AddArrayToWatchesFrom1To12Id" />
+      <IDSymbol value="0x150d" name="AddArrayToWatchesFrom1To13Id" />
+      <IDSymbol value="0x150e" name="AddArrayToWatchesFrom1To14Id" />
+      <IDSymbol value="0x150f" name="AddArrayToWatchesFrom1To15Id" />
+      <IDSymbol value="0x1102" name="AddArrayToWatchesMenuFrom2Id" />
+      <IDSymbol value="0x4102" name="AddArrayToWatchesMenuFrom2Group" />
+      <IDSymbol value="0x1202" name="AddArrayToWatchesFrom2ToHeaderId" />
+      <IDSymbol value="0x1602" name="AddArrayToWatchesFrom2To2Id" />
+      <IDSymbol value="0x1603" name="AddArrayToWatchesFrom2To3Id" />
+      <IDSymbol value="0x1604" name="AddArrayToWatchesFrom2To4Id" />
+      <IDSymbol value="0x1605" name="AddArrayToWatchesFrom2To5Id" />
+      <IDSymbol value="0x1606" name="AddArrayToWatchesFrom2To6Id" />
+      <IDSymbol value="0x1607" name="AddArrayToWatchesFrom2To7Id" />
+      <IDSymbol value="0x1608" name="AddArrayToWatchesFrom2To8Id" />
+      <IDSymbol value="0x1609" name="AddArrayToWatchesFrom2To9Id" />
+      <IDSymbol value="0x160a" name="AddArrayToWatchesFrom2To10Id" />
+      <IDSymbol value="0x160b" name="AddArrayToWatchesFrom2To11Id" />
+      <IDSymbol value="0x160c" name="AddArrayToWatchesFrom2To12Id" />
+      <IDSymbol value="0x160d" name="AddArrayToWatchesFrom2To13Id" />
+      <IDSymbol value="0x160e" name="AddArrayToWatchesFrom2To14Id" />
+      <IDSymbol value="0x160f" name="AddArrayToWatchesFrom2To15Id" />
+      <IDSymbol value="0x1103" name="AddArrayToWatchesMenuFrom3Id" />
+      <IDSymbol value="0x4103" name="AddArrayToWatchesMenuFrom3Group" />
+      <IDSymbol value="0x1203" name="AddArrayToWatchesFrom3ToHeaderId" />
+      <IDSymbol value="0x1703" name="AddArrayToWatchesFrom3To3Id" />
+      <IDSymbol value="0x1704" name="AddArrayToWatchesFrom3To4Id" />
+      <IDSymbol value="0x1705" name="AddArrayToWatchesFrom3To5Id" />
+      <IDSymbol value="0x1706" name="AddArrayToWatchesFrom3To6Id" />
+      <IDSymbol value="0x1707" name="AddArrayToWatchesFrom3To7Id" />
+      <IDSymbol value="0x1708" name="AddArrayToWatchesFrom3To8Id" />
+      <IDSymbol value="0x1709" name="AddArrayToWatchesFrom3To9Id" />
+      <IDSymbol value="0x170a" name="AddArrayToWatchesFrom3To10Id" />
+      <IDSymbol value="0x170b" name="AddArrayToWatchesFrom3To11Id" />
+      <IDSymbol value="0x170c" name="AddArrayToWatchesFrom3To12Id" />
+      <IDSymbol value="0x170d" name="AddArrayToWatchesFrom3To13Id" />
+      <IDSymbol value="0x170e" name="AddArrayToWatchesFrom3To14Id" />
+      <IDSymbol value="0x170f" name="AddArrayToWatchesFrom3To15Id" />
+      <IDSymbol value="0x1104" name="AddArrayToWatchesMenuFrom4Id" />
+      <IDSymbol value="0x4104" name="AddArrayToWatchesMenuFrom4Group" />
+      <IDSymbol value="0x1204" name="AddArrayToWatchesFrom4ToHeaderId" />
+      <IDSymbol value="0x1804" name="AddArrayToWatchesFrom4To4Id" />
+      <IDSymbol value="0x1805" name="AddArrayToWatchesFrom4To5Id" />
+      <IDSymbol value="0x1806" name="AddArrayToWatchesFrom4To6Id" />
+      <IDSymbol value="0x1807" name="AddArrayToWatchesFrom4To7Id" />
+      <IDSymbol value="0x1808" name="AddArrayToWatchesFrom4To8Id" />
+      <IDSymbol value="0x1809" name="AddArrayToWatchesFrom4To9Id" />
+      <IDSymbol value="0x180a" name="AddArrayToWatchesFrom4To10Id" />
+      <IDSymbol value="0x180b" name="AddArrayToWatchesFrom4To11Id" />
+      <IDSymbol value="0x180c" name="AddArrayToWatchesFrom4To12Id" />
+      <IDSymbol value="0x180d" name="AddArrayToWatchesFrom4To13Id" />
+      <IDSymbol value="0x180e" name="AddArrayToWatchesFrom4To14Id" />
+      <IDSymbol value="0x180f" name="AddArrayToWatchesFrom4To15Id" />
+      <IDSymbol value="0x1105" name="AddArrayToWatchesMenuFrom5Id" />
+      <IDSymbol value="0x4105" name="AddArrayToWatchesMenuFrom5Group" />
+      <IDSymbol value="0x1205" name="AddArrayToWatchesFrom5ToHeaderId" />
+      <IDSymbol value="0x1905" name="AddArrayToWatchesFrom5To5Id" />
+      <IDSymbol value="0x1906" name="AddArrayToWatchesFrom5To6Id" />
+      <IDSymbol value="0x1907" name="AddArrayToWatchesFrom5To7Id" />
+      <IDSymbol value="0x1908" name="AddArrayToWatchesFrom5To8Id" />
+      <IDSymbol value="0x1909" name="AddArrayToWatchesFrom5To9Id" />
+      <IDSymbol value="0x190a" name="AddArrayToWatchesFrom5To10Id" />
+      <IDSymbol value="0x190b" name="AddArrayToWatchesFrom5To11Id" />
+      <IDSymbol value="0x190c" name="AddArrayToWatchesFrom5To12Id" />
+      <IDSymbol value="0x190d" name="AddArrayToWatchesFrom5To13Id" />
+      <IDSymbol value="0x190e" name="AddArrayToWatchesFrom5To14Id" />
+      <IDSymbol value="0x190f" name="AddArrayToWatchesFrom5To15Id" />
+      <IDSymbol value="0x1106" name="AddArrayToWatchesMenuFrom6Id" />
+      <IDSymbol value="0x4106" name="AddArrayToWatchesMenuFrom6Group" />
+      <IDSymbol value="0x1206" name="AddArrayToWatchesFrom6ToHeaderId" />
+      <IDSymbol value="0x1a06" name="AddArrayToWatchesFrom6To6Id" />
+      <IDSymbol value="0x1a07" name="AddArrayToWatchesFrom6To7Id" />
+      <IDSymbol value="0x1a08" name="AddArrayToWatchesFrom6To8Id" />
+      <IDSymbol value="0x1a09" name="AddArrayToWatchesFrom6To9Id" />
+      <IDSymbol value="0x1a0a" name="AddArrayToWatchesFrom6To10Id" />
+      <IDSymbol value="0x1a0b" name="AddArrayToWatchesFrom6To11Id" />
+      <IDSymbol value="0x1a0c" name="AddArrayToWatchesFrom6To12Id" />
+      <IDSymbol value="0x1a0d" name="AddArrayToWatchesFrom6To13Id" />
+      <IDSymbol value="0x1a0e" name="AddArrayToWatchesFrom6To14Id" />
+      <IDSymbol value="0x1a0f" name="AddArrayToWatchesFrom6To15Id" />
+      <IDSymbol value="0x1107" name="AddArrayToWatchesMenuFrom7Id" />
+      <IDSymbol value="0x4107" name="AddArrayToWatchesMenuFrom7Group" />
+      <IDSymbol value="0x1207" name="AddArrayToWatchesFrom7ToHeaderId" />
+      <IDSymbol value="0x1b07" name="AddArrayToWatchesFrom7To7Id" />
+      <IDSymbol value="0x1b08" name="AddArrayToWatchesFrom7To8Id" />
+      <IDSymbol value="0x1b09" name="AddArrayToWatchesFrom7To9Id" />
+      <IDSymbol value="0x1b0a" name="AddArrayToWatchesFrom7To10Id" />
+      <IDSymbol value="0x1b0b" name="AddArrayToWatchesFrom7To11Id" />
+      <IDSymbol value="0x1b0c" name="AddArrayToWatchesFrom7To12Id" />
+      <IDSymbol value="0x1b0d" name="AddArrayToWatchesFrom7To13Id" />
+      <IDSymbol value="0x1b0e" name="AddArrayToWatchesFrom7To14Id" />
+      <IDSymbol value="0x1b0f" name="AddArrayToWatchesFrom7To15Id" />
+      <IDSymbol value="0x1108" name="AddArrayToWatchesMenuFrom8Id" />
+      <IDSymbol value="0x4108" name="AddArrayToWatchesMenuFrom8Group" />
+      <IDSymbol value="0x1208" name="AddArrayToWatchesFrom8ToHeaderId" />
+      <IDSymbol value="0x1c08" name="AddArrayToWatchesFrom8To8Id" />
+      <IDSymbol value="0x1c09" name="AddArrayToWatchesFrom8To9Id" />
+      <IDSymbol value="0x1c0a" name="AddArrayToWatchesFrom8To10Id" />
+      <IDSymbol value="0x1c0b" name="AddArrayToWatchesFrom8To11Id" />
+      <IDSymbol value="0x1c0c" name="AddArrayToWatchesFrom8To12Id" />
+      <IDSymbol value="0x1c0d" name="AddArrayToWatchesFrom8To13Id" />
+      <IDSymbol value="0x1c0e" name="AddArrayToWatchesFrom8To14Id" />
+      <IDSymbol value="0x1c0f" name="AddArrayToWatchesFrom8To15Id" />
+      <IDSymbol value="0x1109" name="AddArrayToWatchesMenuFrom9Id" />
+      <IDSymbol value="0x4109" name="AddArrayToWatchesMenuFrom9Group" />
+      <IDSymbol value="0x1209" name="AddArrayToWatchesFrom9ToHeaderId" />
+      <IDSymbol value="0x1d09" name="AddArrayToWatchesFrom9To9Id" />
+      <IDSymbol value="0x1d0a" name="AddArrayToWatchesFrom9To10Id" />
+      <IDSymbol value="0x1d0b" name="AddArrayToWatchesFrom9To11Id" />
+      <IDSymbol value="0x1d0c" name="AddArrayToWatchesFrom9To12Id" />
+      <IDSymbol value="0x1d0d" name="AddArrayToWatchesFrom9To13Id" />
+      <IDSymbol value="0x1d0e" name="AddArrayToWatchesFrom9To14Id" />
+      <IDSymbol value="0x1d0f" name="AddArrayToWatchesFrom9To15Id" />
+      <IDSymbol value="0x110a" name="AddArrayToWatchesMenuFrom10Id" />
+      <IDSymbol value="0x410a" name="AddArrayToWatchesMenuFrom10Group" />
+      <IDSymbol value="0x120a" name="AddArrayToWatchesFrom10ToHeaderId" />
+      <IDSymbol value="0x1e0a" name="AddArrayToWatchesFrom10To10Id" />
+      <IDSymbol value="0x1e0b" name="AddArrayToWatchesFrom10To11Id" />
+      <IDSymbol value="0x1e0c" name="AddArrayToWatchesFrom10To12Id" />
+      <IDSymbol value="0x1e0d" name="AddArrayToWatchesFrom10To13Id" />
+      <IDSymbol value="0x1e0e" name="AddArrayToWatchesFrom10To14Id" />
+      <IDSymbol value="0x1e0f" name="AddArrayToWatchesFrom10To15Id" />
+      <IDSymbol value="0x110b" name="AddArrayToWatchesMenuFrom11Id" />
+      <IDSymbol value="0x410b" name="AddArrayToWatchesMenuFrom11Group" />
+      <IDSymbol value="0x120b" name="AddArrayToWatchesFrom11ToHeaderId" />
+      <IDSymbol value="0x1f0b" name="AddArrayToWatchesFrom11To11Id" />
+      <IDSymbol value="0x1f0c" name="AddArrayToWatchesFrom11To12Id" />
+      <IDSymbol value="0x1f0d" name="AddArrayToWatchesFrom11To13Id" />
+      <IDSymbol value="0x1f0e" name="AddArrayToWatchesFrom11To14Id" />
+      <IDSymbol value="0x1f0f" name="AddArrayToWatchesFrom11To15Id" />
+      <IDSymbol value="0x110c" name="AddArrayToWatchesMenuFrom12Id" />
+      <IDSymbol value="0x410c" name="AddArrayToWatchesMenuFrom12Group" />
+      <IDSymbol value="0x120c" name="AddArrayToWatchesFrom12ToHeaderId" />
+      <IDSymbol value="0x200c" name="AddArrayToWatchesFrom12To12Id" />
+      <IDSymbol value="0x200d" name="AddArrayToWatchesFrom12To13Id" />
+      <IDSymbol value="0x200e" name="AddArrayToWatchesFrom12To14Id" />
+      <IDSymbol value="0x200f" name="AddArrayToWatchesFrom12To15Id" />
+      <IDSymbol value="0x110d" name="AddArrayToWatchesMenuFrom13Id" />
+      <IDSymbol value="0x410d" name="AddArrayToWatchesMenuFrom13Group" />
+      <IDSymbol value="0x120d" name="AddArrayToWatchesFrom13ToHeaderId" />
+      <IDSymbol value="0x210d" name="AddArrayToWatchesFrom13To13Id" />
+      <IDSymbol value="0x210e" name="AddArrayToWatchesFrom13To14Id" />
+      <IDSymbol value="0x210f" name="AddArrayToWatchesFrom13To15Id" />
+      <IDSymbol value="0x110e" name="AddArrayToWatchesMenuFrom14Id" />
+      <IDSymbol value="0x410e" name="AddArrayToWatchesMenuFrom14Group" />
+      <IDSymbol value="0x120e" name="AddArrayToWatchesFrom14ToHeaderId" />
+      <IDSymbol value="0x220e" name="AddArrayToWatchesFrom14To14Id" />
+      <IDSymbol value="0x220f" name="AddArrayToWatchesFrom14To15Id" />
+      <IDSymbol value="0x110f" name="AddArrayToWatchesMenuFrom15Id" />
+      <IDSymbol value="0x410f" name="AddArrayToWatchesMenuFrom15Group" />
+      <IDSymbol value="0x120f" name="AddArrayToWatchesFrom15ToHeaderId" />
+      <IDSymbol value="0x230f" name="AddArrayToWatchesFrom15To15Id" />
+    </GuidSymbol>
+
+    <!--<GuidSymbol name="guidCmdEvaluateSelected" value="{6624A31D-4C20-4675-84D7-67D140842579}">
+      <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
+      <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
+    </GuidSymbol>-->
+    <GuidSymbol name="guidCmdSetBreakMode" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
+      <IDSymbol name="BreakModeDropdownId" value="0x11" />
+      <IDSymbol name="BreakModeDropdownListId" value="0x101" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
+      <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
+      <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
+    </GuidSymbol>
+    
+    <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">
+      <IDSymbol name="profilerIcon" value="1" />
+      <IDSymbol name="visualizerIcon" value="2" />
+      <IDSymbol name="optionsIcon" value="3" />
+      <IDSymbol name="disassemblyIcon" value="4" />
+      <IDSymbol name="preprocessIcon" value="5" />
+      <IDSymbol name="debugActionIcon" value="6" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

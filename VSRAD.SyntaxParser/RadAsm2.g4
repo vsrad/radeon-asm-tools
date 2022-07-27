@@ -5,31 +5,91 @@ function
     ;
 
 /* Keywords */
-VMCNT       : 'vmcnt' ;
-EXPCNT      : 'expcnt' ;
-LGKMCNT     : 'lgkmcnt' ;
-HWREG       : 'hwreg' ;
-SENDMSG     : 'sendmsg' ;
-ASIC        : 'asic' ;
-TYPE        : 'type' ;
-ASSERT      : 'assert' ;
+BUILTIN_FUNCTION
+    : 'vmcnt'
+    | 'expcnt'
+    | 'lgkmcnt'
+    | 'hwreg'
+    | 'sendmsg'
+    | 'asic'
+    | 'type'
+    | 'len'
+    | 'lit'
+    | 'abs'
+    | 'abs_lo'
+    | 'abs_hi'
+    | 'neg'
+    | 'neg_lo'
+    | 'neg_hi'
+    | 'sel_lo'
+    | 'sel_hi'
+    | 'sel_hi_lo'
+    | 'sel_lo_hi'
+    | 'raw_bits'
+    | 'get_dword_offset'
+    | 'ones'
+    | 'zeros'
+    | 'zeroes'
+    | 'trap_present'
+    | 'user_sgpr_count'
+    | 'sgpr_count'
+    | 'vgpr_count'
+    | 'block_size'
+    | 'group_size'
+    | 'group_size3d'
+    | 'tidig_comp_cnt'
+    | 'tg_size_en'
+    | 'tgid_x_en'
+    | 'tgid_y_en'
+    | 'tgid_z_en'
+    | 'wave_cnt_en'
+    | 'scratch_en'
+    | 'oc_lds_en'
+    | 'z_export_en'
+    | 'stencil_test_export_en'
+    | 'stencil_op_export_en'
+    | 'mask_export_en'
+    | 'covmask_export_en'
+    | 'mrtz_export_format'
+    | 'kill_used'
+    | 'alloc_lds'
+    | 'wave_size'
+    | 'assigned'
+    | 'print'
+    | 'set_ps'
+    | 'set_vs'
+    | 'set_gs'
+    | 'set_es'
+    | 'set_hs'
+    | 'set_ls'
+    | 'set_cs'
+    | 'load_collision_waveid'
+    | 'load_intrawave_collision'
+    | 'assert'
+    | 'align'
+    | 'data'
+    | 'label_diff'
+    | 'label_diff_eq'
+    | 'float'
+    | 'floor'
+    | 'map'
+    | 'zip'
+    | 'head'
+    | 'tail'
+    | 'take'
+    | 'drop'
+    | 'rotate'
+    | 'replicate'
+    | 'reverse'
+    | 'cons'
+    | 'concat'
+    | 'list'
+    | 's_list'
+    | 'v_list'
+    ;
+
 SHADER      : 'shader' ;
-LEN         : 'len' ;
-ABS         : 'abs' ;
-ONES        : 'ones' ;
-ZEROS       : 'zeros' ;
-ZEROES      : 'zeroes' ;
-USGPR_COUNT : 'user_sgpr_count' ;
-SGPR_COUNT  : 'sgpr_count' ;
-VGPR_COUNT  : 'vgpr_count' ;
-BLOCK_SIZE  : 'block_size' ;
-GROUP_SIZE  : 'group_size' ;
-TG_SIZE_EN  : 'tg_size_en' ;
-TGID_X_EN   : 'tgid_x_en' ;
-TGID_Y_EN   : 'tgid_y_en' ;
-TGID_Z_EN   : 'tgid_z_en' ;
-ALLOC_LDS   : 'alloc_lds' ;
-WAVE_SIZE   : 'wave_size' ;
+LABEL       : 'label' ;
 
 VAR         : 'var' ;
 RETURN      : 'return' ;
@@ -69,14 +129,11 @@ PP_ELIF     : '#elif'    ;
 PP_ENDIF    : '#endif'   ;
 
 /* Expression-operator symbols */
-EQ      : '='   ;
 PLUSEQ  : '+='  ;
-LT      : '<'   ;
 LE      : '<='  ;
 EQEQ    : '=='  ;
 NE      : '!='  ;
 GE      : '>='  ;
-GT      : '>'   ;
 SHL     : '<<'  ;
 SHR     : '>>'  ;
 LOGOR   : '||'  ;
@@ -85,6 +142,9 @@ LOGXOR  : '^^'  ;
 LOGNOT  : '!'   ;
 REDMIN  : '<:'  ;
 REDMAX  : '>:'  ;
+EQ      : '='   ;
+LT      : '<'   ;
+GT      : '>'   ;
 PLUS    : '+'   ;
 MINUS   : '-'   ;
 PROD    : '*'   ;
@@ -94,14 +154,15 @@ BITOR   : '|'   ;
 BITAND  : '&'   ;
 BITXOR  : '^'   ;
 BITNOT  : '~'   ;
+RARROW  : '->'  ;
 
 /* "Structural symbols" */
 
+ESCAPE     : '\\';
 COMMA      : ',' ;
 SEMI       : ';' ;
 COLON      : ':' ;
 QUEST      : '?' ;
-SHARP      : '#' ;
 LPAREN     : '(' ;
 RPAREN     : ')' ;
 LSQUAREBRACKET   : '[' ;
@@ -113,6 +174,7 @@ RCURVEBRACKET    : '}' ;
 
 CONSTANT
     : INT_CONSTANT
+    | FLOAT_CONSTANT
     ;
 
 fragment
@@ -123,12 +185,26 @@ INT_CONSTANT
     | [+-]? [0-9] [0-9]*
     ;
 
+fragment
+FLOAT_CONSTANT
+    : [+-]? ([0-9]*[.]) [0-9]+
+    ;
+
 STRING_LITERAL
     : '"' .*? ('"'| EOF)
     ;
 
-IDENTIFIER
+fragment
+SYMBOL_IDENTIFIER
     : '.'? [a-zA-Z_] [a-zA-Z0-9_]*
+    ;
+
+CLOSURE_IDENTIFIER
+    : '#' SYMBOL_IDENTIFIER
+    ;
+
+IDENTIFIER
+    : SYMBOL_IDENTIFIER
     ;
 
 LINE_COMMENT
@@ -148,5 +224,5 @@ EOL
     ;
 
 UNKNOWN
-    : ~[ \t\r\n,:;#?()[\]{}=<>!&|~+\\-*%^/]+
+    : ~[ \t\r\n,:;?()[\]{}=<>!&|~+\\-*%^/\\]+
     ;

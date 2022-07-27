@@ -13,17 +13,21 @@ using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter
 {
-    internal class AnalysisClassifier : IClassifier, ISyntaxDisposable
+    internal class AnalysisClassifier : DocumentObserver, IClassifier
     {
-        private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
-        private readonly IDocumentAnalysis _documentAnalysis;
+        private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private IAnalysisResult _analysisResult;
+        private readonly IDocumentAnalysis _documentAnalysis;
 
-        public AnalysisClassifier(IDocumentAnalysis documentAnalysis)
+        public AnalysisClassifier(IDocument document, IClassificationTypeRegistryService typeRegistryService)
+            : base(document)
         {
-            _analysisResult = documentAnalysis.CurrentResult;
-            _documentAnalysis = documentAnalysis;
+            _documentAnalysis = document.DocumentAnalysis;
+            _analysisResult = _documentAnalysis.CurrentResult;
+
             _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
+
+            InitializeClassifierDictonary(typeRegistryService);
         }
 
 #pragma warning disable CS0067 // disable "The event is never used". It's required by IClassifier
@@ -36,12 +40,15 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var analysisResult = _analysisResult;
             if (analysisResult == null || analysisResult.Snapshot != span.Snapshot) return classificationSpans;
 
-            var block = analysisResult.GetBlock(span.End);
+            var point = span.End - 1; // span is right exclusive
+            var block = analysisResult.GetBlock(point);
             if (block.Type == BlockType.Comment) return classificationSpans;
             if (block.Type == BlockType.Function)
             {
-                var fBlock = (IFunctionBlock) block;
-                classificationSpans.Add(new ClassificationSpan(fBlock.Name.Span, _tokenClassification[fBlock.Name.Type]));
+                var funcBlock = (FunctionBlock)block;
+                var funcToken = funcBlock.Name;
+                var funcClassificationSpan = new ClassificationSpan(funcToken.Span, _tokenClassification[funcToken.Type]);
+                classificationSpans.Add(funcClassificationSpan);
             }
 
             foreach (var scopeToken in block.Tokens)
@@ -61,16 +68,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             return classificationSpans;
         }
 
-        public void OnDispose()
+        private void InitializeClassifierDictonary(IClassificationTypeRegistryService registryService)
         {
-            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
-        }
-
-        public static void InitializeClassifierDictionary(IClassificationTypeRegistryService registryService)
-        {
-            if (_tokenClassification != null)
-                return;
-
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
                 { RadAsmTokenType.Instruction, registryService.GetClassificationType(RadAsmTokenType.Instruction.GetClassificationTypeName()) },
@@ -90,19 +89,27 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             if (reason != RescanReason.ContentChanged)
                 ClassificationChanged?.Invoke(this, new ClassificationChangedEventArgs(new SnapshotSpan(analysisResult.Snapshot, 0, analysisResult.Snapshot.Length)));
         }
+
+        protected override void OnClosingDocument(IDocument document)
+        {
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
+        }
     }
 
-    internal class TokenizerClassifier : ITagger<ClassificationTag>, ISyntaxDisposable
+    internal class TokenizerClassifier : DocumentObserver, ITagger<ClassificationTag>
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentTokenizer _tokenizer;
         private ITokenizerResult _currentResult;
 
-        public TokenizerClassifier(IDocumentTokenizer tokenizer)
+        public TokenizerClassifier(IDocument document, IStandardClassificationService standardClassificationService)
+            : base(document)
         {
-            _tokenizer = tokenizer;
+            _tokenizer = document.DocumentTokenizer;
             _tokenizer.TokenizerUpdated += TokenizerUpdated;
-            TokenizerUpdated(_tokenizer.CurrentResult, CancellationToken.None);
+
+            InitializeClassifierDictionary(standardClassificationService);
+            TokenizerUpdated(_tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -114,23 +121,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 foreach (var token in result.GetTokens(span))
                 {
-                    if (token.IsEmpty) continue;
+                    if (token.IsEmpty || _tokenizer.GetTokenType(token.Type) == RadAsmTokenType.Identifier)
+                        continue;
 
-                    var tokenType = _tokenizer.GetTokenType(token.Type);
-                    if (tokenType == RadAsmTokenType.Identifier) continue;
-
-                    var tag = new ClassificationTag(_tokenClassification[tokenType]);
+                    var tag = new ClassificationTag(_tokenClassification[_tokenizer.GetTokenType(token.Type)]);
                     yield return new TagSpan<ClassificationTag>(new SnapshotSpan(result.Snapshot, token.GetSpan(result.Snapshot)), tag);
                 }
             }
         }
 
-        public void OnDispose()
-        {
-            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
-        }
-
-        public static void InitializeClassifierDictionary(IStandardClassificationService typeService)
+        private void InitializeClassifierDictionary(IStandardClassificationService typeService)
         {
             if (_tokenClassification != null)
                 return;
@@ -159,7 +159,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokenizerUpdated(ITokenizerResult result, CancellationToken ct)
+        private void TokenizerUpdated(ITokenizerResult result, RescanReason rs, CancellationToken ct)
         {
             var tokens = result.UpdatedTokens;
             if (!tokens.Any())
@@ -169,6 +169,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             var start = tokens.First().GetStart(result.Snapshot);
             var end = tokens.Last().GetEnd(result.Snapshot);
             TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(result.Snapshot, new Span(start, end - start))));
+        }
+
+        protected override void OnClosingDocument(IDocument document)
+        {
+            _tokenizer.TokenizerUpdated -= TokenizerUpdated;
         }
     }
 }

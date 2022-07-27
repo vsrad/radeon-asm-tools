@@ -16,7 +16,6 @@
         <Parent guid="guidSHLMainMenu" id="IDG_VS_TOOLS_OTHER2"/>
         <Strings>
           <ButtonText>RAD Debug</ButtonText>
-          <CommandName>RAD Debug</CommandName>
         </Strings>
       </Menu>
       <!-- Tools -> RAD Debug -> Actions -->
@@ -24,7 +23,6 @@
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
         <Strings>
           <ButtonText>Actions</ButtonText>
-          <CommandName>Actions</CommandName>
         </Strings>
       </Menu>
       <!-- View -> Toolbars -> RAD Debug -->
@@ -39,7 +37,6 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add To Watches As Array</ButtonText>
-          <CommandName>Add To Watches As Array</CommandName>
         </Strings>
       </Menu>
       <!-- Editor context menu -> Add to watches as array -> From 0..15 -->
@@ -62,17 +59,21 @@
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Open Visualizer</ButtonText>
+          <ButtonText>Visualizer</ButtonText>
+          <CanonicalName>RadDebug.Visualizer</CanonicalName>
+          <LocCanonicalName>RadDebug.Visualizer</LocCanonicalName>
         </Strings>
       </Button>
       <!--
       <Button guid="guidCmdSetToolWindow" id="ToolWindowSliceVisualizerCommandId" priority="2" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="sliceVisualizerIcon" />
+        <Icon guid="guidImages" id="visualizerIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Open Slice Visualizer</ButtonText>
+          <ButtonText>Slice Visualizer</ButtonText>
+          <CanonicalName>RadDebug.SliceVisualizer</CanonicalName>
+          <LocCanonicalName>RadDebug.SliceVisualizer</LocCanonicalName>
         </Strings>
       </Button>
       -->
@@ -83,6 +84,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Options</ButtonText>
+          <CanonicalName>RadDebug.Options</CanonicalName>
+          <LocCanonicalName>RadDebug.Options</LocCanonicalName>
         </Strings>
       </Button>
       <!-- Tools menu -->
@@ -102,7 +105,9 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Launch Remote Profiling</ButtonText>
+          <ButtonText>Profile</ButtonText>
+          <CanonicalName>RadDebug.ProfileAction</CanonicalName>
+          <LocCanonicalName>RadDebug.ProfileAction</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="6" type="Button">
@@ -112,7 +117,9 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Disassemble file</ButtonText>
+          <ButtonText>Disassemble File</ButtonText>
+          <CanonicalName>RadDebug.DisassembleAction</CanonicalName>
+          <LocCanonicalName>RadDebug.DisassembleAction</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="PreprocessCommandId" priority="7" type="Button">
@@ -122,7 +129,9 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
-          <ButtonText>Preprocess file</ButtonText>
+          <ButtonText>Preprocess File</ButtonText>
+          <CanonicalName>RadDebug.PreprocessAction</CanonicalName>
+          <LocCanonicalName>RadDebug.PreprocessAction</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DebugActionCommandId" priority="8" type="Button">
@@ -133,6 +142,8 @@
         <CommandFlag>TextChanges</CommandFlag>
         <Strings>
           <ButtonText>Debug</ButtonText>
+          <CanonicalName>RadDebug.DebugAction</CanonicalName>
+          <LocCanonicalName>RadDebug.DebugAction</LocCanonicalName>
         </Strings>
       </Button>
       <!-- Editor context menu -->
@@ -142,6 +153,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Force Run To Cursor</ButtonText>
+          <CanonicalName>RadDebug.ForceRunToCursor</CanonicalName>
+          <LocCanonicalName>RadDebug.ForceRunToCursor</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" priority="0x0100" type="Button">
@@ -150,6 +163,8 @@
         <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
           <ButtonText>Add To Watches</ButtonText>
+          <CanonicalName>RadDebug.AddToWatches</CanonicalName>
+          <LocCanonicalName>RadDebug.AddToWatches</LocCanonicalName>
         </Strings>
       </Button>
       <Button guid="guidCmdSetAddToWatches" id="AddToWatchesCustomCommandId" priority="0x1401" type="Button">
@@ -202,7 +217,8 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png" usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, debugActionIcon, sliceVisualizerIcon" />
+      <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png"
+              usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, debugActionIcon" />
     </Bitmaps>
 
     <Groups>
@@ -248,11 +264,23 @@
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
       </Combo>
+      <Combo guid="guidCmdSetBreakMode" id="BreakModeDropdownId" priority="100" type="DropDownCombo" defaultWidth="90" idCommandList="BreakModeDropdownListId">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Break Mode</ButtonText>
+          <ToolTipText>Select the breakpoints placement mode</ToolTipText>
+        </Strings>
+      </Combo>
     </Combos>
   </Commands>
 
   <KeyBindings>
-    <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="A" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetAddToWatches" id="AddSelectionToWatchesCommandId" key1="E" key2="A" mod1="Control" mod2="Control" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="DisassembleCommandId" key1="D" mod1="Alt" editor="guidVSStd97" />
+    <KeyBinding guid="guidCmdSetActionsMenu" id="ProfileCommandId" key1="W" mod1="Alt" editor="guidVSStd97" />
   </KeyBindings>
 
   <CommandPlacements>
@@ -320,6 +348,11 @@
       <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
       <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
     </GuidSymbol>-->
+    <GuidSymbol name="guidCmdSetBreakMode" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
+      <IDSymbol name="BreakModeDropdownId" value="0x11" />
+      <IDSymbol name="BreakModeDropdownListId" value="0x101" />
+    </GuidSymbol>
+    
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
       <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
       <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
@@ -332,7 +365,6 @@
       <IDSymbol name="disassemblyIcon" value="4" />
       <IDSymbol name="preprocessIcon" value="5" />
       <IDSymbol name="debugActionIcon" value="6" />
-      <IDSymbol name="sliceVisualizerIcon" value="7" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

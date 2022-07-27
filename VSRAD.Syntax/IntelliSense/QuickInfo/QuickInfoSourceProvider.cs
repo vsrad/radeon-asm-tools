@@ -29,7 +29,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
                 throw new ArgumentNullException(nameof(textBuffer));
 
             return textBuffer.Properties.GetOrCreateSingletonProperty(() => 
-                new QuickInfoSource(textBuffer, _navigationService.Value, _descriptionBuilder.Value) as IAsyncQuickInfoSource);
+                new QuickInfoSource(textBuffer, _navigationService.Value, _descriptionBuilder.Value));
         }
     }
 }

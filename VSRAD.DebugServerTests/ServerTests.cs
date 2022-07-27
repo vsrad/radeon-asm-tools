@@ -30,8 +30,8 @@ namespace VSRAD.DebugServerTests
             using (var client = new TcpClient("127.0.0.1", 13333).GetStream())
             {
                 await client.WriteSerializedMessageAsync(command);
-                var (response, _) = await client.ReadSerializedResponseAsync<ExecutionCompleted>();
-                Assert.Equal(ExecutionStatus.Completed, response.Status);
+                var response = await client.ReadSerializedMessageAsync<IResponse>();
+                Assert.Equal(ExecutionStatus.Completed, ((ExecutionCompleted)response).Status);
             }
             var tmpContents = File.ReadAllText(tmpFile);
             Assert.Equal("command ran successfully\r\n", tmpContents);
@@ -62,11 +62,11 @@ namespace VSRAD.DebugServerTests
                 FilePath = new[] { @"N:\owhere" }
             }).ConfigureAwait(false);
 
-            var (response1, _) = await stream1.ReadSerializedResponseAsync<ExecutionCompleted>().ConfigureAwait(false);
+            var response1 = (ExecutionCompleted)await stream1.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
             Assert.Equal(ExecutionStatus.Completed, response1.Status);
             Assert.Equal("h\r\n", response1.Stdout);
 
-            var (response2, _) = await stream1.ReadSerializedResponseAsync<MetadataFetched>().ConfigureAwait(false);
+            var response2 = (MetadataFetched)await stream1.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
             Assert.Equal(FetchStatus.FileNotFound, response2.Status);
 
             // This command contains invalid archive data and should trigger an exception;
@@ -80,12 +80,12 @@ namespace VSRAD.DebugServerTests
             {
                 FilePath = new[] { @"H:\what" }
             }).ConfigureAwait(false);
-            var (responseAfterException, _) = await stream2.ReadSerializedResponseAsync<ResultRangeFetched>();
+            var responseAfterException = (ResultRangeFetched)await stream2.ReadSerializedMessageAsync<IResponse>();
             Assert.Equal(FetchStatus.FileNotFound, responseAfterException.Status);
 
             await stream2.WriteAsync(new byte[] { 0, 0, 0, 0 }); // invalid command should not affect other clients
             await stream3.WriteSerializedMessageAsync(new DebugServer.IPC.Commands.Execute()).ConfigureAwait(false);
-            var (response, _) = await stream3.ReadSerializedResponseAsync<ExecutionCompleted>().ConfigureAwait(false);
+            var response = (ExecutionCompleted)await stream3.ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
             Assert.Equal(ExecutionStatus.CouldNotLaunch, response.Status);
         }
     }

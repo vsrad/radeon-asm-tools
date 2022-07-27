@@ -56,8 +56,6 @@ namespace VSRAD.Syntax
         internal const string RadeonAsmSyntaxContentType = "RadeonAsmSyntax";
         internal const string RadeonAsm2SyntaxContentType = "RadeonAsm2Syntax";
         internal const string RadeonAsmDocumentationContentType = "RadeonAsmDocumentation";
-        internal const string RadeonAsm1SyntaxSignatureHelpContentType = "RadeonAsmSyntax Signature Help";
-        internal const string RadeonAsm2SyntaxSignatureHelpContentType = "RadeonAsm2Syntax Signature Help";
 
         /*
          * RadeonAsmSyntax options definition

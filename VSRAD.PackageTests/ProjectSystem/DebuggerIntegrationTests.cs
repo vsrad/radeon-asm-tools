@@ -32,7 +32,6 @@ namespace VSRAD.PackageTests.ProjectSystem
             var options = new ProjectOptions();
             options.SetProfiles(new Dictionary<string, ProfileOptions> { { "Default", new ProfileOptions() } }, activeProfile: "Default");
             projectMock.Setup((p) => p.Options).Returns(options);
-            projectMock.Setup(p => p.RunWhenLoaded(It.IsAny<Action<ProjectOptions>>())).Callback((Action<ProjectOptions> a) => a(options));
             var breakLineTagger = new Mock<BreakLineGlyphTaggerProvider>();
             projectMock.Setup((p) => p.GetExportByMetadataAndType(It.IsAny<Predicate<IAppliesToMetadataView>>(), It.IsAny<Predicate<IViewTaggerProvider>>()))
                 .Returns(breakLineTagger.Object);
@@ -61,16 +60,16 @@ namespace VSRAD.PackageTests.ProjectSystem
             var serviceProvider = new Mock<SVsServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
 
-            var channel = new MockCommunicationChannel(DebugServer.IPC.ServerPlatform.Linux);
+            var channel = new MockCommunicationChannel();
             var sourceManager = new Mock<IProjectSourceManager>();
-            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel, sourceManager.Object,
+            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
                 codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
             var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object);
 
             /* Set up server responses */
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata timestampFetch) =>
-                Assert.Equal(new[] { "/periphery/votw/output-path" }, timestampFetch.FilePath));
+                Assert.Equal(new[] { "/periphery/votw", "output-path" }, timestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);

@@ -1,101 +1,74 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
 using System.Text;
-using Microsoft.VisualStudio.Shell;
-using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
-    public interface ITokenLine
+    public readonly struct NavigationToken : IEquatable<NavigationToken>
     {
-        int LineStart { get; }
-        int LineEnd { get; }
-        int LineNumber { get; }
-        string LineText { get; }
-    }
+        public static NavigationToken Empty { get { return new NavigationToken(); } }
 
-    public interface INavigationToken
-    {
-        IDocument Document { get; }
-        IDefinitionToken Definition { get; }
-        RadAsmTokenType Type { get; }
+        public AnalysisToken AnalysisToken { get; }
+        public string Path { get; }
+        public int Line { get; }
+        public string LineText { get; }
+        public int LineTokenStart { get; }
+        public int LineTokenEnd { get; }
+        public RadAsmTokenType Type => AnalysisToken.Type;
 
-        int GetStart();
-        int GetEnd();
-        ITokenLine GetLine();
-        void Navigate();
-    }
+        private readonly Action _navigate;
 
-    internal readonly struct TokenLine : ITokenLine
-    {
-        private readonly Lazy<ITextSnapshotLine> _lineLazy;
-
-        public TokenLine(IAnalysisToken token, ITextSnapshot snapshot)
+        public NavigationToken(AnalysisToken analysisToken, string path, Action navigate)
         {
-            _lineLazy = new Lazy<ITextSnapshotLine>(() =>
-            {
-                var start = token.TrackingToken.GetStart(snapshot);
-                return snapshot.GetLineFromPosition(start);
-            });
+            AnalysisToken = analysisToken;
+            _navigate = navigate;
+            Path = path;
+
+            var lineText = analysisToken
+                .Span.Start
+                .GetContainingLine();
+            Line = lineText.LineNumber;
+            LineText = lineText.GetText();
+            LineTokenStart = AnalysisToken.Span.Start - lineText.Start;
+            LineTokenEnd = AnalysisToken.Span.End - lineText.Start;
         }
 
-        public int LineStart => _lineLazy.Value.Start;
-        public int LineEnd => _lineLazy.Value.End;
-        public int LineNumber => _lineLazy.Value.LineNumber;
-        public string LineText => _lineLazy.Value.GetText();
-    }
+        public void Navigate() =>
+            _navigate?.Invoke();
 
-    public class NavigationToken : INavigationToken
-    {
-        public IDocument Document { get; }
-        public IDefinitionToken Definition { get; }
-        public RadAsmTokenType Type => Definition.Type;
+        public SnapshotPoint GetEnd() =>
+            AnalysisToken.Span.End;
 
-        public NavigationToken(IDefinitionToken definition, IDocument document)
-        {
-            Document = document;
-            Definition = definition;
-        }
-
-        public ITokenLine GetLine() =>
-            new TokenLine(Definition, Document.CurrentSnapshot);
-
-        public int GetStart() =>
-            Definition.TrackingToken.GetStart(Document.CurrentSnapshot);
-
-        public int GetEnd() =>
-            Definition.TrackingToken.GetEnd(Document.CurrentSnapshot);
-
-        public void Navigate()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            try
-            {
-                Document.NavigateToPosition(GetEnd());
-            }
-            catch (Exception)
-            {
-                Error.ShowErrorMessage("Navigation outdated, please update document content", "Navigation service");
-            }
-        }
+        public string GetText() =>
+            AnalysisToken.GetText();
 
         public override string ToString()
         {
-            var line = GetLine();
             var sb = new StringBuilder();
-            if (Document.Path != null)
+            if (Path != null)
             {
-                sb.Append(Document.Path);
+                sb.Append(Path);
                 sb.Append(" ");
             }
             sb.Append("(");
-            sb.Append(line.LineNumber + 1);
+            sb.Append(Line + 1);
             sb.Append("): ");
 
-            sb.Append(line.LineText);
+            sb.Append(LineText);
             return sb.ToString();
         }
+
+        public bool Equals(NavigationToken o) => AnalysisToken == o.AnalysisToken && Path == o.Path && Line == o.Line;
+
+        public static bool operator ==(NavigationToken left, NavigationToken right) =>
+            left.Equals(right);
+
+        public static bool operator !=(NavigationToken left, NavigationToken right) =>
+            !(left == right);
+
+        public override bool Equals(object obj) => obj is NavigationToken o && Equals(o);
+
+        public override int GetHashCode() => (AnalysisToken, Path, Line).GetHashCode();
     }
 }

@@ -78,7 +78,7 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                currentHost = _project.Options.Connection.ToString();
+                currentHost = _project.Options.Profile.General.Connection.ToString();
                 // Display current host at the top of the list
                 _project.Options.TargetHosts.Add(currentHost);
             }
@@ -100,8 +100,8 @@ namespace VSRAD.Package.Commands
 
                 _project.Options.TargetHosts.Add(formattedHost);
 
-                _project.Options.RemoteMachine = hostname;
-                _project.Options.Port = port;
+                updatedProfile.General.RemoteMachine = hostname;
+                updatedProfile.General.Port = port;
                 updatedProfile.General.RunActionsLocally = false;
             }
 

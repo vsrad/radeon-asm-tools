@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -34,10 +35,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
-            var actionEvalEnv = new ActionEvaluationEnvironment("", "", _dirtyProfile.General.RunActionsLocally,
-                new DebugServer.IPC.CapabilityInfo(default, default, default), _dirtyProfile.Actions);
-
-            return await step.EvaluateAsync(evaluator, actionEvalEnv, sourceAction);
+            return await step.EvaluateAsync(evaluator, _dirtyProfile, sourceAction);
         }
 
         public async Task EditObjectPropertyAsync(object target, string propertyName)
@@ -119,7 +117,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
                 return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
             }
-            catch (NoFilesOpenInEditorException)
+            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
             {
                 return new MacroEvaluatorTransientValues(0,
                     sourcePath: "<current source full path>",

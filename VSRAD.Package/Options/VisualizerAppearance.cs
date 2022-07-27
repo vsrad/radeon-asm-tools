@@ -47,20 +47,6 @@ namespace VSRAD.Package.Options
             get => _hiddenColumnSeparatorWidth;
             set => SetField(ref _hiddenColumnSeparatorWidth, value);
         }
-
-        private int _sliceHiddenColumnSeparatorWidth = 8;
-        public int SliceHiddenColumnSeparatorWidth
-        {
-            get => _sliceHiddenColumnSeparatorWidth;
-            set => SetField(ref _sliceHiddenColumnSeparatorWidth, value);
-        }
-
-        private int _sliceSubgroupSeparatorWidth = 3;
-        public int SliceSubgroupSeparatorWidth
-        {
-            get => _sliceSubgroupSeparatorWidth;
-            set => SetField(ref _sliceSubgroupSeparatorWidth, value);
-        }
         #endregion
         #region number separators
         private uint _binHexSeparator;

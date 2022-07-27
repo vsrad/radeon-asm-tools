@@ -12,8 +12,11 @@ namespace VSRAD.Syntax.Core.Parser
             _container = new Dictionary<string, Stack<(IBlock, DefinitionToken)>>();
         }
 
-        public void Add(IBlock block, DefinitionToken definitionToken) =>
-            Add(block, definitionToken, definitionToken.GetText());
+        public void Add(IBlock block, DefinitionToken definitionToken)
+        {
+            var text = definitionToken.GetText();
+            Add(block, definitionToken, text);
+        }
 
         public void Add(IBlock block, DefinitionToken definitionToken, string text)
         {

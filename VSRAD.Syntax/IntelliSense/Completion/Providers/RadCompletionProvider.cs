@@ -23,14 +23,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
     internal abstract class RadCompletionProvider
     {
-        public RadCompletionProvider(GeneralOptionProvider generalOptionProvider)
+        public RadCompletionProvider(OptionsProvider optionsProvider)
         {
-            generalOptionProvider.OptionsUpdated += DisplayOptionsUpdated;
+            optionsProvider.OptionsUpdated += DisplayOptionsUpdated;
         }
 
         public abstract Task<RadCompletionContext> GetContextAsync(IDocument document, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken);
 
-        public abstract void DisplayOptionsUpdated(GeneralOptionProvider sender);
+        public abstract void DisplayOptionsUpdated(OptionsProvider sender);
 
         public static ImageElement GetImageElement(int imageId) =>
             new ImageElement(new ImageId(ImageCatalogGuid, imageId));

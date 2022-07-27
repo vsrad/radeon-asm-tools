@@ -2,7 +2,7 @@
 
 namespace VSRAD.Syntax.FunctionList.Commands
 {
-    internal class ShowHideLineNumberCommand : AbstractFunctionListCommand
+    class ShowHideLineNumberCommand : AbstractFunctionListCommand
     {
         public static ShowHideLineNumberCommand Instance;
 
@@ -11,7 +11,7 @@ namespace VSRAD.Syntax.FunctionList.Commands
 
         protected override void Execute(FunctionListWindow window)
         {
-            if (window?.Frame == null || window.FunctionListControl == null) 
+            if (window == null || window.Frame == null || window.FunctionListControl == null) 
                 return;
 
             window.FunctionListControl.ShowHideLineNumber();

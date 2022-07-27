@@ -6,18 +6,10 @@ using VSRAD.Package.ProjectSystem;
 
 namespace VSRAD.Package.ToolWindows
 {
-    public interface IDisposableToolWindow
-    {
-        void DisposeToolWindow();
-    }
-
     public abstract class BaseToolWindow : ToolWindowPane
     {
-        protected UIElement Control { get; set; }
-
         private EnvDTE.WindowEvents _windowEvents;
         private bool _dteWindowHasFocus;
-        protected EnvDTE.DTE _dte;
 
         private readonly UIElement _projectStateMissingMessage = new TextBlock
         {
@@ -42,17 +34,12 @@ namespace VSRAD.Package.ToolWindows
 
         public void OnProjectLoaded(IToolWindowIntegration integration)
         {
-            Control = CreateToolControl(integration);
             ((Grid)Content).Children.Clear();
-            ((Grid)Content).Children.Add(Control);
+            ((Grid)Content).Children.Add(CreateToolControl(integration));
         }
 
         public void OnProjectUnloaded()
         {
-            if (Control is IDisposableToolWindow disposable)
-                disposable.DisposeToolWindow();
-
-            Control = null;
             ((Grid)Content).Children.Clear();
             ((Grid)Content).Children.Add(_projectStateMissingMessage);
         }
@@ -62,7 +49,6 @@ namespace VSRAD.Package.ToolWindows
             ThreadHelper.ThrowIfNotOnUIThread();
             var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
             _windowEvents = dte.Events.WindowEvents;
-            _dte = dte;
             _windowEvents.WindowActivated += OnDteWindowFocusChanged;
             Application.Current.Activated += (sender, e) => OnVsWindowFocusChanged(hasFocus: true);
             Application.Current.Deactivated += (sender, e) => OnVsWindowFocusChanged(hasFocus: false);

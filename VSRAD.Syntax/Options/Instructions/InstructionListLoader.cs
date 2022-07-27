@@ -3,10 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Security;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Text;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
@@ -14,111 +12,68 @@ using VSRAD.Syntax.IntelliSense;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
-    public delegate void InstructionsLoadDelegate(IEnumerable<IInstructionSet> instructions);
+    public delegate void InstructionsLoadDelegate(IReadOnlyList<IInstructionSet> instructions);
 
     public interface IInstructionListLoader
     {
-        IEnumerable<IInstructionSet> InstructionSets { get; }
         event InstructionsLoadDelegate InstructionsUpdated;
     }
 
     [Export(typeof(IInstructionListLoader))]
     internal sealed class InstructionListLoader : IInstructionListLoader
     {
-        private readonly object _lock = new object();
+        private readonly OptionsProvider _optionsProvider;
         private readonly Lazy<IDocumentFactory> _documentFactory;
         private readonly Lazy<INavigationTokenService> _navigationTokenService;
-        private readonly Dictionary<string, IInstructionSet> _sets;
-        private readonly Dictionary<string, ITextDocument> _instructionSetPaths;
+        private readonly List<InstructionSet> _sets;
+        private string _loadedPaths;
 
-        public IEnumerable<IInstructionSet> InstructionSets => _sets.Values;
         public event InstructionsLoadDelegate InstructionsUpdated;
 
         [ImportingConstructor]
-        public InstructionListLoader(Lazy<IDocumentFactory> documentFactory,
+        public InstructionListLoader(OptionsProvider optionsEventProvider,
+            Lazy<IDocumentFactory> documentFactory,
             Lazy<INavigationTokenService> navigationTokenService)
         {
+            _optionsProvider = optionsEventProvider;
             _documentFactory = documentFactory;
             _navigationTokenService = navigationTokenService;
-            _sets = new Dictionary<string, IInstructionSet>(StringComparer.OrdinalIgnoreCase);
-            _instructionSetPaths = new Dictionary<string, ITextDocument>(StringComparer.OrdinalIgnoreCase);
+            _sets = new List<InstructionSet>();
 
-            GeneralOptionProvider.Instance.OptionsUpdated += OptionsUpdated;
+            _optionsProvider.OptionsUpdated += OptionsUpdated;
         }
 
-        private void OptionsUpdated(GeneralOptionProvider provider)
+        private void OptionsUpdated(OptionsProvider provider)
         {
-            var sb = new StringBuilder();
-            var newInstructionPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var directory in provider.InstructionsPaths)
-            {
-                try
-                {
-                    foreach (var path in Directory.EnumerateFiles(directory, $"*{Constants.FileExtensionAsm1Doc}")
-                        .Concat(Directory.EnumerateFiles(directory, $"*{Constants.FileExtensionAsm2Doc}")))
-                    {
-                        newInstructionPaths.Add(path);
-                    }
-                }
-                catch (Exception e) when (
-                    e is DirectoryNotFoundException ||
-                    e is PathTooLongException ||
-                    e is SecurityException ||
-                    e is IOException ||
-                    e is UnauthorizedAccessException)
-                {
-                    sb.AppendLine(e.Message);
-                }
-            }
+            var instructionPaths = provider.InstructionsPaths;
 
-            if (sb.Length != 0)
-                Error.ShowErrorMessage(sb.ToString(), "Instruction loader");
+            // skip if options haven't changed
+            if (instructionPaths == _loadedPaths) return;
 
-            lock (_lock)
-            {
-                var invalidatedPaths = newInstructionPaths.ToHashSet();
-                invalidatedPaths.SymmetricExceptWith(_instructionSetPaths.Keys);
-
-                // skip if options haven't changed
-                if (invalidatedPaths.Count == 0) return;
-
-                invalidatedPaths.ExceptWith(newInstructionPaths);
-                CleanInstructionSets(invalidatedPaths);
-
-                // now _instructionSetPaths contains only elements which is both in new sets and old sets
-                newInstructionPaths.ExceptWith(_instructionSetPaths.Keys);
-            }
-
-            _ = Task.Run(() => LoadInstructionsFromDirectoriesAsync(newInstructionPaths));
+            Task.Run(() => LoadInstructionsFromDirectoriesAsync(instructionPaths))
+                .RunAsyncWithoutAwait();
         }
 
-        public async Task LoadInstructionsFromDirectoriesAsync(IEnumerable<string> paths)
+        public async Task LoadInstructionsFromDirectoriesAsync(string dirPathsString)
         {
+            var paths = dirPathsString.Split(';')
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x));
+
+            var loadFromDirectoryTasks = paths
+                .Select(p => LoadInstructionsFromDirectoryAsync(p))
+                .ToArray();
+
             try
             {
-                var loadFromDirectoryTasks = paths
-                    .Select(DocPathToAsmType)
-                    .Select(LoadInstructionsFromDirectoryAsync)
-                    .ToArray();
+                var results = await Task.WhenAll(loadFromDirectoryTasks);
+                var instructionSets = results.SelectMany(t => t);
 
-                var results = await Task.WhenAll(loadFromDirectoryTasks).ConfigureAwait(false);
-                var instructionSets = results.Where(s => s != null);
+                _sets.Clear();
+                _sets.AddRange(instructionSets);
+                _loadedPaths = dirPathsString;
 
-                lock (_lock)
-                {
-                    foreach (var tuple in instructionSets)
-                    {
-                        var (path, document, set) = tuple;
-                        if (document.CurrentSnapshot.TextBuffer.GetTextDocument(out var textDocument))
-                        {
-
-                            _sets.Add(path, set);
-                            _instructionSetPaths.Add(path, textDocument);
-                        }
-                    }
-
-                    InstructionsUpdated?.Invoke(_sets.Values);
-                }
+                InstructionsUpdated?.Invoke(_sets);
             }
             catch (AggregateException e)
             {
@@ -135,58 +90,53 @@ namespace VSRAD.Syntax.Options.Instructions
             }
         }
 
-        private static Tuple<string, AsmType> DocPathToAsmType(string path)
-        {
-            switch (Path.GetExtension(path))
-            {
-                case Constants.FileExtensionAsm1Doc:
-                    return new Tuple<string, AsmType>(path, AsmType.RadAsm);
-                case Constants.FileExtensionAsm2Doc:
-                    return new Tuple<string, AsmType>(path, AsmType.RadAsm2);
-                default:
-                    return null;
-            }
-        }
-
         // TODO: implement with IAsyncEnumerable
-        private async Task<Tuple<string, IDocument, InstructionSet>> LoadInstructionsFromDirectoryAsync(Tuple<string, AsmType> tuple)
+        private async Task<IEnumerable<InstructionSet>> LoadInstructionsFromDirectoryAsync(string path)
         {
-
-            Task<Tuple<IDocument, InstructionSet>> loadTask;
-            var (path, asmType) = tuple;
-            switch (asmType)
+            var instructionSets = new List<InstructionSet>();
+            try
             {
-                case AsmType.RadAsm:
-                    loadTask = LoadInstructionsFromFileAsync(path, InstructionType.RadAsm1);
-                    break;
-                case AsmType.RadAsm2:
-                    loadTask = LoadInstructionsFromFileAsync(path, InstructionType.RadAsm2);
-                    break;
-                default:
-                    return null;
+                var loadTasks = new List<Task<InstructionSet>>();
+                foreach (var filepath in Directory.EnumerateFiles(path))
+                {
+                    if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
+                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
+
+                    else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
+                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
+                }
+
+                var results = await Task.WhenAll(loadTasks);
+                instructionSets.AddRange(results);
+            }
+            catch (Exception e) when (
+               e is DirectoryNotFoundException ||
+               e is IOException ||
+               e is PathTooLongException ||
+               e is UnauthorizedAccessException)
+            {
+                Error.ShowError(e, "Instruction loader");
             }
 
-            var (document, set) = await loadTask.ConfigureAwait(false);
-            return new Tuple<string, IDocument, InstructionSet>(path, document, set);
+            return instructionSets;
         }
 
-        private async Task<Tuple<IDocument, InstructionSet>> LoadInstructionsFromFileAsync(string path, InstructionType type)
+        private async Task<InstructionSet> LoadInstructionsFromFileAsync(string path, InstructionType type)
         {
-            var document = _documentFactory.Value.GetOrCreateDocument(path, false);
+            var document = _documentFactory.Value.GetOrCreateDocument(path);
             var documentAnalysis = document.DocumentAnalysis;
             var snapshot = document.CurrentSnapshot;
             var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);
             var instructionSet = new InstructionSet(path, type);
 
             var instructions = analysisResult.Root.Tokens
-                .Where(t => t.Type == RadAsmTokenType.Instruction)
-                .Cast<IDefinitionToken>();
+                .Where(t => t.Type == RadAsmTokenType.Instruction);
 
             var navigationService = _navigationTokenService.Value;
 
             var navigationTokens = instructions
                 .Select(i => navigationService.CreateToken(i, document))
-                .GroupBy(n => n.Definition.GetText());
+                .GroupBy(n => n.GetText());
 
             foreach (var instructionNameGroup in navigationTokens)
             {
@@ -195,20 +145,7 @@ namespace VSRAD.Syntax.Options.Instructions
                 instructionSet.AddInstruction(name, navigations);
             }
 
-            return new Tuple<IDocument, InstructionSet>(document, instructionSet);
-        }
-
-        private void CleanInstructionSets(IEnumerable<string> paths)
-        {
-            foreach (var path in paths)
-            {
-                if (_instructionSetPaths.TryGetValue(path, out var textDocument))
-                {
-                    textDocument.Dispose();
-                    _sets.Remove(path);
-                    _instructionSetPaths.Remove(path);
-                }
-            }
+            return instructionSet;
         }
     }
 }

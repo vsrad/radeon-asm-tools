@@ -54,7 +54,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         {
             _project = project;
             Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts.Select(h =>
-                new HostItem(h, usedInActiveProfile: !project.Options.Profile.General.RunActionsLocally && project.Options.Connection.ToString() == h)));
+                new HostItem(h, usedInActiveProfile: !project.Options.Profile.General.RunActionsLocally && project.Options.Profile.General.Connection.ToString() == h)));
             DeleteHostCommand = new WpfDelegateCommand(DeleteHost);
 
             InitializeComponent();
@@ -91,8 +91,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
             if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && TryParseHost(hi.Host, out _, out var hostname, out var port))
             {
-                _project.Options.RemoteMachine = hostname;
-                _project.Options.Port = port;
+                updatedProfile.General.RemoteMachine = hostname;
+                updatedProfile.General.Port = port;
             }
             else
             {

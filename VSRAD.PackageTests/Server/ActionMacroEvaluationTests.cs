@@ -1,6 +1,5 @@
 ﻿using Moq;
 using System.Threading.Tasks;
-using VSRAD.DebugServer.IPC;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -25,102 +24,63 @@ namespace VSRAD.PackageTests.Server
         }
 
         [Fact]
-        public async Task CopyFileStepsPathResolutionTestAsync()
-        {
-            var a = new ActionProfileOptions { Name = "A" };
-
-            var envLinux = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
-            var envWin = new ActionEvaluationEnvironment(@"C:\Local", @"C:\Remote\", false, new CapabilityInfo(default, ServerPlatform.Windows, default), new[] { a });
-
-            a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "linux/rel", TargetPath = @"windows\rel" });
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), envLinux)).TryGetResult(out var evaluated, out _));
-            Assert.Equal("/remote/linux/rel", ((CopyFileStep)evaluated.Steps[0]).SourcePath);
-            Assert.Equal(@"C:\Local\windows\rel", ((CopyFileStep)evaluated.Steps[0]).TargetPath);
-
-            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "/linux/abs/path", TargetPath = @"D:\Windows\Abs\Path" };
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), envLinux)).TryGetResult(out evaluated, out _));
-            Assert.Equal("/linux/abs/path", ((CopyFileStep)evaluated.Steps[0]).SourcePath);
-            Assert.Equal(@"D:\Windows\Abs\Path", ((CopyFileStep)evaluated.Steps[0]).TargetPath);
-
-            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = @"windows\rel", TargetPath = @"windows\rel" };
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), envWin)).TryGetResult(out evaluated, out _));
-            Assert.Equal(@"C:\Local\windows\rel", ((CopyFileStep)evaluated.Steps[0]).SourcePath);
-            Assert.Equal(@"C:\Remote\windows\rel", ((CopyFileStep)evaluated.Steps[0]).TargetPath);
-
-            // Invalid paths
-
-            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "windows>_<", TargetPath = "target" };
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), envWin)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Path contains illegal characters: ""windows>_<""" + "\r\n" + @"Working directory: ""C:\Local""", error.Message);
-
-            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "source", TargetPath = "target?|" };
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), envWin)).TryGetResult(out _, out error));
-            Assert.Equal(@"Path contains illegal characters: ""target?|""" + "\r\n" + @"Working directory: ""C:\Remote\""", error.Message);
-
-            var envInvalidPath = new ActionEvaluationEnvironment("", @"C:|Remote", false, new CapabilityInfo(default, ServerPlatform.Windows, default), new[] { a });
-
-            a.Steps[0] = new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "source", TargetPath = "target" };
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), envInvalidPath)).TryGetResult(out _, out error));
-            Assert.Equal(@"Path contains illegal characters: ""target""" + "\r\n" + @"Working directory: ""C:|Remote""", error.Message);
-        }
-
-        [Fact]
         public async Task CopyFileStepEmptyPathsTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
 
             a.Steps.Add(new CopyFileStep { SourcePath = "", TargetPath = "target" });
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal("No source path specified", error.Message);
 
             ((CopyFileStep)a.Steps[0]).SourcePath = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), env)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
             Assert.Equal("The specified source path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
 
             ((CopyFileStep)a.Steps[0]).SourcePath = "source";
             ((CopyFileStep)a.Steps[0]).TargetPath = "";
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
             Assert.Equal("No target path specified", error.Message);
 
             ((CopyFileStep)a.Steps[0]).TargetPath = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), env)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
             Assert.Equal("The specified target path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
         public async Task ExecuteStepEmptyExecutableTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
 
             a.Steps.Add(new ExecuteStep { Executable = "" });
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal("No executable specified", error.Message);
 
             ((ExecuteStep)a.Steps[0]).Executable = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), env)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
             Assert.Equal("The specified executable (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
         public async Task OpenInEditorStepEmptyPathTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
 
             a.Steps.Add(new OpenInEditorStep { Path = "      " });
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal("No file path specified", error.Message);
 
             ((OpenInEditorStep)a.Steps[0]).Path = "$(MissingMacro)";
-            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), env)).TryGetResult(out _, out error));
+            Assert.False((await a.EvaluateAsync(MakeEvaluator("$(MissingMacro)", ""), profile)).TryGetResult(out _, out error));
             Assert.Equal("The specified file path (\"$(MissingMacro)\") evaluates to an empty string", error.Message);
         }
 
         [Fact]
         public async Task RunActionStepDetectsLoopsTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new ExecuteStep { Executable = "-" });
             a.Steps.Add(new RunActionStep { Name = "A_nested" });
@@ -131,26 +91,30 @@ namespace VSRAD.PackageTests.Server
             b.Steps.Add(new OpenInEditorStep { Path = "-" });
             b.Steps.Add(new RunActionStep { Name = "A" });
 
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a, aNested, b });
+            profile.Actions.Add(a);
+            profile.Actions.Add(aNested);
+            profile.Actions.Add(b);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal(@"Encountered a circular dependency: ""A"" -> ""A_nested"" -> ""B"" -> ""A""", error.Message);
         }
 
         [Fact]
         public async Task RunActionStepRefersToSelfTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "A" });
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
+            profile.Actions.Add(a);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal(@"Encountered a circular dependency: ""A"" -> ""A""", error.Message);
         }
 
         [Fact]
         public async Task RunActionStepReportsMissingActionsTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
             var b = new ActionProfileOptions { Name = "B" };
@@ -158,13 +122,15 @@ namespace VSRAD.PackageTests.Server
             var c = new ActionProfileOptions { Name = "C" };
             c.Steps.Add(new RunActionStep { Name = "D" });
 
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a, b, c });
+            profile.Actions.Add(a);
+            profile.Actions.Add(b);
+            profile.Actions.Add(c);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Run Action step", error.Title);
             Assert.Equal(@"Action ""D"" is not found, required by ""A"" -> ""B"" -> ""C""", error.Message);
 
-            Assert.False((await c.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out error));
+            Assert.False((await c.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
             Assert.Equal(@"Action ""C"" could not be run due to a misconfigured Run Action step", error.Title);
             Assert.Equal(@"Action ""D"" is not found", error.Message);
         }
@@ -172,17 +138,19 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionNoActionTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
             var b = new ActionProfileOptions { Name = "B" };
             b.Steps.Add(new RunActionStep { Name = "" });
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a, b });
+            profile.Actions.Add(a);
+            profile.Actions.Add(b);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Run Action step", error.Title);
             Assert.Equal(@"No action specified, required by ""A"" -> ""B""", error.Message);
 
-            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out error));
+            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
             Assert.Equal(@"Action ""B"" could not be run due to a misconfigured Run Action step", error.Title);
             Assert.Equal(@"No action specified", error.Message);
         }
@@ -190,29 +158,32 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionUnconfiguredReferenceTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new RunActionStep { Name = "B" });
             var b = new ActionProfileOptions { Name = "B" };
             b.Steps.Add(new RunActionStep { Name = "C" });
             var c = new ActionProfileOptions { Name = "C" };
             c.Steps.Add(new CopyFileStep());
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a, b, c });
+            profile.Actions.Add(a);
+            profile.Actions.Add(b);
+            profile.Actions.Add(c);
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal(@"Action ""C"" is misconfigured, required by ""A"" -> ""B""", error.Message);
 
-            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out error));
+            Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
             Assert.Equal(@"Action ""C"" is misconfigured", error.Message);
         }
 
         [Fact]
         public async Task ReadDebugDataEmptyOutputPathTestAsync()
         {
+            var profile = new ProfileOptions();
             var a = new ActionProfileOptions { Name = "A" };
-            a.Steps.Add(new ReadDebugDataStep());
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
 
-            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out _, out var error));
+            a.Steps.Add(new ReadDebugDataStep());
+            Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
             Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Read Debug Data step", error.Title);
             Assert.Equal("Debug data path is not specified", error.Message);
         }
@@ -220,6 +191,9 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task RunActionsLocallyTestAsync()
         {
+            var profile = new ProfileOptions();
+            profile.General.RunActionsLocally = true;
+
             var a = new ActionProfileOptions { Name = "A" };
             a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = "lr-copy-source", TargetPath = "lr-copy-target" });
             a.Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "rl-copy-source", TargetPath = "rl-copy-target" });
@@ -232,9 +206,8 @@ namespace VSRAD.PackageTests.Server
                 dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
                 binaryOutput: true, outputOffset: 0));
 
-            var env = new ActionEvaluationEnvironment(@"C:\Local", "/remote", runActionsLocally: false, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
-
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), env)).TryGetResult(out var result, out _));
+            profile.General.RunActionsLocally = false;
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out var result, out _));
             {
                 var copyFileLR = (CopyFileStep)result.Steps[0];
                 Assert.Equal(FileCopyDirection.LocalToRemote, copyFileLR.Direction);
@@ -262,8 +235,8 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal(StepEnvironment.Remote, readDebugData.WatchesFile.Location);
             }
 
-            var envLocal = new ActionEvaluationEnvironment(@"C:\Local", "/remote", runActionsLocally: true, new CapabilityInfo(default, ServerPlatform.Linux, default), new[] { a });
-            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), envLocal)).TryGetResult(out result, out _));
+            profile.General.RunActionsLocally = true;
+            Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out result, out _));
             {
                 var copyFileLR = (CopyFileStep)result.Steps[0]; /* LocalToRemote becomes LocalToLocal */
                 Assert.Equal(FileCopyDirection.LocalToLocal, copyFileLR.Direction);

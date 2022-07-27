@@ -4,37 +4,29 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core.Blocks
 {
-    public interface IFunctionBlock : IBlock
+    internal class FunctionBlock : Block
     {
-        IFunctionToken Name { get; }
-        IList<IDefinitionToken> Parameters { get; }
-    }
+        public DefinitionToken Name { get; }
+        public List<DefinitionToken> Parameters { get; }
 
-    internal class FunctionBlock : Block, IFunctionBlock
-    {
-        public IFunctionToken Name { get; }
-        public IList<IDefinitionToken> Parameters { get; }
-
-        public FunctionBlock(IBlock parent, BlockType type, TrackingToken start, ITextSnapshot textSnapshot, FunctionToken name) 
-            : base(parent, type, start, textSnapshot)
+        public FunctionBlock(IBlock parrent, BlockType type, TrackingToken tokenStart, DefinitionToken name) : base(parrent, type, tokenStart)
         {
             Name = name;
-            Parameters = new List<IDefinitionToken>();
-            parent.AddToken(name);
-            name.FunctionBlock = this;
+            Parameters = new List<DefinitionToken>();
+            parrent.AddToken(name);
         }
 
-        public override void AddToken(IAnalysisToken token)
+        public override void AddToken(AnalysisToken token)
         {
             base.AddToken(token);
             if (token.Type == RadAsmTokenType.FunctionParameter)
-                Parameters.Add(token as IDefinitionToken);
+                Parameters.Add(token as DefinitionToken);
         }
 
         public override bool InRange(int point) =>
-            Name.Span.End <= point && Area.End >= point;
+            Name.Span.End <= point && actualEnd >= point;
 
         public override bool InRange(Span span) =>
-            Name.Span.End <= span.Start && Area.End >= span.End;
+            Name.Span.End <= span.Start && actualEnd >= span.End;
     }
 }

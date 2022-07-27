@@ -14,15 +14,14 @@ namespace VSRAD.DebugServerTests.Handlers
             // Test serialization
             command = await command.WithSerializationAsync();
 
-            var client = new Client(0, null, null, false);
-            var response = await Dispatcher.DispatchAsync(command, client);
+            var logger = new ClientLogger(0, false);
+            var response = await Dispatcher.DispatchAsync(command, logger);
 
             using var stream = new MemoryStream();
             await stream.WriteSerializedMessageAsync(response);
             stream.Position = 0;
             // Test response serialization
-            var (r, _) = await stream.ReadSerializedResponseAsync<TR>();
-            return r;
+            return (TR)await stream.ReadSerializedMessageAsync<IResponse>();
         }
 
         public static async Task<T> WithSerializationAsync<T>(this T command) where T : ICommand
@@ -30,8 +29,7 @@ namespace VSRAD.DebugServerTests.Handlers
             using var stream = new MemoryStream();
             await stream.WriteSerializedMessageAsync(command);
             stream.Position = 0;
-            var (c, _) = await stream.ReadSerializedCommandAsync<T>();
-            return c;
+            return (T)await stream.ReadSerializedMessageAsync<ICommand>();
         }
     }
 }

@@ -39,9 +39,8 @@ namespace VSRAD.Package.ProjectSystem
         public UnconfiguredProject UnconfiguredProject { get; }
         public string RootPath { get; }
 
-        private readonly string _visualOptionsFilePath;
-        private readonly string _profilesFilePath;
-        private readonly string _oldOptionsFilePath;
+        private readonly string _optionsFilePath;
+        private readonly string _legacyOptionsFilePath;
 
         private bool _loaded = false;
         private readonly List<Action<ProjectOptions>> _onLoadCallbacks = new List<Action<ProjectOptions>>();
@@ -50,9 +49,8 @@ namespace VSRAD.Package.ProjectSystem
         public Project(UnconfiguredProject unconfiguredProject)
         {
             RootPath = Path.GetDirectoryName(unconfiguredProject.FullPath);
-            _profilesFilePath = unconfiguredProject.FullPath + ".profiles.json";
-            _oldOptionsFilePath = unconfiguredProject.FullPath + ".conf.json";
-            _visualOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
+            _optionsFilePath = unconfiguredProject.FullPath + ".conf.json";
+            _legacyOptionsFilePath = unconfiguredProject.FullPath + ".user.json";
             UnconfiguredProject = unconfiguredProject;
         }
 
@@ -64,18 +62,27 @@ namespace VSRAD.Package.ProjectSystem
                 _onLoadCallbacks.Add(callback);
         }
 
-        public void Load()
+        public void Load(ProjectOptions projectOptions)
         {
-            Options = ProjectOptions.Read(_visualOptionsFilePath, _profilesFilePath, _oldOptionsFilePath);
+            if (projectOptions == null)
+            {
+                if (!File.Exists(_optionsFilePath) && File.Exists(_legacyOptionsFilePath))
+                    Options = ProjectOptions.ReadLegacy(_legacyOptionsFilePath);
+                else
+                    Options = ProjectOptions.Read(_optionsFilePath);
 
-            Options.PropertyChanged += OptionsPropertyChanged;
-            Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
-            Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
+                Options.PropertyChanged += OptionsPropertyChanged;
+                Options.DebuggerOptions.PropertyChanged += OptionsPropertyChanged;
+                Options.VisualizerOptions.PropertyChanged += OptionsPropertyChanged;
+                Options.VisualizerAppearance.PropertyChanged += OptionsPropertyChanged;
+                Options.VisualizerColumnStyling.PropertyChanged += OptionsPropertyChanged;
+            }
+            else
+            {
+                Options = projectOptions;
+            }
 
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
-            UnconfiguredProject.Services.ExportProvider.GetExportedValue<StatusBarIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
             _loaded = true;
@@ -88,7 +95,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Unload() => Unloaded?.Invoke();
 
-        public void SaveOptions() => Options.Write(_visualOptionsFilePath, _profilesFilePath);
+        public void SaveOptions() => Options.Write(_optionsFilePath);
 
         public IProjectProperties GetProjectProperties()
         {

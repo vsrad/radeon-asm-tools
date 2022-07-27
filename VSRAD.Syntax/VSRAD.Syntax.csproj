@@ -72,7 +72,6 @@
     <Compile Include="Core\DocumentFactory.cs" />
     <Compile Include="Core\DocumentTokenizer.cs" />
     <Compile Include="Core\Helper\BitHelper.cs" />
-    <Compile Include="Core\Helper\OrderedFixedSizeDictionary.cs" />
     <Compile Include="Core\Helper\ListBlockExtension.cs" />
     <Compile Include="Core\Helper\SortedSet.cs" />
     <Compile Include="Core\Helper\ITokenizerCollection.cs" />
@@ -83,10 +82,11 @@
     <Compile Include="Core\IDocumentFactory.cs" />
     <Compile Include="Core\IDocumentTokenizer.cs" />
     <Compile Include="Core\CodeDocument.cs" />
+    <Compile Include="Core\InvisibleTextDocumentFactory.cs" />
     <Compile Include="Core\LexerParserFactory.cs" />
     <Compile Include="Core\Lexer\Asm2Lexer.cs" />
     <Compile Include="Core\Lexer\AsmDocLexer.cs" />
-    <Compile Include="Core\Lexer\AsmLexer.cs" />
+    <Compile Include="Core\Lexer\Asm1Lexer.cs" />
     <Compile Include="Core\Lexer\Lexer.cs" />
     <Compile Include="Core\Parser\AbstractCodeParser.cs" />
     <Compile Include="Core\Parser\Asm2Parser.cs" />
@@ -102,9 +102,7 @@
     <Compile Include="Core\Tokens\AnalysisToken.cs" />
     <Compile Include="Core\Tokens\DefinitionToken.cs" />
     <Compile Include="Core\Tokens\ErrorToken.cs" />
-    <Compile Include="Core\Tokens\FunctionToken.cs" />
     <Compile Include="Core\Tokens\IncludeToken.cs" />
-    <Compile Include="Core\Tokens\InstructionToken.cs" />
     <Compile Include="Core\Tokens\ReferenceToken.cs" />
     <Compile Include="Core\Tokens\TokenSpan.cs" />
     <Compile Include="Core\Tokens\TokenType.cs" />
@@ -121,10 +119,9 @@
     <Compile Include="FunctionList\Helper.cs" />
     <Compile Include="Guide\IndentGuide.cs" />
     <Compile Include="Guide\IndentGuideFactory.cs" />
-    <Compile Include="Helpers\DisposableProvider.cs" />
+    <Compile Include="Helpers\CustomThreadHelper.cs" />
+    <Compile Include="Helpers\DocumentObserver.cs" />
     <Compile Include="Helpers\Error.cs" />
-    <Compile Include="Helpers\InstructionListExtension.cs" />
-    <Compile Include="Helpers\ISyntaxDisposable.cs" />
     <Compile Include="Helpers\NotifyPropertyChanged.cs" />
     <Compile Include="Helpers\AnalysisResultExtension.cs" />
     <Compile Include="Helpers\ServiceProviderExtension.cs" />
@@ -141,7 +138,6 @@
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
-    <Compile Include="IntelliSense\Helper.cs" />
     <Compile Include="IntelliSense\IntellisenseController.cs" />
     <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
     <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
@@ -157,25 +153,19 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\InstructionSignature.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\FunctionSignature.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\Helper.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\Parameter.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\Signature.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\SignatureConfig.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpClassifier.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpClassifierProvider.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpSource.cs" />
-    <Compile Include="IntelliSense\SignatureHelp\SignatureHelpSourceProvider.cs" />
-    <Compile Include="Options\GeneralOptionModel.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
+    <Compile Include="Options\BaseOptionPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Options\BaseOptionModel.cs" />
+    <Compile Include="Options\GeneralOptions.cs" />
+    <Compile Include="Options\GeneralOptionProvider.cs" />
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
     <Compile Include="Options\Instructions\Instruction.cs" />
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Options\Instructions\InstructionSet.cs" />
     <Compile Include="Options\Instructions\InstructionSetSelector.cs" />
-    <Compile Include="Options\GeneralOptionProvider.cs" />
     <Compile Include="Package.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Options\GeneralOptionPage.cs">
@@ -214,8 +204,8 @@
     <Compile Include="SyntaxHighlighter\ErrorHighlighter\ErrorHighlighterTagger.cs" />
     <Compile Include="SyntaxHighlighter\ErrorHighlighter\ErrorHighlighterTaggerProvider.cs" />
     <Compile Include="SyntaxHighlighter\PredefinedClassificationNames.cs" />
-    <Compile Include="SyntaxHighlighter\IdentifiersHighlighter\IdentifierHighliterTagger.cs" />
-    <Compile Include="SyntaxHighlighter\IdentifiersHighlighter\IdentifierHighlighterTaggerProvider.cs" />
+    <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTagger.cs" />
+    <Compile Include="SyntaxHighlighter\IdentifiersHighliter\IdentifierHighliterTaggerProvider.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />

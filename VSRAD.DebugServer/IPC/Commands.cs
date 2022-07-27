@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using VSRAD.DebugServer.SharedUtils;
-using static VSRAD.DebugServer.IPC.CapabilityInfo;
 
 namespace VSRAD.DebugServer.IPC.Commands
 {
@@ -15,14 +11,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         FetchResultRange = 2,
         Deploy = 3,
         ListEnvironmentVariables = 4,
-        PutFile = 5,
-        PutDirectory = 6,
-        ListFiles = 7,
-        GetFiles = 8,
-        GetServerCapabilities = 9,
-        ExecutionTimedOutAction = 10,
-
-        CompressedCommand = 0xFF
+        PutFile = 5
     }
 #pragma warning restore CA1028
 
@@ -47,13 +36,6 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
-                case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
-                case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
-                case CommandType.GetFiles: return GetFilesCommand.Deserialize(reader);
-                case CommandType.GetServerCapabilities: return GetServerCapabilitiesCommand.Deserialize(reader);
-                case CommandType.ExecutionTimedOutAction: return ExecutionTimedOutActionCommand.Deserialize(reader);
-
-                case CommandType.CompressedCommand: return CompressedCommand.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -69,13 +51,6 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
-                case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
-                case ListFilesCommand _: type = CommandType.ListFiles; break;
-                case GetFilesCommand _: type = CommandType.GetFiles; break;
-                case GetServerCapabilitiesCommand _: type = CommandType.GetServerCapabilities; break;
-                case ExecutionTimedOutActionCommand _: type = CommandType.ExecutionTimedOutAction; break;
-
-                case CompressedCommand _: type = CommandType.CompressedCommand; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -202,7 +177,7 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string Path { get; set; }
 
-        public string WorkDir { get; set; } = "";
+        public string WorkDir { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -224,180 +199,6 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.WriteLengthPrefixedBlob(Data);
             writer.Write(Path);
             writer.Write(WorkDir);
-        }
-    }
-
-    public sealed class PutDirectoryCommand : ICommand
-    {
-        public PackedFile[] Files { get; set; } = Array.Empty<PackedFile>();
-
-        public string Path { get; set; }
-
-        public bool PreserveTimestamps { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[]
-        {
-            "PutDirectoryCommand",
-            $"Files = <{Files.Length} files>",
-            $"Path = {Path}",
-            $"PreserveTimestamps = {PreserveTimestamps}"
-        });
-
-        public static PutDirectoryCommand Deserialize(IPCReader reader) => new PutDirectoryCommand
-        {
-            Files = reader.ReadLengthPrefixedFileArray(),
-            Path = reader.ReadString(),
-            PreserveTimestamps = reader.ReadBoolean()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.WriteLengthPrefixedArray(Files);
-            writer.Write(Path);
-            writer.Write(PreserveTimestamps);
-        }
-    }
-
-    public sealed class ListFilesCommand : ICommand
-    {
-        public string Path { get; set; }
-
-        public bool IncludeSubdirectories { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[] {
-            "ListFilesCommand",
-            $"Path = {Path}",
-            $"IncludeSubdirectories = {IncludeSubdirectories}"
-        });
-
-        public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
-        {
-            Path = reader.ReadString(),
-            IncludeSubdirectories = reader.ReadBoolean()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.Write(Path);
-            writer.Write(IncludeSubdirectories);
-        }
-    }
-
-    public sealed class GetFilesCommand : ICommand
-    {
-        public bool UseCompression { get; set; }
-
-        public string RootPath { get; set; }
-
-        public string[] Paths { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[] {
-            "GetFilesCommand",
-            $"UseCompression = {UseCompression}",
-            $"RootPath = {RootPath}",
-            $"Paths = {string.Join(", ", Paths)}"
-        });
-
-        public static GetFilesCommand Deserialize(IPCReader reader) => new GetFilesCommand
-        {
-            UseCompression = reader.ReadBoolean(),
-            RootPath = reader.ReadString(),
-            Paths = reader.ReadLengthPrefixedStringArray()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.Write(UseCompression);
-            writer.Write(RootPath);
-            writer.WriteLengthPrefixedArray(Paths);
-        }
-    }
-
-    public sealed class GetServerCapabilitiesCommand : ICommand
-    {
-        public HashSet<ExtensionCapability> ExtensionCapabilities { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[]
-        {
-            "GetServerCapabilitiesCommand",
-            $"ExtensionCapabilities = {string.Join(", ", ExtensionCapabilities)}"
-        });
-
-        public static GetServerCapabilitiesCommand Deserialize(IPCReader reader)
-        {
-            var capabilityCount = reader.Read7BitEncodedInt();
-            var capabilities = new HashSet<ExtensionCapability>();
-            for (int i = 0; i < capabilityCount; ++i)
-                capabilities.Add((ExtensionCapability)reader.ReadByte());
-            return new GetServerCapabilitiesCommand { ExtensionCapabilities = capabilities };
-        }
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.Write7BitEncodedInt(ExtensionCapabilities.Count);
-            foreach (var cap in ExtensionCapabilities)
-                writer.Write((byte)cap);
-        }
-    }
-
-    public sealed class ExecutionTimedOutActionCommand : ICommand
-    {
-        public bool TerminateProcesses { get; set; }
-
-        public override string ToString() => string.Join(Environment.NewLine, new[]
-        {
-            "ExecutionTimedOutActionCommand",
-            $"TerminateProcesses = {TerminateProcesses}"
-        });
-
-        public static ExecutionTimedOutActionCommand Deserialize(IPCReader reader) => new ExecutionTimedOutActionCommand
-        {
-            TerminateProcesses = reader.ReadBoolean()
-        };
-
-        public void Serialize(IPCWriter writer)
-        {
-            writer.Write(TerminateProcesses);
-        }
-    }
-
-    public sealed class CompressedCommand : ICommand
-    {
-        public ICommand InnerCommand { get; }
-
-        public CompressedCommand(ICommand command)
-        {
-            InnerCommand = command;
-        }
-
-        public override string ToString() =>
-            "CompressedCommand: " + InnerCommand.ToString();
-
-        public static ICommand Deserialize(IPCReader reader)
-        {
-            var commandData = reader.ReadLengthPrefixedBlob();
-            using (var uncompresedStream = new MemoryStream())
-            {
-                using (var inputStream = new MemoryStream(commandData))
-                using (var dstream = new DeflateStream(inputStream, CompressionMode.Decompress))
-                    dstream.CopyTo(uncompresedStream);
-
-                uncompresedStream.Seek(0, SeekOrigin.Begin);
-                using (var uncompressedReader = new IPCReader(uncompresedStream))
-                    return uncompressedReader.ReadCommand();
-            }
-        }
-
-        public void Serialize(IPCWriter writer)
-        {
-            using (var outputStream = new MemoryStream())
-            {
-                using (var dstream = new DeflateStream(outputStream, CompressionLevel.Optimal))
-                using (var compressedWriter = new IPCWriter(dstream))
-                    compressedWriter.WriteCommand(InnerCommand);
-
-                writer.WriteLengthPrefixedBlob(outputStream.ToArray());
-            }
         }
     }
 

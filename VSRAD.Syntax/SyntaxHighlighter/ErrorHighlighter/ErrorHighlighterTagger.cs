@@ -13,11 +13,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
     internal class ErrorHighlighterTagger : ITagger<IErrorTag>
     {
         private static readonly Regex _activeWordWithBracketsRegular = new Regex(@"[\w\\$]*\[[^\[\]]*\]", RegexOptions.Compiled | RegexOptions.Singleline);
-        private readonly ErrorHighlighterTaggerProvider _provider;
         private readonly ITextView view;
         private readonly ITextBuffer buffer;
         private readonly object updateLock;
         private readonly ITextDocument textDocument;
+        private readonly ErrorHighlighterTaggerProvider _provider;
         private List<ErrorMessage> requestedErrorList;
         private IEnumerable<TagSpan<IErrorTag>> currentErrorSnapshotList;
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -32,14 +32,14 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             var rc = buffer.Properties.TryGetProperty(typeof(ITextDocument), out textDocument);
             if (!rc) throw new InvalidOperationException("Cannot find text document for this view");
 
+            view.Closed += ViewClosedEventHandler;
             _provider.ErrorsUpdated += ErrorsUpdatedEvent;
-            view.Closed += OnClose;
         }
 
-        private void OnClose(object sender, EventArgs e)
+        private void ViewClosedEventHandler(object sender, EventArgs e)
         {
+            view.Closed -= ViewClosedEventHandler;
             _provider.ErrorsUpdated -= ErrorsUpdatedEvent;
-            view.Closed -= OnClose;
         }
 
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans)
@@ -54,7 +54,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         {
             if (errors.TryGetValue(textDocument.FilePath, out requestedErrorList))
             {
-                UpdateErrorMarker();
+                UpdateErorMarker();
             }
             else
             {
@@ -62,7 +62,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             }
         }
 
-        private void UpdateErrorMarker()
+        private void UpdateErorMarker()
         {
             ThreadPool.QueueUserWorkItem(UpdateSpanAdornments);
         }

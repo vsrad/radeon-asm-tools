@@ -18,13 +18,13 @@ using System.Threading;
 
 namespace VSRAD.Syntax.Guide
 {
-    internal sealed class IndentGuide : ISyntaxDisposable
+    internal sealed class IndentGuide
     {
         private readonly IWpfTextView _textView;
-        private readonly GeneralOptionProvider _generalOption;
         private readonly IAdornmentLayer _layer;
         private readonly Canvas _canvas;
         private readonly IDocumentAnalysis _documentAnalysis;
+        private readonly OptionsProvider _optionsProvider;
         private double _thickness;
         private double _dashSize;
         private double _spaceSize;
@@ -35,11 +35,11 @@ namespace VSRAD.Syntax.Guide
         private bool _isEnabled;
         private int _tabSize;
 
-        public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, GeneralOptionProvider generalOptionProvider)
+        public IndentGuide(IWpfTextView textView, IDocumentAnalysis documentAnalysis, OptionsProvider optionsProvider)
         {
             _textView = textView ?? throw new NullReferenceException();
-            _generalOption = generalOptionProvider ?? throw new NullReferenceException();
-            _documentAnalysis = documentAnalysis ?? throw new NullReferenceException();
+            _documentAnalysis = documentAnalysis;
+            _optionsProvider = optionsProvider;
 
             _currentAdornments = new List<Line>();
             _canvas = new Canvas
@@ -49,18 +49,30 @@ namespace VSRAD.Syntax.Guide
             };
 
             _layer = _textView.GetAdornmentLayer(Constants.IndentGuideAdornmentLayerName) ?? throw new NullReferenceException();
-            _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, CanvasRemoved);
-            _textView.LayoutChanged += LayoutChanged;
+            _layer.AddAdornment(AdornmentPositioningBehavior.OwnerControlled, null, null, _canvas, null);
 
+            _textView.LayoutChanged += LayoutChanged;
             _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
-            _generalOption.OptionsUpdated += IndentGuideGeneralOptionUpdated;
+            _optionsProvider.OptionsUpdated += IndentGuideOptionsUpdated;
             _textView.Options.OptionChanged += TabSizeOptionsChanged;
+            _textView.Closed += ViewClosedEventHandler;
 
             _tabSize = textView.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
-            IndentGuideGeneralOptionUpdated(_generalOption);
+            IndentGuideOptionsUpdated(optionsProvider);
         }
 
-        private void LayoutChanged(object sender, TextViewLayoutChangedEventArgs e) => 
+        private void ViewClosedEventHandler(object sender, EventArgs e)
+        {
+            _optionsProvider.OptionsUpdated -= IndentGuideOptionsUpdated;
+            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
+            _textView.Options.OptionChanged -= TabSizeOptionsChanged;
+            _textView.LayoutChanged -= LayoutChanged;
+            _textView.Closed -= ViewClosedEventHandler;
+
+            _layer.RemoveAdornment(_canvas);
+        }
+
+        private void LayoutChanged(object s, TextViewLayoutChangedEventArgs e) =>
             UpdateIndentGuides();
 
         private void TabSizeOptionsChanged(object sender, EditorOptionChangedEventArgs e)
@@ -77,30 +89,29 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void IndentGuideGeneralOptionUpdated(GeneralOptionProvider sender)
+        private void IndentGuideOptionsUpdated(OptionsProvider sender)
         {
-            // ReSharper disable CompareOfFloatsByEqualityOperator
-            if (sender.IsEnabledIndentGuides == _isEnabled && sender.IndentGuideThickness == _thickness &&
-                sender.IndentGuideDashSize == _dashSize && sender.IndentGuideSpaceSize == _spaceSize &&
-                sender.IndentGuideOffsetX == _offsetX && sender.IndentGuideOffsetY == _offsetY) return;
-            // ReSharper restore CompareOfFloatsByEqualityOperator
+            if (sender.IsEnabledIndentGuides != _isEnabled
+                || sender.IndentGuideThickness != _thickness
+                || sender.IndentGuideDashSize != _dashSize
+                || sender.IndentGuideSpaceSize != _spaceSize
+                || sender.IndentGuideOffsetX != _offsetX
+                || sender.IndentGuideOffsetY != _offsetY)
+            {
+                _isEnabled = sender.IsEnabledIndentGuides;
+                _thickness = sender.IndentGuideThickness;
+                _dashSize = sender.IndentGuideDashSize;
+                _spaceSize = sender.IndentGuideSpaceSize;
+                _offsetX = sender.IndentGuideOffsetX;
+                _offsetY = sender.IndentGuideOffsetY;
 
-            _isEnabled = sender.IsEnabledIndentGuides;
-            _thickness = sender.IndentGuideThickness;
-            _dashSize = sender.IndentGuideDashSize;
-            _spaceSize = sender.IndentGuideSpaceSize;
-            _offsetX = sender.IndentGuideOffsetX;
-            _offsetY = sender.IndentGuideOffsetY;
-
-            _currentResult = _documentAnalysis.CurrentResult;
-            if (_isEnabled)
-                UpdateIndentGuides();
-            else
-                ClearIndentGuides();
+                _currentResult = _documentAnalysis.CurrentResult;
+                if (_isEnabled)
+                    UpdateIndentGuides();
+                else
+                    CleanupIndentGuidesAsync().ConfigureAwait(false);
+            }
         }
-
-        private void CanvasRemoved(object tag, UIElement element) =>
-            ClearIndentGuides();
 
         private void UpdateIndentGuides()
         {
@@ -109,8 +120,9 @@ namespace VSRAD.Syntax.Guide
                     .RunAsyncWithoutAwait();
         }
 
-        private void ClearIndentGuides()
+        private async Task CleanupIndentGuidesAsync()
         {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             foreach (var oldIndentGuide in _currentAdornments)
             {
                 _canvas.Children.Remove(oldIndentGuide);
@@ -149,13 +161,14 @@ namespace VSRAD.Syntax.Guide
 
         private bool IsInVisualBuffer(IBlock block, ITextViewLine firstVisibleLine, ITextViewLine lastVisibleLine)
         {
-            var blockStart = block.Area.Start;
-            var blockEnd = block.Area.End;
+            var blockStart = block.Area.GetStart(_textView.TextSnapshot);
+            var blockEnd = block.Area.GetEnd(_textView.TextSnapshot);
 
-            var isOnStart = blockStart <= lastVisibleLine.End;
-            var isOnEnd = blockEnd >= firstVisibleLine.End;
+            bool isOnStart = blockStart <= lastVisibleLine.End;
+            bool isOnEnd = blockEnd >= firstVisibleLine.End;
 
-            var isInBlockAll = (blockStart <= firstVisibleLine.End) && (blockEnd >= lastVisibleLine.Start);
+            bool isInBlockAll = (blockStart <= firstVisibleLine.End) && (blockEnd >= lastVisibleLine.Start);
+
             return isOnStart && isOnEnd || isInBlockAll;
         }
 
@@ -164,8 +177,8 @@ namespace VSRAD.Syntax.Guide
             ThreadHelper.ThrowIfNotOnUIThread();
             foreach (var block in blocks)
             {
-                var pointStart = new SnapshotPoint(_textView.TextSnapshot, block.Area.Start);
-                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.Area.End);
+                var pointStart = new SnapshotPoint(_textView.TextSnapshot, block.Area.GetStart(_textView.TextSnapshot));
+                var pointEnd = new SnapshotPoint(_textView.TextSnapshot, block.Area.GetEnd(_textView.TextSnapshot));
 
                 var viewLineStart = _textView.GetTextViewLineContainingBufferPosition(pointStart);
                 var viewLineEnd = _textView.GetTextViewLineContainingBufferPosition(pointEnd);
@@ -208,15 +221,6 @@ namespace VSRAD.Syntax.Guide
             {
                 _canvas.Children.Add(newIndentGuide);
             }
-        }
-
-        public void OnDispose()
-        {
-            _textView.LayoutChanged -= LayoutChanged;
-            _documentAnalysis.AnalysisUpdated -= AnalysisUpdated;
-            _textView.Options.OptionChanged -= TabSizeOptionsChanged;
-            _generalOption.OptionsUpdated -= IndentGuideGeneralOptionUpdated;
-            _layer.RemoveAllAdornments();
         }
     }
 }

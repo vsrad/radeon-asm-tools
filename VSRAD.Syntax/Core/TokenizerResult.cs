@@ -10,11 +10,11 @@ namespace VSRAD.Syntax.Core
     {
         public ITextSnapshot Snapshot { get; }
         public ITokenizerCollection<TrackingToken> Tokens { get; }
-        public IList<TrackingToken> UpdatedTokens { get; }
+        public IEnumerable<TrackingToken> UpdatedTokens { get; }
 
         public TokenizerResult(ITextSnapshot snapshot,
             ITokenizerCollection<TrackingToken> tokens,
-            IList<TrackingToken> updatedTokens)
+            IEnumerable<TrackingToken> updatedTokens)
         {
             Snapshot = snapshot;
             Tokens = tokens;

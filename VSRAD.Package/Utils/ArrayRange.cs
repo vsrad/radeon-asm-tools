@@ -16,7 +16,7 @@ namespace VSRAD.Package.Utils
         //data_N0HW_base_addr[i]
 
         // else add new brackets
-        public static string[] FormatArrayRangeWatch(string name, int from, int to)
+        public static string[] FormatArrayRangeWatch(string name, int from, int to, bool matchBrackets)
         {
             var numericMatch = _numericIndexPattern.Match(name);
             var symbolMatch = _symbolIndexPattern.Match(name);
@@ -24,7 +24,7 @@ namespace VSRAD.Package.Utils
             var count = to - from + 1;
             var result = new string[count];
 
-            if (numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success))
+            if ((numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success)) || !matchBrackets)
             {
                 for (int i = 0; i < count; i++)
                     result[i] = $"{name}[{from + i}]";
@@ -39,13 +39,13 @@ namespace VSRAD.Package.Utils
             return result;
         }
 
-        public static string[] FormatCustomSlice(string name, int start, int step, int count)
+        public static string[] FormatCustomSlice(string name, int start, int step, int count, bool matchBrackets)
         {
             var numericMatch = _numericIndexPattern.Match(name);
             var symbolMatch = _symbolIndexPattern.Match(name);
 
             var result = new string[count];
-            if (numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success))
+            if ((numericMatch.Success || (!numericMatch.Success && !symbolMatch.Success)) || !matchBrackets)
             {
                 for (int i = 0; i < count; i++)
                     result[i] = $"{name}[{start + (i * step)}]";

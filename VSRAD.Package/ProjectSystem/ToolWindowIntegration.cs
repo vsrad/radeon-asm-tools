@@ -1,7 +1,6 @@
 ﻿using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
-using System;
 using System.ComponentModel.Composition;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.DebugVisualizer.SliceVisualizer;
@@ -17,7 +16,6 @@ namespace VSRAD.Package.ProjectSystem
         ProjectOptions ProjectOptions { get; }
         IProject Project { get; }
         ICommunicationChannel CommunicationChannel { get; }
-        IActionLauncher ActionLauncher { get; }
 
         event AddWatch AddWatch;
 
@@ -34,7 +32,6 @@ namespace VSRAD.Package.ProjectSystem
         public IProject Project { get; }
         public ProjectOptions ProjectOptions => Project.Options;
         public ICommunicationChannel CommunicationChannel { get; }
-        public IActionLauncher ActionLauncher { get; }
 
         public event AddWatch AddWatch;
 
@@ -42,11 +39,10 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
 
         [ImportingConstructor]
-        public ToolWindowIntegration(IProject project, ICommunicationChannel channel, IActionLauncher actionLauncher, DebuggerIntegration debugger, SVsServiceProvider serviceProvider)
+        public ToolWindowIntegration(IProject project, ICommunicationChannel channel, DebuggerIntegration debugger, SVsServiceProvider serviceProvider)
         {
             Project = project;
             CommunicationChannel = channel;
-            ActionLauncher = actionLauncher;
             _debugger = debugger;
             _serviceProvider = serviceProvider;
         }

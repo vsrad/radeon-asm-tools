@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
@@ -16,7 +15,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
         public BraceHighlightWordTag() : base(PredefinedMarkerFormatNames.BraceMatching) { }
     }
 
-    internal class BraceHighlighter : ITagger<TextMarkerTag>, ISyntaxDisposable
+    internal class BraceHighlighter : ITagger<TextMarkerTag>
     {
         private readonly object updateLock = new object();
         private readonly ITextView _view;
@@ -39,6 +38,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 
             _view.Caret.PositionChanged += CaretPositionChanged;
             _view.LayoutChanged += ViewLayoutChanged;
+            _view.Closed += ViewClosedEventHandler;
+        }
+
+        private void ViewClosedEventHandler(object sender, EventArgs e)
+        {
+            _view.Caret.PositionChanged -= CaretPositionChanged;
+            _view.LayoutChanged -= ViewLayoutChanged;
+            _view.Closed -= ViewClosedEventHandler;
+
+            indentCts?.Dispose();
         }
 
         private void ViewLayoutChanged(object sender, TextViewLayoutChangedEventArgs e)
@@ -50,10 +59,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
         private void CaretPositionChanged(object sender, CaretPositionChangedEventArgs e) =>
             UpdateAtCaretPosition(e.NewPosition);
 
-        private void UpdateAtCaretPosition(CaretPosition caretPosition)
+        private void UpdateAtCaretPosition(CaretPosition caretPoisition)
         {
             indentCts.Cancel();
-            var point = caretPosition.Point.GetPoint(_buffer, caretPosition.Affinity);
+            SnapshotPoint? point = caretPoisition.Point.GetPoint(_buffer, caretPoisition.Affinity);
 
             if (!point.HasValue)
                 return;
@@ -79,7 +88,6 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             }
             catch (Exception)
             {
-                // ignored
             }
         }
 
@@ -242,17 +250,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
             if (spans.OverlapsWith(new NormalizedSnapshotSpanCollection(currentWord)))
                 yield return new TagSpan<BraceHighlightWordTag>(currentWord, new BraceHighlightWordTag());
 
-            foreach (var span in NormalizedSnapshotSpanCollection.Overlap(spans, wordSpans))
+            foreach (SnapshotSpan span in NormalizedSnapshotSpanCollection.Overlap(spans, wordSpans))
                 yield return new TagSpan<BraceHighlightWordTag>(span, new BraceHighlightWordTag());
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
-
-        public void OnDispose()
-        {
-            _view.Caret.PositionChanged -= CaretPositionChanged;
-            _view.LayoutChanged -= ViewLayoutChanged;
-        }
 
         private enum BracketType
         {

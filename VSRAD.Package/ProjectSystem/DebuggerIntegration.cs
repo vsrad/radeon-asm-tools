@@ -4,6 +4,7 @@ using System;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
+using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
@@ -28,7 +29,6 @@ namespace VSRAD.Package.ProjectSystem
         {
             _project = project;
             _actionLauncher = actionLauncher;
-            _actionLauncher.ActionCompleted += ActionCompleted;
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
 
@@ -38,18 +38,6 @@ namespace VSRAD.Package.ProjectSystem
                 _project.GetExportByMetadataAndType<IViewTaggerProvider, IAppliesToMetadataView>(
                         m => m.AppliesTo == Constants.RadOrVisualCProjectCapability,
                         e => e.GetType() == typeof(BreakLineGlyphTaggerProvider));
-        }
-
-        private void ActionCompleted(object sender, ActionCompletedEventArgs e)
-        {
-            if (e.Error is Error error)
-                Errors.Show(error);
-
-            if (e.RunResult == null) // RunResult is null when an error has occurred
-                return;
-
-            if (_actionLauncher.IsDebugAction(e.Action))
-                RaiseExecutionCompleted(e.Transients.ActiveSourceFullPath ?? "", e.Transients.BreakLines ?? new[] { 0u }, isStepping: false, e.RunResult.BreakState);
         }
 
         public IEngineIntegration RegisterEngine()
@@ -88,11 +76,27 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
+        public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients)
+        {
+            if (runResult != null) // If RunResult is null, the action was not launched (e.g. because another action is already running)
+                RaiseExecutionCompleted(transients?.ActiveSourceFullPath ?? "", transients?.BreakLines ?? new[] { 0u }, isStepping: false, runResult.BreakState);
+        }
+
         public void Execute(bool step)
         {
-            var error = _actionLauncher.TryLaunchActionByName(_project.Options.Profile.MenuCommands.DebugAction, moveToNextDebugTarget: true, isDebugSteppingEnabled: step);
-            if (error is Error e)
-                Errors.Show(e);
+            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            {
+                var result = await _actionLauncher.LaunchActionByNameAsync(
+                    _project.Options.Profile.MenuCommands.DebugAction,
+                    moveToNextDebugTarget: true,
+                    isDebugSteppingEnabled: step);
+
+                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                if (result.Error is Error e)
+                    Errors.Show(e);
+                NotifyDebugActionExecuted(result.RunResult, result.Transients);
+            },
+            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null));
         }
 
         void IEngineIntegration.CauseBreak()

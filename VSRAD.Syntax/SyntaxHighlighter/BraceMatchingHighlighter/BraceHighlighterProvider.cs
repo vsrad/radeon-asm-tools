@@ -4,22 +4,20 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core;
-using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
 {
     [Export(typeof(IViewTaggerProvider))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TagType(typeof(TextMarkerTag))]
-    internal sealed class BraceHighlighterProvider : DisposableProvider<IDocument, BraceHighlighter>, IViewTaggerProvider
+    internal sealed class BraceHighlighterProvider : IViewTaggerProvider
     {
         private readonly IDocumentFactory _documentFactory;
-
+        
         [ImportingConstructor]
         public BraceHighlighterProvider(IDocumentFactory documentFactory)
         {
             _documentFactory = documentFactory;
-            _documentFactory.DocumentDisposed += DisposeRequest;
         }
 
         public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
@@ -28,8 +26,11 @@ namespace VSRAD.Syntax.SyntaxHighlighter.BraceMatchingHighlighter
                 return null;
 
             var document = _documentFactory.GetOrCreateDocument(buffer);
-            return GetValue(document, 
-                () => new BraceHighlighter(textView, buffer, document.DocumentTokenizer)) as ITagger<T>;
+            if (document == null)
+                return null;
+
+            return textView.Properties.GetOrCreateSingletonProperty(() => 
+                new BraceHighlighter(textView, buffer, document.DocumentTokenizer)) as ITagger<T>;
         }
     }
 

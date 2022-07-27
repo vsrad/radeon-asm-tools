@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Core;
 using System.Threading;
-using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
@@ -14,16 +13,16 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     {
         private static readonly ImageElement FunctionIcon = GetImageElement(KnownImageIds.Method);
         private bool _autocompleteFunctions;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly INavigationTokenService _navigationTokenservice;
 
-        public FunctionCompletionProvider(GeneralOptionProvider generalOptionProvider, INavigationTokenService navigationTokenService)
-            : base(generalOptionProvider)
+        public FunctionCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
+            : base(optionsProvider)
         {
-            _autocompleteFunctions = generalOptionProvider.AutocompleteFunctions;
-            _navigationTokenService = navigationTokenService;
+            _autocompleteFunctions = optionsProvider.AutocompleteFunctions;
+            _navigationTokenservice = navigationTokenService;
         }
 
-        public override void DisplayOptionsUpdated(GeneralOptionProvider sender) =>
+        public override void DisplayOptionsUpdated(OptionsProvider sender) =>
             _autocompleteFunctions = sender.AutocompleteFunctions;
 
         public override async Task<RadCompletionContext> GetContextAsync(IDocument document, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
@@ -36,8 +35,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 .AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
-                .Cast<IDefinitionToken>()
-                .Select(t => _navigationTokenService.CreateToken(t, document))
+                .Select(t => _navigationTokenservice.CreateToken(t, document.Path))
                 .Select(t => new CompletionItem(t, FunctionIcon));
 
             return new RadCompletionContext(completionItems.ToList());
