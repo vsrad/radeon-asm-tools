@@ -119,6 +119,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 );
             foreach (var watch in _context.Options.DebuggerOptions.Watches)
                 _table.AppendVariableRow(watch);
+            _table.InitializeNameColumnWidth();
             _table.PrepareNewWatchRow();
         }
 

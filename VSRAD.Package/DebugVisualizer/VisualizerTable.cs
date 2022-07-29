@@ -83,6 +83,7 @@ namespace VSRAD.Package.DebugVisualizer
             _state = new TableState(this, columnWidth: 60, NameColumnIndex);
             _state.NameColumnScalingEnabled = true;
             SetupColumns();
+
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
 
@@ -125,8 +126,6 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
-
-        public void SetNameColumnScalingEnabled(bool nameColumnScalingEnabled) => _state.NameColumnScalingEnabled = nameColumnScalingEnabled;
 
         public void ScaleControls(float scaleFactor)
         {
@@ -274,6 +273,9 @@ namespace VSRAD.Package.DebugVisualizer
             });
             CreateMissingDataColumns(DataColumnCount);
         }
+
+        public void InitializeNameColumnWidth() =>
+            Columns[NameColumnIndex].Width = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
         {
