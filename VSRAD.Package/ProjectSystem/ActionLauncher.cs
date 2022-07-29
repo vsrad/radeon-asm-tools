@@ -123,6 +123,7 @@ namespace VSRAD.Package.ProjectSystem
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
+                if (!actionError.HasValue) _breakpointTracker.UpdateBreakTarget((file, breakLines));
                 return new ActionExecution(actionError, transients, runResult);
             }
             finally
