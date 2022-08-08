@@ -352,18 +352,16 @@
     <None Include="Key.snk" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="VSRAD.Package.vsct">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>VSRAD.Package.tt</DependentUpon>
+    </Content>
     <Resource Include="Resources\CurrentStatement.png" />
     <Content Include="VSRAD.Package.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VSRAD.Package.vsct</LastGenOutput>
     </Content>
-    <VSCTCompile Include="VSRAD.Package.vsct">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>VSRAD.Package.tt</DependentUpon>
-      <ResourceName>Menus.ctmenu</ResourceName>
-      <SubType>Designer</SubType>
-    </VSCTCompile>
     <Resource Include="Resources\DebugVisualizerWindowCommand.png" />
     <None Include="Resources\HandCursor.cur" />
     <Content Include="Resources\Package.ico" />
