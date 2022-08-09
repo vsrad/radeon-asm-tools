@@ -37,7 +37,7 @@ namespace VSRAD.Package.BuildTools.Errors
         }
 
         private static readonly Regex ClangErrorRegex = new Regex(
-            @"(?<file>.+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note):\s(?<text>.+)", RegexOptions.Compiled);
+            @"(?<file>.+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note|fatal error):\s(?<text>.+)", RegexOptions.Compiled);
 
         private static Message ParseClangMessage(string header)
         {
@@ -104,7 +104,7 @@ namespace VSRAD.Package.BuildTools.Errors
         {
             switch (kind)
             {
-                case "E": case "error": case "ERROR": return MessageKind.Error;
+                case "E": case "error": case "ERROR": case "fatal error": return MessageKind.Error;
                 case "W": case "warning": case "WARNING": return MessageKind.Warning;
                 case "note": return MessageKind.Note;
                 default: throw new ArgumentException(kind, nameof(kind));
