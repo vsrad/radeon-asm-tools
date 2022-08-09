@@ -161,7 +161,7 @@ namespace VSRAD.Syntax.FunctionList
             var document = _documentFactory.GetOrCreateDocument(analysisResult.Snapshot.TextBuffer);
             // there is cases, when new document is opened, but it do not become active (see Open in Editor: Preserve active document)
             // in this case we don't want to update function list, so check that target document is in fact active
-            if (_documentFactory.GetActiveDocumentPath() == document.Path)
+            if (_documentFactory.GetActiveDocumentPath() == document.Path.ToUpperInvariant())
                 UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
