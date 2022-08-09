@@ -146,7 +146,10 @@ namespace VSRAD.Syntax.FunctionList
             var analysisResult = document.DocumentAnalysis.CurrentResult;
             var lastAnalysisResult = _lastResult?.Item2;
 
-            if (analysisResult == null || analysisResult == lastAnalysisResult) return;
+            // there is cases, when new document is opened, but it do not become active (see Open in Editor: Preserve active document)
+            // in this case we don't want to update function list, so check that target document is in fact active
+            if (analysisResult == null || analysisResult == lastAnalysisResult
+                || _documentFactory.GetActiveDocumentPath() != document.Path.ToUpperInvariant()) return;
             UpdateFunctionList(document, analysisResult, CancellationToken.None);
         }
 

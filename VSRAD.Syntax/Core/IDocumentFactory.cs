@@ -15,12 +15,6 @@ namespace VSRAD.Syntax.Core
         string GetActiveDocumentPath();
 
         /// <summary>
-        /// Returns current active document full path
-        /// </summary>
-        /// <returns>String, active document full path</returns>
-        string GetActiveDocumentPath();
-
-        /// <summary>
         /// Gets <see cref="IDocument"/> or creates if doesn't exist
         /// </summary>
         /// <param name="path"></param>
