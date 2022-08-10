@@ -102,11 +102,11 @@ namespace VSRAD.Package.BuildTools.Errors
 
         private static MessageKind ParseMessageKind(string kind)
         {
-            switch (kind)
+            switch (kind.ToUpperInvariant())
             {
-                case "E": case "error": case "ERROR": case "fatal error": return MessageKind.Error;
-                case "W": case "warning": case "WARNING": return MessageKind.Warning;
-                case "note": return MessageKind.Note;
+                case "E": case "ERROR": case "FATAL ERROR": return MessageKind.Error;
+                case "W": case "WARNING": return MessageKind.Warning;
+                case "NOTE": return MessageKind.Note;
                 default: throw new ArgumentException(kind, nameof(kind));
             }
         }
