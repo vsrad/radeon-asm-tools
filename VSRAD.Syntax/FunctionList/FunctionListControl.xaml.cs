@@ -153,7 +153,7 @@ namespace VSRAD.Syntax.FunctionList
             if (!hideLineNumber)
                 functionsGridView.Columns[0].Width = double.NaN;
             functionsGridView.Columns[1].Width = 0;
-            functionsGridView.Columns[1].Width = double.NaN;
+            functionsGridView.Columns[1].Width = FunctionNameButtonColumn.ActualWidth;
         }
 
         private void SetLineNumberColumnWidth()
