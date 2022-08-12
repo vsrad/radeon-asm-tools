@@ -37,7 +37,8 @@ namespace VSRAD.Package.DebugVisualizer
             _table = new VisualizerTable(
                 _context.Options,
                 tableFontAndColor,
-                getValidWatches: () => _context?.BreakData?.Watches);
+                getValidWatches: () => _context?.BreakData?.Watches,
+                integration);
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _context.Options.DebuggerOptions.Watches.Clear();

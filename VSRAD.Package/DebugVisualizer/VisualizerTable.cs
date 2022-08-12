@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -49,7 +50,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private readonly TableState _state;
 
-        public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor, GetValidWatches getValidWatches) : base()
+        public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor, GetValidWatches getValidWatches, IToolWindowIntegration toolWindowIntegration) : base()
         {
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();
@@ -85,7 +86,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow, toolWindowIntegration),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
             });
