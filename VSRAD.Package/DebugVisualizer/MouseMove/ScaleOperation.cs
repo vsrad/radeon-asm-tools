@@ -85,6 +85,66 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
+        public bool HandleMouseWheel(MouseEventArgs e)
+        {
+            _orgMouseX = Cursor.Position.X;
+            _orgeX = e.X;
+            _orgWidth = _tableState.ColumnWidth;
+            _orgScroll = _tableState.GetCurrentScroll();
+            _orgNColumns = (_orgScroll + _orgeX - _tableState.DataColumnOffset) / _orgWidth;
+            _orgSColumns = _orgScroll / _orgWidth;
+            _orgSPixels = _orgScroll % _orgWidth;
+            _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < 0.5;
+
+            var minWidth = _tableState.minAllowedWidth;
+
+            int diff = e.Delta / 120;
+            if (diff == 1) diff = 2;
+            if (_tableState.ScalingMode == ScalingMode.ResizeTable
+                || (_tableState.ScalingMode == ScalingMode.ResizeQuad && !_lefthalf)
+                || (_tableState.ScalingMode == ScalingMode.ResizeHalf && !_lefthalf))
+            {
+                int orgL = _orgNColumns * _orgWidth - _orgScroll;
+                int curL = orgL + diff;
+                if (orgL > 0)
+                {
+                    float s = (float)curL / orgL;
+                    int curWidth = (int)(s * _orgWidth);
+                    curWidth = Math.Max(minWidth, curWidth);
+                    s = (float)curWidth / _orgWidth;
+                    int curScroll = _orgSColumns * curWidth + (int)(s * _orgSPixels);
+                    _tableState.SetWidthAndScroll(curWidth, curScroll);
+                }
+            }
+            else if ((_tableState.ScalingMode == ScalingMode.ResizeQuad && _lefthalf)
+                || (_tableState.ScalingMode == ScalingMode.ResizeHalf && _lefthalf))
+            {
+                int orgL = _tableState.Table.Width - _orgeX;
+                int curL = orgL - diff;
+                if (orgL > 0)
+                {
+                    float s = (float)curL / orgL;
+                    int curWidth = (int)(s * _orgWidth);
+                    curWidth = Math.Max(minWidth, curWidth);
+                    s = (float)curWidth / _orgWidth;
+                    int curScroll = (int)(_orgScroll * s + _tableState.GetDataRegionWidth() * (s - 1));
+                    _tableState.SetWidthAndScroll(curWidth, curScroll);
+                }
+            }
+            else if (_tableState.ScalingMode == ScalingMode.ResizeColumn || _tableState.ScalingMode == ScalingMode.ResizeColumnAllowWide)
+            {
+                int orgL = _orgWidth;
+                int curL = orgL + diff;
+                float s = (float)curL / orgL;
+                int curWidth = (int)(s * _orgWidth);
+                curWidth = Math.Max(minWidth, curWidth);
+                int curScroll = _orgScroll + (_orgNColumns - 1) * (curWidth - _orgWidth);
+                _tableState.SetWidthAndScroll(curWidth, curScroll);
+            }
+            _operationStarted = true;
+            return true;
+        }
+
         public bool HandleMouseMove(MouseEventArgs e)
         {
             if ((e.Button & MouseButtons.Left) != MouseButtons.Left)

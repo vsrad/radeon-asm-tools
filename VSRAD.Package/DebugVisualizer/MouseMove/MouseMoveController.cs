@@ -22,6 +22,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                 new PanOperation(_state),
                 new ReorderOperation(_table)
             };
+            _table.MouseWheel += (s, e) => HandleMouseWheel(e);
         }
 
         public bool HandleMouseDown(MouseEventArgs e)
@@ -48,6 +49,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             }
             return true;
         }
+
+        public bool HandleMouseWheel(MouseEventArgs e) => ((ScaleOperation)_operations[0]).HandleMouseWheel(e);
 
         public bool OperationDidNotFinishOnMouseUp()
         {
