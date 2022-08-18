@@ -50,7 +50,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private readonly TableState _state;
 
-        public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor, GetValidWatches getValidWatches, IToolWindowIntegration toolWindowIntegration) : base()
+        public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor, GetValidWatches getValidWatches) : base()
         {
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();
@@ -86,7 +86,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow, toolWindowIntegration),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow,
+                    AddWatchFromVisualizerTable),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
             });
@@ -95,6 +96,24 @@ namespace VSRAD.Package.DebugVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
+        }
+
+        private void AddWatchFromVisualizerTable(string name, int from, int to)
+        {
+            var range = ArrayRange.FormatArrayRangeWatch(name, from, to, true);
+            RemoveNewWatchRow();
+            foreach(var watch in range)
+                AppendVariableRow(new Watch(watch, VariableType.Int, isAVGPR: false));
+            PrepareNewWatchRow();
+            WatchStateChanged(GetCurrentWatchState(), DataRows);
+        }
+
+        public void AddWatch(string watchName)
+        {
+            RemoveNewWatchRow();
+            AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
+            PrepareNewWatchRow();
+            WatchStateChanged(GetCurrentWatchState(), DataRows);
         }
 
         public void GoToWave(uint waveIdx, uint waveSize)

@@ -2,8 +2,6 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.ContextMenus
 {
@@ -12,14 +10,15 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
         public delegate void InsertRow(int rowIndex, bool after);
+        public delegate void AddWatch(string name, int from, int to);
 
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
         private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy, InsertRow insertRow,
-            IToolWindowIntegration toolIntegration)
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy,
+            InsertRow insertRow, AddWatch addWatch)
         {
             _table = table;
 
@@ -58,10 +57,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                     (s, e) =>
                     {
                         var watchName = VisualizerTable.GetRowWatchState(_table.Rows[_currentRow]).Name;
-                        var range = ArrayRange.FormatArrayRangeWatch(watchName, i, y,
-                                        toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
-                        foreach (var watch in range)
-                            toolIntegration.AddWatchFromEditor(watch);
+                        addWatch(watchName, i, y);
                     })).ToArray())
                 ).ToArray());
 

@@ -26,7 +26,6 @@ namespace VSRAD.Package.DebugVisualizer
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
-            integration.AddWatch += AddWatch;
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
@@ -37,8 +36,8 @@ namespace VSRAD.Package.DebugVisualizer
             _table = new VisualizerTable(
                 _context.Options,
                 tableFontAndColor,
-                getValidWatches: () => _context?.BreakData?.Watches,
-                integration);
+                getValidWatches: () => _context?.BreakData?.Watches);
+            integration.AddWatch += _table.AddWatch;
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _context.Options.DebuggerOptions.Watches.Clear();
@@ -170,15 +169,6 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         SetRowContentsFromBreakState(row);
                     break;
             }
-        }
-
-        private void AddWatch(string watchName)
-        {
-            _table.RemoveNewWatchRow();
-            _table.AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
-            _table.PrepareNewWatchRow();
-            _context.Options.DebuggerOptions.Watches.Clear();
-            _context.Options.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
         }
 
         private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
