@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -89,7 +90,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow),
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow,
+                    addWatchRange: (name, from, to) => ArrayRange.FormatArrayRangeWatch(name, from, to, options.VisualizerOptions.MatchBracketsOnAddToWatches).ToList().ForEach(AddWatch)),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
             });
@@ -98,6 +100,14 @@ namespace VSRAD.Package.DebugVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
+        }
+
+        public void AddWatch(string watchName)
+        {
+            RemoveNewWatchRow();
+            AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
+            PrepareNewWatchRow();
+            RaiseWatchStateChanged();
         }
 
         private void SetupDynamicNameColumnWidth(object sender, DataGridViewEditingControlShowingEventArgs e)

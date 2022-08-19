@@ -10,13 +10,15 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
         public delegate void InsertRow(int rowIndex, bool after);
+        public delegate void AddWatchRange(string name, int from, int to);
 
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
         private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy, InsertRow insertRow)
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy,
+            InsertRow insertRow, AddWatchRange addWatchRange)
         {
             _table = table;
 
@@ -49,6 +51,16 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var copy = new MenuItem("Copy", (s, e) => processCopy());
 
+            var addToWatchesAsArray = new MenuItem("Add to watches as array", Enumerable.Range(0, 16)
+                .Select(i =>
+                    new MenuItem(i.ToString(), Enumerable.Range(i, 16 - i).Select(y => new MenuItem(y.ToString(),
+                    (s, e) =>
+                    {
+                        var watchName = VisualizerTable.GetRowWatchState(_table.Rows[_currentRow]).Name;
+                        addWatchRange(watchName, i, y);
+                    })).Prepend(new MenuItem("To") { Enabled = false }).ToArray())
+                ).Prepend(new MenuItem("From") { Enabled = false }).ToArray());
+
             var menuItems = typeItems.Concat(new[]
             {
                 new MenuItem("-"),
@@ -58,7 +70,9 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 copy,
                 new MenuItem("-"),
                 insertRowBefore,
-                insertRowAfter
+                insertRowAfter,
+                new MenuItem("-"),
+                addToWatchesAsArray
                 //_avgprButton
             });
 
