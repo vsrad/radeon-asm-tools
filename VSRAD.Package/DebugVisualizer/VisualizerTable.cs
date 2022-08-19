@@ -220,6 +220,7 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].HeaderCell.Value = watch.Type.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
             Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
+            Columns[NameColumnIndex].Width = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
             LockWatchRowForEditing(Rows[index], canBeRemoved);
         }
 
@@ -273,9 +274,6 @@ namespace VSRAD.Package.DebugVisualizer
             });
             CreateMissingDataColumns(DataColumnCount);
         }
-
-        public void InitializeNameColumnWidth() =>
-            Columns[NameColumnIndex].Width = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
         {
