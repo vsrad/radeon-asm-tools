@@ -10,7 +10,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void AVGPRStateChanged(int rowIndex, bool state);
         public delegate void InsertRow(int rowIndex, bool after);
-        public delegate void AddWatch(string name, int from, int to);
+        public delegate void AddWatchRange(string name, int from, int to);
 
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
@@ -18,7 +18,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private int _currentRow;
 
         public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy,
-            InsertRow insertRow, AddWatch addWatch)
+            InsertRow insertRow, AddWatchRange addWatch)
         {
             _table = table;
 
