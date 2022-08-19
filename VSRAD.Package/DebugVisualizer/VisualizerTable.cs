@@ -220,7 +220,12 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].HeaderCell.Value = watch.Type.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
             Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
-            Columns[NameColumnIndex].Width = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
+
+            var currentWidth = Columns[NameColumnIndex].Width;
+            var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
+            if (preferredWidth > currentWidth)
+                Columns[NameColumnIndex].Width = preferredWidth;
+
             LockWatchRowForEditing(Rows[index], canBeRemoved);
         }
 
