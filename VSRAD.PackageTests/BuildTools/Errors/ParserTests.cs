@@ -18,6 +18,10 @@ Relative\path\host.c:4:2: warning: implicitly declaring library function 'printf
         printf(""h"");
         ^
 C:\Absolute\Path\host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
+
+input.s:16:10: fatal error: 'abcde.s' file not found
+#include ""abcde.s""
+         ^~~~~~~~~
 ";
 
         public static readonly Message[] ClangExpectedMessages = new Message[]
@@ -35,7 +39,11 @@ C:\Absolute\Path\host.c:4:2: note: include the header<stdio.h> or explicitly pro
         printf(""h"");
         ^"},
             new Message { Kind = MessageKind.Note, Line = 4, Column = 2, SourceFile = @"C:\Absolute\Path\host.c", Text =
-                "include the header<stdio.h> or explicitly provide a declaration for 'printf'" },
+                "include the header<stdio.h> or explicitly provide a declaration for 'printf'\r\n" },
+            new Message { Kind = MessageKind.Error, Line = 16, Column = 10, SourceFile = "input.s", Text =
+@"'abcde.s' file not found
+#include ""abcde.s""
+         ^~~~~~~~~" }
         };
 
         [Fact]

@@ -47,7 +47,7 @@ namespace VSRAD.Syntax.Core
             _dte = dte;
         }
 
-        public string GetActiveDocumentPath() => _dte.ActiveDocument.FullName;
+        public string GetActiveDocumentPath() => _dte.ActiveDocument.FullName.ToUpperInvariant();
 
         public IDocument GetOrCreateDocument(string path)
         {
