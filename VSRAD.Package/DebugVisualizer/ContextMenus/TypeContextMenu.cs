@@ -58,8 +58,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                     {
                         var watchName = VisualizerTable.GetRowWatchState(_table.Rows[_currentRow]).Name;
                         addWatchRange(watchName, i, y);
-                    })).ToArray())
-                ).ToArray());
+                    })).Prepend(new MenuItem("To") { Enabled = false }).ToArray())
+                ).Prepend(new MenuItem("From") { Enabled = false }).ToArray());
 
             var menuItems = typeItems.Concat(new[]
             {
