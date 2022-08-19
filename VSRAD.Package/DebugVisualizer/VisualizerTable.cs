@@ -67,6 +67,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             CellEndEdit += WatchEndEdit;
             CellBeginEdit += UpdateEditedWatchName;
+            // somewhat hacky way to implement dynamic name column width change while typing a watch name
+            EditingControlShowing += SetupDynamicNameColumnWidth;
             CellDoubleClick += (sender, args) => { if (args.ColumnIndex != -1) BeginEdit(false); };
             CellClick += (sender, args) => { if (args.RowIndex == NewWatchRowIndex) BeginEdit(false); };
 
@@ -78,8 +80,10 @@ namespace VSRAD.Package.DebugVisualizer
             AllowUserToResizeRows = false;
             EnableHeadersVisualStyles = false; // custom font and color settings for cell headers
 
-            _state = new TableState(this, columnWidth: 60);
+            _state = new TableState(this, columnWidth: 60, NameColumnIndex);
+            _state.NameColumnScalingEnabled = true;
             SetupColumns();
+
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
 
@@ -94,6 +98,23 @@ namespace VSRAD.Package.DebugVisualizer
 
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
+        }
+
+        private void SetupDynamicNameColumnWidth(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (CurrentCell?.ColumnIndex == NameColumnIndex && e.Control is TextBox textBox)
+            {
+                textBox.TextChanged -= AdjustDynamicNameColumnWidth;
+                textBox.TextChanged += AdjustDynamicNameColumnWidth;
+            }
+        }
+
+        private void AdjustDynamicNameColumnWidth(object sender, EventArgs e)
+        {
+            TextBox text = (TextBox)sender;
+            var targetWidth = TextRenderer.MeasureText(text.Text, text.Font).Width + text.Margin.Horizontal;
+            if (targetWidth > Columns[NameColumnIndex].Width)
+                Columns[NameColumnIndex].Width = targetWidth;
         }
 
         public void GoToWave(uint waveIdx, uint waveSize)
@@ -199,6 +220,12 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].HeaderCell.Value = watch.Type.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
             Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
+
+            var currentWidth = Columns[NameColumnIndex].Width;
+            var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
+            if (preferredWidth > currentWidth)
+                Columns[NameColumnIndex].Width = preferredWidth;
+
             LockWatchRowForEditing(Rows[index], canBeRemoved);
         }
 
@@ -248,7 +275,6 @@ namespace VSRAD.Package.DebugVisualizer
                 HeaderText = "Name",
                 ReadOnly = false,
                 Frozen = true,
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
             CreateMissingDataColumns(DataColumnCount);

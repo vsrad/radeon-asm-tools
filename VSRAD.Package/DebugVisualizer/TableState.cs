@@ -10,10 +10,12 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public DataGridView Table { get; }
         public int DataColumnOffset { get; private set; } = 1;
-        public int minAllowedWidth {get; } = 30;
+        public int minAllowedWidth { get; } = 30;
         public IReadOnlyList<DataGridViewColumn> DataColumns => _dataColumns;
         public int ColumnWidth { get; set; }
         public ScalingMode ScalingMode { get; set; } = ScalingMode.ResizeColumn;
+        public bool NameColumnScalingEnabled { get; set; }
+        public int NameColumnIndex { get; }
 
         private readonly List<DataGridViewColumn> _dataColumns = new List<DataGridViewColumn>();
 
@@ -28,15 +30,18 @@ namespace VSRAD.Package.DebugVisualizer
         // displayed after all data columns
         public int PhantomColumnIndex { get; private set; } = -1;
 
+        public int NameColumnEdge { get => Table.Columns[NameColumnIndex].Width + Table.RowHeadersWidth; }
+
         public int GetCurrentScroll()
         {
             return Table.HorizontalScrollingOffset + AdditionalScrollOffset;
         }
 
-        public TableState(DataGridView table, int columnWidth)
+        public TableState(DataGridView table, int columnWidth, int nameColumnIndex)
         {
             Table = table;
             ColumnWidth = columnWidth;
+            NameColumnIndex = nameColumnIndex;
 
             // Out of the box DataGridView is unable to change the width of even several dozen columns in real time because it recalculates layout after each individual column is resized
             // (https://referencesource.microsoft.com/#System.Windows.Forms/winforms/Managed/System/WinForms/DataGridViewMethods.cs,dc107b02a9e367cc)
@@ -101,7 +106,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var firstVisible = GetFirstVisibleDataColumnIndex();
             var n = DataColumns.Count(c => c.Visible);
-            var phantomWidth = Math.Max(2, Table.Width - Table.Columns[0].Width - Table.TopLeftHeaderCell.Size.Width - w);
+            var phantomWidth = Math.Max(2, Table.Width - Table.Columns[NameColumnIndex].Width - Table.TopLeftHeaderCell.Size.Width - w);
             TableShouldSuppressOnColumnWidthChangedEvent = true;
 
             foreach (var column in DataColumns)
@@ -122,6 +127,11 @@ namespace VSRAD.Package.DebugVisualizer
             Table.HorizontalScrollingOffset = Math.Max(0, s);
         }
 
+        public void ScaleNameColumn(int w)
+        {
+            Table.Columns[NameColumnIndex].Width = w;
+        }
+
         public int CountVisibleDataColumns(int index, bool include_current)
         {
             var n = DataColumns.Count(c => c.Visible && (c.Index < index || index == PhantomColumnIndex));
@@ -131,13 +141,13 @@ namespace VSRAD.Package.DebugVisualizer
 
         public int GetDataRegionWidth()
         {
-            return Table.Size.Width - Table.RowHeadersWidth - Table.Columns[0].Width;
+            return Table.Size.Width - Table.RowHeadersWidth - Table.Columns[NameColumnIndex].Width;
         }
 
         public float GetNormalizedXCoordinate(int x)
         {
             var DataRegionWidth = GetDataRegionWidth();
-            var DataRegionMouseX = x - Table.RowHeadersWidth - Table.Columns[0].Width;
+            var DataRegionMouseX = x - Table.RowHeadersWidth - Table.Columns[NameColumnIndex].Width;
 
             return (float)DataRegionMouseX / DataRegionWidth;
         }
