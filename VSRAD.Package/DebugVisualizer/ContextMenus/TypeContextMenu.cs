@@ -18,7 +18,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         private int _currentRow;
 
         public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy,
-            InsertRow insertRow, AddWatchRange addWatch)
+            InsertRow insertRow, AddWatchRange addWatchRange)
         {
             _table = table;
 
@@ -57,7 +57,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                     (s, e) =>
                     {
                         var watchName = VisualizerTable.GetRowWatchState(_table.Rows[_currentRow]).Name;
-                        addWatch(watchName, i, y);
+                        addWatchRange(watchName, i, y);
                     })).ToArray())
                 ).ToArray());
 

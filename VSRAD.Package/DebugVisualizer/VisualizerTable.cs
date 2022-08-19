@@ -87,7 +87,7 @@ namespace VSRAD.Package.DebugVisualizer
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
                 new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow,
-                    AddWatchRange),
+                    addWatchRange: (name, from, to) => ArrayRange.FormatArrayRangeWatch(name, from, to, options.VisualizerOptions.MatchBracketsOnAddToWatches).ToList().ForEach(AddWatch)),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
             });
@@ -98,22 +98,12 @@ namespace VSRAD.Package.DebugVisualizer
             _selectionController = new SelectionController(this);
         }
 
-        private void AddWatchRange(string name, int from, int to)
-        {
-            var range = ArrayRange.FormatArrayRangeWatch(name, from, to, true);
-            RemoveNewWatchRow();
-            foreach(var watch in range)
-                AppendVariableRow(new Watch(watch, VariableType.Int, isAVGPR: false));
-            PrepareNewWatchRow();
-            RaiseWatchStateChanged();
-        }
-
         public void AddWatch(string watchName)
         {
             RemoveNewWatchRow();
             AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
             PrepareNewWatchRow();
-            WatchStateChanged(GetCurrentWatchState(), DataRows);
+            RaiseWatchStateChanged();
         }
 
         public void GoToWave(uint waveIdx, uint waveSize)
