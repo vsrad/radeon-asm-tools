@@ -87,6 +87,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool HandleMouseWheel(MouseEventArgs e)
         {
+            if (!System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftShift)) return false;
+
             var hit = _table.HitTest(e.X, e.Y);
             _orgeX = e.X;
             _orgWidth = _tableState.ColumnWidth;
