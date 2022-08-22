@@ -84,5 +84,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         }
 
         public bool OperationStarted() => _operationStarted;
+
+        public bool HandleMouseWheel(MouseEventArgs e) => false;
     }
 }

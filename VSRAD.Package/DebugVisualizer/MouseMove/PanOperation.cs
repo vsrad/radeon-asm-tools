@@ -67,5 +67,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             return true;
         }
+
+        public bool HandleMouseWheel(MouseEventArgs e) => false;
     }
 }

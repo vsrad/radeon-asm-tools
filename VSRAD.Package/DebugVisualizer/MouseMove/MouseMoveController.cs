@@ -50,7 +50,13 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
-        public bool HandleMouseWheel(MouseEventArgs e) => ((ScaleOperation)_operations[0]).HandleMouseWheel(e);
+        public bool HandleMouseWheel(MouseEventArgs e)
+        {
+            foreach (var op in _operations)
+                if (op.HandleMouseWheel(e)) return true;
+
+            return false;
+        }
 
         public bool OperationDidNotFinishOnMouseUp()
         {
