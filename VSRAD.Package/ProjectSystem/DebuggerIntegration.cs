@@ -93,7 +93,7 @@ namespace VSRAD.Package.ProjectSystem
 
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 if (result.Error is Error e)
-                    Errors.Show(e);
+                    Errors.ShowWithLine(e, result.NextBreakLine);
                 NotifyDebugActionExecuted(result.RunResult, result.Transients);
             },
             exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null));
