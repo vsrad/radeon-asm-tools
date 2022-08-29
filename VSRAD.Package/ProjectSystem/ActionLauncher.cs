@@ -124,6 +124,7 @@ namespace VSRAD.Package.ProjectSystem
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
                 if (!actionError.HasValue) _breakpointTracker.UpdateBreakTarget((file, breakLines));
+                else Errors.ShowWarning($"Unsuccessful debug run. Next break line: {breakLines[0] + 1}");
                 return new ActionExecution(actionError, transients, runResult);
             }
             finally
