@@ -61,7 +61,7 @@
             <ListView.View>
                 <GridView x:Name="functionsGridView">
                     <GridViewColumn Header="Line" DisplayMemberBinding="{Binding Path=LineNumber}" Width="Auto"/>
-                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=Text}"/>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=Text}" Width="Auto"/>
                 </GridView>
             </ListView.View>
         </ListView>
