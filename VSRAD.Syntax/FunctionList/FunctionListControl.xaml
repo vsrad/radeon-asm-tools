@@ -49,6 +49,7 @@
                   MouseDoubleClick="FunctionsName_MouseDoubleClick"
                   PreviewKeyDown="Functions_PreviewKeyDown"
                   >
+            <ScrollViewer.HorizontalScrollBarVisibility>Hidden</ScrollViewer.HorizontalScrollBarVisibility>
             <ListView.Resources>
                 <Style TargetType="GridViewColumnHeader">
                     <Setter Property="Visibility" Value="Collapsed" />
