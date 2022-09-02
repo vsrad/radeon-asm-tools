@@ -49,15 +49,20 @@
                   MouseDoubleClick="FunctionsName_MouseDoubleClick"
                   PreviewKeyDown="Functions_PreviewKeyDown"
                   >
+            <ScrollViewer.HorizontalScrollBarVisibility>Hidden</ScrollViewer.HorizontalScrollBarVisibility>
             <ListView.Resources>
                 <Style TargetType="GridViewColumnHeader">
                     <Setter Property="Visibility" Value="Collapsed" />
+                </Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                    <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource Self}, Path=Text }" />
                 </Style>
             </ListView.Resources>
             <ListView.View>
                 <GridView x:Name="functionsGridView">
                     <GridViewColumn Header="Line" DisplayMemberBinding="{Binding Path=LineNumber}" Width="Auto"/>
-                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=Text}"/>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Path=Text}" Width="Auto"/>
                 </GridView>
             </ListView.View>
         </ListView>
