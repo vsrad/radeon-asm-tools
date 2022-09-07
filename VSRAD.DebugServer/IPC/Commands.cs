@@ -11,7 +11,8 @@ namespace VSRAD.DebugServer.IPC.Commands
         FetchResultRange = 2,
         Deploy = 3,
         ListEnvironmentVariables = 4,
-        PutFile = 5
+        PutFile = 5,
+        GetSExtensionVersion = 6
     }
 #pragma warning restore CA1028
 
@@ -36,6 +37,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
+                case CommandType.GetSExtensionVersion: return GetMinimalExtensionVersion.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -51,6 +53,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
+                case GetMinimalExtensionVersion _: type = CommandType.GetSExtensionVersion; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -234,5 +237,14 @@ namespace VSRAD.DebugServer.IPC.Commands
         public static ListEnvironmentVariables Deserialize(IPCReader _) => new ListEnvironmentVariables();
 
         public void Serialize(IPCWriter _) { }
+    }
+
+    public sealed class GetMinimalExtensionVersion : ICommand
+    {
+        public override string ToString() => "GetMinimalExtensionVersion";
+
+        public void Serialize(IPCWriter writer) { }
+
+        public static GetMinimalExtensionVersion Deserialize(IPCReader _) => new GetMinimalExtensionVersion();
     }
 }

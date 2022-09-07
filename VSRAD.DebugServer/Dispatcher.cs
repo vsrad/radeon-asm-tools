@@ -16,6 +16,7 @@ namespace VSRAD.DebugServer
             PutFileCommand pf => new PutFileHandler(pf).RunAsync(),
             Deploy d => new DeployHandler(d, clientLog).RunAsync(),
             ListEnvironmentVariables lev => new ListEnvironmentVariablesHandler(lev).RunAsync(),
+            GetMinimalExtensionVersion gmex => new GetMinimalExtensionVersionHandler(gmex).RunAsync(),
             _ => throw new ArgumentException($"Unknown command type {command.GetType()}"),
         };
     }

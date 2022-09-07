@@ -16,6 +16,8 @@ namespace VSRAD.DebugServer
         const uint ENABLE_QUICK_EDIT = 0x0040;
         const int STD_INPUT_HANDLE = -10;
 
+        public const string MIN_EXT_VERSION = "2021.12.8";
+
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
         [DllImport("kernel32.dll", SetLastError = true)]

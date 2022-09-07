@@ -11,7 +11,8 @@ namespace VSRAD.DebugServer.IPC.Responses
         MetadataFetched = 1,
         ResultRangeFetched = 2,
         EnvironmentVariablesListed = 3,
-        PutFile = 4
+        PutFile = 4,
+        MinimalExtensionVersion = 5
     }
 #pragma warning restore CA1028
 
@@ -32,6 +33,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
                 case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
+                case ResponseType.MinimalExtensionVersion: return MinimalExtensionVersion.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -46,6 +48,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
                 case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
                 case PutFileResponse _: type = ResponseType.PutFile; break;
+                case MinimalExtensionVersion _: type = ResponseType.MinimalExtensionVersion; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -194,6 +197,28 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public void Serialize(IPCWriter writer) =>
             writer.WriteLengthPrefixedDict(Variables);
+    }
+
+    public sealed class MinimalExtensionVersion : IResponse
+    {
+        public string MinExtensionVersion;
+
+        public string ServerVersion;
+
+        public override string ToString() =>
+            $"Minimal Extension Version: {MinExtensionVersion}{Environment.NewLine}Server Version: {ServerVersion}{Environment.NewLine}";
+
+        public static MinimalExtensionVersion Deserialize(IPCReader reader) => new MinimalExtensionVersion
+        {
+            MinExtensionVersion = reader.ReadString(),
+            ServerVersion = reader.ReadString()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(MinExtensionVersion);
+            writer.Write(ServerVersion);
+        }
     }
 
 #pragma warning disable CA1028 // Using byte for enum storage because it is transferred over the wire
