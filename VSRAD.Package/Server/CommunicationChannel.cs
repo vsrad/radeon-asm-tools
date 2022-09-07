@@ -193,7 +193,7 @@ namespace VSRAD.Package.Server
                 if (string.Compare(minimalExtVersion, _extensionVersion, comparisonType: StringComparison.OrdinalIgnoreCase) > 0)
                 {
                     ConnectionState = ClientState.Disconnected;
-                    throw new UnsupportedDebuggerVersionException(ConnectionOptions, minimalExtVersion, _extensionVersion);
+                    throw new UnsupportedDebuggerVersionException(ConnectionOptions, minimalExtVersion);
                 }
 
                 if (string.Compare(Constants.MinimalRequiredServerVersion, serverVersion, comparisonType: StringComparison.OrdinalIgnoreCase) > 0)

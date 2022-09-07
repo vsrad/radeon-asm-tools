@@ -12,7 +12,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         Deploy = 3,
         ListEnvironmentVariables = 4,
         PutFile = 5,
-        GetSExtensionVersion = 6
+        GetExtensionVersion = 6
     }
 #pragma warning restore CA1028
 
@@ -37,7 +37,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
-                case CommandType.GetSExtensionVersion: return GetMinimalExtensionVersion.Deserialize(reader);
+                case CommandType.GetExtensionVersion: return GetMinimalExtensionVersion.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -53,7 +53,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
-                case GetMinimalExtensionVersion _: type = CommandType.GetSExtensionVersion; break;
+                case GetMinimalExtensionVersion _: type = CommandType.GetExtensionVersion; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
