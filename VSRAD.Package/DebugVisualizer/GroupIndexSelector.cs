@@ -102,17 +102,19 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _updateOptions = false;
 
-            //_projectOptions.VisualizerOptions.NDRange3D = _currentDispatchParams.NDRange3D; not sure about this
+            _projectOptions.VisualizerOptions.NDRange3D = _currentDispatchParams.NDRange3D;
             _projectOptions.DebuggerOptions.WaveSize = _currentDispatchParams.WaveSize;
 
             DimX = _currentDispatchParams.DimX;
             DimY = _currentDispatchParams.DimY;
             DimZ = _currentDispatchParams.DimZ;
 
-            _projectOptions.DebuggerOptions.NGroups =
-                _currentDispatchParams.DimX * _currentDispatchParams.DimY * _currentDispatchParams.DimZ;
-            _projectOptions.DebuggerOptions.GroupSize =
-                _currentDispatchParams.GroupSizeX * _currentDispatchParams.GroupSizeY * _currentDispatchParams.GroupSizeZ;
+            _projectOptions.DebuggerOptions.NGroups = _currentDispatchParams.NDRange3D
+                ? _currentDispatchParams.DimX * _currentDispatchParams.DimY * _currentDispatchParams.DimZ
+                : _currentDispatchParams.DimX;
+            _projectOptions.DebuggerOptions.GroupSize = _currentDispatchParams.NDRange3D
+                ? _currentDispatchParams.GroupSizeX * _currentDispatchParams.GroupSizeY * _currentDispatchParams.GroupSizeZ
+                : _currentDispatchParams.GroupSizeX;
 
             _updateOptions = true;
             Update();
