@@ -50,7 +50,7 @@ namespace VSRAD.Package.DebugVisualizer
         public uint DimZ { get => _dimZ; set { SetField(ref _dimZ, value); RaisePropertyChanged(nameof(MaximumZ)); } }
 
         // OneWay bindings in XAML do not work on these properties for some reason, hence the empty setters
-        public uint MaximumX { get => _projectOptions.VisualizerOptions.NDRange3D ? DimX - 1 : uint.MaxValue; set { } }
+        public uint MaximumX { get => _projectOptions.VisualizerOptions.NDRange3D ? DimX - 1 : DimX * DimY * DimZ - 1; set { } }
         public uint MaximumY { get => DimY - 1; set { } }
         public uint MaximumZ { get => DimZ - 1; set { } }
 
@@ -78,7 +78,21 @@ namespace VSRAD.Package.DebugVisualizer
                         SetOptionsFromDispatchParams();
                     break;
                 case nameof(Options.VisualizerOptions.NDRange3D):
-                    RaisePropertyChanged(nameof(MaximumX));
+                    if (!_projectOptions.VisualizerOptions.NDRange3D)
+                    {
+                        RaisePropertyChanged(nameof(MaximumX));
+                        X = X + Y * DimX + Z * DimX * DimY;
+                        Y = 1;
+                        Z = 1;
+                    }
+                    else
+                    {
+                        var x = X;
+                        X = X % DimX;
+                        Y = x % (DimX * DimY) / DimZ;
+                        Z = x / DimX / DimY;
+                        RaisePropertyChanged(nameof(MaximumX));
+                    }
                     if (_updateOptions) Update();
                     break;
                 case nameof(Options.DebuggerOptions.WaveSize):
