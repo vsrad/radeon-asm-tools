@@ -116,7 +116,8 @@ namespace VSRAD.Package.DebugVisualizer
         {
             _updateOptions = false;
 
-            //_projectOptions.VisualizerOptions.NDRange3D = _currentDispatchParams.NDRange3D; not sure about this
+            _projectOptions.VisualizerOptions.NDRange3D =
+                _currentDispatchParams.DimY > 1 || _currentDispatchParams.DimZ > 1;
             _projectOptions.DebuggerOptions.WaveSize = _currentDispatchParams.WaveSize;
 
             DimX = _currentDispatchParams.DimX;
