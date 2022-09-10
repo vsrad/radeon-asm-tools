@@ -112,7 +112,9 @@ namespace VSRAD.Package.DebugVisualizer
             _projectOptions.DebuggerOptions.NGroups = _currentDispatchParams.NDRange3D
                 ? _currentDispatchParams.DimX * _currentDispatchParams.DimY * _currentDispatchParams.DimZ
                 : _currentDispatchParams.DimX;
-            _projectOptions.DebuggerOptions.GroupSize = _currentDispatchParams.GroupSizeX;
+            _projectOptions.DebuggerOptions.GroupSize = _currentDispatchParams.NDRange3D
+                ? _currentDispatchParams.GroupSizeX * _currentDispatchParams.GroupSizeY * _currentDispatchParams.GroupSizeZ
+                : _currentDispatchParams.GroupSizeX;
 
             _updateOptions = true;
             Update();
