@@ -61,6 +61,7 @@ input.s:16:10: fatal error: 'abcde.s' file not found
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?
 *E,fatal (C:\Absolute\Path\source.c:35): Uncaught error: Undefined variable: user
+*W,undefined: undefined reference to 'printf' (C:\Absolute\Path\source.c:3, C:\Absolute\Path\source.c:5, C:\Absolute\Path\include.h:10)
 ";
 
         public static readonly Message[] ScriptExpectedMessages = new Message[]
@@ -72,7 +73,10 @@ input.s:16:10: fatal error: 'abcde.s' file not found
 @"syntax error: at symbol 'printf'
     parse error: syntax error, unexpected T_PAAMAYIM_NEKUDOTAYIM
     did you really mean to use the scope resolution op here?" },
-            new Message { Kind = MessageKind.Error, Line = 35, SourceFile = @"C:\Absolute\Path\source.c", Text = "fatal: Uncaught error: Undefined variable: user" }
+            new Message { Kind = MessageKind.Error, Line = 35, SourceFile = @"C:\Absolute\Path\source.c", Text = "fatal: Uncaught error: Undefined variable: user" },
+            new Message { Kind = MessageKind.Warning, Line = 3, SourceFile = @"C:\Absolute\Path\source.c", Text = "undefined: undefined reference to 'printf'" },
+            new Message { Kind = MessageKind.Warning, Line = 5, SourceFile = @"C:\Absolute\Path\source.c", Text = "undefined: undefined reference to 'printf'" },
+            new Message { Kind = MessageKind.Warning, Line = 10, SourceFile = @"C:\Absolute\Path\include.h", Text = "undefined: undefined reference to 'printf'" }
         };
 
         [Fact]

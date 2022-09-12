@@ -20,11 +20,20 @@ namespace VSRAD.Package.BuildTools.Errors
                     string line;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        var message = ParseScriptMessage(line) ?? ParseKeywordMessage(line) ?? ParseClangMessage(line);
-                        if (message != null)
+                        var message = ParseKeywordMessage(line) ?? ParseClangMessage(line);
+                        var scriptMessages = ParseScriptMessage(line);
+                        if (message != null || scriptMessages != null)
                         {
-                            lastMessage = message;
-                            messages.Add(message);
+                            if (message != null)
+                            {
+                                lastMessage = message;
+                                messages.Add(message);
+                            }
+                            else
+                            {
+                                lastMessage = scriptMessages[scriptMessages.Count - 1];
+                                messages.AddRange(scriptMessages);
+                            }
                         }
                         else if (lastMessage != null)
                         {
@@ -54,12 +63,15 @@ namespace VSRAD.Package.BuildTools.Errors
         }
 
         private static readonly Regex ScriptErrorRegex = new Regex(
-            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>.+):(?<line>\d+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
+            @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>.+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
 
-        private static readonly Regex ScriptErrorLocationInTextRegex = new Regex(
-            @"(?<text>.+)\s\((?<file>.+):(?<line>\d+)\)", RegexOptions.Compiled);
+        private static readonly Regex ScriptErrorTextRegex = new Regex(
+            @"(?<text>.+)\s\((?<file>.+)\)", RegexOptions.Compiled);
 
-        private static Message ParseScriptMessage(string header)
+        private static readonly Regex ScriptErrorLocationsRegex = new Regex(
+            @"(?<file>.+):(?<line>\d+)", RegexOptions.Compiled);
+
+        private static List<Message> ParseScriptMessage(string header)
         {
             var match = ScriptErrorRegex.Match(header);
             if (!match.Success) return null;
@@ -67,20 +79,31 @@ namespace VSRAD.Package.BuildTools.Errors
             var code = match.Groups["code"].Value;
             var textAndMaybeLocation = match.Groups["text"].Value;
 
-            var message = new Message { Kind = ParseMessageKind(match.Groups["kind"].Value) };
+            var kind = ParseMessageKind(match.Groups["kind"].Value);
 
             if (!match.Groups["file"].Success)
-                match = ScriptErrorLocationInTextRegex.Match(textAndMaybeLocation);
+                match = ScriptErrorTextRegex.Match(textAndMaybeLocation);
+
+            var messages = new List<Message>();
 
             if (match.Success)
             {
-                message.SourceFile = match.Groups["file"].Value;
-                message.Line = int.Parse(match.Groups["line"].Value);
+                foreach (var source in match.Groups["file"].Value.Split(','))
+                {
+                    var message = new Message { Kind = kind };
+                    var locationMatch = ScriptErrorLocationsRegex.Match(source);
+                    message.SourceFile = locationMatch.Groups["file"].Value.Trim();
+                    message.Line = int.Parse(locationMatch.Groups["line"].Value);
+                    message.Text = code + ": " + match.Groups["text"].Value;
+                    messages.Add(message);
+                }
+            }
+            else
+            {
+                messages.Add(new Message { Kind = kind, Text = code + ": " + textAndMaybeLocation });
             }
 
-            message.Text = code + ": " + (match.Success ? match.Groups["text"].Value : textAndMaybeLocation);
-
-            return message;
+            return messages;
         }
 
         private static readonly Regex KeywordErrorRegex = new Regex(
