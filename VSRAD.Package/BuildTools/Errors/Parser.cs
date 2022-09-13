@@ -57,7 +57,7 @@ namespace VSRAD.Package.BuildTools.Errors
             @"(?<text>.+)\s\((?<file>.+)\)", RegexOptions.Compiled);
 
         private static readonly Regex ScriptErrorLocationsRegex = new Regex(
-            @"(?<file>.+):(?<line>\d+)", RegexOptions.Compiled);
+            @"(?<file>[^,]+):(?<line>\d+)", RegexOptions.Compiled);
 
         private static bool ParseScriptMessage(string header, List<Message> messages)
         {
@@ -74,14 +74,28 @@ namespace VSRAD.Package.BuildTools.Errors
 
             if (match.Success)
             {
-                foreach (var source in match.Groups["file"].Value.Split(','))
+                var locationMatch = ScriptErrorLocationsRegex.Matches(match.Groups["file"].Value); 
+                if (locationMatch.Count == 0)
                 {
-                    var message = new Message { Kind = kind };
-                    var locationMatch = ScriptErrorLocationsRegex.Match(source);
-                    message.SourceFile = locationMatch.Groups["file"].Value.Trim();
-                    message.Line = int.Parse(locationMatch.Groups["line"].Value);
-                    message.Text = code + ": " + match.Groups["text"].Value;
-                    messages.Add(message);
+                    messages.Add(new Message { Kind = kind, Text = code + ": " + textAndMaybeLocation });
+                    return true;
+                }
+                foreach (Match lMatch in locationMatch)
+                {
+                    if (!lMatch.Success)
+                    {
+                        messages.Add(new Message { Kind = kind, Text = code + ": " + textAndMaybeLocation });
+                    }
+                    else
+                    {
+                        messages.Add(new Message
+                        {
+                            Kind = kind,
+                            SourceFile = lMatch.Groups["file"].Value.Trim(),
+                            Line = int.Parse(lMatch.Groups["line"].Value),
+                            Text = code + ": " + match.Groups["text"].Value
+                        });
+                    }
                 }
             }
             else
