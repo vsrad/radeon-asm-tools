@@ -23,8 +23,7 @@ namespace VSRAD.Package.BuildTools.Errors
                             ParseAsmMessages(line, messages) ||
                             ParseScriptMessages(line, messages) ||
                             ParseClangMessages(line, messages);
-                        if (!currentLineParsed && !string.IsNullOrWhiteSpace(line)
-                                && messages.Count > 0)
+                        if (!currentLineParsed && messages.Count > 0)
                             messages.Last().Text += Environment.NewLine + line;
                     }
                 }

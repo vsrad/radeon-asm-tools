@@ -18,11 +18,9 @@ Relative\path\host.c:4:2: warning: implicitly declaring library function 'printf
         printf(""h"");
         ^
 C:\Absolute\Path\host.c:4:2: note: include the header<stdio.h> or explicitly provide a declaration for 'printf'
-
 input.s:16:10: fatal error: 'abcde.s' file not found
 #include ""abcde.s""
-         ^~~~~~~~~
-";
+         ^~~~~~~~~";
 
         public static readonly Message[] ClangExpectedMessages = new Message[]
         {
@@ -53,8 +51,8 @@ input.s:16:10: fatal error: 'abcde.s' file not found
             Assert.Equal(ClangExpectedMessages, messages);
         }
 
-        public const string AsmStderr = @"
-*E,fatal: undefined reference to 'printf' (<stdin>:3)
+        public const string AsmStderr =
+@"*E,fatal: undefined reference to 'printf' (<stdin>:3)
 *E,fatal: undefined reference to 'printf' (C:\Absolute\Path\source.c:3)
 *W,undefined: 1 undefined references found
 *E,syntax error (<stdin>:12): at symbol 'printf'
@@ -87,12 +85,11 @@ input.s:16:10: fatal error: 'abcde.s' file not found
             Assert.Equal(AsmExpectedMessages, messages);
         }
 
-        public const string ScriptStderr = @"
-*E,fatal: undefined reference to 'printf' (<stdin>:3)
+        public const string ScriptStderr =
+@"*E,fatal: undefined reference to 'printf' (<stdin>:3)
 ERROR: check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'
 WARNING: you are incredibly beautiful!
-*E,fatal (auth.c:35): Uncaught error: Undefined variable: user
-";
+*E,fatal (auth.c:35): Uncaught error: Undefined variable: user";
 
         public static readonly Message[] ScriptErrorExpectedMessages = new Message[]
         {
