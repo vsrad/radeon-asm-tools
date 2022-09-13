@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Linq;
 using static VSRAD.BuildTools.IPCBuildResult;
 
 namespace VSRAD.Package.BuildTools.Errors
@@ -15,30 +16,16 @@ namespace VSRAD.Package.BuildTools.Errors
             {
                 using (var reader = new StringReader(output))
                 {
-                    Message lastMessage = null;
-
                     string line;
                     while ((line = reader.ReadLine()) != null)
                     {
-                        var message = ParseKeywordMessage(line) ?? ParseClangMessage(line);
-                        var scriptMessages = ParseScriptMessage(line);
-                        if (message != null || scriptMessages != null)
-                        {
-                            if (message != null)
-                            {
-                                lastMessage = message;
-                                messages.Add(message);
-                            }
-                            else
-                            {
-                                lastMessage = scriptMessages[scriptMessages.Count - 1];
-                                messages.AddRange(scriptMessages);
-                            }
-                        }
-                        else if (lastMessage != null)
-                        {
-                            lastMessage.Text += Environment.NewLine + line;
-                        }
+                        var currentLineParsed = 
+                            ParseScriptMessage(line, messages) ||
+                            ParseKeywordMessage(line, messages) ||
+                            ParseClangMessage(line, messages);
+                        if (!currentLineParsed && !string.IsNullOrWhiteSpace(line)
+                                && messages.Count > 0)
+                            messages.Last().Text += Environment.NewLine + line;
                     }
                 }
             }
@@ -48,18 +35,19 @@ namespace VSRAD.Package.BuildTools.Errors
         private static readonly Regex ClangErrorRegex = new Regex(
             @"(?<file>.+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note|fatal error):\s(?<text>.+)", RegexOptions.Compiled);
 
-        private static Message ParseClangMessage(string header)
+        private static bool ParseClangMessage(string header, List<Message> messages)
         {
             var match = ClangErrorRegex.Match(header);
-            if (!match.Success) return null;
-            return new Message
+            if (!match.Success) return false;
+            messages.Add(new Message
             {
                 Kind = ParseMessageKind(match.Groups["kind"].Value),
                 Text = match.Groups["text"].Value,
                 SourceFile = match.Groups["file"].Value,
                 Line = int.Parse(match.Groups["line"].Value),
                 Column = int.Parse(match.Groups["col"].Value)
-            };
+            });
+            return true;
         }
 
         private static readonly Regex ScriptErrorRegex = new Regex(
@@ -71,10 +59,10 @@ namespace VSRAD.Package.BuildTools.Errors
         private static readonly Regex ScriptErrorLocationsRegex = new Regex(
             @"(?<file>.+):(?<line>\d+)", RegexOptions.Compiled);
 
-        private static List<Message> ParseScriptMessage(string header)
+        private static bool ParseScriptMessage(string header, List<Message> messages)
         {
             var match = ScriptErrorRegex.Match(header);
-            if (!match.Success) return null;
+            if (!match.Success) return false;
 
             var code = match.Groups["code"].Value;
             var textAndMaybeLocation = match.Groups["text"].Value;
@@ -83,8 +71,6 @@ namespace VSRAD.Package.BuildTools.Errors
 
             if (!match.Groups["file"].Success)
                 match = ScriptErrorTextRegex.Match(textAndMaybeLocation);
-
-            var messages = new List<Message>();
 
             if (match.Success)
             {
@@ -102,25 +88,23 @@ namespace VSRAD.Package.BuildTools.Errors
             {
                 messages.Add(new Message { Kind = kind, Text = code + ": " + textAndMaybeLocation });
             }
-
-            return messages;
+            return true;
         }
 
         private static readonly Regex KeywordErrorRegex = new Regex(
             @"(?<kind>ERROR|WARNING):\s*(?<text>.+)", RegexOptions.Compiled);
 
-        private static Message ParseKeywordMessage(string header)
+        private static bool ParseKeywordMessage(string header, List<Message> messages)
         {
             var match = KeywordErrorRegex.Match(header);
-            if (!match.Success) return null;
+            if (!match.Success) return false;
 
-            var message = new Message
+            messages.Add(new Message
             {
                 Kind = ParseMessageKind(match.Groups["kind"].Value),
                 Text = match.Groups["text"].Value
-            };
-
-            return message;
+            });
+            return true;
         }
 
         private static MessageKind ParseMessageKind(string kind)

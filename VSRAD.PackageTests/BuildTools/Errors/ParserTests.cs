@@ -39,7 +39,7 @@ input.s:16:10: fatal error: 'abcde.s' file not found
         printf(""h"");
         ^"},
             new Message { Kind = MessageKind.Note, Line = 4, Column = 2, SourceFile = @"C:\Absolute\Path\host.c", Text =
-                "include the header<stdio.h> or explicitly provide a declaration for 'printf'\r\n" },
+                "include the header<stdio.h> or explicitly provide a declaration for 'printf'" },
             new Message { Kind = MessageKind.Error, Line = 16, Column = 10, SourceFile = "input.s", Text =
 @"'abcde.s' file not found
 #include ""abcde.s""
