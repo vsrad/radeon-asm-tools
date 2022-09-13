@@ -20,9 +20,9 @@ namespace VSRAD.Package.BuildTools.Errors
                     while ((line = reader.ReadLine()) != null)
                     {
                         var currentLineParsed = 
-                            ParseAsmMessage(line, messages) ||
-                            ParseScriptMessage(line, messages) ||
-                            ParseClangMessage(line, messages);
+                            ParseAsmMessages(line, messages) ||
+                            ParseScriptMessages(line, messages) ||
+                            ParseClangMessages(line, messages);
                         if (!currentLineParsed && !string.IsNullOrWhiteSpace(line)
                                 && messages.Count > 0)
                             messages.Last().Text += Environment.NewLine + line;
@@ -35,7 +35,7 @@ namespace VSRAD.Package.BuildTools.Errors
         private static readonly Regex ClangErrorRegex = new Regex(
             @"(?<file>.+):(?<line>\d+):(?<col>\d+):\s*(?<kind>error|warning|note|fatal error):\s(?<text>.+)", RegexOptions.Compiled);
 
-        private static bool ParseClangMessage(string header, List<Message> messages)
+        private static bool ParseClangMessages(string header, List<Message> messages)
         {
             var match = ClangErrorRegex.Match(header);
             if (!match.Success) return false;
@@ -59,7 +59,7 @@ namespace VSRAD.Package.BuildTools.Errors
         private static readonly Regex AsmErrorLocationsRegex = new Regex(
             @"(?<fileOrText>[^,]+):(?<line>\d+)", RegexOptions.Compiled);
 
-        private static bool ParseAsmMessage(string header, List<Message> messages)
+        private static bool ParseAsmMessages(string header, List<Message> messages)
         {
             var match = AsmErrorRegex.Match(header);
             if (!match.Success) return false;
@@ -108,7 +108,7 @@ namespace VSRAD.Package.BuildTools.Errors
         private static readonly Regex ScriptErrorRegex = new Regex(
             @"(?<kind>ERROR|WARNING):\s*(?<text>.+)", RegexOptions.Compiled);
 
-        private static bool ParseScriptMessage(string header, List<Message> messages)
+        private static bool ParseScriptMessages(string header, List<Message> messages)
         {
             var match = ScriptErrorRegex.Match(header);
             if (!match.Success) return false;
