@@ -20,8 +20,8 @@ namespace VSRAD.Package.BuildTools.Errors
                     while ((line = reader.ReadLine()) != null)
                     {
                         var currentLineParsed = 
+                            ParseAsmMessage(line, messages) ||
                             ParseScriptMessage(line, messages) ||
-                            ParseKeywordMessage(line, messages) ||
                             ParseClangMessage(line, messages);
                         if (!currentLineParsed && !string.IsNullOrWhiteSpace(line)
                                 && messages.Count > 0)
@@ -50,18 +50,18 @@ namespace VSRAD.Package.BuildTools.Errors
             return true;
         }
 
-        private static readonly Regex ScriptErrorRegex = new Regex(
+        private static readonly Regex AsmErrorRegex = new Regex(
             @"\*(?<kind>[EW]),(?<code>[^:(]+)(?>\s\((?<file>.+)\))?:\s(?<text>.+)", RegexOptions.Compiled);
 
-        private static readonly Regex ScriptErrorTextRegex = new Regex(
+        private static readonly Regex AsmErrorTextRegex = new Regex(
             @"(?<text>.+)\s\((?<file>.+)\)", RegexOptions.Compiled);
 
-        private static readonly Regex ScriptErrorLocationsRegex = new Regex(
-            @"(?<file>[^,]+):(?<line>\d+)", RegexOptions.Compiled);
+        private static readonly Regex AsmErrorLocationsRegex = new Regex(
+            @"(?<fileOrText>[^,]+):(?<line>\d+)", RegexOptions.Compiled);
 
-        private static bool ParseScriptMessage(string header, List<Message> messages)
+        private static bool ParseAsmMessage(string header, List<Message> messages)
         {
-            var match = ScriptErrorRegex.Match(header);
+            var match = AsmErrorRegex.Match(header);
             if (!match.Success) return false;
 
             var code = match.Groups["code"].Value;
@@ -70,11 +70,11 @@ namespace VSRAD.Package.BuildTools.Errors
             var kind = ParseMessageKind(match.Groups["kind"].Value);
 
             if (!match.Groups["file"].Success)
-                match = ScriptErrorTextRegex.Match(textAndMaybeLocation);
+                match = AsmErrorTextRegex.Match(textAndMaybeLocation);
 
             if (match.Success)
             {
-                var locationMatch = ScriptErrorLocationsRegex.Matches(match.Groups["file"].Value); 
+                var locationMatch = AsmErrorLocationsRegex.Matches(match.Groups["file"].Value);
                 if (locationMatch.Count == 0)
                 {
                     messages.Add(new Message { Kind = kind, Text = code + ": " + textAndMaybeLocation });
@@ -91,7 +91,7 @@ namespace VSRAD.Package.BuildTools.Errors
                         messages.Add(new Message
                         {
                             Kind = kind,
-                            SourceFile = lMatch.Groups["file"].Value.Trim(),
+                            SourceFile = lMatch.Groups["fileOrText"].Value.Trim(),
                             Line = int.Parse(lMatch.Groups["line"].Value),
                             Text = code + ": " + match.Groups["text"].Value
                         });
@@ -105,12 +105,12 @@ namespace VSRAD.Package.BuildTools.Errors
             return true;
         }
 
-        private static readonly Regex KeywordErrorRegex = new Regex(
+        private static readonly Regex ScriptErrorRegex = new Regex(
             @"(?<kind>ERROR|WARNING):\s*(?<text>.+)", RegexOptions.Compiled);
 
-        private static bool ParseKeywordMessage(string header, List<Message> messages)
+        private static bool ParseScriptMessage(string header, List<Message> messages)
         {
-            var match = KeywordErrorRegex.Match(header);
+            var match = ScriptErrorRegex.Match(header);
             if (!match.Success) return false;
 
             messages.Add(new Message

@@ -53,7 +53,7 @@ input.s:16:10: fatal error: 'abcde.s' file not found
             Assert.Equal(ClangExpectedMessages, messages);
         }
 
-        public const string ScriptStderr = @"
+        public const string AsmStderr = @"
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
 *E,fatal: undefined reference to 'printf' (C:\Absolute\Path\source.c:3)
 *W,undefined: 1 undefined references found
@@ -64,7 +64,7 @@ input.s:16:10: fatal error: 'abcde.s' file not found
 *W,undefined: undefined reference to 'printf' (C:\Absolute\Path\source.c:3, C:\Absolute\Path\source.c:5, C:\Absolute\Path\include.h:10)
 *W,undefined: undefined reference to 'printf' (undefref)";
 
-        public static readonly Message[] ScriptExpectedMessages = new Message[]
+        public static readonly Message[] AsmExpectedMessages = new Message[]
         {
             new Message { Kind = MessageKind.Error, Line = 3, SourceFile = "<stdin>", Text = "fatal: undefined reference to 'printf'"},
             new Message { Kind = MessageKind.Error, Line = 3, SourceFile = @"C:\Absolute\Path\source.c", Text = "fatal: undefined reference to 'printf'"},
@@ -81,20 +81,20 @@ input.s:16:10: fatal error: 'abcde.s' file not found
         };
 
         [Fact]
-        public void ScriptErrorTest()
+        public void AsmErrorTest()
         {
-            var messages = ParseStderr(new string[] { ScriptStderr }).ToArray();
-            Assert.Equal(ScriptExpectedMessages, messages);
+            var messages = ParseStderr(new string[] { AsmStderr }).ToArray();
+            Assert.Equal(AsmExpectedMessages, messages);
         }
 
-        public const string KeywordStderr = @"
+        public const string ScriptStderr = @"
 *E,fatal: undefined reference to 'printf' (<stdin>:3)
 ERROR: check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'
 WARNING: you are incredibly beautiful!
 *E,fatal (auth.c:35): Uncaught error: Undefined variable: user
 ";
 
-        public static readonly Message[] KeywordErrorExpectedMessages = new Message[]
+        public static readonly Message[] ScriptErrorExpectedMessages = new Message[]
         {
             new Message { Kind = MessageKind.Error, Line = 3, SourceFile = "<stdin>", Text = "fatal: undefined reference to 'printf'" },
             new Message { Kind = MessageKind.Error, Line = 0, SourceFile = "", Text = @"check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'" },
@@ -103,18 +103,18 @@ WARNING: you are incredibly beautiful!
         };
 
         [Fact]
-        public void KeywordErrorTest()
+        public void ScriptErrorTest()
         {
-            var messages = ParseStderr(new string[] { KeywordStderr }).ToArray();
-            Assert.Equal(KeywordErrorExpectedMessages, messages);
+            var messages = ParseStderr(new string[] { ScriptStderr }).ToArray();
+            Assert.Equal(ScriptErrorExpectedMessages, messages);
         }
 
         [Fact]
         public void MixedErrorFormatsTest()
         {
-            var expectedMessages = ClangExpectedMessages.Concat(KeywordErrorExpectedMessages).Concat(ScriptExpectedMessages).ToArray();
+            var expectedMessages = ClangExpectedMessages.Concat(ScriptErrorExpectedMessages).Concat(AsmExpectedMessages).ToArray();
 
-            var separateOutputs = new[] { ClangStderr, KeywordStderr, ScriptStderr };
+            var separateOutputs = new[] { ClangStderr, ScriptStderr, AsmStderr };
             var separateOutputsMessages = ParseStderr(separateOutputs).ToArray();
             Assert.Equal(expectedMessages, separateOutputsMessages);
 
