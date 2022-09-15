@@ -78,7 +78,7 @@ input.s:16:10: fatal error: 'abcde.s' file not found
         }
 
         public const string ScriptStderr =
-@"*E,fatal: undefined reference to 'printf' (<stdin>:3)
+@"*E,fatal (<stdin>:3): undefined reference to 'printf'
 ERROR: check if app exists and can be executed 'C:\NEVER\GONNA\GIVE\YOU\UP.exe'
 WARNING: you are incredibly beautiful!
 *E,fatal (auth.c:35): Uncaught error: Undefined variable: user";
