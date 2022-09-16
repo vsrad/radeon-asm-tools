@@ -71,6 +71,33 @@ namespace VSRAD.DebugServer
             Console.WriteLine($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
         }
 
+        public void ParseVersionError(String version)
+        {
+            Console.WriteLine($"{Environment.NewLine}Invalid Version on handshake attempt: {version}");
+        }
+
+        public void InvalidVersion(String receivedVersion, String minimalVersion)
+        {
+            Console.WriteLine($"{Environment.NewLine}Version mismatch. Client version: {receivedVersion}," +
+                $" expected version greater then {minimalVersion} ");
+        }
+
+        public void ClientRejectedServerVersion(String serverVersion, String clientVersion)
+        {
+            Console.WriteLine($"{Environment.NewLine}Client rejected server version{Environment.NewLine}" +
+                $"client version: {clientVersion}, server version: {serverVersion}");
+        }
+
+        public void HandshakeFailed(EndPoint clientEndpoint)
+        {
+            Console.WriteLine($"{Environment.NewLine}Handshake in connection with {clientEndpoint} failed");
+        }
+
+        public void ConnectionTimeoutOnHandShake()
+        {
+            Console.WriteLine($"{Environment.NewLine}Connection timeout on handshake attempt");
+        }
+
         private void Print(string message) =>
             Console.WriteLine("===" + Environment.NewLine + $"[Client #{_clientId}] {message}");
     }
