@@ -11,9 +11,16 @@
 
   <PropertyGroup>
     <TrimUnusedDependencies>true</TrimUnusedDependencies>
-    <Version>2021.03.03</Version>
+    <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)\..\VSRAD.Package\source.extension.vsixmanifest")), `Version=\"[0-9,.]+\" Language=`).ToString()),`[0-9,.]+`).ToString())</Version>
     <AssemblyName>RadeonAsmDebugServer</AssemblyName>
     <RootNamespace>VSRAD.DebugServer</RootNamespace>
   </PropertyGroup>
+
+  <Target Name="ValidateVersion" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+       <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)\..\VSRAD.Package\source.extension.vsixmanifest")), `Version=\"[0-9,.]+\" Language=`).ToString()),`[0-9,.]+`).ToString())</Version>
+    </PropertyGroup>
+    <Message Importance="High" Text="Debug server version: $(Version)"/>
+  </Target>
 
 </Project>
