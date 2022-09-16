@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text;
 using VSRAD.DebugServer.IPC.Commands;
+
 namespace VSRAD.DebugServer
 {
     public sealed class Server
@@ -33,6 +34,14 @@ namespace VSRAD.DebugServer
         {
             _listener = new TcpListener(ip, port);
             _verboseLogging = verboseLogging;
+        }
+
+        public enum HandShakeStatus
+        {
+            client_accepted,
+            client_not_accepted,
+            server_accepted,
+            server_not_accepted
         }
 
         public async Task LoopAsync()

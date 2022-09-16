@@ -62,6 +62,14 @@ namespace VSRAD.Package.Server
         Connected
     }
 
+    public enum HandShakeStatus
+    {
+        client_accepted,
+        client_not_accepted,
+        server_accepted,
+        server_not_accepted
+    }
+
     [Export(typeof(ICommunicationChannel))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class CommunicationChannel : ICommunicationChannel
