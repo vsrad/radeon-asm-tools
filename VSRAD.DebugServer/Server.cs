@@ -4,6 +4,8 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
+using System.Text;
 
 namespace VSRAD.DebugServer
 {
@@ -12,6 +14,8 @@ namespace VSRAD.DebugServer
         private readonly SemaphoreSlim _commandExecutionLock = new SemaphoreSlim(1, 1);
         private readonly TcpListener _listener;
         private readonly bool _verboseLogging;
+        private static Version _serverVersion = typeof(Server).Assembly.GetName().Version;
+        private static Version _minimalAcceptedClientVersion = new Version("2021.12.8");
 
         const uint ENABLE_QUICK_EDIT = 0x0040;
         const int STD_INPUT_HANDLE = -10;
@@ -29,6 +33,14 @@ namespace VSRAD.DebugServer
         {
             _listener = new TcpListener(ip, port);
             _verboseLogging = verboseLogging;
+        }
+
+        public enum HandShakeStatus
+        {
+            CLIENT_ACCEPTED,
+            CLIENT_NOT_ACCEPTED,
+            SERVER_ACCEPTED,
+            SERVER_NOT_ACCEPTED
         }
 
         public async Task LoopAsync()
@@ -49,17 +61,75 @@ namespace VSRAD.DebugServer
             while (true)
             {
                 var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
-                ClientConnected(client, clientsCount);
+                TcpClientConnected(client, clientsCount);
                 clientsCount++;
             }
         }
 
-        private void ClientConnected(TcpClient tcpClient, uint clientId)
+        private void TcpClientConnected(TcpClient tcpClient, uint clientId)
         {
             var networkClient = new NetworkClient(tcpClient, clientId);
             var clientLog = new ClientLogger(clientId, _verboseLogging);
+            if (!Task.Run(() => TryProcessServerHandshake(tcpClient, clientLog)).Result)
+            {
+                clientLog.HandshakeFailed(networkClient.EndPoint);
+                return;
+            }
             clientLog.ConnectionEstablished(networkClient.EndPoint);
             Task.Run(() => BeginClientLoopAsync(networkClient, clientLog));
+        }
+
+        private async Task<bool> TryProcessServerHandshake(TcpClient client, ClientLogger clientLog)
+        {
+            try
+            {
+                StreamWriter writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+                StreamReader reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+
+                // Send server version to client
+                //
+                await writer.WriteLineAsync(_serverVersion.ToString()).ConfigureAwait(false);
+
+                // Obtain client version
+                //
+                String clientResponse = await reader.ReadLineAsync().ConfigureAwait(false);
+
+                Version clientVersion = null;
+                if (!Version.TryParse(clientResponse, out clientVersion))
+                {
+                    clientLog.ParseVersionError(clientResponse);
+                    // Inform client that server declines client's version
+                    //
+                    await writer.WriteLineAsync(HandShakeStatus.SERVER_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                    return false;
+                }
+
+                if (clientVersion.CompareTo(_minimalAcceptedClientVersion) < 0)
+                {
+                    clientLog.InvalidVersion(clientVersion.ToString(), _minimalAcceptedClientVersion.ToString());
+                    // Inform client that server declines client's version
+                    //
+                    await writer.WriteLineAsync(HandShakeStatus.SERVER_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                    return false;
+                }
+
+                // Inform client that server accepts client's version
+                //
+                await writer.WriteLineAsync(HandShakeStatus.SERVER_ACCEPTED.ToString()).ConfigureAwait(false);
+
+                // Check if client accepts server version
+                //
+                if (await reader.ReadLineAsync() != HandShakeStatus.CLIENT_ACCEPTED.ToString())
+                {
+                    clientLog.ClientRejectedServerVersion(_serverVersion.ToString(), clientVersion.ToString());
+                    return false;
+                }
+            } catch (Exception)
+            {
+                clientLog.ConnectionTimeoutOnHandShake();
+                return false;
+            }
+            return true;
         }
 
         private async Task BeginClientLoopAsync(NetworkClient client, ClientLogger clientLog)

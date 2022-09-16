@@ -12,6 +12,9 @@ using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using Task = System.Threading.Tasks.Task;
+using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace VSRAD.Package.Server
 {
@@ -37,11 +40,33 @@ namespace VSRAD.Package.Server
         { }
     }
 
+    public sealed class UnsupportedServerVersionException : System.IO.IOException
+    {
+        public UnsupportedServerVersionException(ServerConnectionOptions connection, Version serverVersion) :
+            base($"The debug server on host {connection} is out of date and missing critical features. Please update it to the {serverVersion} or above version.")
+        { }
+    }
+
+    public sealed class UnsupportedDebuggerVersionException : System.IO.IOException
+    {
+        public UnsupportedDebuggerVersionException(ServerConnectionOptions connection, Version serverVersion) :
+            base($"This extension is out of date and missing critical features to work with debug server on host {connection}. Please update extension to the {serverVersion} or above version.")
+        { }
+    }
+
     public enum ClientState
     {
         Disconnected,
         Connecting,
         Connected
+    }
+
+    public enum HandShakeStatus
+    {
+        CLIENT_ACCEPTED,
+        CLIENT_NOT_ACCEPTED,
+        SERVER_ACCEPTED,
+        SERVER_NOT_ACCEPTED
     }
 
     [Export(typeof(ICommunicationChannel))]
@@ -51,7 +76,7 @@ namespace VSRAD.Package.Server
         public event Action ConnectionStateChanged;
         public ServerConnectionOptions ConnectionOptions =>
             _project.Options?.Connection ?? new ServerConnectionOptions("Remote address is not specified", 0);
-
+        private Version _extensionVersion;
         private ClientState _state = ClientState.Disconnected;
         public ClientState ConnectionState
         {
@@ -64,6 +89,7 @@ namespace VSRAD.Package.Server
         }
 
         private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
+        private static readonly Regex _extensionVersionRegex = new Regex(@".*\/(?<version>.*)\/RadeonAsmDebugger\.dll", RegexOptions.Compiled);
 
         private readonly OutputWindowWriter _outputWindowWriter;
         private readonly IProject _project;
@@ -81,10 +107,55 @@ namespace VSRAD.Package.Server
             _project = project;
             _project.RunWhenLoaded((options) =>
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
+            var match = _extensionVersionRegex.Match(typeof(IProject).Assembly.CodeBase);
+            if (!match.Success)
+                throw new Exception("Error while getting current extension version.");
+            _extensionVersion = new Version(match.Groups["version"].Value);
         }
 
         public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>
             SendWithReplyAsync<T>(command, tryReconnect: true);
+
+        private async Task<bool> TryProcessClientHandshake(TcpClient client)
+        {
+            StreamWriter writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+            StreamReader reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+
+            // Send client version to server
+            //
+            await writer.WriteLineAsync(_extensionVersion.ToString()).ConfigureAwait(false);
+            // Obtain server version
+            //
+            String serverResponse = await reader.ReadLineAsync().ConfigureAwait(false);
+            Version serverVersion = null;
+            if (!Version.TryParse(serverResponse, out serverVersion))
+            {
+                // Inform server that client declines serve's version
+                //
+                await writer.WriteLineAsync(HandShakeStatus.CLIENT_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
+            }
+
+            if (serverVersion.CompareTo(Constants.MinimalRequiredServerVersion) < 0)
+            {
+                // Inform client that server declines client's version
+                //
+                await writer.WriteLineAsync(HandShakeStatus.CLIENT_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
+            }
+
+            // Inform client that server accepts client's version
+            //
+            await writer.WriteLineAsync(HandShakeStatus.CLIENT_ACCEPTED.ToString()).ConfigureAwait(false);
+
+            // Check if client accepts server version
+            //
+            if (await reader.ReadLineAsync() != HandShakeStatus.SERVER_ACCEPTED.ToString())
+            {
+                throw new UnsupportedDebuggerVersionException(ConnectionOptions, serverVersion);
+            }
+            return true;
+        }
 
         private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect) where T : IResponse
         {
@@ -156,11 +227,12 @@ namespace VSRAD.Package.Server
                 using (cts.Token.Register(() => client.Dispose()))
                 {
                     await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
+                    await TryProcessClientHandshake(client);
                     _connection = client;
                     ConnectionState = ClientState.Connected;
                 }
             }
-            catch (Exception)
+            catch (Exception e) when (!(e is UnsupportedDebuggerVersionException) && !(e is UnsupportedServerVersionException))
             {
                 ConnectionState = ClientState.Disconnected;
                 throw new ConnectionRefusedException(ConnectionOptions);
