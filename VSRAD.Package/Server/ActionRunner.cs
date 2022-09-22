@@ -21,6 +21,7 @@ namespace VSRAD.Package.Server
         private readonly Dictionary<string, DateTime> _initialTimestamps = new Dictionary<string, DateTime>();
         private readonly ActionEnvironment _environment;
         private readonly IProject _project;
+        private readonly VsStatusBarWriter _statusBar;
 
         public ActionRunner(ICommunicationChannel channel, SVsServiceProvider serviceProvider, ActionEnvironment environment, IProject project)
         {
@@ -28,6 +29,7 @@ namespace VSRAD.Package.Server
             _serviceProvider = serviceProvider;
             _environment = environment;
             _project = project;
+            _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
         public DateTime GetInitialFileTimestamp(string file) =>

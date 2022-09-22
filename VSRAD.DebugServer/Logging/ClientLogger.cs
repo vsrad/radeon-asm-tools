@@ -35,7 +35,7 @@ namespace VSRAD.DebugServer
             Print("An exception has occurred while processing the command. Connection has been terminated." + Environment.NewLine + e.ToString());
 
         public void CliendDisconnected() =>
-            Print("client has been disconnected");
+            Console.WriteLine($"{Environment.NewLine}client #{_clientId} has been disconnected");
 
         public void ExecutionStarted()
         {
@@ -96,6 +96,16 @@ namespace VSRAD.DebugServer
         public void ConnectionTimeoutOnHandShake()
         {
             Console.WriteLine($"{Environment.NewLine}Connection timeout on handshake attempt");
+        }
+
+        public void LockAcquired()
+        {
+            Console.WriteLine($"{Environment.NewLine}client#{_clientId} acquired lock");
+        }
+
+        public void LockReleased()
+        {
+            Console.WriteLine($"{Environment.NewLine}client#{_clientId} released lock");
         }
 
         private void Print(string message) =>

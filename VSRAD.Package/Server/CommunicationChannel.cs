@@ -15,6 +15,8 @@ using Task = System.Threading.Tasks.Task;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using VSRAD.Package.Utils;
+using System.Windows;
 
 namespace VSRAD.Package.Server
 {
@@ -54,6 +56,13 @@ namespace VSRAD.Package.Server
         { }
     }
 
+    public sealed class UnaquiredLockException : System.IO.IOException
+    {
+        public UnaquiredLockException(ServerConnectionOptions connection) :
+            base($"Unable to acquire lock at {connection}")
+        { }
+    }
+
     public enum ClientState
     {
         Disconnected,
@@ -67,6 +76,12 @@ namespace VSRAD.Package.Server
         client_not_accepted,
         server_accepted,
         server_not_accepted
+    }
+
+    public enum LockStatus
+    {
+        lock_not_ackquired,
+        lock_acquired
     }
 
     [Export(typeof(ICommunicationChannel))]
@@ -88,10 +103,12 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
+        private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 10);
+        private static readonly TimeSpan _lockTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 10);
         private static readonly Regex _extensionVersionRegex = new Regex(@".*\/(?<version>.*)\/RadeonAsmDebugger\.dll", RegexOptions.Compiled);
 
         private readonly OutputWindowWriter _outputWindowWriter;
+        private readonly VsStatusBarWriter _statusBar;
         private readonly IProject _project;
 
         private TcpClient _connection;
@@ -104,6 +121,7 @@ namespace VSRAD.Package.Server
         {
             _outputWindowWriter = new OutputWindowWriter(provider,
                 Constants.OutputPaneServerGuid, Constants.OutputPaneServerTitle);
+            _statusBar = new VsStatusBarWriter(provider);
             _project = project;
             _project.RunWhenLoaded((options) =>
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
@@ -114,7 +132,29 @@ namespace VSRAD.Package.Server
         }
 
         public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>
-            SendWithReplyAsync<T>(command, tryReconnect: true);
+            SendWithReplyAsync<T>(command, tryReconnect: false);
+
+        private async Task<bool> TryAcquireServerLock(TcpClient client) {
+            StreamReader reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+            await _statusBar.SetTextAsync("Acquiring lock on the server");
+            using (var cts = new CancellationTokenSource(_lockTimeout))
+            using (cts.Token.Register(() => client.Dispose()))
+            try
+            {
+
+                if (await reader.ReadLineAsync() != LockStatus.lock_acquired.ToString())
+                {
+                    throw new UnaquiredLockException(ConnectionOptions);
+                }
+                await _statusBar.SetTextAsync("Acquired Lock");
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Unable to acquire lock, try again.");
+                return false;
+            }
+            return true;
+        }
 
         private async Task<bool> TryProcessClientHandshake(TcpClient client)
         {
@@ -202,6 +242,7 @@ namespace VSRAD.Package.Server
                 await EstablishServerConnectionAsync().ConfigureAwait(false);
                 var environment = await SendWithReplyAsync<EnvironmentVariablesListed>(new ListEnvironmentVariables());
                 _remoteEnvironment = environment.Variables;
+                ForceDisconnect();
             }
             return _remoteEnvironment;
         }
@@ -223,14 +264,15 @@ namespace VSRAD.Package.Server
             var client = new TcpClient();
             try
             {
-                using (var cts = new CancellationTokenSource(_connectionTimeout))
-                using (cts.Token.Register(() => client.Dispose()))
                 {
+                    using (var cts = new CancellationTokenSource(_connectionTimeout))
+                    using (cts.Token.Register(() => client.Dispose()))
                     await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
                     await TryProcessClientHandshake(client);
                     _connection = client;
                     ConnectionState = ClientState.Connected;
                 }
+                await TryAcquireServerLock(client);
             }
             catch (Exception e) when (!(e is UnsupportedDebuggerVersionException) && !(e is UnsupportedServerVersionException))
             {
