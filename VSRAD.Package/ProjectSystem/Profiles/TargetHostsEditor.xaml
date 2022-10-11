@@ -37,6 +37,21 @@
                         </Style>
                     </DataGridTextColumn.EditingElementStyle>
                 </DataGridTextColumn>
+                <DataGridTextColumn Header="Alias" Binding="{Binding Alias, UpdateSourceTrigger=PropertyChanged}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="{x:Type TextBox}">
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="3,0" />
+                            <Setter Property="Height" Value="22" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
                 <DataGridTemplateColumn Width="36" MinWidth="36" MaxWidth="36">
                     <DataGridTemplateColumn.Header>
                         <Button Grid.Column="1" Content="➕" ToolTip="Add host" Width="22" Height="22" HorizontalAlignment="Center" Click="AddHost" />
