@@ -12,24 +12,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 {
     public sealed partial class TargetHostsEditor : DialogWindow
     {
-        public static bool TryParseHost(string input, out string formatted, out string hostname, out ushort port)
-        {
-            formatted = "";
-            hostname = "";
-            port = 0;
-
-            var hostnamePort = input.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-            if (hostnamePort.Length == 0)
-                return false;
-
-            hostname = hostnamePort[0];
-            if (hostnamePort.Length < 2 || !ushort.TryParse(hostnamePort[1], out port))
-                port = 9339;
-
-            formatted = $"{hostname}:{port}";
-            return true;
-        }
-
         public ObservableCollection<HostItem> Hosts { get; }
         public ICommand DeleteHostCommand { get; }
 
@@ -75,7 +57,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _project.Options.TargetHosts.AddRange(Hosts.Select(h => h.Host).Distinct());
 
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
-            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && TryParseHost(hi.Host, out _, out var hostname, out var port))
+            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && HostItem.TryParseHost(hi.Host, out _, out var hostname, out var port))
             {
                 _project.Options.RemoteMachine = hostname;
                 _project.Options.Port = port;
@@ -92,7 +74,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private void ValidateHostAfterEdit(object sender, DataGridRowEditEndingEventArgs e)
         {
             var item = (HostItem)e.Row.DataContext;
-            if (TryParseHost(item.Host, out var formattedHost, out _, out _))
+            if (HostItem.TryParseHost(item.Host, out var formattedHost, out _, out _))
                 item.Host = formattedHost;
             else
 #pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire

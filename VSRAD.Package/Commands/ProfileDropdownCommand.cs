@@ -95,7 +95,7 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                if (!TargetHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
+                if (!Utils.HostItem.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
                     return;
 
                 _project.Options.TargetHosts.Add(formattedHost);

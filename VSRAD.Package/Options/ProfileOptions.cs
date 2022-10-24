@@ -127,26 +127,6 @@ namespace VSRAD.Package.Options
         }
     }
 
-    public readonly struct ServerConnectionOptions : IEquatable<ServerConnectionOptions>
-    {
-        public string RemoteMachine { get; }
-        public int Port { get; }
-
-        public ServerConnectionOptions(string remoteMachine = "127.0.0.1", int port = 9339)
-        {
-            RemoteMachine = remoteMachine;
-            Port = port;
-        }
-
-        public override string ToString() => $"{RemoteMachine}:{Port}";
-
-        public bool Equals(ServerConnectionOptions s) => RemoteMachine == s.RemoteMachine && Port == s.Port;
-        public override bool Equals(object o) => o is ServerConnectionOptions s && Equals(s);
-        public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
-        public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
-        public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
-    }
-
     public readonly struct ActionEnvironment : IEquatable<ActionEnvironment>
     {
         public string LocalWorkDir { get; }

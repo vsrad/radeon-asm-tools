@@ -22,5 +22,53 @@ namespace VSRAD.Package.Utils
             Host = host;
             UsedInActiveProfile = usedInActiveProfile;
         }
+
+        public ServerConnectionOptions ConnectionOptions
+        {
+            get {
+                if (TryParseHost(Host, out var _, out var hostname, out var port))
+                    return new ServerConnectionOptions(hostname, port);
+                else
+                    return default;
+            }
+        }
+
+        public static bool TryParseHost(string input, out string formatted, out string hostname, out ushort port)
+        {
+            formatted = "";
+            hostname = "";
+            port = 0;
+
+            var hostnamePort = input.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+            if (hostnamePort.Length == 0)
+                return false;
+
+            hostname = hostnamePort[0];
+            if (hostnamePort.Length < 2 || !ushort.TryParse(hostnamePort[1], out port))
+                port = 9339;
+
+            formatted = $"{hostname}:{port}";
+            return true;
+        }
+    }
+
+    public readonly struct ServerConnectionOptions : IEquatable<ServerConnectionOptions>
+    {
+        public string RemoteMachine { get; }
+        public int Port { get; }
+
+        public ServerConnectionOptions(string remoteMachine = "127.0.0.1", int port = 9339)
+        {
+            RemoteMachine = remoteMachine;
+            Port = port;
+        }
+
+        public override string ToString() => $"{RemoteMachine}:{Port}";
+
+        public bool Equals(ServerConnectionOptions s) => RemoteMachine == s.RemoteMachine && Port == s.Port;
+        public override bool Equals(object o) => o is ServerConnectionOptions s && Equals(s);
+        public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
+        public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
+        public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
     }
 }
