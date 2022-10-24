@@ -11,16 +11,31 @@ namespace VSRAD.Package.Utils
         private string _host = "";
         public string Host { get => _host; set => SetField(ref _host, value); }
 
+        private ushort _port = 0;
+        public ushort Port { get => _port; set => SetField(ref _port, value); }
+
         private string _alias = "";
         public string Alias { get => _alias; set => SetField(ref _alias, value); }
 
         public bool UsedInActiveProfile { get; }
+
+        public string Formatted => $"{Host}:{Port}";
 
         public HostItem(string host, bool usedInActiveProfile, string alias = "")
         {
             Alias = alias;
             Host = host;
             UsedInActiveProfile = usedInActiveProfile;
+        }
+
+        public HostItem(string input)
+        {
+            if (TryParseHost(input, out var _, out var host, out var port))
+            {
+                Host = host;
+                Port = port;
+                UsedInActiveProfile = false;
+            }
         }
 
         public ServerConnectionOptions ConnectionOptions

@@ -11,6 +11,7 @@ using System.Windows;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Profiles;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Commands
 {
@@ -95,13 +96,14 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                if (!Utils.HostItem.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
+                var item = new HostItem(selected);
+                if (item == default(HostItem))
                     return;
 
-                _project.Options.TargetHosts.Add(formattedHost);
+                _project.Options.TargetHosts.Add(item.Formatted);
 
-                _project.Options.RemoteMachine = hostname;
-                _project.Options.Port = port;
+                _project.Options.RemoteMachine = item.Host;
+                _project.Options.Port = item.Port;
                 updatedProfile.General.RunActionsLocally = false;
             }
 
