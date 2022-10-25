@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace VSRAD.Package.Utils
 {
@@ -19,12 +16,15 @@ namespace VSRAD.Package.Utils
 
         public bool UsedInActiveProfile { get; }
 
+        [JsonIgnore]
         public string Formatted => $"{Host}:{Port}";
 
+        [JsonIgnore]
         public string Name => string.IsNullOrWhiteSpace(Alias)
                                 ? Formatted
                                 : Alias;
 
+        [JsonConstructor]
         public HostItem(string host, bool usedInActiveProfile, string alias = "")
         {
             Alias = alias;
@@ -42,6 +42,7 @@ namespace VSRAD.Package.Utils
             }
         }
 
+        [JsonIgnore]
         public ServerConnectionOptions ConnectionOptions
         {
             get {
