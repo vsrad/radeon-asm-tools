@@ -96,7 +96,7 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                var item = new HostItem(selected);
+                var item = _project.Options.TargetHosts.FirstOrDefault(h => h.Name == selected);
                 if (item == default(HostItem))
                     return;
 
