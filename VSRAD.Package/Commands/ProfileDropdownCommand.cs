@@ -66,7 +66,7 @@ namespace VSRAD.Package.Commands
 
         private void ListTargetMachines(IntPtr variantOut)
         {
-            var displayItems = _project.Options.TargetHosts.Prepend("Local").Append("Edit...").ToArray();
+            var displayItems = _project.Options.TargetHosts.Select(h => h.Name).Prepend("Local").Append("Edit...").ToArray();
             Marshal.GetNativeVariantForObject(displayItems, variantOut);
         }
 
@@ -81,7 +81,7 @@ namespace VSRAD.Package.Commands
             {
                 currentHost = _project.Options.Connection.ToString();
                 // Display current host at the top of the list
-                _project.Options.TargetHosts.Add(currentHost);
+                //_project.Options.TargetHosts.Add(currentHost); TODO
             }
             Marshal.GetNativeVariantForObject(currentHost, variantOut);
         }
@@ -100,7 +100,7 @@ namespace VSRAD.Package.Commands
                 if (item == default(HostItem))
                     return;
 
-                _project.Options.TargetHosts.Add(item.Formatted);
+                _project.Options.TargetHosts.Add(item);
 
                 _project.Options.RemoteMachine = item.Host;
                 _project.Options.Port = item.Port;

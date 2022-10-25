@@ -21,6 +21,10 @@ namespace VSRAD.Package.Utils
 
         public string Formatted => $"{Host}:{Port}";
 
+        public string Name => string.IsNullOrWhiteSpace(Alias)
+                                ? Formatted
+                                : Alias;
+
         public HostItem(string host, bool usedInActiveProfile, string alias = "")
         {
             Alias = alias;

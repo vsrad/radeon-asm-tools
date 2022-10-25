@@ -21,8 +21,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public TargetHostsEditor(IProject project)
         {
             _project = project;
-            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts.Select(h =>
-                new HostItem(h, usedInActiveProfile: !project.Options.Profile.General.RunActionsLocally && project.Options.Connection.ToString() == h)));
+            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts);
             DeleteHostCommand = new WpfDelegateCommand(DeleteHost);
 
             InitializeComponent();
@@ -54,7 +53,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private void SaveChanges()
         {
             _project.Options.TargetHosts.Clear();
-            _project.Options.TargetHosts.AddRange(Hosts.Select(h => h.Host).Distinct());
+            _project.Options.TargetHosts.AddRange(Hosts.Distinct());
 
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
             if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && HostItem.TryParseHost(hi.Host, out _, out var hostname, out var port))
@@ -73,13 +72,13 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void ValidateHostAfterEdit(object sender, DataGridRowEditEndingEventArgs e)
         {
-            var item = (HostItem)e.Row.DataContext;
-            if (HostItem.TryParseHost(item.Host, out var formattedHost, out _, out _))
-                item.Host = formattedHost;
-            else
-#pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire
-                Dispatcher.BeginInvoke((Action)(() => Hosts.Remove(item)), System.Windows.Threading.DispatcherPriority.Background);
-#pragma warning restore VSTHRD001
+//            var item = (HostItem)e.Row.DataContext;
+//            if (HostItem.TryParseHost(item.Host, out var formattedHost, out _, out _))
+//                item.Host = formattedHost;
+//            else
+//#pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire
+//                Dispatcher.BeginInvoke((Action)(() => Hosts.Remove(item)), System.Windows.Threading.DispatcherPriority.Background);
+//#pragma warning restore VSTHRD001
         }
 
         private void HandleDeleteKey(object sender, KeyEventArgs e)
@@ -130,7 +129,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
             for (int i = 0; i < Hosts.Count; ++i)
             {
-                if (Hosts[i].Host != _project.Options.TargetHosts[i])
+                if (Hosts[i] != _project.Options.TargetHosts[i])
                     return true;
             }
 
