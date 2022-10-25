@@ -56,10 +56,10 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             _project.Options.TargetHosts.AddRange(Hosts.Distinct());
 
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
-            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && HostItem.TryParseHost(hi.Host, out _, out var hostname, out var port))
+            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi)
             {
-                _project.Options.RemoteMachine = hostname;
-                _project.Options.Port = port;
+                _project.Options.RemoteMachine = hi.Host;
+                _project.Options.Port = hi.Port;
             }
             else
             {
