@@ -73,13 +73,14 @@ namespace VSRAD.Package.Commands
         private void GetCurrentTargetMachine(IntPtr variantOut)
         {
             string currentHost;
-            if (_project.Options.Profile.General.RunActionsLocally)
+            if (_project.Options.Profile.General.RunActionsLocally
+                || _project.Options.TargetHosts.Count == 0)
             {
                 currentHost = "Local";
             }
             else
             {
-                currentHost = _project.Options.Connection.ToString();
+                currentHost = _project.Options.TargetHosts[0].Name;
                 // Display current host at the top of the list
                 //_project.Options.TargetHosts.Add(currentHost); TODO
             }
