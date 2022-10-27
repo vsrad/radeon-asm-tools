@@ -30,6 +30,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         private void AddHost(object sender, RoutedEventArgs e)
         {
             var item = new HostItem("", usedInActiveProfile: false);
+            item.Port = 9339; // TODO: move to Constants.cs
             Hosts.Add(item);
 
             // Finish editing the current host before moving the focus away from it

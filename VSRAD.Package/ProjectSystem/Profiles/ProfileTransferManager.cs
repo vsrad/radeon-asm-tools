@@ -41,7 +41,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
             if (json["TargetHosts"] != null)
                 foreach (var host in json["TargetHosts"].ToObject<List<string>>())
-                    options.TargetHosts.Add(host);
+                    options.TargetHosts.Add(new Utils.HostItem(host));
 
             options.ActiveProfile = activeProfile;
 
