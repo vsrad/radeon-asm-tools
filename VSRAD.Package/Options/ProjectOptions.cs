@@ -47,14 +47,8 @@ namespace VSRAD.Package.Options
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
-        private string _remoteMachine = "127.0.0.1";
-        public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
-
-        private int _port = 9339;
-        public int Port { get => _port; set => SetField(ref _port, value); }
-
         [JsonIgnore]
-        public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
+        public ServerConnectionOptions Connection => TargetHosts[0].ConnectionOptions;
 
         [JsonIgnore]
         public bool HasProfiles => Profiles.Count > 0;

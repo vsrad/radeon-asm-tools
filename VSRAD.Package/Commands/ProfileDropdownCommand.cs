@@ -102,8 +102,8 @@ namespace VSRAD.Package.Commands
 
                 _project.Options.TargetHosts.Add(item);
 
-                _project.Options.RemoteMachine = item.Host;
-                _project.Options.Port = item.Port;
+                //_project.Options.RemoteMachine = item.Host;
+                //_project.Options.Port = item.Port;
                 updatedProfile.General.RunActionsLocally = false;
             }
 

@@ -59,8 +59,8 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
             if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi)
             {
-                _project.Options.RemoteMachine = hi.Host;
-                _project.Options.Port = hi.Port;
+                //_project.Options.RemoteMachine = hi.Host;
+                //_project.Options.Port = hi.Port;
             }
             else
             {
