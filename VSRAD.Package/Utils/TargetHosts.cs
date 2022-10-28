@@ -62,7 +62,7 @@ namespace VSRAD.Package.Utils
 
             hostname = hostnamePort[0];
             if (hostnamePort.Length < 2 || !ushort.TryParse(hostnamePort[1], out port))
-                port = 9339;
+                port = Options.DefaultOptionValues.Port;
 
             formatted = $"{hostname}:{port}";
             return true;
@@ -74,7 +74,8 @@ namespace VSRAD.Package.Utils
         public string RemoteMachine { get; }
         public int Port { get; }
 
-        public ServerConnectionOptions(string remoteMachine = "127.0.0.1", int port = 9339)
+        public ServerConnectionOptions(string remoteMachine = Options.DefaultOptionValues.RemoteMachineAdress,
+                                                int port = Options.DefaultOptionValues.Port)
         {
             RemoteMachine = remoteMachine;
             Port = port;

@@ -29,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void AddHost(object sender, RoutedEventArgs e)
         {
-            var item = new HostItem("", 9339); // TODO: move 9339 to Constants.cs
+            var item = new HostItem("", Options.DefaultOptionValues.Port);
             Hosts.Add(item);
 
             // Finish editing the current host before moving the focus away from it
