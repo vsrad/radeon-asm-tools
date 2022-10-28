@@ -29,8 +29,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void AddHost(object sender, RoutedEventArgs e)
         {
-            var item = new HostItem("", usedInActiveProfile: false);
-            item.Port = 9339; // TODO: move to Constants.cs
+            var item = new HostItem("", 9339); // TODO: move 9339 to Constants.cs
             Hosts.Add(item);
 
             // Finish editing the current host before moving the focus away from it
@@ -53,33 +52,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void SaveChanges()
         {
+            var oldHost = _project.Options.TargetHosts.Count != 0
+                                           ? _project.Options.TargetHosts[0]
+                                           : null;
             _project.Options.TargetHosts.Clear();
             _project.Options.TargetHosts.AddRange(Hosts.Distinct());
 
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
-            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi)
-            {
-                //_project.Options.RemoteMachine = hi.Host;
-                //_project.Options.Port = hi.Port;
-            }
-            else
-            {
+            if (oldHost == null || !Hosts.Contains(oldHost))
                 updatedProfile.General.RunActionsLocally = true;
-            }
             _project.Options.UpdateActiveProfile(updatedProfile);
 
             _project.SaveOptions();
-        }
-
-        private void ValidateHostAfterEdit(object sender, DataGridRowEditEndingEventArgs e)
-        {
-//            var item = (HostItem)e.Row.DataContext;
-//            if (HostItem.TryParseHost(item.Host, out var formattedHost, out _, out _))
-//                item.Host = formattedHost;
-//            else
-//#pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire
-//                Dispatcher.BeginInvoke((Action)(() => Hosts.Remove(item)), System.Windows.Threading.DispatcherPriority.Background);
-//#pragma warning restore VSTHRD001
         }
 
         private void HandleDeleteKey(object sender, KeyEventArgs e)

@@ -48,7 +48,9 @@ namespace VSRAD.Package.Options
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
         [JsonIgnore]
-        public ServerConnectionOptions Connection => TargetHosts[0].ConnectionOptions;
+        public ServerConnectionOptions Connection => TargetHosts.Count != 0
+                                                        ? TargetHosts[0].ConnectionOptions
+                                                        : default(ServerConnectionOptions);
 
         [JsonIgnore]
         public bool HasProfiles => Profiles.Count > 0;
