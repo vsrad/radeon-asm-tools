@@ -47,6 +47,8 @@ namespace VSRAD.Package.Options
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
+        // we can safely assume that TargetHosts[0] is the host we want, because
+        // TargetHosts order are updated according to MRU collection (see VSRAD.Package.Utils.MruCollection.cs)
         [JsonIgnore]
         public ServerConnectionOptions Connection => TargetHosts.Count != 0
                                                         ? TargetHosts[0].ConnectionOptions

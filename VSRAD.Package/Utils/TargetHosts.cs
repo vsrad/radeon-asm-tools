@@ -30,42 +30,19 @@ namespace VSRAD.Package.Utils
             Alias = alias;
         }
 
-        public HostItem(string input) // TODO make TryParseHost return HostItem
-        {
-            if (TryParseHost(input, out var _, out var host, out var port))
-            {
-                Host = host;
-                Port = port;
-            }
-        }
-
         [JsonIgnore]
-        public ServerConnectionOptions ConnectionOptions
-        {
-            get {
-                if (TryParseHost(Host, out var _, out var hostname, out var port))
-                    return new ServerConnectionOptions(hostname, port);
-                else
-                    return default;
-            }
-        }
+        public ServerConnectionOptions ConnectionOptions => new ServerConnectionOptions(Host, Port);
 
-        public static bool TryParseHost(string input, out string formatted, out string hostname, out ushort port)
+        public static HostItem TryParseHost(string input)
         {
-            formatted = "";
-            hostname = "";
-            port = 0;
-
             var hostnamePort = input.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-            if (hostnamePort.Length == 0)
-                return false;
+            if (hostnamePort.Length < 2)
+                return default(HostItem);
 
-            hostname = hostnamePort[0];
-            if (hostnamePort.Length < 2 || !ushort.TryParse(hostnamePort[1], out port))
+            var hostname = hostnamePort[0];
+            if (!ushort.TryParse(hostnamePort[1], out var port))
                 port = Options.DefaultOptionValues.Port;
-
-            formatted = $"{hostname}:{port}";
-            return true;
+            return new HostItem(hostname, port);
         }
     }
 

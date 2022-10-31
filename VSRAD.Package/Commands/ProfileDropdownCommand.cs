@@ -81,8 +81,6 @@ namespace VSRAD.Package.Commands
             else
             {
                 currentHost = _project.Options.TargetHosts[0].Name;
-                // Display current host at the top of the list
-                //_project.Options.TargetHosts.Add(currentHost); TODO
             }
             Marshal.GetNativeVariantForObject(currentHost, variantOut);
         }
@@ -97,11 +95,17 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                var item = new HostItem(selected);
-                //if (item == default(HostItem) || !_project.Options.TargetHosts.Contains(item))
-                //{
-                //    return;
-                //}
+                var item = HostItem.TryParseHost(selected);
+                var tmpItem = default(HostItem);
+
+                if (item == default(HostItem)) // check maybe user entered existing alias
+                    tmpItem = _project.Options.TargetHosts.FirstOrDefault(h => h.Alias == selected);
+                else // maybe there is existing host but with alias
+                    tmpItem = _project.Options.TargetHosts
+                                              .FirstOrDefault(h => h.Host == item.Host && h.Port == item.Port);
+
+                if (tmpItem != default(HostItem)) item = tmpItem;
+                else if (item == default(HostItem)) return;
 
                 _project.Options.TargetHosts.Add(item);
 
