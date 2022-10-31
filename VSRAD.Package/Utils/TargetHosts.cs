@@ -30,12 +30,12 @@ namespace VSRAD.Package.Utils
             Alias = alias;
         }
 
-        public HostItem(string input)
+        public HostItem(string input) // TODO make TryParseHost return HostItem
         {
             if (TryParseHost(input, out var _, out var host, out var port))
             {
                 Host = host;
-                Port = port;;
+                Port = port;
             }
         }
 

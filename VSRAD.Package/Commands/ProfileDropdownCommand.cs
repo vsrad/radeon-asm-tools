@@ -97,14 +97,14 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                var item = _project.Options.TargetHosts.FirstOrDefault(h => h.Name == selected);
-                if (item == default(HostItem))
-                    return;
+                var item = new HostItem(selected);
+                //if (item == default(HostItem) || !_project.Options.TargetHosts.Contains(item))
+                //{
+                //    return;
+                //}
 
                 _project.Options.TargetHosts.Add(item);
 
-                //_project.Options.RemoteMachine = item.Host;
-                //_project.Options.Port = item.Port;
                 updatedProfile.General.RunActionsLocally = false;
             }
 
