@@ -191,10 +191,12 @@ namespace VSRAD.DebugServer
             {
                 clientLog.FatalClientException(e);
             }
-
-            client.Disconnect();
-            _actionExecutionLock.Release();
-            clientLog.LockReleased();
+            finally
+            {
+                client.Disconnect();
+                _actionExecutionLock.Release();
+                clientLog.LockReleased();
+            }
         }
     }
 }

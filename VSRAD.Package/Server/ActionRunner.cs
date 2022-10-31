@@ -69,6 +69,7 @@ namespace VSRAD.Package.Server
                 if (!result.Successful && !continueOnError)
                     break;
             }
+            _channel.ForceDisconnect();
 
             runStats.FinishRun();
             return runStats;
