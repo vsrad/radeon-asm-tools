@@ -103,8 +103,9 @@ namespace VSRAD.Package.Server
             }
         }
 
-        private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 10);
+        private static readonly TimeSpan _connectionTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 5);
         private static readonly TimeSpan _lockTimeout = new TimeSpan(hours: 0, minutes: 0, seconds: 10);
+
         private static readonly Regex _extensionVersionRegex = new Regex(@".*\/(?<version>.*)\/RadeonAsmDebugger\.dll", RegexOptions.Compiled);
 
         private readonly OutputWindowWriter _outputWindowWriter;
@@ -152,6 +153,47 @@ namespace VSRAD.Package.Server
             {
                 MessageBox.Show("Unable to acquire lock, try again.");
                 return false;
+            }
+            return true;
+        }
+
+        private async Task<bool> TryProcessClientHandshake(TcpClient client)
+        {
+            StreamWriter writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+            StreamReader reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+
+            // Send client version to server
+            //
+            await writer.WriteLineAsync(_extensionVersion.ToString()).ConfigureAwait(false);
+            // Obtain server version
+            //
+            String serverResponse = await reader.ReadLineAsync().ConfigureAwait(false);
+            Version serverVersion = null;
+            if (!Version.TryParse(serverResponse, out serverVersion))
+            {
+                // Inform server that client declines serve's version
+                //
+                await writer.WriteLineAsync(HandShakeStatus.client_not_accepted.ToString()).ConfigureAwait(false);
+                throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
+            }
+
+            if (serverVersion.CompareTo(Constants.MinimalRequiredServerVersion) < 0)
+            {
+                // Inform client that server declines client's version
+                //
+                await writer.WriteLineAsync(HandShakeStatus.client_not_accepted.ToString()).ConfigureAwait(false);
+                throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
+            }
+
+            // Inform client that server accepts client's version
+            //
+            await writer.WriteLineAsync(HandShakeStatus.client_accepted.ToString()).ConfigureAwait(false);
+
+            // Check if client accepts server version
+            //
+            if (await reader.ReadLineAsync() != HandShakeStatus.server_accepted.ToString())
+            {
+                throw new UnsupportedDebuggerVersionException(ConnectionOptions, serverVersion);
             }
             return true;
         }

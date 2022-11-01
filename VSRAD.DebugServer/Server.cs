@@ -43,12 +43,12 @@ namespace VSRAD.DebugServer
             server_accepted,
             server_not_accepted
         }
+
         public enum LockStatus
         {
             lock_not_ackquired,
             lock_acquired
         }
-
         public async Task LoopAsync()
         {
             /* disable Quick Edit cmd feature to prevent server hanging */
@@ -154,7 +154,6 @@ namespace VSRAD.DebugServer
             } catch (Exception)
             {
                 clientLog.ConnectionTimeoutOnHandShake();
-
                 return false;
             }
             return true;
