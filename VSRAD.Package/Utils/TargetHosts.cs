@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Text.RegularExpressions;
 
 namespace VSRAD.Package.Utils
 {
@@ -15,12 +16,16 @@ namespace VSRAD.Package.Utils
         public string Alias { get => _alias; set => SetField(ref _alias, value); }
 
         [JsonIgnore]
+        private static readonly Regex _aliasHostPortRegex = new Regex(@"(?<alias>\w+) \((?<hostAndPort>.+)\)",
+                                                                    RegexOptions.Compiled | RegexOptions.Singleline);
+
+        [JsonIgnore]
         public string Formatted => $"{Host}:{Port}";
 
         [JsonIgnore]
         public string Name => string.IsNullOrWhiteSpace(Alias)
                                 ? Formatted
-                                : Alias;
+                                : $"{Alias} ({Formatted})";
 
         [JsonConstructor]
         public HostItem(string host, ushort port, string alias = "")
@@ -35,6 +40,13 @@ namespace VSRAD.Package.Utils
 
         public static HostItem TryParseHost(string input)
         {
+            var alias = "";
+            var match = _aliasHostPortRegex.Match(input);
+            if (match.Success)
+            {
+                alias = match.Groups["alias"].ToString();
+                input = match.Groups["hostAndPort"].ToString();
+            }
             var hostnamePort = input.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
             if (hostnamePort.Length < 2)
                 return default(HostItem);
@@ -42,7 +54,7 @@ namespace VSRAD.Package.Utils
             var hostname = hostnamePort[0];
             if (!ushort.TryParse(hostnamePort[1], out var port))
                 port = Options.DefaultOptionValues.Port;
-            return new HostItem(hostname, port);
+            return new HostItem(hostname, port, alias);
         }
     }
 
