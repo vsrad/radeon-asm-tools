@@ -37,10 +37,10 @@ namespace VSRAD.DebugServer
 
         public enum HandShakeStatus
         {
-            CLIENT_ACCEPTED,
-            CLIENT_NOT_ACCEPTED,
-            SERVER_ACCEPTED,
-            SERVER_NOT_ACCEPTED
+            ClientAccepted,
+            ClientNotAccepted,
+            ServerAccepted,
+            ServerNotAccepted
         }
 
         public async Task LoopAsync()
@@ -83,8 +83,8 @@ namespace VSRAD.DebugServer
         {
             try
             {
-                StreamWriter writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
-                StreamReader reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+                var writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+                var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
 
                 // Send server version to client
                 //
@@ -92,15 +92,14 @@ namespace VSRAD.DebugServer
 
                 // Obtain client version
                 //
-                String clientResponse = await reader.ReadLineAsync().ConfigureAwait(false);
+                var clientResponse = await reader.ReadLineAsync().ConfigureAwait(false);
 
-                Version clientVersion = null;
-                if (!Version.TryParse(clientResponse, out clientVersion))
+                if (!Version.TryParse(clientResponse, out var clientVersion))
                 {
                     clientLog.ParseVersionError(clientResponse);
                     // Inform client that server declines client's version
                     //
-                    await writer.WriteLineAsync(HandShakeStatus.SERVER_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                    await writer.WriteLineAsync(HandShakeStatus.ServerNotAccepted.ToString()).ConfigureAwait(false);
                     return false;
                 }
 
@@ -109,17 +108,17 @@ namespace VSRAD.DebugServer
                     clientLog.InvalidVersion(clientVersion.ToString(), _minimalAcceptedClientVersion.ToString());
                     // Inform client that server declines client's version
                     //
-                    await writer.WriteLineAsync(HandShakeStatus.SERVER_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                    await writer.WriteLineAsync(HandShakeStatus.ServerNotAccepted.ToString()).ConfigureAwait(false);
                     return false;
                 }
 
                 // Inform client that server accepts client's version
                 //
-                await writer.WriteLineAsync(HandShakeStatus.SERVER_ACCEPTED.ToString()).ConfigureAwait(false);
+                await writer.WriteLineAsync(HandShakeStatus.ServerAccepted.ToString()).ConfigureAwait(false);
 
                 // Check if client accepts server version
                 //
-                if (await reader.ReadLineAsync() != HandShakeStatus.CLIENT_ACCEPTED.ToString())
+                if (await reader.ReadLineAsync() != HandShakeStatus.ClientAccepted.ToString())
                 {
                     clientLog.ClientRejectedServerVersion(_serverVersion.ToString(), clientVersion.ToString());
                     return false;
@@ -136,7 +135,7 @@ namespace VSRAD.DebugServer
         {
             while (true)
             {
-                bool lockAcquired = false;
+                var lockAcquired = false;
                 try
                 {
                     var command = await client.ReceiveCommandAsync().ConfigureAwait(false);

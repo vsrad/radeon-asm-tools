@@ -33,21 +33,21 @@ namespace VSRAD.Package.Server
         void ForceDisconnect();
     }
 
-    public sealed class ConnectionRefusedException : System.IO.IOException
+    public sealed class ConnectionRefusedException : IOException
     {
         public ConnectionRefusedException(ServerConnectionOptions connection) :
             base($"Unable to establish connection to a debug server at {connection}")
         { }
     }
 
-    public sealed class UnsupportedServerVersionException : System.IO.IOException
+    public sealed class UnsupportedServerVersionException : IOException
     {
         public UnsupportedServerVersionException(ServerConnectionOptions connection, Version serverVersion) :
             base($"The debug server on host {connection} is out of date and missing critical features. Please update it to the {serverVersion} or above version.")
         { }
     }
 
-    public sealed class UnsupportedDebuggerVersionException : System.IO.IOException
+    public sealed class UnsupportedDebuggerVersionException : IOException
     {
         public UnsupportedDebuggerVersionException(ServerConnectionOptions connection, Version serverVersion) :
             base($"This extension is out of date and missing critical features to work with debug server on host {connection}. Please update extension to the {serverVersion} or above version.")
@@ -63,10 +63,10 @@ namespace VSRAD.Package.Server
 
     public enum HandShakeStatus
     {
-        CLIENT_ACCEPTED,
-        CLIENT_NOT_ACCEPTED,
-        SERVER_ACCEPTED,
-        SERVER_NOT_ACCEPTED
+        ClientAccepted,
+        ClientNotAccepted,
+        ServerAccepted,
+        ServerNotAccepted
     }
 
     [Export(typeof(ICommunicationChannel))]
@@ -116,23 +116,21 @@ namespace VSRAD.Package.Server
         public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>
             SendWithReplyAsync<T>(command, tryReconnect: true);
 
-        private async Task<bool> TryProcessClientHandshake(TcpClient client)
+        private async Task TryProcessClientHandshakeAsync(TcpClient client)
         {
-            StreamWriter writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
-            StreamReader reader = new StreamReader(client.GetStream(), Encoding.UTF8);
-
+            var writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+            var reader = new StreamReader(client.GetStream(), Encoding.UTF8);
             // Send client version to server
             //
             await writer.WriteLineAsync(_extensionVersion.ToString()).ConfigureAwait(false);
             // Obtain server version
             //
-            String serverResponse = await reader.ReadLineAsync().ConfigureAwait(false);
-            Version serverVersion = null;
-            if (!Version.TryParse(serverResponse, out serverVersion))
+            var serverResponse = await reader.ReadLineAsync().ConfigureAwait(false);
+            if (!Version.TryParse(serverResponse, out var serverVersion))
             {
                 // Inform server that client declines serve's version
                 //
-                await writer.WriteLineAsync(HandShakeStatus.CLIENT_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                await writer.WriteLineAsync(HandShakeStatus.ClientNotAccepted.ToString()).ConfigureAwait(false);
                 throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
             }
 
@@ -140,21 +138,20 @@ namespace VSRAD.Package.Server
             {
                 // Inform client that server declines client's version
                 //
-                await writer.WriteLineAsync(HandShakeStatus.CLIENT_NOT_ACCEPTED.ToString()).ConfigureAwait(false);
+                await writer.WriteLineAsync(HandShakeStatus.ClientNotAccepted.ToString()).ConfigureAwait(false);
                 throw new UnsupportedServerVersionException(ConnectionOptions, Constants.MinimalRequiredServerVersion);
             }
 
             // Inform client that server accepts client's version
             //
-            await writer.WriteLineAsync(HandShakeStatus.CLIENT_ACCEPTED.ToString()).ConfigureAwait(false);
+            await writer.WriteLineAsync(HandShakeStatus.ClientAccepted.ToString()).ConfigureAwait(false);
 
             // Check if client accepts server version
             //
-            if (await reader.ReadLineAsync() != HandShakeStatus.SERVER_ACCEPTED.ToString())
+            if (await reader.ReadLineAsync().ConfigureAwait(false) != HandShakeStatus.ServerAccepted.ToString())
             {
                 throw new UnsupportedDebuggerVersionException(ConnectionOptions, serverVersion);
             }
-            return true;
         }
 
         private async Task<T> SendWithReplyAsync<T>(ICommand command, bool tryReconnect) where T : IResponse
@@ -220,20 +217,23 @@ namespace VSRAD.Package.Server
 
             ConnectionState = ClientState.Connecting;
 
+#pragma warning disable CA2000 // we save this client as a _connection later if handshake processed successfully
             var client = new TcpClient();
+#pragma warning restore CA2000 // Dispose objects before losing scope
             try
             {
                 using (var cts = new CancellationTokenSource(_connectionTimeout))
                 using (cts.Token.Register(() => client.Dispose()))
                 {
-                    await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port);
-                    await TryProcessClientHandshake(client);
+                    await client.ConnectAsync(ConnectionOptions.RemoteMachine, ConnectionOptions.Port).ConfigureAwait(false);
+                    await TryProcessClientHandshakeAsync(client).ConfigureAwait(false);
                     _connection = client;
                     ConnectionState = ClientState.Connected;
                 }
             }
             catch (Exception e) when (!(e is UnsupportedDebuggerVersionException) && !(e is UnsupportedServerVersionException))
             {
+                client.Dispose();
                 ConnectionState = ClientState.Disconnected;
                 throw new ConnectionRefusedException(ConnectionOptions);
             }
