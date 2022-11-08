@@ -23,6 +23,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private float _orgSPixels; // number of scrolled pixels in first displayed column
 
         private bool _isNameColumn;
+        private bool _phantomColumnVisible;
 
         public ScaleOperation(DataGridView table, TableState state)
         {
@@ -42,6 +43,14 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _isNameColumn = (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex())
                 || (hit.ColumnIndex < _tableState.GetFirstVisibleDataColumnIndex()
                     && hit.ColumnIndex != _tableState.PhantomColumnIndex);
+            _phantomColumnVisible = _table.Columns[_tableState.PhantomColumnIndex].Displayed;
+            var phantomX = _phantomColumnVisible
+                                ? _table.HitTest(_table.Width - 2, 1).ColumnX
+                                     - _table.RowHeadersWidth - _table.Columns[_tableState.NameColumnIndex].Width
+                                : 0;
+            var middle = _phantomColumnVisible
+                                ? (phantomX / (float)_tableState.GetDataRegionWidth()) / 2.0f
+                                : 0.5;
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
@@ -52,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, !leftedge);
             _orgSColumns = _orgScroll / _orgWidth;
             _orgSPixels = _orgScroll % _orgWidth;
-            _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < 0.5;
+            _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < middle;
 
             return true;
         }
