@@ -40,7 +40,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             bool leftedge = (e.X - hit.ColumnX) < (_tableState.ColumnWidth/2);
 
             _isNameColumn = (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex())
-                || hit.ColumnIndex < _tableState.GetFirstVisibleDataColumnIndex();
+                || (hit.ColumnIndex < _tableState.GetFirstVisibleDataColumnIndex()
+                    && hit.ColumnIndex != _tableState.PhantomColumnIndex);
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
