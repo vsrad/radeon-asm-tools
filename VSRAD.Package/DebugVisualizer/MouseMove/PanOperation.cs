@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Properties;
 
@@ -24,6 +23,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
             if (e.Button != MouseButtons.Left) return false;
+            if (!System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftCtrl)) return false;
             if (_state.ScalingMode == ScalingMode.ResizeQuad)
             {
                 float f = _state.GetNormalizedXCoordinate(e.X);
@@ -36,7 +36,6 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             }
             else
             {
-                if (hit.RowIndex == -1) return false;
                 if (hit.ColumnIndex < VisualizerTable.DataColumnOffset && hit.ColumnIndex != VisualizerTable.PhantomColumnIndex) return false;
             }
 
@@ -68,5 +67,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             return true;
         }
+
+        public bool HandleMouseWheel(MouseEventArgs e) => false;
     }
 }

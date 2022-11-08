@@ -92,6 +92,32 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             return true;
         }
 
+        public bool HandleMouseWheel(MouseEventArgs e)
+        {
+            if (!System.Windows.Input.Keyboard.IsKeyDown(System.Windows.Input.Key.LeftShift)) return false;
+
+            var hit = _table.HitTest(e.X, e.Y);
+            _orgeX = e.X;
+            _orgWidth = _tableState.ColumnWidth;
+            _orgScroll = _tableState.GetCurrentScroll();
+            _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, true);
+
+            var minWidth = _tableState.minAllowedWidth;
+            int diff = e.Delta / 120;
+            if (Math.Abs(diff) == 1) diff *= 2;
+           
+            int orgL = _orgWidth;
+            int curL = orgL + diff;
+            float s = (float)curL / orgL;
+            int curWidth = (int)(s * _orgWidth);
+            curWidth = Math.Max(minWidth, curWidth);
+            int curScroll = _orgScroll + (_orgNColumns - 1) * (curWidth - _orgWidth);
+            _tableState.SetWidthAndScroll(curWidth, curScroll);
+            
+            _operationStarted = true;
+            return true;
+        }
+
         public bool HandleMouseMove(MouseEventArgs e)
         {
             if ((e.Button & MouseButtons.Left) != MouseButtons.Left)

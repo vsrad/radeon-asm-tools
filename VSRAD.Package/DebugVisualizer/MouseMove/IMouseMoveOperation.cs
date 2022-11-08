@@ -6,6 +6,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
     {
         bool HandleMouseMove(MouseEventArgs e);
 
+        bool HandleMouseWheel(MouseEventArgs e);
+
         bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit);
 
         bool OperationStarted();
