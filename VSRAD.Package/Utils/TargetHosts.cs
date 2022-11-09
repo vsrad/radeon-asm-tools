@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace VSRAD.Package.Utils
@@ -55,6 +56,38 @@ namespace VSRAD.Package.Utils
             if (!ushort.TryParse(hostnamePort[1], out var port))
                 port = Options.DefaultOptionValues.Port;
             return new HostItem(hostname, port, alias);
+        }
+
+        // we provide custom converter here instead of one defined in MruCollection.cs
+        // because we want seamless migration from old config files, where hosts
+        // are serialiazed as strings ("127.0.0.1:9339")
+        public sealed class HostItemMruCollectionConverter : JsonConverter
+        {
+            public override bool CanConvert(Type objectType) => objectType == typeof(MruCollection<HostItem>);
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                try // to parse new format
+                {
+                    var items = serializer.Deserialize<List<HostItem>>(reader);
+                    ((MruCollection<HostItem>)existingValue).AddRange(items);
+                    return existingValue;
+                }
+                catch (Exception e) when (e.InnerException.Message == /* old format in config file */
+                                "Could not cast or convert from System.String to VSRAD.Package.Utils.HostItem.")
+                {
+                    while (reader.TokenType == JsonToken.String)
+                    {
+                        var item = serializer.Deserialize<string>(reader);
+                        ((MruCollection<HostItem>)existingValue).Add(TryParseHost(item));
+                        reader.Read();
+                    }
+                    return existingValue;
+                }
+            }
+
+            public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) =>
+                serializer.Serialize(writer, (MruCollection<HostItem>) value);
         }
     }
 

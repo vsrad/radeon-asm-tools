@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
+using static VSRAD.Package.Utils.HostItem;
 
 namespace VSRAD.Package.Options
 {
@@ -28,7 +29,7 @@ namespace VSRAD.Package.Options
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
-        [JsonConverter(typeof(MruCollection<HostItem>.Converter))]
+        [JsonConverter(typeof(HostItemMruCollectionConverter))]
         public MruCollection<HostItem> TargetHosts { get; } =
             new MruCollection<HostItem>();
 
