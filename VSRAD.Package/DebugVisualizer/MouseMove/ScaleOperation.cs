@@ -17,12 +17,14 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
         private int _orgWidth;
         private int _orgMouseX;
         private int _orgeX;
+        private int _phantomX; // the start of the phantom column
         private int _orgNColumns; // number of visible columns before mouse cursor
         private int _orgSColumns; // number of fully scrolled columns
         private bool _lefthalf; // mouse is in left half of the data columns region
         private float _orgSPixels; // number of scrolled pixels in first displayed column
 
         private bool _isNameColumn;
+        private bool _phantomColumnVisible;
 
         public ScaleOperation(DataGridView table, TableState state)
         {
@@ -40,7 +42,16 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             bool leftedge = (e.X - hit.ColumnX) < (_tableState.ColumnWidth/2);
 
             _isNameColumn = (leftedge && hit.ColumnIndex == _tableState.GetFirstVisibleDataColumnIndex())
-                || hit.ColumnIndex < _tableState.GetFirstVisibleDataColumnIndex();
+                || (hit.ColumnIndex < _tableState.GetFirstVisibleDataColumnIndex()
+                    && hit.ColumnIndex != _tableState.PhantomColumnIndex);
+            _phantomColumnVisible = _table.Columns[_tableState.PhantomColumnIndex].Displayed;
+            _phantomX = _phantomColumnVisible
+                                ? _table.HitTest(_table.Width - 2, 1).ColumnX
+                                     - _table.RowHeadersWidth - _table.Columns[_tableState.NameColumnIndex].Width
+                                : 0;
+            var middle = _phantomColumnVisible
+                                ? _phantomX / (float)_tableState.GetDataRegionWidth() / 2.0f
+                                : 0.5;
             _operationStarted = false;
             _orgMouseX = Cursor.Position.X;
             _orgeX = e.X;
@@ -51,7 +62,7 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
             _orgNColumns = _tableState.CountVisibleDataColumns(hit.ColumnIndex, !leftedge);
             _orgSColumns = _orgScroll / _orgWidth;
             _orgSPixels = _orgScroll % _orgWidth;
-            _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < 0.5;
+            _lefthalf = _tableState.GetNormalizedXCoordinate(e.X) < middle;
 
             return true;
         }
@@ -132,7 +143,8 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
                     int curWidth = (int)(s * _orgWidth);
                     curWidth = Math.Max(minWidth, curWidth);
                     s = (float)curWidth / _orgWidth;
-                    int curScroll = (int)(_orgScroll * s + _tableState.GetDataRegionWidth() * (s - 1));
+                    int curScroll = (int)(_orgScroll * s + (_phantomColumnVisible ? _phantomX
+                        : _tableState.GetDataRegionWidth()) * (s - 1));
                     if (_isNameColumn && _tableState.NameColumnScalingEnabled)
                         _tableState.ScaleNameColumn(curWidth);
                     else
