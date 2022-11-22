@@ -14,6 +14,13 @@ namespace VSRAD.DebugServer.IPC.Commands
         PutFile = 5
     }
 #pragma warning restore CA1028
+    public enum HandShakeStatus
+    {
+        ClientAccepted,
+        ClientNotAccepted,
+        ServerAccepted,
+        ServerNotAccepted
+    }
 
     public interface ICommand
     {
