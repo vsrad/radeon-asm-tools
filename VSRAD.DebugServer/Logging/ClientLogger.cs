@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using Serilog;
 
 namespace VSRAD.DebugServer
 {
@@ -39,28 +40,28 @@ namespace VSRAD.DebugServer
 
         public void ExecutionStarted()
         {
-            if (_verbose) Console.WriteLine("===");
+            if (_verbose) Log.Information("===");
         }
 
         public void StdoutReceived(string output)
         {
             if (_verbose)
-                Console.WriteLine($"#{_clientId} stdout> " + output);
+                Log.Information($"#{_clientId} stdout> " + output);
         }
 
         public void StderrReceived(string output)
         {
             if (_verbose)
-                Console.WriteLine($"#{_clientId} stderr> " + output);
+                Log.Information($"#{_clientId} stderr> " + output);
         }
 
         public void DeployItemsReceived(IEnumerable<string> outputPaths)
         {
             if (!_verbose) return;
 
-            Console.WriteLine("Deploy Items:");
+            Log.Information("Deploy Items:");
             foreach (var path in outputPaths)
-                Console.WriteLine("-- " + path);
+                Log.Information("-- " + path);
         }
 
         public void CommandProcessed()
@@ -68,10 +69,10 @@ namespace VSRAD.DebugServer
             if (!_verbose) return;
 
             _timer.Stop();
-            Console.WriteLine($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
+            Log.Information($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
         }
 
         private void Print(string message) =>
-            Console.WriteLine("===" + Environment.NewLine + $"[Client #{_clientId}] {message}");
+            Log.Information("===" + Environment.NewLine + $"[Client #{_clientId}] {message}");
     }
 }
