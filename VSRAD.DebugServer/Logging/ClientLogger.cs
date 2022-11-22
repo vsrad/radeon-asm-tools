@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
+using Serilog;
 
 namespace VSRAD.DebugServer
 {
@@ -39,28 +40,28 @@ namespace VSRAD.DebugServer
 
         public void ExecutionStarted()
         {
-            if (_verbose) Console.WriteLine("===");
+            if (_verbose) Log.Information("===");
         }
 
         public void StdoutReceived(string output)
         {
             if (_verbose)
-                Console.WriteLine($"#{_clientId} stdout> " + output);
+                Log.Information($"#{_clientId} stdout> " + output);
         }
 
         public void StderrReceived(string output)
         {
             if (_verbose)
-                Console.WriteLine($"#{_clientId} stderr> " + output);
+                Log.Information($"#{_clientId} stderr> " + output);
         }
 
         public void DeployItemsReceived(IEnumerable<string> outputPaths)
         {
             if (!_verbose) return;
 
-            Console.WriteLine("Deploy Items:");
+            Log.Information("Deploy Items:");
             foreach (var path in outputPaths)
-                Console.WriteLine("-- " + path);
+                Log.Information("-- " + path);
         }
 
         public void CommandProcessed()
@@ -68,37 +69,37 @@ namespace VSRAD.DebugServer
             if (!_verbose) return;
 
             _timer.Stop();
-            Console.WriteLine($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
+            Log.Information($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
         }
 
         public void ParseVersionError(String version)
         {
-            Console.WriteLine($"{Environment.NewLine}Invalid Version on handshake attempt: {version}");
+            Log.Information($"{Environment.NewLine}Invalid Version on handshake attempt: {version}");
         }
 
         public void InvalidVersion(String receivedVersion, String minimalVersion)
         {
-            Console.WriteLine($"{Environment.NewLine}Version mismatch. Client version: {receivedVersion}," +
+            Log.Information($"{Environment.NewLine}Version mismatch. Client version: {receivedVersion}," +
                 $" expected version greater then {minimalVersion} ");
         }
 
         public void ClientRejectedServerVersion(String serverVersion, String clientVersion)
         {
-            Console.WriteLine($"{Environment.NewLine}Client rejected server version{Environment.NewLine}" +
+            Log.Information($"{Environment.NewLine}Client rejected server version{Environment.NewLine}" +
                 $"client version: {clientVersion}, server version: {serverVersion}");
         }
 
         public void HandshakeFailed(EndPoint clientEndpoint)
         {
-            Console.WriteLine($"{Environment.NewLine}Handshake in connection with {clientEndpoint} failed");
+            Log.Information($"{Environment.NewLine}Handshake in connection with {clientEndpoint} failed");
         }
 
         public void ConnectionTimeoutOnHandShake()
         {
-            Console.WriteLine($"{Environment.NewLine}Connection timeout on handshake attempt");
+            Log.Information($"{Environment.NewLine}Connection timeout on handshake attempt");
         }
 
         private void Print(string message) =>
-            Console.WriteLine("===" + Environment.NewLine + $"[Client #{_clientId}] {message}");
+            Log.Information("===" + Environment.NewLine + $"[Client #{_clientId}] {message}");
     }
 }
