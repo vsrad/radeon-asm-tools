@@ -80,12 +80,22 @@ namespace VSRAD.Syntax.Options
 
         [Category("Instructions")]
         [DisplayName("Instruction folder paths")]
-        [Description("List of folder path separated by semicolon wit assembly instructions with .radasm file extension")]
+        [Description("List of folder paths separated by semicolon with assembly instructions with .radasm file extension")]
         [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
         public string InstructionsPaths
         {
             get => _optionsProvider.InstructionsPaths;
             set => _optionsProvider.InstructionsPaths = value;
+        }
+
+        [Category("Instructions")]
+        [DisplayName("Include paths")]
+        [Description("List of folder paths separated by semicolon that contains sources to be included")]
+        [Editor(typeof(FolderPathsEditor), typeof(System.Drawing.Design.UITypeEditor))]
+        public string IncludePaths
+        {
+            get => ConvertExtensionsTo(_optionsProvider.IncludePaths);
+            set => _optionsProvider.IncludePaths = ConvertExtensionsFrom(value);
         }
 
         [Category("Instructions")]
@@ -156,6 +166,10 @@ namespace VSRAD.Syntax.Options
             InstructionsPaths = userSettingsStore.PropertyExists(InstructionCollectionName, nameof(InstructionsPaths))
                 ? userSettingsStore.GetString(InstructionCollectionName, nameof(InstructionsPaths))
                 : OptionsProvider.GetDefaultInstructionDirectoryPath();
+
+            IncludePaths = userSettingsStore.PropertyExists(InstructionCollectionName, nameof(IncludePaths))
+                ? userSettingsStore.GetString(InstructionCollectionName, nameof(IncludePaths))
+                : string.Empty;
         }
 
         public override async Task SaveAsync()
@@ -173,6 +187,11 @@ namespace VSRAD.Syntax.Options
                 StringComparison.OrdinalIgnoreCase))
             {
                 userSettingsStore.SetString(InstructionCollectionName, nameof(InstructionsPaths), InstructionsPaths);
+            }
+
+            if (!string.IsNullOrEmpty(IncludePaths))
+            {
+                userSettingsStore.SetString(InstructionCollectionName, nameof(IncludePaths), IncludePaths);
             }
         }
 

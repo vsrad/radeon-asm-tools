@@ -20,12 +20,14 @@ namespace VSRAD.Syntax.Core.Parser
         private readonly IDocumentFactory _documentFactory;
         private readonly AsmType _asmType;
         private HashSet<string> _instructions;
+        private IReadOnlyList<string> _includes;
 
-        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, AsmType asmType)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
             _instructions = new HashSet<string>();
+            _includes = includes;
             OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
@@ -62,6 +64,16 @@ namespace VSRAD.Syntax.Core.Parser
                 var externalFileName = includeStr.GetText(block.Snapshot).Trim('"');
                 var externalFilePath = Path.Combine(Path.GetDirectoryName(path), externalFileName);
                 var externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
+
+                if (externalDocument == null)
+                {
+                    foreach(var curPath in _includes)
+                    {
+                        externalFilePath = Path.Combine(curPath, externalFileName);
+                        externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
+                        if (externalDocument != null) break;
+                    }
+                }
 
                 if (externalDocument != null)
                 {

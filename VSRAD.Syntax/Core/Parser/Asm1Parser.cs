@@ -11,6 +11,7 @@ using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.Core.Parser
 {
@@ -23,12 +24,13 @@ namespace VSRAD.Syntax.Core.Parser
             var serviceProvider = ServiceProvider.GlobalProvider;
             var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
             var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
+            var options = serviceProvider.GetMefService<OptionsProvider>();
 
-            return new Asm1Parser(documentFactory, instructionListManager);
+            return new Asm1Parser(documentFactory, instructionListManager, options.IncludePaths);
         });
 
-        private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager, AsmType.RadAsm) { }
+        private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes) 
+            : base(documentFactory, instructionListManager, includes, AsmType.RadAsm) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
