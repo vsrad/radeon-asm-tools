@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml.Serialization;
+using VSRAD.DebugServer.SharedUtils;
+using System.Text;
 
 namespace VSRAD.DebugServer.IPC.Responses
 {
@@ -11,7 +14,9 @@ namespace VSRAD.DebugServer.IPC.Responses
         MetadataFetched = 1,
         ResultRangeFetched = 2,
         EnvironmentVariablesListed = 3,
-        PutFile = 4
+        PutFile = 4,
+        CheckOutdatedFiles = 5,
+        ListFiles = 6
     }
 #pragma warning restore CA1028
 
@@ -32,6 +37,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.ResultRangeFetched: return ResultRangeFetched.Deserialize(reader);
                 case ResponseType.EnvironmentVariablesListed: return EnvironmentVariablesListed.Deserialize(reader);
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
+                case ResponseType.CheckOutdatedFiles: return CheckOutdatedFilesResponse.Deserialize(reader);
+                case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -46,6 +53,8 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResultRangeFetched _: type = ResponseType.ResultRangeFetched; break;
                 case EnvironmentVariablesListed _: type = ResponseType.EnvironmentVariablesListed; break;
                 case PutFileResponse _: type = ResponseType.PutFile; break;
+                case CheckOutdatedFilesResponse _: type = ResponseType.CheckOutdatedFiles; break;
+                case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -174,6 +183,72 @@ namespace VSRAD.DebugServer.IPC.Responses
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
+        }
+    }
+
+    public sealed class ListFilesResponse : IResponse
+    {
+        public List<FileMetadata> Files { get; set; }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var file in Files)
+            {
+                sb.AppendLine(file.relativePath_);
+            }
+
+            return string.Join(Environment.NewLine, new[] {
+                "ListFileResponse",
+                $"Files = <{sb.ToString()} >"
+            });
+        }
+        private static XmlSerializer getFormatter()
+        {
+            return new XmlSerializer(typeof(List<FileMetadata>));
+        }
+
+        public static ListFilesResponse Deserialize(IPCReader reader)
+        {
+            List<FileMetadata> files = getFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>;
+            return new ListFilesResponse { Files = files };
+        }
+        public void Serialize(IPCWriter writer)
+        {
+            getFormatter().Serialize(writer.BaseStream, Files);
+        }
+    }
+    public sealed class CheckOutdatedFilesResponse : IResponse
+    {
+        public List<FileMetadata> Files { get; set; }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var file in Files)
+            {
+                sb.AppendLine(file.relativePath_);
+            }
+
+            return string.Join(Environment.NewLine, new[] {
+                "CheckOutdatedFilesResponse",
+                $"Files = <{sb.ToString()} >"
+            });
+        }
+
+        private static XmlSerializer getFormatter()
+        {
+            return new XmlSerializer(typeof(List<FileMetadata>));
+        }
+        public static CheckOutdatedFilesResponse Deserialize(IPCReader reader)
+        {
+            List<FileMetadata> files = getFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>;
+            return new CheckOutdatedFilesResponse { Files = files };
+        }
+
+        public void Serialize(IPCWriter writer)
+        {
+            getFormatter().Serialize(writer.BaseStream, Files);
         }
     }
 

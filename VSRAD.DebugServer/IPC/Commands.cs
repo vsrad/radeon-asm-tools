@@ -1,5 +1,9 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Xml.Serialization;
+using VSRAD.DebugServer.SharedUtils;
+using System.Text;
 
 namespace VSRAD.DebugServer.IPC.Commands
 {
@@ -11,7 +15,9 @@ namespace VSRAD.DebugServer.IPC.Commands
         FetchResultRange = 2,
         Deploy = 3,
         ListEnvironmentVariables = 4,
-        PutFile = 5
+        PutFile = 5,
+        CheckOutdatedFiles = 6,
+        ListFiles =7,
     }
 #pragma warning restore CA1028
     public enum HandShakeStatus
@@ -43,6 +49,8 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.Deploy: return Deploy.Deserialize(reader);
                 case CommandType.ListEnvironmentVariables: return ListEnvironmentVariables.Deserialize(reader);
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
+                case CommandType.CheckOutdatedFiles: return CheckOutdatedFiles.Deserialize(reader);
+                case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -58,6 +66,8 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case Deploy _: type = CommandType.Deploy; break;
                 case ListEnvironmentVariables _: type = CommandType.ListEnvironmentVariables; break;
                 case PutFileCommand _: type = CommandType.PutFile; break;
+                case CheckOutdatedFiles _: type = CommandType.CheckOutdatedFiles; break;
+                case ListFilesCommand _: type = CommandType.ListFiles; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -241,5 +251,67 @@ namespace VSRAD.DebugServer.IPC.Commands
         public static ListEnvironmentVariables Deserialize(IPCReader _) => new ListEnvironmentVariables();
 
         public void Serialize(IPCWriter _) { }
+    }
+
+    public sealed class ListFilesCommand : ICommand
+    {
+        public string DstPath { get; set; }
+        public override string ToString() => string.Join(Environment.NewLine, new[] {
+            "ListFilesCommand",
+            $"Path = <{DstPath}>"           
+        });
+        public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
+        {
+            DstPath = reader.ReadString(),
+           
+        };
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(DstPath);
+        }
+    }
+
+    public sealed class CheckOutdatedFiles : ICommand
+    {
+        public string DstPath { get; set; }
+
+        public List<FileMetadata> Files { get; set; }
+        private static XmlSerializer getFormatter()
+        {
+            return new XmlSerializer(typeof(List<FileMetadata>));
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var file in Files)
+            {
+                sb.AppendLine(file.relativePath_);
+            }
+
+            return string.Join(Environment.NewLine, new[] {
+                "CheckOutdatedFiles",
+                $"DstPath = {DstPath}",
+                $"Files = <{sb.ToString()} >"
+            });
+        }
+        
+        public static CheckOutdatedFiles Deserialize(IPCReader reader) => new CheckOutdatedFiles
+        {
+            DstPath = reader.ReadString(),
+            Files = getFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(DstPath);
+            try
+            {
+                getFormatter().Serialize(writer.BaseStream, Files);
+            } catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
     }
 }
