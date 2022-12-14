@@ -100,10 +100,7 @@ namespace VSRAD.Package.Server
             _project = project;
             _project.RunWhenLoaded((options) =>
                 options.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(options.ActiveProfile)) ForceDisconnect(); });
-            var match = _extensionVersionRegex.Match(typeof(IProject).Assembly.CodeBase);
-            if (!match.Success)
-                throw new Exception("Error while getting current extension version.");
-            _extensionVersion = new Version(match.Groups["version"].Value);
+            _extensionVersion = typeof(CommunicationChannel).Assembly.GetName().Version;
         }
 
         public Task<T> SendWithReplyAsync<T>(ICommand command) where T : IResponse =>

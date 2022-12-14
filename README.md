@@ -38,9 +38,14 @@ where `port` is a TCP port number the server will listen on.
 
 ### Assembling a Release
 
-1. Right-click on `VSRAD.Build` in *Solution Explorer* and select *Set as StartUp Project*.
-2. Select *Release* in the *Solution Configurations* dropdown.
-3. Build the entire solution (*Build* -> *Build Solution*).
+Update extension and server versions if needed:
+
+1. `VSRAD.Package\source.extension.vsixmanifest`
+2. `VSRAD.Package\Properties\AssemblyInfo.cs`
+
+3. Right-click on `VSRAD.Build` in *Solution Explorer* and select *Set as StartUp Project*.
+4. Select *Release* in the *Solution Configurations* dropdown.
+5. Build the entire solution (*Build* -> *Build Solution*).
 
 The release build creates a directory (`Release`) with the installation script
 (`install.bat`), the extension package (`RadeonAsmDebugger.vsix`), and debug server
