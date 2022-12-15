@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core.Parser
 {
+    [Export(typeof(DefinitionContainer))]
     public class DefinitionContainer
     {
         private readonly Dictionary<string, Stack<(IBlock, DefinitionToken)>> _container;

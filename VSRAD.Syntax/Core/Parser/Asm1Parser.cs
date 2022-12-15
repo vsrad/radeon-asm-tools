@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Core.Parser
         });
 
         private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes) 
-            : base(documentFactory, instructionListManager, includes, AsmType.RadAsm) { }
+            : base(documentFactory, instructionListManager, includes, null, AsmType.RadAsm) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)

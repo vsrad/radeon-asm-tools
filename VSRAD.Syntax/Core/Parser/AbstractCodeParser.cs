@@ -21,13 +21,16 @@ namespace VSRAD.Syntax.Core.Parser
         private readonly AsmType _asmType;
         private HashSet<string> _instructions;
         private IReadOnlyList<string> _includes;
+        protected DefinitionContainer _container;
 
-        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes, AsmType asmType)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager,
+            IReadOnlyList<string> includes, DefinitionContainer container, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
             _instructions = new HashSet<string>();
             _includes = includes;
+            _container = container;
             OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
@@ -83,7 +86,7 @@ namespace VSRAD.Syntax.Core.Parser
                         .ConfigureAwait(false);
 
                     foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
-                        definitionContainer.Add(block, externalDefinition);
+                        _container.Add(block, externalDefinition);
                 }
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }
