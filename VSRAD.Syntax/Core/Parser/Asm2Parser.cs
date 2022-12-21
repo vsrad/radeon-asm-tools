@@ -26,13 +26,14 @@ namespace VSRAD.Syntax.Core.Parser
             var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
             var options = serviceProvider.GetMefService<OptionsProvider>();
             var container = serviceProvider.GetMefService<DefinitionContainer>();
+            var manager = serviceProvider.GetMefService<DocumentManager>();
 
-            return new Asm2Parser(documentFactory, instructionListManager, options.IncludePaths, container);
+            return new Asm2Parser(documentFactory, instructionListManager, options.IncludePaths, container, manager);
         });
 
         private Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes,
-            DefinitionContainer container) 
-            : base(documentFactory, instructionListManager, includes, container, AsmType.RadAsm2) { }
+            DefinitionContainer container, DocumentManager manager) 
+            : base(documentFactory, instructionListManager, includes, container, manager, AsmType.RadAsm2) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
@@ -218,7 +219,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm2Lexer.STRING_LITERAL)
                         {
-                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock, _container);
+                            await AddExternalDefinitionsAsync(document, document.Path, tokens[i + 1], currentBlock, _container);
                             i += 1;
                         }
                     }

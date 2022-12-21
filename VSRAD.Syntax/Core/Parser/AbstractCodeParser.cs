@@ -22,15 +22,17 @@ namespace VSRAD.Syntax.Core.Parser
         private HashSet<string> _instructions;
         private IReadOnlyList<string> _includes;
         protected DefinitionContainer _container;
+        protected DocumentManager _manager;
 
         protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager,
-            IReadOnlyList<string> includes, DefinitionContainer container, AsmType asmType)
+            IReadOnlyList<string> includes, DefinitionContainer container, DocumentManager manager, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
             _instructions = new HashSet<string>();
             _includes = includes;
             _container = container;
+            _manager = manager;
             OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
@@ -60,8 +62,9 @@ namespace VSRAD.Syntax.Core.Parser
             }
         }
 
-        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
+        protected async Task AddExternalDefinitionsAsync(IDocument document, string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
         {
+            // wip : we do not need to pass path and definition container here because we can get them from doc and docManager
             try
             {
                 var externalFileName = includeStr.GetText(block.Snapshot).Trim('"');
@@ -84,6 +87,7 @@ namespace VSRAD.Syntax.Core.Parser
                     var externalAnalysisResult = await externalDocumentAnalysis
                         .GetAnalysisResultAsync(externalDocument.CurrentSnapshot)
                         .ConfigureAwait(false);
+                    _manager.AddChild(document, externalDocument);
 
                     foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
                         _container.Add(block, externalDefinition);
