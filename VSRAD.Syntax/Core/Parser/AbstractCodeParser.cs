@@ -21,17 +21,15 @@ namespace VSRAD.Syntax.Core.Parser
         private readonly AsmType _asmType;
         private HashSet<string> _instructions;
         private IReadOnlyList<string> _includes;
-        protected DefinitionContainer _container;
         protected DocumentManager _manager;
 
         protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager,
-            IReadOnlyList<string> includes, DefinitionContainer container, DocumentManager manager, AsmType asmType)
+            IReadOnlyList<string> includes, DocumentManager manager, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
             _instructions = new HashSet<string>();
             _includes = includes;
-            _container = container;
             _manager = manager;
             OtherInstructions = new HashSet<string>();
 
@@ -62,9 +60,8 @@ namespace VSRAD.Syntax.Core.Parser
             }
         }
 
-        protected async Task AddExternalDefinitionsAsync(IDocument document, string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
+        protected async Task AddExternalDefinitionsAsync(IDocument document, string path, TrackingToken includeStr, IBlock block)
         {
-            // wip : we do not need to pass path and definition container here because we can get them from doc and docManager
             try
             {
                 var externalFileName = includeStr.GetText(block.Snapshot).Trim('"');
@@ -89,8 +86,9 @@ namespace VSRAD.Syntax.Core.Parser
                         .ConfigureAwait(false);
                     _manager.AddChild(document, externalDocument);
 
-                    foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
-                        _container.Add(block, externalDefinition);
+                    //var pContainer = _manager.GetContainerForDoc(document);
+                    //foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
+                    //    pContainer.Add(block, externalDefinition);
                 }
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }

@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Core.Parser
         });
 
         private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes) 
-            : base(documentFactory, instructionListManager, includes, null, null, AsmType.RadAsm) { }
+            : base(documentFactory, instructionListManager, includes, null, AsmType.RadAsm) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
@@ -213,7 +213,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.STRING_LITERAL)
                         {
-                            await AddExternalDefinitionsAsync(document, document.Path, tokens[i + 1], currentBlock, definitionContainer);
+                            await AddExternalDefinitionsAsync(document, document.Path, tokens[i + 1], currentBlock);
                             i += 1;
                         }
                     }
