@@ -166,7 +166,7 @@ namespace VSRAD.Syntax.FunctionList
             {
                 functionsGridView.Columns[0].Width = Math.Max(functionsGridView.Columns[0].ActualWidth, 45.4 /*min width equals to 5 digits*/);
             }
-            functionsGridView.Columns[1].Width = FunctionListWindow.ActualWidth - functionsGridView.Columns[0].Width;
+            functionsGridView.Columns[1].Width = Math.Max(FunctionListWindow.ActualWidth - functionsGridView.Columns[0].Width,0);
         }
 
         private void SetLineNumberColumnWidth()
