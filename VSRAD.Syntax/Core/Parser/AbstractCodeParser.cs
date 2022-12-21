@@ -20,12 +20,17 @@ namespace VSRAD.Syntax.Core.Parser
         private readonly IDocumentFactory _documentFactory;
         private readonly AsmType _asmType;
         private HashSet<string> _instructions;
+        private IReadOnlyList<string> _includes;
+        protected DocumentManager _manager;
 
-        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, AsmType asmType)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager,
+            IReadOnlyList<string> includes, DocumentManager manager, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
             _instructions = new HashSet<string>();
+            _includes = includes;
+            _manager = manager;
             OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
@@ -55,7 +60,7 @@ namespace VSRAD.Syntax.Core.Parser
             }
         }
 
-        protected async Task AddExternalDefinitionsAsync(string path, TrackingToken includeStr, IBlock block, DefinitionContainer definitionContainer)
+        protected async Task AddExternalDefinitionsAsync(IDocument document, string path, TrackingToken includeStr, IBlock block)
         {
             try
             {
@@ -63,15 +68,27 @@ namespace VSRAD.Syntax.Core.Parser
                 var externalFilePath = Path.Combine(Path.GetDirectoryName(path), externalFileName);
                 var externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
 
+                if (externalDocument == null)
+                {
+                    foreach(var curPath in _includes)
+                    {
+                        externalFilePath = Path.Combine(curPath, externalFileName);
+                        externalDocument = _documentFactory.GetOrCreateDocument(externalFilePath);
+                        if (externalDocument != null) break;
+                    }
+                }
+
                 if (externalDocument != null)
                 {
                     var externalDocumentAnalysis = externalDocument.DocumentAnalysis;
                     var externalAnalysisResult = await externalDocumentAnalysis
                         .GetAnalysisResultAsync(externalDocument.CurrentSnapshot)
                         .ConfigureAwait(false);
+                    _manager.AddChild(document, externalDocument);
 
-                    foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
-                        definitionContainer.Add(block, externalDefinition);
+                    //var pContainer = _manager.GetContainerForDoc(document);
+                    //foreach (var externalDefinition in externalAnalysisResult.GetGlobalDefinitions())
+                    //    pContainer.Add(block, externalDefinition);
                 }
             }
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }

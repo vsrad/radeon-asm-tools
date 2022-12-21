@@ -11,6 +11,7 @@ using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.Core.Parser
 {
@@ -23,12 +24,14 @@ namespace VSRAD.Syntax.Core.Parser
             var serviceProvider = ServiceProvider.GlobalProvider;
             var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
             var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
+            var options = serviceProvider.GetMefService<OptionsProvider>();
+            var manager = serviceProvider.GetMefService<DocumentManager>();
 
-            return new Asm2Parser(documentFactory, instructionListManager);
+            return new Asm2Parser(documentFactory, instructionListManager, options.IncludePaths, manager);
         });
 
-        private Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager, AsmType.RadAsm2) { }
+        private Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, IReadOnlyList<string> includes, DocumentManager manager) 
+            : base(documentFactory, instructionListManager, includes, manager, AsmType.RadAsm2) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
@@ -54,9 +57,9 @@ namespace VSRAD.Syntax.Core.Parser
                 .WithCancellation(cancellation)
                 .ToArray();
 
-            var definitionContainer = new DefinitionContainer();
             var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
 
+            var definitionContainer = _manager.GetContainerForDoc(document);
             var blocks = new List<IBlock>();
             var errors = new List<IErrorToken>();
             IBlock currentBlock = new Block(version);
@@ -216,7 +219,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm2Lexer.STRING_LITERAL)
                         {
-                            await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock, definitionContainer);
+                            await AddExternalDefinitionsAsync(document, document.Path, tokens[i + 1], currentBlock);
                             i += 1;
                         }
                     }

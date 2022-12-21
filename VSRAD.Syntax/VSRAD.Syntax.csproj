@@ -92,6 +92,7 @@
     <Compile Include="Core\Parser\Asm2Parser.cs" />
     <Compile Include="Core\Parser\AsmDocParser.cs" />
     <Compile Include="Core\Parser\Asm1Parser.cs" />
+    <Compile Include="Core\Parser\DocumentManager.cs" />
     <Compile Include="Core\Parser\IParser.cs" />
     <Compile Include="Core\Parser\DefinitionContainer.cs" />
     <Compile Include="Core\ITokenizerResult.cs" />

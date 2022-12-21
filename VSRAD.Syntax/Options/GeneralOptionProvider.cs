@@ -31,6 +31,7 @@ namespace VSRAD.Syntax.Options
             Asm1FileExtensions = Constants.DefaultFileExtensionAsm1;
             Asm2FileExtensions = Constants.DefaultFileExtensionAsm2;
             InstructionsPaths = GetDefaultInstructionDirectoryPath();
+            IncludePaths = new List<string>();
             Asm1InstructionSet = string.Empty;
             Asm2InstructionSet = string.Empty;
             AutocompleteInstructions = false;
@@ -50,6 +51,7 @@ namespace VSRAD.Syntax.Options
         public IReadOnlyList<string> Asm1FileExtensions;
         public IReadOnlyList<string> Asm2FileExtensions;
         public string InstructionsPaths;
+        public IReadOnlyList<string> IncludePaths;
         public string Asm1InstructionSet;
         public string Asm2InstructionSet;
         public bool AutocompleteInstructions;
