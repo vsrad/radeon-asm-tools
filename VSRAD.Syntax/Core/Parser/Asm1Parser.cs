@@ -194,7 +194,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         var tokenText = token.GetText(version);
                         if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
-                            !TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
+                            !TryAddReference(document, tokenText, token, currentBlock, version, cancellation))
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.EQ)
                             {
@@ -238,7 +238,7 @@ namespace VSRAD.Syntax.Core.Parser
 
             foreach (var (text, trackingToken, block) in referenceCandidates)
             {
-                if (!TryAddReference(text, trackingToken, block, version, definitionContainer, cancellation) && OtherInstructions.Contains(text))
+                if (!TryAddReference(document, text, trackingToken, block, version, cancellation) && OtherInstructions.Contains(text))
                     errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
             }
 

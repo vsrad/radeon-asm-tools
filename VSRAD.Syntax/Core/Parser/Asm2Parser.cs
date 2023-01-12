@@ -199,7 +199,7 @@ namespace VSRAD.Syntax.Core.Parser
                     else if (token.Type == RadAsm2Lexer.CLOSURE_IDENTIFIER)
                     {
                         var tokenText = token.GetText(version).Substring(1); // remove first '#' symbol
-                        if (!TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
+                        if (!TryAddReference(document, tokenText, token, currentBlock, version, cancellation))
                         {
                             referenceCandidates.AddLast((tokenText, token, currentBlock));
                         }
@@ -208,7 +208,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         var tokenText = token.GetText(version);
                         if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
-                            !TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
+                            !TryAddReference(document, tokenText, token, currentBlock, version, cancellation))
                         {
                             referenceCandidates.AddLast((tokenText, token, currentBlock));
                         }
@@ -247,7 +247,7 @@ namespace VSRAD.Syntax.Core.Parser
 
             foreach (var (text, trackingToken, block) in referenceCandidates)
             {
-                if (!TryAddReference(text, trackingToken, block, version, definitionContainer, cancellation) && OtherInstructions.Contains(text))
+                if (!TryAddReference(document, text, trackingToken, block, version, cancellation) && OtherInstructions.Contains(text))
                     errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
             }
 

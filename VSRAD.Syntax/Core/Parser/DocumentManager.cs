@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using VSRAD.Syntax.Core.Blocks;
 
 namespace VSRAD.Syntax.Core.Parser
 {
@@ -14,7 +15,7 @@ namespace VSRAD.Syntax.Core.Parser
             _documents = new List<DocumentNode>();
         }
 
-        private DocumentNode GetNodeForDoc(IDocument document)
+        public DocumentNode GetNodeForDoc(IDocument document)
         {
             var node = _documents.FirstOrDefault(d => d.Document == document);
             if (node == default(DocumentNode))
@@ -37,10 +38,10 @@ namespace VSRAD.Syntax.Core.Parser
         }
     }
 
-    sealed class DocumentNode
+    public sealed class DocumentNode
     {
         public readonly IDocument Document;
-        public readonly DefinitionContainer DefinitionContainer;
+        public DefinitionContainer DefinitionContainer;
         public readonly List<DocumentNode> Children;
 
         public DocumentNode(IDocument doc)

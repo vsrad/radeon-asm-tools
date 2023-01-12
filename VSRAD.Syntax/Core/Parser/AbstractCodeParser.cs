@@ -94,10 +94,15 @@ namespace VSRAD.Syntax.Core.Parser
             catch (Exception e) when (e is ArgumentException || e is FileNotFoundException) { /* invalid path */ }
         }
 
-        protected bool TryAddReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version, DefinitionContainer definitionContainer, CancellationToken cancellation)
+        protected bool TryAddReference(IDocument doc, string tokenText, TrackingToken token, IBlock block,
+            ITextSnapshot version, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
-            if (definitionContainer.TryGetDefinition(tokenText, out var definitionToken))
+
+            var node = _manager.GetNodeForDoc(doc);
+            var definitionToken = SearchForToken(node, tokenText);
+
+            if (definitionToken != null)
             {
                 RadAsmTokenType referenceType;
                 switch (definitionToken.Type)
@@ -131,6 +136,19 @@ namespace VSRAD.Syntax.Core.Parser
             }
 
             return false;
+        }
+
+        private DefinitionToken SearchForToken(DocumentNode node, string tokenText)
+        {
+            DefinitionToken token;
+            if (node.DefinitionContainer.TryGetDefinition(tokenText, out token))
+                return token; // look for token in current node
+            foreach (var child in node.Children) // going deeper in recursion
+            {
+                token = SearchForToken(child, tokenText);
+                if (token != null) break; // found token in child node
+            }
+            return token; // can still be null, in case non of children contains token
         }
 
         protected bool TryAddInstruction(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
