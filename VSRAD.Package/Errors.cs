@@ -31,6 +31,9 @@ namespace VSRAD.Package
         public static void Show(Error error) =>
             CreateMessageBox(error.Message, error.Title, error.Critical ? OLEMSGICON.OLEMSGICON_CRITICAL : OLEMSGICON.OLEMSGICON_WARNING);
 
+        public static void ShowWithLine(Error error, uint line) =>
+            CreateMessageBox(error.Message + $"\nNext break line: {line}", error.Title, error.Critical ? OLEMSGICON.OLEMSGICON_CRITICAL : OLEMSGICON.OLEMSGICON_WARNING);
+
         public static void ShowCritical(string message, string title = "RAD Debugger") =>
             CreateMessageBox(message, title, OLEMSGICON.OLEMSGICON_CRITICAL);
 

@@ -17,11 +17,14 @@ namespace VSRAD.Package.ProjectSystem
         public MacroEvaluatorTransientValues Transients { get; }
         public ActionRunResult RunResult { get; }
 
-        public ActionExecution(Error? error, MacroEvaluatorTransientValues transients = null, ActionRunResult runResult = null)
+        public uint NextBreakLine { get; }
+
+        public ActionExecution(Error? error, MacroEvaluatorTransientValues transients = null, ActionRunResult runResult = null, uint nextBreakLine = 0)
         {
             Error = error;
             Transients = transients;
             RunResult = runResult;
+            NextBreakLine = nextBreakLine;
         }
     }
 
@@ -123,7 +126,8 @@ namespace VSRAD.Package.ProjectSystem
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
-                return new ActionExecution(actionError, transients, runResult);
+                if (!actionError.HasValue) _breakpointTracker.UpdateBreakTarget((file, breakLines));
+                return new ActionExecution(actionError, transients, runResult, breakLines[0] + 1);
             }
             finally
             {

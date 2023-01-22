@@ -60,7 +60,7 @@ namespace VSRAD.Package.Commands
                     var result = await _actionLauncher.LaunchActionByNameAsync(actionName, moveToNextDebugTarget: isDebugAction);
                     await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                     if (result.Error is Error e)
-                        Errors.Show(e);
+                        Errors.ShowWithLine(e, result.NextBreakLine);
                     if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
                         && _actionLauncher.IsDebugAction(action))
                         _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);

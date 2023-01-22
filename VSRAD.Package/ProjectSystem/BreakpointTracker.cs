@@ -17,6 +17,7 @@ namespace VSRAD.Package.ProjectSystem
         (string, uint[]) GetBreakTarget();
         void SetRunToLine(string file, uint line);
         void ResetToFirstBreakTarget();
+        void UpdateBreakTarget((string, uint[]) target);
     }
 
     [Export(typeof(IBreakpointTracker))]
@@ -76,9 +77,10 @@ namespace VSRAD.Package.ProjectSystem
                 _runToLine = null;
             }
 
-            _breakTargets[target.Item1] = target.Item2;
             return target;
         }
+
+        public void UpdateBreakTarget((string, uint[]) target) => _breakTargets[target.Item1] = target.Item2;
 
         public (string, uint[]) GetBreakTarget()
         {

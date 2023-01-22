@@ -46,7 +46,10 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
                     m.Invalidate();
 
                 // Draw our own markers
-                DebugExecutionCompleted?.Invoke(this, execCompleted);
+                if (execCompleted.CompletedSuccessfully)
+                    DebugExecutionCompleted?.Invoke(this, execCompleted);
+                else
+                    RemoveBreakLineMarkers();
             }
             catch (Exception e)
             {

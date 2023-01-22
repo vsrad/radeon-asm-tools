@@ -93,7 +93,7 @@ namespace VSRAD.Package.ProjectSystem
 
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 if (result.Error is Error e)
-                    Errors.Show(e);
+                    Errors.ShowWithLine(e, result.NextBreakLine);
                 NotifyDebugActionExecuted(result.RunResult, result.Transients);
             },
             exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null));
@@ -110,7 +110,7 @@ namespace VSRAD.Package.ProjectSystem
 
         private void RaiseExecutionCompleted(string file, uint[] lines, bool isStepping, BreakState breakState)
         {
-            var args = new ExecutionCompletedEventArgs(file, lines, isStepping);
+            var args = new ExecutionCompletedEventArgs(file, lines, isStepping, breakState != null);
             ExecutionCompleted?.Invoke(this, args);
             _breakLineTagger.OnExecutionCompleted(args);
             BreakEntered(this, breakState);

@@ -7,12 +7,14 @@ namespace VSRAD.Deborgar
         public string File { get; }
         public uint[] Lines { get; }
         public bool IsStepping { get; }
+        public bool CompletedSuccessfully { get; }
 
-        public ExecutionCompletedEventArgs(string file, uint[] lines, bool isStepping)
+        public ExecutionCompletedEventArgs(string file, uint[] lines, bool isStepping, bool completedSuccessfully)
         {
             File = file;
             Lines = lines;
             IsStepping = isStepping;
+            CompletedSuccessfully = completedSuccessfully;
         }
     }
 
