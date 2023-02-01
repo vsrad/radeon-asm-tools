@@ -24,12 +24,13 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var typeItems = new MenuItem[]
             {
-                new MenuItem("Hex", new MenuItem[]
-                {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex, 16))),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex,  8)))
-                }),
+                new MenuItem("Hex", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex, 32))),
+                //new MenuItem("Hex", new MenuItem[]
+                //{
+                //    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex, 32))),
+                //    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex, 16))),
+                //    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Hex,  8)))
+                //}),
                 new MenuItem("Int", new MenuItem[]
                 {
                     new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Int, 32))),
@@ -42,11 +43,12 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                     new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Uint, 16))),
                     new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Uint,  8)))
                 }),
-                new MenuItem("Float", new MenuItem[]
-                {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 16)))
-                }),
+                new MenuItem("Float", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 32))),
+                //new MenuItem("Float", new MenuItem[]
+                //{
+                //    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 32))),
+                //    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 16)))
+                //}),
                 new MenuItem("Bin", new MenuItem[]
                 {
                     new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin, 32))),

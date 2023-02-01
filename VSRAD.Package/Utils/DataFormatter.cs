@@ -79,11 +79,11 @@ namespace VSRAD.Package.Utils
                     float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
                     return $"{firstHalf}; {secondHalf}";
                 case VariableType.Bin:
-                    var bin = Convert.ToString(data, 2);
+                    var bin = Convert.ToString(data, 2).PadLeft(32, '0');
                     if (varInfo.Size != 32) bin = bin.Substring(32 - varInfo.Size, varInfo.Size);
                     if (string.IsNullOrEmpty(bin)) bin = "0";
-                    if (leadingZeroes)
-                        bin = bin.PadLeft(varInfo.Size, '0');
+                    if (!leadingZeroes)
+                        bin = bin.TrimStart('0');
                     if (binHexSeparator != 0)
                         bin = InsertNumberSeparators(bin, binHexSeparator);
                     return "0b" + bin;
