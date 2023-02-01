@@ -171,15 +171,6 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             }
         }
 
-        private void AddWatch(string watchName)
-        {
-            _table.RemoveNewWatchRow();
-            _table.AppendVariableRow(new Watch(watchName, new VariableInfo(VariableType.Int, 32), isAVGPR: false));
-            _table.PrepareNewWatchRow();
-            _context.Options.DebuggerOptions.Watches.Clear();
-            _context.Options.DebuggerOptions.Watches.AddRange(_table.GetCurrentWatchState());
-        }
-
         private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
             if (_context.BreakData == null)

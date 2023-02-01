@@ -105,7 +105,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void AddWatch(string watchName)
         {
             RemoveNewWatchRow();
-            AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
+            AppendVariableRow(new Watch(watchName, new VariableInfo(VariableType.Int, 32), isAVGPR: false));
             PrepareNewWatchRow();
             RaiseWatchStateChanged();
         }

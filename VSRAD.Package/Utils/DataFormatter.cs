@@ -32,7 +32,7 @@ namespace VSRAD.Package.Utils
             {
                 case VariableType.Hex:
                     var hex = data.ToString("x");
-                    if (varInfo.Size != 32) hex = hex.Substring(8 - (varInfo.Size / 4), varInfo.Size / 4);
+                    if (varInfo.Size != 32) hex = hex.Substring(8 - (varInfo.Size / 4), varInfo.Size / 4); // TODO: doesnt work with short representations (0x0)
                     if (string.IsNullOrEmpty(hex)) hex = "0";
                     if (leadingZeroes)
                         hex = hex.PadLeft(varInfo.Size / 4, '0');
