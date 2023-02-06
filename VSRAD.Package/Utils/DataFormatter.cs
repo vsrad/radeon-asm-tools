@@ -8,6 +8,7 @@ namespace VSRAD.Package.Utils
     {
         private static string InsertNumberSeparators(string str, uint sep)
         {
+            if (sep == 0) return str;
             var sb = new StringBuilder();
             // If leading zeroes option is turned off we want separators
             // to be between N characters starting from last one, not the
@@ -52,26 +53,34 @@ namespace VSRAD.Package.Utils
                     switch (varInfo.Size)
                     {
                         case 32:
-                            return intSeparator == 0 ? data.ToString() : InsertNumberSeparators(data.ToString(), intSeparator);
+                            return InsertNumberSeparators(data.ToString(), intSeparator);
                         case 16:
-                            var res16 = BitConverter.ToUInt16(uIntBytes, 0);
-                            return intSeparator == 0 ? res16.ToString() : InsertNumberSeparators(res16.ToString(), intSeparator);
+                            var res16_1 = InsertNumberSeparators(BitConverter.ToUInt16(uIntBytes, 2).ToString(), intSeparator);
+                            var res16_2 = InsertNumberSeparators(BitConverter.ToUInt16(uIntBytes, 0).ToString(), intSeparator);
+                            return $"{res16_1}; {res16_2}";
                         default: // 8
-                            var res8 = uIntBytes[3].ToString(); // little endian
-                            return intSeparator == 0 ? res8.ToString() : InsertNumberSeparators(res8.ToString(), intSeparator);
+                            var res8_1 = InsertNumberSeparators(uIntBytes[3].ToString(), intSeparator);
+                            var res8_2 = InsertNumberSeparators(uIntBytes[2].ToString(), intSeparator);
+                            var res8_3 = InsertNumberSeparators(uIntBytes[1].ToString(), intSeparator);
+                            var res8_4 = InsertNumberSeparators(uIntBytes[0].ToString(), intSeparator);
+                            return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
                     }
                 case VariableType.Int:
                     var intBytes = BitConverter.GetBytes(data);
                     switch (varInfo.Size)
                     {
                         case 32:
-                            return intSeparator == 0 ? ((int)data).ToString() : InsertNumberSeparators(((int)data).ToString(), intSeparator);
+                            return InsertNumberSeparators(((int)data).ToString(), intSeparator);
                         case 16:
-                            var res16 = BitConverter.ToInt16(intBytes, 0);
-                            return intSeparator == 0 ? res16.ToString() : InsertNumberSeparators(res16.ToString(), intSeparator);
+                            var res16_1 = InsertNumberSeparators(BitConverter.ToInt16(intBytes, 2).ToString(), intSeparator);
+                            var res16_2 = InsertNumberSeparators(BitConverter.ToInt16(intBytes, 0).ToString(), intSeparator);
+                            return $"{res16_1}; {res16_2}";
                         default: // 8
-                            var res8 = ((sbyte)intBytes[3]).ToString(); // little endian
-                            return intSeparator == 0 ? res8.ToString() : InsertNumberSeparators(res8.ToString(), intSeparator);
+                            var res8_1 = InsertNumberSeparators(((sbyte)intBytes[3]).ToString(), intSeparator);
+                            var res8_2 = InsertNumberSeparators(((sbyte)intBytes[2]).ToString(), intSeparator);
+                            var res8_3 = InsertNumberSeparators(((sbyte)intBytes[1]).ToString(), intSeparator);
+                            var res8_4 = InsertNumberSeparators(((sbyte)intBytes[0]).ToString(), intSeparator);
+                            return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
                     }
                 case VariableType.Half:
                     byte[] bytes = BitConverter.GetBytes(data);
