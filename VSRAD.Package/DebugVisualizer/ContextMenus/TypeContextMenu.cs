@@ -49,12 +49,13 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 //    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 32))),
                 //    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Float, 16)))
                 //}),
-                new MenuItem("Bin", new MenuItem[]
-                {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin, 16))),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin,  8)))
-                }),
+                new MenuItem("Bin", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin, 32))),
+                //new MenuItem("Bin", new MenuItem[]
+                //{
+                //    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin, 32))),
+                //    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin, 16))),
+                //    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Bin,  8)))
+                //}),
                 new MenuItem("Half", (s, e) => typeChanged(_currentRow, new VariableInfo(VariableType.Half, 0)))
             };
 

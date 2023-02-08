@@ -43,13 +43,13 @@ namespace VSRAD.Package.DebugVisualizer
             switch (info.Type)
             {
                 case VariableType.Bin:
-                    return "B" + info.Size.ToString();
+                    return "B"; //+ info.Size.ToString();
                 case VariableType.Float:
-                    return "F" + info.Size.ToString();
+                    return "F"; //+ info.Size.ToString();
                 case VariableType.Half:
                     return "h"; // we dont use size for half's
                 case VariableType.Hex:
-                    return "H" + info.Size.ToString();
+                    return "H"; //+ info.Size.ToString();
                 case VariableType.Int:
                     return "I" + info.Size.ToString();
                 case VariableType.Uint:
@@ -64,13 +64,13 @@ namespace VSRAD.Package.DebugVisualizer
             switch (shortName[0])
             {
                 case 'B':
-                    return new VariableInfo(VariableType.Bin, int.Parse(shortName.Substring(1)));
+                    return new VariableInfo(VariableType.Bin, 32);//int.Parse(shortName.Substring(1)));
                 case 'F':
-                    return new VariableInfo(VariableType.Float, int.Parse(shortName.Substring(1)));
+                    return new VariableInfo(VariableType.Float, 32);//int.Parse(shortName.Substring(1)));
                 case 'h':
                     return new VariableInfo(VariableType.Half, 0); // we dont use size for half's
                 case 'H':
-                    return new VariableInfo(VariableType.Hex, int.Parse(shortName.Substring(1)));
+                    return new VariableInfo(VariableType.Hex, 32); //int.Parse(shortName.Substring(1)));
                 case 'I':
                     return new VariableInfo(VariableType.Int, int.Parse(shortName.Substring(1)));
                 default:
