@@ -26,9 +26,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
 
             Assert.Collection(imported.DebuggerOptions.Watches,
-                w1 => Assert.Equal(new Watch("v0", VariableType.Hex, false), w1),
-                w2 => Assert.Equal(new Watch(" ", VariableType.Uint, false), w2),
-                w3 => Assert.Equal(new Watch("v2", VariableType.Float, false), w3));
+                w1 => Assert.Equal(new Watch("v0", new VariableInfo(VariableType.Hex, 32), false), w1),
+                w2 => Assert.Equal(new Watch(" ", new VariableInfo(VariableType.Uint, 32), false), w2),
+                w3 => Assert.Equal(new Watch("v2", new VariableInfo(VariableType.Float, 32), false), w3));
 
             Assert.Equal(42u, imported.DebuggerOptions.Counter);
             Assert.Equal((uint)0x313313, imported.VisualizerOptions.MagicNumber);
