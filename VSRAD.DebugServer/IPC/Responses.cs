@@ -16,7 +16,10 @@ namespace VSRAD.DebugServer.IPC.Responses
         EnvironmentVariablesListed = 3,
         PutFile = 4,
         CheckOutdatedFiles = 5,
-        ListFiles = 6
+        ListFiles = 6,
+        SendFile = 7,
+        GetFile = 8,
+        PutDirectory
     }
 #pragma warning restore CA1028
 
@@ -39,6 +42,9 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.PutFile: return PutFileResponse.Deserialize(reader);
                 case ResponseType.CheckOutdatedFiles: return CheckOutdatedFilesResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
+                case ResponseType.SendFile: return SendFileResponse.Deserialize(reader);
+                case ResponseType.GetFile: return GetFileResponse.Deserialize(reader);
+                case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected response type byte: {type}");
         }
@@ -55,6 +61,9 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case PutFileResponse _: type = ResponseType.PutFile; break;
                 case CheckOutdatedFilesResponse _: type = ResponseType.CheckOutdatedFiles; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
+                case SendFileResponse _: type = ResponseType.SendFile; break;
+                case GetFileResponse _: type = ResponseType.GetFile; break;
+                case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
             }
             writer.Write((byte)type);
@@ -186,6 +195,68 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
+    public sealed class SendFileResponse : IResponse
+    {
+        public SendFileStatus Status { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "SendFileResponse",
+            $"Status = {Status}",
+        });
+
+        public static SendFileResponse Deserialize(IPCReader reader) => new SendFileResponse
+        {
+            Status = (SendFileStatus)reader.ReadByte()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+        }
+    }
+
+    public sealed class PutDirectoryResponse : IResponse
+    {
+        public PutDirectoryStatus Status { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "PutDirectoryResponse",
+            $"Status = {Status}",
+        });
+
+        public static PutDirectoryResponse Deserialize(IPCReader reader) => new PutDirectoryResponse
+        {
+            Status = (PutDirectoryStatus)reader.ReadByte()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+        }
+    }
+    public sealed class GetFileResponse : IResponse
+    {
+        public GetFileStatus Status { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "SendFileResponse",
+            $"Status = {Status}",
+        });
+
+        public static GetFileResponse Deserialize(IPCReader reader) => new GetFileResponse
+        {
+            Status = (GetFileStatus)reader.ReadByte()
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+        }
+    }
+
     public sealed class ListFilesResponse : IResponse
     {
         public List<FileMetadata> Files { get; set; }
@@ -286,6 +357,27 @@ namespace VSRAD.DebugServer.IPC.Responses
     }
 
     public enum PutFileStatus : byte
+    {
+        Successful = 0,
+        PermissionDenied = 1,
+        OtherIOError = 2
+    }
+
+    public enum SendFileStatus : byte
+    {
+        Successful = 0,
+        PermissionDenied = 1,
+        OtherIOError = 2
+    }
+
+    public enum PutDirectoryStatus : byte
+    {
+        Successful = 0,
+        PermissionDenied = 1,
+        OtherIOError = 2
+    }
+
+    public enum GetFileStatus : byte
     {
         Successful = 0,
         PermissionDenied = 1,

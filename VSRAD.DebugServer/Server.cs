@@ -136,7 +136,7 @@ namespace VSRAD.DebugServer
                     await _commandExecutionLock.WaitAsync();
                     lockAcquired = true;
 
-                    var response = await Dispatcher.DispatchAsync(command, clientLog).ConfigureAwait(false);
+                    var response = await Dispatcher.DispatchAsync(command, clientLog, client).ConfigureAwait(false);
                     if (response != null) // commands like Deploy do not return a response
                     {
                         var bytesSent = await client.SendResponseAsync(response).ConfigureAwait(false);

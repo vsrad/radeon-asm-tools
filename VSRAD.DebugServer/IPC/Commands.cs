@@ -17,7 +17,10 @@ namespace VSRAD.DebugServer.IPC.Commands
         ListEnvironmentVariables = 4,
         PutFile = 5,
         CheckOutdatedFiles = 6,
-        ListFiles =7,
+        ListFiles = 7,
+        SendFile = 8,
+        GetFile = 9,
+        PutDirectory = 10
     }
 #pragma warning restore CA1028
     public enum HandShakeStatus
@@ -51,6 +54,9 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.PutFile: return PutFileCommand.Deserialize(reader);
                 case CommandType.CheckOutdatedFiles: return CheckOutdatedFiles.Deserialize(reader);
                 case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
+                case CommandType.SendFile: return SendFileCommand.Deserialize(reader);
+                case CommandType.GetFile: return GetFileCommand.Deserialize(reader);
+                case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
             }
             throw new InvalidDataException($"Unexpected command type byte: {type}");
         }
@@ -68,6 +74,10 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case PutFileCommand _: type = CommandType.PutFile; break;
                 case CheckOutdatedFiles _: type = CommandType.CheckOutdatedFiles; break;
                 case ListFilesCommand _: type = CommandType.ListFiles; break;
+                case SendFileCommand _: type = CommandType.SendFile; break;
+                case GetFileCommand _: type = CommandType.GetFile; break;
+                case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
+
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
             }
             writer.Write((byte)type);
@@ -263,11 +273,134 @@ namespace VSRAD.DebugServer.IPC.Commands
         public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
         {
             DstPath = reader.ReadString(),
-           
         };
         public void Serialize(IPCWriter writer)
         {
             writer.Write(DstPath);
+        }
+    }
+
+    public sealed class SendFileCommand : ICommand
+    {
+        public string DstPath { get; set; }
+
+        public string SrcPath { get; set; }
+
+        public FileMetadata Metadata { get; set; }
+
+        private static XmlSerializer getFormatter()
+        {
+            return new XmlSerializer(typeof(FileMetadata));
+        }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "SendFileCommand",
+            $"DstPath = {DstPath}",
+            $"SrcPath = {SrcPath}",
+            $"Metadata = {Metadata.ToString()}"
+        });
+
+        public static SendFileCommand Deserialize(IPCReader reader) => new SendFileCommand
+        {
+            DstPath = reader.ReadString(),
+            SrcPath = reader.ReadString(),
+            Metadata = getFormatter().Deserialize(reader.BaseStream) as FileMetadata
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(DstPath);
+            writer.Write(SrcPath);
+            try
+            {
+                getFormatter().Serialize(writer.BaseStream, Metadata);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+    }
+
+    public sealed class GetFileCommand : ICommand
+    {
+        public string SrcPath { get; set; }
+
+        public string DstPath { get; set; }
+
+        public FileMetadata Metadata { get; set; }
+
+        private static XmlSerializer getFormatter()
+        {
+            return new XmlSerializer(typeof(FileMetadata));
+        }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "GetFileCommand",
+            $"SrcPath = {SrcPath}",
+            $"DstPath = {DstPath}",
+            $"Metadata = {Metadata.ToString()}"
+        });
+
+        public static GetFileCommand Deserialize(IPCReader reader) => new GetFileCommand
+        {
+            SrcPath = reader.ReadString(),
+            DstPath = reader.ReadString(),
+            Metadata = getFormatter().Deserialize(reader.BaseStream) as FileMetadata
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(SrcPath);
+            writer.Write(DstPath);
+            try
+            {
+                getFormatter().Serialize(writer.BaseStream, Metadata);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+    }
+
+    public sealed class PutDirectoryCommand : ICommand
+    {
+        public string DstPath { get; set; }
+
+        public FileMetadata Metadata { get; set; }
+
+        private static XmlSerializer getFormatter()
+        {
+            return new XmlSerializer(typeof(FileMetadata));
+        }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[]
+        {
+            "PutDirectoryCommand",
+            $"DstPath = {DstPath}",
+            $"Metadata = {Metadata.ToString()}"
+        });
+
+        public static PutDirectoryCommand Deserialize(IPCReader reader) => new PutDirectoryCommand
+        {
+            DstPath = reader.ReadString(),
+            Metadata = getFormatter().Deserialize(reader.BaseStream) as FileMetadata
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(DstPath);
+            try
+            {
+                getFormatter().Serialize(writer.BaseStream, Metadata);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 
@@ -286,7 +419,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             var sb = new StringBuilder();
             foreach (var file in Files)
             {
-                sb.AppendLine(file.relativePath_);
+                sb.AppendLine(file.ToString());
             }
 
             return string.Join(Environment.NewLine, new[] {
