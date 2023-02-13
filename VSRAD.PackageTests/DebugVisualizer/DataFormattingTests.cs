@@ -69,6 +69,26 @@ namespace VSRAD.PackageTests.DebugVisualizer
             "0; 11; 166; 225"
         };
 
+        static readonly string[] Int32 = new string[]
+        {
+            "-559038737", "-1056969216", "1044942", "-1073614835", "-1413829702",
+            "100719597", "-1377903634", "-893753632", "-559056178", "763617"
+        };
+
+        static readonly string[] Int16 = new string[]
+        {
+            "-8531; -16657", "-16129; -4608", "15; -3634", "-16383; -4083", "-21574; -21574",
+            "1536; -9235", "-21026; -9234", "-13638; 26336", "-8531; 31438", "11; -22815"
+        };
+
+        static readonly string[] Int8 = new string[]
+        {
+            "-34; -83; -66; -17", "-64; -1; -18; 0", "0; 15; -15; -50",
+            "-64; 1; -16; 13", "-85; -70; -85; -70", "6; 0; -37; -19",
+            "-83; -34; -37; -18", "-54; -70; 102; -32", "-34; -83; 122; -50",
+            "0; 11; -90; -31"
+        };
+
         public static IEnumerable<object[]> ProvideTestData =>
             new List<object[]>
             {
@@ -78,6 +98,9 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 new object[] { new VariableInfo(VariableType.Uint, 32), 0, 0, false, UInt32       },
                 new object[] { new VariableInfo(VariableType.Uint, 16), 0, 0, false, UInt16       },
                 new object[] { new VariableInfo(VariableType.Uint, 8),  0, 0, false, UInt8        },
+                new object[] { new VariableInfo(VariableType.Int, 32),  0, 0, false, Int32        },
+                new object[] { new VariableInfo(VariableType.Int, 16),  0, 0, false, Int16        },
+                new object[] { new VariableInfo(VariableType.Int, 8),   0, 0, false, Int8         },
             };
 
         [Theory, MemberData(nameof(ProvideTestData))]
