@@ -61,5 +61,76 @@ namespace VSRAD.DebugServer
                 return prefixedMessageLength;
             }
         }
+
+        public static async Task<bool> ProcessDataTransfer(this Stream writer, ICommand command)
+        {
+            switch (command)
+            {
+                case SendFileCommand _:
+                    var send_command = (SendFileCommand)command;
+                    var sendPath = Path.Combine(send_command.SrcPath, send_command.Metadata.relativePath_);
+                    return await SendFileAsync(writer, sendPath).ConfigureAwait(false);
+                case GetFileCommand _:
+                    var receive_command = (GetFileCommand)command;
+                    var receivePath = Path.Combine(receive_command.DstPath, receive_command.Metadata.relativePath_);
+                    return await ReceiveFileAsync(writer, receivePath);
+                default:
+                    break;
+            }
+            return true;
+        }
+
+        public static async Task<bool> SendFileAsync(this Stream writer, String path)
+        {
+            using (var reader = new FileStream(path, FileMode.Open))
+            {
+                var BUFFER_SIZE = 4096;
+                byte[] buffer = new byte[BUFFER_SIZE];
+
+                var bytesToSend = reader.Length;
+                byte[] fileSizeBytes = BitConverter.GetBytes(bytesToSend);
+                writer.Write(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.GetLength(0)));
+
+                while (bytesToSend > 0)
+                {
+                    var sendSize = Math.Min(bytesToSend, BUFFER_SIZE);
+
+                    var readCount = reader.Read(buffer, 0, Convert.ToInt32(sendSize));
+                    if (readCount == 0) throw new IOException("SendFileAsync file read error");
+
+                    writer.Write(buffer, 0, readCount);
+
+                    bytesToSend -= readCount;
+                }
+            }
+            return true;
+        }
+
+        public static async Task<bool> ReceiveFileAsync(this Stream reader, String path)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            using (var writer = new FileStream(path, FileMode.Create))
+            {
+                var BUFFER_SIZE = 4096;
+                byte[] buffer = new byte[BUFFER_SIZE];
+
+                byte[] fileSizeBytes = new byte[sizeof(long)];
+                reader.Read(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.Length));
+                var bytesToReceive = BitConverter.ToInt64(fileSizeBytes, 0);
+
+                while (bytesToReceive > 0)
+                {
+                    var receiveSize = Convert.ToInt32(Math.Min(bytesToReceive, BUFFER_SIZE));
+
+                    var receivedBytes = reader.Read(buffer, 0, Convert.ToInt32(receiveSize));
+                    if (receivedBytes == 0) throw new IOException("ReceiveFileAsync network read error");
+
+                    writer.Write(buffer, 0, Convert.ToInt32(receivedBytes));
+
+                    bytesToReceive -= receivedBytes;
+                }
+            }
+            return true;
+        }
     }
 }

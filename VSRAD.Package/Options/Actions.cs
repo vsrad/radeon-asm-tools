@@ -56,6 +56,9 @@ namespace VSRAD.Package.Options
         private string _targetPath = "";
         public string TargetPath { get => _targetPath; set => SetField(ref _targetPath, value); }
 
+        private bool _skipIfSame = true;
+        public bool SkipIfSame { get => _skipIfSame; set => SetField(ref _skipIfSame, value); }
+
         private bool _checkTimestamp;
         public bool CheckTimestamp { get => _checkTimestamp; set => SetField(ref _checkTimestamp, value); }
 

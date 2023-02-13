@@ -16,6 +16,8 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using VSRAD.DebugServer.IPC.Commands;
+using VSRAD.DebugServer.IPC;
+using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.Package.Server
 {
@@ -158,7 +160,7 @@ namespace VSRAD.Package.Server
                 await EstablishServerConnectionAsync().ConfigureAwait(false);
                 await _connection.GetStream().WriteSerializedMessageAsync(command).ConfigureAwait(false);
                 await _outputWindowWriter.PrintMessageAsync($"Sent command to {ConnectionOptions}", command.ToString()).ConfigureAwait(false);
-
+                await _connection.GetStream().ProcessDataTransfer(command);
                 var response = await _connection.GetStream().ReadSerializedMessageAsync<IResponse>().ConfigureAwait(false);
                 await _outputWindowWriter.PrintMessageAsync($"Received response from {ConnectionOptions}", response.ToString()).ConfigureAwait(false);
                 return (T)response;
