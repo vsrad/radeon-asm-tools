@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Utils;
 using Xunit;
-using Xunit.Extensions;
 
 namespace VSRAD.PackageTests.DebugVisualizer
 {
@@ -89,6 +85,12 @@ namespace VSRAD.PackageTests.DebugVisualizer
             "0; 11; -90; -31"
         };
 
+        static readonly string[] Int16Sep3 = new string[]
+        {
+            "-8 531; -16 657", "-16 129; -4 608", "15; -3 634", "-16 383; -4 083", "-21 574; -21 574",
+            "1 536; -9 235", "-21 026; -9 234", "-13 638; 26 336", "-8 531; 31 438", "11; -22 815"
+        };
+
         public static IEnumerable<object[]> ProvideTestData =>
             new List<object[]>
             {
@@ -101,6 +103,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 new object[] { new VariableInfo(VariableType.Int, 32),  0, 0, false, Int32        },
                 new object[] { new VariableInfo(VariableType.Int, 16),  0, 0, false, Int16        },
                 new object[] { new VariableInfo(VariableType.Int, 8),   0, 0, false, Int8         },
+                new object[] { new VariableInfo(VariableType.Int, 16),  0, 3, false, Int16Sep3    },
             };
 
         [Theory, MemberData(nameof(ProvideTestData))]
