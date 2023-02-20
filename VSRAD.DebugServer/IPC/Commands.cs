@@ -265,23 +265,29 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class ListFilesCommand : ICommand
     {
-        public string DstPath { get; set; }
+        public string RemoteWorkDir { get; set; }
+        public string ListPath { get; set; }
         public override string ToString() => string.Join(Environment.NewLine, new[] {
             "ListFilesCommand",
-            $"Path = <{DstPath}>"           
+            $"RemoteWorkDir = <{RemoteWorkDir}>",
+            $"ListPath = <{ListPath}>"           
         });
         public static ListFilesCommand Deserialize(IPCReader reader) => new ListFilesCommand
         {
-            DstPath = reader.ReadString(),
+            RemoteWorkDir = reader.ReadString(),
+            ListPath = reader.ReadString(),
         };
         public void Serialize(IPCWriter writer)
         {
-            writer.Write(DstPath);
+            writer.Write(RemoteWorkDir);
+            writer.Write(ListPath);
         }
     }
 
     public sealed class SendFileCommand : ICommand
     {
+        public string LocalWorkDir { get; set; }
+        public string RemoteWorkDir { get; set; }
         public string DstPath { get; set; }
 
         public string SrcPath { get; set; }
@@ -298,6 +304,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "SendFileCommand",
+            $"RemoteWorkDir = {RemoteWorkDir}",
             $"DstPath = {DstPath}",
             $"SrcPath = {SrcPath}",
             $"UseCompression = {UseCompression}",
@@ -306,6 +313,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public static SendFileCommand Deserialize(IPCReader reader) => new SendFileCommand
         {
+            LocalWorkDir = reader.ReadString(),
+            RemoteWorkDir = reader.ReadString(),
             DstPath = reader.ReadString(),
             SrcPath = reader.ReadString(),
             UseCompression = reader.ReadBoolean(),
@@ -314,6 +323,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public void Serialize(IPCWriter writer)
         {
+            writer.Write(LocalWorkDir);
+            writer.Write(RemoteWorkDir);
             writer.Write(DstPath);
             writer.Write(SrcPath);
             writer.Write(UseCompression);
@@ -330,6 +341,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class GetFileCommand : ICommand
     {
+        public string LocalWorkDir { get; set; }
+        public string RemoteWorkDir { get; set; }
         public string SrcPath { get; set; }
 
         public string DstPath { get; set; }
@@ -346,14 +359,17 @@ namespace VSRAD.DebugServer.IPC.Commands
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "GetFileCommand",
+            $"RemoteWorkDir = {RemoteWorkDir}",
             $"SrcPath = {SrcPath}",
-            $"DstPath = {DstPath}",
+            $"ListDir = {DstPath}",
             $"UseCompression = {UseCompression}",
             $"Metadata = {Metadata.ToString()}"
         });
 
         public static GetFileCommand Deserialize(IPCReader reader) => new GetFileCommand
         {
+            LocalWorkDir = reader.ReadString(),
+            RemoteWorkDir = reader.ReadString(),
             SrcPath = reader.ReadString(),
             DstPath = reader.ReadString(),
             UseCompression = reader.ReadBoolean(),
@@ -362,6 +378,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public void Serialize(IPCWriter writer)
         {
+            writer.Write(LocalWorkDir);
+            writer.Write(RemoteWorkDir);
             writer.Write(SrcPath);
             writer.Write(DstPath);
             writer.Write(UseCompression);
@@ -378,7 +396,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class PutDirectoryCommand : ICommand
     {
-        public string DstPath { get; set; }
+        public string RemoteWorkDir { get; set; }
+        public string TargetPath { get; set; }
 
         public FileMetadata Metadata { get; set; }
 
@@ -390,19 +409,22 @@ namespace VSRAD.DebugServer.IPC.Commands
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "PutDirectoryCommand",
-            $"DstPath = {DstPath}",
+            $"RemoteWorkDir = {RemoteWorkDir}",
+            $"ListDir = {TargetPath}",
             $"Metadata = {Metadata.ToString()}"
         });
 
         public static PutDirectoryCommand Deserialize(IPCReader reader) => new PutDirectoryCommand
         {
-            DstPath = reader.ReadString(),
+            RemoteWorkDir = reader.ReadString(),
+            TargetPath = reader.ReadString(),
             Metadata = getFormatter().Deserialize(reader.BaseStream) as FileMetadata
         };
 
         public void Serialize(IPCWriter writer)
         {
-            writer.Write(DstPath);
+            writer.Write(RemoteWorkDir);
+            writer.Write(TargetPath);
             try
             {
                 getFormatter().Serialize(writer.BaseStream, Metadata);
@@ -416,7 +438,9 @@ namespace VSRAD.DebugServer.IPC.Commands
 
     public sealed class CheckOutdatedFiles : ICommand
     {
-        public string DstPath { get; set; }
+        public string RemoteWorkDir { get; set; }
+
+        public string TargetPath { get; set; }
 
         public List<FileMetadata> Files { get; set; }
         private static XmlSerializer getFormatter()
@@ -434,20 +458,23 @@ namespace VSRAD.DebugServer.IPC.Commands
 
             return string.Join(Environment.NewLine, new[] {
                 "CheckOutdatedFiles",
-                $"DstPath = {DstPath}",
+                $"RemoteWorkDir = {RemoteWorkDir}",
+                $"TargetPath = {TargetPath}",
                 $"Files = <{sb.ToString()} >"
             });
         }
         
         public static CheckOutdatedFiles Deserialize(IPCReader reader) => new CheckOutdatedFiles
         {
-            DstPath = reader.ReadString(),
+            RemoteWorkDir = reader.ReadString(),
+            TargetPath = reader.ReadString(),
             Files = getFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>
         };
 
         public void Serialize(IPCWriter writer)
         {
-            writer.Write(DstPath);
+            writer.Write(RemoteWorkDir);
+            writer.Write(TargetPath);
             try
             {
                 getFormatter().Serialize(writer.BaseStream, Files);

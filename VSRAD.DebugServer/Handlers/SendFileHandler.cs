@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Threading;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using System.Runtime.InteropServices;
+
 
 namespace VSRAD.DebugServer.Handlers
 {
@@ -23,11 +25,22 @@ namespace VSRAD.DebugServer.Handlers
 
         public async Task<IResponse> RunAsync()
         {
-            var fullPath = Path.Combine(_command.DstPath, _command.Metadata.relativePath_);
-            await _client.ReceiveFileAsync(fullPath, _command.UseCompression);
+            var relativePath = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                             ? _command.Metadata.RelativePath.Replace('\\', '/')
+                             : _command.Metadata.RelativePath;
 
-            File.SetLastWriteTimeUtc(fullPath, _command.Metadata.lastWriteTimeUtc_);
-
+            var fullPath = Path.Combine(_command.RemoteWorkDir, _command.DstPath, relativePath);
+            try
+            {
+                await _client.ReceiveFileAsync(fullPath, _command.UseCompression);
+                File.SetLastWriteTimeUtc(fullPath, _command.Metadata.LastWriteTimeUtc);
+            } catch (System.Security.SecurityException ex)
+            {
+                return new SendFileResponse { Status = SendFileStatus.PermissionDenied };
+            } catch (Exception ex)
+            {
+                return new SendFileResponse { Status = SendFileStatus.OtherIOError };
+            }
             return new SendFileResponse { Status = SendFileStatus.Successful };
         }
     }

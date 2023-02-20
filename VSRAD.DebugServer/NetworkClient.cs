@@ -27,12 +27,14 @@ namespace VSRAD.DebugServer
 
         public async Task<bool> SendFileAsync(string Path, bool useCompression)
         {
-            return await _socket.GetStream().SendFileAsync(Path, useCompression).ConfigureAwait(false);
+            return useCompression ? await _socket.GetStream().SendCompressedFileAsync(Path).ConfigureAwait(false)
+                                  : await _socket.GetStream().SendFileAsync(Path).ConfigureAwait(false);
         }
 
         public async Task<bool> ReceiveFileAsync(string Path, bool useCompression)
         {
-            return await _socket.GetStream().ReceiveFileAsync(Path, useCompression).ConfigureAwait(false);
+            return useCompression ? await _socket.GetStream().ReceiveCompressedFileAsync(Path).ConfigureAwait(false)
+                                  : await _socket.GetStream().ReceiveFileAsync(Path).ConfigureAwait(false);
         }
 
         public async Task<ICommand> ReceiveCommandAsync()

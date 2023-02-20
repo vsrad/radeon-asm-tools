@@ -24,7 +24,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<CheckOutdatedFiles, CheckOutdatedFilesResponse>(new CheckOutdatedFiles
             {
-                DstPath = Path.GetDirectoryName(tmpPath),
+                RemoteWorkDir = "",
+                TargetPath = Path.GetDirectoryName(tmpPath),
                 Files = files
             });
 
@@ -70,7 +71,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<CheckOutdatedFiles, CheckOutdatedFilesResponse>(new CheckOutdatedFiles
             {
-                DstPath = Path.GetDirectoryName(tmpPath),
+                RemoteWorkDir = "",
+                TargetPath = Path.GetDirectoryName(tmpPath),
                 Files = files
             });
 
@@ -89,7 +91,8 @@ namespace VSRAD.DebugServerTests.Handlers
 
             var response = await Helper.DispatchCommandAsync<CheckOutdatedFiles, CheckOutdatedFilesResponse>(new CheckOutdatedFiles
             {
-                DstPath = Path.GetDirectoryName(tmpPath),
+                RemoteWorkDir = "",
+                TargetPath = Path.GetDirectoryName(tmpPath),
                 Files = files
             });
 

@@ -20,10 +20,10 @@ namespace VSRAD.DebugServer.Handlers
         public Task<IResponse> RunAsync()
         {
             var files = new List<FileMetadata>();
-            
+            var rootPath = Path.Combine(_command.RemoteWorkDir, _command.TargetPath);
             foreach (var info in _command.Files)
             {
-                if (FileMetadata.isOutdated(info, _command.DstPath))
+                if (FileMetadata.isOutdated(info, rootPath))
                     continue;
 
                 files.Add(info);

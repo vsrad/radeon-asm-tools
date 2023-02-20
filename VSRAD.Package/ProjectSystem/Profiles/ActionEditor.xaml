@@ -134,6 +134,10 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Direction:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Height="22">

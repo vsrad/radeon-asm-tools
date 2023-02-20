@@ -266,7 +266,7 @@ namespace VSRAD.DebugServer.IPC.Responses
             var sb = new StringBuilder();
             foreach (var file in Files)
             {
-                sb.AppendLine(file.relativePath_);
+                sb.AppendLine(file.RelativePath);
             }
 
             return string.Join(Environment.NewLine, new[] {
@@ -274,19 +274,19 @@ namespace VSRAD.DebugServer.IPC.Responses
                 $"Files = <{sb.ToString()} >"
             });
         }
-        private static XmlSerializer getFormatter()
+        private static XmlSerializer GetFormatter()
         {
             return new XmlSerializer(typeof(List<FileMetadata>));
         }
 
         public static ListFilesResponse Deserialize(IPCReader reader)
         {
-            List<FileMetadata> files = getFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>;
+            List<FileMetadata> files = GetFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>;
             return new ListFilesResponse { Files = files };
         }
         public void Serialize(IPCWriter writer)
         {
-            getFormatter().Serialize(writer.BaseStream, Files);
+            GetFormatter().Serialize(writer.BaseStream, Files);
         }
     }
     public sealed class CheckOutdatedFilesResponse : IResponse
@@ -298,7 +298,7 @@ namespace VSRAD.DebugServer.IPC.Responses
             var sb = new StringBuilder();
             foreach (var file in Files)
             {
-                sb.AppendLine(file.relativePath_);
+                sb.AppendLine(file.RelativePath);
             }
 
             return string.Join(Environment.NewLine, new[] {
@@ -307,19 +307,19 @@ namespace VSRAD.DebugServer.IPC.Responses
             });
         }
 
-        private static XmlSerializer getFormatter()
+        private static XmlSerializer GetFormatter()
         {
             return new XmlSerializer(typeof(List<FileMetadata>));
         }
         public static CheckOutdatedFilesResponse Deserialize(IPCReader reader)
         {
-            List<FileMetadata> files = getFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>;
+            List<FileMetadata> files = GetFormatter().Deserialize(reader.BaseStream) as List<FileMetadata>;
             return new CheckOutdatedFilesResponse { Files = files };
         }
 
         public void Serialize(IPCWriter writer)
         {
-            getFormatter().Serialize(writer.BaseStream, Files);
+            GetFormatter().Serialize(writer.BaseStream, Files);
         }
     }
 

@@ -81,15 +81,15 @@ namespace VSRAD.Package.Server
                     return await LocalCopyFileAsync(step);
                 case FileCopyDirection.LocalToRemote:
                 {
-                    var root = new DirectoryInfo(Path.Combine(_environment.LocalWorkDir, step.SourcePath));
+                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
                     var localInfos = new List<FileMetadata>();
-                    foreach (var info in root.EnumerateFileSystemInfos("*", SearchOption.AllDirectories))
+                    foreach (var info in PathExtension.TraverseFileInfoTree(rootPath))
                     {
                         var metadata = new FileMetadata
                         {
-                            relativePath_ = PathExtension.GetRelativePath(root.FullName, info.FullName),
-                            isDirectory_ = info.Attributes.HasFlag(FileAttributes.Directory),
-                            lastWriteTimeUtc_ = info.LastWriteTimeUtc
+                            RelativePath = PathExtension.GetRelativePath(rootPath, info.FullName),
+                            IsDirectory = info.Attributes.HasFlag(FileAttributes.Directory),
+                            LastWriteTimeUtc = info.LastWriteTimeUtc
                         };
                         localInfos.Add(metadata);
                     }
@@ -97,10 +97,10 @@ namespace VSRAD.Package.Server
                     if (step.IfNotModified == ActionIfNotModified.Copy)
                         return await SendFilesAsync(step, localInfos);
 
-                    var remotePath = Path.Combine(_environment.RemoteWorkDir, step.TargetPath);
                     var command = new CheckOutdatedFiles
                     {
-                        DstPath = remotePath,
+                        RemoteWorkDir = _environment.RemoteWorkDir,
+                        TargetPath = step.TargetPath,
                         Files = localInfos
                     };
                     // Result is filtered on server side
@@ -114,7 +114,8 @@ namespace VSRAD.Package.Server
                     var remotePath = Path.Combine(_environment.RemoteWorkDir, step.SourcePath);
                     var command = new ListFilesCommand
                     {
-                         DstPath = remotePath
+                         RemoteWorkDir = _environment.RemoteWorkDir,
+                         ListPath = step.SourcePath
                     };
                     var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
 
@@ -138,15 +139,15 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> SendFilesAsync(CopyFileStep step, IList<FileMetadata> files)
         {
-            var dstPath = Path.Combine(_environment.RemoteWorkDir, step.TargetPath);
-            var srcPath = Path.Combine(_environment.RemoteWorkDir, step.SourcePath);
+            var srcPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
             foreach (var file in files)
             {
-                if (file.isDirectory_)
+                if (file.IsDirectory)
                 {
                     var command = new PutDirectoryCommand
                     {
-                        DstPath = dstPath,
+                        RemoteWorkDir = _environment.RemoteWorkDir,
+                        TargetPath = step.TargetPath,
                         Metadata = file
                     };
                     await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
@@ -154,7 +155,9 @@ namespace VSRAD.Package.Server
                 {
                     var command = new SendFileCommand
                     {
-                        DstPath = dstPath,
+                        LocalWorkDir = _environment.LocalWorkDir,
+                        RemoteWorkDir = _environment.RemoteWorkDir,
+                        DstPath = step.TargetPath,
                         SrcPath = srcPath,
                         UseCompression = step.UseCompression,
                         Metadata = file
@@ -167,20 +170,21 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> GetFilesAsync(CopyFileStep step, IList<FileMetadata> files)
         {
-            var srcPath = Path.Combine(_environment.RemoteWorkDir, step.SourcePath);
-            var dstPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
             foreach (var file in files)
             {
-                if (file.isDirectory_)
+                if (file.IsDirectory)
                 {
+                    var dstPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
                     Directory.CreateDirectory(dstPath);
-                    Directory.SetLastWriteTimeUtc(dstPath, file.lastWriteTimeUtc_);
+                    Directory.SetLastWriteTimeUtc(dstPath, file.LastWriteTimeUtc);
                 } else
                 {
                     var command = new GetFileCommand
                     {
-                        SrcPath = srcPath,
-                        DstPath = dstPath,
+                        LocalWorkDir = _environment.LocalWorkDir,
+                        RemoteWorkDir = _environment.RemoteWorkDir,
+                        SrcPath = step.SourcePath,
+                        DstPath = step.TargetPath,
                         UseCompression = step.UseCompression,
                         Metadata = file
                     };

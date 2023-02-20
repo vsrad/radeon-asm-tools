@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using System.Threading;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using System.Runtime.InteropServices;
+
 
 namespace VSRAD.DebugServer.Handlers
 {
@@ -18,12 +20,16 @@ namespace VSRAD.DebugServer.Handlers
 
         public async Task<IResponse> RunAsync()
         {
-            var fullPath = Path.Combine(_command.DstPath, _command.Metadata.relativePath_);
+            var relativePath = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                             ? _command.Metadata.RelativePath.Replace('\\', '/')
+                             : _command.Metadata.RelativePath;
+
+            var fullPath = Path.Combine(_command.RemoteWorkDir, _command.TargetPath, relativePath);
 
             if (!Directory.Exists(fullPath))
                 Directory.CreateDirectory(fullPath);
 
-            Directory.SetLastWriteTimeUtc(fullPath, _command.Metadata.lastWriteTimeUtc_);
+            Directory.SetLastWriteTimeUtc(fullPath, _command.Metadata.LastWriteTimeUtc);
 
             return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful };
         }

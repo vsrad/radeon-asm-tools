@@ -19,12 +19,11 @@ namespace VSRAD.DebugServer.Handlers
 
         public Task<IResponse> RunAsync()
         {
-            var root = new DirectoryInfo(_command.DstPath);
             var files = new List<FileMetadata>();
-
-            foreach (var info in root.EnumerateFileSystemInfos("*", SearchOption.AllDirectories))
+            var rootPath = Path.Combine(_command.RemoteWorkDir, _command.ListPath);
+            foreach (var info in PathExtension.TraverseFileInfoTree(rootPath))
             {
-                var relativePath = PathExtension.GetRelativePath(_command.DstPath, info.FullName);
+                var relativePath = PathExtension.GetRelativePath(rootPath, info.FullName);
                 files.Add(new FileMetadata(relativePath, info.LastWriteTimeUtc, info.Attributes.HasFlag(FileAttributes.Directory)));
             }
  

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Runtime.InteropServices;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
 
@@ -21,9 +22,21 @@ namespace VSRAD.DebugServer.Handlers
 
         public async Task<IResponse> RunAsync()
         {
-            var fullPath = Path.Combine(_command.SrcPath, _command.Metadata.relativePath_);
-            
-            await _client.SendFileAsync(fullPath, _command.UseCompression);
+            var relativePath = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                             ? _command.Metadata.RelativePath.Replace('\\', '/')
+                             : _command.Metadata.RelativePath;
+
+            var fullPath = Path.Combine(_command.RemoteWorkDir, _command.SrcPath, relativePath);
+            try
+            {
+                await _client.SendFileAsync(fullPath, _command.UseCompression);
+            } catch(System.Security.SecurityException ex)
+            {
+                return new GetFileResponse { Status = GetFileStatus.PermissionDenied };
+            } catch (Exception ex)
+            {
+                return new GetFileResponse { Status = GetFileStatus.OtherIOError };
+            }
                 
             return new GetFileResponse { Status = GetFileStatus.Successful };         
         }

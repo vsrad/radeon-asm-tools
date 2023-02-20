@@ -10,6 +10,30 @@ namespace VSRAD.DebugServer.SharedUtils
 {
     class PathExtension
     {
+        public static List<FileSystemInfo> TraverseFileInfoTree(String path)
+        {
+            var result = new List<FileSystemInfo>();
+
+            if (File.Exists(path))
+            {
+                result.Add(new FileInfo(path));
+            }
+
+            if (Directory.Exists(path))
+            {
+                var root = new DirectoryInfo(path);
+                foreach (var file in root.GetFiles())
+                    result.Add(new FileInfo(file.FullName));
+
+                foreach (var dir in root.GetDirectories())
+                    result.AddRange(TraverseFileInfoTree(dir.FullName));
+
+                result.Add(root);
+            }
+
+            return result;
+        }
+
         private static bool IsDirectorySeparator(char c)
         {
             return c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar;
@@ -102,28 +126,19 @@ namespace VSRAD.DebugServer.SharedUtils
             return commonChars;
         }
 
-        private static unsafe int EqualStartingCharacterCount(string first, string second, bool ignoreCase)
+        private static int EqualStartingCharacterCount(string first, string second, bool ignoreCase)
         {
             if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(second)) return 0;
 
             int commonChars = 0;
 
-            fixed (char* f = first)
-            fixed (char* s = second)
+            var l = Math.Min(first.Length, second.Length);
+            for (var i = 0; i < l; i++)
             {
-                char* l = f;
-                char* r = s;
-                char* leftEnd = l + first.Length;
-                char* rightEnd = r + second.Length;
-
-                while (l != leftEnd && r != rightEnd
-                                    && (*l == *r || (ignoreCase &&
-                                                     char.ToUpperInvariant((*l)) == char.ToUpperInvariant((*r)))))
-                {
-                    commonChars++;
-                    l++;
-                    r++;
-                }
+                var f = ignoreCase ? char.ToUpperInvariant(first[i]) : first[i];
+                var s = ignoreCase ? char.ToUpperInvariant(second[i]) : second[i];
+                if (f != s) break;
+                commonChars++;
             }
 
             return commonChars;
