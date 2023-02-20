@@ -7,7 +7,7 @@ namespace VSRAD.Package.DebugVisualizer
     public enum VariableType
     {
 #pragma warning disable CA1720 // Identifier contains type name
-        Hex, Float, Uint, Int, Half, Bin
+        Hex, Float, Uint, Int, Bin
 #pragma warning restore CA1720 // Identifier contains type name
     };
 
@@ -43,13 +43,14 @@ namespace VSRAD.Package.DebugVisualizer
             switch (info.Type)
             {
                 case VariableType.Bin:
-                    return "B"; //+ info.Size.ToString();
+                    return "B";
                 case VariableType.Float:
-                    return "F"; //+ info.Size.ToString();
-                case VariableType.Half:
-                    return "h"; // we dont use size for half's
+                    if (info.Size == 32)
+                        return "F";
+                    else
+                        return "h"; // half
                 case VariableType.Hex:
-                    return "H"; //+ info.Size.ToString();
+                    return "H";
                 case VariableType.Int:
                     return "I" + info.Size.ToString();
                 case VariableType.Uint:
@@ -64,13 +65,13 @@ namespace VSRAD.Package.DebugVisualizer
             switch (shortName[0])
             {
                 case 'B':
-                    return new VariableInfo(VariableType.Bin, 32);//int.Parse(shortName.Substring(1)));
+                    return new VariableInfo(VariableType.Bin, 32);
                 case 'F':
-                    return new VariableInfo(VariableType.Float, 32);//int.Parse(shortName.Substring(1)));
+                    return new VariableInfo(VariableType.Float, 32);
                 case 'h':
-                    return new VariableInfo(VariableType.Half, 0); // we dont use size for half's
+                    return new VariableInfo(VariableType.Float, 16);
                 case 'H':
-                    return new VariableInfo(VariableType.Hex, 32); //int.Parse(shortName.Substring(1)));
+                    return new VariableInfo(VariableType.Hex, 32);
                 case 'I':
                     return new VariableInfo(VariableType.Int, int.Parse(shortName.Substring(1)));
                 default:

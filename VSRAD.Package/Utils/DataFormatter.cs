@@ -44,7 +44,10 @@ namespace VSRAD.Package.Utils
                     switch (varInfo.Size)
                     {
                         case 16:
-                            return Half.ToFloat(BitConverter.ToUInt16(BitConverter.GetBytes(data), 0)).ToString();
+                            byte[] bytes = BitConverter.GetBytes(data);
+                            float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
+                            float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
+                            return $"{firstHalf}; {secondHalf}";
                         default: // 32
                             return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
                     }
@@ -82,11 +85,6 @@ namespace VSRAD.Package.Utils
                             var res8_4 = InsertNumberSeparators(((sbyte)intBytes[0]).ToString(), intSeparator);
                             return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
                     }
-                case VariableType.Half:
-                    byte[] bytes = BitConverter.GetBytes(data);
-                    float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
-                    float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
-                    return $"{firstHalf}; {secondHalf}";
                 case VariableType.Bin:
                     var bin = Convert.ToString(data, 2).PadLeft(32, '0');
                     if (varInfo.Size != 32) bin = bin.Substring(32 - varInfo.Size, varInfo.Size);
