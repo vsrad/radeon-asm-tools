@@ -94,20 +94,20 @@ namespace VSRAD.PackageTests.DebugVisualizer
         public static IEnumerable<object[]> ProvideTestData =>
             new List<object[]>
             {
-                new object[] { new VariableInfo(VariableType.Hex, 32),  0, true,  Hex32LZs     },
-                new object[] { new VariableInfo(VariableType.Hex, 32),  3, true,  Hex32LZsSep3 },
-                new object[] { new VariableInfo(VariableType.Hex, 32),  0, false, Hex32        },
-                new object[] { new VariableInfo(VariableType.Uint, 32), 0, false, UInt32       },
-                new object[] { new VariableInfo(VariableType.Uint, 16), 0, false, UInt16       },
-                new object[] { new VariableInfo(VariableType.Uint, 8),  0, false, UInt8        },
-                new object[] { new VariableInfo(VariableType.Int, 32),  0, false, Int32        },
-                new object[] { new VariableInfo(VariableType.Int, 16),  0, false, Int16        },
-                new object[] { new VariableInfo(VariableType.Int, 8),   0, false, Int8         },
-                new object[] { new VariableInfo(VariableType.Int, 16),  3, false, Int16Sep3    },
+                new object[] { new VariableType(VariableRepresentation.Hex, 32),  0, true,  Hex32LZs     },
+                new object[] { new VariableType(VariableRepresentation.Hex, 32),  3, true,  Hex32LZsSep3 },
+                new object[] { new VariableType(VariableRepresentation.Hex, 32),  0, false, Hex32        },
+                new object[] { new VariableType(VariableRepresentation.Uint, 32), 0, false, UInt32       },
+                new object[] { new VariableType(VariableRepresentation.Uint, 16), 0, false, UInt16       },
+                new object[] { new VariableType(VariableRepresentation.Uint, 8),  0, false, UInt8        },
+                new object[] { new VariableType(VariableRepresentation.Int, 32),  0, false, Int32        },
+                new object[] { new VariableType(VariableRepresentation.Int, 16),  0, false, Int16        },
+                new object[] { new VariableType(VariableRepresentation.Int, 8),   0, false, Int8         },
+                new object[] { new VariableType(VariableRepresentation.Int, 16),  3, false, Int16Sep3    },
             };
 
         [Theory, MemberData(nameof(ProvideTestData))]
-        public void FormatDwordTests(VariableInfo info, uint separator,
+        public void FormatDwordTests(VariableType info, uint separator,
             bool leadingZeros, string[] expected) =>
                 Assert.Equal(_data.Select(d => DataFormatter.FormatDword(info, d, separator,
                     separator, leadingZeros)), expected);

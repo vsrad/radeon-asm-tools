@@ -24,8 +24,8 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         private string _selectedWatch;
         public string SelectedWatch { get => _selectedWatch; set => SetField(ref _selectedWatch, value); }
 
-        private VariableInfo _selectedType;
-        public VariableInfo SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
+        private VariableType _selectedType;
+        public VariableType SelectedType { get => _selectedType; set => SetField(ref _selectedType, value); }
 
         private bool _useHeatMap = false;
         public bool UseHeatMap { get => _useHeatMap; set => SetField(ref _useHeatMap, value); }

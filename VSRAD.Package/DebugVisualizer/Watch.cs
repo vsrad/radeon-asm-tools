@@ -8,7 +8,7 @@ namespace VSRAD.Package.DebugVisualizer
         public string Name { get; }
 
         //[JsonConverter(typeof(StringEnumConverter))]
-        public VariableInfo Info { get; }
+        public VariableType Info { get; }
 
         public bool IsAVGPR { get; }
 
@@ -16,7 +16,7 @@ namespace VSRAD.Package.DebugVisualizer
         public bool IsEmpty => string.IsNullOrWhiteSpace(Name);
 
         [JsonConstructor]
-        public Watch(string name, VariableInfo type, bool isAVGPR)
+        public Watch(string name, VariableType type, bool isAVGPR)
         {
             Name = name;
             Info = type;

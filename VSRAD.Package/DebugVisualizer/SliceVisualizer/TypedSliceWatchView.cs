@@ -10,14 +10,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public int RowCount => _view.RowCount;
         public int ColumnCount => _view.ColumnCount;
 
-        public bool IsSingleWordValue => _type.Type == VariableType.Float && _type.Size == 16;
+        public bool IsSingleWordValue => _type.Repr == VariableRepresentation.Float && _type.Size == 16;
 
         private readonly SliceWatchView _view;
-        private readonly VariableInfo _type;
+        private readonly VariableType _type;
         private readonly TypedWatchValue _minValue;
         private readonly TypedWatchValue _maxValue;
 
-        public TypedSliceWatchView(SliceWatchView view, VariableInfo type)
+        public TypedSliceWatchView(SliceWatchView view, VariableType type)
         {
             _view = view;
             _type = type;
@@ -54,7 +54,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
             //throw new NotImplementedException();
         }
 
-        private static void GetMinMaxValues(SliceWatchView view, VariableInfo info, out TypedWatchValue min, out TypedWatchValue max)
+        private static void GetMinMaxValues(SliceWatchView view, VariableType info, out TypedWatchValue min, out TypedWatchValue max)
         {
             min = new TypedWatchValue { floatValue = float.MinValue };
             max = new TypedWatchValue { floatValue = float.MaxValue };

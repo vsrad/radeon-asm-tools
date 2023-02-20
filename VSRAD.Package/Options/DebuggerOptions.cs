@@ -86,7 +86,7 @@ namespace VSRAD.Package.Options
             while (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 if (reader.TokenType == JsonToken.String)
-                    watches.Add(new Watch((string)reader.Value, new VariableInfo(VariableType.Hex, 32), isAVGPR: false));
+                    watches.Add(new Watch((string)reader.Value, new VariableType(VariableRepresentation.Hex, 32), isAVGPR: false));
                 else if (reader.TokenType == JsonToken.StartObject)
                 {
                     if (!reader.Read()) continue;
@@ -99,20 +99,20 @@ namespace VSRAD.Package.Options
                     if (!reader.Read()) continue;
                     if (reader.TokenType != JsonToken.PropertyName) continue;
 
-                    VariableInfo info;
+                    VariableType info;
 
                     if (reader.Value.ToString() == "Info")
                     {
                         if (!reader.Read()) continue;
                         if (reader.TokenType != JsonToken.StartObject) continue;
-                        info = JObject.Load(reader).ToObject<VariableInfo>();
+                        info = JObject.Load(reader).ToObject<VariableType>();
                     }
                     else
                     {
                         if (reader.Value.ToString() != "Type") continue;
                         if (!reader.Read()) continue;
                         if (reader.TokenType != JsonToken.String) continue;
-                        info = new VariableInfo((VariableType)Enum.Parse(typeof(VariableType), reader.Value.ToString()), 32);
+                        info = new VariableType((VariableRepresentation)Enum.Parse(typeof(VariableRepresentation), reader.Value.ToString()), 32);
                     }
 
                     if (!reader.Read()) continue;

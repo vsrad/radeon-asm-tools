@@ -105,7 +105,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void AddWatch(string watchName)
         {
             RemoveNewWatchRow();
-            AppendVariableRow(new Watch(watchName, new VariableInfo(VariableType.Int, 32), isAVGPR: false));
+            AppendVariableRow(new Watch(watchName, new VariableType(VariableRepresentation.Int, 32), isAVGPR: false));
             PrepareNewWatchRow();
             RaiseWatchStateChanged();
         }
@@ -162,7 +162,7 @@ namespace VSRAD.Package.DebugVisualizer
             ProcessInsertKey(Keys.Control | Keys.C);
         }
 
-        private void VariableTypeChanged(int rowIndex, VariableInfo type)
+        private void VariableTypeChanged(int rowIndex, VariableType type)
         {
             var changedRows = _selectionController.GetClickTargetRows(rowIndex);
             foreach (var row in changedRows)
@@ -218,7 +218,7 @@ namespace VSRAD.Package.DebugVisualizer
             var index = after ? rowIndex + 1 : rowIndex;
             Rows.Insert(index);
             Rows[index].Cells[NameColumnIndex].Value = " ";
-            Rows[index].HeaderCell.Value = VariableType.Hex.ToString();
+            Rows[index].HeaderCell.Value = VariableRepresentation.Hex.ToString();
             Rows[index].HeaderCell.Tag = false; // avgpr
             RaiseWatchStateChanged(new[] { Rows[index] });
         }
@@ -302,7 +302,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var scrollingOffset = HorizontalScrollingOffset;
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
-                    Rows[e.RowIndex].HeaderCell.Value = new VariableInfo(VariableType.Hex, 32).ShortName();
+                    Rows[e.RowIndex].HeaderCell.Value = new VariableType(VariableRepresentation.Hex, 32).ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
                     LockWatchRowForEditing(row);
