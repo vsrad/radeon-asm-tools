@@ -19,10 +19,9 @@ namespace VSRAD.DebugServer.Handlers
 
         public Task<IResponse> RunAsync()
         {
-            var root = new DirectoryInfo(_command.DstPath);
             var files = new List<FileMetadata>();
 
-            foreach (var info in root.EnumerateFileSystemInfos("*", SearchOption.AllDirectories))
+            foreach (var info in PathExtension.TraverseFileInfoTree(_command.DstPath))
             {
                 var relativePath = PathExtension.GetRelativePath(_command.DstPath, info.FullName);
                 files.Add(new FileMetadata(relativePath, info.LastWriteTimeUtc, info.Attributes.HasFlag(FileAttributes.Directory)));

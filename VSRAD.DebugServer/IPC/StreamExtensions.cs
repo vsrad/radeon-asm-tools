@@ -10,6 +10,7 @@ namespace VSRAD.DebugServer
 {
     public static class StreamExtensions
     {
+        const int BUFFER_SIZE = 2097152;
         public static async Task<T> ReadSerializedMessageAsync<T>(this Stream stream)
         {
             byte[] messageSizeBytes = new byte[4];
@@ -85,7 +86,6 @@ namespace VSRAD.DebugServer
         {
             using (var reader = new FileStream(path, FileMode.Open))
             {
-                var BUFFER_SIZE = 4096;
                 var buffer = new byte[BUFFER_SIZE];
 
                 var bytesToSend = reader.Length;
@@ -100,8 +100,6 @@ namespace VSRAD.DebugServer
 
                     if (readCount == 0) throw new IOException("SendFileAsync file read error");
 
-                    var blockSizeBytes = BitConverter.GetBytes((long)readCount);
-                    writer.Write(blockSizeBytes, 0, Convert.ToInt32(blockSizeBytes.GetLength(0)));
                     writer.Write(buffer, 0, readCount);
 
                     bytesToSend -= readCount;
@@ -114,7 +112,6 @@ namespace VSRAD.DebugServer
         {
             using (var reader = new FileStream(path, FileMode.Open))
             {
-                var BUFFER_SIZE = 4096;
                 var decodedbuffer = new byte[BUFFER_SIZE];
                 var encodedBuffer = new byte[LZ4Codec.MaximumOutputSize(decodedbuffer.Length)];
 
@@ -149,7 +146,6 @@ namespace VSRAD.DebugServer
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             using (var writer = new FileStream(path, FileMode.Create))
             {
-                var BUFFER_SIZE = 4096;
                 var encodedBuffer = new byte[BUFFER_SIZE];
                 var decodedBuffer = new byte[encodedBuffer.Length * 255];
 
@@ -182,7 +178,6 @@ namespace VSRAD.DebugServer
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             using (var writer = new FileStream(path, FileMode.Create))
             {
-                var BUFFER_SIZE = 4096;
                 var buffer = new byte[BUFFER_SIZE];
 
                 var fileSizeBytes = new byte[sizeof(long)];

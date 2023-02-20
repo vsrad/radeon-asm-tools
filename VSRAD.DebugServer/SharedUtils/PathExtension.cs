@@ -10,6 +10,30 @@ namespace VSRAD.DebugServer.SharedUtils
 {
     class PathExtension
     {
+        public static List<FileSystemInfo> TraverseFileInfoTree(String path)
+        {
+            var result = new List<FileSystemInfo>();
+
+            if (File.Exists(path))
+            {
+                result.Add(new FileInfo(path));
+            }
+
+            if (Directory.Exists(path))
+            {
+                var root = new DirectoryInfo(path);
+                foreach (var file in root.GetFiles())
+                    result.Add(new FileInfo(file.FullName));
+
+                foreach (var dir in root.GetDirectories())
+                    result.AddRange(TraverseFileInfoTree(dir.FullName));
+
+                result.Add(root);
+            }
+
+            return result;
+        }
+
         private static bool IsDirectorySeparator(char c)
         {
             return c == Path.DirectorySeparatorChar || c == Path.AltDirectorySeparatorChar;

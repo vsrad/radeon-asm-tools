@@ -81,13 +81,13 @@ namespace VSRAD.Package.Server
                     return await LocalCopyFileAsync(step);
                 case FileCopyDirection.LocalToRemote:
                 {
-                    var root = new DirectoryInfo(Path.Combine(_environment.LocalWorkDir, step.SourcePath));
+                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
                     var localInfos = new List<FileMetadata>();
-                    foreach (var info in root.EnumerateFileSystemInfos("*", SearchOption.AllDirectories))
+                    foreach (var info in PathExtension.TraverseFileInfoTree(rootPath))
                     {
                         var metadata = new FileMetadata
                         {
-                            relativePath_ = PathExtension.GetRelativePath(root.FullName, info.FullName),
+                            relativePath_ = PathExtension.GetRelativePath(rootPath, info.FullName),
                             isDirectory_ = info.Attributes.HasFlag(FileAttributes.Directory),
                             lastWriteTimeUtc_ = info.LastWriteTimeUtc
                         };
