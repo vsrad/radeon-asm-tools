@@ -24,7 +24,7 @@ namespace VSRAD.DebugServer.Handlers
         public async Task<IResponse> RunAsync()
         {
             var fullPath = Path.Combine(_command.DstPath, _command.Metadata.relativePath_);
-            await _client.ReceiveFileAsync(fullPath);
+            await _client.ReceiveFileAsync(fullPath, _command.UseCompression);
 
             File.SetLastWriteTimeUtc(fullPath, _command.Metadata.lastWriteTimeUtc_);
 

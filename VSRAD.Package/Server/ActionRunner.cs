@@ -94,7 +94,7 @@ namespace VSRAD.Package.Server
                         localInfos.Add(metadata);
                     }
 
-                    if (!step.SkipIfSame)
+                    if (step.IfNotModified == ActionIfNotModified.Copy)
                         return await SendFilesAsync(step, localInfos);
 
                     var remotePath = Path.Combine(_environment.RemoteWorkDir, step.TargetPath);
@@ -118,7 +118,7 @@ namespace VSRAD.Package.Server
                     };
                     var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
 
-                    if (!step.SkipIfSame)
+                    if (step.IfNotModified == ActionIfNotModified.Copy)
                         return await GetFilesAsync(step, response.Files);
 
                     var filtered = new List<FileMetadata>();
@@ -156,6 +156,7 @@ namespace VSRAD.Package.Server
                     {
                         DstPath = dstPath,
                         SrcPath = srcPath,
+                        UseCompression = step.UseCompression,
                         Metadata = file
                     };
                     await _channel.SendWithReplyAsync<SendFileResponse>(command);
@@ -180,6 +181,7 @@ namespace VSRAD.Package.Server
                     {
                         SrcPath = srcPath,
                         DstPath = dstPath,
+                        UseCompression = step.UseCompression,
                         Metadata = file
                     };
                     var response = await _channel.SendWithReplyAsync<GetFileResponse>(command);
@@ -451,7 +453,7 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
+                if (step is CopyFileStep copyFile && copyFile.PreserveTimestamps)
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(

@@ -286,6 +286,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string SrcPath { get; set; }
 
+        public bool UseCompression { get; set; }
+
         public FileMetadata Metadata { get; set; }
 
         private static XmlSerializer getFormatter()
@@ -298,6 +300,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             "SendFileCommand",
             $"DstPath = {DstPath}",
             $"SrcPath = {SrcPath}",
+            $"UseCompression = {UseCompression}",
             $"Metadata = {Metadata.ToString()}"
         });
 
@@ -305,6 +308,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             DstPath = reader.ReadString(),
             SrcPath = reader.ReadString(),
+            UseCompression = reader.ReadBoolean(),
             Metadata = getFormatter().Deserialize(reader.BaseStream) as FileMetadata
         };
 
@@ -312,6 +316,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             writer.Write(DstPath);
             writer.Write(SrcPath);
+            writer.Write(UseCompression);
             try
             {
                 getFormatter().Serialize(writer.BaseStream, Metadata);
@@ -329,6 +334,8 @@ namespace VSRAD.DebugServer.IPC.Commands
 
         public string DstPath { get; set; }
 
+        public bool UseCompression { get; set; }
+
         public FileMetadata Metadata { get; set; }
 
         private static XmlSerializer getFormatter()
@@ -341,6 +348,7 @@ namespace VSRAD.DebugServer.IPC.Commands
             "GetFileCommand",
             $"SrcPath = {SrcPath}",
             $"DstPath = {DstPath}",
+            $"UseCompression = {UseCompression}",
             $"Metadata = {Metadata.ToString()}"
         });
 
@@ -348,6 +356,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             SrcPath = reader.ReadString(),
             DstPath = reader.ReadString(),
+            UseCompression = reader.ReadBoolean(),
             Metadata = getFormatter().Deserialize(reader.BaseStream) as FileMetadata
         };
 
@@ -355,6 +364,7 @@ namespace VSRAD.DebugServer.IPC.Commands
         {
             writer.Write(SrcPath);
             writer.Write(DstPath);
+            writer.Write(UseCompression);
             try
             {
                 getFormatter().Serialize(writer.BaseStream, Metadata);

@@ -68,6 +68,15 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         }
     }
 
+    public sealed class ActionEditorIfNotModifiedConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => (int)value;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => (ActionIfNotModified)value;
+    }
+
     public partial class ActionEditor : UserControl, INotifyPropertyChanged
     {
 #pragma warning disable CA2227 // WPF collection bindings need a setter

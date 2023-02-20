@@ -23,7 +23,7 @@ namespace VSRAD.DebugServer.Handlers
         {
             var fullPath = Path.Combine(_command.SrcPath, _command.Metadata.relativePath_);
             
-            await _client.SendFileAsync(fullPath);
+            await _client.SendFileAsync(fullPath, _command.UseCompression);
                 
             return new GetFileResponse { Status = GetFileStatus.Successful };         
         }
