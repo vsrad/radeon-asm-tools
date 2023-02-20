@@ -117,6 +117,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     _context.Options.VisualizerAppearance.DataColumnAlignment,
                     _context.Options.VisualizerAppearance.HeadersAlignment
                 );
+            _table.SetAutoscaleName(_context.Options.VisualizerAppearance.AutoscaleNameColumn);
             foreach (var watch in _context.Options.DebuggerOptions.Watches)
                 _table.AppendVariableRow(watch);
             _table.PrepareNewWatchRow();
@@ -144,6 +145,9 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
                     RefreshDataStyling();
+                    break;
+                case nameof(Options.VisualizerAppearance.AutoscaleNameColumn):
+                    _table.SetAutoscaleName(_context.Options.VisualizerAppearance.AutoscaleNameColumn);
                     break;
                 case nameof(Options.DebuggerOptions.WaveSize):
                     RefreshDataStyling();

@@ -102,6 +102,8 @@ namespace VSRAD.Package.DebugVisualizer
             _selectionController = new SelectionController(this);
         }
 
+        public void SetAutoscaleName(bool value) => _state.AutoscaleName = value;
+
         public void AddWatch(string watchName)
         {
             RemoveNewWatchRow();
