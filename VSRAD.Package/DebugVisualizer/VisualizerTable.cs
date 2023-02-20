@@ -501,6 +501,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Standard functions overriding
 
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Columns[NameColumnIndex].Frozen = Width > Columns[NameColumnIndex].Width + RowHeadersWidth;
+        }
+
         protected override void OnMouseUp(MouseEventArgs e)
         {
             if (_state.ScalingMode == ScalingMode.ResizeColumn
