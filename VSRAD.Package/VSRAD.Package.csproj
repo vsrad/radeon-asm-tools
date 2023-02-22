@@ -56,6 +56,7 @@
     </CodeAnalysisRuleSet>
     <LangVersion>7.3</LangVersion>
     <DeployExtension>False</DeployExtension>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />

@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace VSRAD.DebugServer.SharedUtils
 {
@@ -126,28 +127,18 @@ namespace VSRAD.DebugServer.SharedUtils
             return commonChars;
         }
 
-        private static unsafe int EqualStartingCharacterCount(string first, string second, bool ignoreCase)
+        private static int EqualStartingCharacterCount(string first, string second, bool ignoreCase)
         {
             if (string.IsNullOrEmpty(first) || string.IsNullOrEmpty(second)) return 0;
 
             int commonChars = 0;
-
-            fixed (char* f = first)
-            fixed (char* s = second)
+            var l = Math.Min(first.Length, second.Length);
+            for (var i = 0; i < l; i++)
             {
-                char* l = f;
-                char* r = s;
-                char* leftEnd = l + first.Length;
-                char* rightEnd = r + second.Length;
-
-                while (l != leftEnd && r != rightEnd
-                                    && (*l == *r || (ignoreCase &&
-                                                     char.ToUpperInvariant((*l)) == char.ToUpperInvariant((*r)))))
-                {
-                    commonChars++;
-                    l++;
-                    r++;
-                }
+                var f = ignoreCase ? char.ToUpperInvariant(first[i])  : first[i];
+                var s = ignoreCase ? char.ToUpperInvariant(second[i]) : second[i];
+                if (f != s) break;
+                commonChars++;
             }
 
             return commonChars;

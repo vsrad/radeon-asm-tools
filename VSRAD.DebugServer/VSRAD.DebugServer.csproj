@@ -22,10 +22,6 @@
     <RootNamespace>VSRAD.DebugServer</RootNamespace>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-
   <Target Name="ValidateVersion" BeforeTargets="BeforeBuild">
     <PropertyGroup>
        <Version>$([System.Text.RegularExpressions.Regex]::Match($([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)\..\VSRAD.Package\source.extension.vsixmanifest")), `Version=\"[0-9,.]+\" Language=`).ToString()),`[0-9,.]+`).ToString())</Version>
