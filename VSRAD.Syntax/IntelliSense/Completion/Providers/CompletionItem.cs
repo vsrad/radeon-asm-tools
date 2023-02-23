@@ -33,7 +33,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         }
 
         public Task<object> GetDescriptionAsync(IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
-            descriptionBuilder.GetColorizedDescriptionAsync(_token, cancellationToken);
+            descriptionBuilder.GetColorizedDescriptionAsync(new[] { _token }, cancellationToken);
     }
 
     internal class MultipleCompletionItem : ICompletionItem

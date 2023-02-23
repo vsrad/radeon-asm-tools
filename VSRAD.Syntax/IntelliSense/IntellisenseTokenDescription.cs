@@ -11,13 +11,13 @@ using VSRAD.Syntax.Core.Blocks;
 using System.Threading;
 using Microsoft.VisualStudio.Text;
 using System.Text.RegularExpressions;
+using System;
 
 namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntellisenseDescriptionBuilder
     {
-        Task<object> GetColorizedDescriptionAsync(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken);
-        Task<object> GetColorizedDescriptionAsync(NavigationToken token, CancellationToken cancellationToken);
+        Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken);
     }
 
     [Export(typeof(IIntellisenseDescriptionBuilder))]
@@ -33,16 +33,24 @@ namespace VSRAD.Syntax.IntelliSense
             _navigationTokenService = navigationTokenService;
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken)
+        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)
         {
-            if (tokens == null || tokens.Count == 0) return null;
-            else if (tokens.Count == 1) return await GetColorizedDescriptionAsync(tokens[0], cancellationToken);
-            else return GetColorizedDescriptions(tokens, cancellationToken);
+            if (tokens == null)
+                throw new ArgumentNullException(nameof(tokens));
+            if (tokens.Count == 0)
+                throw new ArgumentException($"{nameof(tokens)} is empty");
+            
+            var descriptionBuider = await GetTokenDescriptionBuilderAsync(tokens.First(), cancellationToken);
+            if (tokens.Count > 1)
+                descriptionBuider = AppendTokenDefinitionsToDescription(descriptionBuider, tokens, cancellationToken);
+            
+            return descriptionBuider.Build();
         }
 
-        private object GetColorizedDescriptions(IReadOnlyList<NavigationToken> tokens, CancellationToken cancellationToken)
+        private ClassifiedTextBuilder AppendTokenDefinitionsToDescription(ClassifiedTextBuilder builder, IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)
         {
-            var builder = new ClassifiedTextBuilder();
+            builder.AddClassifiedText("").SetAsElement();
+
             foreach (var tokenGroup in tokens.GroupBy(t => t.Path))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -51,7 +59,7 @@ namespace VSRAD.Syntax.IntelliSense
                     ? Path.GetFileNameWithoutExtension(tokenGroup.Key)
                     : tokenGroup.Key;
 
-                builder.AddClassifiedText(filePath).SetAsElement();
+                builder.AddClassifiedText(filePath, ClassifiedTextRunStyle.Bold).SetAsElement();
                 foreach (var token in tokenGroup)
                 {
                     var typeName = token.Type.GetName();
@@ -66,10 +74,10 @@ namespace VSRAD.Syntax.IntelliSense
                 }
             }
 
-            return builder.Build();
+            return builder;
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(NavigationToken token, CancellationToken cancellationToken)
+        private async Task<ClassifiedTextBuilder> GetTokenDescriptionBuilderAsync(NavigationToken token, CancellationToken cancellationToken)
         {
             if (token == NavigationToken.Empty) return null;
             cancellationToken.ThrowIfCancellationRequested();
@@ -125,7 +133,7 @@ namespace VSRAD.Syntax.IntelliSense
             builder.SetAsElement();
             if (TryGetCommentDescription(document.DocumentTokenizer, token.GetEnd(), cancellationToken, out var message))
                 builder.AddClassifiedText(message).SetAsElement();
-            return builder.Build();
+            return builder;
         }
 
         private bool TryGetCommentDescription(IDocumentTokenizer documentTokenizer, SnapshotPoint tokenEnd, CancellationToken cancellationToken, out string message)
@@ -215,14 +223,14 @@ namespace VSRAD.Syntax.IntelliSense
                 return this;
             }
 
-            public ClassifiedTextBuilder AddClassifiedText(RadAsmTokenType tokenType, string text)
+            public ClassifiedTextBuilder AddClassifiedText(RadAsmTokenType tokenType, string text, ClassifiedTextRunStyle style = ClassifiedTextRunStyle.UseClassificationStyle)
             {
-                _classifiedTextRuns.AddLast(new ClassifiedTextRun(tokenType.GetClassificationTypeName(), text));
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(tokenType.GetClassificationTypeName(), text, style));
                 return this;
             }
 
-            public ClassifiedTextBuilder AddClassifiedText(string text) =>
-                AddClassifiedText(RadAsmTokenType.Identifier, text);
+            public ClassifiedTextBuilder AddClassifiedText(string text, ClassifiedTextRunStyle style = ClassifiedTextRunStyle.Plain) =>
+                AddClassifiedText(RadAsmTokenType.Identifier, text, style);
         }
     }
 }
