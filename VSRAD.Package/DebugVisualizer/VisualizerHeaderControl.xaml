@@ -211,7 +211,7 @@
         </StackPanel.Style>
         <WrapPanel>
             <Label Content="Counter:" Height="26" Width="68" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}"
+            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}" Minimum="1"
                                Width="60" Height="24" />
             <StackPanel Orientation="Horizontal">
                 <Label Content="Group #:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
