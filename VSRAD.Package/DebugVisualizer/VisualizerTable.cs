@@ -56,7 +56,7 @@ namespace VSRAD.Package.DebugVisualizer
             _computedStyling = new ComputedColumnStyling();
             _getValidWatches = getValidWatches;
 
-            RowHeadersWidth = 30;
+            RowHeadersWidth = 45;
             RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
             ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             RowHeadersVisible = true;
@@ -105,7 +105,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void AddWatch(string watchName)
         {
             RemoveNewWatchRow();
-            AppendVariableRow(new Watch(watchName, VariableType.Int, isAVGPR: false));
+            AppendVariableRow(new Watch(watchName, new VariableType(VariableCategory.Int, 32), isAVGPR: false));
             PrepareNewWatchRow();
             RaiseWatchStateChanged();
         }
@@ -218,7 +218,7 @@ namespace VSRAD.Package.DebugVisualizer
             var index = after ? rowIndex + 1 : rowIndex;
             Rows.Insert(index);
             Rows[index].Cells[NameColumnIndex].Value = " ";
-            Rows[index].HeaderCell.Value = VariableType.Hex.ToString();
+            Rows[index].HeaderCell.Value = VariableCategory.Hex.ToString();
             Rows[index].HeaderCell.Tag = false; // avgpr
             RaiseWatchStateChanged(new[] { Rows[index] });
         }
@@ -227,7 +227,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var index = Rows.Add();
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
-            Rows[index].HeaderCell.Value = watch.Type.ShortName();
+            Rows[index].HeaderCell.Value = watch.Info.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
             Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
 
@@ -302,7 +302,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var scrollingOffset = HorizontalScrollingOffset;
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
-                    Rows[e.RowIndex].HeaderCell.Value = VariableType.Hex.ShortName();
+                    Rows[e.RowIndex].HeaderCell.Value = new VariableType(VariableCategory.Hex, 32).ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
                     RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, _getValidWatches());
                     LockWatchRowForEditing(row);

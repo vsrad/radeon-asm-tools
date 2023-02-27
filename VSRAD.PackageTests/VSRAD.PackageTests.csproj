@@ -67,6 +67,7 @@
     <Compile Include="BuildTools\Errors\ParserTests.cs" />
     <Compile Include="DebugVisualizer\ColumnSelectorTests.cs" />
     <Compile Include="DebugVisualizer\ColumnStylingTests.cs" />
+    <Compile Include="DebugVisualizer\DataFormattingTests.cs" />
     <Compile Include="DebugVisualizer\GroupIndexSelectorTests.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStylingTests.cs" />
     <Compile Include="DebugVisualizer\WavemapTests.cs" />

@@ -1,30 +1,60 @@
-﻿namespace VSRAD.Package.DebugVisualizer
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
+namespace VSRAD.Package.DebugVisualizer
 {
-    public enum VariableType
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum VariableCategory
     {
 #pragma warning disable CA1720 // Identifier contains type name
-        Hex, Float, Uint, Int, Half, Bin
+        Hex, Float, Uint, Int, Bin
 #pragma warning restore CA1720 // Identifier contains type name
     };
 
+    public readonly struct VariableType : System.IEquatable<VariableType>
+    {
+        [JsonConstructor]
+        public VariableType(VariableCategory type, int size)
+        {
+            Category = type;
+            Size = size;
+        }
+
+        public readonly VariableCategory Category;
+        public readonly int Size;
+
+        public bool Equals(VariableType other) =>
+            other.Category == Category && other.Size == Size;
+
+        public override bool Equals(object obj) =>
+            obj is VariableType other && Equals(other);
+
+        public override int GetHashCode() => (Category, Size).GetHashCode();
+
+        public static bool operator ==(VariableType left, VariableType right) => left.Equals(right);
+
+        public static bool operator !=(VariableType left, VariableType right) => !(left == right);
+    }
+
     public static class VariableTypeUtils
     {
-        public static string ShortName(this VariableType type)
+        public static string ShortName(this VariableType info)
         {
-            switch (type)
+            switch (info.Category)
             {
-                case VariableType.Bin:
+                case VariableCategory.Bin:
                     return "B";
-                case VariableType.Float:
-                    return "F";
-                case VariableType.Half:
-                    return "h";
-                case VariableType.Hex:
+                case VariableCategory.Float:
+                    if (info.Size == 32)
+                        return "F";
+                    else
+                        return "h"; // half
+                case VariableCategory.Hex:
                     return "H";
-                case VariableType.Int:
-                    return "I";
-                case VariableType.Uint:
-                    return "U";
+                case VariableCategory.Int:
+                    return "I" + info.Size.ToString();
+                case VariableCategory.Uint:
+                    return "U" + info.Size.ToString();
                 default:
                     return string.Empty;
             }
@@ -32,20 +62,20 @@
 
         public static VariableType TypeFromShortName(string shortName)
         {
-            switch (shortName)
+            switch (shortName[0])
             {
-                case "B":
-                    return VariableType.Bin;
-                case "F":
-                    return VariableType.Float;
-                case "h":
-                    return VariableType.Half;
-                case "H":
-                    return VariableType.Hex;
-                case "I":
-                    return VariableType.Int;
+                case 'B':
+                    return new VariableType(VariableCategory.Bin, 32);
+                case 'F':
+                    return new VariableType(VariableCategory.Float, 32);
+                case 'h':
+                    return new VariableType(VariableCategory.Float, 16);
+                case 'H':
+                    return new VariableType(VariableCategory.Hex, 32);
+                case 'I':
+                    return new VariableType(VariableCategory.Int, int.Parse(shortName.Substring(1)));
                 default:
-                    return VariableType.Uint;
+                    return new VariableType(VariableCategory.Uint, int.Parse(shortName.Substring(1)));
             }
         }
     }

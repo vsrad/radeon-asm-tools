@@ -86,9 +86,44 @@ namespace VSRAD.Package.Options
             while (reader.Read() && reader.TokenType != JsonToken.EndArray)
             {
                 if (reader.TokenType == JsonToken.String)
-                    watches.Add(new Watch((string)reader.Value, VariableType.Hex, isAVGPR: false));
+                    watches.Add(new Watch((string)reader.Value, new VariableType(VariableCategory.Hex, 32), isAVGPR: false));
                 else if (reader.TokenType == JsonToken.StartObject)
-                    watches.Add(JObject.Load(reader).ToObject<Watch>());
+                {
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "Name") continue;
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.String) continue;
+                    var name = reader.Value.ToString();
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.PropertyName) continue;
+
+                    VariableType info;
+
+                    if (reader.Value.ToString() == "Info")
+                    {
+                        if (!reader.Read()) continue;
+                        if (reader.TokenType != JsonToken.StartObject) continue;
+                        info = JObject.Load(reader).ToObject<VariableType>();
+                    }
+                    else
+                    {
+                        if (reader.Value.ToString() != "Type") continue;
+                        if (!reader.Read()) continue;
+                        if (reader.TokenType != JsonToken.String) continue;
+                        info = new VariableType((VariableCategory)Enum.Parse(typeof(VariableCategory), reader.Value.ToString()), 32);
+                    }
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.PropertyName || reader.Value.ToString() != "IsAVGPR") continue;
+
+                    if (!reader.Read()) continue;
+                    if (reader.TokenType != JsonToken.Boolean) continue;
+                    var isAVGPR = (bool)reader.Value;
+
+                    watches.Add(new Watch(name, info, isAVGPR));
+                }
             }
 
             return watches;

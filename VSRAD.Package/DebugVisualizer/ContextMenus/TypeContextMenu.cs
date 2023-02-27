@@ -22,8 +22,25 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         {
             _table = table;
 
-            var typeItems = ((VariableType[])Enum.GetValues(typeof(VariableType)))
-                .Select(type => new MenuItem(type.ToString(), (s, e) => typeChanged(_currentRow, type)));
+            var typeItems = new MenuItem[]
+            {
+                new MenuItem("Hex", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Hex, 32))),
+                new MenuItem("Int", new MenuItem[]
+                {
+                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int, 32))),
+                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int, 16))),
+                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int,  8)))
+                }),
+                new MenuItem("UInt", new MenuItem[]
+                {
+                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 32))),
+                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 16))),
+                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint,  8)))
+                }),
+                new MenuItem("Float", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 32))),
+                new MenuItem("Bin", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Bin, 32))),
+                new MenuItem("Half", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 16)))
+            };
 
             var fgColor = new MenuItem("Font Color", new[]
             {
@@ -90,7 +107,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 item.Checked = false;
 
             var selectedWatch = VisualizerTable.GetRowWatchState(_table.Rows[hit.RowIndex]);
-            _menu.MenuItems[(int)selectedWatch.Type].Checked = true;
             _avgprButton.Enabled = _currentRow != 0 || !_table.ShowSystemRow;
             _avgprButton.Checked = selectedWatch.IsAVGPR;
 
