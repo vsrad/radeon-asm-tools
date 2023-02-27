@@ -48,8 +48,10 @@ namespace VSRAD.Package.Utils
                             float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
                             float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
                             return $"{firstHalf}; {secondHalf}";
-                        default: // 32
+                        case 32:
                             return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
+                        default:
+                            throw new NotImplementedException($"Unknown size: {varInfo.Size}");
                     }
                 case VariableCategory.Uint:
                     var uIntBytes = BitConverter.GetBytes(data);
@@ -61,12 +63,14 @@ namespace VSRAD.Package.Utils
                             var res16_1 = InsertNumberSeparators(BitConverter.ToUInt16(uIntBytes, 2).ToString(), intSeparator);
                             var res16_2 = InsertNumberSeparators(BitConverter.ToUInt16(uIntBytes, 0).ToString(), intSeparator);
                             return $"{res16_1}; {res16_2}";
-                        default: // 8
+                        case 8:
                             var res8_1 = InsertNumberSeparators(uIntBytes[3].ToString(), intSeparator);
                             var res8_2 = InsertNumberSeparators(uIntBytes[2].ToString(), intSeparator);
                             var res8_3 = InsertNumberSeparators(uIntBytes[1].ToString(), intSeparator);
                             var res8_4 = InsertNumberSeparators(uIntBytes[0].ToString(), intSeparator);
                             return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
+                        default:
+                            throw new NotImplementedException($"Unknown size: {varInfo.Size}");
                     }
                 case VariableCategory.Int:
                     var intBytes = BitConverter.GetBytes(data);
@@ -78,12 +82,14 @@ namespace VSRAD.Package.Utils
                             var res16_1 = InsertNumberSeparators(BitConverter.ToInt16(intBytes, 2).ToString(), intSeparator);
                             var res16_2 = InsertNumberSeparators(BitConverter.ToInt16(intBytes, 0).ToString(), intSeparator);
                             return $"{res16_1}; {res16_2}";
-                        default: // 8
+                        case 8:
                             var res8_1 = InsertNumberSeparators(((sbyte)intBytes[3]).ToString(), intSeparator);
                             var res8_2 = InsertNumberSeparators(((sbyte)intBytes[2]).ToString(), intSeparator);
                             var res8_3 = InsertNumberSeparators(((sbyte)intBytes[1]).ToString(), intSeparator);
                             var res8_4 = InsertNumberSeparators(((sbyte)intBytes[0]).ToString(), intSeparator);
                             return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
+                        default:
+                            throw new NotImplementedException($"Unknown size: {varInfo.Size}");
                     }
                 case VariableCategory.Bin:
                     var bin = Convert.ToString(data, 2).PadLeft(32, '0');
