@@ -110,7 +110,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         {
             RefreshDataStyling();
             _table.Rows.Clear();
-            _table.AppendVariableRow(new Watch("System", new VariableType(VariableRepresentation.Hex, 32), isAVGPR: false), canBeRemoved: false);
+            _table.AppendVariableRow(new Watch("System", new VariableType(VariableCategory.Hex, 32), isAVGPR: false), canBeRemoved: false);
             _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
             _table.AlignmentChanged(
                     _context.Options.VisualizerAppearance.NameColumnAlignment,

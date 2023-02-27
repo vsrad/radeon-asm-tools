@@ -4,7 +4,7 @@ using Newtonsoft.Json.Converters;
 namespace VSRAD.Package.DebugVisualizer
 {
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum VariableRepresentation
+    public enum VariableCategory
     {
 #pragma warning disable CA1720 // Identifier contains type name
         Hex, Float, Uint, Int, Bin
@@ -14,22 +14,22 @@ namespace VSRAD.Package.DebugVisualizer
     public readonly struct VariableType : System.IEquatable<VariableType>
     {
         [JsonConstructor]
-        public VariableType(VariableRepresentation type, int size)
+        public VariableType(VariableCategory type, int size)
         {
-            Repr = type;
+            Category = type;
             Size = size;
         }
 
-        public readonly VariableRepresentation Repr;
+        public readonly VariableCategory Category;
         public readonly int Size;
 
         public bool Equals(VariableType other) =>
-            other.Repr == Repr && other.Size == Size;
+            other.Category == Category && other.Size == Size;
 
         public override bool Equals(object obj) =>
             obj is VariableType other && Equals(other);
 
-        public override int GetHashCode() => (Repr, Size).GetHashCode();
+        public override int GetHashCode() => (Category, Size).GetHashCode();
 
         public static bool operator ==(VariableType left, VariableType right) => left.Equals(right);
 
@@ -40,20 +40,20 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public static string ShortName(this VariableType info)
         {
-            switch (info.Repr)
+            switch (info.Category)
             {
-                case VariableRepresentation.Bin:
+                case VariableCategory.Bin:
                     return "B";
-                case VariableRepresentation.Float:
+                case VariableCategory.Float:
                     if (info.Size == 32)
                         return "F";
                     else
                         return "h"; // half
-                case VariableRepresentation.Hex:
+                case VariableCategory.Hex:
                     return "H";
-                case VariableRepresentation.Int:
+                case VariableCategory.Int:
                     return "I" + info.Size.ToString();
-                case VariableRepresentation.Uint:
+                case VariableCategory.Uint:
                     return "U" + info.Size.ToString();
                 default:
                     return string.Empty;
@@ -65,17 +65,17 @@ namespace VSRAD.Package.DebugVisualizer
             switch (shortName[0])
             {
                 case 'B':
-                    return new VariableType(VariableRepresentation.Bin, 32);
+                    return new VariableType(VariableCategory.Bin, 32);
                 case 'F':
-                    return new VariableType(VariableRepresentation.Float, 32);
+                    return new VariableType(VariableCategory.Float, 32);
                 case 'h':
-                    return new VariableType(VariableRepresentation.Float, 16);
+                    return new VariableType(VariableCategory.Float, 16);
                 case 'H':
-                    return new VariableType(VariableRepresentation.Hex, 32);
+                    return new VariableType(VariableCategory.Hex, 32);
                 case 'I':
-                    return new VariableType(VariableRepresentation.Int, int.Parse(shortName.Substring(1)));
+                    return new VariableType(VariableCategory.Int, int.Parse(shortName.Substring(1)));
                 default:
-                    return new VariableType(VariableRepresentation.Uint, int.Parse(shortName.Substring(1)));
+                    return new VariableType(VariableCategory.Uint, int.Parse(shortName.Substring(1)));
             }
         }
     }

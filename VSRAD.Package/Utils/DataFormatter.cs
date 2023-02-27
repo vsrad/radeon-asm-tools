@@ -29,9 +29,9 @@ namespace VSRAD.Package.Utils
 
         public static string FormatDword(VariableType varInfo, uint data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
         {
-            switch (varInfo.Repr)
+            switch (varInfo.Category)
             {
-                case VariableRepresentation.Hex:
+                case VariableCategory.Hex:
                     var hex = data.ToString("x");
                     if (varInfo.Size != 32) hex = hex.Substring(8 - (varInfo.Size / 4), varInfo.Size / 4); // TODO: doesnt work with short representations (0x0)
                     if (string.IsNullOrEmpty(hex)) hex = "0";
@@ -40,7 +40,7 @@ namespace VSRAD.Package.Utils
                     if (binHexSeparator != 0)
                         hex = InsertNumberSeparators(hex, binHexSeparator);
                     return "0x" + hex;
-                case VariableRepresentation.Float:
+                case VariableCategory.Float:
                     switch (varInfo.Size)
                     {
                         case 16:
@@ -51,7 +51,7 @@ namespace VSRAD.Package.Utils
                         default: // 32
                             return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();
                     }
-                case VariableRepresentation.Uint:
+                case VariableCategory.Uint:
                     var uIntBytes = BitConverter.GetBytes(data);
                     switch (varInfo.Size)
                     {
@@ -68,7 +68,7 @@ namespace VSRAD.Package.Utils
                             var res8_4 = InsertNumberSeparators(uIntBytes[0].ToString(), intSeparator);
                             return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
                     }
-                case VariableRepresentation.Int:
+                case VariableCategory.Int:
                     var intBytes = BitConverter.GetBytes(data);
                     switch (varInfo.Size)
                     {
@@ -85,7 +85,7 @@ namespace VSRAD.Package.Utils
                             var res8_4 = InsertNumberSeparators(((sbyte)intBytes[0]).ToString(), intSeparator);
                             return $"{res8_1}; {res8_2}; {res8_3}; {res8_4}";
                     }
-                case VariableRepresentation.Bin:
+                case VariableCategory.Bin:
                     var bin = Convert.ToString(data, 2).PadLeft(32, '0');
                     if (varInfo.Size != 32) bin = bin.Substring(32 - varInfo.Size, varInfo.Size);
                     if (string.IsNullOrEmpty(bin)) bin = "0";

@@ -10,7 +10,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public int RowCount => _view.RowCount;
         public int ColumnCount => _view.ColumnCount;
 
-        public bool IsSingleWordValue => _type.Repr == VariableRepresentation.Float && _type.Size == 16;
+        public bool IsSingleWordValue => _type.Category == VariableCategory.Float && _type.Size == 16;
 
         private readonly SliceWatchView _view;
         private readonly VariableType _type;

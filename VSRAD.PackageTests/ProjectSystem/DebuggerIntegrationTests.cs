@@ -40,9 +40,9 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.Profile.General.LocalWorkDir = "local/dir";
             project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
             project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
-            project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableType(VariableRepresentation.Hex, 32), false));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableType(VariableRepresentation.Hex, 32), false));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableRepresentation.Hex, 32), false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableType(VariableCategory.Hex, 32), false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableType(VariableCategory.Hex, 32), false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableCategory.Hex, 32), false));
 
             var readDebugDataStep = new ReadDebugDataStep { BinaryOutput = false, OutputOffset = 1 };
             readDebugDataStep.OutputFile.CheckTimestamp = true;

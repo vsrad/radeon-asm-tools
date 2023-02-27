@@ -24,22 +24,22 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var typeItems = new MenuItem[]
             {
-                new MenuItem("Hex", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Hex, 32))),
+                new MenuItem("Hex", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Hex, 32))),
                 new MenuItem("Int", new MenuItem[]
                 {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Int, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Int, 16))),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Int,  8)))
+                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int, 32))),
+                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int, 16))),
+                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int,  8)))
                 }),
                 new MenuItem("UInt", new MenuItem[]
                 {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Uint, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Uint, 16))),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Uint,  8)))
+                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 32))),
+                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 16))),
+                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint,  8)))
                 }),
-                new MenuItem("Float", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Float, 32))),
-                new MenuItem("Bin", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Bin, 32))),
-                new MenuItem("Half", (s, e) => typeChanged(_currentRow, new VariableType(VariableRepresentation.Float, 16)))
+                new MenuItem("Float", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 32))),
+                new MenuItem("Bin", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Bin, 32))),
+                new MenuItem("Half", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 16)))
             };
 
             var fgColor = new MenuItem("Font Color", new[]
