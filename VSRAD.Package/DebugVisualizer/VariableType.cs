@@ -14,9 +14,9 @@ namespace VSRAD.Package.DebugVisualizer
     public readonly struct VariableType : System.IEquatable<VariableType>
     {
         [JsonConstructor]
-        public VariableType(VariableCategory type, int size)
+        public VariableType(VariableCategory category, int size)
         {
-            Category = type;
+            Category = category;
             Size = size;
         }
 
