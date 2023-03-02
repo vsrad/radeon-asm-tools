@@ -10,6 +10,7 @@ using VSRAD.Syntax.Options.Instructions;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using System;
 using System.Linq;
+using Microsoft.VisualStudio.Shell;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -89,7 +90,7 @@ namespace VSRAD.Syntax.IntelliSense
                 {
                     var asmType = analysisToken.Snapshot.GetAsmType();
                     var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
-                    var instructionText = analysisToken.GetText();
+                    var instructionText = analysisToken.GetText().TrimPrefix("#");
                     var instructionNavigations = new List<NavigationToken>();
 
                     var navigations = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations);
