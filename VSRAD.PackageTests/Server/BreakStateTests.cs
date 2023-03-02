@@ -156,7 +156,7 @@ namespace VSRAD.PackageTests.Server
         public async Task EmptyResultRangeTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var watches = new ReadOnlyCollection<string>(new[] { "h" });
+            var watches = new ReadOnlyCollection<string>(new[] { "F16" });
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
             var breakStateData = new BreakStateData(watches, file);
 
@@ -175,7 +175,7 @@ namespace VSRAD.PackageTests.Server
         public async Task NGroupViolationProducesAWarningButFetchesResultsTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var watches = new ReadOnlyCollection<string>(new[] { "h" });
+            var watches = new ReadOnlyCollection<string>(new[] { "F16" });
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
             var breakStateData = new BreakStateData(watches, file);
 

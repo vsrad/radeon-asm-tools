@@ -24,22 +24,19 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             var typeItems = new MenuItem[]
             {
-                new MenuItem("Hex", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Hex, 32))),
-                new MenuItem("Int", new MenuItem[]
+                new MenuItem("Hex",    (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Hex,   32))),
+                new MenuItem("Float",  (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 32))),
+                new MenuItem("Half",   (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 16))),
+                new MenuItem("Int32",  (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int,   32))),
+                new MenuItem("UInt32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint,  32))),
+                new MenuItem("Other", new MenuItem[]
                 {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int, 16))),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int,  8)))
-                }),
-                new MenuItem("UInt", new MenuItem[]
-                {
-                    new MenuItem("32", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 32))),
-                    new MenuItem("16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 16))),
-                    new MenuItem("8" , (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint,  8)))
-                }),
-                new MenuItem("Float", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 32))),
-                new MenuItem("Bin", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Bin, 32))),
-                new MenuItem("Half", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Float, 16)))
+                    new MenuItem("Int16",  (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int,  16))),
+                    new MenuItem("Int8",   (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Int,   8))),
+                    new MenuItem("UInt16", (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint, 16))),
+                    new MenuItem("Uint8",  (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Uint,  8))),
+                    new MenuItem("Bin",    (s, e) => typeChanged(_currentRow, new VariableType(VariableCategory.Bin,  32)))
+                })
             };
 
             var fgColor = new MenuItem("Font Color", new[]

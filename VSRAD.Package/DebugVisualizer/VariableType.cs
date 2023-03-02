@@ -45,10 +45,7 @@ namespace VSRAD.Package.DebugVisualizer
                 case VariableCategory.Bin:
                     return "B";
                 case VariableCategory.Float:
-                    if (info.Size == 32)
-                        return "F";
-                    else
-                        return "h"; // half
+                    return "F" + info.Size.ToString();
                 case VariableCategory.Hex:
                     return "H";
                 case VariableCategory.Int:
@@ -67,9 +64,7 @@ namespace VSRAD.Package.DebugVisualizer
                 case 'B':
                     return new VariableType(VariableCategory.Bin, 32);
                 case 'F':
-                    return new VariableType(VariableCategory.Float, 32);
-                case 'h':
-                    return new VariableType(VariableCategory.Float, 16);
+                    return new VariableType(VariableCategory.Float, int.Parse(shortName.Substring(1)));
                 case 'H':
                     return new VariableType(VariableCategory.Hex, 32);
                 case 'I':
