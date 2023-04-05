@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using VSRAD.Package.ProjectSystem.Profiles;
 using VSRAD.Package.Utils;
+using static VSRAD.Package.Utils.HostItem;
 
 namespace VSRAD.Package.Options
 {
@@ -28,9 +29,9 @@ namespace VSRAD.Package.Options
         public DebugVisualizer.ColumnStylingOptions VisualizerColumnStyling { get; } =
             new DebugVisualizer.ColumnStylingOptions();
 
-        [JsonConverter(typeof(MruCollection<string>.Converter))]
-        public MruCollection<string> TargetHosts { get; } =
-            new MruCollection<string>();
+        [JsonConverter(typeof(HostItemMruCollectionConverter))]
+        public MruCollection<HostItem> TargetHosts { get; } =
+            new MruCollection<HostItem>();
 
         public ProjectOptions() { }
 
@@ -47,14 +48,12 @@ namespace VSRAD.Package.Options
         private string _activeProfile = "Default";
         public string ActiveProfile { get => _activeProfile; set { if (value != null) SetField(ref _activeProfile, value, raiseIfEqual: true); } }
 
-        private string _remoteMachine = "127.0.0.1";
-        public string RemoteMachine { get => _remoteMachine; set => SetField(ref _remoteMachine, value); }
-
-        private int _port = 9339;
-        public int Port { get => _port; set => SetField(ref _port, value); }
-
+        // we can safely assume that TargetHosts[0] is the host we want, because
+        // TargetHosts order are updated according to MRU collection (see VSRAD.Package.Utils.MruCollection.cs)
         [JsonIgnore]
-        public ServerConnectionOptions Connection => new ServerConnectionOptions(RemoteMachine, Port);
+        public ServerConnectionOptions Connection => TargetHosts.Count != 0
+                                                        ? TargetHosts[0].ConnectionOptions
+                                                        : default(ServerConnectionOptions);
 
         [JsonIgnore]
         public bool HasProfiles => Profiles.Count > 0;

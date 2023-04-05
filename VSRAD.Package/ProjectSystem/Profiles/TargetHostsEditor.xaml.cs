@@ -12,38 +12,6 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 {
     public sealed partial class TargetHostsEditor : DialogWindow
     {
-        public sealed class HostItem : DefaultNotifyPropertyChanged
-        {
-            private string _host = "";
-            public string Host { get => _host; set => SetField(ref _host, value); }
-
-            public bool UsedInActiveProfile { get; }
-
-            public HostItem(string host, bool usedInActiveProfile)
-            {
-                Host = host;
-                UsedInActiveProfile = usedInActiveProfile;
-            }
-        }
-
-        public static bool TryParseHost(string input, out string formatted, out string hostname, out ushort port)
-        {
-            formatted = "";
-            hostname = "";
-            port = 0;
-
-            var hostnamePort = input.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
-            if (hostnamePort.Length == 0)
-                return false;
-
-            hostname = hostnamePort[0];
-            if (hostnamePort.Length < 2 || !ushort.TryParse(hostnamePort[1], out port))
-                port = 9339;
-
-            formatted = $"{hostname}:{port}";
-            return true;
-        }
-
         public ObservableCollection<HostItem> Hosts { get; }
         public ICommand DeleteHostCommand { get; }
 
@@ -53,8 +21,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
         public TargetHostsEditor(IProject project)
         {
             _project = project;
-            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts.Select(h =>
-                new HostItem(h, usedInActiveProfile: !project.Options.Profile.General.RunActionsLocally && project.Options.Connection.ToString() == h)));
+            Hosts = new ObservableCollection<HostItem>(project.Options.TargetHosts);
             DeleteHostCommand = new WpfDelegateCommand(DeleteHost);
 
             InitializeComponent();
@@ -62,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void AddHost(object sender, RoutedEventArgs e)
         {
-            var item = new HostItem("", usedInActiveProfile: false);
+            var item = new HostItem("", Options.DefaultOptionValues.Port);
             Hosts.Add(item);
 
             // Finish editing the current host before moving the focus away from it
@@ -85,33 +52,18 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
         private void SaveChanges()
         {
+            var oldHost = _project.Options.TargetHosts.Count != 0
+                                           ? _project.Options.TargetHosts[0]
+                                           : null;
             _project.Options.TargetHosts.Clear();
-            _project.Options.TargetHosts.AddRange(Hosts.Select(h => h.Host).Distinct());
+            _project.Options.TargetHosts.AddRange(Hosts.Distinct());
 
             var updatedProfile = (Options.ProfileOptions)_project.Options.Profile.Clone();
-            if (Hosts.FirstOrDefault(h => h.UsedInActiveProfile) is HostItem hi && TryParseHost(hi.Host, out _, out var hostname, out var port))
-            {
-                _project.Options.RemoteMachine = hostname;
-                _project.Options.Port = port;
-            }
-            else
-            {
+            if (oldHost == null || !Hosts.Contains(oldHost))
                 updatedProfile.General.RunActionsLocally = true;
-            }
             _project.Options.UpdateActiveProfile(updatedProfile);
 
             _project.SaveOptions();
-        }
-
-        private void ValidateHostAfterEdit(object sender, DataGridRowEditEndingEventArgs e)
-        {
-            var item = (HostItem)e.Row.DataContext;
-            if (TryParseHost(item.Host, out var formattedHost, out _, out _))
-                item.Host = formattedHost;
-            else
-#pragma warning disable VSTHRD001 // Using BeginInvoke to delete item after all post-edit events fire
-                Dispatcher.BeginInvoke((Action)(() => Hosts.Remove(item)), System.Windows.Threading.DispatcherPriority.Background);
-#pragma warning restore VSTHRD001
         }
 
         private void HandleDeleteKey(object sender, KeyEventArgs e)
@@ -162,7 +114,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
 
             for (int i = 0; i < Hosts.Count; ++i)
             {
-                if (Hosts[i].Host != _project.Options.TargetHosts[i])
+                if (Hosts[i] != _project.Options.TargetHosts[i])
                     return true;
             }
 

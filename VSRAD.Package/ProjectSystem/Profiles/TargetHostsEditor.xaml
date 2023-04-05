@@ -18,11 +18,41 @@
             <Button Content="Cancel" IsCancel="True" Click="HandleCancel" Width="61" Height="22" Margin="4,0,0,0" />
         </StackPanel>
         <DataGrid x:Name="HostGrid" ItemsSource="{Binding Hosts, ElementName=Root}" Margin="4" GridLinesVisibility="None" Focusable="True"
-                  RowEditEnding="ValidateHostAfterEdit" PreviewKeyDown="HandleDeleteKey"
+                  PreviewKeyDown="HandleDeleteKey"
                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserReorderColumns="False" CanUserSortColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False"
                   HeadersVisibility="Column" HorizontalScrollBarVisibility="Disabled" RowHeight="24">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Host" Binding="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="{x:Type TextBox}">
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="3,0" />
+                            <Setter Property="Height" Value="22" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Port" Binding="{Binding Port, UpdateSourceTrigger=PropertyChanged}" Width="*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="VerticalAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="6,0" />
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="{x:Type TextBox}">
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="Padding" Value="3,0" />
+                            <Setter Property="Height" Value="22" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Alias" Binding="{Binding Alias, UpdateSourceTrigger=PropertyChanged}" Width="*">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="VerticalAlignment" Value="Center" />

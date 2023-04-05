@@ -11,6 +11,7 @@ using System.Windows;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Profiles;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Commands
 {
@@ -65,22 +66,21 @@ namespace VSRAD.Package.Commands
 
         private void ListTargetMachines(IntPtr variantOut)
         {
-            var displayItems = _project.Options.TargetHosts.Prepend("Local").Append("Edit...").ToArray();
+            var displayItems = _project.Options.TargetHosts.Select(h => h.Name).Prepend("Local").Append("Edit...").ToArray();
             Marshal.GetNativeVariantForObject(displayItems, variantOut);
         }
 
         private void GetCurrentTargetMachine(IntPtr variantOut)
         {
             string currentHost;
-            if (_project.Options.Profile.General.RunActionsLocally)
+            if (_project.Options.Profile.General.RunActionsLocally
+                || _project.Options.TargetHosts.Count == 0)
             {
                 currentHost = "Local";
             }
             else
             {
-                currentHost = _project.Options.Connection.ToString();
-                // Display current host at the top of the list
-                _project.Options.TargetHosts.Add(currentHost);
+                currentHost = _project.Options.TargetHosts[0].Name;
             }
             Marshal.GetNativeVariantForObject(currentHost, variantOut);
         }
@@ -95,13 +95,20 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                if (!TargetHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
-                    return;
+                var item = HostItem.TryParseHost(selected);
+                var tmpItem = default(HostItem);
 
-                _project.Options.TargetHosts.Add(formattedHost);
+                if (item == default(HostItem)) // check maybe user entered existing alias
+                    tmpItem = _project.Options.TargetHosts.FirstOrDefault(h => h.Alias == selected);
+                else // maybe there is existing host but with alias
+                    tmpItem = _project.Options.TargetHosts
+                                              .FirstOrDefault(h => h.Host == item.Host && h.Port == item.Port);
 
-                _project.Options.RemoteMachine = hostname;
-                _project.Options.Port = port;
+                if (tmpItem != default(HostItem)) item = tmpItem;
+                else if (item == default(HostItem)) return;
+
+                _project.Options.TargetHosts.Add(item);
+
                 updatedProfile.General.RunActionsLocally = false;
             }
 
