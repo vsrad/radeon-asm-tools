@@ -93,6 +93,7 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             //SetColumnSelector(newSelector);
             _stylingOptions.Range = new Utils.VisibleColumnsRange(displayLast ? Utils.SelectorType.Last : Utils.SelectorType.First,
                                             (int)displayedCount, (int)subgroupSize);
+            _stylingOptions.VisibleColumns = _stylingOptions.Range.GetStringRepresentation(_getGroupSize());
             _table.ClearSelection();
         }
 

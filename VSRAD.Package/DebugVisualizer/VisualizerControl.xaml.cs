@@ -136,6 +136,10 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
                 case nameof(Options.DebuggerOptions.GroupSize):
+                    _context.Options.VisualizerColumnStyling.VisibleColumns
+                        = _context.Options.VisualizerColumnStyling.Range.GetStringRepresentation(_context.Options.DebuggerOptions.GroupSize);
+                    RefreshDataStyling();
+                    break;
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerAppearance.LaneGrouping):
