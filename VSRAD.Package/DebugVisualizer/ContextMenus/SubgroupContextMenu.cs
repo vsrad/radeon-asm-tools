@@ -88,9 +88,12 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         private void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
         {
-            string subgroupsSelector = ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast);
-            string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector, _table.DataColumnCount);
-            SetColumnSelector(newSelector);
+            //string subgroupsSelector = ColumnSelector.PartialSubgroups(_getGroupSize(), subgroupSize, displayedCount, displayLast);
+            //string newSelector = ColumnSelector.GetSelectorMultiplication(_stylingOptions.VisibleColumns, subgroupsSelector, _table.DataColumnCount);
+            //SetColumnSelector(newSelector);
+            _stylingOptions.Range = new Utils.VisibleColumnsRange(displayLast ? Utils.SelectorType.Last : Utils.SelectorType.First,
+                                            (int)displayedCount, (int)subgroupSize);
+            _table.ClearSelection();
         }
 
         private void SetBackgroundColor(DataHighlightColor color)
@@ -109,7 +112,9 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
         private void SetColumnSelector(string newSelector)
         {
-            _stylingOptions.VisibleColumns = newSelector;
+            //_stylingOptions.VisibleColumns = newSelector;
+            //_table.ClearSelection();
+            _stylingOptions.Range = new Utils.VisibleColumnsRange(newSelector);
             _table.ClearSelection();
         }
 

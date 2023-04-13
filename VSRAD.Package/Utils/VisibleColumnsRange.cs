@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VSRAD.Package.DebugVisualizer;
 
 namespace VSRAD.Package.Utils
 {
@@ -11,7 +12,7 @@ namespace VSRAD.Package.Utils
         First, Last, Custom
     }
 
-    class VisibleColumnsRange
+    public class VisibleColumnsRange
     {
         public SelectorType Type;
         public int X;
@@ -23,7 +24,13 @@ namespace VSRAD.Package.Utils
             Type = type; X = x; Y = y;
         }
 
-        public string GetRepresentation(uint groupSize, List<int> range = null)
+        public VisibleColumnsRange(string custom)
+        {
+            Type = SelectorType.Custom;
+            Custom = custom;
+        }
+
+        public string GetStringRepresentation(uint groupSize)
         {
             if (Type == SelectorType.Custom) return Custom;
 
@@ -32,10 +39,23 @@ namespace VSRAD.Package.Utils
             while (cur < groupSize)
             {
                 sb.Append($"{cur}-{cur+X-1}:");
-                if (range != null) range.AddRange(Enumerable.Range(cur, X));
                 cur += Y;
             }
             return sb.ToString();
+        }
+
+        public IEnumerable<int> GetRangeRepresentation(uint groupSize)
+        {
+            if (Type == SelectorType.Custom) return ColumnSelector.ToIndexes(Custom, (int)groupSize);
+
+            int cur = Type == SelectorType.First ? 0 : Y - X;
+            var res = new List<int>();
+            while (cur < groupSize)
+            {
+                res.AddRange(Enumerable.Range(cur, X));
+                cur += Y;
+            }
+            return res;
         }
     }
 }
