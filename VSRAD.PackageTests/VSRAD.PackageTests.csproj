@@ -85,6 +85,7 @@
     <Compile Include="Server\BreakStateTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />
+    <Compile Include="Utils\VisibleColumnsRangeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Key.snk" />

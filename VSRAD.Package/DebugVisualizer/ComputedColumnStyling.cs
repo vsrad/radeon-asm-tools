@@ -29,7 +29,9 @@ namespace VSRAD.Package.DebugVisualizer
 
             Array.Resize(ref _columnState, (int)groupSize);
             Array.Clear(_columnState, 0, _columnState.Length);
-            foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)groupSize))
+            if (styling.Range == null) // TODO
+                styling.Range = new Utils.VisibleColumnsRange("0:1-8191");
+            foreach (int i in styling.Range.GetRangeRepresentation(groupSize))
                 ColumnState[i] |= ColumnStates.Visible;
 
             ComputeInactiveLanes(options, system);
