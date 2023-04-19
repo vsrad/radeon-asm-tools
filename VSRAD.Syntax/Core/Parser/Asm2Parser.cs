@@ -344,6 +344,14 @@ namespace VSRAD.Syntax.Core.Parser
             "cons",
             "concat",
             "wgp_mode",
+            "get_wave_size",
+            "get_group_size_x",
+            "get_group_size_y",
+            "get_group_size_z",
+            "s_index",
+            "v_index",
+            "s_reg",
+            "v_reg",
         };
     }
 }
