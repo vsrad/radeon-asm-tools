@@ -199,6 +199,8 @@ namespace VSRAD.DebugServer.IPC.Responses
     {
         public SendFileStatus Status { get; set; }
 
+        public string Message { get; set; }
+
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
             "SendFileResponse",
@@ -207,18 +209,22 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public static SendFileResponse Deserialize(IPCReader reader) => new SendFileResponse
         {
-            Status = (SendFileStatus)reader.ReadByte()
+            Status = (SendFileStatus)reader.ReadByte(),
+            Message = reader.ReadString()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
+            writer.Write(Message);
         }
     }
 
     public sealed class PutDirectoryResponse : IResponse
     {
         public PutDirectoryStatus Status { get; set; }
+
+        public string Message { get; set; } 
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -228,17 +234,21 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public static PutDirectoryResponse Deserialize(IPCReader reader) => new PutDirectoryResponse
         {
-            Status = (PutDirectoryStatus)reader.ReadByte()
+            Status = (PutDirectoryStatus)reader.ReadByte(),
+            Message = reader.ReadString()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
+            writer.Write(Message);
         }
     }
     public sealed class GetFileResponse : IResponse
     {
         public GetFileStatus Status { get; set; }
+
+        public string Message { get; set; }
 
         public override string ToString() => string.Join(Environment.NewLine, new[]
         {
@@ -248,12 +258,14 @@ namespace VSRAD.DebugServer.IPC.Responses
 
         public static GetFileResponse Deserialize(IPCReader reader) => new GetFileResponse
         {
-            Status = (GetFileStatus)reader.ReadByte()
+            Status = (GetFileStatus)reader.ReadByte(),
+            Message = reader.ReadString()
         };
 
         public void Serialize(IPCWriter writer)
         {
             writer.Write((byte)Status);
+            writer.Write(Message);
         }
     }
 

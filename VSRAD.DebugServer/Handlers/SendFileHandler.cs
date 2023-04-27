@@ -34,14 +34,11 @@ namespace VSRAD.DebugServer.Handlers
             {
                 await _client.ReceiveFileAsync(fullPath, _command.UseCompression);
                 File.SetLastWriteTimeUtc(fullPath, _command.Metadata.LastWriteTimeUtc);
-            } catch (System.Security.SecurityException ex)
+            } catch (Exception e)
             {
-                return new SendFileResponse { Status = SendFileStatus.PermissionDenied };
-            } catch (Exception ex)
-            {
-                return new SendFileResponse { Status = SendFileStatus.OtherIOError };
+                return new SendFileResponse { Status = SendFileStatus.OtherIOError, Message = e.Message };
             }
-            return new SendFileResponse { Status = SendFileStatus.Successful };
+            return new SendFileResponse { Status = SendFileStatus.Successful, Message = "" };
         }
     }
 }

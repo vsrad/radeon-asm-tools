@@ -30,15 +30,12 @@ namespace VSRAD.DebugServer.Handlers
             try
             {
                 await _client.SendFileAsync(fullPath, _command.UseCompression);
-            } catch(System.Security.SecurityException ex)
+            } catch (Exception e)
             {
-                return new GetFileResponse { Status = GetFileStatus.PermissionDenied };
-            } catch (Exception ex)
-            {
-                return new GetFileResponse { Status = GetFileStatus.OtherIOError };
+                return new GetFileResponse { Status = GetFileStatus.OtherIOError, Message = e.Message };
             }
                 
-            return new GetFileResponse { Status = GetFileStatus.Successful };         
+            return new GetFileResponse { Status = GetFileStatus.Successful, Message = "" };
         }
     }
 }

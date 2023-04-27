@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 using System.Text;
+using System.Runtime.InteropServices;
+
 
 namespace VSRAD.DebugServer.SharedUtils
 {
@@ -40,18 +42,26 @@ namespace VSRAD.DebugServer.SharedUtils
 
         public static bool isOutdated(FileMetadata metadata, String BaseDir)
         {
-            var fullPath = Path.Combine(BaseDir, metadata.RelativePath);
-            Console.WriteLine($"Checking file {fullPath} for existence");
-            if (!metadata.IsDirectory && File.Exists(fullPath))
+            var relativePath = RuntimeInformation.IsOSPlatform(OSPlatform.Linux)
+                 ? metadata.RelativePath.Replace('\\', '/')
+                 : metadata.RelativePath;
+
+            var fullPath = Path.Combine(BaseDir, relativePath);
+            if (!File.Exists(fullPath) && !Directory.Exists(fullPath))
+            {
+                return true;
+            }
+            if (!metadata.IsDirectory)
             {
                 var localInfo = new FileInfo(fullPath);
-                return metadata.LastWriteTimeUtc == localInfo.LastWriteTimeUtc;
+                return metadata.LastWriteTimeUtc != localInfo.LastWriteTimeUtc;
             }
-            if (metadata.IsDirectory && Directory.Exists(fullPath))
+            if (metadata.IsDirectory)
             {
                 var localInfo = new DirectoryInfo(fullPath);
-                return metadata.LastWriteTimeUtc == localInfo.LastWriteTimeUtc;
+                return metadata.LastWriteTimeUtc != localInfo.LastWriteTimeUtc;
             }
+
             return false;
         }
     }

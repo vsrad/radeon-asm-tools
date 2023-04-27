@@ -110,8 +110,7 @@ namespace VSRAD.DebugServer
             using (var reader = new FileStream(path, FileMode.Open))
             {
                 var decodedbuffer = new byte[BUFFER_SIZE];
-                var encodedBuffer = new byte[LZ4Codec.MaximumOutputSize(decodedbuffer.Length)];
-
+                var encodedBuffer = new byte[LZ4Codec.MaximumOutputSize(BUFFER_SIZE)];
                 var bytesToSend = reader.Length;
                 var fileSizeBytes = BitConverter.GetBytes((long)bytesToSend);
                 stream.Write(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.GetLength(0)));
@@ -137,24 +136,30 @@ namespace VSRAD.DebugServer
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             using (var writer = new FileStream(path, FileMode.Create))
             {
-                var encodedBuffer = new byte[BUFFER_SIZE];
-                var decodedBuffer = new byte[encodedBuffer.Length * 255];
+                var decodedBuffer = new byte[BUFFER_SIZE];
+                var encodedBuffer = new byte[LZ4Codec.MaximumOutputSize(BUFFER_SIZE)];
                 var fileSizeBytes = new byte[sizeof(long)];
-                var receiveBlockSize = new byte[sizeof(long)];
+                var encodedBlockSizeBytes = new byte[sizeof(int)];
 
-                stream.Read(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.Length));
+                if (stream.Read(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.Length)) != sizeof(long))
+                {
+                    throw new IOException("ReceiveCompressedFileAsync file size read error");
+                }
+
                 var bytesToReceive = BitConverter.ToInt64(fileSizeBytes, 0);
 
                 while (bytesToReceive > 0)
                 {
-                    stream.Read(receiveBlockSize, 0, Convert.ToInt32(receiveBlockSize.Length));
-                    var blockSize = BitConverter.ToInt32(receiveBlockSize, 0);
+                    if (stream.Read(encodedBlockSizeBytes, 0, Convert.ToInt32(encodedBlockSizeBytes.Length)) != sizeof(int))
+                    {
+                        throw new IOException("ReceiveCompressedFileAsync block size read error");
+                    }
+                    var encodedBlockSize = BitConverter.ToInt32(encodedBlockSizeBytes, 0);
 
                     // Need to receive full encoded block before decoding
                     //
-                    await ReceiveBlockAsync(stream, encodedBuffer, blockSize);
-
-                    var decodedBytes = LZ4Codec.Decode(encodedBuffer, 0, blockSize, decodedBuffer, 0, decodedBuffer.Length);
+                    ReceiveBlockAsync(stream, encodedBuffer, encodedBlockSize);
+                    var decodedBytes = LZ4Codec.Decode(encodedBuffer, 0, encodedBlockSize, decodedBuffer, 0, decodedBuffer.Length);
                     writer.Write(decodedBuffer, 0, decodedBytes);
                     bytesToReceive -= decodedBytes;
                 }
@@ -166,10 +171,10 @@ namespace VSRAD.DebugServer
         {
             var bytesToReceive = count;
             var alreadyReceived = 0;
-            while(alreadyReceived != count)
+            while (alreadyReceived != count)
             {
                 var receivedBytes = stream.Read(buffer, alreadyReceived, bytesToReceive);
-                if (receivedBytes == 0) throw new IOException($"ReceiveFileAsync network read error, zero bytes received");
+                if (receivedBytes == 0) throw new IOException($"ReceiveBlockAsync network read error, zero bytes received");
                 alreadyReceived += receivedBytes;
                 bytesToReceive -= receivedBytes;
             }
@@ -184,7 +189,10 @@ namespace VSRAD.DebugServer
                 var buffer = new byte[BUFFER_SIZE];
 
                 var fileSizeBytes = new byte[sizeof(long)];
-                stream.Read(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.Length));
+                if (stream.Read(fileSizeBytes, 0, Convert.ToInt32(fileSizeBytes.Length)) != sizeof(long))
+                {
+                    throw new IOException("ReceiveFileAsync file size read error");
+                }
                 var bytesToReceive = BitConverter.ToInt64(fileSizeBytes, 0);
 
                 while (bytesToReceive > 0)

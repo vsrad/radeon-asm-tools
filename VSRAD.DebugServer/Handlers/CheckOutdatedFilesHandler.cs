@@ -24,9 +24,9 @@ namespace VSRAD.DebugServer.Handlers
             foreach (var info in _command.Files)
             {
                 if (FileMetadata.isOutdated(info, rootPath))
-                    continue;
-
-                files.Add(info);
+                {
+                    files.Add(info);
+                }
             }
 
             return Task.FromResult<IResponse>(new CheckOutdatedFilesResponse { Files = files });

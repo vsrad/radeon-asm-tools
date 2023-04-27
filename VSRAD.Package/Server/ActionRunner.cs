@@ -16,6 +16,19 @@ using System.Windows.Forms;
 
 namespace VSRAD.Package.Server
 {
+    public sealed class RemoteIOException : IOException
+    {
+        public RemoteIOException(FileMetadata file, PutDirectoryResponse serverResponse) :
+            base($"Failed to send {file.RelativePath} : {serverResponse.Message}")
+        { }
+        public RemoteIOException(FileMetadata file, SendFileResponse serverResponse) :
+            base($"Failed to send {file.RelativePath} : {serverResponse.Message}")
+        { }
+        public RemoteIOException(FileMetadata file, GetFileResponse serverResponse) :
+            base($"Failed to send {file.RelativePath} : {serverResponse.Message}")
+        { }
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
@@ -140,56 +153,80 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> SendFilesAsync(CopyFileStep step, IList<FileMetadata> files)
         {
             var srcPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
-            foreach (var file in files)
+            try
             {
-                if (file.IsDirectory)
+                foreach (var file in files)
                 {
-                    var command = new PutDirectoryCommand
+                    if (file.IsDirectory)
                     {
-                        RemoteWorkDir = _environment.RemoteWorkDir,
-                        TargetPath = step.TargetPath,
-                        Metadata = file
-                    };
-                    await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
-                } else
-                {
-                    var command = new SendFileCommand
+                        var command = new PutDirectoryCommand
+                        {
+                            RemoteWorkDir = _environment.RemoteWorkDir,
+                            TargetPath = step.TargetPath,
+                            Metadata = file
+                        };
+                        var result = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+                        if (result.Status != PutDirectoryStatus.Successful)
+                            throw new RemoteIOException(file, result);
+                    }
+                    else
                     {
-                        LocalWorkDir = _environment.LocalWorkDir,
-                        RemoteWorkDir = _environment.RemoteWorkDir,
-                        DstPath = step.TargetPath,
-                        SrcPath = srcPath,
-                        UseCompression = step.UseCompression,
-                        Metadata = file
-                    };
-                    await _channel.SendWithReplyAsync<SendFileResponse>(command);
+                        var command = new SendFileCommand
+                        {
+                            LocalWorkDir = _environment.LocalWorkDir,
+                            RemoteWorkDir = _environment.RemoteWorkDir,
+                            DstPath = step.TargetPath,
+                            SrcPath = srcPath,
+                            UseCompression = step.UseCompression,
+                            Metadata = file
+                        };
+                        var result = await _channel.SendWithReplyAsync<SendFileResponse>(command);
+                        if (result.Status != SendFileStatus.Successful)
+                            throw new RemoteIOException(file, result);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return new StepResult(false, "", e.Message);
             }
             return new StepResult(true, "", "");
         }
 
         private async Task<StepResult> GetFilesAsync(CopyFileStep step, IList<FileMetadata> files)
         {
-            foreach (var file in files)
+            try
             {
-                if (file.IsDirectory)
+                foreach (var file in files)
                 {
-                    var dstPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
-                    Directory.CreateDirectory(dstPath);
-                    Directory.SetLastWriteTimeUtc(dstPath, file.LastWriteTimeUtc);
-                } else
-                {
-                    var command = new GetFileCommand
+                    if (file.IsDirectory)
                     {
-                        LocalWorkDir = _environment.LocalWorkDir,
-                        RemoteWorkDir = _environment.RemoteWorkDir,
-                        SrcPath = step.SourcePath,
-                        DstPath = step.TargetPath,
-                        UseCompression = step.UseCompression,
-                        Metadata = file
-                    };
-                    var response = await _channel.SendWithReplyAsync<GetFileResponse>(command);
+                        var dstPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
+                        Directory.CreateDirectory(dstPath);
+                        Directory.SetLastWriteTimeUtc(dstPath, file.LastWriteTimeUtc);
+                    }
+                    else
+                    {
+                        var command = new GetFileCommand
+                        {
+                            LocalWorkDir = _environment.LocalWorkDir,
+                            RemoteWorkDir = _environment.RemoteWorkDir,
+                            SrcPath = step.SourcePath,
+                            DstPath = step.TargetPath,
+                            UseCompression = step.UseCompression,
+                            Metadata = file
+                        };
+                        var response = await _channel.SendWithReplyAsync<GetFileResponse>(command);
+                        if (response.Status != GetFileStatus.Successful)
+                            throw new RemoteIOException(file, response);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return new StepResult(false, "", e.Message);
             }
             return new StepResult(true, "", "");
         }

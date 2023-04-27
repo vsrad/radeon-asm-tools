@@ -25,13 +25,17 @@ namespace VSRAD.DebugServer.Handlers
                              : _command.Metadata.RelativePath;
 
             var fullPath = Path.Combine(_command.RemoteWorkDir, _command.TargetPath, relativePath);
+            try
+            {
+                if (!Directory.Exists(fullPath))
+                    Directory.CreateDirectory(fullPath);
 
-            if (!Directory.Exists(fullPath))
-                Directory.CreateDirectory(fullPath);
-
-            Directory.SetLastWriteTimeUtc(fullPath, _command.Metadata.LastWriteTimeUtc);
-
-            return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful };
+                Directory.SetLastWriteTimeUtc(fullPath, _command.Metadata.LastWriteTimeUtc);
+            } catch(Exception e)
+            {
+                return new PutDirectoryResponse { Status = PutDirectoryStatus.OtherIOError, Message = e.Message };
+            }
+            return new PutDirectoryResponse { Status = PutDirectoryStatus.Successful, Message = "" };
         }
     }
 }
