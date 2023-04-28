@@ -27,7 +27,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = true, SourcePath = "tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             var localTempFile = Path.GetRandomFileName();
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
@@ -59,7 +59,7 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/mizu/machete/key3_49" },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = true, SourcePath = "/home/mizu/machete/key3_49" },
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "autotween" } // should not be run
             };
 
@@ -155,13 +155,13 @@ namespace VSRAD.PackageTests.Server
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
 
             var localPath = Path.GetTempFileName();
-            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "", CheckTimestamp = true } };
+            var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "", PreserveTimestamps = true } };
             var result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal($@"File is not changed at {localPath}. Disable Check Timestamp in step options to skip the modification date check", result.StepResults[0].Warning);
 
             var nonexistentPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
-            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = nonexistentPath, TargetPath = "", CheckTimestamp = true } };
+            steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = nonexistentPath, TargetPath = "", PreserveTimestamps = true } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
             Assert.Equal(@"File C:\Non\Existent\Path\To\Users\mizu\raw3 is not found on the local machine", result.StepResults[0].Warning);
@@ -196,7 +196,7 @@ namespace VSRAD.PackageTests.Server
             {
                 // update file timestamp
                 new ExecuteStep { Environment = StepEnvironment.Local, Executable = "cmd.exe", Arguments = $@"/C ""copy /b {Path.GetFileName(file)} +,,""" },
-                new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = Path.GetFileName(file), TargetPath = Path.GetFileName(target), CheckTimestamp = true }
+                new CopyFileStep { Direction = FileCopyDirection.LocalToLocal, SourcePath = Path.GetFileName(file), TargetPath = Path.GetFileName(target), PreserveTimestamps = true }
             };
 
             var result = await runner.RunAsync("HTMT", steps);
@@ -214,7 +214,7 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "dvd-prepare" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = false, TargetPath = "/home/parker/audio/unchecked", SourcePath = "" }, // should not be run
             };
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/parker/audio"), _project);
 
@@ -328,7 +328,7 @@ namespace VSRAD.PackageTests.Server
             var level1Steps = new List<IActionStep>
             {
                 new RunActionStep(level2Steps) { Name = "level2" },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = true, SourcePath = "/home/mizu/machete/tweened.tvpp", TargetPath = Path.GetTempFileName() }
             };
             // 1. Initial timestamp fetch
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) });
@@ -640,8 +640,8 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             readDebugData.WatchesFile.Path = "/home/parker/audio/copy";
             var steps = new List<IActionStep>
             {
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
-                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
+                new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = false, SourcePath = "/home/parker/audio/unchecked", TargetPath = Path.GetTempFileName() },
                 readDebugData
             };
 

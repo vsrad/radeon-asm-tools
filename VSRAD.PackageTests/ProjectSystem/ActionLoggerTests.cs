@@ -24,7 +24,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             profile.Actions[1].Steps.Add(new RunActionStep { Name = "Exchange Soul" });
             profile.Actions.Add(new ActionProfileOptions { Name = "Transform" });
             profile.Actions[2].Steps.Add(new RunActionStep { Name = "Sign Contract" });
-            profile.Actions[2].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, CheckTimestamp = true, TargetPath = "incubator", SourcePath = "soul" });
+            profile.Actions[2].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, PreserveTimestamps = true, TargetPath = "incubator", SourcePath = "soul" });
 
             var evaluator = new Mock<IMacroEvaluator>();
             evaluator.Setup(e => e.EvaluateAsync(It.IsAny<string>())).Returns<string>(s => Task.FromResult<Result<string>>(s));
@@ -99,7 +99,7 @@ Captured stdout (exit code 2):
             var profile = new ProfileOptions();
             profile.Actions.Add(new ActionProfileOptions { Name = "Shibahama Yūfō Taisen!" });
             profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "draw_anime", Arguments = "--dont-miss-deadlines" });
-            profile.Actions[0].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = false, TargetPath = "ending_theme.wav", SourcePath = "some_dudes_email" });
+            profile.Actions[0].Steps.Add(new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, PreserveTimestamps = false, TargetPath = "ending_theme.wav", SourcePath = "some_dudes_email" });
             profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "combine_ending_animation_and_music", Arguments = "--hope-music-fits" });
             profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "rework_ending", Arguments = "--one-night" });
             profile.Actions[0].Steps.Add(new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "comet_a", Arguments = "--showcase" });

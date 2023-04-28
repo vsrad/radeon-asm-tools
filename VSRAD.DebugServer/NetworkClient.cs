@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
+using System.Threading;
+using System.IO;
+using System;
 
 namespace VSRAD.DebugServer
 {
@@ -23,6 +25,18 @@ namespace VSRAD.DebugServer
 
         public void Disconnect() => _socket.Close();
 
+        public async Task<bool> SendFileAsync(string Path, bool useCompression)
+        {
+            return useCompression ? await _socket.GetStream().SendCompressedFileAsync(Path).ConfigureAwait(false)
+                                  : await _socket.GetStream().SendFileAsync(Path).ConfigureAwait(false);
+        }
+
+        public async Task<bool> ReceiveFileAsync(string Path, bool useCompression)
+        {
+            return useCompression ? await _socket.GetStream().ReceiveCompressedFileAsync(Path).ConfigureAwait(false)
+                                  : await _socket.GetStream().ReceiveFileAsync(Path).ConfigureAwait(false);
+        }
+
         public async Task<ICommand> ReceiveCommandAsync()
         {
             try
@@ -38,7 +52,6 @@ namespace VSRAD.DebugServer
             }
         }
         
-
         public Task<int> SendResponseAsync(IPC.Responses.IResponse response) =>
              _socket.GetStream().WriteSerializedMessageAsync(response);
     }

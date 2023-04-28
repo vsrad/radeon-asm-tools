@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet />
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -49,4 +50,4 @@ if $(ConfigurationName) == Debug echo 'Warning: you publish debug build' 1&gt;&a
   <Target Name="Clean">
     <RemoveDir Directories="$(ProjectDir)..\$(ConfigurationName)"/>
   </Target>
-</Project>
+  </Project>

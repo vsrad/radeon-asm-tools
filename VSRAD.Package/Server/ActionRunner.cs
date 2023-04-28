@@ -10,10 +10,25 @@ using VSRAD.DebugServer.IPC.Responses;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
+using VSRAD.DebugServer.SharedUtils;
 using Task = System.Threading.Tasks.Task;
+using System.Windows.Forms;
 
 namespace VSRAD.Package.Server
 {
+    public sealed class RemoteIOException : IOException
+    {
+        public RemoteIOException(FileMetadata file, PutDirectoryResponse serverResponse) :
+            base($"Failed to send {file.RelativePath} : {serverResponse.Message}")
+        { }
+        public RemoteIOException(FileMetadata file, SendFileResponse serverResponse) :
+            base($"Failed to send {file.RelativePath} : {serverResponse.Message}")
+        { }
+        public RemoteIOException(FileMetadata file, GetFileResponse serverResponse) :
+            base($"Failed to send {file.RelativePath} : {serverResponse.Message}")
+        { }
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
@@ -74,55 +89,185 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoCopyFileAsync(CopyFileStep step)
         {
-            byte[] sourceContents;
-            /* Read source file */
-            var initTimestamp = GetInitialFileTimestamp(step.SourcePath);
-            if (step.Direction == FileCopyDirection.RemoteToLocal)
-            {
-                var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
-                var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
-                if (response.Status == FetchStatus.FileNotFound)
-                    return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
-                if (step.CheckTimestamp && initTimestamp == response.Timestamp)
-                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
-                sourceContents = response.Data;
-            }
-            else
-            {
-                if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
-                    return new StepResult(false, error, "");
-                if (step.CheckTimestamp && initTimestamp == GetLocalFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is not changed at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
-            }
-            /* Write target file */
-            if (step.Direction == FileCopyDirection.LocalToRemote)
-            {
-                var command = new PutFileCommand { Data = sourceContents, Path = step.TargetPath, WorkDir = _environment.RemoteWorkDir };
-                var response = await _channel.SendWithReplyAsync<PutFileResponse>(command);
-                if (response.Status == PutFileStatus.PermissionDenied)
-                    return new StepResult(false, $"Access to path {step.TargetPath} on the remote machine is denied", "");
-                if (response.Status == PutFileStatus.OtherIOError)
-                    return new StepResult(false, $"File {step.TargetPath} could not be created on the remote machine", "");
-            }
-            else
-            {
-                try
+            switch (step.Direction) {
+                case FileCopyDirection.LocalToLocal:
+                    return await LocalCopyFileAsync(step);
+                case FileCopyDirection.LocalToRemote:
                 {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                    File.WriteAllBytes(localPath, sourceContents);
-                }
-                catch (UnauthorizedAccessException)
+                    var rootPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
+                    var localInfos = new List<FileMetadata>();
+                    foreach (var info in PathExtension.TraverseFileInfoTree(rootPath))
+                    {
+                        var metadata = new FileMetadata
+                        {
+                            RelativePath = PathExtension.GetRelativePath(rootPath, info.FullName),
+                            IsDirectory = info.Attributes.HasFlag(FileAttributes.Directory),
+                            LastWriteTimeUtc = info.LastWriteTimeUtc
+                        };
+                        localInfos.Add(metadata);
+                    }
+
+                    if (step.IfNotModified == ActionIfNotModified.Copy)
+                        return await SendFilesAsync(step, localInfos);
+
+                    var command = new CheckOutdatedFiles
+                    {
+                        RemoteWorkDir = _environment.RemoteWorkDir,
+                        TargetPath = step.TargetPath,
+                        Files = localInfos
+                    };
+                    // Result is filtered on server side
+                    //
+                    var outdatedResult = await _channel.SendWithReplyAsync<CheckOutdatedFilesResponse>(command);
+
+                    return await SendFilesAsync(step, outdatedResult.Files);
+                };
+                case FileCopyDirection.RemoteToLocal:
                 {
-                    return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
-                }
+                    var remotePath = Path.Combine(_environment.RemoteWorkDir, step.SourcePath);
+                    var command = new ListFilesCommand
+                    {
+                         RemoteWorkDir = _environment.RemoteWorkDir,
+                         ListPath = step.SourcePath
+                    };
+                    var response = await _channel.SendWithReplyAsync<ListFilesResponse>(command);
+
+                    if (step.IfNotModified == ActionIfNotModified.Copy)
+                        return await GetFilesAsync(step, response.Files);
+
+                    var filtered = new List<FileMetadata>();
+                    foreach (var info in response.Files)
+                    {
+                        var baseDir = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
+                        if (FileMetadata.isOutdated(info, baseDir))
+                            continue;
+                        filtered.Add(info);
+                    }
+                    return await GetFilesAsync(step, filtered);
+                };
             }
 
             return new StepResult(true, "", "");
+        }
+
+        private async Task<StepResult> SendFilesAsync(CopyFileStep step, IList<FileMetadata> files)
+        {
+            var srcPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
+            try
+            {
+                foreach (var file in files)
+                {
+                    if (file.IsDirectory)
+                    {
+                        var command = new PutDirectoryCommand
+                        {
+                            RemoteWorkDir = _environment.RemoteWorkDir,
+                            TargetPath = step.TargetPath,
+                            Metadata = file
+                        };
+                        var result = await _channel.SendWithReplyAsync<PutDirectoryResponse>(command);
+                        if (result.Status != PutDirectoryStatus.Successful)
+                            throw new RemoteIOException(file, result);
+                    }
+                    else
+                    {
+                        var command = new SendFileCommand
+                        {
+                            LocalWorkDir = _environment.LocalWorkDir,
+                            RemoteWorkDir = _environment.RemoteWorkDir,
+                            DstPath = step.TargetPath,
+                            SrcPath = srcPath,
+                            UseCompression = step.UseCompression,
+                            Metadata = file
+                        };
+                        var result = await _channel.SendWithReplyAsync<SendFileResponse>(command);
+                        if (result.Status != SendFileStatus.Successful)
+                            throw new RemoteIOException(file, result);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return new StepResult(false, "", e.Message);
+            }
+            return new StepResult(true, "", "");
+        }
+
+        private async Task<StepResult> GetFilesAsync(CopyFileStep step, IList<FileMetadata> files)
+        {
+            try
+            {
+                foreach (var file in files)
+                {
+                    if (file.IsDirectory)
+                    {
+                        var dstPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
+                        Directory.CreateDirectory(dstPath);
+                        Directory.SetLastWriteTimeUtc(dstPath, file.LastWriteTimeUtc);
+                    }
+                    else
+                    {
+                        var command = new GetFileCommand
+                        {
+                            LocalWorkDir = _environment.LocalWorkDir,
+                            RemoteWorkDir = _environment.RemoteWorkDir,
+                            SrcPath = step.SourcePath,
+                            DstPath = step.TargetPath,
+                            UseCompression = step.UseCompression,
+                            Metadata = file
+                        };
+                        var response = await _channel.SendWithReplyAsync<GetFileResponse>(command);
+                        if (response.Status != GetFileStatus.Successful)
+                            throw new RemoteIOException(file, response);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                return new StepResult(false, "", e.Message);
+            }
+            return new StepResult(true, "", "");
+        }
+
+        private async Task<StepResult> LocalCopyFileAsync(CopyFileStep step)
+        {
+            var srcPath = Path.Combine(_environment.LocalWorkDir, step.SourcePath);
+            var dstPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
+
+            if (File.Exists(srcPath))
+            {
+                File.Copy(srcPath, dstPath);
+            } else
+            {
+                CopyDirectory(srcPath, dstPath);
+            }
+            return new StepResult(true, "", "");
+        }
+
+        private void CopyDirectory(string sourceDir, string destinationDir)
+        {
+            var dir = new DirectoryInfo(sourceDir);
+
+            if (!dir.Exists)
+                throw new DirectoryNotFoundException($"Source directory not found: {dir.FullName}");
+
+            var dirs = dir.GetDirectories();
+
+            Directory.CreateDirectory(destinationDir);
+
+            foreach (FileInfo file in dir.GetFiles())
+            {
+                var targetFilePath = Path.Combine(destinationDir, file.Name);
+                file.CopyTo(targetFilePath);
+            }
+
+           foreach (DirectoryInfo subDir in dirs)
+           {
+               var newDestinationDir = Path.Combine(destinationDir, subDir.Name);
+               CopyDirectory(subDir.FullName, newDestinationDir);
+           }
         }
 
         private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
@@ -349,7 +494,7 @@ namespace VSRAD.Package.Server
         {
             foreach (var step in steps)
             {
-                if (step is CopyFileStep copyFile && copyFile.CheckTimestamp)
+                if (step is CopyFileStep copyFile && copyFile.PreserveTimestamps)
                 {
                     if (copyFile.Direction == FileCopyDirection.RemoteToLocal)
                         _initialTimestamps[copyFile.SourcePath] = (await _channel.SendWithReplyAsync<MetadataFetched>(

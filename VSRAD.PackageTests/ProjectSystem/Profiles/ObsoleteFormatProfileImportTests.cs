@@ -86,7 +86,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                PreserveTimestamps = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -136,7 +136,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                PreserveTimestamps = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "$(RadRemoteWorkDir)/src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -153,7 +153,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = true,
+                PreserveTimestamps = true,
                 SourcePath = "src/pp/pp_result",
                 TargetPath = "pp_result_local"
             }, action.Steps[2]);
@@ -181,7 +181,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                PreserveTimestamps = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -198,7 +198,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = false,
+                PreserveTimestamps = false,
                 SourcePath = "src/dsm/dsm_src.s",
                 TargetPath = "dsm_src_local.s"
             }, action.Steps[2]);
@@ -225,7 +225,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
+                PreserveTimestamps = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -242,7 +242,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = false,
+                PreserveTimestamps = false,
                 SourcePath = "src/prf/prf_out",
                 TargetPath = "prf_out_local"
             }, action.Steps[2]);
