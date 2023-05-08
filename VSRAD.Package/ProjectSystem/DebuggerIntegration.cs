@@ -79,10 +79,16 @@ namespace VSRAD.Package.ProjectSystem
         public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients)
         {
             if (runResult != null)
-                RaiseExecutionCompleted(transients?.ActiveSourceFullPath ?? "", transients?.BreakLines ?? new[] { 0u }, isStepping: false, runResult.BreakState);
+            {
+                var sourcePath = transients?.ActiveSourceFullPath ?? "";
+                var breakLines = transients != null && transients.BreakLines.TryGetResult(out var lines, out _) ? lines : Array.Empty<uint>();
+                RaiseExecutionCompleted(sourcePath, breakLines, isStepping: false, runResult.BreakState);
+            }
             else
+            {
                 // If RunResult is null, the action was not launched due to some error, so the break line markers should be removed
                 _breakLineTagger.RemoveBreakLineMarkers();
+            }
         }
 
         public void Execute(bool step)
