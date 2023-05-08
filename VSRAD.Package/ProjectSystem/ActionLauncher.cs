@@ -88,12 +88,22 @@ namespace VSRAD.Package.ProjectSystem
                     $"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile."));
 
-            var (file, breakLines) = moveToNextDebugTarget
-                ? _breakpointTracker.MoveToNextBreakTarget(isDebugSteppingEnabled)
-                : _breakpointTracker.GetBreakTarget();
-            var line = _codeEditor.GetCurrentLine();
+            var activeFile = _codeEditor.GetAbsoluteSourcePath();
+            var activeFileLine = _codeEditor.GetCurrentLine();
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var transients = new MacroEvaluatorTransientValues(line, file, breakLines, watches);
+
+            var nextBreakTargetResult = moveToNextDebugTarget
+                ? _breakpointTracker.MoveToNextBreakTarget(activeFile, isDebugSteppingEnabled)
+                : _breakpointTracker.GetBreakTarget(activeFile, isDebugSteppingEnabled);
+            if (!nextBreakTargetResult.TryGetResult(out var breakLines, out var breakpointError))
+            {
+                if (moveToNextDebugTarget)
+                    return new ActionExecution(breakpointError);
+                else
+                    breakLines = new[] { 0u };
+            }
+
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, breakLines, watches);
 
             try
             {
