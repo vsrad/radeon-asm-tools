@@ -9,6 +9,10 @@
   <!--This header contains the command ids for the menus provided by the shell. -->
   <Extern href="vsshlids.h" />
 
+  <!--These headers contain the GUIDs and command ids for the debug menus provided by the shell. -->
+  <Extern href="VSDbgCmd.h"/>
+  <Extern href="VsDebugGuids.h"/>
+
   <Commands package="guidVSPackage">
     <Menus>
       <!-- Tools -> RAD Debug -->
@@ -208,6 +212,13 @@
           <ButtonText>Evaluate Selected</ButtonText>
         </Strings>
       </Button>-->
+      <Button guid="guidCmdSetBreakpointMenu" id="BreakpointMenuToggleResumable" priority="0x10">
+        <Parent guid="guidVSDebugGroup" id="IDG_BREAKPOINT_CONTEXT_MODIFY" />
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Resume execution after break</ButtonText>
+        </Strings>
+      </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -342,6 +353,10 @@
       <IDSymbol value="0x<#= (0x1400 + i * 0x100 + j).ToString("x") #>" name="AddArrayToWatchesFrom<#=i #>To<#= j #>Id" />
 <# } #>
 <# } #>
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetBreakpointMenu" value="{D0D94348-11C2-4ED2-8A89-D8D10862DABA}">
+	  <IDSymbol value="0x1020" name="BreakpointMenuToggleResumable" />
     </GuidSymbol>
 
     <!--<GuidSymbol name="guidCmdEvaluateSelected" value="{6624A31D-4C20-4675-84D7-67D140842579}">
