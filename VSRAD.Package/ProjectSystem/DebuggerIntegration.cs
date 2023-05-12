@@ -76,19 +76,34 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
-        public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients)
+        public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients, bool isStepping = false)
         {
-            if (runResult != null)
+            ExecutionCompletedEventArgs args;
+            if (transients != null && transients.BreakLines.TryGetResult(out var breakLines, out _))
             {
-                var sourcePath = transients?.ActiveSourceFullPath ?? "";
-                var breakLines = transients != null && transients.BreakLines.TryGetResult(out var lines, out _) ? lines : Array.Empty<uint>();
-                RaiseExecutionCompleted(sourcePath, breakLines, isStepping: false, runResult.BreakState);
+                args = new ExecutionCompletedEventArgs(transients.ActiveSourceFullPath, breakLines, isStepping, isSuccessful: true);
             }
             else
             {
-                // If RunResult is null, the action was not launched due to some error, so the break line markers should be removed
-                _breakLineTagger.RemoveBreakLineMarkers();
+                // Error case: if we leave the source path empty, VS debugger will open a "Source Not Available/Frame not in module" tab.
+                // To avoid that, if the action execution failed and transients are not available, we attempt to pick the active file in the editor as the source.
+                string sourcePath;
+                try
+                {
+                    sourcePath = _codeEditor.GetAbsoluteSourcePath();
+                    breakLines = new[] { _codeEditor.GetCurrentLine() };
+                }
+                catch
+                {
+                    // May throw an exception if no files are open in the editor
+                    sourcePath = "";
+                    breakLines = Array.Empty<uint>();
+                }
+                args = new ExecutionCompletedEventArgs(sourcePath, breakLines, isStepping, isSuccessful: false);
             }
+            ExecutionCompleted?.Invoke(this, args);
+            _breakLineTagger.OnExecutionCompleted(args);
+            BreakEntered(this, runResult?.BreakState);
         }
 
         public void Execute(bool step)
@@ -103,26 +118,14 @@ namespace VSRAD.Package.ProjectSystem
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 if (result.Error is Error e)
                     Errors.Show(e);
-                NotifyDebugActionExecuted(result.RunResult, result.Transients);
+                NotifyDebugActionExecuted(result.RunResult, result.Transients, step);
             },
-            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null));
+            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null, step));
         }
 
         void IEngineIntegration.CauseBreak()
         {
-            string file = "";
-            // May throw an exception if no files are open in the editor
-            try { file = _codeEditor.GetAbsoluteSourcePath(); } catch { }
-
-            RaiseExecutionCompleted(file, new[] { 0u }, isStepping: false, null);
-        }
-
-        private void RaiseExecutionCompleted(string file, uint[] lines, bool isStepping, BreakState breakState)
-        {
-            var args = new ExecutionCompletedEventArgs(file, lines, isStepping);
-            ExecutionCompleted?.Invoke(this, args);
-            _breakLineTagger.OnExecutionCompleted(args);
-            BreakEntered(this, breakState);
+            NotifyDebugActionExecuted(null, null);
         }
     }
 }

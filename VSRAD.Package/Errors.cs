@@ -62,8 +62,15 @@ namespace VSRAD.Package
                 catch (Exception e)
                 {
                     await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                    exceptionCallbackOnMainThread?.Invoke();
-                    ShowException(e);
+                    try
+                    {
+                        exceptionCallbackOnMainThread?.Invoke();
+                        ShowException(e);
+                    }
+                    catch (Exception callbackExc)
+                    {
+                        ShowCritical(e.Message + "\r\n\r\nAn exception has occurred during the handling of this error. Exception message and stack trace are provided below:\r\n\r\n" + callbackExc.Message + "\r\n\r\n" + callbackExc.StackTrace);
+                    }
                 }
             });
 

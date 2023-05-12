@@ -94,7 +94,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             _tagSpans.Clear();
 
-            if (e != null && e.File == _document.FilePath)
+            if (e != null && e.IsSuccessful && e.File == _document.FilePath)
             {
                 var toolTip = "Last RAD debugger break " + (e.Lines.Length == 1
                             ? $"line: {e.Lines[0]}"
