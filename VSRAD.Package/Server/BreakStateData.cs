@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 
@@ -15,37 +15,54 @@ namespace VSRAD.Package.Server
     //
     // system[64] is spread across a wavefront (64 lanes)
 
-    public sealed class WatchView
+    public sealed class WaveView
     {
-        private readonly int _startOffset;
-        private readonly int _laneDataSize;
+        public int StartGlobalId { get; }
+        public int StartThreadId { get; }
+        public int EndThreadId { get; }
+        public int WaveSize { get; }
 
         private readonly uint[] _data;
+        private readonly IReadOnlyDictionary<uint, string[]> _instanceWatches;
 
-        public int LastIndexInGroup { get; }
-
-        public WatchView(uint[] data, int groupIndex, int displayGroupSize, int dataGroupSize, int laneDataOffset, int laneDataSize)
+        public WaveView(int groupThreadIdOffset, int startThreadId, int endThreadId, int waveSize, uint[] data, IReadOnlyDictionary<uint, string[]> instanceWatches)
         {
+            StartGlobalId = groupThreadIdOffset + startThreadId;
+            StartThreadId = startThreadId;
+            EndThreadId = endThreadId;
+            WaveSize = waveSize;
             _data = data;
-            var groupOffset = groupIndex * dataGroupSize * laneDataSize;
-            _startOffset = groupOffset + laneDataOffset;
-            _laneDataSize = laneDataSize;
-
-            // Handle cases when some of the items in the last group are for some reason out of the bounds of data
-            var itemsInGroup = (_data.Length - groupOffset) / laneDataSize;
-            LastIndexInGroup = Math.Min(displayGroupSize, itemsInGroup) - 1;
+            _instanceWatches = instanceWatches;
         }
 
-        public uint this[int index]
-        {
-            get
-            {
-                if (index > LastIndexInGroup)
-                    throw new KeyNotFoundException($"Item #{index} in group requested, but the last valid index in the watch view is {LastIndexInGroup}.");
+        public uint GetSystemMagicNumber() => GetSystem().ElementAt(0);
 
-                var dwordIdx = _startOffset + index * _laneDataSize;
-                return _data[dwordIdx];
-            }
+        public uint GetSystemBreakpointLine() => GetSystem().ElementAt(1);
+
+        public uint GetSystemInstanceId() => GetSystem().ElementAt(2);
+
+        public uint GetSystemScc() => GetSystem().ElementAt(3);
+
+        public uint[] GetSystemExecMask() => GetSystem().Skip(8).Take(2).ToArray();
+
+        public IEnumerable<uint> GetSystem() => EnumerateWatchData(0);
+
+        public IEnumerable<uint> GetWatchOrNull(string watch)
+        {
+            int watchIndex;
+            if (_instanceWatches.TryGetValue(GetSystemInstanceId(), out var watches) && (watchIndex = Array.IndexOf(watches, watch)) != -1)
+                return EnumerateWatchData(watchOffset: watchIndex + 1 /* skip System watch */);
+            else
+                return null;
+        }
+
+        private IEnumerable<uint> EnumerateWatchData(int watchOffset)
+        {
+            var dwordsPerLane = BreakStateData.GetDwordsPerLane(_instanceWatches);
+            var waveStartOffset = StartGlobalId * dwordsPerLane;
+            var waveEndOffset = (StartGlobalId + WaveSize) * dwordsPerLane;
+            for (var offset = waveStartOffset + watchOffset; offset < waveEndOffset; offset += dwordsPerLane)
+                yield return _data[offset];
         }
     }
 
@@ -91,36 +108,22 @@ namespace VSRAD.Package.Server
 
     public sealed class BreakStateData
     {
-        public ReadOnlyCollection<string> Watches { get; }
+        public IReadOnlyDictionary<uint, string[]> InstanceWatches { get; }
 
         public int GroupIndex { get; private set; }
         public int GroupSize { get; private set; }
         public int WaveSize { get; private set; }
 
-        // Data group size may be different from display group size (as entered in visualizer window),
-        // because it is always a multiple of wave size (rounded up)
-        private int? DataGroupSize
-        {
-            get
-            {
-                if (GroupSize > 0 && WaveSize > 0)
-                    return ((GroupSize + WaveSize - 1) / WaveSize) * WaveSize;
-                return null;
-            }
-        }
-
         private readonly BreakStateOutputFile _outputFile;
-        private readonly int _laneDataSize; // in dwords
 
         private readonly uint[] _data;
         private readonly bool _localData;
         private BitArray _fetchedDataWaves; // 1 bit per wavefront data
 
-        public BreakStateData(ReadOnlyCollection<string> watches, BreakStateOutputFile file, byte[] localData = null)
+        public BreakStateData(IReadOnlyDictionary<uint, string[]> instanceWatches, BreakStateOutputFile file, byte[] localData = null)
         {
-            Watches = watches;
+            InstanceWatches = instanceWatches;
             _outputFile = file;
-            _laneDataSize = 1 /* system */ + watches.Count;
 
             _data = new uint[file.DwordCount];
             _localData = localData != null;
@@ -132,33 +135,34 @@ namespace VSRAD.Package.Server
             }
         }
 
+        public static int GetDwordsPerLane(IReadOnlyDictionary<uint, string[]> instanceWatches) =>
+            1 /* System watch */ + (instanceWatches.Count == 0 ? 0 : instanceWatches.Max(i => i.Value.Length));
+
         public int GetGroupCount(int groupSize, int waveSize, int nGroups)
         {
             var realGroupSize = ((groupSize + waveSize - 1) / waveSize) * waveSize; // real group size is always a multiple of wave size
-            var realCount = _data.Length / realGroupSize / _laneDataSize;
+            var realCount = _data.Length / realGroupSize / GetDwordsPerLane(InstanceWatches);
             // Disabled for now as it should be refactored
             //if (nGroups != 0 && nGroups < realCount)
             //    return nGroups;
             return realCount;
         }
 
-        public WatchView GetSystem()
+        public IEnumerable<WaveView> GetWaveViews()
         {
-            if (DataGroupSize is int dataGroupSize)
-                return new WatchView(_data, GroupIndex, GroupSize, dataGroupSize, laneDataOffset: 0, _laneDataSize);
-            return null;
-        }
-
-        public WatchView GetWatch(string watch)
-        {
-            var watchIndex = Watches.IndexOf(watch);
-            if (watchIndex != -1 && DataGroupSize is int dataGroupSize)
-                return new WatchView(_data, GroupIndex, GroupSize, dataGroupSize, laneDataOffset: watchIndex + 1 /* system */, _laneDataSize);
-            return null;
+            var wavesPerGroup = (GroupSize + WaveSize - 1) / WaveSize;
+            var groupThreadIdOffset = wavesPerGroup * GroupIndex * WaveSize;
+            var groupSizeAvailable = Math.Min(GroupSize, (_data.Length - groupThreadIdOffset) / GetDwordsPerLane(InstanceWatches)); // group size can be set by user, so may exceed data bounds
+            for (var startThreadId = 0; startThreadId < groupSizeAvailable; startThreadId += WaveSize)
+            {
+                var endThreadId = Math.Min(startThreadId + WaveSize, groupSizeAvailable);
+                yield return new WaveView(groupThreadIdOffset, startThreadId, endThreadId, WaveSize, _data, InstanceWatches);
+            }
         }
 
         public SliceWatchView GetSliceWatch(string watch, int groupsInRow, int nGroups)
         {
+#if false
             int laneDataOffset;
             if (watch == "System")
             {
@@ -171,13 +175,16 @@ namespace VSRAD.Package.Server
                     return null;
                 laneDataOffset = watchIndex + 1;
             }
-            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _laneDataSize);
+            return new SliceWatchView(_data, groupsInRow, GroupSize, GetGroupCount(GroupSize, WaveSize, nGroups), laneDataOffset, _dwordsPerLane);
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         public WavemapView GetWavemapView()
         {
             if (GroupSize > 0 && WaveSize > 0)
-                return new WavemapView(_data, WaveSize, _laneDataSize, GroupSize, GetGroupCount(GroupSize, WaveSize, 0));
+                return new WavemapView(_data, WaveSize, GetDwordsPerLane(InstanceWatches), GroupSize, GetGroupCount(GroupSize, WaveSize, 0));
             return null;
         }
 
@@ -185,7 +192,7 @@ namespace VSRAD.Package.Server
         {
             if (waveSize != WaveSize)
             {
-                var waveDataSize = waveSize * _laneDataSize;
+                var waveDataSize = waveSize * GetDwordsPerLane(InstanceWatches);
                 if (!_localData)
                     _fetchedDataWaves = new BitArray((_data.Length + waveDataSize - 1) / waveDataSize, false);
                 WaveSize = waveSize;
@@ -206,7 +213,8 @@ namespace VSRAD.Package.Server
             if (IsFilePartFetched(waveOffset, waveCount))
                 return null;
 
-            var waveDataSize = _laneDataSize * WaveSize;
+            var dwordsPerLane = GetDwordsPerLane(InstanceWatches);
+            var waveDataSize = dwordsPerLane * WaveSize;
             var requestedByteOffset = waveOffset * waveDataSize * 4;
             var requestedByteCount = Math.Min(waveCount * waveDataSize, _outputFile.DwordCount) * 4;
 
@@ -233,7 +241,7 @@ namespace VSRAD.Package.Server
             if (response.Data.Length < requestedByteCount)
                 return $"Group #{groupIndex} is incomplete: expected to read {requestedByteCount} bytes but the output file contains {response.Data.Length}.";
 
-            if (_data.Length < nGroups * groupSize * _laneDataSize)
+            if (_data.Length < nGroups * groupSize * dwordsPerLane)
                 return $"Output file has fewer groups than requested (NGroups = {nGroups}, but the file contains only {GetGroupCount(groupSize, WaveSize, nGroups)})";
 
             return null;

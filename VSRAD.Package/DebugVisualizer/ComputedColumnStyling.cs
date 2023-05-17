@@ -22,7 +22,7 @@ namespace VSRAD.Package.DebugVisualizer
         private uint _groupSize;
         private uint _waveSize;
 
-        public void Recompute(VisualizerOptions options, VisualizerAppearance appearance, ColumnStylingOptions styling, uint groupSize, uint waveSize, Server.WatchView system)
+        public void Recompute(VisualizerOptions options, VisualizerAppearance appearance, ColumnStylingOptions styling, uint groupSize, uint waveSize, Server.BreakStateData breakData)
         {
             _groupSize = groupSize;
             _waveSize = waveSize;
@@ -32,31 +32,31 @@ namespace VSRAD.Package.DebugVisualizer
             foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)groupSize))
                 ColumnState[i] |= ColumnStates.Visible;
 
-            ComputeInactiveLanes(options, system);
+            ComputeInactiveLanes(options, breakData);
             ComputeLaneGrouping(appearance);
             ComputeHiddenColumnSeparators();
         }
 
-        private void ComputeInactiveLanes(VisualizerOptions options, Server.WatchView system)
+        private void ComputeInactiveLanes(VisualizerOptions options, Server.BreakStateData breakData)
         {
-            if (system == null)
-                return;
-
-            var lastItemId = Math.Min(_groupSize - 1, system.LastIndexInGroup);
-            for (int waveOffset = 0; waveOffset < system.LastIndexInGroup; waveOffset += (int)_waveSize)
+            if (breakData != null && breakData.WaveSize == _waveSize && breakData.GroupSize == _groupSize)
             {
-                var lastLaneId = Math.Min(waveOffset + _waveSize - 1, lastItemId);
-                if (options.CheckMagicNumber && system[waveOffset] != options.MagicNumber)
+                foreach (var waveView in breakData.GetWaveViews())
                 {
-                    for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)
-                        _columnState[waveOffset + laneId] |= ColumnStates.Inactive;
-                }
-                else if (options.MaskLanes && _waveSize <= 64 && waveOffset + 9 <= lastLaneId)
-                {
-                    var execMask = new BitArray(new[] { (int)system[waveOffset + 8], (int)system[waveOffset + 9] });
-                    for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)
-                        if (!execMask[laneId])
-                            _columnState[waveOffset + laneId] |= ColumnStates.Inactive;
+                    var waveEnd = Math.Min(waveView.StartThreadId + waveView.WaveSize, breakData.GroupSize);
+                    if (options.CheckMagicNumber && waveView.GetSystemMagicNumber() != options.MagicNumber)
+                    {
+                        for (var lane = 0; lane + waveView.StartThreadId < waveEnd; ++lane)
+                            _columnState[lane + waveView.StartThreadId] |= ColumnStates.Inactive;
+                    }
+                    else if (options.MaskLanes)
+                    {
+                        var execMaskDwords = waveView.GetSystemExecMask();
+                        var execMask = new BitArray(new[] { (int)execMaskDwords[0], (int)execMaskDwords[1] });
+                        for (var lane = 0; lane + waveView.StartThreadId < waveEnd; ++lane)
+                            if (!execMask[lane])
+                                _columnState[lane + waveView.StartThreadId] |= ColumnStates.Inactive;
+                    }
                 }
             }
         }

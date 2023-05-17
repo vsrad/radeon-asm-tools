@@ -189,60 +189,27 @@ namespace VSRAD.Package.Server
 
         private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
-            var watches = _environment.Watches;
-            BreakStateDispatchParameters dispatchParams = null;
-
-            if (!string.IsNullOrEmpty(step.WatchesFile.Path))
+            string validWatchesString;
             {
                 var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
                     return (new StepResult(false, error.Message, ""), null);
-
-                var watchString = Encoding.UTF8.GetString(data);
-                var watchArray = watchString.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-
-                watches = Array.AsReadOnly(watchArray);
+                validWatchesString = Encoding.UTF8.GetString(data);
             }
+            string dispatchParamsString = null;
             if (!string.IsNullOrEmpty(step.DispatchParamsFile.Path))
             {
                 var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
                     return (new StepResult(false, error.Message, ""), null);
-
-                var paramsString = Encoding.UTF8.GetString(data);
-                var dispatchParamsResult = BreakStateDispatchParameters.Parse(paramsString);
-                if (!dispatchParamsResult.TryGetResult(out dispatchParams, out error))
-                    return (new StepResult(false, error.Message, ""), null);
+                dispatchParamsString = Encoding.UTF8.GetString(data);
             }
             {
                 var path = step.OutputFile.Path;
                 var initOutputTimestamp = GetInitialFileTimestamp(path);
 
-                int GetOutputDwordCount(int fileByteCount, out string warning)
-                {
-                    warning = "";
-                    var fileDwordCount = fileByteCount / 4;
-                    if (dispatchParams == null)
-                        return fileDwordCount;
-
-                    var laneDataSize = 1 /* system watch */ + watches.Count;
-                    var totalLaneCount = dispatchParams.GridSizeX * dispatchParams.GridSizeY * dispatchParams.GridSizeZ;
-                    var dispatchDwordCount = (int)totalLaneCount * laneDataSize;
-
-                    if (fileDwordCount < dispatchDwordCount)
-                    {
-                        warning = $"Output file ({path}) is smaller than expected.\r\n\r\n" +
-                            $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
-                            $"which corresponds to {totalLaneCount} lanes. With {laneDataSize} DWORDs per lane, the output file is expected to contain at least " +
-                            $"{dispatchDwordCount} DWORDs, but it only contains {fileDwordCount} DWORDs.";
-                    }
-
-                    return Math.Min(dispatchDwordCount, fileDwordCount);
-                }
-
                 BreakStateOutputFile outputFile;
                 byte[] localOutputData = null;
-                string stepWarning;
 
                 if (step.OutputFile.IsRemote())
                 {
@@ -255,8 +222,7 @@ namespace VSRAD.Package.Server
                         return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
-                    var dataByteCount = Math.Max(0, response.ByteCount - offset);
-                    var dataDwordCount = GetOutputDwordCount(dataByteCount, out stepWarning);
+                    var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, step.OutputOffset, response.Timestamp, dataDwordCount);
                 }
                 else
@@ -272,12 +238,14 @@ namespace VSRAD.Package.Server
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
-                    var dataDwordCount = GetOutputDwordCount(localOutputData.Length, out stepWarning);
+                    var dataDwordCount = localOutputData.Length / 4;
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
 
-                var data = new BreakStateData(watches, outputFile, localOutputData);
-                return (new StepResult(true, stepWarning, ""), new BreakState(data, dispatchParams));
+                if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData).TryGetResult(out var breakState, out var error))
+                    return (new StepResult(true, "", ""), breakState);
+                else
+                    return (new StepResult(false, error.Message, ""), null);
             }
         }
 
