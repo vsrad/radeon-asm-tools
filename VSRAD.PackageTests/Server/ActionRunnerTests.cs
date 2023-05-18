@@ -1,8 +1,8 @@
 ﻿using Moq;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -376,7 +376,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "output" }, initTimestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("jill\njulianne") }, (FetchResultRange watchesFetch) =>
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"Instance 0:jill;julianne") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "watches" }, watchesFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"
 grid_size (8192, 0, 0)
@@ -384,7 +384,7 @@ group_size (512, 0, 0)
 wave_size 32
 comment 115200") }, (FetchResultRange statusFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "status" }, statusFetch.FilePath));
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now }, (FetchMetadata outputMetaFetch) =>
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 8192 * 3 * sizeof(uint) }, (FetchMetadata outputMetaFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "output" }, outputMetaFetch.FilePath));
 
             var result = await runner.RunAsync("Debug", steps);
@@ -392,62 +392,13 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             Assert.True(channel.AllInteractionsHandled);
             Assert.True(result.Successful);
             Assert.NotNull(result.BreakState);
-            Assert.Collection(result.BreakState.Data.Watches,
-                (first) => Assert.Equal("jill", first),
-                (second) => Assert.Equal("julianne", second));
+            Assert.Equal(new Dictionary<uint, string[]> { { 0, new[] { "jill", "julianne" } } }, result.BreakState.Data.InstanceWatches);
             Assert.NotNull(result.BreakState.DispatchParameters);
             Assert.Equal<uint>(8192 / 512, result.BreakState.DispatchParameters.DimX);
             Assert.Equal<uint>(512, result.BreakState.DispatchParameters.GroupSizeX);
             Assert.Equal<uint>(32, result.BreakState.DispatchParameters.WaveSize);
             Assert.False(result.BreakState.DispatchParameters.NDRange3D);
             Assert.Equal("115200", result.BreakState.DispatchParameters.StatusString);
-        }
-
-        [Fact]
-        public async Task ReadDebugDataRemoteTextOutputWarningsTestAsync()
-        {
-            var steps = new List<IActionStep>
-            {
-                new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "va11" },
-                new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = true },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
-                    binaryOutput: false, outputOffset: 1)
-            };
-
-            var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"), _project);
-
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound });
-            channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("jill\njulianne\nstingray") });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"
-grid_size (16384, 0, 0)
-group_size (256, 0, 0)
-wave_size 64") });
-            // Note that the file is missing the output offset line (it contains 262144/4 = 65536 values, which, with the offset subtracted, is only 65535 values.
-            // This may cause an out of range error in ChangeGroupWithWarningsAsync
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 262144 }, (FetchMetadata outputMetaFetch) =>
-                Assert.False(outputMetaFetch.BinaryOutput));
-
-            var result = await runner.RunAsync("Debug", steps);
-
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = new byte[262140] }, (FetchResultRange outputFetch) =>
-            {
-                Assert.Equal(0, outputFetch.ByteOffset);
-                Assert.Equal(262140, outputFetch.ByteCount);
-                Assert.False(outputFetch.BinaryOutput);
-                Assert.Equal(1, outputFetch.OutputOffset);
-            });
-            _ = await result.BreakState.Data.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 256, waveSize: 64, nGroups: 0, fetchWholeFile: true);
-
-            Assert.True(result.Successful);
-            Assert.True(channel.AllInteractionsHandled);
-            Assert.Equal(@"Output file (output) is smaller than expected.
-
-Grid size as specified in the dispatch parameters file is (16384, 1, 1), which corresponds to 16384 lanes. With 4 DWORDs per lane, the output file is expected to contain at least 65536 DWORDs, but it only contains 65535 DWORDs.",
-            result.StepResults[1].Warning);
         }
 
         [Fact]
@@ -458,7 +409,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
                 new ReadDebugDataStep(
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/output", CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/watches", CheckTimestamp = true },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/status", CheckTimestamp = true },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/dispatch", CheckTimestamp = true },
                     binaryOutput: true, outputOffset: 0)
             };
 
@@ -485,26 +436,49 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal("Valid watches file (remote/watches) was not modified.", result.StepResults[0].Warning);
+
+            /* Wrong output file size */
+
+            for (int i = 0; i < 3; ++i) // initial timestamp fetch
+                channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = Encoding.UTF8.GetBytes(@"
+Instance 0:jill;julianne;stingray
+") },
+                (FetchResultRange f) => Assert.Equal("remote/watches", f.FilePath[1]));
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = Encoding.UTF8.GetBytes(@"
+grid_size (16384, 0, 0)
+group_size (256, 0, 0)
+wave_size 64") },
+                (FetchResultRange f) => Assert.Equal("remote/dispatch", f.FilePath[1]));
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 65536 },
+                (FetchMetadata f) => Assert.Equal("remote/output", f.FilePath[1]));
+
+            result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal(@"Output file does not match the expected size.
+
+Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 4 DWORDs per lane, the output file is expected to be 65536 DWORDs long, but the actual size is 16384 DWORDs.",
+result.StepResults[0].Warning);
         }
 
-        [Theory]
-        [InlineData("grid_size (128, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", "")] /* file size (384*4 bytes) matches grid size, no warning shown */
-        [InlineData("grid_size (64, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", "")] /* file size exceeds grid size, no warning shown */
-        [InlineData("grid_size (256, 0, 0)\ngroup_size (64, 0, 0)\nwave_size 64", /* grid size exceeds file size, "output file is smaller than expected" warning shown */
-            "Output file ({outputFile}) is smaller than expected.\r\n\r\nGrid size as specified in the dispatch parameters file is (256, 1, 1), which corresponds to 256 lanes. " +
-            "With 3 DWORDs per lane, the output file is expected to contain at least 768 DWORDs, but it only contains 384 DWORDs.")]
-        public async Task ReadDebugDataLocalWarningsTestAsync(string dispatchParams, string expectedWarning)
+        [Fact]
+        public async Task ReadDebugDataLocalTestAsync()
         {
             var outputFile = Path.GetTempFileName();
             var watchesFile = Path.GetTempFileName();
             var dispatchParamsFile = Path.GetTempFileName();
 
-            File.WriteAllText(watchesFile, "jill\r\njulianne");
-            File.WriteAllText(dispatchParamsFile, dispatchParams);
+            File.WriteAllText(watchesFile, @"
+Instance 12345:jill;julianne
+");
+            File.WriteAllText(dispatchParamsFile, @"
+grid_size (128, 0, 0)
+group_size (64, 0, 0)
+wave_size 64");
             var output = new uint[384];
             for (int witem = 0; witem < 128; ++witem)
             {
-                output[witem * 3 + 0] = 1;                // system = const
+                output[witem * 3 + 0] = 12345;            // system = instance id
                 output[witem * 3 + 1] = 777;              // first watch = const
                 output[witem * 3 + 2] = (uint)witem % 64; // second watch = lane
             }
@@ -525,68 +499,31 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
-            Assert.Equal(expectedWarning.Replace("{outputFile}", outputFile), result.StepResults[0].Warning);
+            Assert.Equal("", result.StepResults[0].Warning);
             Assert.NotNull(result.BreakState);
-            Assert.Collection(result.BreakState.Data.Watches,
-                (first) => Assert.Equal("jill", first),
-                (second) => Assert.Equal("julianne", second));
+            Assert.Equal(new Dictionary<uint, string[]> { { 12345, new[] { "jill", "julianne" } } }, result.BreakState.Data.InstanceWatches);
             Assert.Equal<uint>(64, result.BreakState.DispatchParameters.GroupSizeX);
             Assert.Equal<uint>(64, result.BreakState.DispatchParameters.WaveSize);
 
             await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 64, waveSize: 64, nGroups: 0);
-            var secondWatch = result.BreakState.Data.GetWatch("julianne");
+            var waves = result.BreakState.Data.GetWaveViews().ToArray();
+            var firstWaveSecondWatch = waves[0].GetWatchOrNull("julianne").ToArray();
             for (int i = 0; i < 64; ++i)
-                Assert.Equal(i, (int)secondWatch[i]);
-        }
-
-        [Theory]
-        [InlineData("grid_size (4, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", "")] /* file size matches grid size, no warning shown */
-        [InlineData("grid_size (2, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", "")] /* file size exceeds grid size, no warning shown */
-        [InlineData("grid_size (8, 0, 0)\ngroup_size (2, 0, 0)\nwave_size 2", /* grid size exceeds file size, "output file is smaller than expected" warning shown */
-            "Output file ({outputFile}) is smaller than expected.\r\n\r\nGrid size as specified in the dispatch parameters file is (8, 1, 1), which corresponds to 8 lanes. " +
-            "With 2 DWORDs per lane, the output file is expected to contain at least 16 DWORDs, but it only contains 8 DWORDs.")]
-        public async Task ReadDebugDataLocalTextOutputWarningsTestAsync(string dispatchParams, string expectedWarning)
-        {
-            var outputFile = Path.GetTempFileName();
-            var dispatchParamsFile = Path.GetTempFileName();
-            File.WriteAllLines(outputFile, new[] { "SKIPPED LINE", "0x6173616b", "0x7573616d", "0x69646f72", "0x69333133", "0x0", "0x0", "0x0", "0x0" });
-            File.WriteAllText(dispatchParamsFile, dispatchParams);
-
-            var steps = new List<IActionStep>
-            {
-                new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
-                    watchesFile: new BuiltinActionFile(),
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
-                    binaryOutput: false, outputOffset: 1)
-            };
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: new ReadOnlyCollection<string>(new[] { "const" })), _project);
-            var result = await runner.RunAsync("Debug", steps);
-
-            Assert.True(result.Successful);
-            Assert.Equal(expectedWarning.Replace("{outputFile}", outputFile), result.StepResults[0].Warning);
-
-            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 2, waveSize: 2, nGroups: 0);
-            var system = result.BreakState.Data.GetSystem();
-            Assert.Equal(0x6173616b, (int)system[0]);
-            Assert.Equal(0x69646f72, (int)system[1]);
-            var constWatch = result.BreakState.Data.GetWatch("const");
-            Assert.Equal(0x7573616d, (int)constWatch[0]);
-            Assert.Equal(0x69333133, (int)constWatch[1]);
+                Assert.Equal(i, (int)firstWaveSecondWatch[i]);
         }
 
         [Fact]
         public async Task ReadDebugDataLocalErrorTestAsync()
         {
-            var outputFile = Path.GetTempFileName();
-            var fileName = Path.GetFileName(outputFile);
+            string outputFile = Path.GetTempFileName(), watchesFile = Path.GetTempFileName(), dispatchFile = Path.GetTempFileName();
+            string outputFileName = Path.GetFileName(outputFile), watchesFileName = Path.GetFileName(watchesFile), dispatchFileName = Path.GetFileName(dispatchFile);
 
             var steps = new List<IActionStep>
             {
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = fileName, CheckTimestamp = true },
-                    watchesFile: new BuiltinActionFile(),
-                    dispatchParamsFile: new BuiltinActionFile(),
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFileName, CheckTimestamp = true },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFileName, CheckTimestamp = false },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchFileName, CheckTimestamp = false },
                     binaryOutput: true, outputOffset: 0)
             };
 
@@ -597,7 +534,7 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
 
             var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file ({fileName}) was not modified. Data may be stale.", result.StepResults[0].Warning);
+            Assert.Equal($"Output file ({outputFileName}) was not modified. Data may be stale.", result.StepResults[0].Warning);
 
             /* Access denied */
 
@@ -608,21 +545,40 @@ Grid size as specified in the dispatch parameters file is (16384, 1, 1), which c
             ((ReadDebugDataStep)steps[0]).OutputFile.CheckTimestamp = false;
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. Access to path {fileName} on the local machine is denied", result.StepResults[0].Warning);
+            Assert.Equal($"Output file could not be opened. Access to path {outputFileName} on the local machine is denied", result.StepResults[0].Warning);
 
             /* File not found */
 
             File.Delete(outputFile);
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. File {fileName} is not found on the local machine", result.StepResults[0].Warning);
+            Assert.Equal($"Output file could not be opened. File {outputFileName} is not found on the local machine", result.StepResults[0].Warning);
 
             /* Invalid path */
 
             ((ReadDebugDataStep)steps[0]).OutputFile.Path += "<>";
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{fileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+            Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{outputFileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+
+            /* Wrong output file size */
+
+            ((ReadDebugDataStep)steps[0]).OutputFile.Path = outputFileName;
+            File.WriteAllText(watchesFile, @"
+Instance 0:jill;julianne;stingray
+");
+            File.WriteAllText(dispatchFile, @"
+grid_size (16384, 0, 0)
+group_size (256, 0, 0)
+wave_size 64
+");
+            File.WriteAllBytes(outputFile, new byte[1024]);
+            result = await runner.RunAsync("Debug", steps);
+            Assert.False(result.StepResults[0].Successful);
+            Assert.Equal(@"Output file does not match the expected size.
+
+Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 4 DWORDs per lane, the output file is expected to be 65536 DWORDs long, but the actual size is 256 DWORDs.",
+result.StepResults[0].Warning);
         }
         #endregion
 
