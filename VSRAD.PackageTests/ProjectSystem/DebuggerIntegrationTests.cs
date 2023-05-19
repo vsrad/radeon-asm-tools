@@ -54,7 +54,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             readDebugDataStep.DispatchParamsFile.Path = "dispatch-params-path";
 
             project.Options.Profile.Actions[0].Steps.Add(new ExecuteStep
-            { Executable = "ohmu", Arguments = "-break-line $(RadBreakLine) -source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
+            { Executable = "ohmu", Arguments = "-break-line $(RadBreakLines) -source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
             project.Options.Profile.Actions[0].Steps.Add(readDebugDataStep);
 
             var codeEditor = new Mock<IActiveCodeEditor>();
@@ -88,7 +88,7 @@ wave_size 64
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
-                Assert.Equal(@"-break-line 666 -source JATO.s -source-line 13 -watch a:c:tide", execute.Arguments);
+                Assert.Equal(@"-break-line 666 -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
             });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(validWatchesString) }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "watches-path" }, watchesFetch.FilePath));

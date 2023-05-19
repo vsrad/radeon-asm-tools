@@ -18,7 +18,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         public MacroListDesignTimeCollection()
         {
-            Add(new MacroItem("RadBreakLine", "<next breakpoint line>", userDefined: false));
+            Add(new MacroItem("RadBreakLines", "<next breakpoint line>", userDefined: false));
             Add(new MacroItem("RadDeployDir", "/home/rad/deploy", userDefined: true));
             Add(new MacroItem("RadDebugOutputPath", "$(RadDeployDir)/out.bin", userDefined: true));
         }
@@ -45,8 +45,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.ActiveSourceDir, "<current source dir name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFile, "<current source file name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
-            new MacroItem(RadMacros.Watches, "<visualizer watches, colon-separated>", userDefined: false),
-            new MacroItem(RadMacros.BreakLine, "<next breakpoint line(s), colon-separated>", userDefined: false),
+            new MacroItem(RadMacros.Watches, "<visualizer watches, semicolon-separated>", userDefined: false),
+            new MacroItem(RadMacros.BreakLines, "<next breakpoint line(s), semicolon-separated>", userDefined: false),
             new MacroItem(RadMacros.DebugAppArgs, "<app args, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.DebugBreakArgs, "<break args, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.Counter, "<counter, set in visualizer>", userDefined: false),

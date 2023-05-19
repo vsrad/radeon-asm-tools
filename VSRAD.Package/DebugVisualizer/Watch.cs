@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -7,13 +6,9 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public string Name { get; }
 
-        //[JsonConverter(typeof(StringEnumConverter))]
         public VariableType Info { get; }
 
         public bool IsAVGPR { get; }
-
-        [JsonIgnore]
-        public bool IsEmpty => string.IsNullOrWhiteSpace(Name);
 
         [JsonConstructor]
         public Watch(string name, VariableType type, bool isAVGPR)
@@ -22,6 +17,9 @@ namespace VSRAD.Package.DebugVisualizer
             Info = type;
             IsAVGPR = isAVGPR;
         }
+
+        public static bool IsWatchNameValid(string name) =>
+            !string.IsNullOrWhiteSpace(name) && !name.Contains(ProjectSystem.Macros.RadMacros.WatchSeparator);
 
         public bool Equals(Watch w) => Name == w.Name && Info == w.Info && IsAVGPR == w.IsAVGPR;
         public override bool Equals(object o) => o is Watch w && Equals(w);

@@ -22,10 +22,7 @@ namespace VSRAD.Package.Options
         public PinnableMruCollection<string> LastAppArgs { get; } = new PinnableMruCollection<string>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
-            new ReadOnlyCollection<string>(Watches.Where(w => !w.IsEmpty).Select(w => w.Name).Distinct().ToList());
-
-        public ReadOnlyCollection<string> GetAWatchSnapshot() =>
-            new ReadOnlyCollection<string>(Watches.Where(w => w.IsAVGPR).Select(w => w.Name).Distinct().ToList());
+            new ReadOnlyCollection<string>(Watches.Select(w => w.Name).Where(Watch.IsWatchNameValid).Distinct().ToList());
 
         private uint _nGroups;
         public uint NGroups { get => _nGroups; set => SetField(ref _nGroups, (uint)0); } // always 0 for now as it should be refactored (see ce37993)
