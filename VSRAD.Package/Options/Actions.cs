@@ -42,7 +42,10 @@ namespace VSRAD.Package.Options
             file.Location == StepEnvironment.Remote;
 
         public static Error EvaluationError(string action, string step, string description) =>
-            new Error(description, title: $"Action \"{action}\" could not be run due to a misconfigured {step} step");
+            new Error(description, title: $"{step} step failed in \"{action}\"");
+
+        public static Error NestedEvaluationError(string parentAction, Error childError) =>
+            new Error(childError.Message, title: childError.Title + " <- " + $"\"{parentAction}\"");
     }
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
@@ -88,10 +91,10 @@ namespace VSRAD.Package.Options
 
             var sourcePathResult = await evaluator.EvaluateAsync(SourcePath);
             if (!sourcePathResult.TryGetResult(out var evaluatedSourcePath, out var error))
-                return error;
+                return EvaluationError(sourceAction, "Copy File", error.Message);
             var targetPathResult = await evaluator.EvaluateAsync(TargetPath);
             if (!targetPathResult.TryGetResult(out var evaluatedTargetPath, out error))
-                return error;
+                return EvaluationError(sourceAction, "Copy File", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedSourcePath))
                 return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
@@ -161,13 +164,13 @@ namespace VSRAD.Package.Options
 
             var executableResult = await evaluator.EvaluateAsync(Executable);
             if (!executableResult.TryGetResult(out var evaluatedExecutable, out var error))
-                return error;
+                return EvaluationError(sourceAction, "Execute", error.Message);
             var argumentsResult = await evaluator.EvaluateAsync(Arguments);
             if (!argumentsResult.TryGetResult(out var evaluatedArguments, out error))
-                return error;
+                return EvaluationError(sourceAction, "Execute", error.Message);
             var workdirResult = await evaluator.EvaluateAsync(WorkingDirectory);
             if (!workdirResult.TryGetResult(out var evaluatedWorkdir, out error))
-                return error;
+                return EvaluationError(sourceAction, "Execute", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedExecutable))
                 return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
@@ -210,7 +213,7 @@ namespace VSRAD.Package.Options
 
             var pathResult = await evaluator.EvaluateAsync(Path);
             if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
-                return error;
+                return EvaluationError(sourceAction, "Open in Editor", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedPath))
                 return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
@@ -241,65 +244,33 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 7;
 
-        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
-        {
-            var traversed = new List<string>() { sourceAction };
-            return EvaluateAsync(evaluator, profile, traversed);
-        }
+        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction) =>
+            EvaluateAsync(evaluator, profile, actionStack: new[] { sourceAction });
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, List<string> actionsTraversed)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, IEnumerable<string> actionStack)
         {
             if (string.IsNullOrWhiteSpace(Name))
-            {
-                var message = "No action specified";
-                if (actionsTraversed.Count > 1)
-                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                return EvaluationError(actionsTraversed[0], "Run Action", message);
-            }
-            if (actionsTraversed.Contains(Name))
-            {
-                var t = string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")) + " -> \"" + Name + "\"";
-                return EvaluationError(actionsTraversed[0], "Run Action", "Encountered a circular dependency: " + t);
-            }
+                return EvaluationError(actionStack.Last(), "Run Action", "No action specified");
+            if (actionStack.Contains(Name))
+                return NestedEvaluationError(actionStack.Last(), EvaluationError(Name, "Run Action", "Circular dependency between actions"));
 
             var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
-            {
-                var message = "Action \"" + Name + "\" is not found";
-                if (actionsTraversed.Count > 1)
-                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                return EvaluationError(actionsTraversed[0], "Run Action", message);
-            }
-
-            actionsTraversed.Add(Name);
+                return EvaluationError(actionStack.Last(), "Run Action", $"Action \"{Name}\" is not found");
 
             var evaluatedSteps = new List<IActionStep>();
             foreach (var step in action.Steps)
             {
-                IActionStep evaluated;
+                Result<IActionStep> evalResult;
                 if (step is RunActionStep runAction)
-                {
-                    var evalResult = await runAction.EvaluateAsync(evaluator, profile, actionsTraversed);
-                    if (!evalResult.TryGetResult(out evaluated, out var error))
-                        return error;
-                }
+                    evalResult = await runAction.EvaluateAsync(evaluator, profile, actionStack.Append(Name));
                 else
-                {
-                    var evalResult = await step.EvaluateAsync(evaluator, profile, actionsTraversed[0]);
-                    if (!evalResult.TryGetResult(out evaluated, out _))
-                    {
-                        var message = "Action \"" + Name + "\" is misconfigured";
-                        actionsTraversed.Remove(Name);
-                        if (actionsTraversed.Count > 1)
-                            message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                        return EvaluationError(actionsTraversed[0], "Run Action", message);
-                    }
-                }
+                    evalResult = await step.EvaluateAsync(evaluator, profile, Name);
+                if (!evalResult.TryGetResult(out var evaluated, out var error))
+                    return NestedEvaluationError(actionStack.Last(), error);
+
                 evaluatedSteps.Add(evaluated);
             }
-
-            actionsTraversed.RemoveAt(actionsTraversed.Count - 1);
-
             return new RunActionStep(evaluatedSteps) { Name = Name };
         }
     }
