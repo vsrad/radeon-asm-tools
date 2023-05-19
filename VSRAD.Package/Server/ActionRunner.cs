@@ -58,7 +58,7 @@ namespace VSRAD.Package.Server
                         result = await DoRunActionAsync(runAction, continueOnError);
                         break;
                     case ReadDebugDataStep readDebugData:
-                        (result, runStats.BreakState) = await DoReadDebugDataAsync(readDebugData);
+                        result = await DoReadDebugDataAsync(readDebugData);
                         break;
                     default:
                         throw new NotImplementedException();
@@ -184,16 +184,16 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
         {
             var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError);
-            return new StepResult(subActionResult.Successful, "", "", subActionResult);
+            return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
         }
 
-        private async Task<(StepResult, BreakState)> DoReadDebugDataAsync(ReadDebugDataStep step)
+        private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
             string validWatchesString;
             {
                 var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
-                    return (new StepResult(false, error.Message, ""), null);
+                    return new StepResult(false, error.Message, "", breakState: null);
                 validWatchesString = Encoding.UTF8.GetString(data);
             }
             string dispatchParamsString = null;
@@ -201,7 +201,7 @@ namespace VSRAD.Package.Server
             {
                 var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
-                    return (new StepResult(false, error.Message, ""), null);
+                    return new StepResult(false, error.Message, "", breakState: null);
                 dispatchParamsString = Encoding.UTF8.GetString(data);
             }
             {
@@ -217,9 +217,9 @@ namespace VSRAD.Package.Server
                     var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
 
                     if (response.Status == FetchStatus.FileNotFound)
-                        return (new StepResult(false, $"Output file ({path}) could not be found.", ""), null);
+                        return new StepResult(false, $"Output file ({path}) could not be found.", "", breakState: null);
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+                        return new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", "", breakState: null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
@@ -230,11 +230,11 @@ namespace VSRAD.Package.Server
                     var fullPath = new[] { _environment.LocalWorkDir, path };
                     var timestamp = GetLocalFileTimestamp(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return (new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", ""), null);
+                        return new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", "", breakState: null);
 
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
                     if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
-                        return (new StepResult(false, "Output file could not be opened. " + readError, ""), null);
+                        return new StepResult(false, "Output file could not be opened. " + readError, "", breakState: null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
@@ -243,9 +243,9 @@ namespace VSRAD.Package.Server
                 }
 
                 if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData).TryGetResult(out var breakState, out var error))
-                    return (new StepResult(true, "", ""), breakState);
+                    return new StepResult(true, "", "", breakState: breakState);
                 else
-                    return (new StepResult(false, error.Message, ""), null);
+                    return new StepResult(false, error.Message, "", breakState: null);
             }
         }
 

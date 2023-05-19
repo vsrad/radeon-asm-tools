@@ -319,6 +319,11 @@ namespace VSRAD.PackageTests.Server
             var level3Steps = new List<IActionStep>
             {
                 new ExecuteStep { Environment = StepEnvironment.Remote, Executable = "cleanup", Arguments = "--skip" },
+                new ReadDebugDataStep(
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = false },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
+                    binaryOutput: true, outputOffset: 0)
             };
             var level2Steps = new List<IActionStep>
             {
@@ -342,12 +347,17 @@ namespace VSRAD.PackageTests.Server
             {
                 Assert.Equal("cleanup", command.Executable);
             });
+            // 4. Level 3 Read Debug Data
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("Instance 0:w") });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("grid_size (8192, 0, 0)\r\ngroup_size (512, 0, 0)\r\nwave_size 32") });
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 8192 * 2 * sizeof(uint) });
             // 4. Level 1 Copy File
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
             var result = await runner.RunAsync("HTMT", level1Steps);
 
             Assert.True(result.Successful);
+            Assert.NotNull(result.BreakState);
             Assert.Equal("level2", result.StepResults[0].SubAction.ActionName);
             Assert.Null(result.StepResults[0].SubAction.StepResults[0].SubAction);
             Assert.Equal("Captured stdout (exit code 0):\r\nlevel2\r\n", result.StepResults[0].SubAction.StepResults[0].Log);

@@ -44,13 +44,13 @@ namespace VSRAD.PackageTests.ProjectSystem
             TestHelper.SetReadOnlyProp(level2Result, nameof(level2Result.TotalMillis), 40);
             level2Result.StepResults[0] = new StepResult(true, "Some Message Indicating Contract Obtained", "Captured stdout (exit code 1):\r\ncontract obtained\r\n");
             level2Result.StepRunMillis[0] = 20;
-            level2Result.StepResults[1] = new StepResult(true, "", "", level3Result);
+            level2Result.StepResults[1] = new StepResult(true, "", "", subAction: level3Result);
             level2Result.StepRunMillis[1] = 20;
 
             var level1Result = new ActionRunResult(level1action.Name, level1action.Steps, false);
             TestHelper.SetReadOnlyProp(level1Result, nameof(level1Result.InitTimestampFetchMillis), 10);
             TestHelper.SetReadOnlyProp(level1Result, nameof(level1Result.TotalMillis), 70);
-            level1Result.StepResults[0] = new StepResult(true, "", "", level2Result);
+            level1Result.StepResults[0] = new StepResult(true, "", "", subAction: level2Result);
             level1Result.StepRunMillis[0] = 40;
             level1Result.StepResults[1] = new StepResult(true, "", "");
             level1Result.StepRunMillis[1] = 20;
