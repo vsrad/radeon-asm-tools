@@ -96,7 +96,8 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(b);
 
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Encountered a circular dependency: ""A"" -> ""A_nested"" -> ""B"" -> ""A""", error.Message);
+            Assert.Equal(@"Run Action step failed in ""A"" <- ""B"" <- ""A_nested"" <- ""A""", error.Title);
+            Assert.Equal(@"Circular dependency between actions", error.Message);
         }
 
         [Fact]
@@ -108,7 +109,8 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(a);
 
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Encountered a circular dependency: ""A"" -> ""A""", error.Message);
+            Assert.Equal(@"Run Action step failed in ""A"" <- ""A""", error.Title);
+            Assert.Equal(@"Circular dependency between actions", error.Message);
         }
 
         [Fact]
@@ -127,11 +129,11 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(c);
 
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Run Action step", error.Title);
-            Assert.Equal(@"Action ""D"" is not found, required by ""A"" -> ""B"" -> ""C""", error.Message);
+            Assert.Equal(@"Run Action step failed in ""C"" <- ""B"" <- ""A""", error.Title);
+            Assert.Equal(@"Action ""D"" is not found", error.Message);
 
             Assert.False((await c.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
-            Assert.Equal(@"Action ""C"" could not be run due to a misconfigured Run Action step", error.Title);
+            Assert.Equal(@"Run Action step failed in ""C""", error.Title);
             Assert.Equal(@"Action ""D"" is not found", error.Message);
         }
 
@@ -147,11 +149,11 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(b);
 
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Run Action step", error.Title);
-            Assert.Equal(@"No action specified, required by ""A"" -> ""B""", error.Message);
+            Assert.Equal(@"Run Action step failed in ""B"" <- ""A""", error.Title);
+            Assert.Equal(@"No action specified", error.Message);
 
             Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
-            Assert.Equal(@"Action ""B"" could not be run due to a misconfigured Run Action step", error.Title);
+            Assert.Equal(@"Run Action step failed in ""B""", error.Title);
             Assert.Equal(@"No action specified", error.Message);
         }
 
@@ -170,10 +172,12 @@ namespace VSRAD.PackageTests.Server
             profile.Actions.Add(c);
 
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Action ""C"" is misconfigured, required by ""A"" -> ""B""", error.Message);
+            Assert.Equal(@"Copy File step failed in ""C"" <- ""B"" <- ""A""", error.Title);
+            Assert.Equal(@"No source path specified", error.Message);
 
             Assert.False((await b.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out error));
-            Assert.Equal(@"Action ""C"" is misconfigured", error.Message);
+            Assert.Equal(@"Copy File step failed in ""C"" <- ""B""", error.Title);
+            Assert.Equal(@"No source path specified", error.Message);
         }
 
         [Fact]
@@ -184,7 +188,7 @@ namespace VSRAD.PackageTests.Server
 
             a.Steps.Add(new ReadDebugDataStep());
             Assert.False((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out _, out var error));
-            Assert.Equal(@"Action ""A"" could not be run due to a misconfigured Read Debug Data step", error.Title);
+            Assert.Equal(@"Read Debug Data step failed in ""A""", error.Title);
             Assert.Equal("Debug data path is not specified", error.Message);
         }
 

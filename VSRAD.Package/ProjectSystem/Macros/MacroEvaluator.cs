@@ -18,10 +18,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
-        public uint[] BreakLines { get; }
+        public Result<uint[]> BreakLines { get; }
         public ReadOnlyCollection<string> Watches { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, uint[] breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, Result<uint[]> breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
@@ -109,38 +109,26 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);
 
         private readonly IProjectProperties _projectProperties;
+        private readonly MacroEvaluatorTransientValues _transientValues;
         private readonly AsyncLazy<IReadOnlyDictionary<string, string>> _remoteEnvironment;
 
+        private readonly Options.DebuggerOptions _debuggerOptions;
         private readonly Options.ProfileOptions _profileOptions;
-        private readonly Dictionary<string, string> _macroCache;
+
+        private readonly Dictionary<string, string> _macroCache = new Dictionary<string, string>();
 
         public MacroEvaluator(
             IProjectProperties projectProperties,
-            MacroEvaluatorTransientValues values,
+            MacroEvaluatorTransientValues transientValues,
             AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnvironment,
             Options.DebuggerOptions debuggerOptions,
             Options.ProfileOptions profileOptions)
         {
             _projectProperties = projectProperties;
+            _transientValues = transientValues;
             _remoteEnvironment = remoteEnvironment;
+            _debuggerOptions = debuggerOptions;
             _profileOptions = profileOptions;
-
-            // Predefined macros
-            _macroCache = new Dictionary<string, string>
-            {
-                { RadMacros.ActiveSourceFullPath, values.ActiveSourceFullPath },
-                { RadMacros.ActiveSourceDir, values.ActiveSourceDir },
-                { RadMacros.ActiveSourceFile, values.ActiveSourceFile },
-                { RadMacros.ActiveSourceFileLine, values.ActiveSourceLine.ToString() },
-                { RadMacros.Watches, string.Join(":", values.Watches) },
-                { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
-                { RadMacros.BreakLine, string.Join(":", values.BreakLines ?? new[] { 0u }) },
-                { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
-                { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
-                { RadMacros.Counter, debuggerOptions.Counter.ToString() },
-                { RadMacros.NGroups, debuggerOptions.NGroups.ToString() },
-                { RadMacros.GroupSize, debuggerOptions.GroupSize.ToString() }
-            };
         }
 
         public Task<Result<string>> GetMacroValueAsync(string name) => GetMacroValueAsync(name, new List<string>());
@@ -157,25 +145,46 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
             evaluationChain.Add(name);
 
-            string unevaluated = null;
-            foreach (var macro in _profileOptions.Macros)
+            switch (name)
             {
-                if (macro.Name == name)
-                {
-                    unevaluated = macro.Value;
+                case RadMacros.ActiveSourceFullPath: value = _transientValues.ActiveSourceFullPath; break;
+                case RadMacros.ActiveSourceDir: value = _transientValues.ActiveSourceDir; break;
+                case RadMacros.ActiveSourceFile: value = _transientValues.ActiveSourceFile; break;
+                case RadMacros.ActiveSourceFileLine: value = _transientValues.ActiveSourceLine.ToString(); break;
+                case RadMacros.Watches: value = string.Join(":", _transientValues.Watches); break;
+                case RadMacros.AWatches: value = string.Join(":", _debuggerOptions.GetAWatchSnapshot()); break;
+                case RadMacros.DebugAppArgs: value = _debuggerOptions.AppArgs; break;
+                case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
+                case RadMacros.Counter: value = _debuggerOptions.Counter.ToString(); break;
+                case RadMacros.NGroups: value = _debuggerOptions.NGroups.ToString(); break;
+                case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
+                case RadMacros.BreakLine:
+                    if (_transientValues.BreakLines.TryGetResult(out var breakLines, out var error))
+                        value = string.Join(":", breakLines);
+                    else
+                        return error;
                     break;
-                }
-            }
-
-            if (unevaluated != null)
-            {
-                var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
-                if (!evalResult.TryGetResult(out value, out var error))
-                    return error;
-            }
-            else
-            {
-                value = await _projectProperties.GetEvaluatedPropertyValueAsync(name);
+                default:
+                    string unevaluated = null;
+                    foreach (var macro in _profileOptions.Macros)
+                    {
+                        if (macro.Name == name)
+                        {
+                            unevaluated = macro.Value;
+                            break;
+                        }
+                    }
+                    if (unevaluated != null)
+                    {
+                        var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
+                        if (!evalResult.TryGetResult(out value, out error))
+                            return error;
+                    }
+                    else
+                    {
+                        value = await _projectProperties.GetEvaluatedPropertyValueAsync(name);
+                    }
+                    break;
             }
 
             _macroCache.Add(name, value);
