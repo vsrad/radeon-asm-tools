@@ -314,6 +314,8 @@ namespace VSRAD.Package.Options
             var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
             if (!watchesResult.TryGetResult(out var watchesFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            if (string.IsNullOrEmpty(outputFile.Path))
+                return EvaluationError(sourceAction, "Read Debug Data", "Watches path is not specified");
 
             var dispatchParamsResult = await DispatchParamsFile.EvaluateAsync(evaluator);
             if (!dispatchParamsResult.TryGetResult(out var dispatchParamsFile, out error))

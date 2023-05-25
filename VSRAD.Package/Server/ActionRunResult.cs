@@ -18,7 +18,19 @@ namespace VSRAD.Package.Server
         public StepResult[] StepResults { get; }
 
         /// <summary>Non-null if the action includes a <c>ReadDebugData</c> step and it was executed successfully.</summary>
-        public BreakState BreakState { get; set; }
+        public BreakState BreakState
+        {
+            get
+            {
+                foreach (var result in StepResults)
+                    if (result.BreakState != null)
+                        return result.BreakState;
+                foreach (var result in StepResults)
+                    if (result.SubAction?.BreakState is BreakState breakState)
+                        return breakState;
+                return null;
+            }
+        }
 
         public bool Successful => StepResults.All(r => r.Successful);
 
@@ -79,14 +91,16 @@ namespace VSRAD.Package.Server
         public string Log { get; }
         public string[] ErrorListOutput { get; }
         public ActionRunResult SubAction { get; }
+        public BreakState BreakState { get; }
 
-        public StepResult(bool successful, string warning, string log, ActionRunResult subAction = null, string[] errorListOutput = null)
+        public StepResult(bool successful, string warning, string log, string[] errorListOutput = null, ActionRunResult subAction = null, BreakState breakState = null)
         {
             Successful = successful;
             Warning = warning;
             Log = log;
-            SubAction = subAction;
             ErrorListOutput = errorListOutput;
+            SubAction = subAction;
+            BreakState = breakState;
         }
 
         public bool Equals(StepResult result) =>

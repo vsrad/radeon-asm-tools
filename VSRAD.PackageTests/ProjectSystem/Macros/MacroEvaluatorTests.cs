@@ -54,17 +54,17 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             var result = await evaluator.GetMacroValueAsync(RadMacros.Watches);
             Assert.True(result.TryGetResult(out var evaluated, out _));
-            Assert.Equal("m:c:ride", evaluated);
+            Assert.Equal("m;c;ride", evaluated);
 
-            result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceDir})\\$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLine})");
+            result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceDir})\\$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLines})");
             Assert.True(result.TryGetResult(out evaluated, out _));
             Assert.Equal(@"B:\welcome\home:666, stop at 13", evaluated);
 
             transients = new MacroEvaluatorTransientValues(0, "nofile", new[] { 20u, 1u, 9u }, new ReadOnlyCollection<string>(new[] { "watch" }));
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
-            result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLine})");
+            result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLines})");
             Assert.True(result.TryGetResult(out evaluated, out _));
-            Assert.Equal("-l 20:1:9", evaluated);
+            Assert.Equal("-l 20;1;9", evaluated);
         }
 
         [Fact]

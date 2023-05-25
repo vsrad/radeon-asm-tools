@@ -34,7 +34,7 @@ namespace VSRAD.Package.DebugVisualizer
                     //| DataGridViewPaintParts.ContentForeground // not needed because we are using custom string painter below
                 );
 
-            if (!selectedWatch.IsEmpty)
+            if (Watch.IsWatchNameValid(selectedWatch.Name))
             {
                 var typeTextPos = new PointF((float)e.RowBounds.Left + 7, (float)e.RowBounds.Top + 4);
                 e.Graphics.DrawString(selectedWatch.Info.ShortName(),

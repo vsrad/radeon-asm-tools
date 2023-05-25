@@ -1,8 +1,9 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -33,10 +34,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
-            _table = new VisualizerTable(
-                _context.Options,
-                tableFontAndColor,
-                getValidWatches: () => _context?.BreakData?.Watches);
+            _table = new VisualizerTable(_context.Options, tableFontAndColor);
             integration.AddWatch += _table.AddWatch;
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
@@ -67,7 +65,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_context.Options, _context.BreakData?.GetSystem());
+            _table.ApplyDataStyling(_context.Options, _context.BreakData);
 
         private void GrayOutWatches() =>
             _table.GrayOutRows();
@@ -173,39 +171,34 @@ To switch to manual grid size selection, right-click on the space next to the Gr
 
         private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
-            if (_context.BreakData == null)
-                return;
-            if (row.Index == 0)
+            var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
+            if (_context.BreakData != null && !string.IsNullOrEmpty(watch))
             {
-                RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem(),
-                    _context.Options.VisualizerAppearance.BinHexSeparator, _context.Options.VisualizerAppearance.IntUintSeparator,
-                    _context.Options.VisualizerAppearance.BinHexLeadingZeroes);
-            }
-            else
-            {
-                var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-                var watchData = _context.BreakData.GetWatch(watch);
-                if (watchData != null)
-                    RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData,
-                        _context.Options.VisualizerAppearance.BinHexSeparator, _context.Options.VisualizerAppearance.IntUintSeparator,
-                        _context.Options.VisualizerAppearance.BinHexLeadingZeroes);
-                else
-                    EraseRowData(row, _table.DataColumnCount);
-            }
-        }
+                var watchType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
+                var binHexSeparator = _context.Options.VisualizerAppearance.BinHexSeparator;
+                var intSeparator = _context.Options.VisualizerAppearance.IntUintSeparator;
+                var leadingZeroes = _context.Options.VisualizerAppearance.BinHexLeadingZeroes;
 
-        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row, int columnCount)
-        {
-            for (int i = 0; i < columnCount; ++i)
-                row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
-        }
-
-        private static void RenderRowData(System.Windows.Forms.DataGridViewRow row, uint groupSize, WatchView data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
-        {
-            var variableType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
-            for (int i = 0; i < groupSize; i++)
-                row.Cells[i + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(variableType, data[i],
-                                                                            binHexSeparator, intSeparator, leadingZeroes);
+                foreach (var waveView in _context.BreakData.GetWaveViews())
+                {
+                    var endThreadId = Math.Min(waveView.StartThreadId + waveView.WaveSize, _table.DataColumnCount);
+                    IEnumerable<uint> watchData = row.Index == 0 ? waveView.GetSystem() : waveView.GetWatchOrNull(watch);
+                    if (watchData == null)
+                    {
+                        for (var tid = waveView.StartThreadId; tid < endThreadId; ++tid)
+                            row.Cells[tid + VisualizerTable.DataColumnOffset].Value = "";
+                    }
+                    else
+                    {
+                        var tid = waveView.StartThreadId;
+                        foreach (var value in watchData)
+                        {
+                            if (tid < endThreadId)
+                                row.Cells[(tid++) + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, value, binHexSeparator, intSeparator, leadingZeroes);
+                        }
+                    }
+                }
+            }
         }
     }
 }
