@@ -228,7 +228,6 @@
     </Compile>
     <Compile Include="DebugVisualizer\ContextMenus\CopyContextMenu.cs" />
     <Compile Include="DebugVisualizer\MouseMove\PanOperation.cs" />
-    <Compile Include="DebugVisualizer\RowStyling.cs" />
     <Compile Include="DebugVisualizer\MouseMove\ScaleOperation.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
     <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />

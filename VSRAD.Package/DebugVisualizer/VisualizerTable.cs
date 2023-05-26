@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -32,6 +30,10 @@ namespace VSRAD.Package.DebugVisualizer
             get => Rows.Count > 0 && Rows[0].Visible;
             set { if (Rows.Count > 0) Rows[0].Visible = value; }
         }
+
+        private bool _watchDataValid = true;
+        /// <summary>Set externally by the context to indicate whether the cell values are valid or should be grayed out.</summary>
+        public bool WatchDataValid { get => _watchDataValid; set { _watchDataValid = value; Invalidate(); } }
 
         public IEnumerable<DataGridViewRow> DataRows => Rows
             .Cast<DataGridViewRow>()
@@ -225,7 +227,6 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
             Rows[index].HeaderCell.Value = watch.Info.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
-            Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
 
             var currentWidth = Columns[NameColumnIndex].Width;
             var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
@@ -300,7 +301,6 @@ namespace VSRAD.Package.DebugVisualizer
                         Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
                     Rows[e.RowIndex].HeaderCell.Value = new VariableType(VariableCategory.Hex, 32).ShortName();
                     Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
-                    RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
                     LockWatchRowForEditing(row);
                     PrepareNewWatchRow();
                     RaiseWatchStateChanged(new[] { row });
@@ -348,29 +348,15 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void GrayOutRows()
-        {
-            if (ShowSystemRow)
-                RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, Rows[0]);
-
-            foreach (DataGridViewRow row in DataRows)
-            {
-                RowStyling.GrayOutRow(_fontAndColor.FontAndColorState, row);
-            }
-
-            Invalidate();
-        }
-
-        public void ApplyWatchStyling()
-        {
-            foreach (DataGridViewRow row in Rows)
-                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
-        }
-
         public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
             foreach (var row in _selectionController.GetClickTargetRows(rowIndex))
-                RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState, changeFg, changeBg);
+            {
+                if (changeFg is DataHighlightColor newFg)
+                    row.DefaultCellStyle.ForeColor = (newFg != DataHighlightColor.None) ? _fontAndColor.FontAndColorState.HighlightForeground[(int)newFg] : Color.Empty;
+                if (changeBg is DataHighlightColor newBg)
+                    row.DefaultCellStyle.BackColor = (newBg != DataHighlightColor.None) ? _fontAndColor.FontAndColorState.HighlightBackground[(int)newBg] : Color.Empty;
+            }
         }
 
         private bool _disableColumnWidthChangeHandler = false;
@@ -402,10 +388,6 @@ namespace VSRAD.Package.DebugVisualizer
                 _computedStyling,
                 _fontAndColor.FontAndColorState);
             columnStyling.Apply(_state.DataColumns);
-
-            foreach (DataGridViewRow row in Rows)
-                if (row.Index != NewWatchRowIndex)
-                    RowStyling.UpdateRowHighlight(row, _fontAndColor.FontAndColorState);
 
             _disableColumnWidthChangeHandler = false;
             ((Control)this).ResumeDrawing();

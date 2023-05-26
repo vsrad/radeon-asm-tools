@@ -47,14 +47,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 new MenuItem("Green", (s, e) => SetForegroundColor(DataHighlightColor.Green)),
                 new MenuItem("Red", (s, e) => SetForegroundColor(DataHighlightColor.Red)),
                 new MenuItem("Blue", (s, e) => SetForegroundColor(DataHighlightColor.Blue)),
-                new MenuItem("None", (s, e) => SetForegroundColor(DataHighlightColor.None))
+                new MenuItem("Default", (s, e) => SetForegroundColor(DataHighlightColor.None))
             });
             var bgColor = new MenuItem("Background Color", new[]
             {
                 new MenuItem("Green", (s, e) => SetBackgroundColor(DataHighlightColor.Green)),
                 new MenuItem("Red", (s, e) => SetBackgroundColor(DataHighlightColor.Red)),
                 new MenuItem("Blue", (s, e) => SetBackgroundColor(DataHighlightColor.Blue)),
-                new MenuItem("None", (s, e) => SetBackgroundColor(DataHighlightColor.None))
+                new MenuItem("Default", (s, e) => SetBackgroundColor(DataHighlightColor.None))
             });
 
             var fitWidth = new MenuItem("Autofit Width", (s, e) =>
