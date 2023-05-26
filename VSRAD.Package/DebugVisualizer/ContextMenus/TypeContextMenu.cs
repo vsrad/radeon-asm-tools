@@ -44,14 +44,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.Green)),
                 new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.Red)),
                 new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.Blue)),
-                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.None))
+                new MenuItem("Default", (s, e) => _table.ApplyRowHighlight(_currentRow, changeFg: DataHighlightColor.None))
             });
             var bgColor = new MenuItem("Background Color", new[]
             {
                 new MenuItem("Green", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.Green)),
                 new MenuItem("Red", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.Red)),
                 new MenuItem("Blue", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.Blue)),
-                new MenuItem("None", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.None))
+                new MenuItem("Default", (s, e) => _table.ApplyRowHighlight(_currentRow, changeBg: DataHighlightColor.None))
             });
 
             var insertRowBefore = new MenuItem("Insert Row Before", (s, e) => insertRow(_currentRow, false));
