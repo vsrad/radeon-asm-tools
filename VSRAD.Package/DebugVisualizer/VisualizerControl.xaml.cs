@@ -17,7 +17,7 @@ namespace VSRAD.Package.DebugVisualizer
         public VisualizerControl(IToolWindowIntegration integration)
         {
             _context = integration.GetVisualizerContext();
-            _context.PropertyChanged += ContextPropertyChanged;
+            _context.PropertyChanged += VisualizerStateChanged;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
             DataContext = _context;
@@ -27,10 +27,10 @@ namespace VSRAD.Package.DebugVisualizer
             _wavemap.NavigationRequested += NavigateToWave;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
-            integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerStateChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
-            integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
-            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.DebuggerOptions.PropertyChanged += VisualizerStateChanged;
+            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerStateChanged;
 
             var tableFontAndColor = new FontAndColorProvider();
             tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
@@ -69,17 +69,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void GrayOutWatches() =>
             _table.GrayOutRows();
-
-        private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(VisualizerContext.WatchesValid):
-                    if (!_context.WatchesValid)
-                        GrayOutWatches();
-                    break;
-            }
-        }
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
         {
@@ -120,12 +109,12 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             _table.PrepareNewWatchRow();
         }
 
-        private void OptionsChanged(object sender, PropertyChangedEventArgs e)
+        private void VisualizerStateChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
-                case nameof(Options.DebuggerOptions.Counter):
-                    GrayOutWatches();
+                case nameof(VisualizerContext.WatchDataValid):
+                    _table.WatchDataValid = _context.WatchDataValid;
                     break;
                 case nameof(Options.VisualizerOptions.ShowSystemVariable):
                     _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;

@@ -35,8 +35,8 @@ namespace VSRAD.Package.DebugVisualizer
         private string _status = "No data available";
         public string Status { get => _status; set => SetField(ref _status, value); }
 
-        private bool _watchesValid = true;
-        public bool WatchesValid { get => _watchesValid; set => SetField(ref _watchesValid, value); }
+        private bool _watchDataValid = true;
+        public bool WatchDataValid { get => _watchDataValid; set => SetField(ref _watchDataValid, value); }
 
         private int _canvasWidth = 100;
         public int CanvasWidth { get => _canvasWidth; set => SetField(ref _canvasWidth, value); }
@@ -58,6 +58,7 @@ namespace VSRAD.Package.DebugVisualizer
         public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, DebuggerIntegration debugger)
         {
             Options = options;
+            Options.DebuggerOptions.PropertyChanged += OptionsChanged;
             _channel = channel;
 
             debugger.BreakEntered += EnterBreak;
@@ -66,11 +67,21 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
 
+        private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            switch (e.PropertyName)
+            {
+                case nameof(Options.DebuggerOptions.Counter):
+                    WatchDataValid = false;
+                    break;
+            }
+        }
+
         private void EnterBreak(object sender, BreakState breakState)
         {
             _breakState = breakState;
-            WatchesValid = breakState != null;
-            if (WatchesValid)
+            WatchDataValid = breakState != null;
+            if (WatchDataValid)
                 GroupIndex.UpdateOnBreak(breakState);
         }
 
@@ -80,8 +91,8 @@ namespace VSRAD.Package.DebugVisualizer
                 return;
 
             e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
-            WatchesValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
-            if (!WatchesValid)
+            WatchDataValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
+            if (!WatchDataValid)
                 return;
 
             VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));

@@ -33,6 +33,10 @@ namespace VSRAD.Package.DebugVisualizer
             set { if (Rows.Count > 0) Rows[0].Visible = value; }
         }
 
+        private bool _watchDataValid = true;
+        /// <summary>Set externally by the context to indicate whether the cell values are valid or should be grayed out.</summary>
+        public bool WatchDataValid { get => _watchDataValid; set { _watchDataValid = value; Invalidate(); } }
+
         public IEnumerable<DataGridViewRow> DataRows => Rows
             .Cast<DataGridViewRow>()
             .Where(x => x.Index > 0 && x.Index != NewWatchRowIndex);
@@ -225,7 +229,6 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
             Rows[index].HeaderCell.Value = watch.Info.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
-            Rows[index].DefaultCellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
 
             var currentWidth = Columns[NameColumnIndex].Width;
             var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
