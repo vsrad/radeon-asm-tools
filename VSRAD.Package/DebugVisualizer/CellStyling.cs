@@ -67,7 +67,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void GrayOutInactiveLanes(int dataColumnIndex, DataGridViewCellPaintingEventArgs e)
         {
-            if (!_table.WatchDataValid || (_computedStyling.ColumnState[dataColumnIndex] & ColumnStates.Inactive) != 0)
+            if (!_table.WatchDataValid || (_computedStyling.ColumnState[dataColumnIndex] & ColumnStates.Inactive) != 0 || (e.Value is string v && v.Length == 0))
             {
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
