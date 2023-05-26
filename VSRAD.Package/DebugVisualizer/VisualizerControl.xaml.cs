@@ -67,9 +67,6 @@ namespace VSRAD.Package.DebugVisualizer
         private void RefreshDataStyling() =>
             _table.ApplyDataStyling(_context.Options, _context.BreakData);
 
-        private void GrayOutWatches() =>
-            _table.GrayOutRows();
-
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
         {
             if (e.Warning != null)
@@ -84,7 +81,6 @@ To enable dispatch parameters extraction:
 
 To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual override dispatch"".");
 
-            _table.ApplyWatchStyling();
             RefreshDataStyling();
 
             _wavemap.View = _context.BreakData.GetWavemapView();
