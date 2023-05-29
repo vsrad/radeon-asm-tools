@@ -28,6 +28,15 @@ namespace VSRAD.Package
 
     public static class Errors
     {
+        public delegate void CreateMessageBoxImpl(string message, string title, OLEMSGICON icon);
+
+        private static CreateMessageBoxImpl _createMessageBox;
+        public static CreateMessageBoxImpl CreateMessageBox
+        {
+            get => _createMessageBox ?? VsCreateMessageBox;
+            set => _createMessageBox = value;
+        }
+
         public static void Show(Error error) =>
             CreateMessageBox(error.Message, error.Title, error.Critical ? OLEMSGICON.OLEMSGICON_CRITICAL : OLEMSGICON.OLEMSGICON_WARNING);
 
@@ -74,7 +83,7 @@ namespace VSRAD.Package
                 }
             });
 
-        private static void CreateMessageBox(string message, string title, OLEMSGICON icon)
+        private static void VsCreateMessageBox(string message, string title, OLEMSGICON icon)
         {
             if (ThreadHelper.CheckAccess())
             {

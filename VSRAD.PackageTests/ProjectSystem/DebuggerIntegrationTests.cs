@@ -26,6 +26,7 @@ namespace VSRAD.PackageTests.ProjectSystem
         public async Task SuccessfulRunTestAsync()
         {
             TestHelper.InitializePackageTaskFactory();
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
 
             /* Create a test project */
 
@@ -41,9 +42,9 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.Profile.General.LocalWorkDir = "local/dir";
             project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
             project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
-            project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableType(VariableCategory.Hex, 32), false));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableType(VariableCategory.Hex, 32), false));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableCategory.Hex, 32), false));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableType(VariableCategory.Hex, 32)));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableType(VariableCategory.Hex, 32)));
+            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableCategory.Hex, 32)));
 
             var readDebugDataStep = new ReadDebugDataStep { BinaryOutput = true, OutputOffset = 0 };
             readDebugDataStep.OutputFile.CheckTimestamp = true;
@@ -109,6 +110,7 @@ wave_size 64
 
             var execCompletedEvent = await tcs.Task;
 
+            Assert.Empty(packageErrors);
             Assert.NotNull(execCompletedEvent);
             Assert.Equal(@"C:\MEHVE\JATO.s", execCompletedEvent.File);
             Assert.Equal(666u, execCompletedEvent.Lines[0]);

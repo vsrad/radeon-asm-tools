@@ -3,23 +3,19 @@
         "Watches": [
             {
                 "Name": "v[tid]",
-                "Type": "Uint",
-                "IsAVGPR": false
+                "Type": "Uint"
             },
             {
                 "Name": "v[in1]",
-                "Type": "Float",
-                "IsAVGPR": false
+                "Type": "Float"
             },
             {
                 "Name": "v[in2]",
-                "Type": "Float",
-                "IsAVGPR": false
+                "Type": "Float"
             },
             {
                 "Name": "v[out]",
-                "Type": "Float",
-                "IsAVGPR": false
+                "Type": "Float"
             }
         ],
         "Counter": 0,
