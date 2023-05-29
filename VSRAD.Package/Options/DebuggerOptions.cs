@@ -54,11 +54,16 @@ namespace VSRAD.Package.Options
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(true)]
         public bool ForceOppositeTab { get => _forceOppositeTab; set => SetField(ref _forceOppositeTab, value); }
-        
+
+#if true
+        [JsonIgnore]
+        public bool PreserveActiveDoc => true;
+#else
         private bool _preserveActiveDoc = true;
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(true)]
         public bool PreserveActiveDoc { get => _preserveActiveDoc; set => SetField(ref _preserveActiveDoc, value); }
+#endif
 
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
