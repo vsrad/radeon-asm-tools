@@ -8,16 +8,14 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
     public sealed class TypeContextMenu : IContextMenu
     {
         public delegate void TypeChanged(int rowIndex, VariableType type);
-        public delegate void AVGPRStateChanged(int rowIndex, bool state);
         public delegate void InsertRow(int rowIndex, bool after);
         public delegate void AddWatchRange(string name, int from, int to);
 
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
-        private readonly MenuItem _avgprButton;
         private int _currentRow;
 
-        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, AVGPRStateChanged avgprChanged, Action processCopy,
+        public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, Action processCopy,
             InsertRow insertRow, AddWatchRange addWatchRange)
         {
             _table = table;
@@ -57,12 +55,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
             var insertRowBefore = new MenuItem("Insert Row Before", (s, e) => insertRow(_currentRow, false));
             var insertRowAfter = new MenuItem("Insert Row After", (s, e) => insertRow(_currentRow, true));
 
-            _avgprButton = new MenuItem("AVGPR", (s, e) =>
-            {
-                _avgprButton.Checked = !_avgprButton.Checked;
-                avgprChanged(_currentRow, _avgprButton.Checked);
-            });
-
             var copy = new MenuItem("Copy", (s, e) => processCopy());
 
             var addToWatchesAsArray = new MenuItem("Add to watches as array", Enumerable.Range(0, 16)
@@ -87,7 +79,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 insertRowAfter,
                 new MenuItem("-"),
                 addToWatchesAsArray
-                //_avgprButton
             });
 
             _menu = new ContextMenu(menuItems.ToArray());
@@ -102,10 +93,6 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             foreach (MenuItem item in _menu.MenuItems)
                 item.Checked = false;
-
-            var selectedWatch = VisualizerTable.GetRowWatchState(_table.Rows[hit.RowIndex]);
-            _avgprButton.Enabled = _currentRow != 0 || !_table.ShowSystemRow;
-            _avgprButton.Checked = selectedWatch.IsAVGPR;
 
             _menu.Show(_table, new Point(e.X, e.Y));
             return true;
