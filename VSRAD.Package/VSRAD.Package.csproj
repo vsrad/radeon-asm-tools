@@ -197,7 +197,6 @@
     <Compile Include="Options\VisualizerAppearance.cs" />
     <Compile Include="ProjectSystem\ActionLauncher.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
-    <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\BreakpointTracker.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphFactory.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphTagger.cs" />

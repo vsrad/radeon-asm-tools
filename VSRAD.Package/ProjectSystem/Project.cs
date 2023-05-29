@@ -81,7 +81,6 @@ namespace VSRAD.Package.ProjectSystem
                 Options = projectOptions;
             }
 
-            UnconfiguredProject.Services.ExportProvider.GetExportedValue<BreakpointIntegration>();
             UnconfiguredProject.Services.ExportProvider.GetExportedValue<BuildToolsServer>();
 
             _loaded = true;

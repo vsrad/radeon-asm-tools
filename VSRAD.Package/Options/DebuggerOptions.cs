@@ -34,9 +34,6 @@ namespace VSRAD.Package.Options
         private bool _autosave = true;
         public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }
 
-        private bool _singleActiveBreakpoint = false;
-        public bool SingleActiveBreakpoint { get => _singleActiveBreakpoint; set => SetField(ref _singleActiveBreakpoint, value); }
-
         private uint _groupSize = 512;
         [DefaultValue(512)]
         public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, Math.Max(value, 1)); }
