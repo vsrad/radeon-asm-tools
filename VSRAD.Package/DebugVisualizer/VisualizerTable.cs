@@ -49,6 +49,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         private readonly TableState _state;
 
+        private bool _hostWindowHasFocus;
+        private bool _enterPressedOnWatchEndEdit;
+
         public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor) : base()
         {
             _fontAndColor = fontAndColor;
@@ -180,14 +183,15 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void HostWindowFocusChanged(bool hasFocus)
         {
+            _hostWindowHasFocus = hasFocus;
             if (hasFocus)
             {
                 DefaultCellStyle.SelectionBackColor = SystemColors.Highlight;
             }
             else
             {
-                DefaultCellStyle.SelectionBackColor = System.Drawing.Color.LightSteelBlue;
-                CancelEdit();
+                DefaultCellStyle.SelectionBackColor = Color.LightSteelBlue;
+                EndEdit();
             }
         }
 
@@ -225,6 +229,7 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var index = Rows.Add();
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
+            Rows[index].Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
             Rows[index].HeaderCell.Value = watch.Info.ShortName();
             Rows[index].HeaderCell.Tag = watch.IsAVGPR;
 
@@ -232,8 +237,6 @@ namespace VSRAD.Package.DebugVisualizer
             var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
             if (preferredWidth > currentWidth)
                 Columns[NameColumnIndex].Width = preferredWidth;
-
-            LockWatchRowForEditing(Rows[index], canBeRemoved);
         }
 
         public void RemoveNewWatchRow()
@@ -289,61 +292,57 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void WatchEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            var row = Rows[e.RowIndex];
-            var rowWatchName = (string)row.Cells[NameColumnIndex].Value;
-
-            if (e.RowIndex == NewWatchRowIndex)
+            // Asynchronous delegate to prevent reentrant calls inside WatchEndEdit (it will be called again when changing the focus to another cell, incl. when removing the current row)
+            // See also https://social.msdn.microsoft.com/Forums/windows/en-US/f824fbbf-9d08-4191-98d6-14903801acfc/operation-is-not-valid-because-it-results-in-a-reentrant-call-to-the-setcurrentcelladdresscore
+            BeginInvoke(new MethodInvoker(() =>
             {
-                if (e.ColumnIndex == NameColumnIndex && !string.IsNullOrEmpty(rowWatchName))
+                var row = Rows[e.RowIndex];
+                var rowWatchName = (string)row.Cells[NameColumnIndex].Value;
+
+                var nextWatchIndex = -1;
+                var shouldMoveCaretToNextWatch = _hostWindowHasFocus && _enterPressedOnWatchEndEdit;
+                _enterPressedOnWatchEndEdit = false; // Don't move the focus again on successive WatchEndEdit invocations
+
+                if (e.RowIndex == NewWatchRowIndex) // Adding a new watch
                 {
-                    var scrollingOffset = HorizontalScrollingOffset;
-                    if (!string.IsNullOrWhiteSpace(rowWatchName))
-                        Rows[e.RowIndex].Cells[NameColumnIndex].Value = rowWatchName.Trim();
-                    Rows[e.RowIndex].HeaderCell.Value = new VariableType(VariableCategory.Hex, 32).ShortName();
-                    Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
-                    LockWatchRowForEditing(row);
-                    PrepareNewWatchRow();
-                    RaiseWatchStateChanged(new[] { row });
                     if (!string.IsNullOrWhiteSpace(rowWatchName))
                     {
-                        // We want to focus on the new row, but changing the current cell inside CellEndEdit
-                        // may cause us to enter infinite loop unless we do it in an asynchronous delegate
-                        BeginInvoke(new MethodInvoker(() =>
-                        {
-                            CurrentCell = Rows[NewWatchRowIndex].Cells[NameColumnIndex];
-                            HorizontalScrollingOffset = scrollingOffset;
-                            BeginEdit(true);
-                        }));
+                        row.Cells[NameColumnIndex].Value = rowWatchName.Trim();
+                        row.HeaderCell.Value = new VariableType(VariableCategory.Hex, 32).ShortName();
+                        PrepareNewWatchRow();
+                        RaiseWatchStateChanged(new[] { row });
+                        if (shouldMoveCaretToNextWatch)
+                            nextWatchIndex = e.RowIndex + 1;
                     }
                 }
-            }
-            else if (e.RowIndex != 0)
-            {
-                if (string.IsNullOrEmpty(rowWatchName))
+                else if (e.RowIndex != 0) // Modifying an existing watch
                 {
-                    // ditto as above (asynchronous delegate to prevent an inifinite loop)
-                    BeginInvoke(new MethodInvoker(() =>
+                    if (!string.IsNullOrEmpty(rowWatchName)) // Allow watch names consisting only of whitespace characters for divider rows
+                    {
+                        if (rowWatchName != _editedWatchName)
+                            RaiseWatchStateChanged(new[] { row });
+                        if (shouldMoveCaretToNextWatch)
+                            nextWatchIndex = e.RowIndex + 1;
+                    }
+                    else
                     {
                         Rows.RemoveAt(e.RowIndex);
                         RaiseWatchStateChanged();
-                    }));
+                        if (shouldMoveCaretToNextWatch)
+                            nextWatchIndex = e.RowIndex;
+                    }
                 }
-                else if (rowWatchName != _editedWatchName)
-                {
-                    Rows[e.RowIndex].HeaderCell.Tag = IsAVGPR(rowWatchName); // avgpr
-                    RaiseWatchStateChanged(new[] { row });
-                    BeginInvoke(new MethodInvoker(() =>
-                    {
-                        CurrentCell = Rows[e.RowIndex + 1].Cells[NameColumnIndex];
-                        BeginEdit(true);
-                    }));
-                }
-            }
-        }
 
-        private static void LockWatchRowForEditing(DataGridViewRow row, bool canBeRemoved = true)
-        {
-            row.Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
+                if (!_hostWindowHasFocus)
+                {
+                    ClearSelection();
+                }
+                if (nextWatchIndex != -1)
+                {
+                    CurrentCell = Rows[nextWatchIndex].Cells[NameColumnIndex];
+                    BeginEdit(true);
+                }
+            }));
         }
 
         #region Styling
@@ -458,11 +457,7 @@ namespace VSRAD.Package.DebugVisualizer
                     BeginEdit(false);
                     return true;
                 }
-                if (!string.IsNullOrEmpty(CurrentCell?.Value?.ToString()) && CurrentCell?.RowIndex == NewWatchRowIndex)
-                {
-                    EndEdit();
-                    return true;
-                }
+                _enterPressedOnWatchEndEdit = true;
             }
             return false;
         }
