@@ -61,7 +61,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void PaintInvalidWatchName(DataGridViewCellPaintingEventArgs e)
         {
-            if (e.ColumnIndex == VisualizerTable.NameColumnIndex && e.Value is string watchName && !string.IsNullOrEmpty(watchName) && !Watch.IsWatchNameValid(watchName))
+            if (e.ColumnIndex == VisualizerTable.NameColumnIndex && e.Value is string watchName && !string.IsNullOrWhiteSpace(watchName) && !Watch.IsWatchNameValid(watchName))
                 e.CellStyle.BackColor = Color.Red;
         }
 

@@ -59,6 +59,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         public static VariableType TypeFromShortName(string shortName)
         {
+            if (string.IsNullOrEmpty(shortName))
+                return new VariableType(VariableCategory.Hex, 32);
+
             switch (shortName[0])
             {
                 case 'B':
