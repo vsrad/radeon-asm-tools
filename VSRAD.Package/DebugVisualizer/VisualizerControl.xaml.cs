@@ -157,9 +157,9 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
             var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-            if (_context.BreakData != null && !string.IsNullOrEmpty(watch))
+            if (_context.BreakData != null && watch != null)
             {
-                var watchType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
+                var watchType = VariableTypeUtils.TypeFromShortName((string)row.HeaderCell.Value);
                 var binHexSeparator = _context.Options.VisualizerAppearance.BinHexSeparator;
                 var intSeparator = _context.Options.VisualizerAppearance.IntUintSeparator;
                 var leadingZeroes = _context.Options.VisualizerAppearance.BinHexLeadingZeroes;
