@@ -16,6 +16,9 @@ namespace VSRAD.Package.ProjectSystem
         Result<uint[]> GetBreakTarget(string file, bool step);
         void SetRunToLine(string file, uint line);
         void ResetToFirstBreakTarget();
+        void SetResumableState(string file, uint line, bool resumable);
+        bool GetResumableState(string file, uint line);
+        void InitBreakpoints();
     }
 
     [Export(typeof(IBreakpointTracker))]
@@ -38,6 +41,9 @@ namespace VSRAD.Package.ProjectSystem
                 Assumes.Present(_dte);
 
                 _projectOptions = options;
+
+                InitBreakpoints();
+
             });
         }
 
@@ -115,5 +121,46 @@ namespace VSRAD.Package.ProjectSystem
                 }
             }
         }
+
+        public void SetResumableState(string file, uint line, bool resumable)
+        {
+            _projectOptions.DebuggerOptions.UpdateBreakpoint(file, line, resumable);
+        }
+
+        public bool GetResumableState(string file, uint line)
+        {
+            var br = _projectOptions.DebuggerOptions.FindBreakpoint(file, line);
+            if(br.File != null)
+            {
+                return br.Resumable;
+            } else
+            {
+                _projectOptions.DebuggerOptions.UpdateBreakpoint(file, line, _projectOptions.DebuggerOptions.ResumableDefaultValue);
+                return _projectOptions.DebuggerOptions.ResumableDefaultValue;
+            }
+        }
+
+        public void InitBreakpoints()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            var breakpoints = new List<DebugVisualizer.Breakpoint>();
+
+            foreach (Breakpoint br in _dte.Debugger.Breakpoints)
+            {
+                var savedBreakpoint = _projectOptions.DebuggerOptions.FindBreakpoint(br.File, (uint) br.FileLine);
+
+                if(savedBreakpoint.File.Length == 0)
+                {
+                    breakpoints.Add(new DebugVisualizer.Breakpoint(br.File, (uint)br.FileLine, _projectOptions.DebuggerOptions.ResumableDefaultValue));
+                } else
+                {
+                    breakpoints.Add(savedBreakpoint);
+                }
+            }
+
+            _projectOptions.DebuggerOptions.SetBreakpoints(breakpoints);
+        }
     }
+
+
 }

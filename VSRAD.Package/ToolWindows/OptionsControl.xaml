@@ -105,6 +105,13 @@
                     <CheckBox Content="Open in Editor: Preserve active document" VerticalAlignment="Center" Padding="4,0,0,0"
                                 IsChecked="{Binding Options.DebuggerOptions.PreserveActiveDoc, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
+                <StackPanel Orientation="Horizontal" Height="25">
+                    <TextBlock Text="Default state for new breakpoints:" VerticalAlignment="Center"/>
+                    <ComboBox VerticalAlignment="Center" Margin="5,0,0,0">
+                        <ComboBoxItem Content="Resumable" IsSelected="{Binding Options.DebuggerOptions.ResumableDefaultValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBoxItem Content="Non-resumable" IsSelected="{Binding !Options.DebuggerOptions.ResumableDefaultValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </ComboBox>
+                </StackPanel>
                 <Expander Header="Visualizer Appearance" Margin="0,8,0,0">
                     <StackPanel Margin="0,6,0,0">
                         <StackPanel Orientation="Horizontal" Height="25">

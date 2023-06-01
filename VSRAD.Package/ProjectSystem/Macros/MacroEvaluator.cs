@@ -85,6 +85,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public const string WatchSeparator = ";";
         public const string BreakLineSeparator = ";";
+        public const string BreakStateSeparator = ":";
 
         public const string BuildExecutable = "RadBuildExe";
         public const string BuildArguments = "RadBuildArgs";
@@ -161,7 +162,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
                 case RadMacros.BreakLines:
                     if (_transientValues.BreakLines.TryGetResult(out var breakLines, out var error))
-                        value = string.Join(RadMacros.BreakLineSeparator, breakLines);
+                    {
+                        List<string> breakpoints = new List<string>();
+
+                        foreach (var line in breakLines)
+                        {
+                            bool resumeState = _debuggerOptions.FindBreakpoint(_transientValues.ActiveSourceFullPath, line + 1).Resumable;
+                            breakpoints.Add(line + RadMacros.BreakStateSeparator + (resumeState ? 1 : 0));
+                        }
+                        value = string.Join(RadMacros.BreakLineSeparator, breakpoints);
+                    }
                     else
                         return error;
                     break;

@@ -1366,6 +1366,20 @@
           <ButtonText>Resume execution after break</ButtonText>
         </Strings>
       </Button>
+	 <Button guid="guidCmdSetBreakpointMenu" id="BreakpointMenuAllToResumable" priority="0x10">
+		<Parent guid="guidVSDebugGroup" id="IDG_BREAKPOINT_CONTEXT_MODIFY" />
+		<CommandFlag>DynamicVisibility</CommandFlag>
+		<Strings>
+			<ButtonText>Set all breakpoints to resumable</ButtonText>
+		</Strings>
+	 </Button>
+	 <Button guid="guidCmdSetBreakpointMenu" id="BreakpointMenuAllToUnresumable" priority="0x10">
+		<Parent guid="guidVSDebugGroup" id="IDG_BREAKPOINT_CONTEXT_MODIFY" />
+		<CommandFlag>DynamicVisibility</CommandFlag>
+		<Strings>
+			<ButtonText>Set all breakpoints to non-resumable</ButtonText>
+		</Strings>
+	 </Button>
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -1723,6 +1737,8 @@
 
     <GuidSymbol name="guidCmdSetBreakpointMenu" value="{D0D94348-11C2-4ED2-8A89-D8D10862DABA}">
 	  <IDSymbol value="0x1020" name="BreakpointMenuToggleResumable" />
+	  <IDSymbol value="0x1021" name="BreakpointMenuAllToResumable" />
+	  <IDSymbol value="0x1022" name="BreakpointMenuAllToUnresumable" />
     </GuidSymbol>
 
     <!--<GuidSymbol name="guidCmdEvaluateSelected" value="{6624A31D-4C20-4675-84D7-67D140842579}">
