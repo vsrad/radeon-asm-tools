@@ -183,7 +183,6 @@
       <DependentUpon>VisualizerHeaderControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
-    <Compile Include="DebugVisualizer\Breakpoint.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetInput.xaml.cs">

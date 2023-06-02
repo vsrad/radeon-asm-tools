@@ -19,7 +19,6 @@ namespace VSRAD.Package.Options
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
         public List<Watch> Watches { get; } = new List<Watch>();
-        public List<Breakpoint> Breakpoints { get; } = new List<Breakpoint>();
         public PinnableMruCollection<string> LastAppArgs { get; } = new PinnableMruCollection<string>();
 
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
@@ -71,7 +70,6 @@ namespace VSRAD.Package.Options
         public DebuggerOptions() { }
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
 
-        public DebuggerOptions(List<Breakpoint> breakpoints) => Breakpoints = breakpoints;
         public void UpdateLastAppArgs()
         {
             if (string.IsNullOrWhiteSpace(AppArgs)) return;

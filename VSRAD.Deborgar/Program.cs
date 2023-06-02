@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace VSRAD.Deborgar
 {
@@ -40,7 +41,8 @@ namespace VSRAD.Deborgar
 
         private void ExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
         {
-            _breakFrame = new StackFrame(e.File, new SourceFileLineContext(e.File, e.Lines));
+            var breakLines = e.Breakpoints.Select(br => br.BreakLine).ToArray();
+            _breakFrame = new StackFrame(e.File, new SourceFileLineContext(e.File, breakLines));
 
             if (e.IsStepping)
                 _callbacks.OnStepComplete();

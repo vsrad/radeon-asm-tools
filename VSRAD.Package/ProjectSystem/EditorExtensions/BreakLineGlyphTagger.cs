@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
 using VSRAD.Package.Utils;
+using System.Linq;
 
 namespace VSRAD.Package.ProjectSystem.EditorExtensions
 {
@@ -38,7 +39,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
             ThreadHelper.ThrowIfNotOnUIThread();
             try
             {
-                VsEditor.NavigateToFileAndLine(ServiceProvider.GlobalProvider, execCompleted.File, execCompleted.Lines[0]);
+                VsEditor.NavigateToFileAndLine(ServiceProvider.GlobalProvider, execCompleted.File, execCompleted.Breakpoints[0].BreakLine);
 
                 // Clear VS debugger break markers because they may be stale (clicking Debug in our toolbar does not update them, for instance)
                 var vsDebuggerBreakLineMarkers = VsEditor.GetLineMarkersOfTypeInActiveView(ServiceProvider.GlobalProvider, 63);
@@ -96,11 +97,12 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
             if (e != null && e.IsSuccessful && e.File == _document.FilePath)
             {
-                var toolTip = "Last RAD debugger break " + (e.Lines.Length == 1
-                            ? $"line: {e.Lines[0]}"
-                            : "lines: " + string.Join(", ", e.Lines));
+                var breakLines = e.Breakpoints.Select(br => br.BreakLine).ToArray();
+                var toolTip = "Last RAD debugger break " + (breakLines.Length == 1
+                            ? $"line: {breakLines[0]}"
+                            : "lines: " + string.Join(", ", breakLines));
 
-                foreach (var line in e.Lines)
+                foreach (var line in breakLines)
                 {
                     if (line >= _buffer.CurrentSnapshot.LineCount)
                         continue;

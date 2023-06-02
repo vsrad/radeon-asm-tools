@@ -6,16 +6,16 @@ namespace VSRAD.Deborgar
     public sealed class ExecutionCompletedEventArgs : EventArgs
     {
         public string File { get; }
-        public uint[] Lines { get; }
+        public (uint BreakLine, bool Resumable)[] Breakpoints { get; }
         public bool IsStepping { get; }
         public bool IsSuccessful { get; }
 
-        public ExecutionCompletedEventArgs(string file, uint[] lines, bool isStepping, bool isSuccessful)
+        public ExecutionCompletedEventArgs(string file, (uint BreakLine, bool Resumable)[] breakpoints, bool isStepping, bool isSuccessful)
         {
-            Assumes.True(lines != null && lines.Length != 0, "At least one break line must be provided for the VS debugger.");
+            Assumes.True(breakpoints != null && breakpoints.Length != 0, "At least one break line must be provided for the VS debugger.");
 
             File = file;
-            Lines = lines;
+            Breakpoints = breakpoints;
             IsStepping = isStepping;
             IsSuccessful = isSuccessful;
         }

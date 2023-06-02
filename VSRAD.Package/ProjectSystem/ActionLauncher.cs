@@ -91,10 +91,10 @@ namespace VSRAD.Package.ProjectSystem
             var activeFile = _codeEditor.GetAbsoluteSourcePath();
             var activeFileLine = _codeEditor.GetCurrentLine();
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var breakLines = moveToNextDebugTarget
+            var breakpoints = moveToNextDebugTarget
                 ? _breakpointTracker.MoveToNextBreakTarget(activeFile, isDebugSteppingEnabled)
                 : _breakpointTracker.GetBreakTarget(activeFile, isDebugSteppingEnabled);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, breakLines, watches);
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, breakpoints, watches);
 
             try
             {
