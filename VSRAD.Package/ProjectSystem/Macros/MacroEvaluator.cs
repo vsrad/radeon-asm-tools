@@ -167,7 +167,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
                         foreach (var line in breakLines)
                         {
-                            bool resumeState = _debuggerOptions.FindBreakpoint(_transientValues.ActiveSourceFullPath, line + 1).Resumable;
+                            var breakpoint = _debuggerOptions.Breakpoints.Find(br => (br.File == _transientValues.ActiveSourceFullPath) && (br.Line == line));
+                            bool resumeState = breakpoint is null ? _debuggerOptions.ResumableDefaultValue : breakpoint.Resumable;
                             breakpoints.Add(line + RadMacros.BreakStateSeparator + (resumeState ? 1 : 0));
                         }
                         value = string.Join(RadMacros.BreakLineSeparator, breakpoints);

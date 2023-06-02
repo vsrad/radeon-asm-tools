@@ -2,7 +2,7 @@
 
 namespace VSRAD.Package.DebugVisualizer
 {
-    public struct Breakpoint : System.IEquatable<Breakpoint>
+    public class Breakpoint : System.IEquatable<Breakpoint>
     {
         public string File { get; }
 
@@ -21,7 +21,16 @@ namespace VSRAD.Package.DebugVisualizer
         public bool Equals(Breakpoint br) => File == br.File && Line == br.Line && Resumable == br.Resumable;
         public override bool Equals(object o) => o is Breakpoint br && Equals(br);
         public override int GetHashCode() => (File, Line, Resumable).GetHashCode();
-        public static bool operator ==(Breakpoint left, Breakpoint right) => left.Equals(right);
+        public static bool operator ==(Breakpoint left, Breakpoint right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+
+            if (left is null || right is null)
+                return false;
+
+            return left.Equals(right);
+        }
         public static bool operator !=(Breakpoint left, Breakpoint right) => !(left == right);
     }
 }

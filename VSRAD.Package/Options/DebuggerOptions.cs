@@ -19,7 +19,6 @@ namespace VSRAD.Package.Options
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
         public List<Watch> Watches { get; } = new List<Watch>();
-        [JsonConverter(typeof(BreakpointConverter))]
         public List<Breakpoint> Breakpoints { get; } = new List<Breakpoint>();
         public PinnableMruCollection<string> LastAppArgs { get; } = new PinnableMruCollection<string>();
 
@@ -63,7 +62,7 @@ namespace VSRAD.Package.Options
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(true)]
         public bool ForceOppositeTab { get => _forceOppositeTab; set => SetField(ref _forceOppositeTab, value); }
-        
+
         private bool _preserveActiveDoc = true;
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(true)]
@@ -73,40 +72,6 @@ namespace VSRAD.Package.Options
         public DebuggerOptions(List<Watch> watches) => Watches = watches;
 
         public DebuggerOptions(List<Breakpoint> breakpoints) => Breakpoints = breakpoints;
-
-        public Breakpoint FindBreakpoint(string file, uint line)
-        {
-            foreach(var br in Breakpoints)
-            {
-                if (br.File == file && br.Line == line)
-                {
-                    return br;
-                }
-            }
-            return new Breakpoint();
-        }
-
-        public void RemoveBreakpoint(string file, uint line)
-        {
-            var br = FindBreakpoint(file, line);
-            Breakpoints.Remove(br);
-        }
-
-        public void UpdateBreakpoint(string file, uint line, bool resumable)
-        {
-            var br = FindBreakpoint(file, line);
-            Breakpoints.Remove(br);
-            Breakpoints.Add(new Breakpoint(file, line, resumable));
-        }
-
-        public void SetBreakpoints(List<Breakpoint> _breakpoints)
-        {
-            Breakpoints.Clear();
-            foreach (Breakpoint br in _breakpoints)
-            {
-                Breakpoints.Add(br);
-            }
-        }
         public void UpdateLastAppArgs()
         {
             if (string.IsNullOrWhiteSpace(AppArgs)) return;
@@ -174,30 +139,4 @@ namespace VSRAD.Package.Options
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
     }
 
-    public sealed class BreakpointConverter : JsonConverter
-    {
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-        {
-            List<Breakpoint> breakpoints = existingValue as List<Breakpoint> ?? new List<Breakpoint>();
-
-            if (reader.TokenType == JsonToken.StartArray)
-            {
-                JArray jsonArray = JArray.Load(reader);
-                foreach (JToken item in jsonArray)
-                {
-                    Breakpoint breakpoint = item.ToObject<Breakpoint>();
-                    breakpoints.Add(breakpoint);
-                }
-            }
-
-            return breakpoints;
-        }
-        public override bool CanConvert(Type objectType) => objectType == typeof(Breakpoint);
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            var breakpoints = (List <Breakpoint>) value;
-
-            serializer.Serialize(writer, breakpoints);
-        }
-    }
 }

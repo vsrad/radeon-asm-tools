@@ -39,12 +39,12 @@ namespace VSRAD.Package.Commands
 
             if (commandId == Constants.BreakpointMenuToggleResumable)
             {
-                var line = _codeEditor.GetCurrentLine() + 1;
+                var line = _codeEditor.GetCurrentLine();
                 var file = _codeEditor.GetAbsoluteSourcePath();
                 var resumable = _breakpointTracker.GetResumableState(file, line) ? OLECMDF.OLECMDF_LATCHED : 0;
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED | resumable;
             }
-                
+
             return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
         }
 
@@ -52,13 +52,13 @@ namespace VSRAD.Package.Commands
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             var file = _codeEditor.GetAbsoluteSourcePath();
-            var line = _codeEditor.GetCurrentLine() + 1;
+            var line = _codeEditor.GetCurrentLine();
             if (commandId == Constants.BreakpointMenuToggleResumable)
             {
                 var resumable = _breakpointTracker.GetResumableState(file, line);
                 _breakpointTracker.SetResumableState(file, line, !resumable);
             }
-            else if (commandId == Constants.BreakpointMenuAllToResumable || commandId == Constants.BreakpointMenuAllToUnresumable) 
+            else if (commandId == Constants.BreakpointMenuAllToResumable || commandId == Constants.BreakpointMenuAllToUnresumable)
             {
                 var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
                 Assumes.Present(dte);
@@ -68,10 +68,10 @@ namespace VSRAD.Package.Commands
                 {
                     if (br.File == file)
                     {
-                        _breakpointTracker.SetResumableState(br.File, (uint)br.FileLine, state);
+                        _breakpointTracker.SetResumableState(br.File, (uint)(br.FileLine - 1), state);
                     }
                 }
-               
+
             }
         }
     }
