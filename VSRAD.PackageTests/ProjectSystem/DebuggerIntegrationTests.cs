@@ -61,7 +61,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             codeEditor.Setup(e => e.GetAbsoluteSourcePath()).Returns(@"C:\MEHVE\JATO.s");
             codeEditor.Setup(e => e.GetCurrentLine()).Returns(13);
             var breakpointTracker = new Mock<IBreakpointTracker>();
-            breakpointTracker.Setup(t => t.MoveToNextBreakTarget(@"C:\MEHVE\JATO.s", false)).Returns((new[] { 666u }));
+            breakpointTracker.Setup(t => t.MoveToNextBreakTarget(@"C:\MEHVE\JATO.s", false)).Returns((new[] { (666u, true) }));
 
             var serviceProvider = new Mock<SVsServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
@@ -88,7 +88,7 @@ wave_size 64
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
-                Assert.Equal(@"-break-line 666:0 -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
+                Assert.Equal(@"-break-line 666:1 -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
             });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(validWatchesString) }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "watches-path" }, watchesFetch.FilePath));
@@ -111,7 +111,7 @@ wave_size 64
 
             Assert.NotNull(execCompletedEvent);
             Assert.Equal(@"C:\MEHVE\JATO.s", execCompletedEvent.File);
-            Assert.Equal(666u, execCompletedEvent.Lines[0]);
+            Assert.Equal(666u, execCompletedEvent.Breakpoints[0].BreakLine);
 
             sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
