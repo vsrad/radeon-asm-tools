@@ -127,6 +127,9 @@ namespace VSRAD.Package.ProjectSystem
             if (breakpoint != null)
             {
                 breakpoint.Resumable = resumable;
+            } else
+            {
+                _projectOptions.DebuggerOptions.Breakpoints.Add(new DebugVisualizer.Breakpoint(file, line, resumable));
             }
         }
 
