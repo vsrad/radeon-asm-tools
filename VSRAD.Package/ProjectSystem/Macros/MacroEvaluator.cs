@@ -18,16 +18,16 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
-        public Result<uint[]> BreakLines { get; }
+        public Result<(uint BreakLine, bool Resumable)[]> Breakpoints { get; }
         public ReadOnlyCollection<string> Watches { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, Result<uint[]> breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, Result<(uint BreakLine, bool Resumable)[]> breakpoints, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
-            BreakLines = breakLines;
+            Breakpoints = breakpoints;
             Watches = watches;
         }
     }
@@ -85,6 +85,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public const string WatchSeparator = ";";
         public const string BreakLineSeparator = ";";
+        public const string BreakpointPropsSeparator = ":";
 
         public const string BuildExecutable = "RadBuildExe";
         public const string BuildArguments = "RadBuildArgs";
@@ -160,8 +161,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.NGroups: value = _debuggerOptions.NGroups.ToString(); break;
                 case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
                 case RadMacros.BreakLines:
-                    if (_transientValues.BreakLines.TryGetResult(out var breakLines, out var error))
-                        value = string.Join(RadMacros.BreakLineSeparator, breakLines);
+                    if (_transientValues.Breakpoints.TryGetResult(out var breakpoints, out var error))
+                    {
+                        var breakpointsStrings = breakpoints.Select(br => br.BreakLine + RadMacros.BreakpointPropsSeparator + (br.Resumable ? 1 : 0));
+                        value = string.Join(RadMacros.BreakLineSeparator, breakpointsStrings);
+                    }
                     else
                         return error;
                     break;

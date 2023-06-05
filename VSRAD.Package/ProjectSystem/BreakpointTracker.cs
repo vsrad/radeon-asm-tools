@@ -7,15 +7,31 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
+using System.Linq;
+using EnvDTE80;
+using Newtonsoft.Json;
 
 namespace VSRAD.Package.ProjectSystem
 {
+    class BreakpointState
+    {
+        public bool Resumable { get; set; }
+
+        [JsonConstructor]
+        public BreakpointState(bool resumable)
+        {
+            Resumable = resumable;
+        }
+    }
+
     public interface IBreakpointTracker
     {
-        Result<uint[]> MoveToNextBreakTarget(string file, bool step);
-        Result<uint[]> GetBreakTarget(string file, bool step);
+        Result<(uint BreakLine, bool Resumable)[]> MoveToNextBreakTarget(string file, bool step);
+        Result<(uint BreakLine, bool Resumable)[]> GetBreakTarget(string file, bool step);
         void SetRunToLine(string file, uint line);
         void ResetToFirstBreakTarget();
+        void SetResumableState(string file, uint line, bool resumable);
+        bool GetResumableState(string file, uint line);
     }
 
     [Export(typeof(IBreakpointTracker))]
@@ -26,6 +42,7 @@ namespace VSRAD.Package.ProjectSystem
 
         private DTE _dte;
         private ProjectOptions _projectOptions;
+
 
         [ImportingConstructor]
         public BreakpointTracker(IProject project, SVsServiceProvider serviceProvider)
@@ -51,7 +68,7 @@ namespace VSRAD.Package.ProjectSystem
             _breakTargetPerFile.Clear();
         }
 
-        public Result<uint[]> MoveToNextBreakTarget(string file, bool step)
+        public Result<(uint BreakLine, bool Resumable)[]> MoveToNextBreakTarget(string file, bool step)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -61,18 +78,18 @@ namespace VSRAD.Package.ProjectSystem
                 if (_projectOptions.DebuggerOptions.BreakMode == BreakMode.Multiple)
                     _breakTargetPerFile.Remove(file);
                 else
-                    _breakTargetPerFile[file] = (Line: nextTarget[0], ForceRunToLine: false);
+                    _breakTargetPerFile[file] = (Line: nextTarget[0].BreakLine, ForceRunToLine: false);
             }
             return nextTargetResult;
         }
 
-        public Result<uint[]> GetBreakTarget(string file, bool step)
+        public Result<(uint BreakLine, bool Resumable)[]> GetBreakTarget(string file, bool step)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
             if (_breakTargetPerFile.TryGetValue(file, out var target) && target.ForceRunToLine)
             {
-                return new[] { target.Line };
+                return new[] { (target.Line, GetResumableState(file, target.Line)) };
             }
             else if (step)
             {
@@ -80,7 +97,7 @@ namespace VSRAD.Package.ProjectSystem
                     return new Error("Stepping is not supported in multiple breakpoints mode.");
 
                 if (_breakTargetPerFile.TryGetValue(file, out var prevTarget))
-                    return new[] { prevTarget.Line + 1 };
+                    return new[] { (prevTarget.Line + 1, GetResumableState(file, prevTarget.Line + 1)) };
                 else
                     return new Error($"Stepping is not available until a breakpoint has been hit in the current file ({file}).");
             }
@@ -98,22 +115,77 @@ namespace VSRAD.Package.ProjectSystem
                 switch (_projectOptions.DebuggerOptions.BreakMode)
                 {
                     case BreakMode.Multiple:
-                        return breakpointLines.ToArray();
+                        return breakpointLines.Select(line => (line, GetResumableState(file, line))).ToArray();
                     case BreakMode.SingleRerun:
                         if (_breakTargetPerFile.TryGetValue(file, out var prevTarget) && breakpointLines.Contains(prevTarget.Line))
-                            return new[] { prevTarget.Line };
+                            return new[] { (prevTarget.Line, GetResumableState(file, prevTarget.Line)) };
                         else
                             goto case BreakMode.SingleRoundRobin;
                     case BreakMode.SingleRoundRobin:
                         var previousBreakLine = _breakTargetPerFile.TryGetValue(file, out prevTarget) ? prevTarget.Line : 0;
                         foreach (var breakLine in breakpointLines)
                             if (breakLine > previousBreakLine)
-                                return new[] { breakLine };
-                        return new[] { breakpointLines[0] };
+                                return new[] { (breakLine, GetResumableState(file, breakLine)) };
+                        return new[] { (breakpointLines[0], GetResumableState(file, breakpointLines[0])) };
                     default:
                         return new Error("Undefined breakpoint mode.");
                 }
             }
         }
+
+        public void SetResumableState(string file, uint line, bool resumable)
+        {
+            EnvDTE80.Debugger2 debugger = (EnvDTE80.Debugger2)_dte.Debugger;
+            var breakpoint = debugger.Breakpoints.Cast<EnvDTE80.Breakpoint2>().FirstOrDefault(br => br.File == file && (br.FileLine - 1) == line);
+            if (breakpoint != null)
+            {
+                BreakpointState breakpointState;
+                if (!string.IsNullOrEmpty(breakpoint.Tag))
+                {
+                    breakpointState = JsonConvert.DeserializeObject<BreakpointState>(breakpoint.Tag);
+                    breakpointState.Resumable = resumable;
+                }
+                else
+                {
+                    breakpointState = new BreakpointState(resumable);
+                }
+
+                string newTag = JsonConvert.SerializeObject(breakpointState, Formatting.None);
+                breakpoint.Tag = newTag;
+            }
+            else
+            {
+                Errors.ShowWarning("Breakpoint not found at " + file + ":" + line);
+            }
+
+
+        }
+
+        public bool GetResumableState(string file, uint line)
+        {
+            EnvDTE80.Debugger2 debugger = (EnvDTE80.Debugger2)_dte.Debugger;
+            var breakpoint = debugger.Breakpoints.Cast<EnvDTE80.Breakpoint2>().FirstOrDefault(br => br.File == file && (br.FileLine - 1) == line);
+            if (breakpoint != null)
+            {
+                BreakpointState breakpointState;
+                if (!string.IsNullOrEmpty(breakpoint.Tag))
+                {
+                    breakpointState = JsonConvert.DeserializeObject<BreakpointState>(breakpoint.Tag);
+                    return breakpointState.Resumable;
+                }
+                else
+                {
+                    SetResumableState(file, line, _projectOptions.DebuggerOptions.ResumableDefaultValue);
+                    return _projectOptions.DebuggerOptions.ResumableDefaultValue;
+                }
+            }
+            else
+            {
+                return _projectOptions.DebuggerOptions.ResumableDefaultValue;
+            }
+        }
+
     }
+
+
 }

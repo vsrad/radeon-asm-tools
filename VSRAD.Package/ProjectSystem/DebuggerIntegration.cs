@@ -79,9 +79,9 @@ namespace VSRAD.Package.ProjectSystem
         public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients, bool isStepping = false)
         {
             ExecutionCompletedEventArgs args;
-            if (transients != null && transients.BreakLines.TryGetResult(out var breakLines, out _))
+            if (transients != null && transients.Breakpoints.TryGetResult(out var breakpoints, out _))
             {
-                args = new ExecutionCompletedEventArgs(transients.ActiveSourceFullPath, breakLines, isStepping, isSuccessful: true);
+                args = new ExecutionCompletedEventArgs(transients.ActiveSourceFullPath, breakpoints, isStepping, isSuccessful: true);
             }
             else
             {
@@ -91,15 +91,15 @@ namespace VSRAD.Package.ProjectSystem
                 try
                 {
                     sourcePath = _codeEditor.GetAbsoluteSourcePath();
-                    breakLines = new[] { _codeEditor.GetCurrentLine() };
+                    breakpoints = new[] { (_codeEditor.GetCurrentLine(), true) };
                 }
                 catch
                 {
                     // May throw an exception if no files are open in the editor
                     sourcePath = "";
-                    breakLines = Array.Empty<uint>();
+                    breakpoints = new[] { (0u, true) };
                 }
-                args = new ExecutionCompletedEventArgs(sourcePath, breakLines, isStepping, isSuccessful: false);
+                args = new ExecutionCompletedEventArgs(sourcePath, breakpoints, isStepping, isSuccessful: false);
             }
             ExecutionCompleted?.Invoke(this, args);
             _breakLineTagger.OnExecutionCompleted(args);

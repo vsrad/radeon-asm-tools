@@ -50,6 +50,10 @@ namespace VSRAD.Package.Options
         [DefaultValue(64)]
         public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }
 
+        private bool _resumableDefaultValue;
+        [DefaultValue(true)]
+        public bool ResumableDefaultValue { get => _resumableDefaultValue; set => SetField(ref _resumableDefaultValue, value); }
+
         private BreakMode _breakMode;
         public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
 
@@ -57,7 +61,7 @@ namespace VSRAD.Package.Options
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(true)]
         public bool ForceOppositeTab { get => _forceOppositeTab; set => SetField(ref _forceOppositeTab, value); }
-        
+
         private bool _preserveActiveDoc = true;
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(true)]
@@ -132,4 +136,5 @@ namespace VSRAD.Package.Options
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) => throw new NotImplementedException();
     }
+
 }

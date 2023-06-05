@@ -104,7 +104,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         {
             return new MacroEvaluatorTransientValues(0,
                 sourcePath: "<active editor tab full path>",
-                new[] { 0u },
+                new[] { (0u, true) },
                 _project.Options.DebuggerOptions.GetWatchSnapshot(),
                 sourceDir: "<active editor tab dir name>",
                 sourceFile: "<active editor tab file name>");
