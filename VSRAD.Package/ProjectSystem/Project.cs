@@ -91,7 +91,12 @@ namespace VSRAD.Package.ProjectSystem
 
         private void OptionsPropertyChanged(object sender, PropertyChangedEventArgs e) => SaveOptions();
 
-        public void Unload() => Unloaded?.Invoke();
+        public void Unload()
+        {
+            Unloaded?.Invoke();
+            if (_loaded)
+                SaveOptions();
+        }
 
         public void SaveOptions() => Options.Write(_visualOptionsFilePath, _profilesFilePath);
 
