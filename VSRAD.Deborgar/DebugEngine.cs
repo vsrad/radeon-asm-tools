@@ -51,11 +51,6 @@ namespace VSRAD.Deborgar
             return VSConstants.S_OK;
         }
 
-        int IDebugEngine2.CreatePendingBreakpoint(IDebugBreakpointRequest2 pBPRequest, out IDebugPendingBreakpoint2 ppPendingBP)
-        {
-            return _program.CreatePendingBreakpoint(pBPRequest, out ppPendingBP);
-        }
-
         int IDebugEngine2.DestroyProgram(IDebugProgram2 program)
         {
             ErrorHandler.ThrowOnFailure(program.Terminate());
@@ -99,6 +94,12 @@ namespace VSRAD.Deborgar
 
         int IDebugEngine2.EnumPrograms(out IEnumDebugPrograms2 programs) =>
             throw new NotImplementedException(nameof(IDebugEngine2.EnumPrograms) + " is a deprecated method not called by the debugger.");
+
+        int IDebugEngine2.CreatePendingBreakpoint(IDebugBreakpointRequest2 pBPRequest, out IDebugPendingBreakpoint2 ppPendingBP)
+        {
+            ppPendingBP = null;
+            return VSConstants.E_NOTIMPL;
+        }
 
         #endregion
     }

@@ -62,7 +62,6 @@
   <ItemGroup>
     <Compile Include="AD7Enums.cs" />
     <Compile Include="AD7Events.cs" />
-    <Compile Include="Breakpoint.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DebugEngine.cs" />
     <Compile Include="EngineCallback.cs" />

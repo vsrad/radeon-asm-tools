@@ -1,9 +1,7 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Debugger.Interop;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace VSRAD.Deborgar
 {
@@ -11,8 +9,6 @@ namespace VSRAD.Deborgar
     {
         private readonly IDebugProcess2 _process;
         private readonly Guid _programId = Guid.NewGuid();
-
-        private readonly Dictionary<string, List<Breakpoint>> _breakpoints = new Dictionary<string, List<Breakpoint>>();
 
         private IEngineIntegration _engineIntegration;
         private IEngineCallbacks _callbacks;
@@ -81,46 +77,6 @@ namespace VSRAD.Deborgar
             _breakFrame.SetFrameInfo(dwFieldSpec, out var frameInfo);
             ppEnum = new AD7FrameInfoEnum(new FRAMEINFO[] { frameInfo });
             return VSConstants.S_OK;
-        }
-
-        public int CreatePendingBreakpoint(IDebugBreakpointRequest2 request, out IDebugPendingBreakpoint2 breakpoint)
-        {
-            var requestInfo = new BP_REQUEST_INFO[1];
-            ErrorHandler.ThrowOnFailure(request.GetRequestInfo(enum_BPREQI_FIELDS.BPREQI_BPLOCATION, requestInfo));
-            var bpLocation = requestInfo[0].bpLocation;
-            if (bpLocation.bpLocationType != (uint)enum_BP_LOCATION_TYPE.BPLT_CODE_FILE_LINE)
-            {
-                breakpoint = null;
-                return VSConstants.E_FAIL;
-            }
-
-            var documentInfo = (IDebugDocumentPosition2)Marshal.GetObjectForIUnknown(bpLocation.unionmember2);
-            breakpoint = new Breakpoint(this, request, documentInfo);
-            return VSConstants.S_OK;
-        }
-
-        public void AddBreakpoint(Breakpoint breakpoint)
-        {
-            var fileState = GetFileBreakpoints(breakpoint.SourceContext.SourcePath);
-            fileState.Add(breakpoint);
-
-            _callbacks.OnBreakpointBound(breakpoint);
-        }
-
-        public void RemoveBreakpoint(Breakpoint breakpoint)
-        {
-            var fileState = GetFileBreakpoints(breakpoint.SourceContext.SourcePath);
-            fileState.Remove(breakpoint);
-        }
-
-        private List<Breakpoint> GetFileBreakpoints(string file)
-        {
-            if (!_breakpoints.TryGetValue(file, out var breakpoints))
-            {
-                breakpoints = new List<Breakpoint>();
-                _breakpoints.Add(file, breakpoints);
-            }
-            return breakpoints;
         }
 
         #region IDebugProgram2/IDebugProgram3 Members

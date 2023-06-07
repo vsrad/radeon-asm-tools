@@ -92,48 +92,6 @@ namespace VSRAD.Deborgar
         public static readonly Guid GUID = new Guid("B1844850-1349-45D4-9F12-495212F5EB0B");
     }
 
-    sealed class AD7BreakpointBoundEvent : AD7AsynchronousEvent, IDebugBreakpointBoundEvent2
-    {
-        public static readonly Guid GUID = new Guid("1dddb704-cf99-4b8a-b746-dabb01dd13a0");
-
-        private readonly Breakpoint _breakpoint;
-
-        public AD7BreakpointBoundEvent(Breakpoint breakpoint)
-        {
-            _breakpoint = breakpoint;
-        }
-
-        int IDebugBreakpointBoundEvent2.EnumBoundBreakpoints(out IEnumDebugBoundBreakpoints2 ppEnum)
-        {
-            ppEnum = new AD7BoundBreakpointsEnum(new IDebugBoundBreakpoint2[] { _breakpoint });
-            return VSConstants.S_OK;
-        }
-
-        int IDebugBreakpointBoundEvent2.GetPendingBreakpoint(out IDebugPendingBreakpoint2 ppPendingBP)
-        {
-            ppPendingBP = _breakpoint;
-            return VSConstants.S_OK;
-        }
-    }
-
-    sealed class AD7BreakpointEvent : AD7StoppingEvent, IDebugBreakpointEvent2
-    {
-        public static readonly Guid GUID = new Guid("501C1E21-C557-48B8-BA30-A1EAB0BC4A74");
-
-        IEnumDebugBoundBreakpoints2 _boundBreakpoints;
-
-        public AD7BreakpointEvent(IEnumDebugBoundBreakpoints2 boundBreakpoints)
-        {
-            _boundBreakpoints = boundBreakpoints;
-        }
-
-        int IDebugBreakpointEvent2.EnumBreakpoints(out IEnumDebugBoundBreakpoints2 ppEnum)
-        {
-            ppEnum = _boundBreakpoints;
-            return VSConstants.S_OK;
-        }
-    }
-
     sealed class AD7StepCompleteEvent : AD7StoppingEvent, IDebugStepCompleteEvent2
     {
         public static readonly Guid GUID = new Guid("0F7F24C1-74D9-4EA6-A3EA-7EDB2D81441D");
