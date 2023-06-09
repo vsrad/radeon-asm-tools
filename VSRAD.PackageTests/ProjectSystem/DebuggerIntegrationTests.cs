@@ -88,7 +88,7 @@ wave_size 64
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
-                Assert.Equal(@"-break-line 666 -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
+                Assert.Equal(@"-break-line 666:resume -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
             });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(validWatchesString) }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "watches-path" }, watchesFetch.FilePath));
