@@ -50,9 +50,9 @@ namespace VSRAD.Package.Options
         [DefaultValue(64)]
         public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }
 
-        private bool _resumeMode;
+        private bool _stopOnHit;
         [DefaultValue(false)]
-        public bool ResumeMode { get => _resumeMode; set => SetField(ref _resumeMode, value); }
+        public bool StopOnHit { get => _stopOnHit; set => SetField(ref _stopOnHit, value); }
 
         private BreakMode _breakMode;
         public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }

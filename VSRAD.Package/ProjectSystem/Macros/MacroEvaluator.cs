@@ -163,7 +163,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.BreakLines:
                     if (_transientValues.BreakLines.TryGetResult(out var breakLines, out var error))
                     {
-                        bool stopOnHit = _debuggerOptions.ResumeMode;
+                        bool stopOnHit = _debuggerOptions.StopOnHit;
                         var breakpointsStrings = breakLines.Select(line =>  line + RadMacros.BreakpointPropsSeparator + (stopOnHit ? 0 : 1));
                         value = string.Join(RadMacros.BreakLineSeparator, breakpointsStrings);
                     }

@@ -214,7 +214,7 @@
             <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}"
                                Width="60" Height="24" />
             <StackPanel Orientation="Horizontal" Height="24">
-                <CheckBox  Margin="6,0,6,0" Padding="-4,-1,0,0" IsChecked="{Binding Options.DebuggerOptions.ResumeMode}" VerticalContentAlignment="Center" UseLayoutRounding="False">
+                <CheckBox  Margin="6,0,6,0" Padding="-4,-1,0,0" IsChecked="{Binding Options.DebuggerOptions.StopOnHit}" VerticalContentAlignment="Center" UseLayoutRounding="False">
                     <Label Content="Stop on hit"/>
                 </CheckBox>
             </StackPanel>
