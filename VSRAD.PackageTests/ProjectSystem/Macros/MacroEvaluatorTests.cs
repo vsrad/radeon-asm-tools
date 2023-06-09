@@ -58,13 +58,13 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
 
             result = await evaluator.EvaluateAsync($"$({RadMacros.ActiveSourceDir})\\$({RadMacros.ActiveSourceFile}):$({RadMacros.ActiveSourceFileLine}), stop at $({RadMacros.BreakLines})");
             Assert.True(result.TryGetResult(out evaluated, out _));
-            Assert.Equal(@"B:\welcome\home:666, stop at 13", evaluated);
+            Assert.Equal(@"B:\welcome\home:666, stop at 13:1", evaluated);
 
             transients = new MacroEvaluatorTransientValues(0, "nofile", new[] { 20u, 1u, 9u }, new ReadOnlyCollection<string>(new[] { "watch" }));
             evaluator = new MacroEvaluator(props.Object, transients, EmptyRemoteEnv, new DebuggerOptions(), new ProfileOptions());
             result = await evaluator.EvaluateAsync($"-l $({RadMacros.BreakLines})");
             Assert.True(result.TryGetResult(out evaluated, out _));
-            Assert.Equal("-l 20;1;9", evaluated);
+            Assert.Equal("-l 20:1;1:1;9:1", evaluated);
         }
 
         [Fact]
