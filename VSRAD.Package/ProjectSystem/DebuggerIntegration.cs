@@ -97,7 +97,7 @@ namespace VSRAD.Package.ProjectSystem
                 {
                     // May throw an exception if no files are open in the editor
                     sourcePath = "";
-                    breakLines = Array.Empty<uint>();
+                    breakLines = new[] { 0u }; // ExecutionCompletedEventArgs requires at least one break line
                 }
                 args = new ExecutionCompletedEventArgs(sourcePath, breakLines, isStepping, isSuccessful: false);
             }
@@ -112,8 +112,7 @@ namespace VSRAD.Package.ProjectSystem
             {
                 var result = await _actionLauncher.LaunchActionByNameAsync(
                     _project.Options.Profile.MenuCommands.DebugAction,
-                    moveToNextDebugTarget: true,
-                    isDebugSteppingEnabled: step);
+                    debugBreakTarget: step ? BreakTargetSelector.NextLine : BreakTargetSelector.NextBreakpoint);
 
                 await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                 if (result.Error is Error e)
