@@ -10,11 +10,6 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Options
 {
-    public enum BreakMode
-    {
-        SingleRoundRobin, SingleRerun, Multiple
-    }
-
     public sealed class DebuggerOptions : DefaultNotifyPropertyChanged
     {
         [JsonConverter(typeof(BackwardsCompatibilityWatchConverter))]
@@ -54,8 +49,9 @@ namespace VSRAD.Package.Options
         [DefaultValue(false)]
         public bool StopOnHit { get => _stopOnHit; set => SetField(ref _stopOnHit, value); }
 
-        private BreakMode _breakMode;
-        public BreakMode BreakMode { get => _breakMode; set => SetField(ref _breakMode, value); }
+        private bool _enableMultipleBreakpoints;
+        [DefaultValue(false)]
+        public bool EnableMultipleBreakpoints { get => _enableMultipleBreakpoints; set => SetField(ref _enableMultipleBreakpoints, value); }
 
         private bool _forceOppositeTab = true;
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]

@@ -61,7 +61,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             codeEditor.Setup(e => e.GetAbsoluteSourcePath()).Returns(@"C:\MEHVE\JATO.s");
             codeEditor.Setup(e => e.GetCurrentLine()).Returns(13);
             var breakpointTracker = new Mock<IBreakpointTracker>();
-            breakpointTracker.Setup(t => t.MoveToNextBreakTarget(@"C:\MEHVE\JATO.s", false)).Returns((new[] { 666u }));
+            breakpointTracker.Setup(t => t.GoToBreakTarget(@"C:\MEHVE\JATO.s", BreakTargetSelector.NextBreakpoint)).Returns(new[] { 666u });
 
             var serviceProvider = new Mock<SVsServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);

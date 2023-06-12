@@ -27,7 +27,7 @@ namespace VSRAD.Package.ProjectSystem
 
     public interface IActionLauncher
     {
-        Task<ActionExecution> LaunchActionByNameAsync(string actionName, bool moveToNextDebugTarget = false, bool isDebugSteppingEnabled = false);
+        Task<ActionExecution> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.Last);
         bool IsDebugAction(ActionProfileOptions action);
     }
 
@@ -65,7 +65,7 @@ namespace VSRAD.Package.ProjectSystem
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
-        public async Task<ActionExecution> LaunchActionByNameAsync(string actionName, bool moveToNextDebugTarget = false, bool isDebugSteppingEnabled = false)
+        public async Task<ActionExecution> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.Last)
         {
             if (_currentlyRunningActionName != null)
                 return new ActionExecution(new Error(
@@ -83,7 +83,7 @@ namespace VSRAD.Package.ProjectSystem
                     $"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
                     "Alternatively, you can set a different action for this command in the Toolbar section of your profile."));
 
-            if (moveToNextDebugTarget && !IsDebugAction(action))
+            if (debugBreakTarget != BreakTargetSelector.Last && !IsDebugAction(action))
                 return new ActionExecution(new Error(
                     $"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile."));
@@ -91,9 +91,7 @@ namespace VSRAD.Package.ProjectSystem
             var activeFile = _codeEditor.GetAbsoluteSourcePath();
             var activeFileLine = _codeEditor.GetCurrentLine();
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var breakLines = moveToNextDebugTarget
-                ? _breakpointTracker.MoveToNextBreakTarget(activeFile, isDebugSteppingEnabled)
-                : _breakpointTracker.GetBreakTarget(activeFile, isDebugSteppingEnabled);
+            var breakLines = _breakpointTracker.GoToBreakTarget(activeFile, debugBreakTarget);
             var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, breakLines, watches);
 
             try

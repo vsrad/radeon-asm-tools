@@ -7,8 +7,6 @@ namespace VSRAD.Deborgar
     public interface IEngineCallbacks
     {
         void OnAttach();
-        void OnBreakpointBound(Breakpoint breakpoint);
-        void OnBreakpointsHit(IDebugBoundBreakpoint2[] breakpoints);
         void OnProgramTerminated();
         void OnStepComplete();
         void OnBreakComplete();
@@ -34,17 +32,6 @@ namespace VSRAD.Deborgar
             Send(new AD7EngineCreateEvent(_engine), AD7EngineCreateEvent.GUID);
             Send(new AD7ProgramCreateEvent(), AD7ProgramCreateEvent.GUID);
             Send(new AD7LoadCompleteEvent(), AD7LoadCompleteEvent.GUID);
-        }
-
-        public void OnBreakpointBound(Breakpoint breakpoint)
-        {
-            Send(new AD7BreakpointBoundEvent(breakpoint), AD7BreakpointBoundEvent.GUID);
-        }
-
-        public void OnBreakpointsHit(IDebugBoundBreakpoint2[] breakpoints)
-        {
-            var boundBreakpoints = new AD7BoundBreakpointsEnum(breakpoints);
-            Send(new AD7BreakpointEvent(boundBreakpoints), AD7BreakpointEvent.GUID);
         }
 
         public void OnProgramTerminated()

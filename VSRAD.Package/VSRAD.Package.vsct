@@ -213,7 +213,7 @@
       </Button>
       <Button guid="guidCmdSetActionsMenu" id="DisassembleCommandId" priority="6" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="disassemblyIcon" />
+        <Icon guid="guidImages" id="disassembleIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
         <CommandFlag>TextChanges</CommandFlag>
@@ -245,6 +245,30 @@
           <ButtonText>Debug</ButtonText>
           <CanonicalName>RadDebug.DebugAction</CanonicalName>
           <LocCanonicalName>RadDebug.DebugAction</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetActionsMenu" id="RerunDebugCommandId" priority="9" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="rerunDebugActionIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Rerun Debug</ButtonText>
+          <CanonicalName>RadDebug.RerunDebug</CanonicalName>
+          <LocCanonicalName>RadDebug.RerunDebug</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="9" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="multipleBreakpointsIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Multiple breakpoints</ButtonText>
+          <CanonicalName>RadDebug.ToggleMultipleBreakpoints</CanonicalName>
+          <LocCanonicalName>RadDebug.ToggleMultipleBreakpoints</LocCanonicalName>
         </Strings>
       </Button>
       <!-- Editor context menu -->
@@ -1365,7 +1389,7 @@
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
       <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png"
-              usedList="profilerIcon, visualizerIcon, optionsIcon, disassemblyIcon, preprocessIcon, debugActionIcon" />
+              usedList="visualizerIcon, optionsIcon, profilerIcon, disassembleIcon, preprocessIcon, debugActionIcon, rerunDebugActionIcon, multipleBreakpointsIcon" />
     </Bitmaps>
 
     <Groups>
@@ -1454,16 +1478,6 @@
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
       </Combo>
-      <Combo guid="guidCmdSetBreakMode" id="BreakModeDropdownId" priority="100" type="DropDownCombo" defaultWidth="90" idCommandList="BreakModeDropdownListId">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <CommandFlag>CommandWellOnly</CommandFlag>
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Break Mode</ButtonText>
-          <ToolTipText>Select the breakpoints placement mode</ToolTipText>
-        </Strings>
-      </Combo>
     </Combos>
   </Commands>
 
@@ -1504,6 +1518,11 @@
       <IDSymbol name="DisassembleCommandId" value="0x11" />
       <IDSymbol name="PreprocessCommandId" value="0x12" />
       <IDSymbol name="DebugActionCommandId" value="0x13" />
+      <IDSymbol name="RerunDebugCommandId" value="0x14" />
+    </GuidSymbol>
+
+    <GuidSymbol name="guidCmdSetBreakpointMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
+      <IDSymbol name="ToggleMultipleBreakpointsCommandId" value="0x10" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
@@ -1714,10 +1733,6 @@
       <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
       <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
     </GuidSymbol>-->
-    <GuidSymbol name="guidCmdSetBreakMode" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
-      <IDSymbol name="BreakModeDropdownId" value="0x11" />
-      <IDSymbol name="BreakModeDropdownListId" value="0x101" />
-    </GuidSymbol>
     
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
       <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
@@ -1725,12 +1740,14 @@
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">
-      <IDSymbol name="profilerIcon" value="1" />
-      <IDSymbol name="visualizerIcon" value="2" />
-      <IDSymbol name="optionsIcon" value="3" />
-      <IDSymbol name="disassemblyIcon" value="4" />
+      <IDSymbol name="visualizerIcon" value="1" />
+      <IDSymbol name="optionsIcon" value="2" />
+      <IDSymbol name="profilerIcon" value="3" />
+      <IDSymbol name="disassembleIcon" value="4" />
       <IDSymbol name="preprocessIcon" value="5" />
       <IDSymbol name="debugActionIcon" value="6" />
+      <IDSymbol name="rerunDebugActionIcon" value="7" />
+      <IDSymbol name="multipleBreakpointsIcon" value="8" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

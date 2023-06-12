@@ -85,6 +85,19 @@ namespace VSRAD.Package
 #if DEBUG
             DebugVisualizer.FontAndColorService.ClearFontAndColorCache(this);
 #endif
+
+            try
+            {
+                // https://stackoverflow.com/a/22748659
+                var rerunDebugCommand = dte.Commands.Item(Constants.ActionsMenuCommandSet.ToString("B"), Constants.RerunDebugCommandId);
+                rerunDebugCommand.Bindings = "Global::F6";
+            }
+            catch (Exception e)
+            {
+                Errors.ShowWarning("Unable to set F6 as the keyboard shortcut for Tools.RadDebug.RerunDebug." +
+                    " Please configure it manually in Tools -> Options -> Environment -> Keyboard." +
+                    "\n\nException: " + e.Message);
+            }
         }
 
         public async Task ProjectLoadedAsync(object sender, ProjectLoadedEventArgs e)

@@ -36,7 +36,12 @@ namespace VSRAD.Package.Commands
             {
                 var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
-                    OleCommandText.SetText(commandText, actionName);
+                {
+                    if (commandId == Constants.RerunDebugCommandId)
+                        OleCommandText.SetText(commandText, $"Rerun {actionName}");
+                    else
+                        OleCommandText.SetText(commandText, actionName);
+                }
 
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
             }
@@ -56,8 +61,8 @@ namespace VSRAD.Package.Commands
             {
                 VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
-                    var isDebugAction = actionName == SelectedProfile.MenuCommands.DebugAction;
-                    var result = await _actionLauncher.LaunchActionByNameAsync(actionName, moveToNextDebugTarget: isDebugAction);
+                    var debugNextTarget = commandId == Constants.DebugActionCommandId ? BreakTargetSelector.NextBreakpoint : BreakTargetSelector.Last;
+                    var result = await _actionLauncher.LaunchActionByNameAsync(actionName, debugNextTarget);
                     await VSPackage.TaskFactory.SwitchToMainThreadAsync();
                     if (result.Error is Error e)
                         Errors.Show(e);
@@ -86,6 +91,7 @@ namespace VSRAD.Package.Commands
                 case Constants.PreprocessCommandId:
                     return SelectedProfile.MenuCommands.PreprocessAction;
                 case Constants.DebugActionCommandId:
+                case Constants.RerunDebugCommandId:
                     return SelectedProfile.MenuCommands.DebugAction;
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;
