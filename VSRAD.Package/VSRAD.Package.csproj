@@ -130,12 +130,10 @@
     <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
     <Compile Include="Commands\BaseCommand.cs" />
-    <Compile Include="Commands\BaseRemoteCommand.cs" />
     <Compile Include="Commands\BreakpointMenuCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
-    <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
     <Compile Include="Commands\AddToWatchesCustomSliceEditor.xaml.cs">
       <DependentUpon>AddToWatchesCustomSliceEditor.xaml</DependentUpon>
@@ -235,10 +233,6 @@
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
     <Compile Include="Server\BreakStateOutputFile.cs" />
-    <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
-      <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
@@ -286,8 +280,6 @@
     <Compile Include="ProjectTypeRegistration.cs" />
     <Compile Include="Options\VisualizerOptions.cs" />
     <Compile Include="ProjectProperties.cs" />
-    <Compile Include="ProjectSystem\EditorExtensions\EvaluateSelectedQuickInfoSource.cs" />
-    <Compile Include="ProjectSystem\EditorExtensions\QuickInfoEvaluateSelectedState.cs" />
     <Compile Include="ProjectSystem\Project.cs" />
     <Compile Include="Registry\ProvideDebugEngineAttribute.cs" />
     <Compile Include="Registry\ProvideDebugPortSupplierAttribute.cs" />
@@ -462,10 +454,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\ControlStyle.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ToolWindows\EvaluateSelectedControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

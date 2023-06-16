@@ -224,14 +224,6 @@
       </Button>
 <# } #>
 <# } #>
-      <!--<Button guid="guidCmdEvaluateSelected" id="EvaluateSelectedCommandId" priority="0x0100" type="Button">
-        <Parent guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <Strings>
-          <ButtonText>Evaluate Selected</ButtonText>
-        </Strings>
-      </Button>-->
     </Buttons>
 
     <!--The bitmaps section is used to define the bitmaps that are used for the commands.-->
@@ -272,9 +264,6 @@
         <Parent guid="guidCmdSetAddToWatches" id="AddArrayToWatchesMenuFrom<#= i #>Id" />
       </Group>
 <# } #>
-      <!--<Group guid="guidCmdEvaluateSelected" id="EditorContextMenuEvaluateSelectedGroup" priority="0x0600">
-        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
-      </Group>-->
     </Groups>
 
     <Combos>
@@ -363,11 +352,6 @@
 <# } #>
     </GuidSymbol>
 
-    <!--<GuidSymbol name="guidCmdEvaluateSelected" value="{6624A31D-4C20-4675-84D7-67D140842579}">
-      <IDSymbol value="0x0100" name="EvaluateSelectedCommandId" />
-      <IDSymbol value="4128" name="EditorContextMenuEvaluateSelectedGroup" />
-    </GuidSymbol>-->
-    
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
       <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
       <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
