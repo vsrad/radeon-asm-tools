@@ -1,22 +1,24 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Microsoft.VisualStudio.Shell;
 using Moq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using Xunit;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.PackageTests.ProjectSystem.Macros
 {
+    [Collection(MockedVS.Collection)]
     public class MacroEditContextTests
     {
         [Fact]
         public async Task RecursiveMacroInListTestAsync()
         {
-            TestHelper.InitializePackageTaskFactory();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var profile = new ProfileOptions();
             profile.Macros.Add(new MacroItem("A", "$(B)", userDefined: true));
@@ -38,9 +40,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         }
 
         [Fact]
-        public void RecursiveMacroPreviewTest()
+        public async Task RecursiveMacroPreviewTestAsync()
         {
-            TestHelper.InitializePackageTaskFactory();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var profile = new ProfileOptions();
             profile.Macros.Add(new MacroItem("A", "$(B)", userDefined: true));

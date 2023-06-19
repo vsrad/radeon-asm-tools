@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.ComponentModel.Composition;
@@ -108,13 +109,13 @@ namespace VSRAD.Package.ProjectSystem
 
         public void Execute(bool step)
         {
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
             {
                 var result = await _actionLauncher.LaunchActionByNameAsync(
                     _project.Options.Profile.MenuCommands.DebugAction,
                     debugBreakTarget: step ? BreakTargetSelector.NextLine : BreakTargetSelector.NextBreakpoint);
 
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (result.Error is Error e)
                     Errors.Show(e);
                 NotifyDebugActionExecuted(result.RunResult, result.Transients, step);

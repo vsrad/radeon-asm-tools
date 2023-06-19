@@ -1,35 +1,21 @@
-﻿using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Threading;
+﻿using Microsoft.VisualStudio.Sdk.TestFramework;
+using Microsoft.VisualStudio.Shell.Interop;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Threading;
 using VSRAD.Package;
-
-#pragma warning disable VSSDK005 // Avoid instantiating JoinableTaskContext
+using Xunit;
 
 namespace VSRAD.PackageTests
 {
+    /// <summary><a href="https://github.com/microsoft/vssdktestfx/blob/main/doc/xunit.md">See  Microsoft.VisualStudio.Sdk.TestFramework</a></summary>
+    [CollectionDefinition(Collection)]
+    public class MockedVS : ICollectionFixture<GlobalServiceProvider>, ICollectionFixture<MefHostingFixture>
+    {
+        public const string Collection = "MockedVS";
+    }
+
     public static class TestHelper
     {
-        private static bool _packageFactoryOverridden;
-
-        /* https://github.com/Microsoft/vs-threading/blob/master/doc/testing_vs.md */
-        public static void InitializePackageTaskFactory()
-        {
-            if (_packageFactoryOverridden) return;
-
-            var sta = new Thread(() =>
-            {
-                var jtc = new JoinableTaskContext();
-                VSPackage.TaskFactory = jtc.Factory;
-
-                _packageFactoryOverridden = true;
-            });
-            sta.SetApartmentState(ApartmentState.STA); // JTC needs to be created on the main thread
-            sta.Start();
-            sta.Join();
-        }
-
         public static List<(string Message, string Title, OLEMSGICON Icon)> CapturePackageMessageBoxErrors()
         {
             var errorList = new List<(string Message, string Title, OLEMSGICON Icon)>();

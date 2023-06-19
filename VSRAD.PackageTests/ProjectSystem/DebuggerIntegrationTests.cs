@@ -20,12 +20,13 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.PackageTests.ProjectSystem
 {
+    [Collection(MockedVS.Collection)]
     public class DebuggerIntegrationTests
     {
         [Fact]
         public async Task SuccessfulRunTestAsync()
         {
-            TestHelper.InitializePackageTaskFactory();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
 
             /* Create a test project */

@@ -29,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public async Task<Result<IActionStep>> EvaluateStepAsync(IActionStep step, string sourceAction)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
@@ -47,13 +47,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public async Task<string> EditAsync(string macroName, string currentValue)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
             var editor = new MacroEditContext(macroName, currentValue, evaluator);
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
                 editor.LoadPreviewListAsync(_dirtyProfile.Macros, ProjectProperties, RemoteEnvironment));
 
             var editorWindow = new MacroEditorWindow(editor)
@@ -95,7 +95,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                         {
                             return new Dictionary<string, string>();
                         }
-                    }, VSPackage.TaskFactory);
+                    }, ThreadHelper.JoinableTaskFactory);
                 return _remoteEnv;
             }
         }

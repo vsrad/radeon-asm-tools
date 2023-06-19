@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using Microsoft.VisualStudio.Shell;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using VSRAD.Package.Options;
@@ -44,7 +45,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var file = editButton.DataContext;
             var propertyName = (string)editButton.Tag;
 
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
                 MacroEditor.EditObjectPropertyAsync(file, propertyName));
         }
     }
