@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Sdk.TestFramework;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using VSRAD.Package;
 using Xunit;
@@ -16,6 +17,12 @@ namespace VSRAD.PackageTests
 
     public static class TestHelper
     {
+        public static string GetFixturePath(string fixtureName)
+        {
+            var binDebug = Directory.GetCurrentDirectory();
+            return Path.Combine(Directory.GetParent(binDebug).Parent.FullName, "Fixtures", fixtureName);
+        }
+
         public static List<(string Message, string Title, OLEMSGICON Icon)> CapturePackageMessageBoxErrors()
         {
             var errorList = new List<(string Message, string Title, OLEMSGICON Icon)>();

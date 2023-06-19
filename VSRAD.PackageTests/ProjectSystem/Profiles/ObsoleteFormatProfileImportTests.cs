@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.IO;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using Xunit;
@@ -8,11 +7,9 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
 {
     public class ObsoleteFormatProfileImportTests
     {
-        private static readonly string _fixtureDir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\ProjectSystem\Profiles\Fixtures";
-
-        private static readonly string _obsoleteConfPath = Path.Combine(_fixtureDir, "ConfigsTest.vcxproj.conf.json");
-        private static readonly string _userOptionsPath = Path.Combine(_fixtureDir, "ConfigsTest.vcxproj.user.json");       // do not exist
-        private static readonly string _profOptionsPath = Path.Combine(_fixtureDir, "ConfigsTest.vcxproj.profiles.json");   // do not exist
+        private static readonly string _obsoleteConfPath = TestHelper.GetFixturePath("ConfigsTest.vcxproj.conf.json");
+        private static readonly string _userOptionsPath = TestHelper.GetFixturePath("ConfigsTest.vcxproj.user.json");       // does not exist
+        private static readonly string _profOptionsPath = TestHelper.GetFixturePath("ConfigsTest.vcxproj.profiles.json");   // does not exist
 
         [Fact]
         public void ProjectImportTest()
