@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
@@ -10,6 +10,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed partial class VisualizerControl : UserControl
     {
+        public VisualizerTable Table => _table;
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
         private readonly WavemapImage _wavemap;
@@ -41,7 +42,7 @@ namespace VSRAD.Package.DebugVisualizer
                 _context.Options.DebuggerOptions.Watches.AddRange(newWatchState);
                 if (invalidatedRows != null)
                     foreach (var row in invalidatedRows)
-                        SetRowContentsFromBreakState(row);
+                        SetRowContentsFromBreakState(row, Enumerable.Empty<int>());
             };
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
@@ -85,7 +86,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             _wavemap.View = _context.BreakData.GetWavemapView();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
-                SetRowContentsFromBreakState(row);
+                SetRowContentsFromBreakState(row, Enumerable.Empty<int>());
         }
 
         private void RestoreSavedState()
@@ -148,41 +149,81 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 case nameof(Options.VisualizerAppearance.IntUintSeparator):
                 case nameof(Options.VisualizerAppearance.BinHexLeadingZeroes):
                     foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
-                        SetRowContentsFromBreakState(row);
+                        SetRowContentsFromBreakState(row, Enumerable.Empty<int>());
                     break;
             }
         }
 
-        private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
+        /// <returns>The number of child item rows.</returns>
+        private int SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row, IEnumerable<int> parentRowIndexes)
         {
-            var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-            if (_context.BreakData != null && watch != null)
+            var nChildRows = 0;
+            if (_context.BreakData != null && row.Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nameCell && nameCell.Value != null && Enumerable.SequenceEqual(nameCell.ParentRowIndexes, parentRowIndexes))
             {
                 var watchType = VariableTypeUtils.TypeFromShortName((string)row.HeaderCell.Value);
                 var binHexSeparator = _context.Options.VisualizerAppearance.BinHexSeparator;
                 var intSeparator = _context.Options.VisualizerAppearance.IntUintSeparator;
                 var leadingZeroes = _context.Options.VisualizerAppearance.BinHexLeadingZeroes;
 
-                foreach (var waveView in _context.BreakData.GetWaveViews())
+                if (row.Index == 0) // System watch
                 {
-                    var endThreadId = Math.Min(waveView.StartThreadId + waveView.WaveSize, _table.DataColumnCount);
-                    IEnumerable<uint> watchData = row.Index == 0 ? waveView.GetSystem() : waveView.GetWatchOrNull(watch);
-                    if (watchData == null)
+                    int tid = 0;
+                    for (var wave = 0; wave < _context.BreakData.WavesPerGroup; ++wave)
                     {
-                        for (var tid = waveView.StartThreadId; tid < endThreadId; ++tid)
-                            row.Cells[tid + VisualizerTable.DataColumnOffset].Value = "";
-                    }
-                    else
-                    {
-                        var tid = waveView.StartThreadId;
-                        foreach (var value in watchData)
-                        {
-                            if (tid < endThreadId)
-                                row.Cells[(tid++) + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, value, binHexSeparator, intSeparator, leadingZeroes);
-                        }
+                        var data = _context.BreakData.GetSystemData(wave);
+                        for (var lane = 0; lane < data.Length && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                            row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
                     }
                 }
+                else
+                {
+                    Server.WatchMeta watchMeta = null;
+                    foreach (var rowIdx in nameCell.ParentRowIndexes.Append(row.Index))
+                    {
+                        if (watchMeta == null)
+                            _context.BreakData.Watches.TryGetValue((string)_table.Rows[rowIdx].Cells[VisualizerTable.NameColumnIndex].Value, out watchMeta);
+                        else
+                            watchMeta = watchMeta.ListItems[((WatchNameCell)_table.Rows[rowIdx].Cells[VisualizerTable.NameColumnIndex]).IndexInList];
+                    }
+                    for (int wave = 0, tid = 0; wave < _context.BreakData.WavesPerGroup; ++wave)
+                    {
+                        var instance = _context.BreakData.GetSystemData(wave)[Server.BreakStateData.SystemInstanceIdLane];
+                        var (_, DataSlot, ListSize) = watchMeta != null ? watchMeta.Instances.Find(v => v.Instance == instance) : default;
+                        if (DataSlot is uint dataSlot)
+                        {
+                            var data = _context.BreakData.GetWatchData(wave, (int)dataSlot);
+                            for (var lane = 0; lane < data.Length && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
+                        }
+                        else
+                        {
+                            var label = (ListSize is uint listSize) ? (listSize == 1 ? "<1 element>" : $"<{listSize} elements>") : "";
+                            for (var lane = 0; lane < _context.BreakData.WaveSize && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;
+                        }
+                    }
+                    for (var i = 0; i < (watchMeta?.ListItems?.Count ?? 0); ++i)
+                    {
+                        var nextRowIndex = row.Index + nChildRows + 1;
+                        if (!(nextRowIndex < _table.NewWatchRowIndex
+                            && _table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nextNameCell
+                            && Enumerable.SequenceEqual(nextNameCell.ParentRowIndexes, parentRowIndexes.Append(row.Index))))
+                        {
+                            _table.Rows.Insert(nextRowIndex);
+                            _table.Rows[nextRowIndex].Visible = nameCell.ListExpanded;
+                            _table.Rows[nextRowIndex].HeaderCell.Value = VariableTypeUtils.ShortName(watchType); // Inherit watch type
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).IndexInList = i;
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ParentRowIndexes.AddRange(parentRowIndexes.Append(row.Index));
+                        }
+                        nChildRows += 1;
+                        nChildRows += SetRowContentsFromBreakState(_table.Rows[nextRowIndex], parentRowIndexes.Append(row.Index));
+                    }
+                    // Remove all child rows that no longer match watch data
+                    for (var r = row.Index + nChildRows + 1; r < _table.NewWatchRowIndex && ((WatchNameCell)_table.Rows[r].Cells[VisualizerTable.NameColumnIndex]).ParentRowIndexes.Count > parentRowIndexes.Count();)
+                        _table.Rows.RemoveAt(r);
+                }
             }
+            return nChildRows;
         }
     }
 }

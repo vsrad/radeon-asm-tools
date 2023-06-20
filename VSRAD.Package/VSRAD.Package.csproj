@@ -182,6 +182,7 @@
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
+    <Compile Include="DebugVisualizer\WatchNameColumn.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetInput.xaml.cs">
       <DependentUpon>WavemapOffsetInput.xaml</DependentUpon>
     </Compile>

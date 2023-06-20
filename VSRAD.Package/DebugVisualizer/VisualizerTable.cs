@@ -71,7 +71,6 @@ namespace VSRAD.Package.DebugVisualizer
             CellBeginEdit += UpdateEditedWatchName;
             // somewhat hacky way to implement dynamic name column width change while typing a watch name
             EditingControlShowing += SetupDynamicNameColumnWidth;
-            CellDoubleClick += (sender, args) => { if (args.ColumnIndex != -1) BeginEdit(false); };
             CellClick += (sender, args) => { if (args.RowIndex == NewWatchRowIndex) BeginEdit(false); };
 
             // Custom pan/scale cursors
@@ -263,7 +262,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void SetupColumns()
         {
-            Columns.Add(new DataGridViewTextBoxColumn
+            Columns.Add(new WatchNameColumn
             {
                 HeaderText = "Name",
                 ReadOnly = false,
