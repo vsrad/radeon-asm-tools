@@ -11,7 +11,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class VisualizerTable : DataGridView
     {
-        public delegate void ChangeWatchState(List<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
+        public delegate void ChangeWatchState(IEnumerable<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
         public delegate uint GetGroupSize();
 
         public event ChangeWatchState WatchStateChanged;
@@ -34,10 +34,6 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _watchDataValid = true;
         /// <summary>Set externally by the context to indicate whether the cell values are valid or should be grayed out.</summary>
         public bool WatchDataValid { get => _watchDataValid; set { _watchDataValid = value; Invalidate(); } }
-
-        public IEnumerable<DataGridViewRow> DataRows => Rows
-            .Cast<DataGridViewRow>()
-            .Where(x => x.Index > 0 && x.Index != NewWatchRowIndex);
 
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
@@ -184,8 +180,17 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        public List<Watch> GetCurrentWatchState() =>
-            DataRows.Select(GetRowWatchState).ToList();
+        public bool IsUserWatchRow(DataGridViewRow r) =>
+            r.Index > SystemRowIndex && r.Index < NewWatchRowIndex && ((WatchNameCell)r.Cells[NameColumnIndex]).NestingLevel == 0;
+
+        public IEnumerable<DataGridViewRow> GetUserWatchRows() =>
+            Rows.Cast<DataGridViewRow>().Where(IsUserWatchRow);
+
+        public IEnumerable<DataGridViewRow> GetSelectedUserWatchRows() =>
+            GetUserWatchRows().Where(r => r.Cells[NameColumnIndex].Selected);
+
+        public IEnumerable<Watch> GetCurrentWatchState() =>
+            GetUserWatchRows().Select(GetRowWatchState);
 
         public static Watch GetRowWatchState(DataGridViewRow row) => new Watch(
             name: row.Cells[NameColumnIndex].Value?.ToString(),
@@ -294,7 +299,7 @@ namespace VSRAD.Package.DebugVisualizer
                         PrepareNewWatchRow();
                         RaiseWatchStateChanged(new[] { row });
                         if (shouldMoveCaretToNextWatch)
-                            nextWatchIndex = e.RowIndex + 1;
+                            nextWatchIndex = NewWatchRowIndex;
                     }
                 }
                 else if (e.RowIndex != 0) // Modifying an existing watch
@@ -304,14 +309,14 @@ namespace VSRAD.Package.DebugVisualizer
                         if (rowWatchName != _editedWatchName)
                             RaiseWatchStateChanged(new[] { row });
                         if (shouldMoveCaretToNextWatch)
-                            nextWatchIndex = e.RowIndex + 1;
+                            nextWatchIndex = Rows.Cast<DataGridViewRow>().FirstOrDefault(r => IsUserWatchRow(r) && r.Index > e.RowIndex)?.Index ?? NewWatchRowIndex;
                     }
                     else
                     {
                         Rows.RemoveAt(e.RowIndex);
                         RaiseWatchStateChanged();
                         if (shouldMoveCaretToNextWatch)
-                            nextWatchIndex = e.RowIndex;
+                            nextWatchIndex = Rows.Cast<DataGridViewRow>().LastOrDefault(r => IsUserWatchRow(r) && r.Index <= e.RowIndex)?.Index ?? 0;
                     }
                 }
 
@@ -417,10 +422,12 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (!IsCurrentCellInEditMode)
             {
-                var selectedRowsIndexes = _selectionController.GetSelectedRows().Select(r => r.Index).Reverse();
-                foreach (var rowIndex in selectedRowsIndexes)
-                    if (rowIndex != 0) // deleting System is forbidden
-                        Rows.RemoveAt(rowIndex);
+                var selectedRows = GetSelectedUserWatchRows().ToList();
+                var rowsToDelete = Rows.Cast<DataGridViewRow>()
+                    .Where(r => selectedRows.Contains(r) || selectedRows.Contains(((WatchNameCell)r.Cells[NameColumnIndex]).ParentRows.FirstOrDefault()))
+                    .ToList(); // Need to materialize the collection prior to removing any rows
+                foreach (var row in rowsToDelete)
+                    Rows.Remove(row);
 
                 RaiseWatchStateChanged();
 
@@ -432,7 +439,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private bool HandleEnter()
         {
-            if (CurrentCell?.ColumnIndex == NameColumnIndex)
+            if (CurrentCell?.ColumnIndex == NameColumnIndex && IsUserWatchRow(CurrentRow))
             {
                 if (!IsCurrentCellInEditMode)
                 {
@@ -446,10 +453,12 @@ namespace VSRAD.Package.DebugVisualizer
 
         private bool HandleEscape()
         {
-            if (CurrentCell?.ColumnIndex != NameColumnIndex || !IsCurrentCellInEditMode)
-                return false;
-            CancelEdit();
-            return true;
+            if (CurrentCell?.ColumnIndex == NameColumnIndex && IsCurrentCellInEditMode)
+            {
+                CancelEdit();
+                return true;
+            }
+            return false;
         }
 
         #endregion

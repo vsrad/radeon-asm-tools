@@ -12,15 +12,16 @@ namespace VSRAD.Package.DebugVisualizer
     public class WatchNameCell : DataGridViewTextBoxCell
     {
         public int IndexInList { get; set; } = -1;
-        public List<int> ParentRowIndexes { get; } = new List<int>();
+        public List<DataGridViewRow> ParentRows { get; } = new List<DataGridViewRow>();
+
+        public int NestingLevel => ParentRows.Count;
+        public bool HasChildItems => RowIndex + 1 < DataGridView.RowCount && ((WatchNameCell)DataGridView.Rows[RowIndex + 1].Cells[ColumnIndex]).ParentRows.Contains(OwningRow);
+
+        private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
+        private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
 
         private bool _listExpanded;
         public bool ListExpanded { get => _listExpanded; set { _listExpanded = value; ApplyListExpansion(); } }
-
-        private bool HasChildItems => RowIndex + 1 < DataGridView.RowCount && ((WatchNameCell)DataGridView.Rows[RowIndex + 1].Cells[ColumnIndex]).ParentRowIndexes.Contains(RowIndex);
-        private int NestingLevel => ParentRowIndexes.Count;
-        private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
-        private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
 
         public WatchNameCell() : base() { }
 
@@ -59,6 +60,12 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
+        protected override Size GetPreferredSize(Graphics graphics, DataGridViewCellStyle cellStyle, int rowIndex, Size constraintSize)
+        {
+            var textSize = base.GetPreferredSize(graphics, cellStyle, rowIndex, constraintSize);
+            return new Size(textSize.Width + NestedButtonExtentX, textSize.Height);
+        }
+
         public override Rectangle PositionEditingPanel(Rectangle cellBounds, Rectangle cellClip, DataGridViewCellStyle cellStyle, bool singleVerticalBorderAdded, bool singleHorizontalBorderAdded, bool isFirstDisplayedColumn, bool isFirstDisplayedRow)
         {
             var pos = base.PositionEditingPanel(cellBounds, cellClip, cellStyle, singleVerticalBorderAdded, singleHorizontalBorderAdded, isFirstDisplayedColumn, isFirstDisplayedRow);
@@ -75,9 +82,16 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseDoubleClick(DataGridViewCellMouseEventArgs e)
         {
-            base.OnMouseDoubleClick(e);
-            if (!ExpanderButtonClicked(e) && NestingLevel == 0)
-                DataGridView.BeginEdit(false);
+            if (ExpanderButtonClicked(e))
+            {
+                ListExpanded = !ListExpanded;
+            }
+            else
+            {
+                base.OnMouseDoubleClick(e);
+                if (NestingLevel == 0)
+                    DataGridView.BeginEdit(false);
+            }
         }
 
         private bool ExpanderButtonClicked(DataGridViewCellMouseEventArgs e) =>
@@ -88,9 +102,9 @@ namespace VSRAD.Package.DebugVisualizer
             for (var row = RowIndex + 1; row < DataGridView.RowCount; ++row)
             {
                 var rowNameCell = (WatchNameCell)DataGridView.Rows[row].Cells[ColumnIndex];
-                if (!rowNameCell.ParentRowIndexes.Contains(RowIndex))
+                if (!rowNameCell.ParentRows.Contains(OwningRow))
                     break;
-                var allLevelsExpanded = rowNameCell.ParentRowIndexes.TrueForAll(r => ((WatchNameCell)DataGridView.Rows[r].Cells[ColumnIndex]).ListExpanded);
+                var allLevelsExpanded = rowNameCell.ParentRows.TrueForAll(r => ((WatchNameCell)r.Cells[ColumnIndex]).ListExpanded);
                 DataGridView.Rows[row].Visible = allLevelsExpanded;
             }
         }

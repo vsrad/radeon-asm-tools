@@ -7,28 +7,30 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 {
     sealed class ReorderOperation : IMouseMoveOperation
     {
-        private readonly DataGridView _table;
+        private readonly VisualizerTable _table;
 
         private bool _operationStarted;
-        private int _hoverRowIndex;
-        private int _newWatchRowIndex;
+        private DataGridViewRow _mouseDownRow;
+        private List<DataGridViewRow> _userWatchRows;
         private List<DataGridViewRow> _selectedRows;
         private List<DataGridViewRow> _rowsToMove;
 
-        public ReorderOperation(DataGridView table)
+        public ReorderOperation(VisualizerTable table)
         {
             _table = table;
         }
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            _newWatchRowIndex = _table.RowCount - 1;
-            if (hit.Type != DataGridViewHitTestType.RowHeader
-                || hit.RowIndex <= VisualizerTable.SystemRowIndex
-                || hit.RowIndex == _newWatchRowIndex)
+            if (hit.Type != DataGridViewHitTestType.RowHeader || hit.RowIndex < 0)
                 return false;
+
+            _mouseDownRow = _table.Rows[hit.RowIndex];
+            if (!_table.IsUserWatchRow(_mouseDownRow))
+                return false;
+
             _operationStarted = false;
-            _hoverRowIndex = hit.RowIndex;
+            _userWatchRows = _table.GetUserWatchRows().ToList();
             return true;
         }
 
@@ -39,45 +41,52 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
             if (!_operationStarted)
             {
-                _selectedRows = _table.SelectedRows.Cast<DataGridViewRow>().Where(r => r.Index != _newWatchRowIndex).ToList();
-                if (_selectedRows.Contains(_table.Rows[_hoverRowIndex]))
-                    _rowsToMove = _selectedRows.Where(r => r.Index != VisualizerTable.SystemRowIndex).ToList();
-                else
-                    _rowsToMove = new List<DataGridViewRow>() { _table.Rows[_hoverRowIndex] };
+                _selectedRows = _table.GetSelectedUserWatchRows().ToList();
+                var userRowsToMove = _selectedRows.Contains(_mouseDownRow) ? _selectedRows : (IEnumerable<DataGridViewRow>)new[] { _mouseDownRow };
+                _rowsToMove = _table.Rows.Cast<DataGridViewRow>()
+                    .Where(r => userRowsToMove.Contains(r) || userRowsToMove.Contains(((WatchNameCell)r.Cells[VisualizerTable.NameColumnIndex]).ParentRows.FirstOrDefault())).ToList();
             }
 
             var nomalizedMouseX = Math.Min(Math.Max(e.X, 1), _table.Width - 2);
             var hit = _table.HitTest(nomalizedMouseX, e.Y);
-            var indexDiff = hit.RowIndex - _hoverRowIndex;
-
-            if (indexDiff != 0
-                && _rowsToMove.Max(r => r.Index) + indexDiff < _newWatchRowIndex
-                && _rowsToMove.Min(r => r.Index) + indexDiff > VisualizerTable.SystemRowIndex)
+            if (hit.RowIndex >= 0)
             {
-                _operationStarted = true;
-
-                _rowsToMove.Sort((r1, r2) => (indexDiff < 0) ? r1.Index.CompareTo(r2.Index) : r2.Index.CompareTo(r1.Index));
-
-                // When SelectionMode is set to RowHeaderSelect and a selected row is removed,
-                // DataGridView "compensates" for it by selecting an adjacent row.
-                // As a result, rows that weren't a part of the selection at the start of the
-                // reorder operation suddenly become selected, which is jarring.
-                // To prevent this, we keep _selectedRows and restore them manually.
-                var originalSelectionMode = _table.SelectionMode;
-                _table.SelectionMode = DataGridViewSelectionMode.CellSelect;
-
-                foreach (var row in _rowsToMove)
+                var hoverRow = _table.Rows[hit.RowIndex];
+                var hoverWatchIndex = _userWatchRows.IndexOf(hoverRow);
+                if (hoverWatchIndex != -1 && hoverWatchIndex != _userWatchRows.IndexOf(_mouseDownRow))
                 {
-                    var oldIndex = row.Index;
-                    _table.Rows.Remove(row);
-                    _table.Rows.Insert(oldIndex + indexDiff, row);
+                    _operationStarted = true;
+
+                    int moveToRowIndex;
+                    if (hoverRow.Index > _mouseDownRow.Index)
+                        moveToRowIndex = (hoverWatchIndex + 1 < _userWatchRows.Count ? _userWatchRows[hoverWatchIndex + 1].Index : _table.NewWatchRowIndex) - 1;
+                    else
+                        moveToRowIndex = hoverRow.Index;
+
+                    _rowsToMove.Sort((r1, r2) => hoverRow.Index > _mouseDownRow.Index ? r1.Index.CompareTo(r2.Index) : r2.Index.CompareTo(r1.Index));
+
+                    // When SelectionMode is set to RowHeaderSelect and a selected row is removed,
+                    // DataGridView "compensates" for it by selecting an adjacent row.
+                    // As a result, rows that weren't a part of the selection at the start of the
+                    // reorder operation suddenly become selected, which is jarring.
+                    // To prevent this, we keep _selectedRows and restore them manually.
+                    var originalSelectionMode = _table.SelectionMode;
+                    _table.SelectionMode = DataGridViewSelectionMode.CellSelect;
+
+                    foreach (var row in _rowsToMove)
+                    {
+                        //var oldIndex = row.Index;
+                        _table.Rows.Remove(row);
+                        _table.Rows.Insert(moveToRowIndex, row);
+                    }
+
+                    _table.SelectionMode = originalSelectionMode;
+                    foreach (var row in _selectedRows)
+                        row.Selected = true;
+
+                    // Rearrange user watch indexes according to new row positions
+                    _userWatchRows.Sort((a, b) => a.Index.CompareTo(b.Index));
                 }
-
-                _table.SelectionMode = originalSelectionMode;
-                foreach (var row in _selectedRows)
-                    row.Selected = true;
-
-                _hoverRowIndex = hit.RowIndex;
             }
 
             return true;

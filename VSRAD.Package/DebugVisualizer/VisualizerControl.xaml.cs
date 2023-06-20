@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Linq;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
@@ -42,7 +41,7 @@ namespace VSRAD.Package.DebugVisualizer
                 _context.Options.DebuggerOptions.Watches.AddRange(newWatchState);
                 if (invalidatedRows != null)
                     foreach (var row in invalidatedRows)
-                        SetRowContentsFromBreakState(row, Enumerable.Empty<int>());
+                        SetRowContentsFromBreakState(row);
             };
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
@@ -86,7 +85,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             _wavemap.View = _context.BreakData.GetWavemapView();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
-                SetRowContentsFromBreakState(row, Enumerable.Empty<int>());
+                SetRowContentsFromBreakState(row);
         }
 
         private void RestoreSavedState()
@@ -149,16 +148,16 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 case nameof(Options.VisualizerAppearance.IntUintSeparator):
                 case nameof(Options.VisualizerAppearance.BinHexLeadingZeroes):
                     foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
-                        SetRowContentsFromBreakState(row, Enumerable.Empty<int>());
+                        SetRowContentsFromBreakState(row);
                     break;
             }
         }
 
         /// <returns>The number of child item rows.</returns>
-        private int SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row, IEnumerable<int> parentRowIndexes)
+        private int SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
             var nChildRows = 0;
-            if (_context.BreakData != null && row.Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nameCell && nameCell.Value != null && Enumerable.SequenceEqual(nameCell.ParentRowIndexes, parentRowIndexes))
+            if (_context.BreakData != null && row.Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nameCell && nameCell.Value != null)
             {
                 var watchType = VariableTypeUtils.TypeFromShortName((string)row.HeaderCell.Value);
                 var binHexSeparator = _context.Options.VisualizerAppearance.BinHexSeparator;
@@ -178,12 +177,12 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 else
                 {
                     Server.WatchMeta watchMeta = null;
-                    foreach (var rowIdx in nameCell.ParentRowIndexes.Append(row.Index))
+                    foreach (var r in nameCell.ParentRows.Append(row))
                     {
                         if (watchMeta == null)
-                            _context.BreakData.Watches.TryGetValue((string)_table.Rows[rowIdx].Cells[VisualizerTable.NameColumnIndex].Value, out watchMeta);
+                            _context.BreakData.Watches.TryGetValue((string)r.Cells[VisualizerTable.NameColumnIndex].Value, out watchMeta);
                         else
-                            watchMeta = watchMeta.ListItems[((WatchNameCell)_table.Rows[rowIdx].Cells[VisualizerTable.NameColumnIndex]).IndexInList];
+                            watchMeta = watchMeta.ListItems[((WatchNameCell)r.Cells[VisualizerTable.NameColumnIndex]).IndexInList];
                     }
                     for (int wave = 0, tid = 0; wave < _context.BreakData.WavesPerGroup; ++wave)
                     {
@@ -207,19 +206,19 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         var nextRowIndex = row.Index + nChildRows + 1;
                         if (!(nextRowIndex < _table.NewWatchRowIndex
                             && _table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nextNameCell
-                            && Enumerable.SequenceEqual(nextNameCell.ParentRowIndexes, parentRowIndexes.Append(row.Index))))
+                            && Enumerable.SequenceEqual(nextNameCell.ParentRows, nameCell.ParentRows.Append(row))))
                         {
                             _table.Rows.Insert(nextRowIndex);
                             _table.Rows[nextRowIndex].Visible = nameCell.ListExpanded;
                             _table.Rows[nextRowIndex].HeaderCell.Value = VariableTypeUtils.ShortName(watchType); // Inherit watch type
                             ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).IndexInList = i;
-                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ParentRowIndexes.AddRange(parentRowIndexes.Append(row.Index));
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ParentRows.AddRange(nameCell.ParentRows.Append(row));
                         }
                         nChildRows += 1;
-                        nChildRows += SetRowContentsFromBreakState(_table.Rows[nextRowIndex], parentRowIndexes.Append(row.Index));
+                        nChildRows += SetRowContentsFromBreakState(_table.Rows[nextRowIndex]);
                     }
                     // Remove all child rows that no longer match watch data
-                    for (var r = row.Index + nChildRows + 1; r < _table.NewWatchRowIndex && ((WatchNameCell)_table.Rows[r].Cells[VisualizerTable.NameColumnIndex]).ParentRowIndexes.Count > parentRowIndexes.Count();)
+                    for (var r = row.Index + nChildRows + 1; r < _table.NewWatchRowIndex && ((WatchNameCell)_table.Rows[r].Cells[VisualizerTable.NameColumnIndex]).ParentRows.Count > nameCell.ParentRows.Count;)
                         _table.Rows.RemoveAt(r);
                 }
             }
