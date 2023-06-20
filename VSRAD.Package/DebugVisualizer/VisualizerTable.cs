@@ -42,7 +42,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
 
-        private readonly FontAndColorProvider _fontAndColor;
+        private readonly IFontAndColorProvider _fontAndColor;
         private readonly ComputedColumnStyling _computedStyling;
 
         private string _editedWatchName;
@@ -52,7 +52,7 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _hostWindowHasFocus;
         private bool _enterPressedOnWatchEndEdit;
 
-        public VisualizerTable(ProjectOptions options, FontAndColorProvider fontAndColor) : base()
+        public VisualizerTable(ProjectOptions options, IFontAndColorProvider fontAndColor) : base()
         {
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();

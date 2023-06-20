@@ -10,9 +10,17 @@ using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
 {
-    [Export]
+    public interface IDebuggerIntegration : IEngineIntegration
+    {
+        event EventHandler<BreakState> BreakEntered;
+
+        bool TryCreateDebugSession();
+        void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients, bool isStepping = false);
+    }
+
+    [Export(typeof(IDebuggerIntegration))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class DebuggerIntegration : IEngineIntegration
+    public sealed class DebuggerIntegration : IDebuggerIntegration
     {
         public event EventHandler<BreakState> BreakEntered;
         public event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
@@ -107,7 +115,7 @@ namespace VSRAD.Package.ProjectSystem
             BreakEntered(this, runResult?.BreakState);
         }
 
-        public void Execute(bool step)
+        void IEngineIntegration.Execute(bool step)
         {
             ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
             {

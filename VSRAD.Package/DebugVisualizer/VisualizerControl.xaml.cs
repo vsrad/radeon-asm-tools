@@ -14,7 +14,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly VisualizerContext _context;
         private readonly WavemapImage _wavemap;
 
-        public VisualizerControl(IToolWindowIntegration integration)
+        public VisualizerControl(IToolWindowIntegration integration, IFontAndColorProvider fontAndColorProvider)
         {
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += VisualizerStateChanged;
@@ -32,9 +32,8 @@ namespace VSRAD.Package.DebugVisualizer
             integration.ProjectOptions.DebuggerOptions.PropertyChanged += VisualizerStateChanged;
             integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerStateChanged;
 
-            var tableFontAndColor = new FontAndColorProvider();
-            tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
-            _table = new VisualizerTable(_context.Options, tableFontAndColor);
+            fontAndColorProvider.FontAndColorInfoChanged += RefreshDataStyling;
+            _table = new VisualizerTable(_context.Options, fontAndColorProvider);
             integration.AddWatch += _table.AddWatch;
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {

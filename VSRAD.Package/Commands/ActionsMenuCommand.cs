@@ -16,12 +16,12 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
-        private readonly DebuggerIntegration _debuggerIntegration;
+        private readonly IDebuggerIntegration _debuggerIntegration;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, DebuggerIntegration debuggerIntegration)
+        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, IDebuggerIntegration debuggerIntegration)
         {
             _project = project;
             _actionLauncher = actionLauncher;

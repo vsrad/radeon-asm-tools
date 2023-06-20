@@ -13,10 +13,10 @@ namespace VSRAD.Package.Commands
     {
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IBreakpointTracker _breakpointTracker;
-        private readonly DebuggerIntegration _debuggerIntegration;
+        private readonly IDebuggerIntegration _debuggerIntegration;
 
         [ImportingConstructor]
-        public ForceRunToCursorCommand(IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker, DebuggerIntegration debuggerIntegration)
+        public ForceRunToCursorCommand(IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker, IDebuggerIntegration debuggerIntegration)
         {
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;

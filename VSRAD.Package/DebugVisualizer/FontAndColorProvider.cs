@@ -12,6 +12,7 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public interface IFontAndColorProvider
     {
+        event Action FontAndColorInfoChanged;
         FontAndColorState FontAndColorState { get; }
     }
 

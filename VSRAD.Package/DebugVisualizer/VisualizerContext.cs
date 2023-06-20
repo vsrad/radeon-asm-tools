@@ -56,7 +56,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly ICommunicationChannel _channel;
         private BreakState _breakState;
 
-        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, DebuggerIntegration debugger)
+        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, IDebuggerIntegration debugger)
         {
             Options = options;
             Options.DebuggerOptions.PropertyChanged += OptionsChanged;
