@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.Deborgar;
@@ -76,15 +77,6 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             /* Set up server responses */
 
-            var validWatchesString = @"Instance 0:a;tide
-Instance 1:
-Instance 2:a;c;tide
-";
-            var dispatchParamsString = @"
-grid_size (1024, 1, 1)
-group_size (256, 1, 1)
-wave_size 64
-";
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata timestampFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "output-path" }, timestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
@@ -92,11 +84,11 @@ wave_size 64
                 Assert.Equal("ohmu", execute.Executable);
                 Assert.Equal(@"-break-line 666:resume -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
             });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(validWatchesString) }, (FetchResultRange watchesFetch) =>
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "watches-path" }, watchesFetch.FilePath));
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(dispatchParamsString) }, (FetchResultRange dispatchParamsFetch) =>
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") }, (FetchResultRange dispatchParamsFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "dispatch-params-path" }, dispatchParamsFetch.FilePath));
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 1024 /* lanes */ * 4 /* dwords/lane */ * sizeof(uint) });
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") });
 
             /* Start debugging */
 
@@ -119,10 +111,10 @@ wave_size 64
             sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
             Assert.NotNull(breakState);
-            Assert.Equal(1024u, breakState.DispatchParameters.GridSizeX);
-            Assert.Equal(256u, breakState.DispatchParameters.GroupSizeX);
+            Assert.Equal(16384u, breakState.DispatchParameters.GridSizeX);
+            Assert.Equal(512u, breakState.DispatchParameters.GroupSizeX);
             Assert.Equal(64u, breakState.DispatchParameters.WaveSize);
-            Assert.Equal(new Dictionary<uint, string[]> { { 0, new[] { "a", "tide" } }, { 1, Array.Empty<string>() }, { 2, new[] { "a", "c", "tide" } } }, breakState.Data.InstanceWatches);
+            Assert.Equal(new[] { "a", "c", "tide", "tid", "lst", "lst[1]" }, breakState.Data.Watches.Keys);
 
             breakLineTagger.Verify(t => t.OnExecutionCompleted(execCompletedEvent));
         }

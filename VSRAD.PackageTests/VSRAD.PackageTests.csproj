@@ -85,10 +85,13 @@
     <Compile Include="Server\ActionRunnerTests.cs" />
     <Compile Include="Server\BreakStateDispatchParametersTests.cs" />
     <Compile Include="Server\BreakStateTests.cs" />
+    <Compile Include="Server\BreakStateValidWatchesTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Fixtures\DebugBuffer.bin" />
+    <None Include="Fixtures\DebugBufferGen.pl" />
     <None Include="Key.snk" />
     <None Include="Fixtures\ConfigsTest.vcxproj.conf.json" />
   </ItemGroup>
@@ -163,6 +166,10 @@
     <PackageReference Include="System.Composition">
       <Version>1.4.1</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Fixtures\DispatchParams.txt" />
+    <Content Include="Fixtures\ValidWatches.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
