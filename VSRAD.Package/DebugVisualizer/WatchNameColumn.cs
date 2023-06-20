@@ -19,7 +19,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private bool HasChildItems => RowIndex + 1 < DataGridView.RowCount && ((WatchNameCell)DataGridView.Rows[RowIndex + 1].Cells[ColumnIndex]).ParentRowIndexes.Contains(RowIndex);
         private int NestingLevel => ParentRowIndexes.Count;
-        private int ButtonSizeX => Size.Height - Size.Height % 2 - 8;
+        private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
         private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
 
         public WatchNameCell() : base() { }
@@ -46,16 +46,16 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (HasChildItems)
             {
-                int rectSize = ButtonSizeX - 6, rectPadLeft = 4, rectPadTop = (Size.Height - rectSize) / 2;
-                var btnRect = new Rectangle(cellBounds.X + (ButtonSizeX * NestingLevel) + rectPadLeft, cellBounds.Y + rectPadTop, rectSize, rectSize);
-
                 var color = ((cellState & DataGridViewElementStates.Selected) != 0) ? Color.LightGray : Color.DimGray;
-                var pen = new Pen(color, 1.0f);
+                var pen = new Pen(color, 2.0f);
 
-                graphics.DrawRectangle(pen, btnRect);
-                graphics.DrawLine(pen, btnRect.Left + 2, btnRect.Top + btnRect.Height / 2, btnRect.Right - 2, btnRect.Top + btnRect.Height / 2);
-                if (!ListExpanded)
-                    graphics.DrawLine(pen, btnRect.Left + btnRect.Width / 2, btnRect.Top + 2, btnRect.Left + btnRect.Width / 2, btnRect.Bottom - 2);
+                float sz = ButtonSizeX + (ButtonSizeX % 4) - 8; // must be a multiple of 4
+                float x0 = cellBounds.X + (ButtonSizeX * NestingLevel) + 6, y0 = cellBounds.Y + (Size.Height - sz) / 2;
+
+                if (ListExpanded)
+                    graphics.DrawLines(pen, new[] { new PointF(x0, y0 + sz * 0.25f), new PointF(x0 + sz * 0.5f, y0 + sz * 0.75f), new PointF(x0 + sz, y0 + sz * 0.25f) });
+                else
+                    graphics.DrawLines(pen, new[] { new PointF(x0 + sz * 0.25f, y0), new PointF(x0 + sz * 0.75f, y0 + sz * 0.5f), new PointF(x0 + sz * 0.25f, y0 + sz) });
             }
         }
 
