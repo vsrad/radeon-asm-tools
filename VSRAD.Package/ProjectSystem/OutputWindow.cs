@@ -72,7 +72,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task PrintMessageAsync(string title, string contents = null)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var message = contents == null
                 ? "=== " + title + Environment.NewLine + Environment.NewLine
                 : "=== " + title + Environment.NewLine + contents + Environment.NewLine + Environment.NewLine;
@@ -81,7 +81,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public async Task ClearAsync()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             Pane.Clear();
         }
     }

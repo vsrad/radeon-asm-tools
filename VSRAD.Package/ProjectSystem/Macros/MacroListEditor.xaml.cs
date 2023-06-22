@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -154,7 +155,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private void OpenMacroEditor(object param)
         {
             var item = (MacroItem)param;
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
                 item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
         }
 

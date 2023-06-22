@@ -70,7 +70,7 @@ namespace VSRAD.Package
                 }
                 catch (Exception e)
                 {
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     try
                     {
                         exceptionCallbackOnMainThread?.Invoke();

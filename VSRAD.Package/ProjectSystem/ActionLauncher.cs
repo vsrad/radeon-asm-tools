@@ -104,7 +104,7 @@ namespace VSRAD.Package.ProjectSystem
                 var projectProperties = _project.GetProjectProperties();
                 var remoteEnvironment = _project.Options.Profile.General.RunActionsLocally
                     ? null
-                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, VSPackage.TaskFactory);
+                    : new AsyncLazy<IReadOnlyDictionary<string, string>>(_channel.GetRemoteEnvironmentAsync, ThreadHelper.JoinableTaskFactory);
 
                 var evaluator = new MacroEvaluator(projectProperties, transients, remoteEnvironment, _project.Options.DebuggerOptions, _project.Options.Profile);
 
@@ -115,7 +115,7 @@ namespace VSRAD.Package.ProjectSystem
                 if (!evalResult.TryGetResult(out action, out evalError))
                     return new ActionExecution(evalError);
 
-                await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSources.SaveProjectState();
 
                 var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches);

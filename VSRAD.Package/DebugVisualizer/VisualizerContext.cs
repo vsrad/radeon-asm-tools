@@ -1,9 +1,10 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Text;
-using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -55,7 +56,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly ICommunicationChannel _channel;
         private BreakState _breakState;
 
-        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, DebuggerIntegration debugger)
+        public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, IDebuggerIntegration debugger)
         {
             Options = options;
             Options.DebuggerOptions.PropertyChanged += OptionsChanged;
@@ -95,12 +96,12 @@ namespace VSRAD.Package.DebugVisualizer
             if (!WatchDataValid)
                 return;
 
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));
         }
 
         private async Task ChangeGroupAsync(GroupIndexChangedEventArgs e)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var fetchArgs = new GroupFetchingEventArgs();
             GroupFetching(this, fetchArgs);
 

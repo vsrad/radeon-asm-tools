@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -15,12 +16,12 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
-        private readonly DebuggerIntegration _debuggerIntegration;
+        private readonly IDebuggerIntegration _debuggerIntegration;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, DebuggerIntegration debuggerIntegration)
+        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, IDebuggerIntegration debuggerIntegration)
         {
             _project = project;
             _actionLauncher = actionLauncher;
@@ -59,11 +60,11 @@ namespace VSRAD.Package.Commands
         {
             if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out var error))
             {
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+                ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
                     var debugNextTarget = commandId == Constants.DebugActionCommandId ? BreakTargetSelector.NextBreakpoint : BreakTargetSelector.Last;
                     var result = await _actionLauncher.LaunchActionByNameAsync(actionName, debugNextTarget);
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     if (result.Error is Error e)
                         Errors.Show(e);
                     if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action

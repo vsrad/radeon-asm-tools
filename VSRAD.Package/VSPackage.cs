@@ -3,7 +3,6 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Threading;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -47,13 +46,6 @@ namespace VSRAD.Package
         public static SliceVisualizerWindow SliceVisualizerToolWindow { get; private set; }
         public static OptionsWindow OptionsToolWindow { get; private set; }
 
-        private static JoinableTaskFactory _taskFactoryOverride;
-        public static JoinableTaskFactory TaskFactory
-        {
-            get => _taskFactoryOverride ?? ThreadHelper.JoinableTaskFactory;
-            set => _taskFactoryOverride = value;
-        }
-
         private ICommandRouter _commandRouter;
         private SolutionManager _solutionManager;
 
@@ -63,12 +55,12 @@ namespace VSRAD.Package
             AddService(typeof(DebugVisualizer.FontAndColorService),
                 (c, ct, st) => Task.FromResult<object>(new DebugVisualizer.FontAndColorService()), promote: true);
 
-            await TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var vsMonitorSelection = (IVsMonitorSelection)await GetServiceAsync(typeof(IVsMonitorSelection));
             var dte = (DTE)await GetServiceAsync(typeof(DTE));
             _solutionManager = new SolutionManager(vsMonitorSelection);
-            _solutionManager.ProjectLoaded += (s, e) => TaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
+            _solutionManager.ProjectLoaded += (s, e) => ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
 
 #pragma warning disable CS4014     // LoadCurrentSolution needs to be invoked _after_ we leave InitializeAsync,
 #pragma warning disable VSTHRD001  // otherwise we enter a deadlock waiting for the package to finish loading
@@ -106,7 +98,7 @@ namespace VSRAD.Package
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
                 typeof(OptionsWindow), 0, true, CancellationToken.None);
 
-            await TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             VisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             SliceVisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(e.ToolWindowIntegration);

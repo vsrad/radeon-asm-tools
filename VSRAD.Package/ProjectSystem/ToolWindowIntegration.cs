@@ -35,11 +35,11 @@ namespace VSRAD.Package.ProjectSystem
 
         public event AddWatch AddWatch;
 
-        private readonly DebuggerIntegration _debugger;
+        private readonly IDebuggerIntegration _debugger;
         private readonly SVsServiceProvider _serviceProvider;
 
         [ImportingConstructor]
-        public ToolWindowIntegration(IProject project, ICommunicationChannel channel, DebuggerIntegration debugger, SVsServiceProvider serviceProvider)
+        public ToolWindowIntegration(IProject project, ICommunicationChannel channel, IDebuggerIntegration debugger, SVsServiceProvider serviceProvider)
         {
             Project = project;
             CommunicationChannel = channel;

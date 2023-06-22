@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using VSRAD.Package.Options;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem.Macros
 {
@@ -32,7 +34,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public bool MacroValueChanged => MacroValue != _initMacroValue;
 
-        public string EvaluatedValue => VSPackage.TaskFactory.Run(EvaluatePreviewAsync);
+        public string EvaluatedValue => ThreadHelper.JoinableTaskFactory.Run(EvaluatePreviewAsync);
 
         public ICollectionView MacroListView { get; private set; } = new ListCollectionView(new List<KeyValuePair<string, string>>());
 
@@ -80,7 +82,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             foreach (DictionaryEntry e in Environment.GetEnvironmentVariables())
                 macroList.Add(new KeyValuePair<string, string>("$ENV(" + (string)e.Key + ")", (string)e.Value));
 
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             MacroListView = new ListCollectionView(macroList) { Filter = FilterMacro };
             RaisePropertyChanged(nameof(MacroListView));
             RaisePropertyChanged(nameof(EvaluatedValue));
@@ -99,7 +101,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
             foreach (var e in remoteEnvVariables)
                 macroList.Add(new KeyValuePair<string, string>("$ENVR(" + e.Key + ")", e.Value));
 
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             MacroListView.Refresh();
             RaisePropertyChanged(nameof(EvaluatedValue));
             if (remoteEnvVariables.Count > 0)

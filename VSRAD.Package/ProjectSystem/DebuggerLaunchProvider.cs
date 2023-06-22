@@ -13,10 +13,10 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class DebuggerLaunchProvider : DebugLaunchProviderBase
     {
-        private readonly DebuggerIntegration _debugger;
+        private readonly IDebuggerIntegration _debugger;
 
         [ImportingConstructor]
-        public DebuggerLaunchProvider(ConfiguredProject project, DebuggerIntegration debugger) : base(project)
+        public DebuggerLaunchProvider(ConfiguredProject project, IDebuggerIntegration debugger) : base(project)
         {
             _debugger = debugger;
         }
