@@ -1,14 +1,9 @@
-﻿using Microsoft.VisualStudio.Threading;
-using Moq;
+﻿using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
-using System.Threading.Tasks;
 using VSRAD.Package;
-using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ProjectSystem.Macros;
-using VSRAD.Package.Utils;
 
 #pragma warning disable VSSDK005 // Avoid instantiating JoinableTaskContext
 
@@ -33,6 +28,13 @@ namespace VSRAD.PackageTests
             sta.SetApartmentState(ApartmentState.STA); // JTC needs to be created on the main thread
             sta.Start();
             sta.Join();
+        }
+
+        public static List<(string Message, string Title, OLEMSGICON Icon)> CapturePackageMessageBoxErrors()
+        {
+            var errorList = new List<(string Message, string Title, OLEMSGICON Icon)>();
+            Errors.CreateMessageBox = (message, title, icon) => errorList.Add((message, title, icon));
+            return errorList;
         }
 
         public static T MakeWithReadOnlyProps<T>(params (string prop, object value)[] properties) where T : new()

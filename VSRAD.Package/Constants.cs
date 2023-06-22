@@ -31,7 +31,6 @@ namespace VSRAD.Package
         public const int PreprocessCommandId = 0x12;
         public const int DebugActionCommandId = 0x13;
         public const int RerunDebugCommandId = 0x14;
-        public const int EvaluateSelectedCommandId = 0x0100;
         public const int AddToWatchesCommandId = 0x0100;
         public const int AddToWatchesArrayCustomCommandId = 0x1900;
         public const int AddArrayToWatchesIndexCount = 16;
@@ -45,7 +44,6 @@ namespace VSRAD.Package
         public static readonly Guid ToolWindowCommandSet = new Guid("03c8f3ba-2e44-4159-ac37-b08fc295a0cc");
         public static readonly Guid ForceRunToCursorCommandSet = new Guid("cefc8250-7cd1-46c1-b4f6-46a0a22a1c81");
         public static readonly Guid AddToWatchesCommandSet = new Guid("8560BD12-1D31-40BA-B300-1A31FC901E93");
-        public static readonly Guid EvaluateSelectedCommandSet = new Guid("6624A31D-4C20-4675-84D7-67D140842579");
         public static readonly Guid ToolbarCommandSet = new Guid("E1436EB5-1D47-4714-85CB-6177E62AB2AD");
         public static readonly Guid ActionsMenuCommandSet = new Guid("7CF54FFE-BCAC-4751-BEEC-D103FD953C8B");
         public static readonly Guid ProfileDropdownCommandSet = new Guid("912C011A-EDAA-4922-85F2-74436F2265CA");

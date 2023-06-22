@@ -91,7 +91,7 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, AvgprStateChanged, ProcessCopy, InsertSeparatorRow,
+                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, ProcessCopy, InsertSeparatorRow,
                     addWatchRange: (name, from, to) => ArrayRange.FormatArrayRangeWatch(name, from, to, options.VisualizerOptions.MatchBracketsOnAddToWatches).ToList().ForEach(AddWatch)),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
@@ -106,7 +106,7 @@ namespace VSRAD.Package.DebugVisualizer
         public void AddWatch(string watchName)
         {
             RemoveNewWatchRow();
-            AppendVariableRow(new Watch(watchName, new VariableType(VariableCategory.Int, 32), isAVGPR: false));
+            AppendVariableRow(new Watch(watchName, new VariableType(VariableCategory.Int, 32)));
             PrepareNewWatchRow();
             RaiseWatchStateChanged();
         }
@@ -171,16 +171,6 @@ namespace VSRAD.Package.DebugVisualizer
             RaiseWatchStateChanged(changedRows);
         }
 
-        private void AvgprStateChanged(int rowIndex, bool newAvgprState)
-        {
-            var selectedNames = _selectionController.GetClickTargetRows(rowIndex).Select(r => (string)r.Cells[NameColumnIndex].Value);
-            var selectedRows = DataRows.Where(r => selectedNames.Contains(r.Cells[NameColumnIndex].Value.ToString()));
-            foreach (var row in selectedRows)
-                row.HeaderCell.Tag = newAvgprState;
-            RaiseWatchStateChanged(selectedRows);
-            Invalidate(); // redraw custom avgpr graphics
-        }
-
         public void HostWindowFocusChanged(bool hasFocus)
         {
             _hostWindowHasFocus = hasFocus;
@@ -200,11 +190,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public static Watch GetRowWatchState(DataGridViewRow row) => new Watch(
             name: row.Cells[NameColumnIndex].Value?.ToString(),
-            type: VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString()),
-            isAVGPR: (bool)row.HeaderCell.Tag);
-
-        public bool IsAVGPR(string watchName) => DataRows
-            .Any(r => r.Cells[NameColumnIndex].Value?.ToString() == watchName && (bool)r.HeaderCell.Tag);
+            type: VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString()));
 
         private void RaiseWatchStateChanged(IEnumerable<DataGridViewRow> invalidatedRows = null) =>
             WatchStateChanged(GetCurrentWatchState(), invalidatedRows);
@@ -221,7 +207,6 @@ namespace VSRAD.Package.DebugVisualizer
             Rows.Insert(index);
             Rows[index].Cells[NameColumnIndex].Value = " ";
             Rows[index].HeaderCell.Value = VariableCategory.Hex.ToString();
-            Rows[index].HeaderCell.Tag = false; // avgpr
             RaiseWatchStateChanged(new[] { Rows[index] });
         }
 
@@ -231,7 +216,6 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[index].Cells[NameColumnIndex].Value = watch.Name;
             Rows[index].Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
             Rows[index].HeaderCell.Value = watch.Info.ShortName();
-            Rows[index].HeaderCell.Tag = watch.IsAVGPR;
 
             var currentWidth = Columns[NameColumnIndex].Width;
             var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
@@ -249,7 +233,6 @@ namespace VSRAD.Package.DebugVisualizer
             var newRowIndex = Rows.Add();
             Rows[newRowIndex].Cells[NameColumnIndex].ReadOnly = false;
             Rows[newRowIndex].HeaderCell.Value = "";
-            Rows[newRowIndex].HeaderCell.Tag = false; // avgpr
             ClearSelection();
         }
 

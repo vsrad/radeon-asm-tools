@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
 
 namespace VSRAD.PackageTests.ProjectSystem.Profiles
@@ -23,12 +17,14 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
         [Fact]
         public void ProjectImportTest()
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
 
             Assert.Collection(imported.DebuggerOptions.Watches,
-                w1 => Assert.Equal(new Watch("v0", new VariableType(VariableCategory.Hex, 32), false), w1),
-                w2 => Assert.Equal(new Watch(" ", new VariableType(VariableCategory.Uint, 32), false), w2),
-                w3 => Assert.Equal(new Watch("v2", new VariableType(VariableCategory.Float, 32), false), w3));
+                w1 => Assert.Equal(new Watch("v0", new VariableType(VariableCategory.Hex, 32)), w1),
+                w2 => Assert.Equal(new Watch(" ", new VariableType(VariableCategory.Uint, 32)), w2),
+                w3 => Assert.Equal(new Watch("v2", new VariableType(VariableCategory.Float, 32)), w3));
 
             Assert.Equal(42u, imported.DebuggerOptions.Counter);
             Assert.Equal((uint)0x313313, imported.VisualizerOptions.MagicNumber);
@@ -54,7 +50,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                       string userName,
                                       string markerName, string markerValue)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             Assert.Equal("$(RadLocalWorkDir)", profile.General.LocalWorkDir);
@@ -76,7 +75,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                     int timeout,
                                     bool binaryData, int outputOffset)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[0];
@@ -127,7 +129,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                            int timeout,
                                            string lineMarker)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[1];
@@ -172,7 +177,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                            int timeout,
                                            string lineMarker)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[2];
@@ -217,7 +225,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                        int timeout,
                                        string vwExec)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[3];

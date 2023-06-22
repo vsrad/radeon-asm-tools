@@ -1,22 +1,21 @@
 {
   "DebuggerOptions": {
-    "_forceOppositeTab": true,
-    "_preserveActiveDoc": true,
     "Watches": [
       {
         "Name": "v0",
-        "Type": "Hex",
-        "IsAVGPR": false
+        "Type": "Hex"
       },
       {
         "Name": " ",
-        "Type": "Uint",
-        "IsAVGPR": false
+        "Type": "Uint"
       },
       {
         "Name": "v2",
-        "Type": "Float",
-        "IsAVGPR": false
+        "Type": "Float"
+      },
+      {
+        "Bad": "Watch",
+        "ShouldBe":  "Ignored"
       }
     ],
     "LastAppArgs": [],

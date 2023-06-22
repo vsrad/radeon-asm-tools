@@ -49,28 +49,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
     public static class RadMacros
     {
-        public const string DeployDirectory = "RadDeployDir";
-
-        public const string DebuggerExecutable = "RadDebugExe";
-        public const string DebuggerArguments = "RadDebugArgs";
-        public const string DebuggerWorkingDirectory = "RadDebugWorkDir";
-        public const string DebuggerOutputPath = "RadDebugDataOutputPath";
-        public const string DebuggerValidWatchesFilePath = "RadDebugValidWatchesFilePath";
-
-        public const string DisassemblerExecutable = "RadDisasmExe";
-        public const string DisassemblerArguments = "RadDisasmArgs";
-        public const string DisassemblerWorkingDirectory = "RadDisasmWorkDir";
-        public const string DisassemblerOutputPath = "RadDisasmOutputPath";
-        public const string DisassemblerLocalPath = "RadDisasmLocalCopyPath";
-
-        public const string ProfilerExecutable = "RadProfileExe";
-        public const string ProfilerArguments = "RadProfileArgs";
-        public const string ProfilerWorkingDirectory = "RadProfileWorkDir";
-        public const string ProfilerOutputPath = "RadProfileOutputPath";
-        public const string ProfilerViewerExecutable = "RadProfileViewerExe";
-        public const string ProfilerViewerArguments = "RadProfileViewerArgs";
-        public const string ProfilerLocalPath = "RadProfileLocalCopyPath";
-
         public const string ActiveSourceFullPath = "RadActiveSourceFullPath";
         public const string ActiveSourceDir = "RadActiveSourceDir";
         public const string ActiveSourceFile = "RadActiveSourceFile";
@@ -86,17 +64,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string WatchSeparator = ";";
         public const string BreakLineSeparator = ";";
         public const string BreakpointPropsSeparator = ":";
-
-        public const string BuildExecutable = "RadBuildExe";
-        public const string BuildArguments = "RadBuildArgs";
-        public const string BuildWorkingDirectory = "RadBuildWorkDir";
-
-        public const string PreprocessorExecutable = "RadPpExe";
-        public const string PreprocessorArguments = "RadPpArgs";
-        public const string PreprocessorWorkingDirectory = "RadPpDir";
-        public const string PreprocessorOutputPath = "RadPpOutputPath";
-        public const string PreprocessorLocalPath = "RadPpLocalCopyPath";
-        public const string PreprocessorLineMarker = "RadPpLineMarker";
     }
 
     public interface IMacroEvaluator

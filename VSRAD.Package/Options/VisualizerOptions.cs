@@ -25,7 +25,7 @@ namespace VSRAD.Package.Options
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
 
-        private uint _magicNumber = 0x7777777; // Default value, do not change
+        private uint _magicNumber = 0x77777777; // Default value, do not change
         [JsonConverter(typeof(MagicNumberConverter))]
         public uint MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
 
