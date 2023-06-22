@@ -112,6 +112,33 @@ namespace VSRAD.PackageTests.DebugVisualizer
                     Assert.Equal(wave % 2 == 0 ? "" : $"{vis.Context.GroupIndex.DimX}", vis.GetDataCell(c5, tid).Value);
                 }
             }
+
+            int c_1 = 13, c_10 = 14, c_11 = 15;
+            Assert.Equal(("c[1]", ""), (vis.GetNameCell(c_1).Value, vis.GetNameCellParentRowIndexes(c_1)));
+            Assert.Equal(("[0]", $"{c_1}"), (vis.GetNameCell(c_10).Value, vis.GetNameCellParentRowIndexes(c_10)));
+            Assert.Equal(("[1]", $"{c_1}"), (vis.GetNameCell(c_11).Value, vis.GetNameCellParentRowIndexes(c_11)));
+            for (var tid = 0; tid < breakState.Data.GroupSize; ++tid)
+            {
+                Assert.Equal(vis.GetDataCell(c1, tid).Value, vis.GetDataCell(c_1, tid).Value);
+                Assert.Equal(vis.GetDataCell(c10, tid).Value, vis.GetDataCell(c_10, tid).Value);
+                Assert.Equal(vis.GetDataCell(c11, tid).Value, vis.GetDataCell(c_11, tid).Value);
+            }
+
+            int c_1_1 = 16;
+            Assert.Equal(("c[1][1]", ""), (vis.GetNameCell(c_1_1).Value, vis.GetNameCellParentRowIndexes(c_1_1)));
+            for (var tid = 0; tid < breakState.Data.GroupSize; ++tid)
+                Assert.Equal(vis.GetDataCell(c11, tid).Value, vis.GetDataCell(c_1_1, tid).Value);
+
+            int c_1_1_1 = 17;
+            Assert.Equal(("c[1][1][1]", ""), (vis.GetNameCell(c_1_1_1).Value, vis.GetNameCellParentRowIndexes(c_1_1_1)));
+            for (var tid = 0; tid < breakState.Data.GroupSize; ++tid)
+                Assert.Equal("", vis.GetDataCell(c_1_1_1, tid).Value);
+
+            int lst = 18, lst0 = 19, lst1 = 20, lst2 = 21;
+            Assert.Equal(("lst", ""), (vis.GetNameCell(lst).Value, vis.GetNameCellParentRowIndexes(lst)));
+            Assert.Equal(("[0]", $"{lst}"), (vis.GetNameCell(lst0).Value, vis.GetNameCellParentRowIndexes(lst0)));
+            Assert.Equal(("[1]", $"{lst}"), (vis.GetNameCell(lst1).Value, vis.GetNameCellParentRowIndexes(lst1)));
+            Assert.Equal(("[2]", $"{lst}"), (vis.GetNameCell(lst2).Value, vis.GetNameCellParentRowIndexes(lst2)));
         }
     }
 }

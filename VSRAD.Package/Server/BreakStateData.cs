@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 
@@ -70,6 +71,8 @@ namespace VSRAD.Package.Server
         private readonly bool _localData;
         private BitArray _fetchedDataWaves; // 1 bit per wavefront data
 
+        private static readonly Regex _watchIndexRegex = new Regex(@"\[(\d+)\]$", RegexOptions.Compiled);
+
         public BreakStateData(IReadOnlyDictionary<string, WatchMeta> watches, int dwordsPerLane, BreakStateOutputFile file, byte[] localData = null)
         {
             Watches = watches;
@@ -94,6 +97,22 @@ namespace VSRAD.Package.Server
             //if (nGroups != 0 && nGroups < realCount)
             //    return nGroups;
             return realCount;
+        }
+
+        public WatchMeta GetWatchMeta(string watch)
+        {
+            if (Watches.TryGetValue(watch, out var watchMeta))
+                return watchMeta;
+
+            if (_watchIndexRegex.Match(watch) is Match indexMatch && indexMatch.Success)
+            {
+                var parentWatch = watch.Substring(0, indexMatch.Groups[0].Index);
+                var idx = uint.Parse(indexMatch.Groups[1].Value);
+                if (GetWatchMeta(parentWatch) is WatchMeta parent && idx < parent.ListItems.Count)
+                    return parent.ListItems[(int)idx];
+            }
+
+            return null;
         }
 
         /// <returns>An array of exactly n=WaveSize elements, with 0s for missing data</returns>

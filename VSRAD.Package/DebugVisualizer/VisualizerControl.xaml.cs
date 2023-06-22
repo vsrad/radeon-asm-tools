@@ -39,9 +39,8 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 _context.Options.DebuggerOptions.Watches.Clear();
                 _context.Options.DebuggerOptions.Watches.AddRange(newWatchState);
-                if (invalidatedRows != null)
-                    foreach (var row in invalidatedRows)
-                        SetRowContentsFromBreakState(row);
+                foreach (var row in invalidatedRows)
+                    SetRowContentsFromBreakState(row);
             };
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
@@ -92,7 +91,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         {
             RefreshDataStyling();
             _table.Rows.Clear();
-            _table.AppendVariableRow(new Watch("System", new VariableType(VariableCategory.Hex, 32)), canBeRemoved: false);
+            _table.InsertUserWatchRow(new Watch("System", new VariableType(VariableCategory.Hex, 32)), canBeRemoved: false);
             _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
             _table.AlignmentChanged(
                     _context.Options.VisualizerAppearance.NameColumnAlignment,
@@ -100,7 +99,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     _context.Options.VisualizerAppearance.HeadersAlignment
                 );
             foreach (var watch in _context.Options.DebuggerOptions.Watches)
-                _table.AppendVariableRow(watch);
+                _table.InsertUserWatchRow(watch);
             _table.PrepareNewWatchRow();
         }
 
@@ -180,7 +179,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     foreach (var r in nameCell.ParentRows.Append(row))
                     {
                         if (watchMeta == null)
-                            _context.BreakData.Watches.TryGetValue((string)r.Cells[VisualizerTable.NameColumnIndex].Value, out watchMeta);
+                            watchMeta = _context.BreakData.GetWatchMeta((string)r.Cells[VisualizerTable.NameColumnIndex].Value);
                         else
                             watchMeta = watchMeta.ListItems[((WatchNameCell)r.Cells[VisualizerTable.NameColumnIndex]).IndexInList];
                     }
@@ -196,7 +195,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         }
                         else
                         {
-                            var label = (ListSize is uint listSize) ? (listSize == 1 ? "<1 element>" : $"<{listSize} elements>") : "";
+                            var label = (ListSize is uint listSize) ? $"<list of {listSize}>" : "";
                             for (var lane = 0; lane < _context.BreakData.WaveSize && tid < _context.BreakData.GroupSize; ++tid, ++lane)
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;
                         }

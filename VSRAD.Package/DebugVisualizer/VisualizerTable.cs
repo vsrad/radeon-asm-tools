@@ -86,8 +86,12 @@ namespace VSRAD.Package.DebugVisualizer
 
             _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
             {
-                new ContextMenus.TypeContextMenu(this, VariableTypeChanged, ProcessCopy, InsertSeparatorRow,
-                    addWatchRange: (name, from, to) => ArrayRange.FormatArrayRangeWatch(name, from, to, options.VisualizerOptions.MatchBracketsOnAddToWatches).ToList().ForEach(AddWatch)),
+                new ContextMenus.TypeContextMenu(this,
+                VariableTypeChanged,
+                ProcessCopy,
+                InsertSeparatorRow,
+                addWatchRange: (name, from, to) => ArrayRange.FormatArrayRangeWatch(name, from, to, options.VisualizerOptions.MatchBracketsOnAddToWatches).ToList().ForEach(AddWatch),
+                PromoteToWatch),
                 new ContextMenus.CopyContextMenu(this, ProcessCopy),
                 new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
             });
@@ -100,10 +104,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void AddWatch(string watchName)
         {
-            RemoveNewWatchRow();
-            AppendVariableRow(new Watch(watchName, new VariableType(VariableCategory.Int, 32)));
-            PrepareNewWatchRow();
-            RaiseWatchStateChanged();
+            var watchRow = InsertUserWatchRow(new Watch(watchName, VariableType.Default), NewWatchRowIndex);
+            RaiseWatchStateChanged(new[] { watchRow });
         }
 
         private void SetupDynamicNameColumnWidth(object sender, DataGridViewEditingControlShowingEventArgs e)
@@ -183,6 +185,9 @@ namespace VSRAD.Package.DebugVisualizer
         public bool IsUserWatchRow(DataGridViewRow r) =>
             r.Index > SystemRowIndex && r.Index < NewWatchRowIndex && ((WatchNameCell)r.Cells[NameColumnIndex]).NestingLevel == 0;
 
+        public bool IsListItemRow(DataGridViewRow r) =>
+            r.Index > SystemRowIndex && r.Index < NewWatchRowIndex && ((WatchNameCell)r.Cells[NameColumnIndex]).NestingLevel > 0;
+
         public IEnumerable<DataGridViewRow> GetUserWatchRows() =>
             Rows.Cast<DataGridViewRow>().Where(IsUserWatchRow);
 
@@ -196,7 +201,7 @@ namespace VSRAD.Package.DebugVisualizer
             name: row.Cells[NameColumnIndex].Value?.ToString(),
             type: VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString()));
 
-        private void RaiseWatchStateChanged(IEnumerable<DataGridViewRow> invalidatedRows = null) =>
+        private void RaiseWatchStateChanged(IEnumerable<DataGridViewRow> invalidatedRows) =>
             WatchStateChanged(GetCurrentWatchState(), invalidatedRows);
 
         private void UpdateEditedWatchName(object sender, EventArgs e)
@@ -208,28 +213,28 @@ namespace VSRAD.Package.DebugVisualizer
         private void InsertSeparatorRow(int rowIndex, bool after)
         {
             var index = after ? rowIndex + 1 : rowIndex;
-            Rows.Insert(index);
-            Rows[index].Cells[NameColumnIndex].Value = " ";
-            Rows[index].HeaderCell.Value = VariableCategory.Hex.ToString();
-            RaiseWatchStateChanged(new[] { Rows[index] });
+            var separatorRow = InsertUserWatchRow(new Watch(" ", VariableType.Default), index);
+            RaiseWatchStateChanged(new[] { separatorRow });
         }
 
-        public void AppendVariableRow(Watch watch, bool canBeRemoved = true)
+        public DataGridViewRow InsertUserWatchRow(Watch watch, int index = -1, bool canBeRemoved = true)
         {
-            var index = Rows.Add();
-            Rows[index].Cells[NameColumnIndex].Value = watch.Name;
-            Rows[index].Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
-            Rows[index].HeaderCell.Value = watch.Info.ShortName();
+            if (index == -1)
+                index = RowCount;
+
+            Rows.Insert(index);
+            var insertedRow = Rows[index];
+
+            insertedRow.Cells[NameColumnIndex].Value = watch.Name;
+            insertedRow.Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
+            insertedRow.HeaderCell.Value = watch.Info.ShortName();
 
             var currentWidth = Columns[NameColumnIndex].Width;
             var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
             if (preferredWidth > currentWidth)
                 Columns[NameColumnIndex].Width = preferredWidth;
-        }
 
-        public void RemoveNewWatchRow()
-        {
-            Rows.Remove(Rows[NewWatchRowIndex]);
+            return insertedRow;
         }
 
         public void PrepareNewWatchRow()
@@ -238,6 +243,24 @@ namespace VSRAD.Package.DebugVisualizer
             Rows[newRowIndex].Cells[NameColumnIndex].ReadOnly = false;
             Rows[newRowIndex].HeaderCell.Value = "";
             ClearSelection();
+        }
+
+        private void PromoteToWatch(int rowIndex)
+        {
+            var userWatchRows = GetUserWatchRows().ToList();
+            var rowsToPromote = _selectionController.GetClickTargetRows(rowIndex);
+            var insertedRows = new List<DataGridViewRow>();
+            foreach (var row in rowsToPromote)
+            {
+                if (row.Cells[NameColumnIndex] is WatchNameCell nameCell && nameCell.NestingLevel > 0)
+                {
+                    var type = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
+                    var parentIdxInUserRows = userWatchRows.IndexOf(nameCell.ParentRows[0]);
+                    var rowIdxAfterParent = parentIdxInUserRows + 1 < userWatchRows.Count ? userWatchRows[parentIdxInUserRows + 1].Index : NewWatchRowIndex;
+                    insertedRows.Add(InsertUserWatchRow(new Watch(nameCell.FullWatchName, type), rowIdxAfterParent));
+                }
+            }
+            RaiseWatchStateChanged(insertedRows);
         }
 
         // Make sure ApplyDataStyling is called after creating columns to set column visibility
@@ -314,7 +337,7 @@ namespace VSRAD.Package.DebugVisualizer
                     else
                     {
                         Rows.RemoveAt(e.RowIndex);
-                        RaiseWatchStateChanged();
+                        RaiseWatchStateChanged(Enumerable.Empty<DataGridViewRow>());
                         if (shouldMoveCaretToNextWatch)
                             nextWatchIndex = Rows.Cast<DataGridViewRow>().LastOrDefault(r => IsUserWatchRow(r) && r.Index <= e.RowIndex)?.Index ?? 0;
                     }
@@ -429,7 +452,7 @@ namespace VSRAD.Package.DebugVisualizer
                 foreach (var row in rowsToDelete)
                     Rows.Remove(row);
 
-                RaiseWatchStateChanged();
+                RaiseWatchStateChanged(Enumerable.Empty<DataGridViewRow>());
 
                 return true;
             }

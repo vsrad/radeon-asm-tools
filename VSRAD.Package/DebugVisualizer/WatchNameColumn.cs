@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -16,6 +17,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public int NestingLevel => ParentRows.Count;
         public bool HasChildItems => RowIndex + 1 < DataGridView.RowCount && ((WatchNameCell)DataGridView.Rows[RowIndex + 1].Cells[ColumnIndex]).ParentRows.Contains(OwningRow);
+        public string FullWatchName => ParentRows.Append(OwningRow).Aggregate("", (path, row) => path + row.Cells[ColumnIndex].Value);
 
         private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
         private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
