@@ -30,9 +30,10 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
             _state = new TableState(this, 60, 0);
             _state.NameColumnScalingEnabled = false; // slice does not have name column
-
+#if false // TODO FIXME
             _mouseMoveController = new MouseMove.MouseMoveController(this, _state);
             _selectionController = new SelectionController(this);
+#endif
             _ = new SliceRowStyling(this);
             _ = new SliceCellStyling(this, _state, fontAndColor);
         }

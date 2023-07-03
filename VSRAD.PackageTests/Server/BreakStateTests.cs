@@ -18,9 +18,12 @@ namespace VSRAD.PackageTests.Server
         public async Task WaveViewTestAsync(int groupCount, int groupSize, int waveSize)
         {
             var channel = new MockCommunicationChannel();
-            var instanceWatches = new Dictionary<uint, string[]> {
-                { 0, new[] { "ThreadID", "GlobalID", "GlobalID<<2" } },
-                { 1, new[] { "GlobalID<<8", "GlobalID<<4", "GlobalID", "ThreadID" } },
+            var watches = new Dictionary<string, WatchMeta> {
+                { "ThreadID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)1, (uint?)null), (Instance: 1u, DataSlot: (uint?)4, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
+                { "GlobalID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)2, (uint?)null), (Instance: 1u, DataSlot: (uint?)3, (uint?)null), }, Enumerable.Empty<WatchMeta>()) },
+                { "GlobalID<<2", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)3, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
+                { "GlobalID<<4", new WatchMeta(new[] { (Instance: 1u, DataSlot: (uint?)2, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
+                { "GlobalID<<8", new WatchMeta(new[] { (Instance: 1u, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
             };
             var dwordsPerLane = 5; // max watches per instance + 1
             var wavesPerGroup = (groupSize + waveSize - 1) / waveSize;
@@ -28,8 +31,7 @@ namespace VSRAD.PackageTests.Server
             var dwordsInBuffer = groupCount * dwordsPerGroup;
 
             var file = new BreakStateOutputFile(new[] { "/working/dir", "debug_buffer.bin" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: dwordsInBuffer);
-            var breakStateData = new BreakStateData(instanceWatches, file);
-            Assert.Equal(dwordsPerLane, BreakStateData.GetDwordsPerLane(instanceWatches));
+            var breakStateData = new BreakStateData(watches, dwordsPerLane, file);
 
             var data = new int[dwordsInBuffer];
             for (int group = 0; group < groupCount; ++group)
@@ -74,43 +76,52 @@ namespace VSRAD.PackageTests.Server
                 var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: group, groupSize: groupSize, waveSize: waveSize, nGroups: groupCount);
                 Assert.Null(warning);
 
-                var waves = breakStateData.GetWaveViews().ToArray();
-                Assert.Equal(wavesPerGroup, waves.Length);
+                Assert.Equal(wavesPerGroup, breakStateData.WavesPerGroup);
                 for (var wave = 0; wave < wavesPerGroup; ++wave)
                 {
-                    Assert.Equal(waveSize, waves[wave].WaveSize);
-                    Assert.Equal(wave * waveSize, waves[wave].StartThreadId);
-                    Assert.Equal(Math.Min((wave + 1) * waveSize, groupSize), waves[wave].EndThreadId);
-                    for (var lane = 0; lane < waveSize; ++lane)
+                    for (int lane = 0, threadId = wave * waveSize; lane < waveSize; ++lane, ++threadId)
                     {
-                        int globalId = (group * wavesPerGroup + wave) * waveSize + lane, threadId = wave * waveSize + lane;
+                        var globalId = (group * wavesPerGroup + wave) * waveSize + lane;
 
-                        var systemData = waves[wave].GetSystem().ToArray();
+                        var systemData = breakStateData.GetSystemData(wave);
                         Assert.Equal((uint)group, systemData[lane]);
 
-                        var globalIdData = waves[wave].GetWatchOrNull("GlobalID").ToArray();
+                        Assert.True(breakStateData.Watches.TryGetValue("GlobalID", out var globalIdWatch));
+                        var (_, globalIdWatchSlot, _) = globalIdWatch.Instances.Find(v => v.Instance == group);
+                        var globalIdData = breakStateData.GetWatchData(wave, (int)globalIdWatchSlot);
                         Assert.Equal((uint)globalId, globalIdData[lane]);
 
-                        var threadIdData = waves[wave].GetWatchOrNull("ThreadID").ToArray();
+                        Assert.True(breakStateData.Watches.TryGetValue("ThreadID", out var threadIdWatch));
+                        var (_, threadIdWatchSlot, _) = threadIdWatch.Instances.Find(v => v.Instance == group);
+                        var threadIdData = breakStateData.GetWatchData(wave, (int)threadIdWatchSlot);
                         Assert.Equal((uint)threadId, threadIdData[lane]);
 
                         switch (group)
                         {
                             case 0:
-                                var globalIdShl2Data = waves[wave].GetWatchOrNull("GlobalID<<2").ToArray();
+                                Assert.True(breakStateData.Watches.TryGetValue("GlobalID<<2", out var globalIdShl2Watch));
+                                var (_, globalIdShl2Slot, _) = globalIdShl2Watch.Instances.Find(v => v.Instance == group);
+                                var globalIdShl2Data = breakStateData.GetWatchData(wave, (int)globalIdShl2Slot);
                                 Assert.Equal((uint)globalId << 2, globalIdShl2Data[lane]);
 
-                                Assert.Null(waves[wave].GetWatchOrNull("GlobalID<<4"));
+                                Assert.True(breakStateData.Watches.TryGetValue("GlobalID<<4", out var globalIdShl4Watch));
+                                Assert.False(globalIdShl4Watch.Instances.Exists(v => v.Instance == group));
 
-                                Assert.Null(waves[wave].GetWatchOrNull("GlobalID<<8"));
+                                Assert.True(breakStateData.Watches.TryGetValue("GlobalID<<8", out var globalIdShl8Watch));
+                                Assert.False(globalIdShl8Watch.Instances.Exists(v => v.Instance == group));
                                 break;
                             case 1:
-                                Assert.Null(waves[wave].GetWatchOrNull("GlobalID<<2"));
+                                Assert.True(breakStateData.Watches.TryGetValue("GlobalID<<2", out globalIdShl2Watch));
+                                Assert.False(globalIdShl2Watch.Instances.Exists(v => v.Instance == group));
 
-                                var globalIdShl4Data = waves[wave].GetWatchOrNull("GlobalID<<4").ToArray();
+                                Assert.True(breakStateData.Watches.TryGetValue("GlobalID<<4", out globalIdShl4Watch));
+                                var (_, globalIdShl4Slot, _) = globalIdShl4Watch.Instances.Find(v => v.Instance == group);
+                                var globalIdShl4Data = breakStateData.GetWatchData(wave, (int)globalIdShl4Slot);
                                 Assert.Equal((uint)globalId << 4, globalIdShl4Data[lane]);
 
-                                var globalIdShl8Data = waves[wave].GetWatchOrNull("GlobalID<<8").ToArray();
+                                Assert.True(breakStateData.Watches.TryGetValue("GlobalID<<8", out globalIdShl8Watch));
+                                var (_, globalIdShl8Slot, _) = globalIdShl8Watch.Instances.Find(v => v.Instance == group);
+                                var globalIdShl8Data = breakStateData.GetWatchData(wave, (int)globalIdShl8Slot);
                                 Assert.Equal((uint)globalId << 8, globalIdShl8Data[lane]);
                                 break;
                         }
@@ -128,9 +139,9 @@ namespace VSRAD.PackageTests.Server
         public async Task EmptyResultRangeTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var instanceWatches = new Dictionary<uint, string[]> { { 0, new[] { "ThreadID" } } };
+            var watches = new Dictionary<string, WatchMeta> { { "ThreadID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) } };
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
-            var breakStateData = new BreakStateData(instanceWatches, file);
+            var breakStateData = new BreakStateData(watches, dwordsPerLane: 2, file);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>
@@ -140,12 +151,15 @@ namespace VSRAD.PackageTests.Server
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 512, waveSize: 64, nGroups: 1);
             Assert.Equal("Group #0 is incomplete: expected to read 4096 bytes but the output file contains 0.", warning);
             // Data is set to 0 if unavailable
-            foreach (var wave in breakStateData.GetWaveViews())
+            for (var wave = 0; wave < breakStateData.WavesPerGroup; ++wave)
             {
-                for (var i = 0; i < breakStateData.WaveSize; ++i)
+                for (int lane = 0, threadId = wave * breakStateData.WaveSize; lane < breakStateData.WaveSize; ++lane, ++threadId)
                 {
-                    Assert.Equal(0u, wave.GetSystem().ElementAt(i));
-                    Assert.Equal(0u, wave.GetWatchOrNull("ThreadID").ElementAt(i));
+                    Assert.Equal(0u, breakStateData.GetSystemData(wave)[lane]);
+
+                    Assert.True(breakStateData.Watches.TryGetValue("ThreadID", out var threadIdWatch));
+                    var (_, threadIdWatchSlot, _) = threadIdWatch.Instances.Find(v => v.Instance == 0);
+                    Assert.Equal(0u, breakStateData.GetWatchData(wave, (int)threadIdWatchSlot)[lane]);
                 }
             }
         }
@@ -154,9 +168,9 @@ namespace VSRAD.PackageTests.Server
         public async Task NGroupViolationProducesAWarningButFetchesResultsTestAsync()
         {
             var channel = new MockCommunicationChannel();
-            var instanceWatches = new Dictionary<uint, string[]> { { 0, new[] { "ThreadID" } } };
+            var watches = new Dictionary<string, WatchMeta> { { "ThreadID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) } };
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
-            var breakStateData = new BreakStateData(instanceWatches, file);
+            var breakStateData = new BreakStateData(watches, dwordsPerLane: 2, file);
 
             Assert.Equal(2, breakStateData.GetGroupCount(groupSize: 256, waveSize: 64, nGroups: 4));
 
@@ -186,20 +200,29 @@ namespace VSRAD.PackageTests.Server
             var localData = new byte[data.Length * sizeof(int)];
             Buffer.BlockCopy(data, 0, localData, 0, localData.Length);
 
-            var instanceWatches = new Dictionary<uint, string[]> { { (uint)instanceId, new[] { "GlobalID", "ThreadID" } } };
+            var watches = new Dictionary<string, WatchMeta> {
+                { "GlobalID", new WatchMeta(new[] { (Instance: (uint)instanceId, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
+                { "ThreadID", new WatchMeta(new[] { (Instance: (uint)instanceId, DataSlot: (uint?)2, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
+            };
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: data.Length);
-            var breakStateData = new BreakStateData(instanceWatches, file, localData);
+            var breakStateData = new BreakStateData(watches, dwordsPerLane: 3, file, localData);
 
             var groupId = 1;
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: groupId, groupSize: groupSize, waveSize: waveSize, nGroups: nGroups);
             Assert.Null(warning);
 
-            for (var tid = 0; tid < groupSize; ++tid)
+            for (int tid = 0; tid < groupSize; ++tid)
             {
-                var wave = breakStateData.GetWaveViews().ElementAt(tid / waveSize);
-                Assert.Equal(instanceId, (int)wave.GetSystem().ElementAt(tid % waveSize));
-                Assert.Equal(groupId * groupSize + tid, (int)wave.GetWatchOrNull("GlobalID").ElementAt(tid % waveSize));
-                Assert.Equal(tid, (int)wave.GetWatchOrNull("ThreadID").ElementAt(tid % waveSize));
+                int wave = tid / waveSize, lane = tid % waveSize;
+                Assert.Equal(instanceId, (int)breakStateData.GetSystemData(wave)[lane]);
+
+                Assert.True(breakStateData.Watches.TryGetValue("ThreadID", out var threadIdWatch));
+                var (_, threadIdWatchSlot, _) = threadIdWatch.Instances.Find(v => v.Instance == instanceId);
+                Assert.Equal(tid, (int)breakStateData.GetWatchData(wave, (int)threadIdWatchSlot)[lane]);
+
+                Assert.True(breakStateData.Watches.TryGetValue("GlobalID", out var globalIdWatch));
+                var (_, globalIdWatchSlot, _) = globalIdWatch.Instances.Find(v => v.Instance == instanceId);
+                Assert.Equal(groupId * groupSize + tid, (int)breakStateData.GetWatchData(wave, (int)globalIdWatchSlot)[lane]);
             }
         }
 

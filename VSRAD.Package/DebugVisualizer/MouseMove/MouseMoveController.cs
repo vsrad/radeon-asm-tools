@@ -5,14 +5,14 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 {
     public sealed class MouseMoveController
     {
-        private readonly DataGridView _table;
+        private readonly VisualizerTable _table;
         private readonly TableState _state;
         private readonly List<IMouseMoveOperation> _operations;
         private IMouseMoveOperation _currentOperation;
 
         private bool _operationAbortedOnMouseUp = false;
 
-        public MouseMoveController(DataGridView table, TableState state)
+        public MouseMoveController(VisualizerTable table, TableState state)
         {
             _table = table;
             _state = state;

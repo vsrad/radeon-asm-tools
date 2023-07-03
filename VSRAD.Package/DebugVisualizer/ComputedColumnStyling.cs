@@ -41,21 +41,21 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (breakData != null && breakData.WaveSize == _waveSize && breakData.GroupSize == _groupSize)
             {
-                foreach (var waveView in breakData.GetWaveViews())
+                for (uint wave = 0, waveStartId = 0; wave < breakData.WavesPerGroup; wave += 1, waveStartId += _waveSize)
                 {
-                    var waveEnd = Math.Min(waveView.StartThreadId + waveView.WaveSize, breakData.GroupSize);
-                    if (options.CheckMagicNumber && waveView.GetSystemMagicNumber() != options.MagicNumber)
+                    var waveSystemData = breakData.GetSystemData((int)wave);
+                    var waveEndId = Math.Min(waveStartId + _waveSize, breakData.GroupSize);
+                    if (options.CheckMagicNumber && waveSystemData[Server.BreakStateData.SystemMagicNumberLane] != options.MagicNumber)
                     {
-                        for (var lane = 0; lane + waveView.StartThreadId < waveEnd; ++lane)
-                            _columnState[lane + waveView.StartThreadId] |= ColumnStates.Inactive;
+                        for (var lane = 0; lane + waveStartId < waveEndId; ++lane)
+                            _columnState[lane + waveStartId] |= ColumnStates.Inactive;
                     }
                     else if (options.MaskLanes)
                     {
-                        var execMaskDwords = waveView.GetSystemExecMask();
-                        var execMask = new BitArray(new[] { (int)execMaskDwords[0], (int)execMaskDwords[1] });
-                        for (var lane = 0; lane + waveView.StartThreadId < waveEnd; ++lane)
+                        var execMask = new BitArray(new[] { (int)waveSystemData[Server.BreakStateData.SystemExecLoLane], (int)waveSystemData[Server.BreakStateData.SystemExecHiLane] });
+                        for (var lane = 0; lane + waveStartId < waveEndId; ++lane)
                             if (!execMask[lane])
-                                _columnState[lane + waveView.StartThreadId] |= ColumnStates.Inactive;
+                                _columnState[lane + waveStartId] |= ColumnStates.Inactive;
                     }
                 }
             }

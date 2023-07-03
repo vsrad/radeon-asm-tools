@@ -23,6 +23,15 @@ namespace VSRAD.PackageTests
             return Path.Combine(Directory.GetParent(binDebug).Parent.FullName, "Fixtures", fixtureName);
         }
 
+        public static int GetFixtureSize(string fixtureName) =>
+            (int)new FileInfo(GetFixturePath(fixtureName)).Length;
+
+        public static string ReadFixture(string fixtureName) =>
+            File.ReadAllText(GetFixturePath(fixtureName));
+
+        public static byte[] ReadFixtureBytes(string fixtureName) =>
+            File.ReadAllBytes(GetFixturePath(fixtureName));
+
         public static List<(string Message, string Title, OLEMSGICON Icon)> CapturePackageMessageBoxErrors()
         {
             var errorList = new List<(string Message, string Title, OLEMSGICON Icon)>();

@@ -1,4 +1,5 @@
 ﻿using Moq;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -348,9 +349,9 @@ namespace VSRAD.PackageTests.Server
                 Assert.Equal("cleanup", command.Executable);
             });
             // 4. Level 3 Read Debug Data
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("Instance 0:w") });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes("grid_size (8192, 0, 0)\r\ngroup_size (512, 0, 0)\r\nwave_size 32") });
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 8192 * 2 * sizeof(uint) });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") });
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") });
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") });
             // 4. Level 1 Copy File
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
             var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
@@ -386,15 +387,11 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "output" }, initTimestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"Instance 0:jill;julianne") }, (FetchResultRange watchesFetch) =>
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "watches" }, watchesFetch.FilePath));
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Encoding.UTF8.GetBytes(@"
-grid_size (8192, 0, 0)
-group_size (512, 0, 0)
-wave_size 32
-comment 115200") }, (FetchResultRange statusFetch) =>
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") }, (FetchResultRange statusFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "status" }, statusFetch.FilePath));
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 8192 * 3 * sizeof(uint) }, (FetchMetadata outputMetaFetch) =>
+            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") }, (FetchMetadata outputMetaFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "output" }, outputMetaFetch.FilePath));
 
             var result = await runner.RunAsync("Debug", steps);
@@ -402,11 +399,10 @@ comment 115200") }, (FetchResultRange statusFetch) =>
             Assert.True(channel.AllInteractionsHandled);
             Assert.True(result.Successful);
             Assert.NotNull(result.BreakState);
-            Assert.Equal(new Dictionary<uint, string[]> { { 0, new[] { "jill", "julianne" } } }, result.BreakState.Data.InstanceWatches);
             Assert.NotNull(result.BreakState.DispatchParameters);
-            Assert.Equal<uint>(8192 / 512, result.BreakState.DispatchParameters.DimX);
-            Assert.Equal<uint>(512, result.BreakState.DispatchParameters.GroupSizeX);
-            Assert.Equal<uint>(32, result.BreakState.DispatchParameters.WaveSize);
+            Assert.Equal(16384u / 512, result.BreakState.DispatchParameters.DimX);
+            Assert.Equal(512u, result.BreakState.DispatchParameters.GroupSizeX);
+            Assert.Equal(64u, result.BreakState.DispatchParameters.WaveSize);
             Assert.False(result.BreakState.DispatchParameters.NDRange3D);
             Assert.Equal("115200", result.BreakState.DispatchParameters.StatusString);
         }
@@ -451,14 +447,9 @@ comment 115200") }, (FetchResultRange statusFetch) =>
 
             for (int i = 0; i < 3; ++i) // initial timestamp fetch
                 channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromFileTime(0) });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = Encoding.UTF8.GetBytes(@"
-Instance 0:jill;julianne;stingray
-") },
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") },
                 (FetchResultRange f) => Assert.Equal("remote/watches", f.FilePath[1]));
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = Encoding.UTF8.GetBytes(@"
-grid_size (16384, 0, 0)
-group_size (256, 0, 0)
-wave_size 64") },
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") },
                 (FetchResultRange f) => Assert.Equal("remote/dispatch", f.FilePath[1]));
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = 65536 },
                 (FetchMetadata f) => Assert.Equal("remote/output", f.FilePath[1]));
@@ -467,43 +458,20 @@ wave_size 64") },
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal(@"Output file does not match the expected size.
 
-Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 4 DWORDs per lane, the output file is expected to be 65536 DWORDs long, but the actual size is 16384 DWORDs.",
+Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 7 DWORDs per lane, the output file is expected to be 114688 DWORDs long, but the actual size is 16384 DWORDs.",
 result.StepResults[0].Warning);
         }
 
         [Fact]
         public async Task ReadDebugDataLocalTestAsync()
         {
-            var outputFile = Path.GetTempFileName();
-            var watchesFile = Path.GetTempFileName();
-            var dispatchParamsFile = Path.GetTempFileName();
-
-            File.WriteAllText(watchesFile, @"
-Instance 12345:jill;julianne
-");
-            File.WriteAllText(dispatchParamsFile, @"
-grid_size (128, 0, 0)
-group_size (64, 0, 0)
-wave_size 64");
-            var output = new uint[384];
-            for (int witem = 0; witem < 128; ++witem)
-            {
-                output[witem * 3 + 0] = 12345;            // system = instance id
-                output[witem * 3 + 1] = 777;              // first watch = const
-                output[witem * 3 + 2] = (uint)witem % 64; // second watch = lane
-            }
-            var outputOffset = 3;
-            byte[] outputBytes = new byte[output.Length * sizeof(int) + outputOffset];
-            Buffer.BlockCopy(output, 0, outputBytes, outputOffset, outputBytes.Length - outputOffset);
-            File.WriteAllBytes(outputFile, outputBytes);
-
             var steps = new List<IActionStep>
             {
                 new ReadDebugDataStep(
-                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFile, CheckTimestamp = false },
-                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFile, CheckTimestamp = false },
-                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchParamsFile, CheckTimestamp = false },
-                    binaryOutput: true, outputOffset)
+                    outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DebugBuffer.bin"), CheckTimestamp = false },
+                    watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("ValidWatches.txt"), CheckTimestamp = false },
+                    dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DispatchParams.txt"), CheckTimestamp = false },
+                    binaryOutput: true, outputOffset: 0)
             };
             var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""), _project);
             var result = await runner.RunAsync("Debug", steps);
@@ -511,15 +479,33 @@ wave_size 64");
             Assert.True(result.Successful);
             Assert.Equal("", result.StepResults[0].Warning);
             Assert.NotNull(result.BreakState);
-            Assert.Equal(new Dictionary<uint, string[]> { { 12345, new[] { "jill", "julianne" } } }, result.BreakState.Data.InstanceWatches);
-            Assert.Equal<uint>(64, result.BreakState.DispatchParameters.GroupSizeX);
-            Assert.Equal<uint>(64, result.BreakState.DispatchParameters.WaveSize);
+            Assert.Equal(16384u, result.BreakState.DispatchParameters.GridSizeX);
+            Assert.Equal(512u, result.BreakState.DispatchParameters.GroupSizeX);
+            Assert.Equal(64u, result.BreakState.DispatchParameters.WaveSize);
+            Assert.Equal(7, result.BreakState.Data.DwordsPerLane);
+            Assert.Equal(new[] { "a", "c", "tide", "tid", "lst", "lst[1]" }, result.BreakState.Data.Watches.Keys);
 
-            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: 0, groupSize: 64, waveSize: 64, nGroups: 0);
-            var waves = result.BreakState.Data.GetWaveViews().ToArray();
-            var firstWaveSecondWatch = waves[0].GetWatchOrNull("julianne").ToArray();
+            Assert.Equal((Instance: 0, DataSlot: 2, ListSize: null), result.BreakState.Data.Watches["c"].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 6), result.BreakState.Data.Watches["c"].Instances[1]);
+            Assert.Equal(6, result.BreakState.Data.Watches["c"].ListItems.Count);
+            Assert.Empty(result.BreakState.Data.Watches["c"].ListItems[0].Instances);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 2), result.BreakState.Data.Watches["c"].ListItems[1].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: 3, ListSize: null), result.BreakState.Data.Watches["c"].ListItems[1].ListItems[0].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: 4, ListSize: null), result.BreakState.Data.Watches["c"].ListItems[1].ListItems[1].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 1), result.BreakState.Data.Watches["c"].ListItems[3].Instances[0]);
+            Assert.Empty(result.BreakState.Data.Watches["c"].ListItems[3].ListItems[0].Instances);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 0), result.BreakState.Data.Watches["c"].ListItems[4].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: 5, ListSize: null), result.BreakState.Data.Watches["c"].ListItems[5].Instances[0]);
+
+            var (tidInstance, tidSlot, tidListSize) = result.BreakState.Data.Watches["tid"].Instances.First();
+            Assert.Equal(1u, tidInstance);
+            Assert.Equal(1u, tidSlot);
+            Assert.Null(tidListSize);
+
+            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: (int)tidInstance, groupSize: 512, waveSize: 64, nGroups: 0);
+            var tidData = result.BreakState.Data.GetWatchData(4, (int)tidSlot);
             for (int i = 0; i < 64; ++i)
-                Assert.Equal(i, (int)firstWaveSecondWatch[i]);
+                Assert.Equal(4u * 64 + i, tidData[i]);
         }
 
         [Fact]
@@ -574,20 +560,14 @@ wave_size 64");
             /* Wrong output file size */
 
             ((ReadDebugDataStep)steps[0]).OutputFile.Path = outputFileName;
-            File.WriteAllText(watchesFile, @"
-Instance 0:jill;julianne;stingray
-");
-            File.WriteAllText(dispatchFile, @"
-grid_size (16384, 0, 0)
-group_size (256, 0, 0)
-wave_size 64
-");
+            File.WriteAllText(watchesFile, File.ReadAllText(TestHelper.GetFixturePath("ValidWatches.txt")));
+            File.WriteAllText(dispatchFile, File.ReadAllText(TestHelper.GetFixturePath("DispatchParams.txt")));
             File.WriteAllBytes(outputFile, new byte[1024]);
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
             Assert.Equal(@"Output file does not match the expected size.
 
-Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 4 DWORDs per lane, the output file is expected to be 65536 DWORDs long, but the actual size is 256 DWORDs.",
+Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 7 DWORDs per lane, the output file is expected to be 114688 DWORDs long, but the actual size is 256 DWORDs.",
 result.StepResults[0].Warning);
         }
         #endregion

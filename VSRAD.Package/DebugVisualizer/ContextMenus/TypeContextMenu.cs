@@ -10,13 +10,15 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
         public delegate void TypeChanged(int rowIndex, VariableType type);
         public delegate void InsertRow(int rowIndex, bool after);
         public delegate void AddWatchRange(string name, int from, int to);
+        public delegate void PromoteToWatch(int rowIndex);
 
         private readonly VisualizerTable _table;
         private readonly ContextMenu _menu;
+        private readonly MenuItem _promoteToWatchMenu;
         private int _currentRow;
 
         public TypeContextMenu(VisualizerTable table, TypeChanged typeChanged, Action processCopy,
-            InsertRow insertRow, AddWatchRange addWatchRange)
+            InsertRow insertRow, AddWatchRange addWatchRange, PromoteToWatch promoteToWatch)
         {
             _table = table;
 
@@ -67,6 +69,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                     })).Prepend(new MenuItem("To") { Enabled = false }).ToArray())
                 ).Prepend(new MenuItem("From") { Enabled = false }).ToArray());
 
+            _promoteToWatchMenu = new MenuItem("Promote to watches", (s, e) => promoteToWatch(_currentRow));
+
             var menuItems = typeItems.Concat(new[]
             {
                 new MenuItem("-"),
@@ -78,7 +82,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
                 insertRowBefore,
                 insertRowAfter,
                 new MenuItem("-"),
-                addToWatchesAsArray
+                addToWatchesAsArray,
+                _promoteToWatchMenu
             });
 
             _menu = new ContextMenu(menuItems.ToArray());
@@ -93,6 +98,8 @@ namespace VSRAD.Package.DebugVisualizer.ContextMenus
 
             foreach (MenuItem item in _menu.MenuItems)
                 item.Checked = false;
+
+            _promoteToWatchMenu.Visible = _table.IsListItemRow(_table.Rows[_currentRow]);
 
             _menu.Show(_table, new Point(e.X, e.Y));
             return true;
