@@ -195,7 +195,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         }
                         else
                         {
-                            var label = (ListSize is uint listSize) ? $"<list of {listSize}>" : "";
+                            var label = (ListSize is uint listSize) ? $"<{listSize}>" : "";
                             for (var lane = 0; lane < _context.BreakData.WaveSize && tid < _context.BreakData.GroupSize; ++tid, ++lane)
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;
                         }

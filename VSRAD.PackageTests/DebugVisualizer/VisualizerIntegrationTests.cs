@@ -100,15 +100,15 @@ namespace VSRAD.PackageTests.DebugVisualizer
             {
                 for (var tid = wave * breakState.Data.WaveSize; tid < (wave + 1) * breakState.Data.WaveSize; ++tid)
                 {
-                    Assert.Equal(wave % 2 == 0 ? $"{wave}" : "<list of 6>", vis.GetDataCell(c, tid).Value);
+                    Assert.Equal(wave % 2 == 0 ? $"{wave}" : "<6>", vis.GetDataCell(c, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "", vis.GetDataCell(c0, tid).Value);
-                    Assert.Equal(wave % 2 == 0 ? "" : "<list of 2>", vis.GetDataCell(c1, tid).Value);
+                    Assert.Equal(wave % 2 == 0 ? "" : "<2>", vis.GetDataCell(c1, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : $"{tid % breakState.Data.WaveSize}", vis.GetDataCell(c10, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : $"{vis.Context.GroupIndex.X}", vis.GetDataCell(c11, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "", vis.GetDataCell(c2, tid).Value);
-                    Assert.Equal(wave % 2 == 0 ? "" : "<list of 1>", vis.GetDataCell(c3, tid).Value);
+                    Assert.Equal(wave % 2 == 0 ? "" : "<1>", vis.GetDataCell(c3, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "", vis.GetDataCell(c30, tid).Value);
-                    Assert.Equal(wave % 2 == 0 ? "" : "<list of 0>", vis.GetDataCell(c4, tid).Value);
+                    Assert.Equal(wave % 2 == 0 ? "" : "<0>", vis.GetDataCell(c4, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : $"{vis.Context.GroupIndex.DimX}", vis.GetDataCell(c5, tid).Value);
                 }
             }
