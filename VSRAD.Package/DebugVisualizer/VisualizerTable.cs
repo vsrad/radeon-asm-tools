@@ -162,7 +162,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void VariableTypeChanged(int rowIndex, VariableType type)
         {
-            var changedRows = _selectionController.GetClickTargetRows(rowIndex);
+            var changedRows = _selectionController.GetClickTargetRows(rowIndex).ToList();
+            changedRows.AddRange(Rows.Cast<DataGridViewRow>().Where(r => ((WatchNameCell)r.Cells[NameColumnIndex]).ParentRows.Any(changedRows.Contains)));
             foreach (var row in changedRows)
                 row.HeaderCell.Value = type.ShortName();
             RaiseWatchStateChanged(changedRows);
