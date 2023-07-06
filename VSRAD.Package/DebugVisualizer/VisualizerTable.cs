@@ -525,6 +525,14 @@ namespace VSRAD.Package.DebugVisualizer
             // Cmd key succesfully processed
             return true;
         }
+
+        public override DataObject GetClipboardContent()
+        {
+            var content = base.GetClipboardContent();
+            content.SetData(DataFormats.Text, content.GetData(DataFormats.CommaSeparatedValue));
+            content.SetData(DataFormats.UnicodeText, content.GetData(DataFormats.CommaSeparatedValue));
+            return content;
+        }
         #endregion
     }
 }
