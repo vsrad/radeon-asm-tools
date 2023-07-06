@@ -65,8 +65,6 @@ namespace VSRAD.Package.DebugVisualizer
 
             CellEndEdit += WatchEndEdit;
             CellBeginEdit += UpdateEditedWatchName;
-            // somewhat hacky way to implement dynamic name column width change while typing a watch name
-            EditingControlShowing += SetupDynamicNameColumnWidth;
             CellClick += (sender, args) => { if (args.RowIndex == NewWatchRowIndex) BeginEdit(false); };
 
             // Custom pan/scale cursors
@@ -106,23 +104,6 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var watchRow = InsertUserWatchRow(new Watch(watchName, VariableType.Default), NewWatchRowIndex);
             RaiseWatchStateChanged(new[] { watchRow });
-        }
-
-        private void SetupDynamicNameColumnWidth(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            if (CurrentCell?.ColumnIndex == NameColumnIndex && e.Control is TextBox textBox)
-            {
-                textBox.TextChanged -= AdjustDynamicNameColumnWidth;
-                textBox.TextChanged += AdjustDynamicNameColumnWidth;
-            }
-        }
-
-        private void AdjustDynamicNameColumnWidth(object sender, EventArgs e)
-        {
-            TextBox text = (TextBox)sender;
-            var targetWidth = TextRenderer.MeasureText(text.Text, text.Font).Width + text.Margin.Horizontal;
-            if (targetWidth > Columns[NameColumnIndex].Width)
-                Columns[NameColumnIndex].Width = targetWidth;
         }
 
         public void GoToWave(uint waveIdx, uint waveSize)

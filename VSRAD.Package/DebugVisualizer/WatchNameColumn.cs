@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -84,7 +85,26 @@ namespace VSRAD.Package.DebugVisualizer
                 {
                     textBox.SelectAll();
                 });
+
+                textBox.TextChanged += ResizeColumnToFitText;
             }
+        }
+
+        public override void DetachEditingControl()
+        {
+            if (DataGridView.EditingControl is DataGridViewTextBoxEditingControl textBox)
+            {
+                textBox.TextChanged -= ResizeColumnToFitText;
+            }
+            base.DetachEditingControl();
+        }
+
+        private void ResizeColumnToFitText(object sender, EventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+            var requiredWidth = TextRenderer.MeasureText(textBox.Text, textBox.Font).Width + textBox.Margin.Horizontal + NestedButtonExtentX;
+            if (DataGridView.Columns[ColumnIndex].Width < requiredWidth)
+                DataGridView.Columns[ColumnIndex].Width = requiredWidth;
         }
 
         protected override void OnMouseClick(DataGridViewCellMouseEventArgs e)
