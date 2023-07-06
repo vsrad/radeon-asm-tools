@@ -74,6 +74,19 @@ namespace VSRAD.Package.DebugVisualizer
             return new Rectangle(pos.X + NestedButtonExtentX + 1, pos.Y, pos.Width - NestedButtonExtentX - 1, pos.Height);
         }
 
+        public override void InitializeEditingControl(int rowIndex, object initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
+        {
+            base.InitializeEditingControl(rowIndex, initialFormattedValue, dataGridViewCellStyle);
+            if (DataGridView.EditingControl is DataGridViewTextBoxEditingControl textBox)
+            {
+                // Defer SelectAll so that it runs after the default TextBox logic (which places the caret at the end)
+                DataGridView.BeginInvoke((MethodInvoker)delegate
+                {
+                    textBox.SelectAll();
+                });
+            }
+        }
+
         protected override void OnMouseClick(DataGridViewCellMouseEventArgs e)
         {
             if (ExpanderButtonClicked(e))
