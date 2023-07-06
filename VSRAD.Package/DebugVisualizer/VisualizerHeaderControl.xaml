@@ -211,7 +211,7 @@
         </StackPanel.Style>
         <WrapPanel>
             <Label Content="Counter:" Height="26" Width="68" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}"
+            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}" Minimum="1"
                                Width="60" Height="24" />
             <StackPanel Orientation="Horizontal" Height="24">
                 <CheckBox  Margin="6,0,6,0" Padding="-4,-1,0,0" IsChecked="{Binding Options.DebuggerOptions.StopOnHit}" VerticalContentAlignment="Center" UseLayoutRounding="False">

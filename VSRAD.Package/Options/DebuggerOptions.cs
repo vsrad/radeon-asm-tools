@@ -23,7 +23,7 @@ namespace VSRAD.Package.Options
         public uint NGroups { get => _nGroups; set => SetField(ref _nGroups, (uint)0); } // always 0 for now as it should be refactored (see ce37993)
 
         private uint _counter;
-        public uint Counter { get => _counter; set => SetField(ref _counter, value); }
+        public uint Counter { get => _counter; set => SetField(ref _counter, Math.Max(value, 1)); }
 
         private string _appArgs = "";
         public string AppArgs { get => _appArgs; set => SetField(ref _appArgs, value); }
