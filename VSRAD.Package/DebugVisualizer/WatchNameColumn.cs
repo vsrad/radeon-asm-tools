@@ -22,8 +22,8 @@ namespace VSRAD.Package.DebugVisualizer
         private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
         private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
 
-        private bool _listExpanded;
-        public bool ListExpanded { get => _listExpanded; set { _listExpanded = value; ApplyListExpansion(); } }
+        private bool? _listExpandedByUser;
+        public bool ListExpanded { get => _listExpandedByUser ?? (NestingLevel == 0); set { _listExpandedByUser = value; ApplyListExpansion(); } }
 
         public WatchNameCell() : base() { }
 
