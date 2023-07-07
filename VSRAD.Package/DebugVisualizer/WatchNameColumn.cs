@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -22,8 +23,8 @@ namespace VSRAD.Package.DebugVisualizer
         private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
         private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
 
-        private bool _listExpanded;
-        public bool ListExpanded { get => _listExpanded; set { _listExpanded = value; ApplyListExpansion(); } }
+        private bool? _listExpandedByUser;
+        public bool ListExpanded { get => _listExpandedByUser ?? (NestingLevel == 0); set { _listExpandedByUser = value; ApplyListExpansion(); } }
 
         public WatchNameCell() : base() { }
 
@@ -72,6 +73,38 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var pos = base.PositionEditingPanel(cellBounds, cellClip, cellStyle, singleVerticalBorderAdded, singleHorizontalBorderAdded, isFirstDisplayedColumn, isFirstDisplayedRow);
             return new Rectangle(pos.X + NestedButtonExtentX + 1, pos.Y, pos.Width - NestedButtonExtentX - 1, pos.Height);
+        }
+
+        public override void InitializeEditingControl(int rowIndex, object initialFormattedValue, DataGridViewCellStyle dataGridViewCellStyle)
+        {
+            base.InitializeEditingControl(rowIndex, initialFormattedValue, dataGridViewCellStyle);
+            if (DataGridView.EditingControl is DataGridViewTextBoxEditingControl textBox)
+            {
+                // Defer SelectAll so that it runs after the default TextBox logic (which places the caret at the end)
+                DataGridView.BeginInvoke((MethodInvoker)delegate
+                {
+                    textBox.SelectAll();
+                });
+
+                textBox.TextChanged += ResizeColumnToFitText;
+            }
+        }
+
+        public override void DetachEditingControl()
+        {
+            if (DataGridView.EditingControl is DataGridViewTextBoxEditingControl textBox)
+            {
+                textBox.TextChanged -= ResizeColumnToFitText;
+            }
+            base.DetachEditingControl();
+        }
+
+        private void ResizeColumnToFitText(object sender, EventArgs e)
+        {
+            TextBox textBox = (TextBox)sender;
+            var requiredWidth = TextRenderer.MeasureText(textBox.Text, textBox.Font).Width + textBox.Margin.Horizontal + NestedButtonExtentX;
+            if (DataGridView.Columns[ColumnIndex].Width < requiredWidth)
+                DataGridView.Columns[ColumnIndex].Width = requiredWidth;
         }
 
         protected override void OnMouseClick(DataGridViewCellMouseEventArgs e)

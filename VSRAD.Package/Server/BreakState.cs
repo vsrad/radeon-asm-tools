@@ -29,6 +29,9 @@ namespace VSRAD.Package.Server
         public BreakStateDispatchParameters DispatchParameters { get; }
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
+        /// FIXME: Break location should be parsed from debugger output as a map of instance to (file, line)
+        public string BreakFile { get; set; }
+
         public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters)
         {
             Data = breakStateData;

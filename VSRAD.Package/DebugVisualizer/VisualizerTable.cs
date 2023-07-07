@@ -12,9 +12,12 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class VisualizerTable : DataGridView
     {
         public delegate void ChangeWatchState(IEnumerable<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
-        public delegate uint GetGroupSize();
+        public delegate void RequestBreakpointLocation(uint threadId, ref string file, ref uint line);
+        public delegate void NavigateToBreakpoint(string file, uint line);
 
         public event ChangeWatchState WatchStateChanged;
+        public event RequestBreakpointLocation BreakpointLocationRequested;
+        public event NavigateToBreakpoint BreakpointNavigationRequested;
 
         public const int NameColumnIndex = 0;
         public const int PhantomColumnIndex = 1;
@@ -38,6 +41,7 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly MouseMove.MouseMoveController _mouseMoveController;
         private readonly SelectionController _selectionController;
 
+        private readonly ProjectOptions _options;
         private readonly IFontAndColorProvider _fontAndColor;
         private readonly ComputedColumnStyling _computedStyling;
 
@@ -50,6 +54,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public VisualizerTable(ProjectOptions options, IFontAndColorProvider fontAndColor) : base()
         {
+            _options = options;
             _fontAndColor = fontAndColor;
             _computedStyling = new ComputedColumnStyling();
 
@@ -65,8 +70,6 @@ namespace VSRAD.Package.DebugVisualizer
 
             CellEndEdit += WatchEndEdit;
             CellBeginEdit += UpdateEditedWatchName;
-            // somewhat hacky way to implement dynamic name column width change while typing a watch name
-            EditingControlShowing += SetupDynamicNameColumnWidth;
             CellClick += (sender, args) => { if (args.RowIndex == NewWatchRowIndex) BeginEdit(false); };
 
             // Custom pan/scale cursors
@@ -84,17 +87,6 @@ namespace VSRAD.Package.DebugVisualizer
             Debug.Assert(_state.DataColumnOffset == DataColumnOffset);
             Debug.Assert(_state.PhantomColumnIndex == PhantomColumnIndex);
 
-            _ = new ContextMenus.ContextMenuController(this, new ContextMenus.IContextMenu[]
-            {
-                new ContextMenus.TypeContextMenu(this,
-                VariableTypeChanged,
-                ProcessCopy,
-                InsertSeparatorRow,
-                addWatchRange: (name, from, to) => ArrayRange.FormatArrayRangeWatch(name, from, to, options.VisualizerOptions.MatchBracketsOnAddToWatches).ToList().ForEach(AddWatch),
-                PromoteToWatch),
-                new ContextMenus.CopyContextMenu(this, ProcessCopy),
-                new ContextMenus.SubgroupContextMenu(this, _state, options.VisualizerColumnStyling, () => options.DebuggerOptions.GroupSize)
-            });
             _ = new CellStyling(this, options.VisualizerAppearance, _computedStyling, _fontAndColor);
             _ = new CustomTableGraphics(this);
 
@@ -106,23 +98,6 @@ namespace VSRAD.Package.DebugVisualizer
         {
             var watchRow = InsertUserWatchRow(new Watch(watchName, VariableType.Default), NewWatchRowIndex);
             RaiseWatchStateChanged(new[] { watchRow });
-        }
-
-        private void SetupDynamicNameColumnWidth(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            if (CurrentCell?.ColumnIndex == NameColumnIndex && e.Control is TextBox textBox)
-            {
-                textBox.TextChanged -= AdjustDynamicNameColumnWidth;
-                textBox.TextChanged += AdjustDynamicNameColumnWidth;
-            }
-        }
-
-        private void AdjustDynamicNameColumnWidth(object sender, EventArgs e)
-        {
-            TextBox text = (TextBox)sender;
-            var targetWidth = TextRenderer.MeasureText(text.Text, text.Font).Width + text.Margin.Horizontal;
-            if (targetWidth > Columns[NameColumnIndex].Width)
-                Columns[NameColumnIndex].Width = targetWidth;
         }
 
         public void GoToWave(uint waveIdx, uint waveSize)
@@ -148,21 +123,15 @@ namespace VSRAD.Package.DebugVisualizer
             ColumnHeadersHeight = headerHeight;
         }
 
-        public IEnumerable<int> GetSelectedDataColumnIndexes(int includeIndex) =>
-            SelectedColumns
-                .Cast<DataGridViewColumn>()
-                .Select(x => x.Index - _state.DataColumnOffset)
-                .Where(x => x >= 0)
-                .Append(includeIndex - _state.DataColumnOffset);
-
-        private void ProcessCopy()
+        private void CopySelectedValues()
         {
             ProcessInsertKey(Keys.Control | Keys.C);
         }
 
-        private void VariableTypeChanged(int rowIndex, VariableType type)
+        private void ChangeWatchType(int rowIndex, VariableType type)
         {
-            var changedRows = _selectionController.GetClickTargetRows(rowIndex);
+            var changedRows = _selectionController.GetClickTargetRows(rowIndex).ToList();
+            changedRows.AddRange(Rows.Cast<DataGridViewRow>().Where(r => ((WatchNameCell)r.Cells[NameColumnIndex]).ParentRows.Any(changedRows.Contains)));
             foreach (var row in changedRows)
                 row.HeaderCell.Value = type.ShortName();
             RaiseWatchStateChanged(changedRows);
@@ -181,6 +150,9 @@ namespace VSRAD.Package.DebugVisualizer
                 EndEdit();
             }
         }
+
+        public IEnumerable<int> GetSelectedDataColumnIndexes(int includeIndex) =>
+            SelectedColumns.Cast<DataGridViewColumn>().Select(c => c.Index - DataColumnOffset).Append(includeIndex - DataColumnOffset).Where(i => i >= 0);
 
         public bool IsUserWatchRow(DataGridViewRow r) =>
             r.Index > SystemRowIndex && r.Index < NewWatchRowIndex && ((WatchNameCell)r.Cells[NameColumnIndex]).NestingLevel == 0;
@@ -357,7 +329,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        public void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
+        private void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
         {
             foreach (var row in _selectionController.GetClickTargetRows(rowIndex))
             {
@@ -366,6 +338,16 @@ namespace VSRAD.Package.DebugVisualizer
                 if (changeBg is DataHighlightColor newBg)
                     row.DefaultCellStyle.BackColor = (newBg != DataHighlightColor.None) ? _fontAndColor.FontAndColorState.HighlightBackground[(int)newBg] : Color.Empty;
             }
+        }
+
+        private void ApplyColumnHighlight(int columnIdx, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
+        {
+            var columns = GetSelectedDataColumnIndexes(columnIdx);
+            if (changeFg is DataHighlightColor newFg)
+                _options.VisualizerColumnStyling.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_options.VisualizerColumnStyling.ForegroundColors, columns, newFg, DataColumnCount);
+            if (changeBg is DataHighlightColor newBg)
+                _options.VisualizerColumnStyling.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_options.VisualizerColumnStyling.BackgroundColors, columns, newBg, DataColumnCount);
+            ClearSelection();
         }
 
         private bool _disableColumnWidthChangeHandler = false;
@@ -503,13 +485,23 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            var hit = HitTest(e.X, e.Y);
+            switch (e.Button)
             {
-                var hit = HitTest(e.X, e.Y);
-                if (hit.Type == DataGridViewHitTestType.RowHeader)
-                    _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
-                if (hit.Type == DataGridViewHitTestType.ColumnHeader)
-                    _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
+                case MouseButtons.Left:
+                    if (hit.Type == DataGridViewHitTestType.RowHeader)
+                        _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
+                    if (hit.Type == DataGridViewHitTestType.ColumnHeader)
+                        _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
+                    break;
+                case MouseButtons.Right:
+                    if (hit.Type == DataGridViewHitTestType.Cell && hit.ColumnIndex >= DataColumnOffset && hit.RowIndex >= 0 && hit.RowIndex < NewWatchRowIndex)
+                    {
+                        var clickedDataCell = Rows[hit.RowIndex].Cells[hit.ColumnIndex];
+                        if (!SelectedCells.Contains(clickedDataCell))
+                            CurrentCell = clickedDataCell;
+                    }
+                    break;
             }
             if (!_mouseMoveController.HandleMouseDown(e))
                 base.OnMouseDown(e);
@@ -543,6 +535,202 @@ namespace VSRAD.Package.DebugVisualizer
             // Cmd key succesfully processed
             return true;
         }
+
+        public override DataObject GetClipboardContent()
+        {
+            var content = base.GetClipboardContent();
+            content.SetData(DataFormats.Text, content.GetData(DataFormats.CommaSeparatedValue));
+            content.SetData(DataFormats.UnicodeText, content.GetData(DataFormats.CommaSeparatedValue));
+            return content;
+        }
+
+        #endregion
+
+        #region Context menus
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            if (e.Button == MouseButtons.Right)
+            {
+                var hit = HitTest(e.X, e.Y);
+                _ = ShowWatchTypeContextMenu(hit, e.Location)
+                    || ShowColumnContextMenu(hit, e.Location)
+                    || ShowCellContextMenu(hit, e.Location);
+            }
+        }
+
+        private bool ShowWatchTypeContextMenu(HitTestInfo hit, Point loc)
+        {
+            if (hit.RowIndex >= 0 && hit.RowIndex < NewWatchRowIndex && (hit.ColumnIndex == -1 || hit.ColumnIndex == NameColumnIndex))
+            {
+                var menu = new ContextMenu();
+                menu.MenuItems.AddRange(new MenuItem[]
+                {
+                    new MenuItem("Hex",    (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Hex,   32))),
+                    new MenuItem("Float",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Float, 32))),
+                    new MenuItem("Half",   (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Float, 16))),
+                    new MenuItem("Int32",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Int,   32))),
+                    new MenuItem("UInt32", (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Uint,  32))),
+                    new MenuItem("Other", new MenuItem[]
+                    {
+                        new MenuItem("Int16",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Int,  16))),
+                        new MenuItem("UInt16", (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Uint, 16))),
+                        new MenuItem("Int8",   (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Int,   8))),
+                        new MenuItem("Uint8",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Uint,  8))),
+                        new MenuItem("Bin",    (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Bin,  32)))
+                    })
+                });
+                menu.MenuItems.Add(new MenuItem("-"));
+                menu.MenuItems.Add(new MenuItem("Font Color", new[]
+                {
+                    new MenuItem("Green",   (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.Green)),
+                    new MenuItem("Red",     (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.Red)),
+                    new MenuItem("Blue",    (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.Blue)),
+                    new MenuItem("Default", (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.None))
+                }));
+                menu.MenuItems.Add(new MenuItem("Background Color", new[]
+                {
+                    new MenuItem("Green",   (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.Green)),
+                    new MenuItem("Red",     (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.Red)),
+                    new MenuItem("Blue",    (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.Blue)),
+                    new MenuItem("Default", (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.None))
+                }));
+                menu.MenuItems.Add(new MenuItem("-"));
+                menu.MenuItems.Add(new MenuItem("Copy", (s, e) => CopySelectedValues()));
+                menu.MenuItems.Add(new MenuItem("-"));
+                menu.MenuItems.Add(new MenuItem("Insert Row Before", (s, e) => InsertSeparatorRow(hit.RowIndex, false)));
+                menu.MenuItems.Add(new MenuItem("Insert Row After", (s, e) => InsertSeparatorRow(hit.RowIndex, true)));
+                menu.MenuItems.Add(new MenuItem("-"));
+                menu.MenuItems.Add(new MenuItem("Add to Watches as Array", Enumerable.Range(0, 16)
+                    .Select(from =>
+                        new MenuItem(from.ToString(),
+                            Enumerable.Range(from, 16 - from).Select(to => new MenuItem(to.ToString(),
+                                (s, e) =>
+                                {
+                                    var name = (string)Rows[hit.RowIndex].Cells[NameColumnIndex].Value;
+                                    foreach (var watch in ArrayRange.FormatArrayRangeWatch(name, from, to, _options.VisualizerOptions.MatchBracketsOnAddToWatches))
+                                        AddWatch(watch);
+                                })
+                            ).Prepend(new MenuItem("To") { Enabled = false }).ToArray())
+                    ).Prepend(new MenuItem("From") { Enabled = false }).ToArray()));
+
+                if (IsListItemRow(Rows[hit.RowIndex]))
+                    menu.MenuItems.Add(new MenuItem("Promote to Watches", (s, e) => PromoteToWatch(hit.RowIndex)));
+
+                menu.Show(this, loc);
+                return true;
+            }
+            return false;
+        }
+
+        private bool ShowColumnContextMenu(HitTestInfo hit, Point loc)
+        {
+            void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
+            {
+                string subgroupsSelector = ColumnSelector.PartialSubgroups(_options.DebuggerOptions.GroupSize, subgroupSize, displayedCount, displayLast);
+                string newSelector = ColumnSelector.GetSelectorMultiplication(_options.VisualizerColumnStyling.VisibleColumns, subgroupsSelector, DataColumnCount);
+                SetColumnSelector(newSelector);
+            }
+            void HideColumns(int columnIdx)
+            {
+                var selectedColumns = GetSelectedDataColumnIndexes(columnIdx);
+                var newColumnIndexes = ColumnSelector.ToIndexes(_options.VisualizerColumnStyling.VisibleColumns, DataColumnCount).Except(selectedColumns);
+                var newSelector = ColumnSelector.FromIndexes(newColumnIndexes);
+                SetColumnSelector(newSelector);
+            }
+            void SetColumnSelector(string newSelector)
+            {
+                _options.VisualizerColumnStyling.VisibleColumns = newSelector;
+                ClearSelection();
+            }
+
+            if (hit.RowIndex == -1 && hit.ColumnIndex >= NameColumnIndex)
+            {
+                var menu = new ContextMenu();
+
+                var groupSize = _options.DebuggerOptions.GroupSize;
+                menu.MenuItems.Add(new MenuItem("Keep First") { Enabled = false });
+                for (uint keepFirst = 1; keepFirst <= groupSize / 2; keepFirst *= 2)
+                {
+                    var submenu = new MenuItem($"{keepFirst}");
+                    for (uint subgroupSize = keepFirst * 2; subgroupSize <= groupSize; subgroupSize *= 2)
+                    {
+                        uint keepFirstCapture = keepFirst, subgroupSizeCapture = subgroupSize;
+                        submenu.MenuItems.Add(new MenuItem($"{subgroupSize}", (s, e) => SelectPartialSubgroups(subgroupSizeCapture, keepFirstCapture, displayLast: false)));
+                    }
+                    menu.MenuItems.Add(submenu);
+                }
+                menu.MenuItems.Add(new MenuItem("-"));
+                var keepLastSubmenu = new MenuItem("Keep Last");
+                for (uint keepLast = 1; keepLast <= groupSize / 2; keepLast *= 2)
+                {
+                    var submenu = new MenuItem($"{keepLast}");
+                    for (uint subgroupSize = keepLast * 2; subgroupSize <= groupSize; subgroupSize *= 2)
+                    {
+                        uint keepLastCapture = keepLast, subgroupSizeCapture = subgroupSize;
+                        submenu.MenuItems.Add(new MenuItem($"{subgroupSize}", (s, e) => SelectPartialSubgroups(subgroupSizeCapture, keepLastCapture, displayLast: true)));
+                    }
+                    keepLastSubmenu.MenuItems.Add(submenu);
+                }
+                menu.MenuItems.Add(keepLastSubmenu);
+                menu.MenuItems.Add(new MenuItem("Show All Columns", (s, e) => SetColumnSelector($"0-{groupSize - 1}")));
+                menu.MenuItems.Add(new MenuItem("-"));
+                menu.MenuItems.Add(new MenuItem("Font Color", new[]
+                {
+                    new MenuItem("Green",   (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.Green)),
+                    new MenuItem("Red",     (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.Red)),
+                    new MenuItem("Blue",    (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.Blue)),
+                    new MenuItem("Default", (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.None))
+                }));
+                menu.MenuItems.Add(new MenuItem("Background Color", new[]
+                {
+                    new MenuItem("Green",   (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.Green)),
+                    new MenuItem("Red",     (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.Red)),
+                    new MenuItem("Blue",    (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.Blue)),
+                    new MenuItem("Default", (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.None))
+                }));
+                menu.MenuItems.Add(new MenuItem("-"));
+                menu.MenuItems.Add(new MenuItem("Autofit Width", (s, e) => _state.FitWidth(hit.ColumnIndex)));
+
+                if (hit.ColumnIndex >= DataColumnOffset)
+                {
+                    menu.MenuItems.Add(new MenuItem("-"));
+                    menu.MenuItems.Add(new MenuItem("Hide This", (s, e) => HideColumns(hit.ColumnIndex)));
+                }
+
+                menu.Show(this, loc);
+                return true;
+            }
+            return false;
+        }
+
+        private bool ShowCellContextMenu(HitTestInfo hit, Point loc)
+        {
+            if (hit.RowIndex >= 0 && hit.RowIndex < NewWatchRowIndex && hit.ColumnIndex >= DataColumnOffset && Rows[hit.RowIndex].Cells[hit.ColumnIndex].Selected)
+            {
+                var menu = new ContextMenu();
+                menu.MenuItems.Add(new MenuItem("Copy", (s, e) => CopySelectedValues()));
+
+                if (SelectedCells.Count == 1)
+                {
+                    menu.MenuItems.Add(new MenuItem("-"));
+
+                    string file = null;
+                    uint line = 0;
+                    BreakpointLocationRequested((uint)hit.ColumnIndex - DataColumnOffset, ref file, ref line);
+                    if (!string.IsNullOrEmpty(file))
+                        menu.MenuItems.Add(new MenuItem($"Go to Breakpoint (Line {line + 1})", (s, e) => BreakpointNavigationRequested(file, line)));
+                    else
+                        menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                }
+
+                menu.Show(this, loc);
+                return true;
+            }
+            return false;
+        }
+
         #endregion
     }
 }

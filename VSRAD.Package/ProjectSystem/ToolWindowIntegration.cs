@@ -6,6 +6,7 @@ using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.DebugVisualizer.SliceVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -23,6 +24,7 @@ namespace VSRAD.Package.ProjectSystem
         SliceVisualizerContext GetSliceVisualizerContext();
 
         void AddWatchFromEditor(string watch);
+        void OpenFileInEditor(string file, uint line);
     }
 
     [Export(typeof(IToolWindowIntegration))]
@@ -72,5 +74,11 @@ namespace VSRAD.Package.ProjectSystem
         }
 
         public void AddWatchFromEditor(string watch) => AddWatch(watch);
+
+        public void OpenFileInEditor(string file, uint line)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            VsEditor.OpenFileInEditor(_serviceProvider, file, line, null, forceOppositeTab: false, preserveActiveDoc: false);
+        }
     }
 }

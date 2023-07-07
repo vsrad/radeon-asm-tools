@@ -176,7 +176,7 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, step.LineMarker,
+            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, null, step.LineMarker,
                 _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
             return new StepResult(true, "", "");
         }

@@ -112,6 +112,8 @@ namespace VSRAD.Package.ProjectSystem
             }
             ExecutionCompleted?.Invoke(this, args);
             _breakLineTagger.OnExecutionCompleted(args);
+            if (runResult?.BreakState != null)
+                runResult.BreakState.BreakFile = args.File;
             BreakEntered(this, runResult?.BreakState);
         }
 

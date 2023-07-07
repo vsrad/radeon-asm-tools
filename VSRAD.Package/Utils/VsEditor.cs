@@ -53,7 +53,7 @@ namespace VSRAD.Package.Utils
         private static readonly Type _viewManagerType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.ViewManager, Microsoft.VisualStudio.Shell.ViewManager");
         private static readonly Type _viewDockOperationsType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockOperations, Microsoft.VisualStudio.Shell.ViewManager");
 
-        public static void OpenFileInEditor(SVsServiceProvider serviceProvider, string path, string lineMarker, bool forceOppositeTab, bool preserveActiveDoc)
+        public static void OpenFileInEditor(SVsServiceProvider serviceProvider, string path, uint? line, string lineMarker, bool forceOppositeTab, bool preserveActiveDoc)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             try
@@ -67,7 +67,9 @@ namespace VSRAD.Package.Utils
                 Assumes.Present(vsUIShellOpenDocument);
                 ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, Guid.Empty, out _, out _, out _, out var newDocumentFrame));
 
-                if (!string.IsNullOrEmpty(lineMarker))
+                if (line is uint caretLine)
+                    ErrorHandler.ThrowOnFailure(VsShellUtilities.GetTextView(newDocumentFrame).SetCaretPos((int)caretLine, 0));
+                else if (!string.IsNullOrEmpty(lineMarker))
                     SetCaretAtLineMarker(newDocumentFrame, lineMarker);
 
                 if (forceOppositeTab && originalDocumentFrame != null && originalDocumentFrame != newDocumentFrame)
