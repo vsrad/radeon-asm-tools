@@ -51,10 +51,10 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 
-        public BreakStateData BreakData => _breakState?.Data;
+        public BreakState BreakState { get; private set; }
+        public BreakStateData BreakData => BreakState?.Data;
 
         private readonly ICommunicationChannel _channel;
-        private BreakState _breakState;
 
         public VisualizerContext(Options.ProjectOptions options, ICommunicationChannel channel, IDebuggerIntegration debugger)
         {
@@ -80,7 +80,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void EnterBreak(object sender, BreakState breakState)
         {
-            _breakState = breakState;
+            BreakState = breakState;
             WatchDataValid = breakState != null;
             if (WatchDataValid)
                 GroupIndex.UpdateOnBreak(breakState);
@@ -88,10 +88,10 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
         {
-            if (_breakState == null)
+            if (BreakState == null)
                 return;
 
-            e.DataGroupCount = (uint)_breakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
+            e.DataGroupCount = (uint)BreakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
             WatchDataValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
             if (!WatchDataValid)
                 return;
@@ -108,15 +108,15 @@ namespace VSRAD.Package.DebugVisualizer
             Status = fetchArgs.FetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
             GroupIndexEditable = false;
 
-            var warning = await _breakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
+            var warning = await BreakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
                 (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
 
-            GroupFetched(this, new GroupFetchedEventArgs(_breakState.DispatchParameters, warning));
+            GroupFetched(this, new GroupFetchedEventArgs(BreakState.DispatchParameters, warning));
 
             var status = new StringBuilder();
             status.AppendFormat("{0} groups, wave size: {1}, last run at: {2}",
-                e.DataGroupCount, Options.DebuggerOptions.WaveSize, _breakState.ExecutedAt.ToString("HH:mm:ss"));
-            if (_breakState.DispatchParameters?.StatusString is string statusStr && statusStr.Length != 0)
+                e.DataGroupCount, Options.DebuggerOptions.WaveSize, BreakState.ExecutedAt.ToString("HH:mm:ss"));
+            if (BreakState.DispatchParameters?.StatusString is string statusStr && statusStr.Length != 0)
             {
                 status.Append(", status: ");
                 status.Append(statusStr);

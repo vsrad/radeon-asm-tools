@@ -12,8 +12,12 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class VisualizerTable : DataGridView
     {
         public delegate void ChangeWatchState(IEnumerable<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
+        public delegate void RequestBreakpointLocation(uint threadId, ref string file, ref uint line);
+        public delegate void NavigateToBreakpoint(string file, uint line);
 
         public event ChangeWatchState WatchStateChanged;
+        public event RequestBreakpointLocation BreakpointLocationRequested;
+        public event NavigateToBreakpoint BreakpointNavigationRequested;
 
         public const int NameColumnIndex = 0;
         public const int PhantomColumnIndex = 1;
@@ -481,13 +485,23 @@ namespace VSRAD.Package.DebugVisualizer
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Left)
+            var hit = HitTest(e.X, e.Y);
+            switch (e.Button)
             {
-                var hit = HitTest(e.X, e.Y);
-                if (hit.Type == DataGridViewHitTestType.RowHeader)
-                    _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
-                if (hit.Type == DataGridViewHitTestType.ColumnHeader)
-                    _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
+                case MouseButtons.Left:
+                    if (hit.Type == DataGridViewHitTestType.RowHeader)
+                        _selectionController.SwitchMode(DataGridViewSelectionMode.RowHeaderSelect);
+                    if (hit.Type == DataGridViewHitTestType.ColumnHeader)
+                        _selectionController.SwitchMode(DataGridViewSelectionMode.ColumnHeaderSelect);
+                    break;
+                case MouseButtons.Right:
+                    if (hit.Type == DataGridViewHitTestType.Cell && hit.ColumnIndex >= DataColumnOffset && hit.RowIndex >= 0 && hit.RowIndex < NewWatchRowIndex)
+                    {
+                        var clickedDataCell = Rows[hit.RowIndex].Cells[hit.ColumnIndex];
+                        if (!SelectedCells.Contains(clickedDataCell))
+                            CurrentCell = clickedDataCell;
+                    }
+                    break;
             }
             if (!_mouseMoveController.HandleMouseDown(e))
                 base.OnMouseDown(e);
@@ -697,6 +711,19 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 var menu = new ContextMenu();
                 menu.MenuItems.Add(new MenuItem("Copy", (s, e) => CopySelectedValues()));
+
+                if (SelectedCells.Count == 1)
+                {
+                    menu.MenuItems.Add(new MenuItem("-"));
+
+                    string file = null;
+                    uint line = 0;
+                    BreakpointLocationRequested((uint)hit.ColumnIndex - DataColumnOffset, ref file, ref line);
+                    if (!string.IsNullOrEmpty(file))
+                        menu.MenuItems.Add(new MenuItem($"Go to Breakpoint (Line {line + 1})", (s, e) => BreakpointNavigationRequested(file, line)));
+                    else
+                        menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                }
 
                 menu.Show(this, loc);
                 return true;

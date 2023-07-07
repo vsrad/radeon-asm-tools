@@ -42,6 +42,20 @@ namespace VSRAD.Package.DebugVisualizer
                 foreach (var row in invalidatedRows)
                     SetRowContentsFromBreakState(row);
             };
+            _table.BreakpointLocationRequested += (uint threadId, ref string file, ref uint line) =>
+            {
+                var waveId = threadId / _context.Options.DebuggerOptions.WaveSize;
+                if (_context.BreakData != null && waveId < _context.BreakData.WavesPerGroup)
+                {
+                    var system = _context.BreakData.GetSystemData((int)waveId);
+                    if (system[Server.BreakStateData.SystemMagicNumberLane] == _context.Options.VisualizerOptions.MagicNumber || !_context.Options.VisualizerOptions.CheckMagicNumber)
+                    {
+                        file = _context.BreakState.BreakFile;
+                        line = system[Server.BreakStateData.SystemBreakLineLane];
+                    }
+                }
+            };
+            _table.BreakpointNavigationRequested += integration.OpenFileInEditor;
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
