@@ -200,12 +200,6 @@ namespace VSRAD.Package.DebugVisualizer
             insertedRow.Cells[NameColumnIndex].Value = watch.Name;
             insertedRow.Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
             insertedRow.HeaderCell.Value = watch.Info.ShortName();
-
-            var currentWidth = Columns[NameColumnIndex].Width;
-            var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
-            if (preferredWidth > currentWidth)
-                Columns[NameColumnIndex].Width = preferredWidth;
-
             return insertedRow;
         }
 
@@ -229,7 +223,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var type = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
                     var parentIdxInUserRows = userWatchRows.IndexOf(nameCell.ParentRows[0]);
                     var rowIdxAfterParent = parentIdxInUserRows + 1 < userWatchRows.Count ? userWatchRows[parentIdxInUserRows + 1].Index : NewWatchRowIndex;
-                    insertedRows.Add(InsertUserWatchRow(new Watch(nameCell.FullWatchName, type), rowIdxAfterParent));
+                    insertedRows.Add(InsertUserWatchRow(new Watch((string)nameCell.Value, type), rowIdxAfterParent));
                 }
             }
             RaiseWatchStateChanged(insertedRows);
