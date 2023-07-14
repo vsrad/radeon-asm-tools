@@ -209,7 +209,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         }
                         else
                         {
-                            var label = (ListSize is uint listSize) ? $"<{listSize}>" : "";
+                            var label = (ListSize is uint listSize) ? $"[{listSize}]" : "";
                             for (var lane = 0; lane < _context.BreakData.WaveSize && tid < _context.BreakData.GroupSize; ++tid, ++lane)
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;
                         }
@@ -222,10 +222,10 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                             && Enumerable.SequenceEqual(nextNameCell.ParentRows, nameCell.ParentRows.Append(row))))
                         {
                             _table.Rows.Insert(nextRowIndex);
-                            _table.Rows[nextRowIndex].Visible = nameCell.ListExpanded;
                             _table.Rows[nextRowIndex].HeaderCell.Value = VariableTypeUtils.ShortName(watchType); // Inherit watch type
                             ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).IndexInList = i;
                             ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ParentRows.AddRange(nameCell.ParentRows.Append(row));
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ExpandCollapse(nameCell.ListExpanded);
                         }
                         nChildRows += 1;
                         nChildRows += SetRowContentsFromBreakState(_table.Rows[nextRowIndex]);

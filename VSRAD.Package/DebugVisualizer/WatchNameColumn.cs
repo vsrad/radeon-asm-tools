@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -18,19 +17,32 @@ namespace VSRAD.Package.DebugVisualizer
 
         public int NestingLevel => ParentRows.Count;
         public bool HasChildItems => RowIndex + 1 < DataGridView.RowCount && ((WatchNameCell)DataGridView.Rows[RowIndex + 1].Cells[ColumnIndex]).ParentRows.Contains(OwningRow);
-        public string FullWatchName => ParentRows.Append(OwningRow).Aggregate("", (path, row) => path + row.Cells[ColumnIndex].Value);
 
         private int ButtonSizeX => Size.Height - Size.Height % 2 - 4;
         private int NestedButtonExtentX => ButtonSizeX * (NestingLevel + 1);
 
         private bool? _listExpandedByUser;
-        public bool ListExpanded { get => _listExpandedByUser ?? (NestingLevel == 0); set { _listExpandedByUser = value; ApplyListExpansion(); } }
+        public bool ListExpanded { get => _listExpandedByUser ?? (NestingLevel == 0); set { _listExpandedByUser = value; ExpandCollapseChildren(); } }
 
         public WatchNameCell() : base() { }
 
+        public void ExpandCollapse(bool parentExpanded)
+        {
+            if (OwningRow.Visible = parentExpanded)
+                ResizeColumnToFitValue();
+        }
+
         protected override object GetValue(int rowIndex)
         {
-            return IndexInList != -1 ? $"[{IndexInList}]" : base.GetValue(rowIndex);
+            return ParentRows.Count > 0 ? (ParentRows[ParentRows.Count - 1].Cells[ColumnIndex].Value + $"[{IndexInList}]") : base.GetValue(rowIndex);
+        }
+
+        protected override bool SetValue(int rowIndex, object value)
+        {
+            var valueSet = base.SetValue(rowIndex, value);
+            if (valueSet && DataGridView != null)
+                ResizeColumnToFitValue();
+            return valueSet;
         }
 
         protected override void Paint(Graphics graphics,
@@ -86,7 +98,7 @@ namespace VSRAD.Package.DebugVisualizer
                     textBox.SelectAll();
                 });
 
-                textBox.TextChanged += ResizeColumnToFitText;
+                textBox.TextChanged += ResizeColumnToFitEditedValue;
             }
         }
 
@@ -94,15 +106,22 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (DataGridView.EditingControl is DataGridViewTextBoxEditingControl textBox)
             {
-                textBox.TextChanged -= ResizeColumnToFitText;
+                textBox.TextChanged -= ResizeColumnToFitEditedValue;
             }
             base.DetachEditingControl();
         }
 
-        private void ResizeColumnToFitText(object sender, EventArgs e)
+        private void ResizeColumnToFitEditedValue(object sender, EventArgs e)
         {
             TextBox textBox = (TextBox)sender;
             var requiredWidth = TextRenderer.MeasureText(textBox.Text, textBox.Font).Width + textBox.Margin.Horizontal + NestedButtonExtentX;
+            if (DataGridView.Columns[ColumnIndex].Width < requiredWidth)
+                DataGridView.Columns[ColumnIndex].Width = requiredWidth;
+        }
+
+        private void ResizeColumnToFitValue()
+        {
+            var requiredWidth = PreferredSize.Width;
             if (DataGridView.Columns[ColumnIndex].Width < requiredWidth)
                 DataGridView.Columns[ColumnIndex].Width = requiredWidth;
         }
@@ -132,7 +151,7 @@ namespace VSRAD.Package.DebugVisualizer
         private bool ExpanderButtonClicked(DataGridViewCellMouseEventArgs e) =>
             e.Button == MouseButtons.Left && e.X < NestedButtonExtentX && e.ColumnIndex == DataGridView.CurrentCellAddress.X && e.RowIndex == DataGridView.CurrentCellAddress.Y;
 
-        private void ApplyListExpansion()
+        private void ExpandCollapseChildren()
         {
             for (var row = RowIndex + 1; row < DataGridView.RowCount; ++row)
             {
@@ -140,7 +159,7 @@ namespace VSRAD.Package.DebugVisualizer
                 if (!rowNameCell.ParentRows.Contains(OwningRow))
                     break;
                 var allLevelsExpanded = rowNameCell.ParentRows.TrueForAll(r => ((WatchNameCell)r.Cells[ColumnIndex]).ListExpanded);
-                DataGridView.Rows[row].Visible = allLevelsExpanded;
+                rowNameCell.ExpandCollapse(allLevelsExpanded);
             }
         }
     }

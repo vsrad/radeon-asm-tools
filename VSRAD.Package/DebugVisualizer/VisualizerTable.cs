@@ -200,12 +200,6 @@ namespace VSRAD.Package.DebugVisualizer
             insertedRow.Cells[NameColumnIndex].Value = watch.Name;
             insertedRow.Cells[NameColumnIndex].ReadOnly = !canBeRemoved;
             insertedRow.HeaderCell.Value = watch.Info.ShortName();
-
-            var currentWidth = Columns[NameColumnIndex].Width;
-            var preferredWidth = Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
-            if (preferredWidth > currentWidth)
-                Columns[NameColumnIndex].Width = preferredWidth;
-
             return insertedRow;
         }
 
@@ -229,7 +223,7 @@ namespace VSRAD.Package.DebugVisualizer
                     var type = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
                     var parentIdxInUserRows = userWatchRows.IndexOf(nameCell.ParentRows[0]);
                     var rowIdxAfterParent = parentIdxInUserRows + 1 < userWatchRows.Count ? userWatchRows[parentIdxInUserRows + 1].Index : NewWatchRowIndex;
-                    insertedRows.Add(InsertUserWatchRow(new Watch(nameCell.FullWatchName, type), rowIdxAfterParent));
+                    insertedRows.Add(InsertUserWatchRow(new Watch((string)nameCell.Value, type), rowIdxAfterParent));
                 }
             }
             RaiseWatchStateChanged(insertedRows);
@@ -626,6 +620,10 @@ namespace VSRAD.Package.DebugVisualizer
 
         private bool ShowColumnContextMenu(HitTestInfo hit, Point loc)
         {
+            EventHandler SelectPartialSubgroupsHandler(uint subgroupSize, uint displayedCount, bool displayLast)
+            {
+                return (s, e) => SelectPartialSubgroups(subgroupSize, displayedCount, displayLast);
+            }
             void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
             {
                 string subgroupsSelector = ColumnSelector.PartialSubgroups(_options.DebuggerOptions.GroupSize, subgroupSize, displayedCount, displayLast);
@@ -649,32 +647,26 @@ namespace VSRAD.Package.DebugVisualizer
             {
                 var menu = new ContextMenu();
 
-                var groupSize = _options.DebuggerOptions.GroupSize;
+                var maxSubgroupSize = 512;
                 menu.MenuItems.Add(new MenuItem("Keep First") { Enabled = false });
-                for (uint keepFirst = 1; keepFirst <= groupSize / 2; keepFirst *= 2)
+                for (uint keepFirst = 1; keepFirst <= maxSubgroupSize / 2; keepFirst *= 2)
                 {
                     var submenu = new MenuItem($"{keepFirst}");
-                    for (uint subgroupSize = keepFirst * 2; subgroupSize <= groupSize; subgroupSize *= 2)
-                    {
-                        uint keepFirstCapture = keepFirst, subgroupSizeCapture = subgroupSize;
-                        submenu.MenuItems.Add(new MenuItem($"{subgroupSize}", (s, e) => SelectPartialSubgroups(subgroupSizeCapture, keepFirstCapture, displayLast: false)));
-                    }
+                    for (uint subgroupSize = keepFirst * 2; subgroupSize <= maxSubgroupSize; subgroupSize *= 2)
+                        submenu.MenuItems.Add(new MenuItem($"{subgroupSize}", SelectPartialSubgroupsHandler(subgroupSize, keepFirst, displayLast: false)));
                     menu.MenuItems.Add(submenu);
                 }
                 menu.MenuItems.Add(new MenuItem("-"));
                 var keepLastSubmenu = new MenuItem("Keep Last");
-                for (uint keepLast = 1; keepLast <= groupSize / 2; keepLast *= 2)
+                for (uint keepLast = 1; keepLast <= maxSubgroupSize / 2; keepLast *= 2)
                 {
                     var submenu = new MenuItem($"{keepLast}");
-                    for (uint subgroupSize = keepLast * 2; subgroupSize <= groupSize; subgroupSize *= 2)
-                    {
-                        uint keepLastCapture = keepLast, subgroupSizeCapture = subgroupSize;
-                        submenu.MenuItems.Add(new MenuItem($"{subgroupSize}", (s, e) => SelectPartialSubgroups(subgroupSizeCapture, keepLastCapture, displayLast: true)));
-                    }
+                    for (uint subgroupSize = keepLast * 2; subgroupSize <= maxSubgroupSize; subgroupSize *= 2)
+                        submenu.MenuItems.Add(new MenuItem($"{subgroupSize}", SelectPartialSubgroupsHandler(subgroupSize, keepLast, displayLast: true)));
                     keepLastSubmenu.MenuItems.Add(submenu);
                 }
                 menu.MenuItems.Add(keepLastSubmenu);
-                menu.MenuItems.Add(new MenuItem("Show All Columns", (s, e) => SetColumnSelector($"0-{groupSize - 1}")));
+                menu.MenuItems.Add(new MenuItem("Show All Columns", (s, e) => SetColumnSelector($"0-{_options.DebuggerOptions.GroupSize - 1}")));
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Font Color", new[]
                 {
