@@ -11,7 +11,7 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
-    public enum BreakTargetSelector { Last, NextBreakpoint, NextLine }
+    public enum BreakTargetSelector { Last, NextBreakpoint, PrevBreakpoint, NextLine }
 
     public interface IBreakpointTracker
     {
@@ -59,10 +59,7 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
 
             if (_lastTarget.TryGetValue(file, out var lt) && lt.ForceRunToLine)
-            {
-                _lastTarget[file] = (lt.Line, Breakpoint: null, ForceRunToLine: false);
-                return new[] { GetBreakTarget(lt.Line) };
-            }
+                return GoToTarget(file, lt.Line);
 
             var breakpoints = _dte.Debugger.Breakpoints.Cast<Breakpoint2>().Where(bp => bp.Enabled && bp.File == file).ToList();
             breakpoints.Sort((a, b) => a.FileLine.CompareTo(b.FileLine));
@@ -70,7 +67,7 @@ namespace VSRAD.Package.ProjectSystem
                 return new Error($"No breakpoints set\n\nSource file: {file}");
 
             if (_projectOptions.DebuggerOptions.EnableMultipleBreakpoints)
-                return breakpoints.Select(GetBreakTarget).ToArray();
+                return GoToTarget(file, breakpoints);
 
             switch (selector)
             {
@@ -78,40 +75,53 @@ namespace VSRAD.Package.ProjectSystem
                     if (_lastTarget.TryGetValue(file, out lt))
                     {
                         if (breakpoints.Contains(lt.Breakpoint))
-                            return new[] { GetBreakTarget(lt.Breakpoint) };
+                            return GoToTarget(file, lt.Breakpoint);
                         else if (lt.Breakpoint == null) // stepping
-                            return new[] { GetBreakTarget(lt.Line) };
+                            return GoToTarget(file, lt.Line);
                     }
                     goto case BreakTargetSelector.NextBreakpoint;
                 case BreakTargetSelector.NextBreakpoint:
-                    Breakpoint2 nextBreakpoint = null;
                     if (_lastTarget.TryGetValue(file, out lt))
                     {
-                        int lastIdx;
-                        if (lt.Breakpoint != null && (lastIdx = breakpoints.IndexOf(lt.Breakpoint)) != -1)
-                            nextBreakpoint = breakpoints[(lastIdx + 1) % breakpoints.Count];
+                        if (lt.Breakpoint != null && breakpoints.IndexOf(lt.Breakpoint) is int lastIdx && lastIdx != -1)
+                            return GoToTarget(file, breakpoints[(lastIdx + 1) % breakpoints.Count]);
                         else
-                            nextBreakpoint = breakpoints.Find(b => ((uint)b.FileLine - 1) > lt.Line);
+                            return GoToTarget(file, breakpoints.Find(b => ((uint)b.FileLine - 1) > lt.Line) ?? breakpoints[0]);
                     }
-                    nextBreakpoint = nextBreakpoint ?? breakpoints[0];
-                    _lastTarget[file] = (Line: (uint)nextBreakpoint.FileLine - 1, Breakpoint: nextBreakpoint, ForceRunToLine: false);
-                    return new[] { GetBreakTarget(nextBreakpoint) };
+                    return GoToTarget(file, breakpoints[0]);
+                case BreakTargetSelector.PrevBreakpoint:
+                    if (_lastTarget.TryGetValue(file, out lt))
+                    {
+                        if (lt.Breakpoint != null && breakpoints.IndexOf(lt.Breakpoint) is int lastIdx && lastIdx != -1)
+                            return GoToTarget(file, breakpoints[lastIdx == 0 ? breakpoints.Count - 1 : lastIdx - 1]);
+                        else
+                            return GoToTarget(file, breakpoints.Find(b => ((uint)b.FileLine - 1) < lt.Line) ?? breakpoints[breakpoints.Count - 1]);
+                    }
+                    return GoToTarget(file, breakpoints[breakpoints.Count - 1]);
                 case BreakTargetSelector.NextLine:
                     if (_lastTarget.TryGetValue(file, out lt))
-                    {
-                        _lastTarget[file] = (lt.Line + 1, Breakpoint: null, ForceRunToLine: false);
-                        return new[] { GetBreakTarget(lt.Line + 1) };
-                    }
+                        return GoToTarget(file, lt.Line + 1);
                     return new Error($"Stepping is not available until a breakpoint has been hit.\n\nSource file: {file}");
                 default:
                     return new Error("Undefined break target selector.");
             }
         }
 
-        private uint GetBreakTarget(Breakpoint2 breakpoint) =>
-            (uint)breakpoint.FileLine - 1;
+        private uint[] GoToTarget(string file, uint targetLine)
+        {
+            _lastTarget[file] = (Line: targetLine, Breakpoint: null, ForceRunToLine: false);
+            return new[] { targetLine };
+        }
 
-        private uint GetBreakTarget(uint line) =>
-            line;
+        private uint[] GoToTarget(string file, Breakpoint2 targetBreakpoint)
+        {
+            _lastTarget[file] = (Line: (uint)targetBreakpoint.FileLine - 1, Breakpoint: targetBreakpoint, ForceRunToLine: false);
+            return new[] { (uint)targetBreakpoint.FileLine - 1 };
+        }
+
+        private uint[] GoToTarget(string file, IEnumerable<Breakpoint2> multipleBreakpoints)
+        {
+            return multipleBreakpoints.Select(b => (uint)b.FileLine - 1).ToArray();
+        }
     }
 }

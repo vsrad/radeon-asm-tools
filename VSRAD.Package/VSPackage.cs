@@ -78,10 +78,12 @@ namespace VSRAD.Package
                 // https://stackoverflow.com/a/22748659
                 var rerunDebugCommand = dte.Commands.Item(Constants.ActionsMenuCommandSet.ToString("B"), Constants.RerunDebugCommandId);
                 rerunDebugCommand.Bindings = "Global::F6";
+                var reverseDebugCommand = dte.Commands.Item(Constants.ActionsMenuCommandSet.ToString("B"), Constants.ReverseDebugCommandId);
+                reverseDebugCommand.Bindings = "Global::F7";
             }
             catch (Exception e)
             {
-                Errors.ShowWarning("Unable to set F6 as the keyboard shortcut for Tools.RadDebug.RerunDebug." +
+                Errors.ShowWarning("Unable to set F6 and F7 as the keyboard shortcuts for Tools.RadDebug.RerunDebug and Tools.RadDebug.ReverseDebug." +
                     " Please configure it manually in Tools -> Options -> Environment -> Keyboard." +
                     "\n\nException: " + e.Message);
             }

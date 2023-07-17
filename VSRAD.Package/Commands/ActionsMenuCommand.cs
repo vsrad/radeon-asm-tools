@@ -38,12 +38,19 @@ namespace VSRAD.Package.Commands
                 var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
                 {
-                    if (commandId == Constants.RerunDebugCommandId)
-                        OleCommandText.SetText(commandText, $"Rerun {actionName}");
-                    else
-                        OleCommandText.SetText(commandText, actionName);
+                    switch (commandId)
+                    {
+                        case Constants.RerunDebugCommandId:
+                            OleCommandText.SetText(commandText, $"Rerun {actionName}");
+                            break;
+                        case Constants.ReverseDebugCommandId:
+                            OleCommandText.SetText(commandText, $"Reverse {actionName}");
+                            break;
+                        default:
+                            OleCommandText.SetText(commandText, actionName);
+                            break;
+                    }
                 }
-
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
             }
             else
@@ -62,7 +69,9 @@ namespace VSRAD.Package.Commands
             {
                 ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
-                    var debugNextTarget = commandId == Constants.DebugActionCommandId ? BreakTargetSelector.NextBreakpoint : BreakTargetSelector.Last;
+                    var debugNextTarget = commandId == Constants.DebugActionCommandId ? BreakTargetSelector.NextBreakpoint
+                                        : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.PrevBreakpoint
+                                        : BreakTargetSelector.Last;
                     var result = await _actionLauncher.LaunchActionByNameAsync(actionName, debugNextTarget);
                     await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     if (result.Error is Error e)
@@ -93,6 +102,7 @@ namespace VSRAD.Package.Commands
                     return SelectedProfile.MenuCommands.PreprocessAction;
                 case Constants.DebugActionCommandId:
                 case Constants.RerunDebugCommandId:
+                case Constants.ReverseDebugCommandId:
                     return SelectedProfile.MenuCommands.DebugAction;
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;

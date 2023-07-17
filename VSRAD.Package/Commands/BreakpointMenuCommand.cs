@@ -23,14 +23,19 @@ namespace VSRAD.Package.Commands
 
         public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
+            var flags = OleCommandText.GetFlags(commandText);
             if (commandId == Constants.ToggleMultipleBreakpointsCommandId)
             {
                 var enabled = _project.Options.DebuggerOptions.EnableMultipleBreakpoints;
-
-                var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
-                    OleCommandText.SetText(commandText, "Multiple breakpoints mode is " + (enabled ? "enabled" : "disabled"));
-
+                    OleCommandText.SetText(commandText, (enabled ? "Disable" : "Enable") + " Multiple Breakpoints");
+                return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED | (enabled ? OLECMDF.OLECMDF_LATCHED : 0);
+            }
+            if (commandId == Constants.ToggleStopOnBreakpointCommandId)
+            {
+                var enabled = _project.Options.DebuggerOptions.StopOnHit;
+                if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
+                    OleCommandText.SetText(commandText, enabled ? "Resume On Hit" : "Stop On Hit");
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED | (enabled ? OLECMDF.OLECMDF_LATCHED : 0);
             }
             return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
@@ -41,6 +46,10 @@ namespace VSRAD.Package.Commands
             if (commandId == Constants.ToggleMultipleBreakpointsCommandId)
             {
                 _project.Options.DebuggerOptions.EnableMultipleBreakpoints = !_project.Options.DebuggerOptions.EnableMultipleBreakpoints;
+            }
+            if (commandId == Constants.ToggleStopOnBreakpointCommandId)
+            {
+                _project.Options.DebuggerOptions.StopOnHit = !_project.Options.DebuggerOptions.StopOnHit;
             }
         }
     }
