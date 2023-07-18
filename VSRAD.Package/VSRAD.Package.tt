@@ -170,19 +170,7 @@
           <LocCanonicalName>RadDebug.ReverseDebug</LocCanonicalName>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetBreakpointMenu" id="ToggleStopOnBreakpointCommandId" priority="11" type="Button">
-        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
-        <Icon guid="guidImages" id="stopOnBreakpointIcon" />
-        <CommandFlag>DefaultInvisible</CommandFlag>
-        <CommandFlag>DynamicVisibility</CommandFlag>
-        <CommandFlag>TextChanges</CommandFlag>
-        <Strings>
-          <ButtonText>Stop on hit</ButtonText>
-          <CanonicalName>RadDebug.ToggleStopOnBreakpointCommandId</CanonicalName>
-          <LocCanonicalName>RadDebug.ToggleStopOnBreakpointCommandId</LocCanonicalName>
-        </Strings>
-      </Button>
-      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="12" type="Button">
+      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="11" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="multipleBreakpointsIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -258,7 +246,7 @@
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
       <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png"
-              usedList="visualizerIcon, optionsIcon, profilerIcon, disassembleIcon, preprocessIcon, debugActionIcon, rerunDebugActionIcon, reverseDebugActionIcon, stopOnBreakpointIcon, multipleBreakpointsIcon" />
+              usedList="visualizerIcon, optionsIcon, profilerIcon, disassembleIcon, preprocessIcon, debugActionIcon, rerunDebugActionIcon, reverseDebugActionIcon, multipleBreakpointsIcon" />
     </Bitmaps>
 
     <Groups>
@@ -347,7 +335,6 @@
 
     <GuidSymbol name="guidCmdSetBreakpointMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
       <IDSymbol name="ToggleMultipleBreakpointsCommandId" value="0x10" />
-      <IDSymbol name="ToggleStopOnBreakpointCommandId" value="0x11"/>
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetToolWindow" value="{03c8f3ba-2e44-4159-ac37-b08fc295a0cc}">
@@ -392,8 +379,7 @@
       <IDSymbol name="debugActionIcon" value="6" />
       <IDSymbol name="rerunDebugActionIcon" value="7" />
       <IDSymbol name="reverseDebugActionIcon" value="8" />
-      <IDSymbol name="stopOnBreakpointIcon" value="9" />
-      <IDSymbol name="multipleBreakpointsIcon" value="10" />
+      <IDSymbol name="multipleBreakpointsIcon" value="9" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>
