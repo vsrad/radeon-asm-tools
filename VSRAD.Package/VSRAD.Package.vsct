@@ -17,7 +17,7 @@
         </Strings>
       </Menu>
       <!-- Tools -> RAD Debug -> Actions -->
-      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="10" type="Menu">
+      <Menu guid="guidCmdSetActionsMenu" id="ActionsMenuId" priority="100" type="Menu">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup"/>
         <Strings>
           <ButtonText>Actions</ButtonText>
@@ -259,7 +259,19 @@
           <LocCanonicalName>RadDebug.RerunDebug</LocCanonicalName>
         </Strings>
       </Button>
-      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="9" type="Button">
+      <Button guid="guidCmdSetActionsMenu" id="ReverseDebugCommandId" priority="10" type="Button">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <Icon guid="guidImages" id="reverseDebugActionIcon" />
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <CommandFlag>TextChanges</CommandFlag>
+        <Strings>
+          <ButtonText>Reverse Debug</ButtonText>
+          <CanonicalName>RadDebug.ReverseDebug</CanonicalName>
+          <LocCanonicalName>RadDebug.ReverseDebug</LocCanonicalName>
+        </Strings>
+      </Button>
+      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="11" type="Button">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <Icon guid="guidImages" id="multipleBreakpointsIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -1381,7 +1393,7 @@
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
       <Bitmap guid="guidImages" href="Resources\DebugVisualizerWindowCommand.png"
-              usedList="visualizerIcon, optionsIcon, profilerIcon, disassembleIcon, preprocessIcon, debugActionIcon, rerunDebugActionIcon, multipleBreakpointsIcon" />
+              usedList="visualizerIcon, optionsIcon, profilerIcon, disassembleIcon, preprocessIcon, debugActionIcon, rerunDebugActionIcon, reverseDebugActionIcon, multipleBreakpointsIcon" />
     </Bitmaps>
 
     <Groups>
@@ -1508,6 +1520,7 @@
       <IDSymbol name="PreprocessCommandId" value="0x12" />
       <IDSymbol name="DebugActionCommandId" value="0x13" />
       <IDSymbol name="RerunDebugCommandId" value="0x14" />
+      <IDSymbol name="ReverseDebugCommandId" value="0x15" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetBreakpointMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
@@ -1731,7 +1744,8 @@
       <IDSymbol name="preprocessIcon" value="5" />
       <IDSymbol name="debugActionIcon" value="6" />
       <IDSymbol name="rerunDebugActionIcon" value="7" />
-      <IDSymbol name="multipleBreakpointsIcon" value="8" />
+      <IDSymbol name="reverseDebugActionIcon" value="8" />
+      <IDSymbol name="multipleBreakpointsIcon" value="9" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

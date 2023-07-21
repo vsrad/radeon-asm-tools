@@ -29,7 +29,7 @@ namespace VSRAD.Package.Commands
 
                 var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
-                    OleCommandText.SetText(commandText, "Multiple breakpoints mode is " + (enabled ? "enabled" : "disabled"));
+                    OleCommandText.SetText(commandText, (enabled ? "Disable" : "Enable") + " Multiple Breakpoints");
 
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED | (enabled ? OLECMDF.OLECMDF_LATCHED : 0);
             }

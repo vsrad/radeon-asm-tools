@@ -31,6 +31,7 @@ namespace VSRAD.Package
         public const int PreprocessCommandId = 0x12;
         public const int DebugActionCommandId = 0x13;
         public const int RerunDebugCommandId = 0x14;
+        public const int ReverseDebugCommandId = 0x15;
         public const int AddToWatchesCommandId = 0x0100;
         public const int AddToWatchesArrayCustomCommandId = 0x1900;
         public const int AddArrayToWatchesIndexCount = 16;
