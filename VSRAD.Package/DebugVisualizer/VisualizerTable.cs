@@ -211,20 +211,14 @@ namespace VSRAD.Package.DebugVisualizer
             ClearSelection();
         }
 
-        private void PromoteToWatch(int rowIndex)
+        private void AddToWatches(int rowIndex)
         {
-            var userWatchRows = GetUserWatchRows().ToList();
-            var rowsToPromote = _selectionController.GetClickTargetRows(rowIndex);
+            var rowsToAdd = _selectionController.GetClickTargetRows(rowIndex);
             var insertedRows = new List<DataGridViewRow>();
-            foreach (var row in rowsToPromote)
+            foreach (var row in rowsToAdd)
             {
-                if (row.Cells[NameColumnIndex] is WatchNameCell nameCell && nameCell.NestingLevel > 0)
-                {
-                    var type = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
-                    var parentIdxInUserRows = userWatchRows.IndexOf(nameCell.ParentRows[0]);
-                    var rowIdxAfterParent = parentIdxInUserRows + 1 < userWatchRows.Count ? userWatchRows[parentIdxInUserRows + 1].Index : NewWatchRowIndex;
-                    insertedRows.Add(InsertUserWatchRow(new Watch((string)nameCell.Value, type), rowIdxAfterParent));
-                }
+                var type = VariableTypeUtils.TypeFromShortName((string)row.HeaderCell.Value);
+                insertedRows.Add(InsertUserWatchRow(new Watch((string)row.Cells[NameColumnIndex].Value, type), NewWatchRowIndex));
             }
             RaiseWatchStateChanged(insertedRows);
         }
@@ -595,22 +589,24 @@ namespace VSRAD.Package.DebugVisualizer
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Insert Row Before", (s, e) => InsertSeparatorRow(hit.RowIndex, false)));
                 menu.MenuItems.Add(new MenuItem("Insert Row After", (s, e) => InsertSeparatorRow(hit.RowIndex, true)));
-                menu.MenuItems.Add(new MenuItem("-"));
-                menu.MenuItems.Add(new MenuItem("Add to Watches as Array", Enumerable.Range(0, 16)
-                    .Select(from =>
-                        new MenuItem(from.ToString(),
-                            Enumerable.Range(from, 16 - from).Select(to => new MenuItem(to.ToString(),
-                                (s, e) =>
-                                {
-                                    var name = (string)Rows[hit.RowIndex].Cells[NameColumnIndex].Value;
-                                    foreach (var watch in ArrayRange.FormatArrayRangeWatch(name, from, to, _options.VisualizerOptions.MatchBracketsOnAddToWatches))
-                                        AddWatch(watch);
-                                })
-                            ).Prepend(new MenuItem("To") { Enabled = false }).ToArray())
-                    ).Prepend(new MenuItem("From") { Enabled = false }).ToArray()));
 
-                if (IsListItemRow(Rows[hit.RowIndex]))
-                    menu.MenuItems.Add(new MenuItem("Promote to Watches", (s, e) => PromoteToWatch(hit.RowIndex)));
+                if (hit.RowIndex != SystemRowIndex)
+                {
+                    menu.MenuItems.Add(new MenuItem("-"));
+                    menu.MenuItems.Add(new MenuItem("Add to Watches", (s, e) => AddToWatches(hit.RowIndex)));
+                    menu.MenuItems.Add(new MenuItem("Add to Watches as Array", Enumerable.Range(0, 16)
+                        .Select(from =>
+                            new MenuItem(from.ToString(),
+                                Enumerable.Range(from, 16 - from).Select(to => new MenuItem(to.ToString(),
+                                    (s, e) =>
+                                    {
+                                        var name = (string)Rows[hit.RowIndex].Cells[NameColumnIndex].Value;
+                                        foreach (var watch in ArrayRange.FormatArrayRangeWatch(name, from, to, _options.VisualizerOptions.MatchBracketsOnAddToWatches))
+                                            AddWatch(watch);
+                                    })
+                                ).Prepend(new MenuItem("To") { Enabled = false }).ToArray())
+                        ).Prepend(new MenuItem("From") { Enabled = false }).ToArray()));
+                }
 
                 menu.Show(this, loc);
                 return true;
