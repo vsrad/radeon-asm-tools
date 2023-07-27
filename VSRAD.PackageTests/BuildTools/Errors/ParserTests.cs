@@ -1,4 +1,6 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 using static VSRAD.BuildTools.IPCBuildResult;
 using static VSRAD.Package.BuildTools.Errors.Parser;
@@ -116,6 +118,20 @@ WARNING: you are incredibly beautiful!
             var combinedOutput = string.Join("\r\n", separateOutputs.Select(o => o.Trim()));
             var combinedOutputMessages = ParseStderr(new[] { combinedOutput }).ToArray();
             Assert.Equal(expectedMessages, combinedOutputMessages);
+        }
+
+        [Fact]
+        public async Task LongErrorLinesTestAsync()
+        {
+            var longLine = string.Concat(Enumerable.Repeat("[#(a: b, c=d, e-f, g>h)],", 1000));
+            var stderr = Enumerable.Repeat(longLine, 100);
+
+            var task = Task.Run(() => ParseStderr(stderr).ToArray());
+            var result = await Task.WhenAny(task, Task.Delay(1000));
+            if (result == task)
+                Assert.Empty(await task);
+            else
+                throw new TimeoutException("ParseStderr should not take longer than 1 second");
         }
     }
 }
