@@ -49,7 +49,6 @@ namespace VSRAD.Package.DebugVisualizer
 
         private readonly TableState _state;
 
-        private bool _hostWindowHasFocus;
         private bool _enterPressedOnWatchEndEdit;
 
         public VisualizerTable(ProjectOptions options, IFontAndColorProvider fontAndColor) : base()
@@ -139,12 +138,20 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void HostWindowFocusChanged(bool hasFocus)
         {
-            _hostWindowHasFocus = hasFocus;
-            if (hasFocus)
-            {
-                DefaultCellStyle.SelectionBackColor = SystemColors.Highlight;
-            }
-            else
+            if (!hasFocus)
+                EndEdit();
+        }
+
+        protected override void OnGotFocus(EventArgs e)
+        {
+            base.OnGotFocus(e);
+            DefaultCellStyle.SelectionBackColor = SystemColors.Highlight;
+        }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            base.OnLostFocus(e);
+            if (!ContainsFocus)
             {
                 DefaultCellStyle.SelectionBackColor = Color.LightSteelBlue;
                 EndEdit();
@@ -270,7 +277,7 @@ namespace VSRAD.Package.DebugVisualizer
                 var rowWatchName = (string)row.Cells[NameColumnIndex].Value;
 
                 var nextWatchIndex = -1;
-                var shouldMoveCaretToNextWatch = _hostWindowHasFocus && _enterPressedOnWatchEndEdit;
+                var shouldMoveCaretToNextWatch = ContainsFocus && _enterPressedOnWatchEndEdit;
                 _enterPressedOnWatchEndEdit = false; // Don't move the focus again on successive WatchEndEdit invocations
 
                 if (e.RowIndex == NewWatchRowIndex) // Adding a new watch
@@ -303,7 +310,7 @@ namespace VSRAD.Package.DebugVisualizer
                     }
                 }
 
-                if (!_hostWindowHasFocus)
+                if (!ContainsFocus)
                 {
                     ClearSelection();
                 }
@@ -527,8 +534,11 @@ namespace VSRAD.Package.DebugVisualizer
         public override DataObject GetClipboardContent()
         {
             var content = base.GetClipboardContent();
-            content.SetData(DataFormats.Text, content.GetData(DataFormats.CommaSeparatedValue));
-            content.SetData(DataFormats.UnicodeText, content.GetData(DataFormats.CommaSeparatedValue));
+            if (content != null)
+            {
+                content.SetData(DataFormats.Text, content.GetData(DataFormats.CommaSeparatedValue));
+                content.SetData(DataFormats.UnicodeText, content.GetData(DataFormats.CommaSeparatedValue));
+            }
             return content;
         }
 
