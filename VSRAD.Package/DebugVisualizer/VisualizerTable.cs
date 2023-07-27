@@ -191,7 +191,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void InsertSeparatorRow(int rowIndex, bool after)
         {
-            var index = after ? rowIndex + 1 : rowIndex;
+            int index = rowIndex;
+            if (after)
+                index = Rows.Cast<DataGridViewRow>().First(r => r.Index > rowIndex && !IsListItemRow(r)).Index; // at least one row (NewWatchRow) always satisfies this
             var separatorRow = InsertUserWatchRow(new Watch(" ", VariableType.Default), index);
             RaiseWatchStateChanged(new[] { separatorRow });
         }
@@ -596,10 +598,14 @@ namespace VSRAD.Package.DebugVisualizer
                 }));
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Copy", (s, e) => CopySelectedValues()));
-                menu.MenuItems.Add(new MenuItem("-"));
-                menu.MenuItems.Add(new MenuItem("Insert Row Before", (s, e) => InsertSeparatorRow(hit.RowIndex, false)));
-                menu.MenuItems.Add(new MenuItem("Insert Row After", (s, e) => InsertSeparatorRow(hit.RowIndex, true)));
 
+                if (!IsListItemRow(Rows[hit.RowIndex]))
+                {
+                    menu.MenuItems.Add(new MenuItem("-"));
+                    if (hit.RowIndex != SystemRowIndex)
+                        menu.MenuItems.Add(new MenuItem("Insert Row Before", (s, e) => InsertSeparatorRow(hit.RowIndex, false)));
+                    menu.MenuItems.Add(new MenuItem("Insert Row After", (s, e) => InsertSeparatorRow(hit.RowIndex, true)));
+                }
                 if (hit.RowIndex != SystemRowIndex)
                 {
                     menu.MenuItems.Add(new MenuItem("-"));
