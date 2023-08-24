@@ -127,10 +127,9 @@ namespace VSRAD.Package.DebugVisualizer
             ProcessInsertKey(Keys.Control | Keys.C);
         }
 
-        private void ChangeWatchType(int rowIndex, VariableType type)
+        private void SetWatchType(List<DataGridViewRow> rows, VariableType type)
         {
-            var changedRows = _selectionController.GetClickTargetRows(rowIndex).ToList();
-            changedRows.AddRange(Rows.Cast<DataGridViewRow>().Where(r => ((WatchNameCell)r.Cells[NameColumnIndex]).ParentRows.Any(changedRows.Contains)));
+            var changedRows = Rows.Cast<DataGridViewRow>().Where(r => rows.Contains(r) || ((WatchNameCell)r.Cells[NameColumnIndex]).ParentRows.Any(rows.Contains));
             foreach (var row in changedRows)
                 row.HeaderCell.Value = type.ShortName();
             RaiseWatchStateChanged(changedRows);
@@ -326,26 +325,31 @@ namespace VSRAD.Package.DebugVisualizer
 
         #region Styling
 
-        private void ApplyRowHighlight(int rowIndex, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
-        {
-            foreach (var row in _selectionController.GetClickTargetRows(rowIndex))
-            {
-                if (changeFg is DataHighlightColor newFg)
-                    row.DefaultCellStyle.ForeColor = (newFg != DataHighlightColor.None) ? _fontAndColor.FontAndColorState.HighlightForeground[(int)newFg] : Color.Empty;
-                if (changeBg is DataHighlightColor newBg)
-                    row.DefaultCellStyle.BackColor = (newBg != DataHighlightColor.None) ? _fontAndColor.FontAndColorState.HighlightBackground[(int)newBg] : Color.Empty;
-            }
-        }
+        private void SetRowForegroundColor(DataGridViewRow row, DataHighlightColor fg) =>
+            // Row DefaultCellStyle has precedence over column DefaultCellStyle, so reset it to Color.Empty if no row highlight is specified, otherwise cells won't pick custom column highlight
+            row.DefaultCellStyle.ForeColor = fg == DataHighlightColor.None ? Color.Empty : _fontAndColor.FontAndColorState.HighlightForeground[(int)fg];
 
-        private void ApplyColumnHighlight(int columnIdx, DataHighlightColor? changeFg = null, DataHighlightColor? changeBg = null)
-        {
-            var columns = GetSelectedDataColumnIndexes(columnIdx);
-            if (changeFg is DataHighlightColor newFg)
-                _options.VisualizerColumnStyling.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_options.VisualizerColumnStyling.ForegroundColors, columns, newFg, DataColumnCount);
-            if (changeBg is DataHighlightColor newBg)
-                _options.VisualizerColumnStyling.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_options.VisualizerColumnStyling.BackgroundColors, columns, newBg, DataColumnCount);
-            ClearSelection();
-        }
+        private void SetRowBackgroundColor(DataGridViewRow row, DataHighlightColor bg) =>
+            // Row DefaultCellStyle has precedence over column DefaultCellStyle, so reset it to Color.Empty if no row highlight is specified, otherwise cells won't pick custom column highlight
+            row.DefaultCellStyle.BackColor = bg == DataHighlightColor.None ? Color.Empty : _fontAndColor.FontAndColorState.HighlightBackground[(int)bg];
+
+        private DataHighlightColor GetRowForegroundColor(DataGridViewRow row) =>
+            _fontAndColor.FontAndColorState.HighlightForeground.Select((fg, c) => (fg, c: (DataHighlightColor)c)).FirstOrDefault(fgc => fgc.fg == row.DefaultCellStyle.ForeColor).c;
+
+        private DataHighlightColor GetRowBackgroundColor(DataGridViewRow row) =>
+            _fontAndColor.FontAndColorState.HighlightBackground.Select((bg, c) => (bg, c: (DataHighlightColor)c)).FirstOrDefault(bgc => bgc.bg == row.DefaultCellStyle.BackColor).c;
+
+        private void SetColumnsForegroundColor(IEnumerable<int> columnIdxs, DataHighlightColor fg) =>
+            _options.VisualizerColumnStyling.ForegroundColors = DataHighlightColors.UpdateColorStringRange(_options.VisualizerColumnStyling.ForegroundColors, columnIdxs, fg, DataColumnCount);
+
+        private void SetColumnsBackgroundColor(IEnumerable<int> columnIdxs, DataHighlightColor bg) =>
+            _options.VisualizerColumnStyling.BackgroundColors = DataHighlightColors.UpdateColorStringRange(_options.VisualizerColumnStyling.BackgroundColors, columnIdxs, bg, DataColumnCount);
+
+        private DataHighlightColor GetColumnForegroundColor(int columnIdx) =>
+            DataHighlightColors.GetFromColorString(_options.VisualizerColumnStyling.ForegroundColors, columnIdx);
+
+        private DataHighlightColor GetColumnBackgroundColor(int columnIdx) =>
+            DataHighlightColors.GetFromColorString(_options.VisualizerColumnStyling.BackgroundColors, columnIdx);
 
         private bool _disableColumnWidthChangeHandler = false;
 
@@ -564,37 +568,39 @@ namespace VSRAD.Package.DebugVisualizer
         {
             if (hit.RowIndex >= 0 && hit.RowIndex < NewWatchRowIndex && (hit.ColumnIndex == -1 || hit.ColumnIndex == NameColumnIndex))
             {
+                var selectedRows = _selectionController.GetClickTargetRows(hit.RowIndex).ToList();
+                var selectedType = selectedRows.Select(r => (VariableType?)GetRowWatchState(r).Info).Distinct().ExclusiveOrDefault();
+                var selectedFgColor = selectedRows.Select(r => (DataHighlightColor?)GetRowForegroundColor(r)).Distinct().ExclusiveOrDefault();
+                var selectedBgColor = selectedRows.Select(r => (DataHighlightColor?)GetRowBackgroundColor(r)).Distinct().ExclusiveOrDefault();
+
                 var menu = new ContextMenu();
                 menu.MenuItems.AddRange(new MenuItem[]
                 {
-                    new MenuItem("Hex",    (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Hex,   32))),
-                    new MenuItem("Float",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Float, 32))),
-                    new MenuItem("Half",   (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Float, 16))),
-                    new MenuItem("Int32",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Int,   32))),
-                    new MenuItem("UInt32", (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Uint,  32))),
-                    new MenuItem("Other", new MenuItem[]
-                    {
-                        new MenuItem("Int16",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Int,  16))),
-                        new MenuItem("UInt16", (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Uint, 16))),
-                        new MenuItem("Int8",   (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Int,   8))),
-                        new MenuItem("Uint8",  (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Uint,  8))),
-                        new MenuItem("Bin",    (s, e) => ChangeWatchType(hit.RowIndex, new VariableType(VariableCategory.Bin,  32)))
-                    })
+                    new MenuItem("Hex",    (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Hex,   32))) { Checked = selectedType == new VariableType(VariableCategory.Hex,   32) },
+                    new MenuItem("Float",  (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Float, 32))) { Checked = selectedType == new VariableType(VariableCategory.Float, 32) },
+                    new MenuItem("Half",   (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Float, 16))) { Checked = selectedType == new VariableType(VariableCategory.Float, 16) },
+                    new MenuItem("Int32",  (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Int,   32))) { Checked = selectedType == new VariableType(VariableCategory.Int,   32) },
+                    new MenuItem("UInt32", (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Uint,  32))) { Checked = selectedType == new VariableType(VariableCategory.Uint,  32) },
+                    new MenuItem("Int16",  (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Int,   16))) { Checked = selectedType == new VariableType(VariableCategory.Int,   16) },
+                    new MenuItem("UInt16", (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Uint,  16))) { Checked = selectedType == new VariableType(VariableCategory.Uint,  16) },
+                    new MenuItem("Int8",   (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Int,    8))) { Checked = selectedType == new VariableType(VariableCategory.Int,    8) },
+                    new MenuItem("Uint8",  (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Uint,   8))) { Checked = selectedType == new VariableType(VariableCategory.Uint,   8) },
+                    new MenuItem("Bin",    (s, e) => SetWatchType(selectedRows, new VariableType(VariableCategory.Bin,   32))) { Checked = selectedType == new VariableType(VariableCategory.Bin,   32) }
                 });
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Font Color", new[]
                 {
-                    new MenuItem("Green",   (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.Green)),
-                    new MenuItem("Red",     (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.Red)),
-                    new MenuItem("Blue",    (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.Blue)),
-                    new MenuItem("Default", (s, e) => ApplyRowHighlight(hit.RowIndex, changeFg: DataHighlightColor.None))
+                    new MenuItem("Green",   (s, e) => { selectedRows.ForEach(r => SetRowForegroundColor(r, DataHighlightColor.Green)); ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.Green },
+                    new MenuItem("Red",     (s, e) => { selectedRows.ForEach(r => SetRowForegroundColor(r, DataHighlightColor.Red));   ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.Red },
+                    new MenuItem("Blue",    (s, e) => { selectedRows.ForEach(r => SetRowForegroundColor(r, DataHighlightColor.Blue));  ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.Blue },
+                    new MenuItem("Default", (s, e) => { selectedRows.ForEach(r => SetRowForegroundColor(r, DataHighlightColor.None));  ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.None },
                 }));
                 menu.MenuItems.Add(new MenuItem("Background Color", new[]
                 {
-                    new MenuItem("Green",   (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.Green)),
-                    new MenuItem("Red",     (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.Red)),
-                    new MenuItem("Blue",    (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.Blue)),
-                    new MenuItem("Default", (s, e) => ApplyRowHighlight(hit.RowIndex, changeBg: DataHighlightColor.None))
+                    new MenuItem("Green",   (s, e) => { selectedRows.ForEach(r => SetRowBackgroundColor(r, DataHighlightColor.Green)); ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.Green },
+                    new MenuItem("Red",     (s, e) => { selectedRows.ForEach(r => SetRowBackgroundColor(r, DataHighlightColor.Red));   ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.Red },
+                    new MenuItem("Blue",    (s, e) => { selectedRows.ForEach(r => SetRowBackgroundColor(r, DataHighlightColor.Blue));  ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.Blue },
+                    new MenuItem("Default", (s, e) => { selectedRows.ForEach(r => SetRowBackgroundColor(r, DataHighlightColor.None));  ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.None },
                 }));
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Copy", (s, e) => CopySelectedValues()));
@@ -642,9 +648,8 @@ namespace VSRAD.Package.DebugVisualizer
                 string newSelector = ColumnSelector.GetSelectorMultiplication(_options.VisualizerColumnStyling.VisibleColumns, subgroupsSelector, DataColumnCount);
                 SetColumnSelector(newSelector);
             }
-            void HideColumns(int columnIdx)
+            void HideColumns(IEnumerable<int> selectedColumns)
             {
-                var selectedColumns = GetSelectedDataColumnIndexes(columnIdx);
                 var newColumnIndexes = ColumnSelector.ToIndexes(_options.VisualizerColumnStyling.VisibleColumns, DataColumnCount).Except(selectedColumns);
                 var newSelector = ColumnSelector.FromIndexes(newColumnIndexes);
                 SetColumnSelector(newSelector);
@@ -657,6 +662,10 @@ namespace VSRAD.Package.DebugVisualizer
 
             if (hit.RowIndex == -1 && hit.ColumnIndex >= NameColumnIndex)
             {
+                var selectedCols = GetSelectedDataColumnIndexes(hit.ColumnIndex).ToList();
+                var selectedFgColor = selectedCols.Select(c => (DataHighlightColor?)GetColumnForegroundColor(c)).Distinct().ExclusiveOrDefault();
+                var selectedBgColor = selectedCols.Select(c => (DataHighlightColor?)GetColumnBackgroundColor(c)).Distinct().ExclusiveOrDefault();
+
                 var menu = new ContextMenu();
 
                 var maxSubgroupSize = 512;
@@ -682,17 +691,17 @@ namespace VSRAD.Package.DebugVisualizer
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Font Color", new[]
                 {
-                    new MenuItem("Green",   (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.Green)),
-                    new MenuItem("Red",     (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.Red)),
-                    new MenuItem("Blue",    (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.Blue)),
-                    new MenuItem("Default", (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeFg: DataHighlightColor.None))
+                    new MenuItem("Green",   (s, e) => { SetColumnsForegroundColor(selectedCols, DataHighlightColor.Green); ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.Green },
+                    new MenuItem("Red",     (s, e) => { SetColumnsForegroundColor(selectedCols, DataHighlightColor.Red);   ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.Red },
+                    new MenuItem("Blue",    (s, e) => { SetColumnsForegroundColor(selectedCols, DataHighlightColor.Blue);  ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.Blue },
+                    new MenuItem("Default", (s, e) => { SetColumnsForegroundColor(selectedCols, DataHighlightColor.None);  ClearSelection(); }) { Checked = selectedFgColor == DataHighlightColor.None },
                 }));
                 menu.MenuItems.Add(new MenuItem("Background Color", new[]
                 {
-                    new MenuItem("Green",   (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.Green)),
-                    new MenuItem("Red",     (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.Red)),
-                    new MenuItem("Blue",    (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.Blue)),
-                    new MenuItem("Default", (s, e) => ApplyColumnHighlight(hit.ColumnIndex, changeBg: DataHighlightColor.None))
+                    new MenuItem("Green",   (s, e) => { SetColumnsBackgroundColor(selectedCols, DataHighlightColor.Green); ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.Green },
+                    new MenuItem("Red",     (s, e) => { SetColumnsBackgroundColor(selectedCols, DataHighlightColor.Red);   ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.Red },
+                    new MenuItem("Blue",    (s, e) => { SetColumnsBackgroundColor(selectedCols, DataHighlightColor.Blue);  ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.Blue },
+                    new MenuItem("Default", (s, e) => { SetColumnsBackgroundColor(selectedCols, DataHighlightColor.None);  ClearSelection(); }) { Checked = selectedBgColor == DataHighlightColor.None },
                 }));
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Autofit Width", (s, e) => _state.FitWidth(hit.ColumnIndex)));
@@ -700,7 +709,7 @@ namespace VSRAD.Package.DebugVisualizer
                 if (hit.ColumnIndex >= DataColumnOffset)
                 {
                     menu.MenuItems.Add(new MenuItem("-"));
-                    menu.MenuItems.Add(new MenuItem("Hide This", (s, e) => HideColumns(hit.ColumnIndex)));
+                    menu.MenuItems.Add(new MenuItem("Hide This", (s, e) => HideColumns(selectedCols)));
                 }
 
                 menu.Show(this, loc);
