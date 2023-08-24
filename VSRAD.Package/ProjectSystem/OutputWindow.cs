@@ -77,6 +77,7 @@ namespace VSRAD.Package.ProjectSystem
                 ? "=== " + title + Environment.NewLine + Environment.NewLine
                 : "=== " + title + Environment.NewLine + contents + Environment.NewLine + Environment.NewLine;
             Pane.OutputStringThreadSafe(message);
+            Pane.Activate();
         }
 
         public async Task ClearAsync()
