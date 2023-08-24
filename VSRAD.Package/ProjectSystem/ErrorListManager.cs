@@ -70,6 +70,9 @@ namespace VSRAD.Package.ProjectSystem
                 errors.Add(task);
             }
 
+            if (errors.Any(e => e.ErrorCategory == TaskErrorCategory.Error))
+                _errorListProvider.BringToFront();
+
             NotifyErrorTagger?.Invoke(errors);
         }
 
