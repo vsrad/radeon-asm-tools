@@ -13,7 +13,7 @@ namespace VSRAD.Package.ToolWindows
 
         private readonly UIElement _projectStateMissingMessage = new TextBlock
         {
-            Text = "No active projects found.",
+            Text = "No supported projects open.",
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };

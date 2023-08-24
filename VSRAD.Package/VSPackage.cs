@@ -23,9 +23,9 @@ namespace VSRAD.Package
     [ProvideDebugPortSupplier(Deborgar.Constants.RemotePortSupplierName, Deborgar.Constants.RemotePortSupplierId,
         typeof(Deborgar.Remote.RemotePortSupplier))]
     [ProvideToolWindow(typeof(VisualizerWindow),
-        Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
+        Style = VsDockStyle.Tabbed, MultiInstances = false)]
     [ProvideToolWindow(typeof(SliceVisualizerWindow),
-        Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
+        Style = VsDockStyle.Tabbed, MultiInstances = false)]
     [ProvideToolWindow(typeof(OptionsWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
