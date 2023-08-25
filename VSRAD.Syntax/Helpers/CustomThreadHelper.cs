@@ -16,7 +16,6 @@ namespace VSRAD.Syntax.Helpers
             ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(ct);
-                ThreadHelper.ThrowIfNotOnUIThread();
                 return func();
             });
 
@@ -24,7 +23,6 @@ namespace VSRAD.Syntax.Helpers
             ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(ct);
-                ThreadHelper.ThrowIfNotOnUIThread();
                 func();
             });
     }

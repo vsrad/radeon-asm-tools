@@ -1,5 +1,7 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Editor;
+using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
@@ -22,7 +24,7 @@ namespace VSRAD.Syntax.Options
 
         private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
-        private readonly DTE _dte;
+        private readonly DTE2 _dte;
         private IEnumerable<string> _asm1Extensions;
         private IEnumerable<string> _asm2Extensions;
         private readonly List<string> _asmDocExtensions;
@@ -36,7 +38,8 @@ namespace VSRAD.Syntax.Options
         {
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
             _fileExtensionRegistryService = fileExtensionRegistryService;
-            _dte = (DTE)serviceProvider.GetService(typeof(DTE));
+
+            _dte = (DTE2)serviceProvider.GetService(typeof(DTE));
 
             _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
             optionsEventProvider.OptionsUpdated += FileExtensionChanged;

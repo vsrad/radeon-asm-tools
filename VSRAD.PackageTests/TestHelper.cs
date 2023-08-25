@@ -15,6 +15,11 @@ namespace VSRAD.PackageTests
         public const string Collection = "MockedVS";
     }
 
+    public class MefHostingFixture : MefHosting
+    {
+        public MefHostingFixture() { }
+    }
+
     public static class TestHelper
     {
         public static string GetFixturePath(string fixtureName)

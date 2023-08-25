@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -17,7 +18,7 @@ namespace VSRAD.Package.Utils
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
+            var dte = (DTE2)serviceProvider.GetService(typeof(DTE));
             Assumes.Present(dte);
 
             dte.ItemOperations.OpenFile(documentPath);
