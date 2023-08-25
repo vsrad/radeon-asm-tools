@@ -16,6 +16,7 @@ namespace VSRAD.Package.DebugVisualizer
         public ScalingMode ScalingMode { get; set; } = ScalingMode.ResizeColumn;
         public bool NameColumnScalingEnabled { get; set; }
         public int NameColumnIndex { get; }
+        public bool AutoscaleName { get; set; }
 
         private readonly List<DataGridViewColumn> _dataColumns = new List<DataGridViewColumn>();
 
@@ -196,6 +197,10 @@ namespace VSRAD.Package.DebugVisualizer
 
             var n = CountVisibleDataColumns(clickedColumnIndex, false);
             var newScrollOffset = Math.Max(0, (n - 1) * (preferredWidth - ColumnWidth) + GetCurrentScroll());
+
+            if (AutoscaleName)
+                Table.Columns[NameColumnIndex].Width
+                    = Table.Columns[NameColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
 
             SetWidthAndScroll(preferredWidth, newScrollOffset);
         }

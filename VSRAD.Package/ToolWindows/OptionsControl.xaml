@@ -180,6 +180,10 @@
                                             Value="{Binding Options.VisualizerOptions.WavemapElementSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="px" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="25">
+                            <CheckBox Content="Autofit Name Column Width" VerticalAlignment="Center"
+                                      IsChecked="{Binding Options.VisualizerAppearance.AutoscaleNameColumn, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Expander>
             </StackPanel>

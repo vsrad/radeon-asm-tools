@@ -94,6 +94,8 @@ namespace VSRAD.Package.DebugVisualizer
             _selectionController = new SelectionController(this);
         }
 
+        public void SetAutoscaleName(bool value) => _state.AutoscaleName = value;
+
         public void AddWatch(string watchName)
         {
             var watchRow = InsertUserWatchRow(new Watch(watchName, VariableType.Default), NewWatchRowIndex);
@@ -463,6 +465,12 @@ namespace VSRAD.Package.DebugVisualizer
         #endregion
 
         #region Standard functions overriding
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            Columns[NameColumnIndex].Frozen = Width > Columns[NameColumnIndex].Width + RowHeadersWidth;
+        }
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
