@@ -89,6 +89,7 @@
     <Compile Include="Server\BreakStateValidWatchesTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />
+    <Compile Include="Utils\FloatTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Fixtures\DebugBuffer.bin" />
@@ -102,7 +103,7 @@
       <Name>VSRAD.Deborgar</Name>
     </ProjectReference>
     <ProjectReference Include="..\VSRAD.Package\VSRAD.Package.csproj">
-      <Project>{7DDAD15C-AF23-4B42-8ADE-CD3BB23DF072}</Project>
+      <Project>{7ddad15c-af23-4b42-8ade-cd3bb23df072}</Project>
       <Name>VSRAD.Package</Name>
     </ProjectReference>
   </ItemGroup>

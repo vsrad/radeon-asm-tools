@@ -28,6 +28,8 @@ namespace VSRAD.Package
         Style = VsDockStyle.Tabbed, MultiInstances = false)]
     [ProvideToolWindow(typeof(OptionsWindow),
         Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true)]
+    [ProvideToolWindow(typeof(FloatViewerWindow),
+        Style = VsDockStyle.Tabbed, MultiInstances = false, Transient = true, Width = 600, Height = 580)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
@@ -45,6 +47,7 @@ namespace VSRAD.Package
         public static VisualizerWindow VisualizerToolWindow { get; private set; }
         public static SliceVisualizerWindow SliceVisualizerToolWindow { get; private set; }
         public static OptionsWindow OptionsToolWindow { get; private set; }
+        public static FloatViewerWindow FloatViewerToolWindow { get; private set; }
 
         private ICommandRouter _commandRouter;
         private SolutionManager _solutionManager;
@@ -99,11 +102,14 @@ namespace VSRAD.Package
                 typeof(SliceVisualizerWindow), 0, true, CancellationToken.None);
             OptionsToolWindow = (OptionsWindow)await FindToolWindowAsync(
                 typeof(OptionsWindow), 0, true, CancellationToken.None);
+            FloatViewerToolWindow = (FloatViewerWindow)await FindToolWindowAsync(
+                typeof(FloatViewerWindow), 0, true, CancellationToken.None);
 
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             VisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             SliceVisualizerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
             OptionsToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
+            FloatViewerToolWindow.OnProjectLoaded(e.ToolWindowIntegration);
         }
 
         public static void SolutionUnloaded()
