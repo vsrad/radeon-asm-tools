@@ -17,15 +17,14 @@ namespace VSRAD.Package.ToolWindows
 
         protected override UIElement CreateToolControl(IToolWindowIntegration integration)
         {
-            _floatViewerControl = new FloatViewerControl(integration);
+            _floatViewerControl = new FloatViewerControl();
             return _floatViewerControl;
         }
 
-        public void InspectFloat(uint binaryValue)
+        public void InspectFloat(uint binaryValue, int floatBitSize)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-
-            _floatViewerControl.Bits.DwordValue = binaryValue;
+            _floatViewerControl.InspectFloat(binaryValue, floatBitSize);
             var windowFrame = (IVsWindowFrame)Frame;
             ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }

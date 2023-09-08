@@ -95,10 +95,18 @@ namespace VSRAD.Package.ToolWindows
     {
         public DwordBitCollection Bits { get; } = new DwordBitCollection();
 
-        public FloatViewerControl(IToolWindowIntegration integration)
+        public FloatViewerControl()
         {
             DataContext = Bits;
             InitializeComponent();
+        }
+
+        public void InspectFloat(uint binaryValue, int floatBitSize)
+        {
+            Bits.DwordValue = binaryValue;
+#pragma warning disable VSTHRD001
+            Dispatcher.BeginInvoke((Action)(() => TabControl.SelectedIndex = floatBitSize == 32 ? 0 : 1), System.Windows.Threading.DispatcherPriority.Background);
+#pragma warning restore VSTHRD001
         }
 
         private void TextBoxCommitInputOnEnter(object sender, KeyEventArgs e)

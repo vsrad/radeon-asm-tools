@@ -33,7 +33,7 @@
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
-    <TabControl>
+    <TabControl x:Name="TabControl">
         <TabControl.Resources>
             <Style TargetType="{x:Type TabPanel}">
                 <Setter Property="HorizontalAlignment" Value="Center" />
@@ -46,12 +46,12 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
+                    <TabPanel Grid.Row="0" IsItemsHost="true" />
                     <Border Grid.Row="1" BorderBrush="#969fa6" BorderThickness="1" Background="{TemplateBinding Background}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                             <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent" />
                         </ScrollViewer>
                     </Border>
-                    <TabPanel Grid.Row="0" IsItemsHost="true" />
                 </Grid>
             </ControlTemplate>
         </TabControl.Template>
@@ -138,7 +138,7 @@
             </Grid>
 
             <Label Grid.Row="1" Grid.Column="0" VerticalContentAlignment="Center">Decimal representation</Label>
-            <TextBox Grid.Row="1" Grid.Column="1" x:Name="TextDecimal" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+            <TextBox Grid.Row="1" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
                 <TextBox.Text>
                     <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordFloatConverter}">
                         <Binding.ValidationRules>
