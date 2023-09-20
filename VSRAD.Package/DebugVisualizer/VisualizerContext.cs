@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Shell;
 using System;
+using System.Globalization;
 using System.Text;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -36,7 +37,7 @@ namespace VSRAD.Package.DebugVisualizer
         private string _status = "No data available";
         public string Status { get => _status; set => SetField(ref _status, value); }
 
-        private bool _watchDataValid = true;
+        private bool _watchDataValid;
         public bool WatchDataValid { get => _watchDataValid; set => SetField(ref _watchDataValid, value); }
 
         private int _canvasWidth = 100;
@@ -83,46 +84,45 @@ namespace VSRAD.Package.DebugVisualizer
             BreakState = breakState;
             WatchDataValid = breakState != null;
             if (WatchDataValid)
-                GroupIndex.UpdateOnBreak(breakState);
+                GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
         {
-            if (BreakState == null)
-                return;
-
-            e.DataGroupCount = (uint)BreakState.Data.GetGroupCount((int)e.GroupSize, (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups);
-            WatchDataValid = e.IsValid = e.GroupIndex < e.DataGroupCount;
-            if (!WatchDataValid)
-                return;
-
-            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));
+            if (WatchDataValid)
+                ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));
         }
 
         private async Task ChangeGroupAsync(GroupIndexChangedEventArgs e)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            var fetchArgs = new GroupFetchingEventArgs();
-            GroupFetching(this, fetchArgs);
+            if (e.IsGroupIndexValid)
+            {
+                var fetchArgs = new GroupFetchingEventArgs();
+                GroupFetching(this, fetchArgs);
 
-            Status = fetchArgs.FetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
-            GroupIndexEditable = false;
+                Status = fetchArgs.FetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
+                GroupIndexEditable = false;
 
-            var warning = await BreakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
-                (int)Options.DebuggerOptions.WaveSize, (int)Options.DebuggerOptions.NGroups, fetchArgs.FetchWholeFile);
+                var warning = await BreakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
+                    (int)Options.DebuggerOptions.WaveSize, fetchArgs.FetchWholeFile);
 
-            GroupFetched(this, new GroupFetchedEventArgs(BreakState.DispatchParameters, warning));
+                GroupFetched(this, new GroupFetchedEventArgs(BreakState.DispatchParameters, warning));
+                GroupIndexEditable = true;
+            }
+            Status = FormatBreakStatusString(BreakState, Options.DebuggerOptions);
+        }
+
+        private static string FormatBreakStatusString(BreakState breakState, Options.DebuggerOptions debuggerOptions)
+        {
+            var groupCount = breakState.Data.NumThreadsInProgram / MathUtils.RoundUpToMultiple(debuggerOptions.GroupSize, debuggerOptions.WaveSize);
+            var waveSize = debuggerOptions.WaveSize;
 
             var status = new StringBuilder();
-            status.AppendFormat("{0} groups, wave size: {1}, last run at: {2}",
-                e.DataGroupCount, Options.DebuggerOptions.WaveSize, BreakState.ExecutedAt.ToString("HH:mm:ss"));
-            if (BreakState.DispatchParameters?.StatusString is string statusStr && statusStr.Length != 0)
-            {
-                status.Append(", status: ");
-                status.Append(statusStr);
-            }
-            Status = status.ToString();
-            GroupIndexEditable = true;
+            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0}, wave size: {1}, last run at: {2:HH:mm:ss}", groupCount, waveSize, breakState.ExecutedAt);
+            if (breakState.DispatchParameters?.StatusString is string dispatchStatus && dispatchStatus.Length != 0)
+                status.Append(", status: ").Append(dispatchStatus);
+            return status.ToString();
         }
     }
 }

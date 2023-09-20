@@ -31,29 +31,25 @@ namespace VSRAD.PackageTests.DebugVisualizer
         public void ValidationErrorTest()
         {
             var options = new ProjectOptions();
+            options.DebuggerOptions.GroupSize = 64;
             options.VisualizerOptions.NDRange3D = true;
             var selector = new GroupIndexSelector(options) { DimX = 20, X = 19 };
 
             Assert.False(selector.HasErrors);
 
-            selector.IndexChanged += (s, e) =>
-            {
-                e.DataGroupCount = 1;
-                e.IsValid = false;
-            };
-            selector.Update();
+            GroupIndexChangedEventArgs eventArgs = null;
+            selector.IndexChanged += (s, e) => eventArgs = e;
+            selector.UpdateOnBreak(numThreadsInProgram: 64, null);
+
+            Assert.False(eventArgs.IsGroupIndexValid);
             Assert.True(selector.HasErrors);
             Assert.Equal("Invalid group index: 19 >= 1", selector.GetErrors("X").Cast<string>().First());
             Assert.Equal("Invalid group index: 19 >= 1", selector.GetErrors("Y").Cast<string>().First());
             Assert.Equal("Invalid group index: 19 >= 1", selector.GetErrors("Z").Cast<string>().First());
             Assert.Empty(selector.GetErrors("").Cast<string>());
 
-            selector.IndexChanged += (s, e) =>
-            {
-                e.DataGroupCount = 20;
-                e.IsValid = true;
-            };
-            selector.Update();
+            selector.X = 0;
+            Assert.True(eventArgs.IsGroupIndexValid);
             Assert.False(selector.HasErrors);
             Assert.Empty(selector.GetErrors("").Cast<string>());
         }
@@ -67,7 +63,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             options.VisualizerOptions.NDRange3D = true;
             var selector = new GroupIndexSelector(options);
 
-            selector.IndexChanged += (s, e) => { eventArgs = e; e.IsValid = true; };
+            selector.IndexChanged += (s, e) => eventArgs = e;
 
             selector.DimX = 10;
             selector.DimY = 100;
@@ -77,6 +73,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             selector.Z = 1;
 
             Assert.NotNull(eventArgs);
+            Assert.True(eventArgs.IsGroupIndexValid);
             Assert.Equal((uint)(3 + 2 * 10 + 10 * 100), eventArgs.GroupIndex);
             Assert.Equal("(3; 2; 1)", eventArgs.Coordinates);
         }
