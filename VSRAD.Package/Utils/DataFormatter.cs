@@ -45,8 +45,8 @@ namespace VSRAD.Package.Utils
                     {
                         case 16:
                             byte[] bytes = BitConverter.GetBytes(data);
-                            float firstHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 0));
-                            float secondHalf = Half.ToFloat(BitConverter.ToUInt16(bytes, 2));
+                            float firstHalf = (float)new F16(BitConverter.ToUInt16(bytes, 0));
+                            float secondHalf = (float)new F16(BitConverter.ToUInt16(bytes, 2));
                             return $"{firstHalf}; {secondHalf}";
                         case 32:
                             return BitConverter.ToSingle(BitConverter.GetBytes(data), 0).ToString();

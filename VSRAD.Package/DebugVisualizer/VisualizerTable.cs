@@ -727,15 +727,23 @@ namespace VSRAD.Package.DebugVisualizer
 
                 if (SelectedCells.Count == 1)
                 {
-                    menu.MenuItems.Add(new MenuItem("-"));
+                    var threadId = (uint)hit.ColumnIndex - DataColumnOffset;
 
-                    string file = null;
-                    uint line = 0;
-                    BreakpointLocationRequested((uint)hit.ColumnIndex - DataColumnOffset, ref file, ref line);
-                    if (!string.IsNullOrEmpty(file))
-                        menu.MenuItems.Add(new MenuItem($"Go to Breakpoint (Line {line + 1})", (s, e) => BreakpointNavigationRequested(file, line)));
-                    else
-                        menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                    if (GetRowWatchState(SelectedCells[0].OwningRow) is Watch watch && SelectedCells[0].Tag is uint binaryData)
+                    {
+                        menu.MenuItems.Add(new MenuItem("Inspect as Float", (s, e) => VSPackage.FloatInspectorToolWindow.InspectFloat(binaryData, watch.Info.Size)));
+                    }
+                    {
+                        menu.MenuItems.Add(new MenuItem("-"));
+
+                        string file = null;
+                        uint line = 0;
+                        BreakpointLocationRequested(threadId, ref file, ref line);
+                        if (!string.IsNullOrEmpty(file))
+                            menu.MenuItems.Add(new MenuItem($"Go to Breakpoint (Line {line + 1})", (s, e) => BreakpointNavigationRequested(file, line)));
+                        else
+                            menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                    }
                 }
 
                 menu.Show(this, loc);

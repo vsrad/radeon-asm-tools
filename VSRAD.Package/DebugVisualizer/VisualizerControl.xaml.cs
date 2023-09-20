@@ -184,7 +184,10 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     {
                         var data = _context.BreakData.GetSystemData(wave);
                         for (var lane = 0; lane < data.Length && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                        {
+                            row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = data[lane];
                             row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
+                        }
                     }
                 }
                 else
@@ -205,13 +208,19 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                         {
                             var data = _context.BreakData.GetWatchData(wave, (int)dataSlot);
                             for (var lane = 0; lane < data.Length && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                            {
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = data[lane];
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
+                            }
                         }
                         else
                         {
                             var label = (ListSize is uint listSize) ? $"[{listSize}]" : "";
                             for (var lane = 0; lane < _context.BreakData.WaveSize && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                            {
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = null;
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;
+                            }
                         }
                     }
                     for (var i = 0; i < (watchMeta?.ListItems?.Count ?? 0); ++i)

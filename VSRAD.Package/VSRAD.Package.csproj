@@ -229,6 +229,10 @@
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
     <Compile Include="Server\BreakStateOutputFile.cs" />
+    <Compile Include="ToolWindows\FloatInspectorControl.xaml.cs">
+      <DependentUpon>FloatInspectorControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ToolWindows\FloatInspectorWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
@@ -285,9 +289,10 @@
     <Compile Include="ToolWindows\VisualizerWindow.cs" />
     <Compile Include="Utils\DataFormatter.cs" />
     <Compile Include="Utils\NotifyPropertyChanged.cs" />
-    <Compile Include="Utils\Half.cs" />
+    <Compile Include="Utils\Float.cs" />
     <Compile Include="Utils\Result.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
+    <Compile Include="Utils\WpfDecorators.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
     <Compile Include="VSLanguageInfo.cs" />
     <Compile Include="VSPackage.cs" />
@@ -450,6 +455,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\ControlStyle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ToolWindows\FloatInspectorControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
