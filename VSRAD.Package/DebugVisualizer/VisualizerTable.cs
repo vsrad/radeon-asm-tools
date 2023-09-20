@@ -731,7 +731,7 @@ namespace VSRAD.Package.DebugVisualizer
 
                     if (GetRowWatchState(SelectedCells[0].OwningRow) is Watch watch && SelectedCells[0].Tag is uint binaryData)
                     {
-                        menu.MenuItems.Add(new MenuItem("Inspect as Float", (s, e) => VSPackage.FloatViewerToolWindow.InspectFloat(binaryData, watch.Info.Size)));
+                        menu.MenuItems.Add(new MenuItem("Inspect as Float", (s, e) => VSPackage.FloatInspectorToolWindow.InspectFloat(binaryData, watch.Info.Size)));
                     }
                     {
                         menu.MenuItems.Add(new MenuItem("-"));

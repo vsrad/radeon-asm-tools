@@ -91,11 +91,11 @@ namespace VSRAD.Package.ToolWindows
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public partial class FloatViewerControl : UserControl
+    public partial class FloatInspectorControl : UserControl
     {
         public DwordBitCollection Bits { get; } = new DwordBitCollection();
 
-        public FloatViewerControl()
+        public FloatInspectorControl()
         {
             DataContext = Bits;
             InitializeComponent();
@@ -164,7 +164,7 @@ namespace VSRAD.Package.ToolWindows
             TryParseUint((string)value, out var parsed) ? parsed : 0;
 
         public override ValidationResult Validate(object value, CultureInfo cultureInfo) =>
-            TryParseUint((string)value, out _) ? ValidationResult.ValidResult : new ValidationResult(false, "Expected a 16-bit hex number that starts with 0x");
+            TryParseUint((string)value, out _) ? ValidationResult.ValidResult : new ValidationResult(false, "Expected a 32-bit uint number");
 
         private bool TryParseUint(string input, out uint value) =>
             uint.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
@@ -179,10 +179,10 @@ namespace VSRAD.Package.ToolWindows
             TryParseUint((string)value, out var parsed) ? parsed : 0;
 
         public override ValidationResult Validate(object value, CultureInfo cultureInfo) =>
-            TryParseUint((string)value, out _) ? ValidationResult.ValidResult : new ValidationResult(false, "Expected a 16-bit hex number that starts with 0x");
+            TryParseUint((string)value, out _) ? ValidationResult.ValidResult : new ValidationResult(false, "Expected a 16-bit uint number");
 
         private bool TryParseUint(string input, out ushort value) =>
-            ushort.TryParse(input.Substring(2), NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+            ushort.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
     }
 
     public sealed class DwordBinConverter : ValidationRule, IValueConverter

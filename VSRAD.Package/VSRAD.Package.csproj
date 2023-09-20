@@ -229,10 +229,10 @@
     <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
     <Compile Include="Server\BreakStateOutputFile.cs" />
-    <Compile Include="ToolWindows\FloatViewerControl.xaml.cs">
-      <DependentUpon>FloatViewerControl.xaml</DependentUpon>
+    <Compile Include="ToolWindows\FloatInspectorControl.xaml.cs">
+      <DependentUpon>FloatInspectorControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ToolWindows\FloatViewerWindow.cs" />
+    <Compile Include="ToolWindows\FloatInspectorWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
@@ -458,7 +458,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ToolWindows\FloatViewerControl.xaml">
+    <Page Include="ToolWindows\FloatInspectorControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

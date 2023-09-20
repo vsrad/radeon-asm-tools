@@ -25,6 +25,7 @@ namespace VSRAD.Package
         public const int ToolWindowVisualizerCommandId = 0x0100;
         public const int ToolWindowOptionsCommandId = 0x0101;
         public const int ToolWindowSliceVisualizerCommandId = 0x0102;
+        public const int ToolWindowFloatInspectorCommandId = 0x0103;
         public const int ActionsMenuCommandId = 0x100;
         public const int ProfileCommandId = 0x10;
         public const int DisassembleCommandId = 0x11;

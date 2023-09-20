@@ -1,11 +1,11 @@
-﻿<UserControl x:Class="VSRAD.Package.ToolWindows.FloatViewerControl"
+﻿<UserControl x:Class="VSRAD.Package.ToolWindows.FloatInspectorControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:VSRAD.Package.ToolWindows"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
-             d:DataContext="{d:DesignInstance Type=local:FloatViewerControl}"
+             d:DataContext="{d:DesignInstance Type=local:FloatInspectorControl}"
              mc:Ignorable="d"
              d:DesignWidth="600" d:DesignHeight="500">
     <UserControl.Resources>

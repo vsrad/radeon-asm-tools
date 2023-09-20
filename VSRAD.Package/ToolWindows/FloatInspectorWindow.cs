@@ -9,22 +9,22 @@ using VSRAD.Package.ProjectSystem;
 namespace VSRAD.Package.ToolWindows
 {
     [Guid("53BC3931-21E8-4453-8139-0D2AF38B751B")]
-    public sealed class FloatViewerWindow : BaseToolWindow
+    public sealed class FloatInspectorWindow : BaseToolWindow
     {
-        private FloatViewerControl _floatViewerControl;
+        private FloatInspectorControl _floatInspectorControl;
 
-        public FloatViewerWindow() : base("RAD Float Viewer") { }
+        public FloatInspectorWindow() : base("RAD Float Inspector") { }
 
         protected override UIElement CreateToolControl(IToolWindowIntegration integration)
         {
-            _floatViewerControl = new FloatViewerControl();
-            return _floatViewerControl;
+            _floatInspectorControl = new FloatInspectorControl();
+            return _floatInspectorControl;
         }
 
         public void InspectFloat(uint binaryValue, int floatBitSize)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            _floatViewerControl.InspectFloat(binaryValue, floatBitSize);
+            _floatInspectorControl.InspectFloat(binaryValue, floatBitSize);
             var windowFrame = (IVsWindowFrame)Frame;
             ErrorHandler.ThrowOnFailure(windowFrame.Show());
         }
