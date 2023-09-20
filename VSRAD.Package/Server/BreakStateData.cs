@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using VSRAD.Package.DebugVisualizer.Wavemap;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
@@ -127,6 +127,21 @@ namespace VSRAD.Package.Server
 
         public uint[] GetSystemData(int waveIndex) => GetWatchData(waveIndex, 0);
 
+        public bool TryGetGlobalSystemData(int groupIndex, int waveIndex, int groupSize, int waveSize, out uint[] systemData)
+        {
+            systemData = new uint[waveSize];
+            var wavesPerGroup = MathUtils.RoundUpQuotient(groupSize, waveSize);
+            var groupCount = NumThreadsInProgram / MathUtils.RoundUpToMultiple(groupSize, waveSize);
+            if (waveIndex >= wavesPerGroup || groupIndex >= groupCount || DwordsPerLane == 0)
+                return false;
+            var globalWaveIndex = wavesPerGroup * groupIndex + waveIndex;
+            var dataStart = globalWaveIndex * waveSize * DwordsPerLane;
+            var dataEnd = Math.Min((globalWaveIndex + 1) * waveSize * DwordsPerLane, _data.Length);
+            for (int i = 0, offset = dataStart; offset < dataEnd; i += 1, offset += DwordsPerLane)
+                systemData[i] = _data[offset];
+            return true;
+        }
+
         public const int SystemMagicNumberLane = 0;
         public const int SystemBreakLineLane = 1;
         public const int SystemInstanceIdLane = 2;
@@ -153,13 +168,6 @@ namespace VSRAD.Package.Server
 #else
             throw new NotImplementedException();
 #endif
-        }
-
-        public WavemapView GetWavemapView()
-        {
-            if (GroupSize > 0 && WaveSize > 0)
-                return new WavemapView(_data, WaveSize, DwordsPerLane, GroupSize, GetGroupCount(GroupSize, WaveSize, 0));
-            return null;
         }
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int waveSize, bool fetchWholeFile = false)

@@ -63,8 +63,8 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
         {
-            _context.GroupIndex.GoToGroup(e.GroupIdx);
-            if (e.WaveIdx is uint waveIdx)
+            _context.GroupIndex.GoToGroup(e.GroupIndex);
+            if (e.WaveIndex is uint waveIdx)
                 _table.GoToWave(waveIdx, _context.Options.DebuggerOptions.WaveSize);
         }
 
@@ -94,8 +94,6 @@ To enable dispatch parameters extraction:
 To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual override dispatch"".");
 
             RefreshDataStyling();
-
-            _wavemap.View = _context.BreakData.GetWavemapView();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
@@ -142,7 +140,6 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     break;
                 case nameof(Options.DebuggerOptions.WaveSize):
                     RefreshDataStyling();
-                    _wavemap.View = _context.BreakData?.GetWavemapView();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_context.Options.VisualizerOptions.CheckMagicNumber)

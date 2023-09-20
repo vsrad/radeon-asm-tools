@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -55,32 +56,38 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void UpdateTooltipAndWaveInfo(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(VisualizerContext.CurrentWaveInfo))
+            if (e.PropertyName == nameof(VisualizerContext.WavemapSelection))
             {
-                var waveInfo = _context.CurrentWaveInfo;
-                var waveInfoText = $"G: {waveInfo.GroupIdx}\nW: {waveInfo.WaveIdx}";
-                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) waveInfoText += " (E)";
-                waveInfoText += "\n";
-                waveInfoText += waveInfo.BreakNotReached
-                    ? "no brk"
-                    : $"L: {waveInfo.BreakLine}";
-
-                var tooltip = $"Group: {waveInfo.GroupIdx}\nWave: {waveInfo.WaveIdx}";
-                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) tooltip += " (partial EXEC mask)";
-                tooltip += "\n";
-                tooltip += waveInfo.BreakNotReached
-                    ? "Brk point not reached"
-                    : $"Line: {waveInfo.BreakLine}";
-
-                WaveInfoTextBlock.Text = waveInfoText;
-                WaveInfoTextBlock.ToolTip = tooltip;
+                if (_context.WavemapSelection is WaveInfo waveInfo)
+                {
+                    {
+                        var info = $"G: {waveInfo.GroupIndex}\nW: {waveInfo.WaveIndex}";
+                        if (waveInfo.PartialExecMask && waveInfo.BreakLine != null)
+                            info += " (E)";
+                        info += "\n";
+                        info += waveInfo.BreakLine is uint breakLine ? $"L: {breakLine}" : "No break";
+                        WaveInfoTextBlock.Text = info;
+                    }
+                    {
+                        var tooltip = $"Group: {waveInfo.GroupIndex}\nWave: {waveInfo.WaveIndex}";
+                        if (waveInfo.PartialExecMask && waveInfo.BreakLine != null)
+                            tooltip += " (partial EXEC mask)";
+                        tooltip += "\n";
+                        tooltip += waveInfo.BreakLine is uint breakLine ? $"Line: {breakLine}" : "No breakpoint reached";
+                        WaveInfoTextBlock.ToolTip = tooltip;
+                    }
+                }
+                else
+                {
+                    WaveInfoTextBlock.Text = "";
+                    WaveInfoTextBlock.ToolTip = "";
+                }
             }
         }
 
         private void UpdateControls(object sender, EventArgs e)
         {
-            var groupCount = _context.BreakData?.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize,
-                (int)_context.Options.DebuggerOptions.WaveSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
+            var groupCount = (_context.BreakData?.NumThreadsInProgram ?? 0) / MathUtils.RoundUpToMultiple(_context.Options.DebuggerOptions.GroupSize, _context.Options.DebuggerOptions.WaveSize);
             if (groupCount > 0 && _image.GridSizeX > 0)
             {
                 DecButton.IsEnabled = _image.FirstGroup != 0;

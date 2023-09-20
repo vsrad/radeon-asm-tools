@@ -40,14 +40,11 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _watchDataValid;
         public bool WatchDataValid { get => _watchDataValid; set => SetField(ref _watchDataValid, value); }
 
-        private int _canvasWidth = 100;
-        public int CanvasWidth { get => _canvasWidth; set => SetField(ref _canvasWidth, value); }
+        private Wavemap.WavemapView _wavemap;
+        public Wavemap.WavemapView Wavemap { get => _wavemap; set => SetField(ref _wavemap, value); }
 
-        private int _canvasHeight = 10;
-        public int CanvasHeight { get => _canvasHeight; set => SetField(ref _canvasHeight, value); }
-
-        private Wavemap.WaveInfo _currentWaveInfo;
-        public Wavemap.WaveInfo CurrentWaveInfo { get => _currentWaveInfo; set => SetField(ref _currentWaveInfo, value); }
+        private Wavemap.WaveInfo _wavemapSelection;
+        public Wavemap.WaveInfo WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
 
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
@@ -82,14 +79,21 @@ namespace VSRAD.Package.DebugVisualizer
         private void EnterBreak(object sender, BreakState breakState)
         {
             BreakState = breakState;
-            WatchDataValid = breakState != null;
-            if (WatchDataValid)
+            if (breakState != null)
+            {
                 GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
+            }
+            else
+            {
+                Status = "Run failed, see the Output window for more details";
+                Wavemap = null;
+            }
+            WavemapSelection = null;
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
         {
-            if (WatchDataValid)
+            if (BreakState != null)
                 ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => ChangeGroupAsync(e));
         }
 
@@ -110,6 +114,9 @@ namespace VSRAD.Package.DebugVisualizer
                 GroupFetched(this, new GroupFetchedEventArgs(BreakState.DispatchParameters, warning));
                 GroupIndexEditable = true;
             }
+            WatchDataValid = e.IsGroupIndexValid;
+            Wavemap = new Wavemap.WavemapView((uint groupIndex, uint waveIndex, out uint[] systemData) =>
+                BreakData.TryGetGlobalSystemData((int)groupIndex, (int)waveIndex, (int)Options.DebuggerOptions.GroupSize, (int)Options.DebuggerOptions.WaveSize, out systemData));
             Status = FormatBreakStatusString(BreakState, Options.DebuggerOptions);
         }
 
