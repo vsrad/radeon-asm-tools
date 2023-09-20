@@ -165,7 +165,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void FitWidth(int clickedColumnIndex)
         {
-            int widestColumnIndex = 0;
+            int widestColumnIndex = -1;
             int maxApproxWidth = 0;
 
             var font = Table.DefaultCellStyle.Font;
@@ -178,8 +178,7 @@ namespace VSRAD.Package.DebugVisualizer
                     continue;
                 foreach (DataGridViewRow row in Table.Rows)
                 {
-                    var value = (string)row.Cells[column.Index].Value;
-                    if (!string.IsNullOrEmpty(value))
+                    if (row.Visible && row.Cells[column.Index].Value is string value)
                     {
                         var width = TextRenderer.MeasureText(value, font).Width + column.DividerWidth;
                         if (width > maxApproxWidth)
@@ -191,13 +190,16 @@ namespace VSRAD.Package.DebugVisualizer
                 }
             }
 
-            var preferredWidth = Table.Columns[widestColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
-            preferredWidth = Math.Max(preferredWidth, minAllowedWidth);
+            if (widestColumnIndex != -1)
+            {
+                var preferredWidth = Table.Columns[widestColumnIndex].GetPreferredWidth(DataGridViewAutoSizeColumnMode.AllCells, true);
+                preferredWidth = Math.Max(preferredWidth, minAllowedWidth);
 
-            var n = CountVisibleDataColumns(clickedColumnIndex, false);
-            var newScrollOffset = Math.Max(0, (n - 1) * (preferredWidth - ColumnWidth) + GetCurrentScroll());
+                var n = CountVisibleDataColumns(clickedColumnIndex, false);
+                var newScrollOffset = Math.Max(0, (n - 1) * (preferredWidth - ColumnWidth) + GetCurrentScroll());
 
-            SetWidthAndScroll(preferredWidth, newScrollOffset);
+                SetWidthAndScroll(preferredWidth, newScrollOffset);
+            }
         }
     }
 }
