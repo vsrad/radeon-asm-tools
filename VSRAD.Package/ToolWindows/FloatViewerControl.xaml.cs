@@ -155,6 +155,36 @@ namespace VSRAD.Package.ToolWindows
         }
     }
 
+    public sealed class DwordUintConverter : ValidationRule, IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            ((uint)value).ToString();
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            TryParseUint((string)value, out var parsed) ? parsed : 0;
+
+        public override ValidationResult Validate(object value, CultureInfo cultureInfo) =>
+            TryParseUint((string)value, out _) ? ValidationResult.ValidResult : new ValidationResult(false, "Expected a 16-bit hex number that starts with 0x");
+
+        private bool TryParseUint(string input, out uint value) =>
+            uint.TryParse(input, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+    }
+
+    public sealed class WordUintConverter : ValidationRule, IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            ((ushort)value).ToString();
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+            TryParseUint((string)value, out var parsed) ? parsed : 0;
+
+        public override ValidationResult Validate(object value, CultureInfo cultureInfo) =>
+            TryParseUint((string)value, out _) ? ValidationResult.ValidResult : new ValidationResult(false, "Expected a 16-bit hex number that starts with 0x");
+
+        private bool TryParseUint(string input, out ushort value) =>
+            ushort.TryParse(input.Substring(2), NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+    }
+
     public sealed class DwordBinConverter : ValidationRule, IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>

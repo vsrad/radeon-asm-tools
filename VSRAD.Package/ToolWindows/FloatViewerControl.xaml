@@ -7,10 +7,11 @@
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              d:DataContext="{d:DesignInstance Type=local:FloatViewerControl}"
              mc:Ignorable="d"
-             d:DesignWidth="600" d:DesignHeight="560">
+             d:DesignWidth="600" d:DesignHeight="500">
     <UserControl.Resources>
         <ResourceDictionary>
             <local:DwordHexConverter x:Key="DwordHexConverter" />
+            <local:DwordUintConverter x:Key="DwordUintConverter" />
             <local:DwordBinConverter x:Key="DwordBinConverter" />
             <local:DwordFloatConverter x:Key="DwordFloatConverter" />
             <local:DwordFloatHighPrecisionReadOnlyConverter x:Key="DwordFloatHighPrecisionReadOnlyConverter" />
@@ -18,6 +19,7 @@
             <local:DwordFloatExponentConverter x:Key="DwordFloatExponentConverter" />
             <local:DwordFloatMantissaConverter x:Key="DwordFloatMantissaConverter" />
             <local:WordHexConverter x:Key="WordHexConverter" />
+            <local:WordUintConverter x:Key="WordUintConverter" />
             <local:WordBinConverter x:Key="WordBinConverter" />
             <local:WordHalfConverter x:Key="WordHalfConverter" />
             <local:WordHalfSignConverter x:Key="WordHalfSignConverter" />
@@ -31,14 +33,14 @@
                     </Trigger>
                 </Style.Triggers>
             </Style>
+            <Style x:Key="TextBoxReadOnlyStyle" TargetType="{x:Type TextBox}">
+                <Setter Property="IsReadOnly" Value="true" />
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
         </ResourceDictionary>
     </UserControl.Resources>
     <TabControl x:Name="TabControl">
-        <TabControl.Resources>
-            <Style TargetType="{x:Type TabPanel}">
-                <Setter Property="HorizontalAlignment" Value="Center" />
-            </Style>
-        </TabControl.Resources>
         <TabControl.Template>
             <ControlTemplate TargetType="TabControl">
                 <Grid>
@@ -56,17 +58,17 @@
             </ControlTemplate>
         </TabControl.Template>
         <TabItem Header="Float">
-        <Grid Margin="10">
+        <Grid Margin="8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition MaxWidth="170" />
+                <ColumnDefinition MaxWidth="150" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="104"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
+                <RowDefinition Height="92"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,5">
@@ -78,20 +80,25 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Border Grid.Column="0" BorderBrush="#8F8FC3" Background="#E2E6F5" BorderThickness="1,1,0,1" Padding="5,0" HorizontalAlignment="Stretch">
+                <Border Grid.Column="0" BorderBrush="#8F8FC3" Background="#E2E6F5" BorderThickness="1,1,0,1" Padding="4,2" HorizontalAlignment="Stretch">
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
-                        <Label HorizontalContentAlignment="Center" Content="Sign" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding DwordValue, Converter={StaticResource DwordFloatSignConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding DwordValue, Converter={StaticResource DwordFloatSignConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <CheckBox HorizontalAlignment="Center" ToolTip="31" IsChecked="{Binding [31].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Sign" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding DwordValue, Converter={StaticResource DwordFloatSignConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding DwordValue, Converter={StaticResource DwordFloatSignConverter}, ConverterParameter=Encoded}"/>
+                        <CheckBox HorizontalAlignment="Center"  Margin="0,4,0,0" ToolTip="15"
+                                  IsChecked="{Binding [31].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="1" BorderBrush="#8FC38F" Background="#E3F5E2" BorderThickness="1,1,0,1" Padding="5,0" HorizontalAlignment="Stretch">
+                <Border Grid.Column="1" BorderBrush="#8FC38F" Background="#E3F5E2" BorderThickness="1,1,0,1" Padding="4,2" HorizontalAlignment="Stretch">
                     <StackPanel Orientation="Vertical">
-                        <Label HorizontalContentAlignment="Center" Content="Exponent" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding DwordValue, Converter={StaticResource DwordFloatExponentConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding DwordValue, Converter={StaticResource DwordFloatExponentConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <UniformGrid Rows="1">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Exponent" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding DwordValue, Converter={StaticResource DwordFloatExponentConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding DwordValue, Converter={StaticResource DwordFloatExponentConverter}, ConverterParameter=Encoded}"/>
+                        <UniformGrid Rows="1" Margin="0,4,0,0">
                             <CheckBox HorizontalAlignment="Center" ToolTip="30" IsChecked="{Binding [30].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="29" IsChecked="{Binding [29].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="28" IsChecked="{Binding [28].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -103,12 +110,14 @@
                         </UniformGrid>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="2" BorderBrush="#C38F8F" Background="#F5E2E3" BorderThickness="1" Padding="5,0">
+                <Border Grid.Column="2" BorderBrush="#C38F8F" Background="#F5E2E3" BorderThickness="1" Padding="4,2">
                     <StackPanel Orientation="Vertical">
-                        <Label HorizontalContentAlignment="Center" Content="Mantissa" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding DwordValue, Converter={StaticResource DwordFloatMantissaConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding DwordValue, Converter={StaticResource DwordFloatMantissaConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <UniformGrid Rows="1">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Mantissa" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding DwordValue, Converter={StaticResource DwordFloatMantissaConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding DwordValue, Converter={StaticResource DwordFloatMantissaConverter}, ConverterParameter=Encoded}"/>
+                        <UniformGrid Rows="1" Margin="0,4,0,0">
                             <CheckBox HorizontalAlignment="Center" ToolTip="22" IsChecked="{Binding [22].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="21" IsChecked="{Binding [21].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="20" IsChecked="{Binding [20].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -148,24 +157,39 @@
                 </TextBox.Text>
             </TextBox>
 
-            <Label Grid.Row="2" Grid.Column="0" VerticalContentAlignment="Center">Actual value stored in float</Label>
+            <Label Grid.Row="2" Grid.Column="0" VerticalContentAlignment="Center">Actual stored value</Label>
             <utils:IgnoreChildSizeDecorator Grid.Row="2" Grid.Column="1">
-                <TextBox VerticalContentAlignment="Center" IsReadOnly="true" Background="Transparent" BorderThickness="0"
+                <TextBox VerticalContentAlignment="Center" Style="{StaticResource TextBoxReadOnlyStyle}"
                          Text="{Binding Path=DwordValue, Mode=OneWay, Converter={StaticResource DwordFloatHighPrecisionReadOnlyConverter}}" />
             </utils:IgnoreChildSizeDecorator>
 
-            <Label Grid.Row="3" Grid.Column="0" VerticalContentAlignment="Center">Hexadecimal representation</Label>
-            <TextBox Grid.Row="3" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
-                <TextBox.Text>
-                    <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordHexConverter}">
-                        <Binding.ValidationRules>
-                            <local:DwordHexConverter/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
+            <Label Grid.Row="3" Grid.Column="0" VerticalContentAlignment="Center">Hex/uint encoding</Label>
+            <Grid Grid.Row="3" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" VerticalContentAlignment="Center" Height="22" Margin="0,0,2,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordHexConverter}">
+                            <Binding.ValidationRules>
+                                <local:DwordHexConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Height="22" Margin="2,0,0,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordUintConverter}">
+                            <Binding.ValidationRules>
+                                <local:DwordUintConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+            </Grid>
 
-            <Label Grid.Row="4" Grid.Column="0" VerticalContentAlignment="Center">Binary representation</Label>
+            <Label Grid.Row="4" Grid.Column="0" VerticalContentAlignment="Center">Bit representation</Label>
             <TextBox Grid.Row="4" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
                 <TextBox.Text>
                     <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordBinConverter}">
@@ -178,39 +202,54 @@
         </Grid>
         </TabItem>
         <TabItem Header="Half">
-        <Grid Margin="10">
+        <Grid Margin="8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition MaxWidth="170"/>
+                <ColumnDefinition MaxWidth="150"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="11"/> <!-- Padding -->
-                <RowDefinition Height="104"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="11"/> <!-- Padding -->
-                <RowDefinition Height="104"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
-                <RowDefinition Height="31"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="8"/> <!-- Padding -->
+                <RowDefinition Height="92"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="8"/> <!-- Padding -->
+                <RowDefinition Height="92"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
+                <RowDefinition Height="28"/>
             </Grid.RowDefinitions>
 
-            <Label Grid.Row="0" Grid.Column="0" VerticalContentAlignment="Center">Packed representation</Label>
-            <TextBox Grid.Row="0" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
-                <TextBox.Text>
-                    <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordHexConverter}">
-                        <Binding.ValidationRules>
-                            <local:DwordHexConverter/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
+            <Label Grid.Row="0" Grid.Column="0" VerticalContentAlignment="Center">Packed hex/uint encoding</Label>
+            <Grid Grid.Row="0" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" VerticalContentAlignment="Center" Height="22" Margin="0,0,2,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordHexConverter}">
+                            <Binding.ValidationRules>
+                                <local:WordHexConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Height="22" Margin="2,0,0,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordUintConverter}">
+                            <Binding.ValidationRules>
+                                <local:WordUintConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+            </Grid>
 
-            <!-- Hi -->
+            <!-- Lo -->
 
             <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,5">
                 <Grid.ColumnDefinitions>
@@ -221,113 +260,25 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Border Grid.Column="0" BorderBrush="#8F8FC3" Background="#E2E6F5" BorderThickness="1,1,0,1" Padding="5,0" HorizontalAlignment="Stretch">
+                <Border Grid.Column="0" BorderBrush="#8F8FC3" Background="#E2E6F5" BorderThickness="1,1,0,1" Padding="4,2" HorizontalAlignment="Stretch">
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
-                        <Label HorizontalContentAlignment="Center" Content="Sign" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordHiValue, Converter={StaticResource WordHalfSignConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordHiValue, Converter={StaticResource WordHalfSignConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <CheckBox HorizontalAlignment="Center" ToolTip="15" IsChecked="{Binding [31].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Sign" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordLoValue, Converter={StaticResource WordHalfSignConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordLoValue, Converter={StaticResource WordHalfSignConverter}, ConverterParameter=Encoded}"/>
+                        <CheckBox HorizontalAlignment="Center"  Margin="0,4,0,0" ToolTip="15"
+                                  IsChecked="{Binding [15].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="1" BorderBrush="#8FC38F" Background="#E3F5E2" BorderThickness="1,1,0,1" Padding="5,0" HorizontalAlignment="Stretch">
+                <Border Grid.Column="1" BorderBrush="#8FC38F" Background="#E3F5E2" BorderThickness="1,1,0,1" Padding="4,2" HorizontalAlignment="Stretch">
                     <StackPanel Orientation="Vertical">
-                        <Label HorizontalContentAlignment="Center" Content="Exponent" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordHiValue, Converter={StaticResource WordHalfExponentConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordHiValue, Converter={StaticResource WordHalfExponentConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <UniformGrid Rows="1">
-                            <CheckBox HorizontalAlignment="Center" ToolTip="14" IsChecked="{Binding [30].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="13" IsChecked="{Binding [29].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="12" IsChecked="{Binding [28].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="11" IsChecked="{Binding [27].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="10" IsChecked="{Binding [26].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        </UniformGrid>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="2" BorderBrush="#C38F8F" Background="#F5E2E3" BorderThickness="1" Padding="5,0">
-                    <StackPanel Orientation="Vertical">
-                        <Label HorizontalContentAlignment="Center" Content="Mantissa" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordHiValue, Converter={StaticResource WordHalfMantissaConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordHiValue, Converter={StaticResource WordHalfMantissaConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <UniformGrid Rows="1">
-                            <CheckBox HorizontalAlignment="Center" ToolTip="9" IsChecked="{Binding [25].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="8" IsChecked="{Binding [24].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="7" IsChecked="{Binding [23].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="6" IsChecked="{Binding [22].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="5" IsChecked="{Binding [21].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="4" IsChecked="{Binding [20].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="3" IsChecked="{Binding [19].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="2" IsChecked="{Binding [18].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="1" IsChecked="{Binding [17].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                            <CheckBox HorizontalAlignment="Center" ToolTip="0" IsChecked="{Binding [16].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                        </UniformGrid>
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <Label Grid.Row="3" Grid.Column="0" VerticalContentAlignment="Center">Decimal representation</Label>
-            <TextBox Grid.Row="3" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
-                <TextBox.Text>
-                    <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHalfConverter}">
-                        <Binding.ValidationRules>
-                            <local:WordHalfConverter/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-
-            <Label Grid.Row="4" Grid.Column="0" VerticalContentAlignment="Center">Actual value stored in half</Label>
-            <utils:IgnoreChildSizeDecorator Grid.Row="4" Grid.Column="1">
-                <TextBox VerticalContentAlignment="Center" IsReadOnly="true" Background="Transparent" BorderThickness="0"
-                    Text="{Binding Path=WordHiValue, Mode=OneWay, Converter={StaticResource WordHalfHighPrecisionReadOnlyConverter}}" />
-            </utils:IgnoreChildSizeDecorator>
-
-            <Label Grid.Row="5" Grid.Column="0" VerticalContentAlignment="Center">Hexadecimal representation</Label>
-            <TextBox Grid.Row="5" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
-                <TextBox.Text>
-                    <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHexConverter}">
-                        <Binding.ValidationRules>
-                            <local:WordHexConverter/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-
-            <Label Grid.Row="6" Grid.Column="0" VerticalContentAlignment="Center">Binary representation</Label>
-            <TextBox Grid.Row="6" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
-                <TextBox.Text>
-                    <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordBinConverter}">
-                        <Binding.ValidationRules>
-                            <local:WordBinConverter/>
-                        </Binding.ValidationRules>
-                    </Binding>
-                </TextBox.Text>
-            </TextBox>
-
-            <!-- Lo -->
-
-            <Grid Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1*" MinWidth="50"/>
-                    <ColumnDefinition Width="6*"/>
-                    <ColumnDefinition Width="10*"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Border Grid.Column="0" BorderBrush="#8F8FC3" Background="#E2E6F5" BorderThickness="1,1,0,1" Padding="5,0" HorizontalAlignment="Stretch">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
-                        <Label HorizontalContentAlignment="Center" Content="Sign" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordLoValue, Converter={StaticResource WordHalfSignConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordLoValue, Converter={StaticResource WordHalfSignConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <CheckBox HorizontalAlignment="Center" ToolTip="15" IsChecked="{Binding [15].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="1" BorderBrush="#8FC38F" Background="#E3F5E2" BorderThickness="1,1,0,1" Padding="5,0" HorizontalAlignment="Stretch">
-                    <StackPanel Orientation="Vertical">
-                        <Label HorizontalContentAlignment="Center" Content="Exponent" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordLoValue, Converter={StaticResource WordHalfExponentConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordLoValue, Converter={StaticResource WordHalfExponentConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <UniformGrid Rows="1">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Exponent" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordLoValue, Converter={StaticResource WordHalfExponentConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordLoValue, Converter={StaticResource WordHalfExponentConverter}, ConverterParameter=Encoded}"/>
+                        <UniformGrid Rows="1" Margin="0,4,0,0">
                             <CheckBox HorizontalAlignment="Center" ToolTip="14" IsChecked="{Binding [14].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="13" IsChecked="{Binding [13].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="12" IsChecked="{Binding [12].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -336,12 +287,14 @@
                         </UniformGrid>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="2" BorderBrush="#C38F8F" Background="#F5E2E3" BorderThickness="1" Padding="5,0">
+                <Border Grid.Column="2" BorderBrush="#C38F8F" Background="#F5E2E3" BorderThickness="1" Padding="4,2">
                     <StackPanel Orientation="Vertical">
-                        <Label HorizontalContentAlignment="Center" Content="Mantissa" FontWeight="Bold" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordLoValue, Converter={StaticResource WordHalfMantissaConverter}}" Height="26"></Label>
-                        <Label HorizontalContentAlignment="Center" Content="{Binding WordLoValue, Converter={StaticResource WordHalfMantissaConverter}, ConverterParameter=Encoded}" Height="26"></Label>
-                        <UniformGrid Rows="1">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Mantissa" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordLoValue, Converter={StaticResource WordHalfMantissaConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordLoValue, Converter={StaticResource WordHalfMantissaConverter}, ConverterParameter=Encoded}"/>
+                        <UniformGrid Rows="1" Margin="0,4,0,0">
                             <CheckBox HorizontalAlignment="Center" ToolTip="9" IsChecked="{Binding [9].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="8" IsChecked="{Binding [8].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                             <CheckBox HorizontalAlignment="Center" ToolTip="7" IsChecked="{Binding [7].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -357,8 +310,8 @@
                 </Border>
             </Grid>
 
-            <Label Grid.Row="9" Grid.Column="0" VerticalContentAlignment="Center">Decimal representation</Label>
-            <TextBox Grid.Row="9" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+            <Label Grid.Row="3" Grid.Column="0" VerticalContentAlignment="Center">Decimal representation</Label>
+            <TextBox Grid.Row="3" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
                 <TextBox.Text>
                     <Binding Path="WordLoValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHalfConverter}">
                         <Binding.ValidationRules>
@@ -368,27 +321,157 @@
                 </TextBox.Text>
             </TextBox>
 
-            <Label Grid.Row="10" Grid.Column="0" VerticalContentAlignment="Center">Actual value stored in half</Label>
-            <utils:IgnoreChildSizeDecorator Grid.Row="10" Grid.Column="1">
-                <TextBox VerticalContentAlignment="Center" IsReadOnly="true" Background="Transparent" BorderThickness="0"
-                    Text="{Binding Path=WordLoValue, Mode=OneWay, Converter={StaticResource WordHalfHighPrecisionReadOnlyConverter}}" />
+            <Label Grid.Row="4" Grid.Column="0" VerticalContentAlignment="Center">Actual stored value</Label>
+            <utils:IgnoreChildSizeDecorator Grid.Row="4" Grid.Column="1">
+                <TextBox VerticalContentAlignment="Center" Style="{StaticResource TextBoxReadOnlyStyle}"
+                         Text="{Binding Path=WordLoValue, Mode=OneWay, Converter={StaticResource WordHalfHighPrecisionReadOnlyConverter}}" />
             </utils:IgnoreChildSizeDecorator>
 
-            <Label Grid.Row="11" Grid.Column="0" VerticalContentAlignment="Center">Hexadecimal representation</Label>
-            <TextBox Grid.Row="11" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+            <Label Grid.Row="5" Grid.Column="0" VerticalContentAlignment="Center">Hex/uint encoding</Label>
+            <Grid Grid.Row="5" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" VerticalContentAlignment="Center" Height="22" Margin="0,0,2,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="WordLoValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHexConverter}">
+                            <Binding.ValidationRules>
+                                <local:WordHexConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Height="22" Margin="2,0,0,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="WordLoValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordUintConverter}">
+                            <Binding.ValidationRules>
+                                <local:WordUintConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+            </Grid>
+
+            <Label Grid.Row="6" Grid.Column="0" VerticalContentAlignment="Center">Bit representation</Label>
+            <TextBox Grid.Row="6" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
                 <TextBox.Text>
-                    <Binding Path="WordLoValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHexConverter}">
+                    <Binding Path="WordLoValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordBinConverter}">
                         <Binding.ValidationRules>
-                            <local:WordHexConverter/>
+                            <local:WordBinConverter/>
                         </Binding.ValidationRules>
                     </Binding>
                 </TextBox.Text>
             </TextBox>
 
-            <Label Grid.Row="12" Grid.Column="0" VerticalContentAlignment="Center">Binary representation</Label>
+            <!-- Hi -->
+
+            <Grid Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" MinWidth="50"/>
+                    <ColumnDefinition Width="6*"/>
+                    <ColumnDefinition Width="10*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Border Grid.Column="0" BorderBrush="#8F8FC3" Background="#E2E6F5" BorderThickness="1,1,0,1" Padding="4,2" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Sign" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordHiValue, Converter={StaticResource WordHalfSignConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordHiValue, Converter={StaticResource WordHalfSignConverter}, ConverterParameter=Encoded}"/>
+                        <CheckBox HorizontalAlignment="Center"  Margin="0,4,0,0" ToolTip="15"
+                                  IsChecked="{Binding [31].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1" BorderBrush="#8FC38F" Background="#E3F5E2" BorderThickness="1,1,0,1" Padding="4,2" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Vertical">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Exponent" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordHiValue, Converter={StaticResource WordHalfExponentConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordHiValue, Converter={StaticResource WordHalfExponentConverter}, ConverterParameter=Encoded}"/>
+                        <UniformGrid Rows="1" Margin="0,4,0,0">
+                            <CheckBox HorizontalAlignment="Center" ToolTip="14" IsChecked="{Binding [30].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="13" IsChecked="{Binding [29].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="12" IsChecked="{Binding [28].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="11" IsChecked="{Binding [27].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="10" IsChecked="{Binding [26].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" BorderBrush="#C38F8F" Background="#F5E2E3" BorderThickness="1" Padding="4,2">
+                    <StackPanel Orientation="Vertical">
+                        <Label HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Content="Mantissa" FontWeight="Bold" Height="20" Padding="0"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordHiValue, Converter={StaticResource WordHalfMantissaConverter}}"/>
+                        <TextBox HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="20" Padding="0" Style="{StaticResource TextBoxReadOnlyStyle}"
+                                 Text="{Binding WordHiValue, Converter={StaticResource WordHalfMantissaConverter}, ConverterParameter=Encoded}"/>
+                        <UniformGrid Rows="1" Margin="0,4,0,0">
+                            <CheckBox HorizontalAlignment="Center" ToolTip="9" IsChecked="{Binding [25].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="8" IsChecked="{Binding [24].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="7" IsChecked="{Binding [23].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="6" IsChecked="{Binding [22].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="5" IsChecked="{Binding [21].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="4" IsChecked="{Binding [20].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="3" IsChecked="{Binding [19].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="2" IsChecked="{Binding [18].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="1" IsChecked="{Binding [17].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                            <CheckBox HorizontalAlignment="Center" ToolTip="0" IsChecked="{Binding [16].Bit, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </UniformGrid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Label Grid.Row="9" Grid.Column="0" VerticalContentAlignment="Center">Decimal representation</Label>
+            <TextBox Grid.Row="9" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                <TextBox.Text>
+                    <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHalfConverter}">
+                        <Binding.ValidationRules>
+                            <local:WordHalfConverter/>
+                        </Binding.ValidationRules>
+                    </Binding>
+                </TextBox.Text>
+            </TextBox>
+
+            <Label Grid.Row="10" Grid.Column="0" VerticalContentAlignment="Center">Actual stored value</Label>
+            <utils:IgnoreChildSizeDecorator Grid.Row="10" Grid.Column="1">
+                <TextBox VerticalContentAlignment="Center" Style="{StaticResource TextBoxReadOnlyStyle}"
+                         Text="{Binding Path=WordHiValue, Mode=OneWay, Converter={StaticResource WordHalfHighPrecisionReadOnlyConverter}}" />
+            </utils:IgnoreChildSizeDecorator>
+
+            <Label Grid.Row="11" Grid.Column="0" VerticalContentAlignment="Center">Hex/uint encoding</Label>
+            <Grid Grid.Row="11" Grid.Column="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" VerticalContentAlignment="Center" Height="22" Margin="0,0,2,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordHexConverter}">
+                            <Binding.ValidationRules>
+                                <local:WordHexConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+                <TextBox Grid.Column="1" VerticalContentAlignment="Center" Height="22" Margin="2,0,0,0" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
+                    <TextBox.Text>
+                        <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordUintConverter}">
+                            <Binding.ValidationRules>
+                                <local:WordUintConverter/>
+                            </Binding.ValidationRules>
+                        </Binding>
+                    </TextBox.Text>
+                </TextBox>
+            </Grid>
+
+            <Label Grid.Row="12" Grid.Column="0" VerticalContentAlignment="Center">Bit representation</Label>
             <TextBox Grid.Row="12" Grid.Column="1" VerticalContentAlignment="Center" Height="22" Style="{StaticResource TextBoxValidationStyle}" KeyUp="TextBoxCommitInputOnEnter">
                 <TextBox.Text>
-                    <Binding Path="WordLoValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordBinConverter}">
+                    <Binding Path="WordHiValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource WordBinConverter}">
                         <Binding.ValidationRules>
                             <local:WordBinConverter/>
                         </Binding.ValidationRules>
