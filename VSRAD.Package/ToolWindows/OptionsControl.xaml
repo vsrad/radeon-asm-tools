@@ -40,10 +40,10 @@
                                             <WrapPanel Margin="4,8,4,4">
                                                 <Label Content="Profile:" Margin="4,0,0,4"/>
                                                 <ComboBox ItemsSource="{Binding ProfileNames}" SelectedItem="{Binding Options.ActiveProfile, Mode=TwoWay}"
-                                                          Width="156" Height="24" Margin="4,0,0,4"/>
-                                                <Button Content="Edit" Style="{StaticResource ProfileButton}" Height="24" Padding="6,0" Margin="4,0,0,4"/>
+                                                          Width="158" Height="22" Margin="4,0,0,4"/>
+                                                <Button Content="Edit" Style="{StaticResource ProfileButton}" Height="22" Padding="6,0" Margin="4,0,0,4"/>
                                                 <Label Content="{Binding ConnectionInfo}" Margin="4,0,0,4"/>
-                                                <Button Content="{Binding DisconnectLabel}" Command="{Binding DisconnectCommand}" Height="24" Padding="6,0" Margin="4,0,0,4"
+                                                <Button Content="{Binding DisconnectLabel}" Command="{Binding DisconnectCommand}" Height="22" Padding="6,0" Margin="4,0,0,4"
                                                         Visibility="{Binding DisconnectButtonVisible, Mode=OneWay}"/>
                                             </WrapPanel>
                                         </ControlTemplate>
@@ -56,7 +56,7 @@
                                         <ControlTemplate>
                                             <StackPanel Orientation="Vertical" Margin="4,8,4,4">
                                                 <TextBlock Margin="4,0,0,4" Text="To use RAD Debugger, create a new or import an existing profile:" TextWrapping="Wrap"/>
-                                                <Button Margin="4,0,0,4" Content="Open profile editor" Style="{StaticResource ProfileButton}" HorizontalAlignment="Left" Height="24" Width="156" Padding="6,0"/>
+                                                <Button Margin="4,0,0,4" Content="Open profile editor" Style="{StaticResource ProfileButton}" HorizontalAlignment="Left" Height="22" Width="156" Padding="6,0"/>
                                             </StackPanel>
                                         </ControlTemplate>
                                     </Setter.Value>
@@ -82,7 +82,7 @@
                 <StackPanel Orientation="Horizontal" Height="25">
                     <CheckBox Content="Check Magic Number in System lane 0" VerticalAlignment="Center" Padding="4,0,0,0"
                             IsChecked="{Binding Options.VisualizerOptions.CheckMagicNumber, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBox Width="100" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                    <TextBox Width="100" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0" Height="22" VerticalContentAlignment="Center"
                              Text="{Binding Options.VisualizerOptions.MagicNumber, Converter={StaticResource MagicNumberConverter}, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Height="25">
@@ -105,26 +105,26 @@
                     <StackPanel Margin="0,6,0,0">
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Name Column Alignment: " VerticalAlignment="Center"/>
-                            <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
-                            <Button Content="C" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
-                            <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="name"/>
+                            <Button Content="L" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="name"/>
+                            <Button Content="C" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="name"/>
+                            <Button Content="R" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="name"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Headers Alignment:" VerticalAlignment="Center"/>
-                            <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="headers"/>
-                            <Button Content="C" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="headers"/>
-                            <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="headers"/>
+                            <Button Content="L" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="headers"/>
+                            <Button Content="C" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="headers"/>
+                            <Button Content="R" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="headers"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Data Alignment:" VerticalAlignment="Center"/>
-                            <Button Content="L" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
-                            <Button Content="C" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
-                            <Button Content="R" Click="AlignmentButtonClick" Width="20" Margin="5,0,0,0" Tag="data"/>
+                            <Button Content="L" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="data"/>
+                            <Button Content="C" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="data"/>
+                            <Button Content="R" Click="AlignmentButtonClick" Width="22" Height="22" Margin="5,0,0,0" Tag="data"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Height="25">
                             <CheckBox Content="Vertical separator between each" VerticalAlignment="Center"
                                 IsChecked="{Binding Options.VisualizerAppearance.VerticalSplit, UpdateSourceTrigger=PropertyChanged}"/>
-                            <TextBox Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
+                            <TextBox Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0" Height="22" VerticalContentAlignment="Center"
                                         Text="{Binding Options.VisualizerAppearance.LaneGrouping, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="columns" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
@@ -132,29 +132,29 @@
                             <CheckBox Content="Append leading zeroes to binary/hex numbers" VerticalAlignment="Center"
                                       IsChecked="{Binding Options.VisualizerAppearance.BinHexLeadingZeroes, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
+                        <StackPanel Orientation="Horizontal" Height="27">
                             <TextBlock Text="Column Separator Width:" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.LaneSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
+                        <StackPanel Orientation="Horizontal" Height="27">
                             <TextBlock Text="Hidden Column Separator Width:" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="1" Maximum="25" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.HiddenColumnSeparatorWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
+                        <StackPanel Orientation="Horizontal" Height="27">
                             <TextBlock Text="Insert separator in binary/hex mode between groups of" VerticalAlignment="Center"/>
                             <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
                                         Value="{Binding Options.VisualizerAppearance.BinHexSeparator, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="digits" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
+                        <StackPanel Orientation="Horizontal" Height="27">
                             <TextBlock Text="Insert separator in int/uint mode between groups of" VerticalAlignment="Center"/>
                             <viz:NumberInput Width="30" VerticalAlignment="Center" Margin="5,0,0,0" Padding="0"
                                         Value="{Binding Options.VisualizerAppearance.IntUintSeparator, UpdateSourceTrigger=PropertyChanged}"/>
                             <TextBlock Text="digits" VerticalAlignment="Center" Margin="5,0,0,0"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
+                        <StackPanel Orientation="Horizontal" Height="27">
                             <TextBlock Text="Darken odd rows by" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="0" Maximum="100" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerAppearance.DarkenAlternatingRowsBy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
@@ -163,7 +163,7 @@
                         <StackPanel Orientation="Horizontal" Height="25">
                             <TextBlock Text="Scaling mode:" VerticalAlignment="Center"/>
                             <ComboBox SelectedItem="{Binding Options.VisualizerAppearance.ScalingMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                              ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalAlignment="Center" Margin="5,0,0,0">
+                                      ItemsSource="{Binding Source={StaticResource ScalingMode}}" VerticalAlignment="Center" Margin="5,0,0,0" Height="22">
                                 <ComboBox.Resources>
                                     <local:ScalingModeConverter x:Key="ScalingModeConverter" />
                                 </ComboBox.Resources>
@@ -174,7 +174,7 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Height="25">
+                        <StackPanel Orientation="Horizontal" Height="27">
                             <TextBlock Text="Wavemap element size" VerticalAlignment="Center"/>
                             <viz:NumberInput VerticalAlignment="Center" Width="50" Minimum="7" Maximum="100" Margin="5,0,0,0"
                                             Value="{Binding Options.VisualizerOptions.WavemapElementSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
