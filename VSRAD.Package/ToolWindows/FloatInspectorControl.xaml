@@ -233,7 +233,7 @@
                     <TextBox.Text>
                         <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordHexConverter}">
                             <Binding.ValidationRules>
-                                <local:WordHexConverter/>
+                                <local:DwordHexConverter/>
                             </Binding.ValidationRules>
                         </Binding>
                     </TextBox.Text>
@@ -242,7 +242,7 @@
                     <TextBox.Text>
                         <Binding Path="DwordValue" Mode="TwoWay" UpdateSourceTrigger="LostFocus" Converter="{StaticResource DwordUintConverter}">
                             <Binding.ValidationRules>
-                                <local:WordUintConverter/>
+                                <local:DwordUintConverter/>
                             </Binding.ValidationRules>
                         </Binding>
                     </TextBox.Text>
