@@ -101,6 +101,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             public uint GroupIndex { get; set; }
             public uint? WaveIndex { get; set; }
+            public uint? BreakLine { get; set; }
         }
 
         public event EventHandler<NagivationEventArgs> NavigationRequested;
@@ -159,6 +160,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 var goToWave = new MenuItem { Header = $"Go to Wave #{wave.WaveIndex} of Group #{wave.GroupIndex}" };
                 goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, WaveIndex = wave.WaveIndex });
                 menu.Items.Add(goToWave);
+                if (wave.BreakLine is uint breakLine)
+                {
+                    var goToBreakLine = new MenuItem { Header = $"Go to Breakpoint (Line {breakLine + 1})" };
+                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, BreakLine = breakLine });
+                    menu.Items.Add(goToBreakLine);
+                }
+                else
+                {
+                    menu.Items.Add(new MenuItem { Header = "No Breakpoint Reached", IsEnabled = false });
+                }
                 menu.IsOpen = true;
             }
         }

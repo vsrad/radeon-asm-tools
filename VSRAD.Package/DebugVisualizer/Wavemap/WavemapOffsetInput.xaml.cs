@@ -65,7 +65,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                         if (waveInfo.PartialExecMask && waveInfo.BreakLine != null)
                             info += " (E)";
                         info += "\n";
-                        info += waveInfo.BreakLine is uint breakLine ? $"L: {breakLine}" : "No break";
+                        info += waveInfo.BreakLine is uint breakLine ? $"L: {breakLine + 1}" : "No break";
                         WaveInfoTextBlock.Text = info;
                     }
                     {
@@ -73,7 +73,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                         if (waveInfo.PartialExecMask && waveInfo.BreakLine != null)
                             tooltip += " (partial EXEC mask)";
                         tooltip += "\n";
-                        tooltip += waveInfo.BreakLine is uint breakLine ? $"Line: {breakLine}" : "No breakpoint reached";
+                        tooltip += waveInfo.BreakLine is uint breakLine ? $"Line: {breakLine + 1}" : "No breakpoint reached";
                         WaveInfoTextBlock.ToolTip = tooltip;
                     }
                 }
