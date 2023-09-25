@@ -192,7 +192,7 @@ namespace VSRAD.Syntax.IntelliSense
         private static string GetCommentText(string text)
         {
             var comment = text.Trim('/', '*', ' ', '\t', '\r', '\n', '\f');
-            return Regex.Replace(comment, @"(?<=\n)\s*(\*|\/\/)", "", RegexOptions.Compiled);
+            return Regex.Replace(comment, @"(?<=\n)\s*(\*|\/\/)\s?", "", RegexOptions.Compiled);
         }
 
         public class ClassifiedTextBuilder
