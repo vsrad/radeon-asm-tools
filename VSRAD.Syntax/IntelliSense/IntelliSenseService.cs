@@ -1,16 +1,16 @@
-﻿using VSRAD.Syntax.Core;
-using VSRAD.Syntax.Helpers;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
-using VSRAD.Syntax.IntelliSense.Navigation;
-using System.ComponentModel.Composition;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Options.Instructions;
-using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
 using System.Linq;
-using Microsoft.VisualStudio.Shell;
+using System.Threading.Tasks;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -26,14 +26,17 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntelliSenseService : IIntelliSenseService
     {
         private readonly IDocumentFactory _documentFactory;
+        private readonly IBuiltinInfoProvider _builtinInfoProvider;
         private readonly IInstructionListManager _instructionListManager;
 
         [ImportingConstructor]
         public IntelliSenseService(
             IDocumentFactory documentFactory,
+            IBuiltinInfoProvider builtinInfoProvider,
             IInstructionListManager instructionListManager)
         {
             _documentFactory = documentFactory;
+            _builtinInfoProvider = builtinInfoProvider;
             _instructionListManager = instructionListManager;
         }
 
@@ -77,12 +80,19 @@ namespace VSRAD.Syntax.IntelliSense
 
             if (symbol is DefinitionToken definition)
             {
-                return new IntelliSenseToken(symbol, new[] { CreateToken(definition, document) });
+                return new IntelliSenseToken(symbol, new[] { CreateToken(definition, document) }, null);
             }
             else if (symbol is ReferenceToken reference)
             {
                 var definitionDocument = _documentFactory.GetOrCreateDocument(reference.Definition.Snapshot.TextBuffer);
-                return new IntelliSenseToken(symbol, new[] { CreateToken(reference.Definition, definitionDocument) });
+                return new IntelliSenseToken(symbol, new[] { CreateToken(reference.Definition, definitionDocument) }, null);
+            }
+            else if (symbol.Type == RadAsmTokenType.BuiltinFunction)
+            {
+                var asmType = symbol.Snapshot.GetAsmType();
+                var builtinText = symbol.GetText().TrimPrefix("#");
+                if (_builtinInfoProvider.TryGetBuilinInfo(asmType, builtinText, out var builtinInfo))
+                    return new IntelliSenseToken(symbol, Array.Empty<NavigationToken>(), builtinInfo);
             }
             else if (symbol.Type == RadAsmTokenType.Instruction)
             {
@@ -91,7 +101,7 @@ namespace VSRAD.Syntax.IntelliSense
                 var instructionText = symbol.GetText().TrimPrefix("#");
                 var definitions = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations).ToList();
                 if (definitions.Count != 0)
-                    return new IntelliSenseToken(symbol, definitions);
+                    return new IntelliSenseToken(symbol, definitions, null);
             }
 
             return null;

@@ -253,7 +253,7 @@ namespace VSRAD.Syntax.Core.Parser
         {
             if (_builtinFunctions.Contains(tokenText))
             {
-                block.AddToken(new AnalysisToken(RadAsmTokenType.Keyword, token, version));
+                block.AddToken(new AnalysisToken(RadAsmTokenType.BuiltinFunction, token, version));
                 return true;
             }
 

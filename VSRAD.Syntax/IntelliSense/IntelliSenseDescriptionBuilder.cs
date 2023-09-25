@@ -17,7 +17,8 @@ namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntelliSenseDescriptionBuilder
     {
-        Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken);
+        Task<object> GetTokenDescriptionAsync(IntelliSenseToken token, CancellationToken cancellationToken);
+        Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> definitionTokens, CancellationToken cancellationToken);
     }
 
     [Export(typeof(IIntelliSenseDescriptionBuilder))]
@@ -33,20 +34,79 @@ namespace VSRAD.Syntax.IntelliSense
             _intelliSenseService = intelliSenseService;
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)
+        public async Task<object> GetTokenDescriptionAsync(IntelliSenseToken token, CancellationToken cancellationToken)
         {
-            if (tokens == null)
-                throw new ArgumentNullException(nameof(tokens));
-            if (tokens.Count == 0)
-                throw new ArgumentException($"{nameof(tokens)} is empty");
+            if (token == null)
+                throw new ArgumentNullException(nameof(token));
 
-            var descriptionBuider = await GetTokenDescriptionBuilderAsync(tokens.First(), cancellationToken);
-            descriptionBuider = AppendTokenDefinitionsToDescription(descriptionBuider, tokens, cancellationToken);
+            if (token.Definitions.Count != 0)
+                return await GetColorizedDescriptionAsync(token.Definitions, cancellationToken);
 
-            return descriptionBuider.Build();
+            var descriptionBuilder = new ClassifiedTextBuilder();
+            if (token.BuiltinInfo is BuiltinInfo builtinInfo)
+            {
+                AppendTokenBuiltinInfo(descriptionBuilder, builtinInfo);
+            }
+            return descriptionBuilder.Build();
         }
 
-        private ClassifiedTextBuilder AppendTokenDefinitionsToDescription(ClassifiedTextBuilder builder, IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)
+        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> definitionTokens, CancellationToken cancellationToken)
+        {
+            var descriptionBuilder = new ClassifiedTextBuilder();
+            await AppendTokenDefinitionDescriptionAsync(descriptionBuilder, definitionTokens.First(), cancellationToken);
+            AppendTokenDefinitionList(descriptionBuilder, definitionTokens, cancellationToken);
+            return descriptionBuilder.Build();
+        }
+
+        private async Task AppendTokenDefinitionDescriptionAsync(ClassifiedTextBuilder builder, NavigationToken definition, CancellationToken cancellationToken)
+        {
+            if (definition == NavigationToken.Empty) return;
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var typeName = definition.Type.GetName();
+            var document = _documentFactory.GetOrCreateDocument(definition.AnalysisToken.Snapshot.TextBuffer);
+
+            if (definition.Type == RadAsmTokenType.Instruction)
+            {
+                builder
+                    .AddClassifiedText($"({typeName} ")
+                    .AddClassifiedText(RadAsmTokenType.Instruction, Path.GetFileNameWithoutExtension(definition.Path))
+                    .AddClassifiedText(") ");
+            }
+            else
+            {
+                builder.AddClassifiedText($"({typeName}) ");
+            }
+
+            builder.AddClassifiedText(definition);
+
+            if (definition.Type == RadAsmTokenType.FunctionName)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var documentAnalysis = await document.DocumentAnalysis.GetAnalysisResultAsync(definition.AnalysisToken.Snapshot);
+                var block = documentAnalysis.GetBlock(definition.GetEnd());
+
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (block is FunctionBlock functionBlock)
+                {
+                    for (var i = 0; i < functionBlock.Parameters.Count; i++)
+                    {
+                        builder.AddClassifiedText(" ")
+                            .AddClassifiedText(_intelliSenseService.CreateToken(functionBlock.Parameters[i], document));
+                        if (i != functionBlock.Parameters.Count - 1)
+                            builder.AddClassifiedText(",");
+                    }
+                }
+            }
+
+            builder.SetAsElement();
+
+            if (TryGetCommentDescription(document.DocumentTokenizer, definition.GetEnd(), cancellationToken, out var message))
+                builder.AddClassifiedText(message).SetAsElement();
+        }
+
+        private void AppendTokenDefinitionList(ClassifiedTextBuilder builder, IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)
         {
             builder.AddClassifiedText("").SetAsElement();
 
@@ -82,57 +142,20 @@ namespace VSRAD.Syntax.IntelliSense
                         .SetAsElement();
                 }
             }
-
-            return builder;
         }
 
-        private async Task<ClassifiedTextBuilder> GetTokenDescriptionBuilderAsync(NavigationToken token, CancellationToken cancellationToken)
+        private void AppendTokenBuiltinInfo(ClassifiedTextBuilder builder, BuiltinInfo builtinInfo)
         {
-            if (token == NavigationToken.Empty) return null;
-            cancellationToken.ThrowIfCancellationRequested();
+            var typeName = RadAsmTokenType.BuiltinFunction.GetName();
+            builder
+                .AddClassifiedText($"({typeName}) ")
+                .AddClassifiedText(RadAsmTokenType.BuiltinFunction, builtinInfo.Name)
+                .AddClassifiedText("(" + string.Join(", ", builtinInfo.Parameters) + ")")
+                .SetAsElement();
+            builder
+                .AddClassifiedText(builtinInfo.Description)
+                .SetAsElement();
 
-            var typeName = token.Type.GetName();
-            var document = _documentFactory.GetOrCreateDocument(token.AnalysisToken.Snapshot.TextBuffer);
-
-            var builder = new ClassifiedTextBuilder();
-
-            if (token.Type == RadAsmTokenType.Instruction)
-            {
-                builder
-                    .AddClassifiedText($"({typeName} ")
-                    .AddClassifiedText(RadAsmTokenType.Instruction, Path.GetFileNameWithoutExtension(token.Path))
-                    .AddClassifiedText(") ");
-            }
-            else
-            {
-                builder.AddClassifiedText($"({typeName}) ");
-            }
-
-            builder.AddClassifiedText(token);
-            if (token.Type == RadAsmTokenType.FunctionName)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var documentAnalysis = await document.DocumentAnalysis.GetAnalysisResultAsync(token.AnalysisToken.Snapshot);
-                var block = documentAnalysis.GetBlock(token.GetEnd());
-
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (block is FunctionBlock functionBlock)
-                {
-                    for (var i = 0; i < functionBlock.Parameters.Count; i++)
-                    {
-                        builder.AddClassifiedText(" ")
-                            .AddClassifiedText(_intelliSenseService.CreateToken(functionBlock.Parameters[i], document));
-                        if (i != functionBlock.Parameters.Count - 1)
-                            builder.AddClassifiedText(",");
-                    }
-                }
-            }
-
-            builder.SetAsElement();
-            if (TryGetCommentDescription(document.DocumentTokenizer, token.GetEnd(), cancellationToken, out var message))
-                builder.AddClassifiedText(message).SetAsElement();
-            return builder;
         }
 
         private bool TryGetCommentDescription(IDocumentTokenizer documentTokenizer, SnapshotPoint tokenEnd, CancellationToken cancellationToken, out string message)

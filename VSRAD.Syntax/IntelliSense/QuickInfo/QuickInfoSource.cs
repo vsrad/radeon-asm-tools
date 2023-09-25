@@ -26,13 +26,13 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var triggerPoint = session.GetTriggerPoint(snapshot);
             if (!triggerPoint.HasValue) return null;
 
-            var navigationsResult = await _intelliSenseService.GetIntelliSenseTokenAsync(triggerPoint.Value);
-            if (navigationsResult == null) return null;
+            var intelliSenseToken = await _intelliSenseService.GetIntelliSenseTokenAsync(triggerPoint.Value);
+            if (intelliSenseToken == null) return null;
 
-            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Definitions, cancellationToken);
+            var dataElement = await _descriptionBuilder.GetTokenDescriptionAsync(intelliSenseToken, cancellationToken);
             if (dataElement == null) return null;
 
-            var tokenSpan = navigationsResult.Symbol.Span;
+            var tokenSpan = intelliSenseToken.Symbol.Span;
             var applicableSpan = snapshot.CreateTrackingSpan(tokenSpan, SpanTrackingMode.EdgeInclusive);
 
             return new QuickInfoItem(applicableSpan, dataElement);
