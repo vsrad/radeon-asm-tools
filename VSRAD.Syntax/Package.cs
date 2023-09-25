@@ -10,6 +10,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using VSRAD.Syntax.IntelliSense.Navigation.NavigationList;
 using System.ComponentModel.Design;
 using VSRAD.Syntax.Options.Instructions;
+using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax
 {
@@ -39,6 +40,10 @@ namespace VSRAD.Syntax
 
             var options = GetMEFComponent<IOptions>();
             await options.LoadAsync();
+            var contentTypeManager = GetMEFComponent<ContentTypeManager>();
+            await contentTypeManager.LoadAsync();
+            var documentFactory = (DocumentFactory)GetMEFComponent<IDocumentFactory>();
+            await documentFactory.LoadAsync();
 
             await NavigationListCommand.InitializeAsync(this);
 
