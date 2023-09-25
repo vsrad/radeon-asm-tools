@@ -15,7 +15,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Buffer.BlockCopy(system, 0, systemBytes, 0, systemBytes.Length);
             var data = new BreakStateData(new Dictionary<string, WatchMeta>(), dwordsPerLane: 1,
                 new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), systemBytes);
-            _ = data.ChangeGroupWithWarningsAsync(null, groupIndex: groupIndex, groupSize: groupSize, waveSize: waveSize, nGroups: 0).Result;
+            _ = data.ChangeGroupWithWarningsAsync(null, groupIndex: groupIndex, groupSize: groupSize, waveSize: waveSize).Result;
             return data;
         }
 

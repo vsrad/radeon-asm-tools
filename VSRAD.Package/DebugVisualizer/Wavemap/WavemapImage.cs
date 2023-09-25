@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -80,13 +81,6 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private readonly Image _img;
         private readonly VisualizerContext _context;
 
-        private WavemapView _view;
-        public WavemapView View
-        {
-            get => _view;
-            set { _view = value; DrawImage(); }
-        }
-
         private int _gridSizeX;
         public int GridSizeX
         {
@@ -105,8 +99,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         public sealed class NagivationEventArgs : EventArgs
         {
-            public uint GroupIdx { get; set; }
-            public uint? WaveIdx { get; set; }
+            public uint GroupIndex { get; set; }
+            public uint? WaveIndex { get; set; }
+            public uint? BreakLine { get; set; }
         }
 
         public event EventHandler<NagivationEventArgs> NavigationRequested;
@@ -120,15 +115,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             _img.MouseRightButtonUp += ShowWaveMenu;
 
             _context = context;
-            _context.Options.VisualizerOptions.PropertyChanged += PropertyChanged;
+            _context.PropertyChanged += VisualizerStateChanged;
+            _context.Options.VisualizerOptions.PropertyChanged += VisualizerStateChanged;
 
             ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
         }
 
-        private void PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void VisualizerStateChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
+                case nameof(VisualizerContext.Wavemap):
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerOptions.MagicNumber):
@@ -148,53 +145,62 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (GetWaveAtMousePos(e.GetPosition(_img)) is WaveInfo wave && wave.IsVisible)
-                _context.CurrentWaveInfo = wave;
+            if (GetWaveAtImagePos(e.GetPosition(_img)) is WaveInfo wave)
+                _context.WavemapSelection = wave;
         }
 
         private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (GetWaveAtMousePos(e.GetPosition(_img)) is WaveInfo wave && wave.IsVisible)
+            if (GetWaveAtImagePos(e.GetPosition(_img)) is WaveInfo wave)
             {
                 var menu = new ContextMenu { PlacementTarget = _img };
-                var goToGroup = new MenuItem { Header = $"Go to Group #{wave.GroupIdx}" };
-                goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIdx = wave.GroupIdx });
+                var goToGroup = new MenuItem { Header = $"Go to Group #{wave.GroupIndex}" };
+                goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex });
                 menu.Items.Add(goToGroup);
-                var goToWave = new MenuItem { Header = $"Go to Wave #{wave.WaveIdx} of Group #{wave.GroupIdx}" };
-                goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIdx = wave.GroupIdx, WaveIdx = wave.WaveIdx });
+                var goToWave = new MenuItem { Header = $"Go to Wave #{wave.WaveIndex} of Group #{wave.GroupIndex}" };
+                goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, WaveIndex = wave.WaveIndex });
                 menu.Items.Add(goToWave);
+                if (wave.BreakLine is uint breakLine)
+                {
+                    var goToBreakLine = new MenuItem { Header = $"Go to Breakpoint (Line {breakLine + 1})" };
+                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, BreakLine = breakLine });
+                    menu.Items.Add(goToBreakLine);
+                }
+                else
+                {
+                    menu.Items.Add(new MenuItem { Header = "No Breakpoint Reached", IsEnabled = false });
+                }
                 menu.IsOpen = true;
             }
         }
 
-        private WaveInfo? GetWaveAtMousePos(Point p)
+        private WaveInfo GetWaveAtImagePos(Point p)
         {
-            if (_view == null)
+            if (_context.Wavemap == null)
                 return null;
 
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
             var row = (int)(p.Y / rSize);
             var col = (int)(p.X / rSize) + FirstGroup;
-            return _view[row, col];
+            return _context.Wavemap.GetWaveInfo((uint)col, (uint)row,
+                _context.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_context.Options.VisualizerOptions.MagicNumber : null, _context.Options.VisualizerOptions.MaskLanes);
         }
 
         private void DrawImage()
         {
             var imageContainer = (FrameworkElement)_img.Parent;
-            if (_view == null || _view.WavesPerGroup == 0 || imageContainer.ActualHeight == 0)
+            var wavesPerGroup = MathUtils.RoundUpQuotient((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.WaveSize);
+
+            if (_context.Wavemap == null || wavesPerGroup == 0 || imageContainer.ActualHeight == 0)
             {
                 _img.Source = null;
                 Updated?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
-            _view.MagicNumber = _context.Options.VisualizerOptions.MagicNumber;
-            _view.CheckInactiveLanes = _context.Options.VisualizerOptions.MaskLanes;
-            _view.CheckMagicNumber = _context.Options.VisualizerOptions.CheckMagicNumber;
-
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
             GridSizeX = (int)imageContainer.ActualWidth / rSize;
-            GridSizeY = _view.WavesPerGroup;
+            GridSizeY = wavesPerGroup;
 
             var pixelCount = GridSizeX * GridSizeY * rSize * rSize;
             var byteCount = pixelCount * 4;
@@ -221,12 +227,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 int col = i % byteWidth;
                 var flatIdx = i + _headerSize;   // header offset
 
-                if (row / rSize >= GridSizeY) continue;
-                var viewRow = (GridSizeY - 1 - row / rSize);
-                var viewCol = (col / rSize / 4) + FirstGroup;
-
-                var waveInfo = _view[viewRow, viewCol];
-                if (!waveInfo.IsVisible) continue;
+                var waveInfo = GetWaveAtImagePos(new Point(col / 4, GridSizeY * rSize - 1 - row));
+                if (waveInfo == null)
+                    continue;
 
                 if ((row % rSize) == 0 || (row % rSize) == rSize - 1)
                 {

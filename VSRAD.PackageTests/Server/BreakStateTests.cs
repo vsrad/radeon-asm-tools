@@ -73,7 +73,7 @@ namespace VSRAD.PackageTests.Server
                         Assert.Equal(group * groupByteSize, command.ByteOffset);
                         Assert.Equal(groupByteSize, command.ByteCount);
                     });
-                var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: group, groupSize: groupSize, waveSize: waveSize, nGroups: groupCount);
+                var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: group, groupSize: groupSize, waveSize: waveSize);
                 Assert.Null(warning);
 
                 Assert.Equal(wavesPerGroup, breakStateData.WavesPerGroup);
@@ -130,7 +130,7 @@ namespace VSRAD.PackageTests.Server
             }
             {
                 // Switching to a smaller group that was already fetched doesn't send any requests
-                var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 1, groupSize: groupSize / 2, waveSize: waveSize, nGroups: wavesPerGroup);
+                var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 1, groupSize: groupSize / 2, waveSize: waveSize);
                 Assert.Null(warning);
             }
         }
@@ -148,7 +148,7 @@ namespace VSRAD.PackageTests.Server
             {
                 Assert.Equal(new[] { "/home/kyubey/projects", "log.tar" }, command.FilePath);
             });
-            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 512, waveSize: 64, nGroups: 1);
+            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 512, waveSize: 64);
             Assert.Equal("Group #0 is incomplete: expected to read 4096 bytes but the output file contains 0.", warning);
             // Data is set to 0 if unavailable
             for (var wave = 0; wave < breakStateData.WavesPerGroup; ++wave)
@@ -162,22 +162,6 @@ namespace VSRAD.PackageTests.Server
                     Assert.Equal(0u, breakStateData.GetWatchData(wave, (int)threadIdWatchSlot)[lane]);
                 }
             }
-        }
-
-        [Fact]
-        public async Task NGroupViolationProducesAWarningButFetchesResultsTestAsync()
-        {
-            var channel = new MockCommunicationChannel();
-            var watches = new Dictionary<string, WatchMeta> { { "ThreadID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) } };
-            var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
-            var breakStateData = new BreakStateData(watches, dwordsPerLane: 2, file);
-
-            Assert.Equal(2, breakStateData.GetGroupCount(groupSize: 256, waveSize: 64, nGroups: 4));
-
-            channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = new byte[2048] }, (_) => { });
-            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel.Object, groupIndex: 0, groupSize: 256, waveSize: 64, nGroups: 4);
-
-            Assert.Equal("Output file has fewer groups than requested (NGroups = 4, but the file contains only 2)", warning);
         }
 
         [Fact]
@@ -208,7 +192,7 @@ namespace VSRAD.PackageTests.Server
             var breakStateData = new BreakStateData(watches, dwordsPerLane: 3, file, localData);
 
             var groupId = 1;
-            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: groupId, groupSize: groupSize, waveSize: waveSize, nGroups: nGroups);
+            var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: groupId, groupSize: groupSize, waveSize: waveSize);
             Assert.Null(warning);
 
             for (int tid = 0; tid < groupSize; ++tid)

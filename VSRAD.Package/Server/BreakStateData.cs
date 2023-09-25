@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using VSRAD.Package.DebugVisualizer.Wavemap;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
 {
@@ -59,11 +59,12 @@ namespace VSRAD.Package.Server
     {
         public IReadOnlyDictionary<string, WatchMeta> Watches { get; }
         public int DwordsPerLane { get; }
+        public int NumThreadsInProgram { get; }
 
         public int GroupIndex { get; private set; }
         public int GroupSize { get; private set; }
         public int WaveSize { get; private set; }
-        public int WavesPerGroup => (GroupSize + WaveSize - 1) / WaveSize;
+        public int WavesPerGroup => MathUtils.RoundUpQuotient(GroupSize, WaveSize);
 
         private readonly BreakStateOutputFile _outputFile;
 
@@ -77,6 +78,7 @@ namespace VSRAD.Package.Server
         {
             Watches = watches;
             DwordsPerLane = dwordsPerLane;
+            NumThreadsInProgram = file.DwordCount / dwordsPerLane;
             _outputFile = file;
 
             _data = new uint[file.DwordCount];
@@ -87,16 +89,6 @@ namespace VSRAD.Package.Server
                     throw new ArgumentException("Trim the offset before passing output data to BreakStateData");
                 Buffer.BlockCopy(localData, file.Offset, _data, 0, file.DwordCount * 4);
             }
-        }
-
-        public int GetGroupCount(int groupSize, int waveSize, int nGroups)
-        {
-            var realGroupSize = ((groupSize + waveSize - 1) / waveSize) * waveSize; // real group size is always a multiple of wave size
-            var realCount = _data.Length / realGroupSize / DwordsPerLane;
-            // Disabled for now as it should be refactored
-            //if (nGroups != 0 && nGroups < realCount)
-            //    return nGroups;
-            return realCount;
         }
 
         public WatchMeta GetWatchMeta(string watch)
@@ -135,6 +127,21 @@ namespace VSRAD.Package.Server
 
         public uint[] GetSystemData(int waveIndex) => GetWatchData(waveIndex, 0);
 
+        public bool TryGetGlobalSystemData(int groupIndex, int waveIndex, int groupSize, int waveSize, out uint[] systemData)
+        {
+            systemData = new uint[waveSize];
+            var wavesPerGroup = MathUtils.RoundUpQuotient(groupSize, waveSize);
+            var groupCount = NumThreadsInProgram / MathUtils.RoundUpToMultiple(groupSize, waveSize);
+            if (waveIndex >= wavesPerGroup || groupIndex >= groupCount || DwordsPerLane == 0)
+                return false;
+            var globalWaveIndex = wavesPerGroup * groupIndex + waveIndex;
+            var dataStart = globalWaveIndex * waveSize * DwordsPerLane;
+            var dataEnd = Math.Min((globalWaveIndex + 1) * waveSize * DwordsPerLane, _data.Length);
+            for (int i = 0, offset = dataStart; offset < dataEnd; i += 1, offset += DwordsPerLane)
+                systemData[i] = _data[offset];
+            return true;
+        }
+
         public const int SystemMagicNumberLane = 0;
         public const int SystemBreakLineLane = 1;
         public const int SystemInstanceIdLane = 2;
@@ -163,35 +170,28 @@ namespace VSRAD.Package.Server
 #endif
         }
 
-        public WavemapView GetWavemapView()
-        {
-            if (GroupSize > 0 && WaveSize > 0)
-                return new WavemapView(_data, WaveSize, DwordsPerLane, GroupSize, GetGroupCount(GroupSize, WaveSize, 0));
-            return null;
-        }
-
-        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int waveSize, int nGroups, bool fetchWholeFile = false)
+        public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int waveSize, bool fetchWholeFile = false)
         {
             if (waveSize != WaveSize)
             {
                 var waveDataSize = waveSize * DwordsPerLane;
                 if (!_localData)
-                    _fetchedDataWaves = new BitArray((_data.Length + waveDataSize - 1) / waveDataSize, false);
+                    _fetchedDataWaves = new BitArray(MathUtils.RoundUpQuotient(_data.Length, waveDataSize), false);
                 WaveSize = waveSize;
             }
 
             string warning = null;
             if (!_localData)
-                warning = await FetchFilePartAsync(channel, groupIndex, groupSize, nGroups, fetchWholeFile);
+                warning = await FetchFilePartAsync(channel, groupIndex, groupSize, fetchWholeFile);
 
             GroupIndex = groupIndex;
             GroupSize = groupSize;
             return warning;
         }
 
-        private async Task<string> FetchFilePartAsync(ICommunicationChannel channel, int groupIndex, int groupSize, int nGroups, bool fetchWholeFile)
+        private async Task<string> FetchFilePartAsync(ICommunicationChannel channel, int groupIndex, int groupSize, bool fetchWholeFile)
         {
-            GetRequestedFilePart(groupIndex, groupSize, nGroups, fetchWholeFile, out var waveOffset, out var waveCount);
+            GetRequestedFilePart(groupIndex, groupSize, fetchWholeFile, out var waveOffset, out var waveCount);
             if (IsFilePartFetched(waveOffset, waveCount))
                 return null;
 
@@ -222,18 +222,15 @@ namespace VSRAD.Package.Server
             if (response.Data.Length < requestedByteCount)
                 return $"Group #{groupIndex} is incomplete: expected to read {requestedByteCount} bytes but the output file contains {response.Data.Length}.";
 
-            if (_data.Length < nGroups * groupSize * DwordsPerLane)
-                return $"Output file has fewer groups than requested (NGroups = {nGroups}, but the file contains only {GetGroupCount(groupSize, WaveSize, nGroups)})";
-
             return null;
         }
 
-        private void GetRequestedFilePart(int groupIndex, int groupSize, int nGroups, bool fetchWholeFile, out int waveOffset, out int waveCount)
+        private void GetRequestedFilePart(int groupIndex, int groupSize, bool fetchWholeFile, out int waveOffset, out int waveCount)
         {
-            groupSize = ((groupSize + WaveSize - 1) / WaveSize) * WaveSize; // real group size is always a multiple of wave size
+            groupSize = MathUtils.RoundUpToMultiple(groupSize, WaveSize); // real group size is always a multiple of wave size
             if (fetchWholeFile)
             {
-                waveCount = nGroups * groupSize / WaveSize;
+                waveCount = MathUtils.RoundUpQuotient(NumThreadsInProgram, WaveSize);
                 if (waveCount == 0 || waveCount > _fetchedDataWaves.Length)
                     waveCount = _fetchedDataWaves.Length;
                 waveOffset = 0;
@@ -243,7 +240,7 @@ namespace VSRAD.Package.Server
                 var groupStart = groupIndex * groupSize;
                 var groupEnd = (groupIndex + 1) * groupSize;
                 var startWaveIndex = groupStart / WaveSize;
-                var endWaveIndex = groupEnd / WaveSize + (groupEnd % WaveSize != 0 ? 1 : 0); // ceil
+                var endWaveIndex = MathUtils.RoundUpQuotient(groupEnd, WaveSize);
 
                 waveCount = endWaveIndex - startWaveIndex;
                 waveOffset = startWaveIndex;

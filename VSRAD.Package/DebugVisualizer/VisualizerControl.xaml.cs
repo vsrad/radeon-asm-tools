@@ -13,9 +13,11 @@ namespace VSRAD.Package.DebugVisualizer
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
         private readonly WavemapImage _wavemap;
+        private readonly IToolWindowIntegration _integration;
 
         public VisualizerControl(IToolWindowIntegration integration, IFontAndColorProvider fontAndColorProvider)
         {
+            _integration = integration;
             _context = integration.GetVisualizerContext();
             _context.PropertyChanged += VisualizerStateChanged;
             _context.GroupFetched += GroupFetched;
@@ -24,7 +26,7 @@ namespace VSRAD.Package.DebugVisualizer
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
-            _wavemap.NavigationRequested += NavigateToWave;
+            _wavemap.NavigationRequested += NavigateFromWavemap;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
             integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerStateChanged;
@@ -61,11 +63,13 @@ namespace VSRAD.Package.DebugVisualizer
             RestoreSavedState();
         }
 
-        private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
+        private void NavigateFromWavemap(object sender, WavemapImage.NagivationEventArgs e)
         {
-            _context.GroupIndex.GoToGroup(e.GroupIdx);
-            if (e.WaveIdx is uint waveIdx)
+            _context.GroupIndex.GoToGroup(e.GroupIndex);
+            if (e.WaveIndex is uint waveIdx)
                 _table.GoToWave(waveIdx, _context.Options.DebuggerOptions.WaveSize);
+            if (e.BreakLine is uint breakLine)
+                _integration.OpenFileInEditor(_context.BreakState.BreakFile, breakLine);
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
@@ -94,8 +98,6 @@ To enable dispatch parameters extraction:
 To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual override dispatch"".");
 
             RefreshDataStyling();
-
-            _wavemap.View = _context.BreakData.GetWavemapView();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
@@ -142,7 +144,6 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     break;
                 case nameof(Options.DebuggerOptions.WaveSize):
                     RefreshDataStyling();
-                    _wavemap.View = _context.BreakData?.GetWavemapView();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
                     if (_context.Options.VisualizerOptions.CheckMagicNumber)

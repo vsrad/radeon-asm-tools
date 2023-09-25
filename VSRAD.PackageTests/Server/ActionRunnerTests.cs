@@ -502,7 +502,7 @@ result.StepResults[0].Warning);
             Assert.Equal(1u, tidSlot);
             Assert.Null(tidListSize);
 
-            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: (int)tidInstance, groupSize: 512, waveSize: 64, nGroups: 0);
+            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: (int)tidInstance, groupSize: 512, waveSize: 64);
             var tidData = result.BreakState.Data.GetWatchData(4, (int)tidSlot);
             for (int i = 0; i < 64; ++i)
                 Assert.Equal(4u * 64 + i, tidData[i]);

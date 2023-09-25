@@ -235,6 +235,7 @@
     <Compile Include="ToolWindows\FloatInspectorWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
+    <Compile Include="Utils\MathUtils.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
     <Compile Include="Utils\MruCollection.cs" />
@@ -391,10 +392,6 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="Commands\AddToWatchesCustomSliceEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="DebugVisualizer\NumberInputStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
