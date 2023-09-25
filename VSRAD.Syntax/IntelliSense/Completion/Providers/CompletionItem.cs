@@ -11,7 +11,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     public interface ICompletionItem
     {
         VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource);
-        Task<object> GetDescriptionAsync(IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken);
+        Task<object> GetDescriptionAsync(IIntelliSenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken);
     }
 
     internal class CompletionItem : ICompletionItem
@@ -32,7 +32,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             return completionItem;
         }
 
-        public Task<object> GetDescriptionAsync(IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
+        public Task<object> GetDescriptionAsync(IIntelliSenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
             descriptionBuilder.GetColorizedDescriptionAsync(new[] { _token }, cancellationToken);
     }
 
@@ -56,7 +56,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             return completionItem;
         }
 
-        public Task<object> GetDescriptionAsync(IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
+        public Task<object> GetDescriptionAsync(IIntelliSenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
             descriptionBuilder.GetColorizedDescriptionAsync(_tokens, cancellationToken);
     }
 
@@ -65,7 +65,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         public static ICompletionItem GetRadCompletionItem(this VsComplectionItem vsComplection) => 
             vsComplection.Properties.GetProperty<ICompletionItem>(typeof(ICompletionItem));
 
-        public static Task<object> GetDescriptionAsync(this VsComplectionItem vsComplection, IIntellisenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
+        public static Task<object> GetDescriptionAsync(this VsComplectionItem vsComplection, IIntelliSenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
             vsComplection.GetRadCompletionItem().GetDescriptionAsync(descriptionBuilder, cancellationToken);
     }
 }

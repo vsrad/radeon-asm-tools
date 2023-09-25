@@ -13,11 +13,11 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
         private readonly Lazy<INavigationTokenService> _navigationService;
-        private readonly Lazy<IIntellisenseDescriptionBuilder> _descriptionBuilder;
+        private readonly Lazy<IIntelliSenseDescriptionBuilder> _descriptionBuilder;
 
         [ImportingConstructor]
         public QuickInfoSourceProvider(Lazy<INavigationTokenService> navigationService,
-            Lazy<IIntellisenseDescriptionBuilder> descriptionBuilder)
+            Lazy<IIntelliSenseDescriptionBuilder> descriptionBuilder)
         {
             _navigationService = navigationService;
             _descriptionBuilder = descriptionBuilder;

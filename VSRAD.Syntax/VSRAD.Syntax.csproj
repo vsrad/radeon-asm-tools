@@ -137,9 +137,9 @@
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
-    <Compile Include="IntelliSense\IntellisenseController.cs" />
-    <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
-    <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
+    <Compile Include="IntelliSense\IntelliSenseController.cs" />
+    <Compile Include="IntelliSense\IntelliSenseControllerProvider.cs" />
+    <Compile Include="IntelliSense\IntelliSenseDescriptionBuilder.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />

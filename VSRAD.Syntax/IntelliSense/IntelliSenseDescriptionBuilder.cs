@@ -15,19 +15,19 @@ using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense
 {
-    public interface IIntellisenseDescriptionBuilder
+    public interface IIntelliSenseDescriptionBuilder
     {
         Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken);
     }
 
-    [Export(typeof(IIntellisenseDescriptionBuilder))]
-    internal class IntellisenseDescriptionBuilder : IIntellisenseDescriptionBuilder
+    [Export(typeof(IIntelliSenseDescriptionBuilder))]
+    internal class IntelliSenseDescriptionBuilder : IIntelliSenseDescriptionBuilder
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly INavigationTokenService _navigationTokenService;
 
         [ImportingConstructor]
-        public IntellisenseDescriptionBuilder(IDocumentFactory documentFactory, INavigationTokenService navigationTokenService)
+        public IntelliSenseDescriptionBuilder(IDocumentFactory documentFactory, INavigationTokenService navigationTokenService)
         {
             _documentFactory = documentFactory;
             _navigationTokenService = navigationTokenService;

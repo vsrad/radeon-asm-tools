@@ -7,7 +7,7 @@ using System;
 
 namespace VSRAD.Syntax.IntelliSense
 {
-    internal class IntellisenseController : IOleCommandTarget
+    internal class IntelliSenseController : IOleCommandTarget
     {
         private readonly ITextView _textView;
         private readonly RadeonServiceProvider _editorService;
@@ -15,7 +15,7 @@ namespace VSRAD.Syntax.IntelliSense
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntellisenseController(RadeonServiceProvider editorService, INavigationTokenService navigationService, ITextView textView)
+        public IntelliSenseController(RadeonServiceProvider editorService, INavigationTokenService navigationService, ITextView textView)
         {
             _textView = textView;
             _editorService = editorService;

@@ -17,14 +17,14 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
     {
         private readonly OptionsProvider _optionsEventProvider;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly IDocumentFactory _documentFactory;
         private readonly IReadOnlyList<RadCompletionProvider> _providers;
 
         [ImportingConstructor]
         public CompletionSourceProvider(OptionsProvider optionsEventProvider,
             IInstructionListManager instructionListManager,
-            IIntellisenseDescriptionBuilder descriptionBuilder,
+            IIntelliSenseDescriptionBuilder descriptionBuilder,
             IDocumentFactory documentFactory, 
             INavigationTokenService navigationTokenService)
         {

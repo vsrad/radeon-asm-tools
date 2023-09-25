@@ -18,11 +18,11 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     internal class CompletionSource : IAsyncCompletionSource
     {
         private readonly IDocument _document;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly IReadOnlyList<RadCompletionProvider> _completionProviders;
 
         public CompletionSource(IDocument document,
-            IIntellisenseDescriptionBuilder descriptionBuilder,
+            IIntelliSenseDescriptionBuilder descriptionBuilder,
             IReadOnlyList<RadCompletionProvider> providers)
         {
             _document = document;

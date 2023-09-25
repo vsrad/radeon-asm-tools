@@ -9,13 +9,13 @@ namespace VSRAD.Syntax.IntelliSense
     [Export(typeof(IVsTextViewCreationListener))]
     [ContentType(Constants.RadeonAsmSyntaxContentType)]
     [TextViewRole(PredefinedTextViewRoles.Editable)]
-    internal class IntellisenseControllerProvider : IVsTextViewCreationListener
+    internal class IntelliSenseControllerProvider : IVsTextViewCreationListener
     {
         private readonly RadeonServiceProvider _editorService;
         private readonly INavigationTokenService _navigationService;
 
         [ImportingConstructor]
-        public IntellisenseControllerProvider(RadeonServiceProvider editorService, INavigationTokenService navigationService)
+        public IntelliSenseControllerProvider(RadeonServiceProvider editorService, INavigationTokenService navigationService)
         {
             _editorService = editorService;
             _navigationService = navigationService;
@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.IntelliSense
             if (view == null) return;
 
             var filter = view.Properties.GetOrCreateSingletonProperty(
-                () => new IntellisenseController(_editorService, _navigationService, view));
+                () => new IntelliSenseController(_editorService, _navigationService, view));
 
             textViewAdapter.AddCommandFilter(filter, out var next);
             filter.Next = next;

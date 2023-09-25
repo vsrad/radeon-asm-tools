@@ -8,12 +8,12 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {
         private readonly INavigationTokenService _navigationTokenService;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly ITextBuffer _textBuffer;
 
         public QuickInfoSource(ITextBuffer textBuffer, 
-            INavigationTokenService navigationTokenService, 
-            IIntellisenseDescriptionBuilder descriptionBuilder)
+            INavigationTokenService navigationTokenService,
+            IIntelliSenseDescriptionBuilder descriptionBuilder)
         {
             _textBuffer = textBuffer;
             _navigationTokenService = navigationTokenService;
