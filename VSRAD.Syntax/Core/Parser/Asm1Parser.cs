@@ -181,9 +181,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
                         {
-                            var variableDefinition = (tokens.Length - i > 3 && tokens[i + 2].Type == RadAsm1Lexer.COMMA && tokens[i + 3].Type == RadAsm1Lexer.CONSTANT)
-                                ? new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version, tokens[i + 3])
-                                : new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
+                            var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, variableDefinition);
                             currentBlock.AddToken(variableDefinition);
                         }
@@ -196,7 +194,7 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.EQ)
                             {
-                                var variableDefinition = new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
+                                var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
                                 definitionContainer.Add(currentBlock, variableDefinition);
                                 currentBlock.AddToken(variableDefinition);
                             }

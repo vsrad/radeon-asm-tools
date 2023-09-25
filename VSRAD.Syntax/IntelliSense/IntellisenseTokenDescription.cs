@@ -1,17 +1,17 @@
-﻿using Microsoft.VisualStudio.Text.Adornments;
+﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Adornments;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using VSRAD.Syntax.IntelliSense.Navigation;
-using VSRAD.Syntax.Core.Tokens;
-using VSRAD.Syntax.Core;
-using System.Threading.Tasks;
-using VSRAD.Syntax.Core.Blocks;
-using System.Threading;
-using Microsoft.VisualStudio.Text;
 using System.Text.RegularExpressions;
-using System;
+using System.Threading;
+using System.Threading.Tasks;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Core.Blocks;
+using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -39,11 +39,10 @@ namespace VSRAD.Syntax.IntelliSense
                 throw new ArgumentNullException(nameof(tokens));
             if (tokens.Count == 0)
                 throw new ArgumentException($"{nameof(tokens)} is empty");
-            
+
             var descriptionBuider = await GetTokenDescriptionBuilderAsync(tokens.First(), cancellationToken);
-            if (tokens.Count > 1)
-                descriptionBuider = AppendTokenDefinitionsToDescription(descriptionBuider, tokens, cancellationToken);
-            
+            descriptionBuider = AppendTokenDefinitionsToDescription(descriptionBuider, tokens, cancellationToken);
+
             return descriptionBuider.Build();
         }
 
@@ -51,22 +50,32 @@ namespace VSRAD.Syntax.IntelliSense
         {
             builder.AddClassifiedText("").SetAsElement();
 
+            var showFilePath = tokens.Count > 1;
+            var showTypeName = tokens.Distinct().Count() > 1;
             foreach (var tokenGroup in tokens.GroupBy(t => t.Path))
             {
                 cancellationToken.ThrowIfCancellationRequested();
-
-                var filePath = tokenGroup.All(t => t.Type == RadAsmTokenType.Instruction)
-                    ? Path.GetFileNameWithoutExtension(tokenGroup.Key)
-                    : tokenGroup.Key;
-
-                builder.AddClassifiedText(filePath, ClassifiedTextRunStyle.Bold).SetAsElement();
+                if (showFilePath)
+                {
+                    var filePath = tokenGroup.All(t => t.Type == RadAsmTokenType.Instruction)
+                        ? Path.GetFileNameWithoutExtension(tokenGroup.Key)
+                        : tokenGroup.Key;
+                    builder.AddClassifiedText(filePath, ClassifiedTextRunStyle.Bold).SetAsElement();
+                }
                 foreach (var token in tokenGroup)
                 {
-                    var typeName = token.Type.GetName();
-                    var textBeforeToken = token.LineText.Substring(0, token.LineTokenStart);
-                    var textAfterToken = token.LineText.Substring(token.LineTokenEnd);
-
-                    builder.AddClassifiedText($"({typeName}) ")
+                    if (token.Type != RadAsmTokenType.Instruction)
+                    {
+                        builder.AddClassifiedText($"Defined on line {token.Line + 1}:", ClassifiedTextRunStyle.Bold).SetAsElement();
+                    }
+                    if (showTypeName)
+                    {
+                        var typeName = token.Type.GetName();
+                        builder.AddClassifiedText($"({typeName}) ");
+                    }
+                    var textBeforeToken = token.LineText.Substring(0, token.LineTokenStart).TrimStart();
+                    var textAfterToken = token.LineText.Substring(token.LineTokenEnd).TrimEnd();
+                    builder
                         .AddClassifiedText(textBeforeToken)
                         .AddClassifiedText(token)
                         .AddClassifiedText(textAfterToken)
@@ -117,16 +126,6 @@ namespace VSRAD.Syntax.IntelliSense
                         if (i != functionBlock.Parameters.Count - 1)
                             builder.AddClassifiedText(",");
                     }
-                }
-            }
-            else if (token.Type == RadAsmTokenType.GlobalVariable || token.Type == RadAsmTokenType.LocalVariable)
-            {
-                var variableToken = (VariableToken)token.AnalysisToken;
-                if (variableToken.DefaultValue != default)
-                {
-                    var defaultValue = variableToken.DefaultValue.GetText(variableToken.Snapshot);
-                    builder.AddClassifiedText(" = ")
-                        .AddClassifiedText(RadAsmTokenType.Number, defaultValue);
                 }
             }
 

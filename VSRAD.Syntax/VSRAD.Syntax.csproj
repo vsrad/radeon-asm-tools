@@ -107,7 +107,6 @@
     <Compile Include="Core\Tokens\TokenSpan.cs" />
     <Compile Include="Core\Tokens\TokenType.cs" />
     <Compile Include="Core\Tokens\TrackingToken.cs" />
-    <Compile Include="Core\Tokens\VariableToken.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
