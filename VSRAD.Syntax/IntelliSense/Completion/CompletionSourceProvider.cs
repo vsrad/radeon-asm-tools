@@ -26,7 +26,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             IInstructionListManager instructionListManager,
             IIntelliSenseDescriptionBuilder descriptionBuilder,
             IDocumentFactory documentFactory, 
-            INavigationTokenService navigationTokenService)
+            IIntelliSenseService intelliSenseService)
         {
             _optionsEventProvider = optionsEventProvider;
             _descriptionBuilder = descriptionBuilder;
@@ -35,8 +35,8 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _providers = new List<RadCompletionProvider>()
             {
                 new InstructionCompletionProvider(optionsEventProvider, instructionListManager),
-                new FunctionCompletionProvider(optionsEventProvider, navigationTokenService),
-                new ScopedCompletionProvider(optionsEventProvider, navigationTokenService),
+                new FunctionCompletionProvider(optionsEventProvider, intelliSenseService),
+                new ScopedCompletionProvider(optionsEventProvider, intelliSenseService),
             };
         }
 

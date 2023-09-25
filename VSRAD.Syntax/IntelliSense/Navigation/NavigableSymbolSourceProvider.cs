@@ -2,8 +2,8 @@
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
+using System;
 using System.ComponentModel.Composition;
-using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
@@ -12,24 +12,21 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
     [Name(nameof(NavigableSymbolSourceProvider))]
     internal sealed class NavigableSymbolSourceProvider : INavigableSymbolSourceProvider
     {
-        private readonly IDocumentFactory _documentFactory;
-        private readonly INavigationTokenService _navigationService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         [ImportingConstructor]
-        public NavigableSymbolSourceProvider(IDocumentFactory documentFactory, INavigationTokenService navigationService)
+        public NavigableSymbolSourceProvider(IIntelliSenseService intelliSenseService)
         {
-            _documentFactory = documentFactory;
-            _navigationService = navigationService;
+            _intelliSenseService = intelliSenseService;
         }
 
-        public INavigableSymbolSource TryCreateNavigableSymbolSource(ITextView textView, ITextBuffer buffer)
+        public INavigableSymbolSource TryCreateNavigableSymbolSource(ITextView textView, ITextBuffer textBuffer)
         {
-            var document = _documentFactory.GetOrCreateDocument(buffer);
-            if (document == null)
-                return null;
+            if (textBuffer == null)
+                throw new ArgumentNullException(nameof(textBuffer));
 
-            return buffer.Properties.GetOrCreateSingletonProperty(() => 
-                new NavigableSymbolSource(_navigationService));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() =>
+                new NavigableSymbolSource(_intelliSenseService));
         }
     }
 }

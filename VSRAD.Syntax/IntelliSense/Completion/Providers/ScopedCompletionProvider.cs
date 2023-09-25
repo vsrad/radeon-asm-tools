@@ -17,15 +17,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private static readonly ImageElement GlobalVariableIcon = GetImageElement(KnownImageIds.GlobalVariable);
         private static readonly ImageElement LocalVariableIcon = GetImageElement(KnownImageIds.LocalVariable);
         private static readonly ImageElement ArgumentIcon = GetImageElement(KnownImageIds.Parameter);
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
 
-        public ScopedCompletionProvider(OptionsProvider optionsProvider, INavigationTokenService navigationTokenService)
+        public ScopedCompletionProvider(OptionsProvider optionsProvider, IIntelliSenseService intelliSenseService)
             : base(optionsProvider)
         {
-            _navigationTokenService = navigationTokenService;
+            _intelliSenseService = intelliSenseService;
             _autocompleteLabels = optionsProvider.AutocompleteLabels;
             _autocompleteVariables = optionsProvider.AutocompleteVariables;
         }
@@ -49,7 +49,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         private IEnumerable<CompletionItem> GetScopedCompletions(IDocument document, IAnalysisResult analysisResult, SnapshotPoint triggerPoint, CancellationToken cancellationToken)
         {
             CompletionItem CreateCompletionItem(AnalysisToken analysisToken, ImageElement imageElement) =>
-                new CompletionItem(_navigationTokenService.CreateToken(analysisToken, document), imageElement);
+                new CompletionItem(_intelliSenseService.CreateToken(analysisToken, document), imageElement);
 
             var currentBlock = analysisResult.GetBlock(triggerPoint);
             while (currentBlock != null)

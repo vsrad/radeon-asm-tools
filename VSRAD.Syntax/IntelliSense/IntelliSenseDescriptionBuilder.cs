@@ -24,13 +24,13 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntelliSenseDescriptionBuilder : IIntelliSenseDescriptionBuilder
     {
         private readonly IDocumentFactory _documentFactory;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         [ImportingConstructor]
-        public IntelliSenseDescriptionBuilder(IDocumentFactory documentFactory, INavigationTokenService navigationTokenService)
+        public IntelliSenseDescriptionBuilder(IDocumentFactory documentFactory, IIntelliSenseService intelliSenseService)
         {
             _documentFactory = documentFactory;
-            _navigationTokenService = navigationTokenService;
+            _intelliSenseService = intelliSenseService;
         }
 
         public async Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> tokens, CancellationToken cancellationToken)
@@ -122,7 +122,7 @@ namespace VSRAD.Syntax.IntelliSense
                     for (var i = 0; i < functionBlock.Parameters.Count; i++)
                     {
                         builder.AddClassifiedText(" ")
-                            .AddClassifiedText(_navigationTokenService.CreateToken(functionBlock.Parameters[i], document));
+                            .AddClassifiedText(_intelliSenseService.CreateToken(functionBlock.Parameters[i], document));
                         if (i != functionBlock.Parameters.Count - 1)
                             builder.AddClassifiedText(",");
                     }

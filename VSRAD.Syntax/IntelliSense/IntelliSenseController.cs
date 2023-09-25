@@ -11,15 +11,15 @@ namespace VSRAD.Syntax.IntelliSense
     {
         private readonly ITextView _textView;
         private readonly RadeonServiceProvider _editorService;
-        private readonly INavigationTokenService _navigationService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         public IOleCommandTarget Next { get; set; }
 
-        public IntelliSenseController(RadeonServiceProvider editorService, INavigationTokenService navigationService, ITextView textView)
+        public IntelliSenseController(RadeonServiceProvider editorService, IIntelliSenseService intelliSenseService, ITextView textView)
         {
             _textView = textView;
             _editorService = editorService;
-            _navigationService = navigationService;
+            _intelliSenseService = intelliSenseService;
         }
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
@@ -86,10 +86,10 @@ namespace VSRAD.Syntax.IntelliSense
         {
             var point = _textView.Caret.Position.BufferPosition;
 
-            var navigationServiceResult = ThreadHelper.JoinableTaskFactory.Run(() => _navigationService.GetNavigationsAsync(point));
-            if (navigationServiceResult == null || navigationServiceResult.Values.Count == 0) return false;
+            var intelliSenseToken = ThreadHelper.JoinableTaskFactory.Run(() => _intelliSenseService.GetIntelliSenseTokenAsync(point));
+            if (intelliSenseToken == null || intelliSenseToken.Definitions.Count == 0) return false;
 
-            _navigationService.NavigateOrOpenNavigationList(navigationServiceResult.Values);
+            _intelliSenseService.NavigateOrOpenNavigationList(intelliSenseToken.Definitions);
             return true;
         }
 

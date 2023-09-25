@@ -14,22 +14,24 @@ using Microsoft.VisualStudio.Shell;
 
 namespace VSRAD.Syntax.IntelliSense
 {
-    public interface INavigationTokenService
+    public interface IIntelliSenseService
     {
         NavigationToken CreateToken(AnalysisToken analysisToken, string path);
         NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document);
-        Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point);
+        Task<IntelliSenseToken> GetIntelliSenseTokenAsync(SnapshotPoint point);
         void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
     }
 
-    [Export(typeof(INavigationTokenService))]
-    internal class NavigationTokenService : INavigationTokenService
+    [Export(typeof(IIntelliSenseService))]
+    internal class IntelliSenseService : IIntelliSenseService
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly IInstructionListManager _instructionListManager;
 
         [ImportingConstructor]
-        public NavigationTokenService(IDocumentFactory documentFactory, IInstructionListManager instructionListManager)
+        public IntelliSenseService(
+            IDocumentFactory documentFactory,
+            IInstructionListManager instructionListManager)
         {
             _documentFactory = documentFactory;
             _instructionListManager = instructionListManager;
@@ -57,56 +59,42 @@ namespace VSRAD.Syntax.IntelliSense
                     // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
                     var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
                     document.NavigateToPosition(navigatePosition);
-                }catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     Error.ShowError(e, "Navigation service");
                 }
             };
 
-        public async Task<NavigationTokenServiceResult> GetNavigationsAsync(SnapshotPoint point)
+        public async Task<IntelliSenseToken> GetIntelliSenseTokenAsync(SnapshotPoint point)
         {
             var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
             if (document == null) return null;
 
             var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(point.Snapshot);
-            var analysisToken = analysisResult.GetToken(point);
+            var symbol = analysisResult.GetToken(point);
+            if (symbol == null) return null;
 
-            if (analysisToken == null) return null;
-            var tokens = new List<NavigationToken>();
-
-            if (analysisToken is DefinitionToken definitionToken)
+            if (symbol is DefinitionToken definition)
             {
-                tokens.Add(CreateToken(definitionToken, document));
+                return new IntelliSenseToken(symbol, new[] { CreateToken(definition, document) });
             }
-            else if (analysisToken is ReferenceToken referenceToken)
+            else if (symbol is ReferenceToken reference)
             {
-                var definition = referenceToken.Definition;
-                var definitionDocument = _documentFactory.GetOrCreateDocument(definition.Snapshot.TextBuffer);
-                tokens.Add(CreateToken(definition, definitionDocument));
+                var definitionDocument = _documentFactory.GetOrCreateDocument(reference.Definition.Snapshot.TextBuffer);
+                return new IntelliSenseToken(symbol, new[] { CreateToken(reference.Definition, definitionDocument) });
             }
-            else
+            else if (symbol.Type == RadAsmTokenType.Instruction)
             {
-                if (analysisToken.Type == RadAsmTokenType.Instruction)
-                {
-                    var asmType = analysisToken.Snapshot.GetAsmType();
-                    var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
-                    var instructionText = analysisToken.GetText().TrimPrefix("#");
-                    var instructionNavigations = new List<NavigationToken>();
-
-                    var navigations = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations);
-                    instructionNavigations.AddRange(navigations);
-                    
-                    if (instructionNavigations.Count != 0)
-                        return new NavigationTokenServiceResult(instructionNavigations, analysisToken);
-                    
-                }
-                else
-                {
-                    return null;
-                }
+                var asmType = symbol.Snapshot.GetAsmType();
+                var instructions = _instructionListManager.GetSelectedSetInstructions(asmType);
+                var instructionText = symbol.GetText().TrimPrefix("#");
+                var definitions = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations).ToList();
+                if (definitions.Count != 0)
+                    return new IntelliSenseToken(symbol, definitions);
             }
 
-            return new NavigationTokenServiceResult(tokens, analysisToken);
+            return null;
         }
 
         public void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations)

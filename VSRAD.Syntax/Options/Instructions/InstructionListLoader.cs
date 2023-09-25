@@ -24,7 +24,7 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         private readonly OptionsProvider _optionsProvider;
         private readonly Lazy<IDocumentFactory> _documentFactory;
-        private readonly Lazy<INavigationTokenService> _navigationTokenService;
+        private readonly Lazy<IIntelliSenseService> _navigationTokenService;
         private readonly List<InstructionSet> _sets;
         private string _loadedPaths;
 
@@ -33,7 +33,7 @@ namespace VSRAD.Syntax.Options.Instructions
         [ImportingConstructor]
         public InstructionListLoader(OptionsProvider optionsEventProvider,
             Lazy<IDocumentFactory> documentFactory,
-            Lazy<INavigationTokenService> navigationTokenService)
+            Lazy<IIntelliSenseService> navigationTokenService)
         {
             _optionsProvider = optionsEventProvider;
             _documentFactory = documentFactory;

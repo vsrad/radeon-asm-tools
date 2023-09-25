@@ -12,14 +12,14 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
     [Order]
     internal class QuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
-        private readonly Lazy<INavigationTokenService> _navigationService;
+        private readonly Lazy<IIntelliSenseService> _intelliSenseService;
         private readonly Lazy<IIntelliSenseDescriptionBuilder> _descriptionBuilder;
 
         [ImportingConstructor]
-        public QuickInfoSourceProvider(Lazy<INavigationTokenService> navigationService,
+        public QuickInfoSourceProvider(Lazy<IIntelliSenseService> intelliSenseService,
             Lazy<IIntelliSenseDescriptionBuilder> descriptionBuilder)
         {
-            _navigationService = navigationService;
+            _intelliSenseService = intelliSenseService;
             _descriptionBuilder = descriptionBuilder;
         }
 
@@ -28,8 +28,8 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             if (textBuffer == null)
                 throw new ArgumentNullException(nameof(textBuffer));
 
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => 
-                new QuickInfoSource(textBuffer, _navigationService.Value, _descriptionBuilder.Value));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() =>
+                new QuickInfoSource(textBuffer, _intelliSenseService.Value, _descriptionBuilder.Value));
         }
     }
 }

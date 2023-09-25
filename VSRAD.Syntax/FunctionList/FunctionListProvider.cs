@@ -19,7 +19,7 @@ namespace VSRAD.Syntax.FunctionList
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class FunctionListProvider : IWpfTextViewCreationListener
     {
-        private readonly Lazy<INavigationTokenService> _navigationTokenService;
+        private readonly Lazy<IIntelliSenseService> _intelliSenseService;
         private readonly IDocumentFactory _documentFactory;
         private readonly List<IDocument> _managedDocuments;
         private Tuple<IDocument, IAnalysisResult> _lastResult;
@@ -28,9 +28,9 @@ namespace VSRAD.Syntax.FunctionList
         private static FunctionListControl _functionListControl;
 
         [ImportingConstructor]
-        public FunctionListProvider(IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
+        public FunctionListProvider(IDocumentFactory documentFactory, Lazy<IIntelliSenseService> intelliSenseService)
         {
-            _navigationTokenService = navigationTokenService;
+            _intelliSenseService = intelliSenseService;
             _documentFactory = documentFactory;
             _managedDocuments = new List<IDocument>();
 
@@ -176,7 +176,7 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
-                    .Select(t => _navigationTokenService.Value.CreateToken(t, document))
+                    .Select(t => _intelliSenseService.Value.CreateToken(t, document))
                     .Select(t => new FunctionListItem(t))
                     .AsParallel()
                     .WithCancellation(cancellationToken)

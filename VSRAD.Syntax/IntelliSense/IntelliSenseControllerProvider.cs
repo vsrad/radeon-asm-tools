@@ -12,13 +12,13 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntelliSenseControllerProvider : IVsTextViewCreationListener
     {
         private readonly RadeonServiceProvider _editorService;
-        private readonly INavigationTokenService _navigationService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         [ImportingConstructor]
-        public IntelliSenseControllerProvider(RadeonServiceProvider editorService, INavigationTokenService navigationService)
+        public IntelliSenseControllerProvider(RadeonServiceProvider editorService, IIntelliSenseService intelliSenseService)
         {
             _editorService = editorService;
-            _navigationService = navigationService;
+            _intelliSenseService = intelliSenseService;
         }
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
@@ -27,7 +27,7 @@ namespace VSRAD.Syntax.IntelliSense
             if (view == null) return;
 
             var filter = view.Properties.GetOrCreateSingletonProperty(
-                () => new IntelliSenseController(_editorService, _navigationService, view));
+                () => new IntelliSenseController(_editorService, _intelliSenseService, view));
 
             textViewAdapter.AddCommandFilter(filter, out var next);
             filter.Next = next;

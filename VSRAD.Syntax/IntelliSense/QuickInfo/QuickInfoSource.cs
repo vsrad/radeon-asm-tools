@@ -7,16 +7,16 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IIntelliSenseService _intelliSenseService;
         private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly ITextBuffer _textBuffer;
 
         public QuickInfoSource(ITextBuffer textBuffer, 
-            INavigationTokenService navigationTokenService,
+            IIntelliSenseService intelliSenseService,
             IIntelliSenseDescriptionBuilder descriptionBuilder)
         {
             _textBuffer = textBuffer;
-            _navigationTokenService = navigationTokenService;
+            _intelliSenseService = intelliSenseService;
             _descriptionBuilder = descriptionBuilder;
         }
 
@@ -26,13 +26,13 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var triggerPoint = session.GetTriggerPoint(snapshot);
             if (!triggerPoint.HasValue) return null;
 
-            var navigationsResult = await _navigationTokenService.GetNavigationsAsync(triggerPoint.Value);
+            var navigationsResult = await _intelliSenseService.GetIntelliSenseTokenAsync(triggerPoint.Value);
             if (navigationsResult == null) return null;
 
-            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
+            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Definitions, cancellationToken);
             if (dataElement == null) return null;
 
-            var tokenSpan = navigationsResult.ApplicableToken.Span;
+            var tokenSpan = navigationsResult.Symbol.Span;
             var applicableSpan = snapshot.CreateTrackingSpan(tokenSpan, SpanTrackingMode.EdgeInclusive);
 
             return new QuickInfoItem(applicableSpan, dataElement);
