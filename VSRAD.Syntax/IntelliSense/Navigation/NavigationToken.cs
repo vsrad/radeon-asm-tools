@@ -10,11 +10,10 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public static NavigationToken Empty { get { return new NavigationToken(); } }
 
         public AnalysisToken AnalysisToken { get; }
+        public ITextSnapshotLine SnapshotLine { get; }
         public string Path { get; }
         public int Line { get; }
-        public string LineText { get; }
-        public int LineTokenStart { get; }
-        public int LineTokenEnd { get; }
+        public string LineText => SnapshotLine.GetText();
         public RadAsmTokenType Type => AnalysisToken.Type;
 
         private readonly Action _navigate;
@@ -22,16 +21,11 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
         public NavigationToken(AnalysisToken analysisToken, string path, Action navigate)
         {
             AnalysisToken = analysisToken;
-            _navigate = navigate;
+            SnapshotLine = analysisToken.Span.Start.GetContainingLine();
             Path = path;
+            Line = SnapshotLine.LineNumber;
 
-            var lineText = analysisToken
-                .Span.Start
-                .GetContainingLine();
-            Line = lineText.LineNumber;
-            LineText = lineText.GetText();
-            LineTokenStart = AnalysisToken.Span.Start - lineText.Start;
-            LineTokenEnd = AnalysisToken.Span.End - lineText.Start;
+            _navigate = navigate;
         }
 
         public void Navigate() =>

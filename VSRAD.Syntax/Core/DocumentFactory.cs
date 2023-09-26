@@ -2,6 +2,7 @@
 using EnvDTE80;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -54,24 +55,24 @@ namespace VSRAD.Syntax.Core
 
         public string GetActiveDocumentPath() => _dte.ActiveDocument.FullName.ToUpperInvariant();
 
-        public IDocument GetOrCreateDocument(string path)
+        public IDocument GetOrCreateDocument(string path, IContentType contentType)
         {
             var fullPath = Path.GetFullPath(path);
 
             if (_documents.TryGetValue(fullPath, out var document))
                 return document;
 
-            return File.Exists(fullPath)
-                ? CreateDocument(fullPath)
-                : null;
-        }
-
-        private IDocument CreateDocument(string path)
-        {
-            var contentType = _contentTypeManager.DetermineContentType(path);
+            contentType = contentType ?? _contentTypeManager.DetermineContentType(path);
             if (contentType == null)
                 return null;
 
+            return File.Exists(fullPath)
+                ? CreateDocument(fullPath, contentType)
+                : null;
+        }
+
+        private IDocument CreateDocument(string path, IContentType contentType)
+        {
             var textDocument = CustomThreadHelper.RunOnMainThread(() =>
                 _invisibleDocumentFactory.Value.CreateAndLoadTextDocument(path, contentType));
 

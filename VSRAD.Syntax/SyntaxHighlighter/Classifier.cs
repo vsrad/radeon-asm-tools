@@ -61,8 +61,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                     case RadAsmTokenType.LocalVariableReference:
                         continue;
                 }
-
-                classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
+                if (span.Contains(scopeToken.Span))
+                    classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
             }
 
             return classificationSpans;

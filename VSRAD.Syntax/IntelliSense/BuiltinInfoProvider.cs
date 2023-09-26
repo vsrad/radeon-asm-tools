@@ -12,12 +12,14 @@ namespace VSRAD.Syntax.IntelliSense
         public string Name { get; }
         public IReadOnlyList<string> Parameters { get; }
         public string Description { get; }
+        public string Examples { get; }
 
-        public BuiltinInfo(string name, IReadOnlyList<string> parameters, string description)
+        public BuiltinInfo(string name, IReadOnlyList<string> parameters, string description, string examples)
         {
             Name = name;
             Parameters = parameters;
             Description = description;
+            Examples = examples;
         }
     }
 
@@ -48,8 +50,9 @@ namespace VSRAD.Syntax.IntelliSense
             {
                 var name = b.Attribute("Name").Value;
                 var parameters = b.Attribute("Parameters").Value.Split(',');
-                var description = b.Value.Trim();
-                return new KeyValuePair<string, BuiltinInfo>(name, new BuiltinInfo(name, parameters, description));
+                var description = b.Element("Description").Value.Trim();
+                var examples = b.Element("Examples")?.Value?.Trim() ?? "";
+                return new KeyValuePair<string, BuiltinInfo>(name, new BuiltinInfo(name, parameters, description, examples));
             });
             return builtinList.ToDictionary(kv => kv.Key, kv => kv.Value);
         }

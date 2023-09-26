@@ -1,5 +1,9 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
+using Microsoft.VisualStudio.Text.Classification;
+using Microsoft.VisualStudio.Text.Tagging;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -12,6 +16,19 @@ using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.IntelliSense.Navigation;
+using Task = System.Threading.Tasks.Task;
+
+namespace Microsoft.VisualStudio.Text.Tagging
+{
+    public interface ITaggerMetadata : IContentTypeMetadata
+    {
+        IEnumerable<Type> TagTypes { get; }
+    }
+
+    public interface INamedTaggerMetadata : ITaggerMetadata, INamedContentTypeMetadata
+    {
+    }
+}
 
 namespace VSRAD.Syntax.IntelliSense
 {
@@ -26,12 +43,25 @@ namespace VSRAD.Syntax.IntelliSense
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly IIntelliSenseService _intelliSenseService;
+        private readonly IClassifierProvider _asmSyntaxClassifierProvider;
+        private readonly ITaggerProvider _asmSyntaxClassificationTaggerProvider;
+
+        private readonly Dictionary<IContentType, IDocument> _tempDocuments
+            = new Dictionary<IContentType, IDocument>();
 
         [ImportingConstructor]
-        public IntelliSenseDescriptionBuilder(IDocumentFactory documentFactory, IIntelliSenseService intelliSenseService)
+        public IntelliSenseDescriptionBuilder(
+            IDocumentFactory documentFactory,
+            IIntelliSenseService intelliSenseService,
+            [ImportMany] IEnumerable<Lazy<IClassifierProvider, INamedContentTypeMetadata>> classifierProviders,
+            [ImportMany] IEnumerable<Lazy<ITaggerProvider, INamedTaggerMetadata>> taggerProviders)
         {
             _documentFactory = documentFactory;
             _intelliSenseService = intelliSenseService;
+            _asmSyntaxClassifierProvider = classifierProviders
+                .First(p => p.Metadata.ContentTypes.Contains(Constants.RadeonAsmSyntaxContentType)).Value;
+            _asmSyntaxClassificationTaggerProvider = taggerProviders
+                .First(p => p.Metadata.ContentTypes.Contains(Constants.RadeonAsmSyntaxContentType) && p.Metadata.TagTypes.Contains(typeof(ClassificationTag))).Value;
         }
 
         public async Task<object> GetTokenDescriptionAsync(IntelliSenseToken token, CancellationToken cancellationToken)
@@ -45,7 +75,7 @@ namespace VSRAD.Syntax.IntelliSense
             var descriptionBuilder = new ClassifiedTextBuilder();
             if (token.BuiltinInfo is BuiltinInfo builtinInfo)
             {
-                AppendTokenBuiltinInfo(descriptionBuilder, builtinInfo);
+                await AppendTokenBuiltinInfoAsync(descriptionBuilder, token.Symbol, builtinInfo);
             }
             return descriptionBuilder.Build();
         }
@@ -133,18 +163,15 @@ namespace VSRAD.Syntax.IntelliSense
                         var typeName = token.Type.GetName();
                         builder.AddClassifiedText($"({typeName}) ");
                     }
-                    var textBeforeToken = token.LineText.Substring(0, token.LineTokenStart).TrimStart();
-                    var textAfterToken = token.LineText.Substring(token.LineTokenEnd).TrimEnd();
-                    builder
-                        .AddClassifiedText(textBeforeToken)
-                        .AddClassifiedText(token)
-                        .AddClassifiedText(textAfterToken)
-                        .SetAsElement();
+                    var definitionLine = token.SnapshotLine.Extent;
+                    foreach (var (span, classification) in GetColorizedSpans(definitionLine))
+                        builder.AddClassifiedText(span, classification);
+                    builder.SetAsElement();
                 }
             }
         }
 
-        private void AppendTokenBuiltinInfo(ClassifiedTextBuilder builder, BuiltinInfo builtinInfo)
+        private async Task AppendTokenBuiltinInfoAsync(ClassifiedTextBuilder builder, AnalysisToken symbol, BuiltinInfo builtinInfo)
         {
             var typeName = RadAsmTokenType.BuiltinFunction.GetName();
             builder
@@ -156,6 +183,60 @@ namespace VSRAD.Syntax.IntelliSense
                 .AddClassifiedText(builtinInfo.Description)
                 .SetAsElement();
 
+            if (!string.IsNullOrEmpty(builtinInfo.Examples))
+            {
+                builder
+                    .AddClassifiedText("").SetAsElement()
+                    .AddClassifiedText("Examples:", ClassifiedTextRunStyle.Bold).SetAsElement();
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                var exampleDocument = GetTempDocument(symbol.Snapshot.ContentType);
+                exampleDocument.CurrentSnapshot.TextBuffer.Replace(new Span(0, exampleDocument.CurrentSnapshot.Length), builtinInfo.Examples);
+                var exampleSpan = new SnapshotSpan(exampleDocument.CurrentSnapshot, 0, exampleDocument.CurrentSnapshot.Length);
+                await exampleDocument.DocumentAnalysis.GetAnalysisResultAsync(exampleDocument.CurrentSnapshot);
+                foreach (var (span, classification) in GetColorizedSpans(exampleSpan))
+                    builder.AddClassifiedText(span, classification);
+                builder.SetAsElement();
+            }
+        }
+
+        private List<(SnapshotSpan Span, string ClassificationTypeName)> GetColorizedSpans(SnapshotSpan snapshotSpan)
+        {
+            var colorizedSpans = new List<(SnapshotSpan Span, string ClassificationTypeName)>();
+            var defnitionTagger = _asmSyntaxClassificationTaggerProvider.CreateTagger<ClassificationTag>(snapshotSpan.Snapshot.TextBuffer);
+            var definitionTags = defnitionTagger.GetTags(new NormalizedSnapshotSpanCollection(snapshotSpan));
+            foreach (var t in definitionTags)
+                colorizedSpans.Add((t.Span, t.Tag.ClassificationType.Classification));
+
+            var definitionClassifier = _asmSyntaxClassifierProvider.GetClassifier(snapshotSpan.Snapshot.TextBuffer);
+            var definitionClassifications = definitionClassifier.GetClassificationSpans(snapshotSpan);
+            foreach (var c in definitionClassifications)
+                colorizedSpans.Add((c.Span, c.ClassificationType.Classification));
+
+            colorizedSpans.Sort((a, b) => a.Span.Start.CompareTo(b.Span.Start));
+            for (var i = 0; i <= colorizedSpans.Count; ++i)
+            {
+                int prevSpanEnd = i == 0 ? snapshotSpan.Start.Position : colorizedSpans[i - 1].Span.End.Position;
+                int nextSpanStart = i == colorizedSpans.Count ? snapshotSpan.End.Position : colorizedSpans[i].Span.Start.Position;
+                if (prevSpanEnd < nextSpanStart)
+                {
+                    var unclassifiedSpan = (new SnapshotSpan(snapshotSpan.Snapshot, prevSpanEnd, nextSpanStart - prevSpanEnd), RadAsmTokenType.Unknown.GetClassificationTypeName());
+                    colorizedSpans.Insert(i, unclassifiedSpan);
+                }
+            }
+
+            return colorizedSpans;
+        }
+
+        private IDocument GetTempDocument(IContentType contentType)
+        {
+            if (!_tempDocuments.TryGetValue(contentType, out var tempDocument))
+            {
+                var tempDocumentPath = Path.GetTempFileName();
+                tempDocument = _documentFactory.GetOrCreateDocument(tempDocumentPath, contentType);
+                _tempDocuments.Add(contentType, tempDocument);
+            }
+            return tempDocument;
         }
 
         private bool TryGetCommentDescription(IDocumentTokenizer documentTokenizer, SnapshotPoint tokenEnd, CancellationToken cancellationToken, out string message)
@@ -242,6 +323,12 @@ namespace VSRAD.Syntax.IntelliSense
             public ClassifiedTextBuilder AddClassifiedText(NavigationToken navigationToken)
             {
                 _classifiedTextRuns.AddLast(new ClassifiedTextRun(navigationToken.Type.GetClassificationTypeName(), navigationToken.GetText(), navigationToken.Navigate));
+                return this;
+            }
+
+            public ClassifiedTextBuilder AddClassifiedText(SnapshotSpan span, string classificationType)
+            {
+                _classifiedTextRuns.AddLast(new ClassifiedTextRun(classificationType, span.GetText()));
                 return this;
             }
 
