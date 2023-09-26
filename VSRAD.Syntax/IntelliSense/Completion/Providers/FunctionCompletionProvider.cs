@@ -35,10 +35,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 .AsParallel()
                 .WithCancellation(cancellationToken)
                 .Where(t => t.Type == Core.Tokens.RadAsmTokenType.FunctionName)
-                .Select(t => _intelliSenseService.CreateToken(t, document.Path))
-                .Select(t => new CompletionItem(t, FunctionIcon));
+                .Select(t => new CompletionItem(_intelliSenseService.GetIntelliSenseInfo(document, t), FunctionIcon))
+                .ToList();
 
-            return new RadCompletionContext(completionItems.ToList());
+            return new RadCompletionContext(completionItems);
         }
     }
 }

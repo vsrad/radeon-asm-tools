@@ -37,7 +37,7 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             if (!triggerPoint.HasValue) return;
 
             var intelliSenseToken = ThreadHelper.JoinableTaskFactory.Run(
-                () => _intelliSenseService.GetIntelliSenseTokenAsync(triggerPoint.Value));
+                () => _intelliSenseService.GetIntelliSenseInfoAsync(triggerPoint.Value));
             if (intelliSenseToken == null || intelliSenseToken.Definitions.Count == 0)
                 return;
 

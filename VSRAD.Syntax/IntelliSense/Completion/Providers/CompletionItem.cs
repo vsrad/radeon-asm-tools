@@ -1,9 +1,7 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text.Adornments;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.IntelliSense.Navigation;
 using VsComplectionItem = Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data.CompletionItem;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
@@ -16,48 +14,24 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
     internal class CompletionItem : ICompletionItem
     {
-        private readonly NavigationToken _token;
+        private readonly IntelliSenseInfo _info;
         private readonly ImageElement _imageElement;
 
-        public CompletionItem(NavigationToken navigationToken, ImageElement imageElement)
+        public CompletionItem(IntelliSenseInfo info, ImageElement imageElement)
         {
-            _token = navigationToken;
+            _info = info;
             _imageElement = imageElement;
         }
 
         public VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource)
         {
-            var completionItem = new VsComplectionItem(_token.GetText(), asyncCompletionSource, _imageElement);
+            var completionItem = new VsComplectionItem(_info.Symbol, asyncCompletionSource, _imageElement);
             completionItem.Properties.AddProperty(typeof(ICompletionItem), this);
             return completionItem;
         }
 
         public Task<object> GetDescriptionAsync(IIntelliSenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
-            descriptionBuilder.GetColorizedDescriptionAsync(new[] { _token }, cancellationToken);
-    }
-
-    internal class MultipleCompletionItem : ICompletionItem
-    {
-        private readonly string _name;
-        private readonly IReadOnlyList<NavigationToken> _tokens;
-        private readonly ImageElement _imageElement;
-
-        public MultipleCompletionItem(string name, IReadOnlyList<NavigationToken> tokens, ImageElement imageElement)
-        {
-            _name = name;
-            _tokens = tokens;
-            _imageElement = imageElement;
-        }
-
-        public VsComplectionItem CreateVsCompletionItem(IAsyncCompletionSource asyncCompletionSource)
-        {
-            var completionItem = new VsComplectionItem(_name, asyncCompletionSource, _imageElement);
-            completionItem.Properties.AddProperty(typeof(ICompletionItem), this);
-            return completionItem;
-        }
-
-        public Task<object> GetDescriptionAsync(IIntelliSenseDescriptionBuilder descriptionBuilder, CancellationToken cancellationToken) =>
-            descriptionBuilder.GetColorizedDescriptionAsync(_tokens, cancellationToken);
+            descriptionBuilder.GetDescriptionAsync(_info, cancellationToken);
     }
 
     public static class VsCompletionItemExtension

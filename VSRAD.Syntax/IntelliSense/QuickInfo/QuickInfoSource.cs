@@ -11,7 +11,7 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
         private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly ITextBuffer _textBuffer;
 
-        public QuickInfoSource(ITextBuffer textBuffer, 
+        public QuickInfoSource(ITextBuffer textBuffer,
             IIntelliSenseService intelliSenseService,
             IIntelliSenseDescriptionBuilder descriptionBuilder)
         {
@@ -26,15 +26,13 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var triggerPoint = session.GetTriggerPoint(snapshot);
             if (!triggerPoint.HasValue) return null;
 
-            var intelliSenseToken = await _intelliSenseService.GetIntelliSenseTokenAsync(triggerPoint.Value);
-            if (intelliSenseToken == null) return null;
+            var intelliSenseToken = await _intelliSenseService.GetIntelliSenseInfoAsync(triggerPoint.Value);
+            if (intelliSenseToken == null || !intelliSenseToken.SymbolSpan.HasValue) return null;
 
-            var dataElement = await _descriptionBuilder.GetTokenDescriptionAsync(intelliSenseToken, cancellationToken);
+            var dataElement = await _descriptionBuilder.GetDescriptionAsync(intelliSenseToken, cancellationToken);
             if (dataElement == null) return null;
 
-            var tokenSpan = intelliSenseToken.Symbol.Span;
-            var applicableSpan = snapshot.CreateTrackingSpan(tokenSpan, SpanTrackingMode.EdgeInclusive);
-
+            var applicableSpan = snapshot.CreateTrackingSpan(intelliSenseToken.SymbolSpan.Value, SpanTrackingMode.EdgeInclusive);
             return new QuickInfoItem(applicableSpan, dataElement);
         }
 

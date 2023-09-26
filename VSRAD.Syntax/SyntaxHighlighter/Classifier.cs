@@ -47,8 +47,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 var funcBlock = (FunctionBlock)block;
                 var funcToken = funcBlock.Name;
-                var funcClassificationSpan = new ClassificationSpan(funcToken.Span, _tokenClassification[funcToken.Type]);
-                classificationSpans.Add(funcClassificationSpan);
+                if (span.Contains(funcToken.Span))
+                    classificationSpans.Add(new ClassificationSpan(funcToken.Span, _tokenClassification[funcToken.Type]));
             }
 
             foreach (var scopeToken in block.Tokens)

@@ -57,6 +57,21 @@ namespace VSRAD.Syntax.Options
         private void OnChangeActivatedWindow(Window gotFocus, Window _) =>
             UpdateWindowContentType(gotFocus.Document);
 
+        public IContentType DetermineContentType(AsmType asmType)
+        {
+            switch (asmType)
+            {
+                case AsmType.RadAsm:
+                    return Asm1ContentType;
+                case AsmType.RadAsm2:
+                    return Asm2ContentType;
+                case AsmType.RadAsmDoc:
+                    return AsmDocContentType;
+                default:
+                    return null;
+            }
+        }
+
         public IContentType DetermineContentType(string path)
         {
             var fileExtension = Path.GetExtension(path);

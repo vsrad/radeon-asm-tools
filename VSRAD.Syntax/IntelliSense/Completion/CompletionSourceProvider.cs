@@ -23,6 +23,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         [ImportingConstructor]
         public CompletionSourceProvider(OptionsProvider optionsEventProvider,
+            IBuiltinInfoProvider builtinInfoProvider,
             IInstructionListManager instructionListManager,
             IIntelliSenseDescriptionBuilder descriptionBuilder,
             IDocumentFactory documentFactory, 
@@ -37,6 +38,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
                 new InstructionCompletionProvider(optionsEventProvider, instructionListManager),
                 new FunctionCompletionProvider(optionsEventProvider, intelliSenseService),
                 new ScopedCompletionProvider(optionsEventProvider, intelliSenseService),
+                new BuiltinCompletionProvider(optionsEventProvider, builtinInfoProvider)
             };
         }
 

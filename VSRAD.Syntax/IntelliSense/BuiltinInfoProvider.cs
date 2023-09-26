@@ -25,6 +25,7 @@ namespace VSRAD.Syntax.IntelliSense
 
     public interface IBuiltinInfoProvider
     {
+        IEnumerable<BuiltinInfo> GetBuiltins(AsmType asmType);
         bool TryGetBuilinInfo(AsmType asmType, string builtinName, out BuiltinInfo builtinInfo);
     }
 
@@ -32,6 +33,14 @@ namespace VSRAD.Syntax.IntelliSense
     public sealed class BuiltinInfoProvider : IBuiltinInfoProvider
     {
         private static readonly Dictionary<string, BuiltinInfo> BuiltinInfo = LoadBuiltinInfo();
+
+        public IEnumerable<BuiltinInfo> GetBuiltins(AsmType asmType)
+        {
+            if (asmType == AsmType.RadAsm2)
+                return BuiltinInfo.Values;
+
+            return Enumerable.Empty<BuiltinInfo>();
+        }
 
         public bool TryGetBuilinInfo(AsmType asmType, string builtinName, out BuiltinInfo builtinInfo)
         {

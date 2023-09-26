@@ -86,7 +86,7 @@ namespace VSRAD.Syntax.IntelliSense
         {
             var point = _textView.Caret.Position.BufferPosition;
 
-            var intelliSenseToken = ThreadHelper.JoinableTaskFactory.Run(() => _intelliSenseService.GetIntelliSenseTokenAsync(point));
+            var intelliSenseToken = ThreadHelper.JoinableTaskFactory.Run(() => _intelliSenseService.GetIntelliSenseInfoAsync(point));
             if (intelliSenseToken == null || intelliSenseToken.Definitions.Count == 0) return false;
 
             _intelliSenseService.NavigateOrOpenNavigationList(intelliSenseToken.Definitions);

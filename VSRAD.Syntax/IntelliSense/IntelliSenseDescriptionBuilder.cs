@@ -15,7 +15,9 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
+using VSRAD.Syntax.Options;
 using Task = System.Threading.Tasks.Task;
 
 namespace Microsoft.VisualStudio.Text.Tagging
@@ -34,7 +36,7 @@ namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntelliSenseDescriptionBuilder
     {
-        Task<object> GetTokenDescriptionAsync(IntelliSenseToken token, CancellationToken cancellationToken);
+        Task<object> GetDescriptionAsync(IntelliSenseInfo info, CancellationToken cancellationToken);
         Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> definitionTokens, CancellationToken cancellationToken);
     }
 
@@ -42,6 +44,7 @@ namespace VSRAD.Syntax.IntelliSense
     internal class IntelliSenseDescriptionBuilder : IIntelliSenseDescriptionBuilder
     {
         private readonly IDocumentFactory _documentFactory;
+        private readonly ContentTypeManager _contentTypeManager;
         private readonly IIntelliSenseService _intelliSenseService;
         private readonly IClassifierProvider _asmSyntaxClassifierProvider;
         private readonly ITaggerProvider _asmSyntaxClassificationTaggerProvider;
@@ -52,11 +55,13 @@ namespace VSRAD.Syntax.IntelliSense
         [ImportingConstructor]
         public IntelliSenseDescriptionBuilder(
             IDocumentFactory documentFactory,
+            ContentTypeManager contentTypeManager,
             IIntelliSenseService intelliSenseService,
             [ImportMany] IEnumerable<Lazy<IClassifierProvider, INamedContentTypeMetadata>> classifierProviders,
             [ImportMany] IEnumerable<Lazy<ITaggerProvider, INamedTaggerMetadata>> taggerProviders)
         {
             _documentFactory = documentFactory;
+            _contentTypeManager = contentTypeManager;
             _intelliSenseService = intelliSenseService;
             _asmSyntaxClassifierProvider = classifierProviders
                 .First(p => p.Metadata.ContentTypes.Contains(Constants.RadeonAsmSyntaxContentType)).Value;
@@ -64,18 +69,18 @@ namespace VSRAD.Syntax.IntelliSense
                 .First(p => p.Metadata.ContentTypes.Contains(Constants.RadeonAsmSyntaxContentType) && p.Metadata.TagTypes.Contains(typeof(ClassificationTag))).Value;
         }
 
-        public async Task<object> GetTokenDescriptionAsync(IntelliSenseToken token, CancellationToken cancellationToken)
+        public async Task<object> GetDescriptionAsync(IntelliSenseInfo info, CancellationToken cancellationToken)
         {
-            if (token == null)
-                throw new ArgumentNullException(nameof(token));
+            if (info == null)
+                throw new ArgumentNullException(nameof(info));
 
-            if (token.Definitions.Count != 0)
-                return await GetColorizedDescriptionAsync(token.Definitions, cancellationToken);
+            if (info.Definitions.Count != 0)
+                return await GetColorizedDescriptionAsync(info.Definitions, cancellationToken);
 
             var descriptionBuilder = new ClassifiedTextBuilder();
-            if (token.BuiltinInfo is BuiltinInfo builtinInfo)
+            if (info.BuiltinInfo is BuiltinInfo builtinInfo)
             {
-                await AppendTokenBuiltinInfoAsync(descriptionBuilder, token.Symbol, builtinInfo);
+                await AppendTokenBuiltinInfoAsync(descriptionBuilder, info.AsmType, builtinInfo);
             }
             return descriptionBuilder.Build();
         }
@@ -171,7 +176,7 @@ namespace VSRAD.Syntax.IntelliSense
             }
         }
 
-        private async Task AppendTokenBuiltinInfoAsync(ClassifiedTextBuilder builder, AnalysisToken symbol, BuiltinInfo builtinInfo)
+        private async Task AppendTokenBuiltinInfoAsync(ClassifiedTextBuilder builder, AsmType asmType, BuiltinInfo builtinInfo)
         {
             var typeName = RadAsmTokenType.BuiltinFunction.GetName();
             builder
@@ -190,7 +195,7 @@ namespace VSRAD.Syntax.IntelliSense
                     .AddClassifiedText("Examples:", ClassifiedTextRunStyle.Bold).SetAsElement();
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                var exampleDocument = GetTempDocument(symbol.Snapshot.ContentType);
+                var exampleDocument = GetTempDocument(_contentTypeManager.DetermineContentType(asmType));
                 exampleDocument.CurrentSnapshot.TextBuffer.Replace(new Span(0, exampleDocument.CurrentSnapshot.Length), builtinInfo.Examples);
                 var exampleSpan = new SnapshotSpan(exampleDocument.CurrentSnapshot, 0, exampleDocument.CurrentSnapshot.Length);
                 await exampleDocument.DocumentAnalysis.GetAnalysisResultAsync(exampleDocument.CurrentSnapshot);

@@ -130,6 +130,7 @@
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="IntelliSense\Completion\ItemManager.cs" />
     <Compile Include="IntelliSense\Completion\ItemManagerProvider.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\BuiltinCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\CompletionItem.cs" />
     <Compile Include="IntelliSense\Completion\Providers\RadCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\FunctionCompletionProvider.cs" />
@@ -151,7 +152,7 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListNode.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
-    <Compile Include="IntelliSense\IntelliSenseToken.cs" />
+    <Compile Include="IntelliSense\IntelliSenseInfo.cs" />
     <Compile Include="IntelliSense\BuiltinInfoProvider.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />

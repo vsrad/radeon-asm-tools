@@ -141,6 +141,15 @@ namespace VSRAD.Syntax.Options
             get => _optionsProvider.AutocompleteVariables;
             set => _optionsProvider.AutocompleteVariables = value;
         }
+
+        [Category("Autocompletion")]
+        [DisplayName("Builtin auto-completion")]
+        [Description("Autocomplete builtin functions")]
+        public bool AutocompleteBuiltins
+        {
+            get => _optionsProvider.AutocompleteBuiltins;
+            set => _optionsProvider.AutocompleteBuiltins = value;
+        }
         #endregion
 
         public override async Task LoadAsync()

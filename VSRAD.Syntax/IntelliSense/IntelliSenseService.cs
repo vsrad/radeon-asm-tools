@@ -18,7 +18,8 @@ namespace VSRAD.Syntax.IntelliSense
     {
         NavigationToken CreateToken(AnalysisToken analysisToken, string path);
         NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document);
-        Task<IntelliSenseToken> GetIntelliSenseTokenAsync(SnapshotPoint point);
+        Task<IntelliSenseInfo> GetIntelliSenseInfoAsync(SnapshotPoint point);
+        IntelliSenseInfo GetIntelliSenseInfo(IDocument document, AnalysisToken symbol);
         void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
     }
 
@@ -69,7 +70,7 @@ namespace VSRAD.Syntax.IntelliSense
                 }
             };
 
-        public async Task<IntelliSenseToken> GetIntelliSenseTokenAsync(SnapshotPoint point)
+        public async Task<IntelliSenseInfo> GetIntelliSenseInfoAsync(SnapshotPoint point)
         {
             var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
             if (document == null) return null;
@@ -78,21 +79,28 @@ namespace VSRAD.Syntax.IntelliSense
             var symbol = analysisResult.GetToken(point);
             if (symbol == null) return null;
 
+            return GetIntelliSenseInfo(document, symbol);
+        }
+
+        public IntelliSenseInfo GetIntelliSenseInfo(IDocument document, AnalysisToken symbol)
+        {
             if (symbol is DefinitionToken definition)
             {
-                return new IntelliSenseToken(symbol, new[] { CreateToken(definition, document) }, null);
+                var asmType = symbol.Snapshot.GetAsmType();
+                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { CreateToken(definition, document) }, null);
             }
             else if (symbol is ReferenceToken reference)
             {
+                var asmType = symbol.Snapshot.GetAsmType();
                 var definitionDocument = _documentFactory.GetOrCreateDocument(reference.Definition.Snapshot.TextBuffer);
-                return new IntelliSenseToken(symbol, new[] { CreateToken(reference.Definition, definitionDocument) }, null);
+                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { CreateToken(reference.Definition, definitionDocument) }, null);
             }
             else if (symbol.Type == RadAsmTokenType.BuiltinFunction)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
                 var builtinText = symbol.GetText().TrimPrefix("#");
                 if (_builtinInfoProvider.TryGetBuilinInfo(asmType, builtinText, out var builtinInfo))
-                    return new IntelliSenseToken(symbol, Array.Empty<NavigationToken>(), builtinInfo);
+                    return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, Array.Empty<NavigationToken>(), builtinInfo);
             }
             else if (symbol.Type == RadAsmTokenType.Instruction)
             {
@@ -101,9 +109,8 @@ namespace VSRAD.Syntax.IntelliSense
                 var instructionText = symbol.GetText().TrimPrefix("#");
                 var definitions = instructions.Where(i => i.Text == instructionText).SelectMany(i => i.Navigations).ToList();
                 if (definitions.Count != 0)
-                    return new IntelliSenseToken(symbol, definitions, null);
+                    return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, definitions, null);
             }
-
             return null;
         }
 
