@@ -37,7 +37,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
             var asmType = document.CurrentSnapshot.GetAsmType();
             var completionItems = _builtinInfoProvider.GetBuiltins(asmType)
-                .Select(b => new CompletionItem(new IntelliSenseInfo(asmType, b.Name, Core.Tokens.RadAsmTokenType.BuiltinFunction, null, Array.Empty<NavigationToken>(), b), FunctionIcon))
+                .Select(b => new RadCompletionItem(new IntelliSenseInfo(asmType, b.Name, Core.Tokens.RadAsmTokenType.BuiltinFunction, null, Array.Empty<NavigationToken>(), b), FunctionIcon))
                 .ToList();
             return Task.FromResult(new RadCompletionContext(completionItems));
         }

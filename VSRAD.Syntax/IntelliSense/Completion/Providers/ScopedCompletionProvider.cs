@@ -46,10 +46,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             return new RadCompletionContext(completions.ToList());
         }
 
-        private IEnumerable<CompletionItem> GetScopedCompletions(IDocument document, IAnalysisResult analysisResult, SnapshotPoint triggerPoint, CancellationToken cancellationToken)
+        private IEnumerable<RadCompletionItem> GetScopedCompletions(IDocument document, IAnalysisResult analysisResult, SnapshotPoint triggerPoint, CancellationToken cancellationToken)
         {
-            CompletionItem CreateCompletionItem(AnalysisToken analysisToken, ImageElement imageElement) =>
-                new CompletionItem(_intelliSenseService.GetIntelliSenseInfo(document, analysisToken), imageElement);
+            RadCompletionItem CreateCompletionItem(AnalysisToken analysisToken, ImageElement imageElement) =>
+                new RadCompletionItem(_intelliSenseService.GetIntelliSenseInfo(document, analysisToken), imageElement);
 
             var currentBlock = analysisResult.GetBlock(triggerPoint);
             while (currentBlock != null)

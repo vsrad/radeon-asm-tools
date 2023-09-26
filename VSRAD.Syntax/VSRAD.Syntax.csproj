@@ -131,7 +131,7 @@
     <Compile Include="IntelliSense\Completion\ItemManager.cs" />
     <Compile Include="IntelliSense\Completion\ItemManagerProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\BuiltinCompletionProvider.cs" />
-    <Compile Include="IntelliSense\Completion\Providers\CompletionItem.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\RadCompletionItem.cs" />
     <Compile Include="IntelliSense\Completion\Providers\RadCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\FunctionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\ScopedCompletionProvider.cs" />

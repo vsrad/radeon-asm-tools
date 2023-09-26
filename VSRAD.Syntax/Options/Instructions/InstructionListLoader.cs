@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.IntelliSense;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
@@ -24,20 +24,16 @@ namespace VSRAD.Syntax.Options.Instructions
     {
         private readonly OptionsProvider _optionsProvider;
         private readonly Lazy<IDocumentFactory> _documentFactory;
-        private readonly Lazy<IIntelliSenseService> _navigationTokenService;
         private readonly List<InstructionSet> _sets;
         private string _loadedPaths;
 
         public event InstructionsLoadDelegate InstructionsUpdated;
 
         [ImportingConstructor]
-        public InstructionListLoader(OptionsProvider optionsEventProvider,
-            Lazy<IDocumentFactory> documentFactory,
-            Lazy<IIntelliSenseService> navigationTokenService)
+        public InstructionListLoader(OptionsProvider optionsEventProvider, Lazy<IDocumentFactory> documentFactory)
         {
             _optionsProvider = optionsEventProvider;
             _documentFactory = documentFactory;
-            _navigationTokenService = navigationTokenService;
             _sets = new List<InstructionSet>();
 
             _optionsProvider.OptionsUpdated += OptionsUpdated;
@@ -132,10 +128,8 @@ namespace VSRAD.Syntax.Options.Instructions
             var instructions = analysisResult.Root.Tokens
                 .Where(t => t.Type == RadAsmTokenType.Instruction);
 
-            var navigationService = _navigationTokenService.Value;
-
             var navigationTokens = instructions
-                .Select(i => navigationService.CreateToken(i, document))
+                .Select(i => new NavigationToken(document, i))
                 .GroupBy(n => n.GetText());
 
             foreach (var instructionNameGroup in navigationTokens)

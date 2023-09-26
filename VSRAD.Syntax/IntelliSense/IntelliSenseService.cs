@@ -16,8 +16,6 @@ namespace VSRAD.Syntax.IntelliSense
 {
     public interface IIntelliSenseService
     {
-        NavigationToken CreateToken(AnalysisToken analysisToken, string path);
-        NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document);
         Task<IntelliSenseInfo> GetIntelliSenseInfoAsync(SnapshotPoint point);
         IntelliSenseInfo GetIntelliSenseInfo(IDocument document, AnalysisToken symbol);
         void NavigateOrOpenNavigationList(IReadOnlyList<NavigationToken> navigations);
@@ -41,35 +39,6 @@ namespace VSRAD.Syntax.IntelliSense
             _instructionListManager = instructionListManager;
         }
 
-        public NavigationToken CreateToken(AnalysisToken analysisToken, string path)
-        {
-            var document = _documentFactory.GetOrCreateDocument(analysisToken.Snapshot.TextBuffer);
-            return CreateToken(analysisToken, document);
-        }
-
-        public NavigationToken CreateToken(AnalysisToken analysisToken, IDocument document)
-        {
-            if (document == null) return NavigationToken.Empty;
-
-            var navigateAction = GetNavigateAction(analysisToken, document);
-            return new NavigationToken(analysisToken, document.Path, navigateAction);
-        }
-
-        private Action GetNavigateAction(AnalysisToken analysisToken, IDocument document) =>
-            () =>
-            {
-                try
-                {
-                    // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
-                    var navigatePosition = analysisToken.TrackingToken.GetEnd(document.CurrentSnapshot);
-                    document.NavigateToPosition(navigatePosition);
-                }
-                catch (Exception e)
-                {
-                    Error.ShowError(e, "Navigation service");
-                }
-            };
-
         public async Task<IntelliSenseInfo> GetIntelliSenseInfoAsync(SnapshotPoint point)
         {
             var document = _documentFactory.GetOrCreateDocument(point.Snapshot.TextBuffer);
@@ -87,13 +56,13 @@ namespace VSRAD.Syntax.IntelliSense
             if (symbol is DefinitionToken definition)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
-                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { CreateToken(definition, document) }, null);
+                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { new NavigationToken(document, definition) }, null);
             }
             else if (symbol is ReferenceToken reference)
             {
                 var asmType = symbol.Snapshot.GetAsmType();
                 var definitionDocument = _documentFactory.GetOrCreateDocument(reference.Definition.Snapshot.TextBuffer);
-                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { CreateToken(reference.Definition, definitionDocument) }, null);
+                return new IntelliSenseInfo(asmType, symbol.GetText(), symbol.Type, symbol.Span, new[] { new NavigationToken(definitionDocument, reference.Definition) }, null);
             }
             else if (symbol.Type == RadAsmTokenType.BuiltinFunction)
             {

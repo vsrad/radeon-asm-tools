@@ -37,7 +37,6 @@ namespace VSRAD.Syntax.IntelliSense
     public interface IIntelliSenseDescriptionBuilder
     {
         Task<object> GetDescriptionAsync(IntelliSenseInfo info, CancellationToken cancellationToken);
-        Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> definitionTokens, CancellationToken cancellationToken);
     }
 
     [Export(typeof(IIntelliSenseDescriptionBuilder))]
@@ -74,28 +73,21 @@ namespace VSRAD.Syntax.IntelliSense
             if (info == null)
                 throw new ArgumentNullException(nameof(info));
 
-            if (info.Definitions.Count != 0)
-                return await GetColorizedDescriptionAsync(info.Definitions, cancellationToken);
-
             var descriptionBuilder = new ClassifiedTextBuilder();
-            if (info.BuiltinInfo is BuiltinInfo builtinInfo)
+            if (info.Definitions.Count != 0)
+            {
+                await AppendTokenDefinitionDescriptionAsync(descriptionBuilder, info.Definitions[0], cancellationToken);
+                AppendTokenDefinitionList(descriptionBuilder, info.Definitions, cancellationToken);
+            }
+            else if (info.BuiltinInfo is BuiltinInfo builtinInfo)
             {
                 await AppendTokenBuiltinInfoAsync(descriptionBuilder, info.AsmType, builtinInfo);
             }
             return descriptionBuilder.Build();
         }
 
-        public async Task<object> GetColorizedDescriptionAsync(IReadOnlyCollection<NavigationToken> definitionTokens, CancellationToken cancellationToken)
-        {
-            var descriptionBuilder = new ClassifiedTextBuilder();
-            await AppendTokenDefinitionDescriptionAsync(descriptionBuilder, definitionTokens.First(), cancellationToken);
-            AppendTokenDefinitionList(descriptionBuilder, definitionTokens, cancellationToken);
-            return descriptionBuilder.Build();
-        }
-
         private async Task AppendTokenDefinitionDescriptionAsync(ClassifiedTextBuilder builder, NavigationToken definition, CancellationToken cancellationToken)
         {
-            if (definition == NavigationToken.Empty) return;
             cancellationToken.ThrowIfCancellationRequested();
 
             var typeName = definition.Type.GetName();
@@ -128,7 +120,7 @@ namespace VSRAD.Syntax.IntelliSense
                     for (var i = 0; i < functionBlock.Parameters.Count; i++)
                     {
                         builder.AddClassifiedText(" ")
-                            .AddClassifiedText(_intelliSenseService.CreateToken(functionBlock.Parameters[i], document));
+                            .AddClassifiedText(new NavigationToken(document, functionBlock.Parameters[i]));
                         if (i != functionBlock.Parameters.Count - 1)
                             builder.AddClassifiedText(",");
                     }

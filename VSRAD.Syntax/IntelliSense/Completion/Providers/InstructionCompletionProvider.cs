@@ -16,15 +16,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     {
         private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
         private bool _autocomplete;
-        private readonly List<CompletionItem> _asm1InstructionCompletions;
-        private readonly List<CompletionItem> _asm2InstructionCompletions;
+        private readonly List<RadCompletionItem> _asm1InstructionCompletions;
+        private readonly List<RadCompletionItem> _asm2InstructionCompletions;
 
         public InstructionCompletionProvider(OptionsProvider optionsProvider, IInstructionListManager instructionListManager)
             : base(optionsProvider)
         {
             _autocomplete = optionsProvider.AutocompleteInstructions;
-            _asm1InstructionCompletions = new List<CompletionItem>();
-            _asm2InstructionCompletions = new List<CompletionItem>();
+            _asm1InstructionCompletions = new List<RadCompletionItem>();
+            _asm2InstructionCompletions = new List<RadCompletionItem>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
             InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
@@ -76,7 +76,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             }
         }
 
-        private static IEnumerable<CompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
+        private static IEnumerable<RadCompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
             manager.GetSelectedSetInstructions(asmType)
               .GroupBy(i => i.Text)
               .Select(g =>
@@ -84,7 +84,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                   var instructionName = g.Key;
                   var definitions = g.SelectMany(i => i.Navigations).ToList();
                   var info = new IntelliSenseInfo(asmType, instructionName, Core.Tokens.RadAsmTokenType.Instruction, null, definitions, null);
-                  return new CompletionItem(info, Icon);
+                  return new RadCompletionItem(info, Icon);
               });
     }
 }
