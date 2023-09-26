@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
@@ -22,13 +23,14 @@ namespace VSRAD.Syntax.Core.Parser
         {
             var serviceProvider = ServiceProvider.GlobalProvider;
             var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
+            var builtinInfoProvider = serviceProvider.GetMefService<IBuiltinInfoProvider>();
             var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
 
-            return new Asm1Parser(documentFactory, instructionListManager);
+            return new Asm1Parser(documentFactory, builtinInfoProvider, instructionListManager);
         });
 
-        private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager, AsmType.RadAsm) { }
+        private Asm1Parser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager)
+            : base(documentFactory, builtinInfoProvider, instructionListManager, AsmType.RadAsm) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)

@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
@@ -22,13 +23,14 @@ namespace VSRAD.Syntax.Core.Parser
         {
             var serviceProvider = ServiceProvider.GlobalProvider;
             var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
+            var builtinInfoProvider = serviceProvider.GetMefService<IBuiltinInfoProvider>();
             var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
 
-            return new Asm2Parser(documentFactory, instructionListManager);
+            return new Asm2Parser(documentFactory, builtinInfoProvider, instructionListManager);
         });
 
-        private Asm2Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager, AsmType.RadAsm2) { }
+        private Asm2Parser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager)
+            : base(documentFactory, builtinInfoProvider, instructionListManager, AsmType.RadAsm2) { }
 
         public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
@@ -196,7 +198,7 @@ namespace VSRAD.Syntax.Core.Parser
                         var tokenText = token.GetText(version).TrimPrefix("#");
                         if (!TryAddInstruction(tokenText, token, currentBlock, version) &&
                             !TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation) &&
-                            !TryAddBuiltinFunctionReference(tokenText, token, currentBlock, version))
+                            !TryAddBuiltinReference(tokenText, token, currentBlock, version))
                         {
                             referenceCandidates.AddLast((tokenText, token, currentBlock));
                         }
@@ -248,108 +250,5 @@ namespace VSRAD.Syntax.Core.Parser
             SearchArguments = 2,
             SearchArgAttribute = 3,
         }
-
-        private bool TryAddBuiltinFunctionReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
-        {
-            if (_builtinFunctions.Contains(tokenText))
-            {
-                block.AddToken(new AnalysisToken(RadAsmTokenType.BuiltinFunction, token, version));
-                return true;
-            }
-
-            return false;
-        }
-
-        private static readonly HashSet<string> _builtinFunctions = new HashSet<string> {
-            "vmcnt",
-            "expcnt",
-            "lgkmcnt",
-            "hwreg",
-            "sendmsg",
-            "asic",
-            "type",
-            "len",
-            "lit",
-            "abs",
-            "abs_lo",
-            "abs_hi",
-            "neg",
-            "neg_lo",
-            "neg_hi",
-            "sel_lo",
-            "sel_hi",
-            "sel_hi_lo",
-            "sel_lo_hi",
-            "raw_bits",
-            "get_dword_offset",
-            "ones",
-            "zeros",
-            "zeroes",
-            "trap_present",
-            "user_sgpr_count",
-            "sgpr_count",
-            "vgpr_count",
-            "block_size",
-            "group_size",
-            "group_size3d",
-            "tidig_comp_cnt",
-            "tg_size_en",
-            "tgid_x_en",
-            "tgid_y_en",
-            "tgid_z_en",
-            "wave_cnt_en",
-            "scratch_en",
-            "oc_lds_en",
-            "z_export_en",
-            "stencil_test_export_en",
-            "stencil_op_export_en",
-            "mask_export_en",
-            "covmask_export_en",
-            "mrtz_export_format",
-            "kill_used",
-            "alloc_lds",
-            "wave_size",
-            "assigned",
-            "print",
-            "set_ps",
-            "set_vs",
-            "set_gs",
-            "set_es",
-            "set_hs",
-            "set_ls",
-            "set_cs",
-            "load_collision_waveid",
-            "load_intrawave_collision",
-            "assert",
-            "align",
-            "data",
-            "is_asic",
-            "label_diff",
-            "label_diff_eq",
-            "float",
-            "floor",
-            "map",
-            "foreach",
-            "zip",
-            "foldl",
-            "head",
-            "tail",
-            "take",
-            "drop",
-            "rotate",
-            "replicate",
-            "reverse",
-            "cons",
-            "concat",
-            "wgp_mode",
-            "get_wave_size",
-            "get_group_size_x",
-            "get_group_size_y",
-            "get_group_size_z",
-            "s_index",
-            "v_index",
-            "s_reg",
-            "v_reg",
-        };
     }
 }
