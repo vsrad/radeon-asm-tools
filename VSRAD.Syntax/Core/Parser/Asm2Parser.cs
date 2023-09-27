@@ -191,6 +191,7 @@ namespace VSRAD.Syntax.Core.Parser
                             var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, variableDefinition);
                             currentBlock.AddToken(variableDefinition);
+                            i += 1;
                         }
                     }
                     else if (token.Type == RadAsm2Lexer.IDENTIFIER || token.Type == RadAsm2Lexer.CLOSURE_IDENTIFIER)
