@@ -46,6 +46,7 @@ namespace VSRAD.Syntax.Core.Lexer
 
             { RadAsm2Lexer.REPEAT, RadAsmTokenType.Keyword },
             { RadAsm2Lexer.UNTIL, RadAsmTokenType.Keyword },
+            { RadAsm2Lexer.PRINT, RadAsmTokenType.Keyword },
 
             { RadAsm2Lexer.PP_INCLUDE, RadAsmTokenType.Preprocessor },
             { RadAsm2Lexer.PP_DEFINE, RadAsmTokenType.Preprocessor },

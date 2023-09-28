@@ -11,15 +11,15 @@ namespace VSRAD.Syntax.IntelliSense.Peek
     {
         private readonly ITextBuffer _textBuffer;
         private readonly IPeekResultFactory _peekResultFactory;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         public PeekableItemSource(ITextBuffer textBuffer, 
             IPeekResultFactory peekResultFactory, 
-            INavigationTokenService navigationService)
+            IIntelliSenseService intelliSenseService)
         {
             _textBuffer = textBuffer;
             _peekResultFactory = peekResultFactory;
-            _navigationTokenService = navigationService;
+            _intelliSenseService = intelliSenseService;
         }
 
         public void AugmentPeekSession(IPeekSession session, IList<IPeekableItem> peekableItems)
@@ -36,21 +36,20 @@ namespace VSRAD.Syntax.IntelliSense.Peek
             var triggerPoint = session.GetTriggerPoint(_textBuffer.CurrentSnapshot);
             if (!triggerPoint.HasValue) return;
 
-            var tokensResult = ThreadHelper.JoinableTaskFactory.Run(
-                () => _navigationTokenService.GetNavigationsAsync(triggerPoint.Value));
-
-            if (tokensResult == null || tokensResult.Values.Count == 0)
+            var intelliSenseToken = ThreadHelper.JoinableTaskFactory.Run(
+                () => _intelliSenseService.GetIntelliSenseInfoAsync(triggerPoint.Value));
+            if (intelliSenseToken == null || intelliSenseToken.Definitions.Count == 0)
                 return;
 
-            if (tokensResult.Values.Count == 1)
+            if (intelliSenseToken.Definitions.Count == 1)
             {
-                var peekableToken = tokensResult.Values[0];
+                var peekableToken = intelliSenseToken.Definitions[0];
                 var peekableItem = new PeekableItem(_peekResultFactory, peekableToken);
                 peekableItems.Add(peekableItem);
             }
             else
             {
-                NavigationList.UpdateNavigationList(tokensResult.Values);
+                NavigationList.UpdateNavigationList(intelliSenseToken.Definitions);
             }
         }
 

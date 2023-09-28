@@ -107,7 +107,6 @@
     <Compile Include="Core\Tokens\TokenSpan.cs" />
     <Compile Include="Core\Tokens\TokenType.cs" />
     <Compile Include="Core\Tokens\TrackingToken.cs" />
-    <Compile Include="Core\Tokens\VariableToken.cs" />
     <Compile Include="Editor\EditorFilter.cs" />
     <Compile Include="Editor\EditorFilterFactory.cs" />
     <Compile Include="FunctionList\Commands\AbstractFunctionListCommand.cs" />
@@ -131,16 +130,17 @@
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="IntelliSense\Completion\ItemManager.cs" />
     <Compile Include="IntelliSense\Completion\ItemManagerProvider.cs" />
-    <Compile Include="IntelliSense\Completion\Providers\CompletionItem.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\BuiltinCompletionProvider.cs" />
+    <Compile Include="IntelliSense\Completion\Providers\RadCompletionItem.cs" />
     <Compile Include="IntelliSense\Completion\Providers\RadCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\FunctionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\ScopedCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\Providers\InstructionCompletionProvider.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSource.cs" />
     <Compile Include="IntelliSense\Completion\CompletionSourceProvider.cs" />
-    <Compile Include="IntelliSense\IntellisenseController.cs" />
-    <Compile Include="IntelliSense\IntellisenseControllerProvider.cs" />
-    <Compile Include="IntelliSense\IntellisenseTokenDescription.cs" />
+    <Compile Include="IntelliSense\IntelliSenseController.cs" />
+    <Compile Include="IntelliSense\IntelliSenseControllerProvider.cs" />
+    <Compile Include="IntelliSense\IntelliSenseDescriptionBuilder.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbol.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSource.cs" />
     <Compile Include="IntelliSense\Navigation\NavigableSymbolSourceProvider.cs" />
@@ -152,7 +152,8 @@
     <Compile Include="IntelliSense\Navigation\NavigationList\NavigationListNode.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationList\TreeViewHelper.cs" />
     <Compile Include="IntelliSense\Navigation\NavigationToken.cs" />
-    <Compile Include="IntelliSense\Navigation\NavigationTokenServiceResult.cs" />
+    <Compile Include="IntelliSense\IntelliSenseInfo.cs" />
+    <Compile Include="IntelliSense\BuiltinInfoProvider.cs" />
     <Compile Include="Options\ContentTypeManager.cs" />
     <Compile Include="Options\FolderPathsEditor.cs" />
     <Compile Include="Options\BaseOptionPage.cs">
@@ -171,7 +172,7 @@
     <Compile Include="Options\GeneralOptionPage.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="IntelliSense\Navigation\NavigationTokenService.cs" />
+    <Compile Include="IntelliSense\IntelliSenseService.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItem.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSource.cs" />
     <Compile Include="IntelliSense\Peek\PeekableItemSourceProvider.cs" />
@@ -251,6 +252,7 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
@@ -310,6 +312,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="DefaultConfiguration\Asm2Builtins.xml" />
     <Content Include="RadeonAsmSyntaxColors.pkgdef">
       <IncludeInVSIX>true</IncludeInVSIX>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -47,8 +47,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             {
                 var funcBlock = (FunctionBlock)block;
                 var funcToken = funcBlock.Name;
-                var funcClassificationSpan = new ClassificationSpan(funcToken.Span, _tokenClassification[funcToken.Type]);
-                classificationSpans.Add(funcClassificationSpan);
+                if (span.Contains(funcToken.Span))
+                    classificationSpans.Add(new ClassificationSpan(funcToken.Span, _tokenClassification[funcToken.Type]));
             }
 
             foreach (var scopeToken in block.Tokens)
@@ -61,8 +61,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                     case RadAsmTokenType.LocalVariableReference:
                         continue;
                 }
-
-                classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
+                if (span.Contains(scopeToken.Span))
+                    classificationSpans.Add(new ClassificationSpan(scopeToken.Span, _tokenClassification[scopeToken.Type]));
             }
 
             return classificationSpans;
@@ -73,6 +73,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             _tokenClassification = new Dictionary<RadAsmTokenType, IClassificationType>()
             {
                 { RadAsmTokenType.Instruction, registryService.GetClassificationType(RadAsmTokenType.Instruction.GetClassificationTypeName()) },
+                { RadAsmTokenType.BuiltinFunction, registryService.GetClassificationType(RadAsmTokenType.BuiltinFunction.GetClassificationTypeName()) },
                 { RadAsmTokenType.FunctionName, registryService.GetClassificationType(RadAsmTokenType.FunctionName.GetClassificationTypeName()) },
                 { RadAsmTokenType.FunctionReference, registryService.GetClassificationType(RadAsmTokenType.FunctionReference.GetClassificationTypeName()) },
                 { RadAsmTokenType.FunctionParameter, registryService.GetClassificationType(RadAsmTokenType.FunctionParameter.GetClassificationTypeName()) },

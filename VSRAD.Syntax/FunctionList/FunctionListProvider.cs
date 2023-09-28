@@ -10,7 +10,7 @@ using System.Threading;
 using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
-using VSRAD.Syntax.IntelliSense;
+using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.FunctionList
 {
@@ -19,7 +19,6 @@ namespace VSRAD.Syntax.FunctionList
     [TextViewRole(PredefinedTextViewRoles.Document)]
     internal sealed class FunctionListProvider : IWpfTextViewCreationListener
     {
-        private readonly Lazy<INavigationTokenService> _navigationTokenService;
         private readonly IDocumentFactory _documentFactory;
         private readonly List<IDocument> _managedDocuments;
         private Tuple<IDocument, IAnalysisResult> _lastResult;
@@ -28,9 +27,8 @@ namespace VSRAD.Syntax.FunctionList
         private static FunctionListControl _functionListControl;
 
         [ImportingConstructor]
-        public FunctionListProvider(IDocumentFactory documentFactory, Lazy<INavigationTokenService> navigationTokenService)
+        public FunctionListProvider(IDocumentFactory documentFactory)
         {
-            _navigationTokenService = navigationTokenService;
             _documentFactory = documentFactory;
             _managedDocuments = new List<IDocument>();
 
@@ -176,8 +174,7 @@ namespace VSRAD.Syntax.FunctionList
             {
                 var tokens = analysisResult.Scopes.SelectMany(s => s.Tokens)
                     .Where(t => t.Type == RadAsmTokenType.Label || t.Type == RadAsmTokenType.FunctionName)
-                    .Select(t => _navigationTokenService.Value.CreateToken(t, document))
-                    .Select(t => new FunctionListItem(t))
+                    .Select(t => new FunctionListItem(new NavigationToken(document, t)))
                     .AsParallel()
                     .WithCancellation(cancellationToken)
                     .ToList();

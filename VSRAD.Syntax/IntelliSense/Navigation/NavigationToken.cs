@@ -1,41 +1,43 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
 using System.Text;
+using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
     public readonly struct NavigationToken : IEquatable<NavigationToken>
     {
-        public static NavigationToken Empty { get { return new NavigationToken(); } }
-
+        public IDocument Document { get; }
         public AnalysisToken AnalysisToken { get; }
-        public string Path { get; }
-        public int Line { get; }
-        public string LineText { get; }
-        public int LineTokenStart { get; }
-        public int LineTokenEnd { get; }
+        public ITextSnapshotLine SnapshotLine { get; }
+
+        public int Line => SnapshotLine.LineNumber;
+        public string LineText => SnapshotLine.GetText();
+        public string Path => Document.Path;
         public RadAsmTokenType Type => AnalysisToken.Type;
 
-        private readonly Action _navigate;
-
-        public NavigationToken(AnalysisToken analysisToken, string path, Action navigate)
+        public NavigationToken(IDocument document, AnalysisToken analysisToken)
         {
-            AnalysisToken = analysisToken;
-            _navigate = navigate;
-            Path = path;
-
-            var lineText = analysisToken
-                .Span.Start
-                .GetContainingLine();
-            Line = lineText.LineNumber;
-            LineText = lineText.GetText();
-            LineTokenStart = AnalysisToken.Span.Start - lineText.Start;
-            LineTokenEnd = AnalysisToken.Span.End - lineText.Start;
+            Document = document ?? throw new ArgumentNullException(nameof(document));
+            AnalysisToken = analysisToken ?? throw new ArgumentNullException(nameof(analysisToken));
+            SnapshotLine = analysisToken.Span.Start.GetContainingLine();
         }
 
-        public void Navigate() =>
-            _navigate?.Invoke();
+        public void Navigate()
+        {
+            try
+            {
+                // cannot use AnalysisToken.SpanStart because it's assigned to snapshot which may be outdated
+                var navigatePosition = AnalysisToken.TrackingToken.GetEnd(Document.CurrentSnapshot);
+                Document.NavigateToPosition(navigatePosition);
+            }
+            catch (Exception e)
+            {
+                Error.ShowError(e, "Navigation");
+            }
+        }
 
         public SnapshotPoint GetEnd() =>
             AnalysisToken.Span.End;
@@ -59,16 +61,14 @@ namespace VSRAD.Syntax.IntelliSense.Navigation
             return sb.ToString();
         }
 
-        public bool Equals(NavigationToken o) => AnalysisToken == o.AnalysisToken && Path == o.Path && Line == o.Line;
+        public bool Equals(NavigationToken o) => Document == o.Document && AnalysisToken == o.AnalysisToken;
 
-        public static bool operator ==(NavigationToken left, NavigationToken right) =>
-            left.Equals(right);
+        public static bool operator ==(NavigationToken left, NavigationToken right) => left.Equals(right);
 
-        public static bool operator !=(NavigationToken left, NavigationToken right) =>
-            !(left == right);
+        public static bool operator !=(NavigationToken left, NavigationToken right) => !(left == right);
 
         public override bool Equals(object obj) => obj is NavigationToken o && Equals(o);
 
-        public override int GetHashCode() => (AnalysisToken, Path, Line).GetHashCode();
+        public override int GetHashCode() => (Document, AnalysisToken).GetHashCode();
     }
 }

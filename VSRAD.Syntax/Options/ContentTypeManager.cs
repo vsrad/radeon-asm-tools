@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
@@ -22,7 +23,7 @@ namespace VSRAD.Syntax.Options
 
         private readonly IVsEditorAdaptersFactoryService _textEditorAdaptersFactoryService;
         private readonly IFileExtensionRegistryService _fileExtensionRegistryService;
-        private readonly DTE _dte;
+        private readonly DTE2 _dte;
         private IEnumerable<string> _asm1Extensions;
         private IEnumerable<string> _asm2Extensions;
         private readonly List<string> _asmDocExtensions;
@@ -36,9 +37,8 @@ namespace VSRAD.Syntax.Options
         {
             _textEditorAdaptersFactoryService = editorAdaptersFactoryService;
             _fileExtensionRegistryService = fileExtensionRegistryService;
-            _dte = (DTE)serviceProvider.GetService(typeof(DTE));
+            _dte = (DTE2)serviceProvider.GetService(typeof(DTE));
 
-            _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
             optionsEventProvider.OptionsUpdated += FileExtensionChanged;
             Asm1ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsmSyntaxContentType);
             Asm2ContentType = contentTypeRegistryService.GetContentType(Constants.RadeonAsm2SyntaxContentType);
@@ -48,8 +48,29 @@ namespace VSRAD.Syntax.Options
             _asmDocExtensions = new List<string>() { Constants.FileExtensionAsm1Doc, Constants.FileExtensionAsm2Doc };
         }
 
+        public async Task LoadAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+        }
+
         private void OnChangeActivatedWindow(Window gotFocus, Window _) =>
             UpdateWindowContentType(gotFocus.Document);
+
+        public IContentType DetermineContentType(AsmType asmType)
+        {
+            switch (asmType)
+            {
+                case AsmType.RadAsm:
+                    return Asm1ContentType;
+                case AsmType.RadAsm2:
+                    return Asm2ContentType;
+                case AsmType.RadAsmDoc:
+                    return AsmDocContentType;
+                default:
+                    return null;
+            }
+        }
 
         public IContentType DetermineContentType(string path)
         {

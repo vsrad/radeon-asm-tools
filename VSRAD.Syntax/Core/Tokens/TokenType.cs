@@ -26,6 +26,7 @@ namespace VSRAD.Syntax.Core.Tokens
         Keyword,
         Preprocessor,
         Unknown,
+        BuiltinFunction,
         FunctionName,
         FunctionReference,
         FunctionParameter,
@@ -58,6 +59,8 @@ namespace VSRAD.Syntax.Core.Tokens
                     return "function";
                 case RadAsmTokenType.Instruction:
                     return "instruction";
+                case RadAsmTokenType.BuiltinFunction:
+                    return "built-in function";
                 default:
                     return "unknown";
             }
@@ -95,6 +98,7 @@ namespace VSRAD.Syntax.Core.Tokens
             { RadAsmTokenType.LocalVariable, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.LocalVariableReference, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.Instruction, SyntaxHighlighter.PredefinedClassificationTypeNames.Instructions },
+            { RadAsmTokenType.BuiltinFunction, PredefinedClassificationTypeNames.Keyword }
         };
 
         public static string GetClassificationTypeName(this RadAsmTokenType tokenType) =>

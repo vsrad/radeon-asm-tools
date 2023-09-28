@@ -11,18 +11,17 @@ using VSRAD.Syntax.Core;
 using VSRAD.Syntax.Core.Tokens;
 using System;
 using VSRAD.Syntax.IntelliSense.Completion.Providers;
-using CompletionItem = Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data.CompletionItem;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
     internal class CompletionSource : IAsyncCompletionSource
     {
         private readonly IDocument _document;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly IReadOnlyList<RadCompletionProvider> _completionProviders;
 
         public CompletionSource(IDocument document,
-            IIntellisenseDescriptionBuilder descriptionBuilder,
+            IIntelliSenseDescriptionBuilder descriptionBuilder,
             IReadOnlyList<RadCompletionProvider> providers)
         {
             _document = document;
@@ -37,37 +36,20 @@ namespace VSRAD.Syntax.IntelliSense.Completion
 
         public async Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
         {
-            var completionContexts = await ComputeNonEmptyCompletionContextsAsync(triggerLocation, applicableToSpan, cancellationToken);
+            var completionContextTasks = _completionProviders.Select(p => p.GetContextAsync(_document, triggerLocation, applicableToSpan, cancellationToken));
+            var completionContexts = await Task.WhenAll(completionContextTasks).ConfigureAwait(false);
 
-            if (completionContexts.Length == 0)
-                return null;
-
-            var completionItems = new LinkedList<CompletionItem>();
+            var completionItemCount = completionContexts.Sum(c => c.Items.Count);
+            var completionItemBuilder = ImmutableArray.CreateBuilder<CompletionItem>(completionItemCount);
             foreach (var context in completionContexts)
-            {
                 foreach (var item in context.Items)
-                {
-                    var completionItem = item.CreateVsCompletionItem(this);
-                    completionItems.AddLast(completionItem);
-                }
-            }
+                    completionItemBuilder.Add(item.CreateVsCompletionItem(this));
 
-            return new CompletionContext(completionItems.ToImmutableArray());
+            return new CompletionContext(completionItemBuilder.MoveToImmutable());
         }
 
         public Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token) =>
-            item.GetDescriptionAsync(_descriptionBuilder, token);
-
-        private async Task<ImmutableArray<RadCompletionContext>> ComputeNonEmptyCompletionContextsAsync(SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
-        {
-            var completionContextTasks = new List<Task<RadCompletionContext>>();
-            foreach (var provider in _completionProviders)
-                completionContextTasks
-                    .Add(provider.GetContextAsync(_document, triggerLocation, applicableToSpan, cancellationToken));
-
-            var completionContexts = await Task.WhenAll(completionContextTasks).ConfigureAwait(false);
-            return completionContexts.Where(c => c.Items.Count > 0).ToImmutableArray();
-        }
+            _descriptionBuilder.GetDescriptionAsync(RadCompletionItem.GetFromVsCompletionItem(item).Info, token);
 
         private bool ShouldTriggerCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation)
         {

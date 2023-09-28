@@ -9,6 +9,7 @@ using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.Core.Parser
@@ -18,13 +19,15 @@ namespace VSRAD.Syntax.Core.Parser
         protected HashSet<string> OtherInstructions { get; private set; }
 
         private readonly IDocumentFactory _documentFactory;
+        private readonly IBuiltinInfoProvider _builtinInfoProvider;
         private readonly AsmType _asmType;
         private HashSet<string> _instructions;
 
-        protected AbstractCodeParser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager, AsmType asmType)
+        protected AbstractCodeParser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
+            _builtinInfoProvider = builtinInfoProvider;
             _instructions = new HashSet<string>();
             OtherInstructions = new HashSet<string>();
 
@@ -121,6 +124,17 @@ namespace VSRAD.Syntax.Core.Parser
             if (_instructions.Contains(tokenText))
             {
                 block.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
+                return true;
+            }
+
+            return false;
+        }
+
+        protected bool TryAddBuiltinReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
+        {
+            if (_builtinInfoProvider.TryGetBuilinInfo(_asmType, tokenText, out _))
+            {
+                block.AddToken(new AnalysisToken(RadAsmTokenType.BuiltinFunction, token, version));
                 return true;
             }
 

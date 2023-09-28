@@ -1,5 +1,8 @@
 ﻿using EnvDTE;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -9,6 +12,7 @@ using VSRAD.Syntax.Core.Parser;
 using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.Options;
 using VSRAD.Syntax.Options.Instructions;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Syntax.Core
 {
@@ -20,8 +24,7 @@ namespace VSRAD.Syntax.Core
         private readonly Dictionary<string, IDocument> _documents;
         private readonly Lazy<IInstructionListManager> _instructionManager;
         private readonly Lazy<IInvisibleTextDocumentFactory> _invisibleDocumentFactory;
-        private readonly DTE _dte;
-
+        private readonly DTE2 _dte;
 
         public event ActiveDocumentChangedEventHandler ActiveDocumentChanged;
         public event DocumentCreatedEventHandler DocumentCreated;
@@ -41,32 +44,35 @@ namespace VSRAD.Syntax.Core
             _serviceProvider = serviceProvider;
             _serviceProvider.TextDocumentFactoryService.TextDocumentDisposed += TextDocumentDisposed;
 
-            var dte = _serviceProvider.ServiceProvider.GetService(typeof(DTE)) as DTE;
-            dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
+            _dte = (DTE2)_serviceProvider.ServiceProvider.GetService(typeof(DTE));
+        }
 
-            _dte = dte;
+        public async Task LoadAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            _dte.Events.WindowEvents.WindowActivated += OnChangeActivatedWindow;
         }
 
         public string GetActiveDocumentPath() => _dte.ActiveDocument.FullName.ToUpperInvariant();
 
-        public IDocument GetOrCreateDocument(string path)
+        public IDocument GetOrCreateDocument(string path, IContentType contentType)
         {
             var fullPath = Path.GetFullPath(path);
 
             if (_documents.TryGetValue(fullPath, out var document))
                 return document;
 
-            return File.Exists(fullPath)
-                ? CreateDocument(fullPath)
-                : null;
-        }
-
-        private IDocument CreateDocument(string path)
-        {
-            var contentType = _contentTypeManager.DetermineContentType(path);
+            contentType = contentType ?? _contentTypeManager.DetermineContentType(path);
             if (contentType == null)
                 return null;
 
+            return File.Exists(fullPath)
+                ? CreateDocument(fullPath, contentType)
+                : null;
+        }
+
+        private IDocument CreateDocument(string path, IContentType contentType)
+        {
             var textDocument = CustomThreadHelper.RunOnMainThread(() =>
                 _invisibleDocumentFactory.Value.CreateAndLoadTextDocument(path, contentType));
 

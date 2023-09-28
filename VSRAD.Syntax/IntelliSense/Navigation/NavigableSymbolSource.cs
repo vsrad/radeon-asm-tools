@@ -2,27 +2,27 @@
 using Microsoft.VisualStudio.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Syntax.Core;
 
 namespace VSRAD.Syntax.IntelliSense.Navigation
 {
     internal class NavigableSymbolSource : INavigableSymbolSource
     {
-        private readonly INavigationTokenService _navigationService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
-        public NavigableSymbolSource(INavigationTokenService navigationService)
+        public NavigableSymbolSource(IIntelliSenseService intelliSenseService)
         {
-            _navigationService = navigationService;
+            _intelliSenseService = intelliSenseService;
         }
 
         public async Task<INavigableSymbol> GetNavigableSymbolAsync(SnapshotSpan triggerSpan, CancellationToken token)
         {
             var triggerPoint = triggerSpan.Start;
-            var tokensResult = await _navigationService.GetNavigationsAsync(triggerPoint);
-            if (tokensResult == null) return null;
+            var intelliSenseToken = await _intelliSenseService.GetIntelliSenseInfoAsync(triggerPoint);
+            if (intelliSenseToken == null || !intelliSenseToken.SymbolSpan.HasValue || intelliSenseToken.Definitions.Count == 0 )
+                return null;
 
-            return new NavigableSymbol(tokensResult.ApplicableToken.Span,
-                () => _navigationService.NavigateOrOpenNavigationList(tokensResult.Values));
+            return new NavigableSymbol(intelliSenseToken.SymbolSpan.Value,
+                () => _intelliSenseService.NavigateOrOpenNavigationList(intelliSenseToken.Definitions));
         }
 
         public void Dispose() { }
