@@ -44,7 +44,6 @@ namespace VSRAD.Syntax.IntelliSense
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly ContentTypeManager _contentTypeManager;
-        private readonly IIntelliSenseService _intelliSenseService;
         private readonly IClassifierProvider _asmSyntaxClassifierProvider;
         private readonly ITaggerProvider _asmSyntaxClassificationTaggerProvider;
 
@@ -55,13 +54,11 @@ namespace VSRAD.Syntax.IntelliSense
         public IntelliSenseDescriptionBuilder(
             IDocumentFactory documentFactory,
             ContentTypeManager contentTypeManager,
-            IIntelliSenseService intelliSenseService,
             [ImportMany] IEnumerable<Lazy<IClassifierProvider, INamedContentTypeMetadata>> classifierProviders,
             [ImportMany] IEnumerable<Lazy<ITaggerProvider, INamedTaggerMetadata>> taggerProviders)
         {
             _documentFactory = documentFactory;
             _contentTypeManager = contentTypeManager;
-            _intelliSenseService = intelliSenseService;
             _asmSyntaxClassifierProvider = classifierProviders
                 .First(p => p.Metadata.ContentTypes.Contains(Constants.RadeonAsmSyntaxContentType)).Value;
             _asmSyntaxClassificationTaggerProvider = taggerProviders
@@ -229,9 +226,11 @@ namespace VSRAD.Syntax.IntelliSense
         {
             if (!_tempDocuments.TryGetValue(contentType, out var tempDocument))
             {
+                // GetTempFileName creates a new file, which we can delete after opening a VS document
                 var tempDocumentPath = Path.GetTempFileName();
                 tempDocument = _documentFactory.GetOrCreateDocument(tempDocumentPath, contentType);
                 _tempDocuments.Add(contentType, tempDocument);
+                File.Delete(tempDocumentPath);
             }
             return tempDocument;
         }
