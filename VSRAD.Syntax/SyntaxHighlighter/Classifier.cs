@@ -16,7 +16,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
     internal class AnalysisClassifier : DocumentObserver, IClassifier
     {
         private Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
-        private IAnalysisResult _analysisResult;
+        private AnalysisResult _analysisResult;
         private readonly IDocumentAnalysis _documentAnalysis;
 
         public AnalysisClassifier(IDocument document, IClassificationTypeRegistryService typeRegistryService)
@@ -86,7 +86,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
+        private void AnalysisUpdated(AnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
         {
             _analysisResult = analysisResult;
 
@@ -104,7 +104,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
     {
         private static Dictionary<RadAsmTokenType, IClassificationType> _tokenClassification;
         private readonly IDocumentTokenizer _tokenizer;
-        private ITokenizerResult _currentResult;
+        private TokenizerResult _currentResult;
 
         public TokenizerClassifier(IDocument document, IStandardClassificationService standardClassificationService)
             : base(document)
@@ -163,7 +163,7 @@ namespace VSRAD.Syntax.SyntaxHighlighter
             };
         }
 
-        private void TokenizerUpdated(ITokenizerResult result, RescanReason rs, CancellationToken ct)
+        private void TokenizerUpdated(TokenizerResult result, RescanReason rs, CancellationToken ct)
         {
             var tokens = result.UpdatedTokens;
             if (!tokens.Any())

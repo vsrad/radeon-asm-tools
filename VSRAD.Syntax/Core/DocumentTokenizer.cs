@@ -18,7 +18,7 @@ namespace VSRAD.Syntax.Core
         private TokenizerCollection CurrentTokens;
         private CancellationTokenSource _cts;
 
-        public ITokenizerResult CurrentResult { get; private set; }
+        public TokenizerResult CurrentResult { get; private set; }
         public event TokenizerUpdatedEventHandler TokenizerUpdated;
 
         public ITextSnapshot CurrentSnapshot

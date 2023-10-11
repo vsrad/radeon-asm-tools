@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Guide
         private double _spaceSize;
         private double _offsetX;
         private double _offsetY;
-        private IAnalysisResult _currentResult;
+        private AnalysisResult _currentResult;
         private IList<Line> _currentAdornments;
         private bool _isEnabled;
         private int _tabSize;
@@ -81,7 +81,7 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
+        private void AnalysisUpdated(AnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
         {
             if (reason != RescanReason.ContentChanged) return;
 

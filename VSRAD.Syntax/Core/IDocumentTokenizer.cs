@@ -4,11 +4,11 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
-    public delegate void TokenizerUpdatedEventHandler(ITokenizerResult result, RescanReason rescanReason, CancellationToken cancellationToken);
+    public delegate void TokenizerUpdatedEventHandler(TokenizerResult result, RescanReason rescanReason, CancellationToken cancellationToken);
 
     public interface IDocumentTokenizer : IDisposable
     {
-        ITokenizerResult CurrentResult { get; }
+        TokenizerResult CurrentResult { get; }
         void Rescan(RescanReason rescanReason);
         RadAsmTokenType GetTokenType(int type);
 

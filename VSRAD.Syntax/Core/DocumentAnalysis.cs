@@ -17,7 +17,7 @@ namespace VSRAD.Syntax.Core
 
         private readonly object _updateResultLock = new object();
 
-        public IAnalysisResult CurrentResult { get; private set; }
+        public AnalysisResult CurrentResult { get; private set; }
         public event AnalysisUpdatedEventHandler AnalysisUpdated;
 
         public DocumentAnalysis(IDocument document, IDocumentTokenizer tokenizer, IParser parser)
@@ -30,7 +30,7 @@ namespace VSRAD.Syntax.Core
             TokenizerUpdated(_tokenizer.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
         }
 
-        public Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
+        public Task<AnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot)
         {
             if (textSnapshot == null)
                 throw new ArgumentNullException(nameof(textSnapshot));
@@ -47,7 +47,7 @@ namespace VSRAD.Syntax.Core
             throw new OperationCanceledException("Buffer changes have not yet been processed");
         }
 
-        private void TokenizerUpdated(ITokenizerResult tokenizerResult, RescanReason reason,
+        private void TokenizerUpdated(TokenizerResult tokenizerResult, RescanReason reason,
             CancellationToken cancellationToken)
         {
             var analysisResultTask = RunAnalysisAsync(tokenizerResult, reason, cancellationToken);
@@ -59,11 +59,11 @@ namespace VSRAD.Syntax.Core
             };
         }
 
-        private Task<IAnalysisResult> RunAnalysisAsync(ITokenizerResult tokenizerResult, RescanReason reason,
+        private Task<AnalysisResult> RunAnalysisAsync(TokenizerResult tokenizerResult, RescanReason reason,
             CancellationToken cancellationToken) =>
             Task.Run(() => RunParserAsync(tokenizerResult, reason, cancellationToken), cancellationToken);
 
-        private async Task<IAnalysisResult> RunParserAsync(ITokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
+        private async Task<AnalysisResult> RunParserAsync(TokenizerResult tokenizerResult, RescanReason reason, CancellationToken cancellationToken)
         {
             var parserResult = await _parser.RunAsync(_document, tokenizerResult.Snapshot, tokenizerResult.Tokens, cancellationToken);
             var analysisResult = new AnalysisResult(parserResult, tokenizerResult.Snapshot);
@@ -74,7 +74,7 @@ namespace VSRAD.Syntax.Core
             return analysisResult;
         }
 
-        private void SynchronousUpdate(IAnalysisResult analysisResult, RescanReason reason, 
+        private void SynchronousUpdate(AnalysisResult analysisResult, RescanReason reason,
             CancellationToken cancellationToken)
         {
             lock (_updateResultLock)
@@ -93,6 +93,6 @@ namespace VSRAD.Syntax.Core
     internal struct AnalysisRequest
     {
         public ITextSnapshot Snapshot;
-        public Task<IAnalysisResult> Request;
+        public Task<AnalysisResult> Request;
     }
 }

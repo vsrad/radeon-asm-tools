@@ -31,10 +31,10 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans) =>
             currentErrorTags ?? Enumerable.Empty<ITagSpan<IErrorTag>>();
 
-        private void UpdateErrorMarker(IAnalysisResult analysisResult, RescanReason rescanReason, CancellationToken ct) =>
+        private void UpdateErrorMarker(AnalysisResult analysisResult, RescanReason rescanReason, CancellationToken ct) =>
             Task.Run(() => UpdateSpanAdornments(analysisResult, ct));
 
-        private void UpdateSpanAdornments(IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void UpdateSpanAdornments(AnalysisResult analysisResult, CancellationToken cancellationToken)
         {
             if (analysisResult == null || cancellationToken.IsCancellationRequested) return;
 

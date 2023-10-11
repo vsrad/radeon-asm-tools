@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.Core.Parser
             InstructionsUpdated(instructionListManager, _asmType);
         }
 
-        public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
+        public abstract Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {

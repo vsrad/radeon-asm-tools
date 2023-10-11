@@ -6,7 +6,7 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
-    public class TokenizerResult : ITokenizerResult
+    public sealed class TokenizerResult
     {
         public ITextSnapshot Snapshot { get; }
         public ITokenizerCollection<TrackingToken> Tokens { get; }

@@ -7,20 +7,20 @@ using VSRAD.Syntax.Core.Tokens;
 
 namespace VSRAD.Syntax.Core
 {
-    internal class AnalysisResult : IAnalysisResult
+    public sealed class AnalysisResult
     {
-        public AnalysisResult(IParserResult parserResult, ITextSnapshot snapshot)
+        public IBlock Root { get; }
+        public IReadOnlyList<IBlock> Scopes { get; }
+        public IReadOnlyList<IErrorToken> Errors { get; }
+        public ITextSnapshot Snapshot { get; }
+
+        public AnalysisResult(ParserResult parserResult, ITextSnapshot snapshot)
         {
             Root = parserResult.RootBlock;
             Scopes = parserResult.Blocks;
             Errors = parserResult.Errors;
             Snapshot = snapshot;
         }
-
-        public IBlock Root { get; }
-        public IReadOnlyList<IBlock> Scopes { get; }
-        public IReadOnlyList<IErrorToken> Errors { get; }
-        public ITextSnapshot Snapshot { get; }
 
         public AnalysisToken GetToken(int point)
         {

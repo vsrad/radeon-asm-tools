@@ -32,7 +32,7 @@ namespace VSRAD.Syntax.Core.Parser
         private Asm2Parser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager)
             : base(documentFactory, builtinInfoProvider, instructionListManager, AsmType.RadAsm2) { }
 
-        public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
+        public override Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             try
@@ -47,7 +47,7 @@ namespace VSRAD.Syntax.Core.Parser
             }
         }
 
-        private async Task<IParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        private async Task<ParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsm2Lexer.WHITESPACE && t.Type != RadAsm2Lexer.LINE_COMMENT)

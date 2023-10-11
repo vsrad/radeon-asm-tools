@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void AnalysisUpdated(AnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
         {
             if (reason == RescanReason.ContentChanged)
                 ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes, cancellationToken));
