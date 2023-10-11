@@ -212,6 +212,16 @@ namespace VSRAD.Syntax.Core.Parser
                             i += 1;
                         }
                     }
+                    else if (token.Type == RadAsm2Lexer.PP_DEFINE)
+                    {
+                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm2Lexer.IDENTIFIER)
+                        {
+                            var macroDefinition = new DefinitionToken(RadAsmTokenType.PreprocessorMacro, tokens[i + 1], version);
+                            definitionContainer.Add(currentBlock, macroDefinition);
+                            currentBlock.AddToken(macroDefinition);
+                            i += 1;
+                        }
+                    }
                 }
                 else if (parserState == ParserState.SearchArguments)
                 {

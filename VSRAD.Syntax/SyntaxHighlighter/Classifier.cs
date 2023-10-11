@@ -81,6 +81,8 @@ namespace VSRAD.Syntax.SyntaxHighlighter
                 { RadAsmTokenType.Label, registryService.GetClassificationType(RadAsmTokenType.Label.GetClassificationTypeName()) },
                 { RadAsmTokenType.LabelReference, registryService.GetClassificationType(RadAsmTokenType.LabelReference.GetClassificationTypeName()) },
                 { RadAsmTokenType.Keyword, registryService.GetClassificationType(RadAsmTokenType.Keyword.GetClassificationTypeName()) },
+                { RadAsmTokenType.PreprocessorMacro, registryService.GetClassificationType(RadAsmTokenType.PreprocessorMacro.GetClassificationTypeName()) },
+                { RadAsmTokenType.PreprocessorMacroReference, registryService.GetClassificationType(RadAsmTokenType.PreprocessorMacroReference.GetClassificationTypeName()) },
             };
         }
 

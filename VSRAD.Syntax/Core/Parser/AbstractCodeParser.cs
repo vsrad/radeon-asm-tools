@@ -88,6 +88,9 @@ namespace VSRAD.Syntax.Core.Parser
                 RadAsmTokenType referenceType;
                 switch (definitionToken.Type)
                 {
+                    case RadAsmTokenType.PreprocessorMacro:
+                        referenceType = RadAsmTokenType.PreprocessorMacroReference;
+                        break;
                     case RadAsmTokenType.FunctionName:
                         referenceType = RadAsmTokenType.FunctionReference;
                         break;
