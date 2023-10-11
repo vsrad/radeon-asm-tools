@@ -151,7 +151,7 @@ namespace VSRAD.Syntax.FunctionList
             UpdateFunctionList(document, analysisResult, CancellationToken.None);
         }
 
-        private void UpdateFunctionList(AnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void UpdateFunctionList(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken)
         {
             if (reason != RescanReason.ContentChanged)
                 return;

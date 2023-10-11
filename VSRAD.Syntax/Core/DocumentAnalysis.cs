@@ -69,18 +69,17 @@ namespace VSRAD.Syntax.Core
             var analysisResult = new AnalysisResult(parserResult, tokenizerResult.Snapshot);
 
             cancellationToken.ThrowIfCancellationRequested();
-            SynchronousUpdate(analysisResult, reason, cancellationToken);
+            SynchronousUpdate(analysisResult, reason, tokenizerResult.UpdatedTokenSpan, cancellationToken);
             
             return analysisResult;
         }
 
-        private void SynchronousUpdate(AnalysisResult analysisResult, RescanReason reason,
-            CancellationToken cancellationToken)
+        private void SynchronousUpdate(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken)
         {
             lock (_updateResultLock)
             {
                 CurrentResult = analysisResult;
-                AnalysisUpdated?.Invoke(analysisResult, reason, cancellationToken);
+                AnalysisUpdated?.Invoke(analysisResult, reason, updatedTokenSpan, cancellationToken);
             }
         }
 

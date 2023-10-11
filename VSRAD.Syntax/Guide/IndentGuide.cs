@@ -81,7 +81,7 @@ namespace VSRAD.Syntax.Guide
             UpdateIndentGuides();
         }
 
-        private void AnalysisUpdated(AnalysisResult analysisResult, RescanReason reason, CancellationToken ct)
+        private void AnalysisUpdated(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken)
         {
             if (reason != RescanReason.ContentChanged) return;
 

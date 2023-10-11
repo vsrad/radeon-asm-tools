@@ -10,15 +10,26 @@ namespace VSRAD.Syntax.Core
     {
         public ITextSnapshot Snapshot { get; }
         public ITokenizerCollection<TrackingToken> Tokens { get; }
-        public IEnumerable<TrackingToken> UpdatedTokens { get; }
+        public IReadOnlyList<TrackingToken> UpdatedTokens { get; }
+        public Span UpdatedTokenSpan { get; }
 
         public TokenizerResult(ITextSnapshot snapshot,
             ITokenizerCollection<TrackingToken> tokens,
-            IEnumerable<TrackingToken> updatedTokens)
+            IReadOnlyList<TrackingToken> updatedTokens)
         {
             Snapshot = snapshot;
             Tokens = tokens;
             UpdatedTokens = updatedTokens;
+            if (updatedTokens.Count != 0)
+            {
+                var updatedTokenSpanStart = updatedTokens[0].GetStart(snapshot);
+                var updatedTokenSpanEnd = updatedTokens[updatedTokens.Count - 1].GetEnd(snapshot);
+                UpdatedTokenSpan = Span.FromBounds(updatedTokenSpanStart, updatedTokenSpanEnd);
+            }
+            else
+            {
+                UpdatedTokenSpan = new Span();
+            }
         }
 
         public TrackingToken GetToken(int point) =>

@@ -88,14 +88,14 @@ namespace VSRAD.Syntax.Core
 
         private void ApplyTextChange(ITextSnapshot before, ITextSnapshot after, ITextChange change)
         {
-            List<TrackingToken> forRemoval = GetInvalidated(before, change);
+            List<TrackingToken> forRemoval = CurrentTokens.GetInvalidated(before, change.OldSpan);
             // Some of the tokens marked for removal must be deleted before applying a new version,
             // because otherwise some trackingtokens will have broken spans
             int i = 0;
             for (; i < forRemoval.Count; i++)
                 CurrentTokens.Remove(forRemoval[i]);
             CurrentSnapshot = after;
-            IList<TrackingToken> updated = Rescan(forRemoval, before, change.Delta);
+            IReadOnlyList<TrackingToken> updated = Rescan(forRemoval, before, change.Delta);
             for (; i < forRemoval.Count; i++)
                 CurrentTokens.Remove(forRemoval[i]);
             foreach (var token in updated)
@@ -103,16 +103,13 @@ namespace VSRAD.Syntax.Core
             RaiseTokensChanged(updated, RescanReason.ContentChanged);
         }
 
-        private void RaiseTokensChanged(IList<TrackingToken> updated, RescanReason reason)
+        private void RaiseTokensChanged(IReadOnlyList<TrackingToken> updated, RescanReason reason)
         {
             CurrentResult = new TokenizerResult(CurrentSnapshot, tokens: CurrentTokens, updatedTokens: updated);
             TokenizerUpdated?.Invoke(CurrentResult, reason, _cts.Token);
         }
 
-        private List<TrackingToken> GetInvalidated(ITextSnapshot oldSnapshot, ITextChange change) =>
-            CurrentTokens.GetInvalidated(oldSnapshot, change.OldSpan);
-
-        private IList<TrackingToken> Rescan(List<TrackingToken> forRemoval, ITextSnapshot oldSnapshot, int delta)
+        private IReadOnlyList<TrackingToken> Rescan(List<TrackingToken> forRemoval, ITextSnapshot oldSnapshot, int delta)
         {
             var invalidatedSpan = InvalidatedSpan(forRemoval, oldSnapshot, delta);
             var invalidatedText = CurrentSnapshot.GetText(invalidatedSpan);
@@ -120,7 +117,7 @@ namespace VSRAD.Syntax.Core
             return RescanCore(forRemoval, invalidatedSpan, invalidatedText);
         }
 
-        private IList<TrackingToken> RescanCore(List<TrackingToken> forRemoval, Span invalidatedSpan, string invalidatedText)
+        private IReadOnlyList<TrackingToken> RescanCore(List<TrackingToken> forRemoval, Span invalidatedSpan, string invalidatedText)
         {
             var newlyCreated = new List<TrackingToken>();
             var removalCandidates = new List<TrackingToken>();

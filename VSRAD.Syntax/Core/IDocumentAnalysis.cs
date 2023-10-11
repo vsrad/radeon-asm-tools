@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace VSRAD.Syntax.Core
 {
-    public delegate void AnalysisUpdatedEventHandler(AnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken);
+    public delegate void AnalysisUpdatedEventHandler(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken);
 
     public interface IDocumentAnalysis : IDisposable
     {
