@@ -47,7 +47,7 @@ namespace VSRAD.Package.ToolWindows
         public override void OnToolWindowCreated()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = (EnvDTE.DTE)GetService(typeof(EnvDTE.DTE));
+            var dte = (EnvDTE80.DTE2)GetService(typeof(EnvDTE.DTE));
             _windowEvents = dte.Events.WindowEvents;
             _windowEvents.WindowActivated += OnDteWindowFocusChanged;
             Application.Current.Activated += (sender, e) => OnVsWindowFocusChanged(hasFocus: true);

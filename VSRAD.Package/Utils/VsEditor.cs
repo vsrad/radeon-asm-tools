@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
@@ -17,7 +18,7 @@ namespace VSRAD.Package.Utils
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
+            var dte = (DTE2)serviceProvider.GetService(typeof(DTE));
             Assumes.Present(dte);
 
             dte.ItemOperations.OpenFile(documentPath);
@@ -49,7 +50,11 @@ namespace VSRAD.Package.Utils
             return markers;
         }
 
+#if VS2019
         private static readonly Type _sVsWindowManagerType = Type.GetType("Microsoft.Internal.VisualStudio.Shell.Interop.SVsWindowManager, Microsoft.VisualStudio.Platform.WindowManagement");
+#else
+        private static readonly Type _sVsWindowManagerType = Type.GetType("Microsoft.Internal.VisualStudio.Shell.Interop.SVsWindowManager, Microsoft.VisualStudio.Interop");
+#endif
         private static readonly Type _viewManagerType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.ViewManager, Microsoft.VisualStudio.Shell.ViewManager");
         private static readonly Type _viewDockOperationsType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockOperations, Microsoft.VisualStudio.Shell.ViewManager");
 

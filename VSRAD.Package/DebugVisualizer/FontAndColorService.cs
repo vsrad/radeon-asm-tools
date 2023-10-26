@@ -190,9 +190,15 @@ namespace VSRAD.Package.DebugVisualizer
             return VSConstants.E_NOTIMPL;
         }
 
+#if VS2019
         int IVsFontAndColorEvents.OnFontChanged(ref Guid category, FontInfo[] _1, LOGFONTW[] _2, uint _3) => OnChange(ref category);
 
         int IVsFontAndColorEvents.OnItemChanged(ref Guid category, string _1, int _2, ColorableItemInfo[] _3, uint _4, uint _5) => OnChange(ref category);
+#else
+        int IVsFontAndColorEvents.OnFontChanged(ref Guid category, FontInfo[] pInfo, LOGFONTW[] pLOGFONT, IntPtr HFONT) => OnChange(ref category);
+
+        int IVsFontAndColorEvents.OnItemChanged(ref Guid category, string szItem, int iItem, ColorableItemInfo[] pInfo, uint crLiteralForeground, uint crLiteralBackground) => OnChange(ref category);
+#endif
 
         int IVsFontAndColorEvents.OnReset(ref Guid category) => OnChange(ref category);
 

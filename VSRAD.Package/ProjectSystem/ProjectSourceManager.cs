@@ -9,6 +9,7 @@ using System.IO;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
+using EnvDTE80;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -57,7 +58,7 @@ namespace VSRAD.Package.ProjectSystem
         public void SaveDocuments(DocumentSaveType type)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
+            var dte = (DTE2)_serviceProvider.GetService(typeof(DTE));
             Assumes.Present(dte);
             switch (type)
             {
