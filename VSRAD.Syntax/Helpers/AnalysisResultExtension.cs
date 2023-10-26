@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Helpers
             (FunctionBlock)blocks.FirstOrDefault(c => c.FInRange(point));
 
 
-        public static FunctionBlock TryGetFunctionBlock(this IAnalysisResult analysisResult, SnapshotPoint point)
+        public static FunctionBlock TryGetFunctionBlock(this AnalysisResult analysisResult, SnapshotPoint point)
         {
             if (point.Snapshot != analysisResult.Snapshot) return null;
             

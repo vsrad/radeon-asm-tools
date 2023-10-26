@@ -21,7 +21,7 @@ namespace VSRAD.Syntax.FunctionList
     {
         private readonly IDocumentFactory _documentFactory;
         private readonly List<IDocument> _managedDocuments;
-        private Tuple<IDocument, IAnalysisResult> _lastResult;
+        private Tuple<IDocument, AnalysisResult> _lastResult;
 
         private static FunctionListProvider _instance;
         private static FunctionListControl _functionListControl;
@@ -151,7 +151,7 @@ namespace VSRAD.Syntax.FunctionList
             UpdateFunctionList(document, analysisResult, CancellationToken.None);
         }
 
-        private void UpdateFunctionList(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void UpdateFunctionList(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken)
         {
             if (reason != RescanReason.ContentChanged)
                 return;
@@ -163,9 +163,9 @@ namespace VSRAD.Syntax.FunctionList
                 UpdateFunctionList(document, analysisResult, cancellationToken);
         }
 
-        private void UpdateFunctionList(IDocument document, IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void UpdateFunctionList(IDocument document, AnalysisResult analysisResult, CancellationToken cancellationToken)
         {
-            _lastResult = new Tuple<IDocument, IAnalysisResult>(document, analysisResult);
+            _lastResult = new Tuple<IDocument, AnalysisResult>(document, analysisResult);
 
             // if document analyzed before Function List view initialization
             if (_functionListControl == null) return;

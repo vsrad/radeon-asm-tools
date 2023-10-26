@@ -150,6 +150,15 @@ namespace VSRAD.Syntax.Options
             get => _optionsProvider.AutocompleteBuiltins;
             set => _optionsProvider.AutocompleteBuiltins = value;
         }
+
+        [Category("Autocompletion")]
+        [DisplayName("Macro auto-completion")]
+        [Description("Autocomplete preprocessor macros")]
+        public bool AutocompletePreprocessorMacros
+        {
+            get => _optionsProvider.AutocompletePreprocessorMacros;
+            set => _optionsProvider.AutocompletePreprocessorMacros = value;
+        }
         #endregion
 
         public override async Task LoadAsync()

@@ -35,7 +35,7 @@ namespace VSRAD.Syntax.Core.Parser
             InstructionsUpdated(instructionListManager, _asmType);
         }
 
-        public abstract Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
+        public abstract Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
 
         private void InstructionsUpdated(IInstructionListManager sender, AsmType asmType)
         {
@@ -88,6 +88,9 @@ namespace VSRAD.Syntax.Core.Parser
                 RadAsmTokenType referenceType;
                 switch (definitionToken.Type)
                 {
+                    case RadAsmTokenType.PreprocessorMacro:
+                        referenceType = RadAsmTokenType.PreprocessorMacroReference;
+                        break;
                     case RadAsmTokenType.FunctionName:
                         referenceType = RadAsmTokenType.FunctionReference;
                         break;

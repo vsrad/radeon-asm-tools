@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace VSRAD.Syntax.Core
 {
-    public delegate void AnalysisUpdatedEventHandler(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken);
+    public delegate void AnalysisUpdatedEventHandler(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken);
 
     public interface IDocumentAnalysis : IDisposable
     {
-        IAnalysisResult CurrentResult { get; }
-        Task<IAnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot);
+        AnalysisResult CurrentResult { get; }
+        Task<AnalysisResult> GetAnalysisResultAsync(ITextSnapshot textSnapshot);
 
         event AnalysisUpdatedEventHandler AnalysisUpdated;
     }

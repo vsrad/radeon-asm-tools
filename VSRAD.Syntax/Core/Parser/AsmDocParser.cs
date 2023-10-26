@@ -14,7 +14,7 @@ namespace VSRAD.Syntax.Core.Parser
     {
         public static IParser Instance = new AsmDocParser();
 
-        public Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        public Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();
             IBlock rootBlock = new Block(version);
@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.Core.Parser
             }
 
             var result = new ParserResult(blocks, new List<IErrorToken>());
-            return Task.FromResult((IParserResult)result);
+            return Task.FromResult(result);
         }
     }
 }
