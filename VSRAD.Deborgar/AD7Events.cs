@@ -55,7 +55,7 @@ namespace VSRAD.Deborgar
     // The debug engine (DE) sends this interface to the session debug manager (SDM) when an instance of the DE is created.
     public sealed class AD7EngineCreateEvent : AD7AsynchronousEvent, IDebugEngineCreateEvent2
     {
-        public static readonly Guid GUID = new Guid("FE5B734C-759D-4E59-AB04-F103343BDD06");
+        public static readonly Guid GUID = typeof(IDebugEngineCreateEvent2).GUID;
 
         private readonly IDebugEngine2 _engine;
 
@@ -73,12 +73,12 @@ namespace VSRAD.Deborgar
 
     public sealed class AD7ProgramCreateEvent : AD7AsynchronousEvent, IDebugProgramCreateEvent2
     {
-        public static readonly Guid GUID = new Guid("96CD11EE-ECD4-4E89-957E-B5D496FC4139");
+        public static readonly Guid GUID = typeof(IDebugProgramCreateEvent2).GUID;
     }
 
-    sealed class AD7ProgramDestroyEvent : AD7SynchronousEvent, IDebugProgramDestroyEvent2
+    public sealed class AD7ProgramDestroyEvent : AD7SynchronousEvent, IDebugProgramDestroyEvent2
     {
-        public static readonly Guid GUID = new Guid("E147E9E3-6440-4073-A7B7-A65592C714B5");
+        public static readonly Guid GUID = typeof(IDebugProgramDestroyEvent2).GUID;
 
         int IDebugProgramDestroyEvent2.GetExitCode(out uint exitCode)
         {
@@ -87,18 +87,34 @@ namespace VSRAD.Deborgar
         }
     }
 
-    public sealed class AD7LoadCompleteEvent : AD7SynchronousEvent, IDebugLoadCompleteEvent2
+    public sealed class AD7ThreadCreateEvent : AD7AsynchronousEvent, IDebugThreadCreateEvent2
     {
-        public static readonly Guid GUID = new Guid("B1844850-1349-45D4-9F12-495212F5EB0B");
+        public static readonly Guid GUID = typeof(IDebugThreadCreateEvent2).GUID;
     }
 
-    sealed class AD7StepCompleteEvent : AD7StoppingEvent, IDebugStepCompleteEvent2
+    public sealed class AD7ThreadDestroyEvent : AD7AsynchronousEvent, IDebugThreadDestroyEvent2
     {
-        public static readonly Guid GUID = new Guid("0F7F24C1-74D9-4EA6-A3EA-7EDB2D81441D");
+        public static readonly Guid GUID = typeof(IDebugThreadDestroyEvent2).GUID;
+
+        int IDebugThreadDestroyEvent2.GetExitCode(out uint exitCode)
+        {
+            exitCode = 0;
+            return VSConstants.S_OK;
+        }
     }
-          
-    sealed class AD7BreakCompleteEvent : AD7StoppingEvent, IDebugBreakEvent2
+
+    public sealed class AD7LoadCompleteEvent : AD7SynchronousEvent, IDebugLoadCompleteEvent2
     {
-        public static readonly Guid GUID = new Guid("c7405d1d-e24b-44e0-b707-d8a5a4e1641b");
+        public static readonly Guid GUID = typeof(IDebugLoadCompleteEvent2).GUID;
+    }
+
+    public sealed class AD7StepCompleteEvent : AD7StoppingEvent, IDebugStepCompleteEvent2
+    {
+        public static readonly Guid GUID = typeof(IDebugStepCompleteEvent2).GUID;
+    }
+
+    public sealed class AD7BreakCompleteEvent : AD7StoppingEvent, IDebugBreakEvent2
+    {
+        public static readonly Guid GUID = typeof(IDebugBreakEvent2).GUID;
     }
 }

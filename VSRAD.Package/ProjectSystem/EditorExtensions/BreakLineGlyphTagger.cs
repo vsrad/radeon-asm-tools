@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.Utils;
 
@@ -33,25 +34,35 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         // ExecutionCompleted event directly.
         internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
 
-        public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs execCompleted)
+        public virtual void OnExecutionCompleted(IProjectSourceManager sourceManager, ExecutionCompletedEventArgs execCompleted)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            try
+#pragma warning disable VSTHRD001 // Need to schedule execution after VS debugger adds its line markers 
+            ThreadHelper.Generic.BeginInvoke(() =>
+#pragma warning restore VSTHRD001
             {
-                VsEditor.NavigateToFileAndLine(ServiceProvider.GlobalProvider, execCompleted.File, execCompleted.Lines[0]);
-
-                // Clear VS debugger break markers because they may be stale (clicking Debug in our toolbar does not update them, for instance)
-                var vsDebuggerBreakLineMarkers = VsEditor.GetLineMarkersOfTypeInActiveView(ServiceProvider.GlobalProvider, 63);
-                foreach (var m in vsDebuggerBreakLineMarkers)
-                    m.Invalidate();
-
-                // Draw our own markers
-                DebugExecutionCompleted?.Invoke(this, execCompleted);
-            }
-            catch (Exception e)
-            {
-                Errors.ShowCritical($"An error occurred while showing the current breakpoint location: {e.Message}\r\n\r\n{e.StackTrace}");
-            }
+                ThreadHelper.ThrowIfNotOnUIThread();
+                try
+                {
+                    // Clear VS debugger break markers because:
+                    // 1) They shouldn't be shown when execution fails, but our debugger needs to report the current caret position as the break line, otherwise
+                    //    VS switches focus to a "Source Not Available" tab, however the break line marker shouldn't be displayed in the editor as no break occurred.
+                    // 2) The markers may be stale: clicking Debug in our toolbar does not update them, for instance.
+                    var sourcePaths = execCompleted.BreakInstances.Select(i => i.CallStack[0].SourcePath).Where(p => !string.IsNullOrEmpty(p)).Distinct();
+                    foreach (var path in sourcePaths)
+                    {
+                        var textBuffer = sourceManager.GetDocumentTextBufferByPath(path);
+                        var vsDebuggerBreakLineMarkers = VsEditor.GetTextLineMarkersOfType(textBuffer, 63);
+                        foreach (var m in vsDebuggerBreakLineMarkers)
+                            m.Invalidate();
+                    }
+                    // Draw our own markers instead
+                    DebugExecutionCompleted?.Invoke(this, execCompleted);
+                }
+                catch (Exception e)
+                {
+                    Errors.ShowCritical($"An error occurred while showing the current breakpoint location: {e.Message}\r\n\r\n{e.StackTrace}");
+                }
+            });
         }
 
         public void RemoveBreakLineMarkers()
@@ -94,20 +105,17 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             _tagSpans.Clear();
 
-            if (e != null && e.IsSuccessful && e.File == _document.FilePath)
+            if (e != null && e.IsSuccessful)
             {
-                var toolTip = "Last RAD debugger break " + (e.Lines.Length == 1
-                            ? $"line: {e.Lines[0]}"
-                            : "lines: " + string.Join(", ", e.Lines));
-
-                foreach (var line in e.Lines)
+                foreach (var instance in e.BreakInstances)
                 {
-                    if (line >= _buffer.CurrentSnapshot.LineCount)
-                        continue;
-
-                    var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)line);
-                    var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
-                    _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag(toolTip)));
+                    var topFrame = instance.CallStack[0];
+                    if (topFrame.SourcePath == _document.FilePath && topFrame.SourceLine < _buffer.CurrentSnapshot.LineCount)
+                    {
+                        var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)topFrame.SourceLine);
+                        var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
+                        _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag("")));
+                    }
                 }
             }
 

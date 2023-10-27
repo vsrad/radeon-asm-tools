@@ -73,7 +73,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             var sourceManager = new Mock<IProjectSourceManager>();
             var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
                 codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
-            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object);
+            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object, sourceManager.Object);
 
             /* Set up server responses */
 
@@ -105,8 +105,9 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             Assert.Empty(packageErrors);
             Assert.NotNull(execCompletedEvent);
-            Assert.Equal(@"C:\MEHVE\JATO.s", execCompletedEvent.File);
-            Assert.Equal(666u, execCompletedEvent.Lines[0]);
+            Assert.Single(execCompletedEvent.BreakInstances);
+            Assert.Equal(@"C:\MEHVE\JATO.s", execCompletedEvent.BreakInstances[0].CallStack[0].SourcePath);
+            Assert.Equal(666u, execCompletedEvent.BreakInstances[0].CallStack[0].SourceLine);
 
             sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
@@ -116,7 +117,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             Assert.Equal(64u, breakState.DispatchParameters.WaveSize);
             Assert.Equal(new[] { "a", "c", "tide", "tid", "lst", "lst[1]" }, breakState.Data.Watches.Keys);
 
-            breakLineTagger.Verify(t => t.OnExecutionCompleted(execCompletedEvent));
+            breakLineTagger.Verify(t => t.OnExecutionCompleted(sourceManager.Object, execCompletedEvent));
         }
     }
 }

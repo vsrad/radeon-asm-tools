@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
@@ -29,17 +30,19 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IActionLauncher _actionLauncher;
         private readonly IActiveCodeEditor _codeEditor;
         private readonly IBreakpointTracker _breakpointTracker;
+        private readonly IProjectSourceManager _sourceManager;
         private readonly BreakLineGlyphTaggerProvider _breakLineTagger;
 
         public bool DebugInProgress { get; private set; } = false;
 
         [ImportingConstructor]
-        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker)
+        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker, IProjectSourceManager sourceManager)
         {
             _project = project;
             _actionLauncher = actionLauncher;
             _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
+            _sourceManager = sourceManager;
 
             // Cannot import BreakLineGlyphTaggerProvider directly because there are
             // multiple IViewTaggerProvider exports and we don't want to instantiate each one
@@ -90,30 +93,31 @@ namespace VSRAD.Package.ProjectSystem
             ExecutionCompletedEventArgs args;
             if (transients != null && transients.BreakLines.TryGetResult(out var breakLines, out _))
             {
-                args = new ExecutionCompletedEventArgs(transients.ActiveSourceFullPath, breakLines, isStepping, isSuccessful: true);
+                var breakInstances = new List<BreakInstance>();
+                for (uint i = 0; i < breakLines.Length; ++i)
+                    breakInstances.Add(new BreakInstance(i, new[] { ("", transients.ActiveSourceFullPath, breakLines[i]) }));
+                args = new ExecutionCompletedEventArgs(breakInstances, isStepping, isSuccessful: true);
             }
             else
             {
                 // Error case: if we leave the source path empty, VS debugger will open a "Source Not Available/Frame not in module" tab.
                 // To avoid that, if the action execution failed and transients are not available, we attempt to pick the active file in the editor as the source.
-                string sourcePath;
+                BreakInstance dummyInstance;
                 try
                 {
-                    sourcePath = _codeEditor.GetAbsoluteSourcePath();
-                    breakLines = new[] { _codeEditor.GetCurrentLine() };
+                    dummyInstance = new BreakInstance(0, new[] { ("Error", _codeEditor.GetAbsoluteSourcePath(), _codeEditor.GetCurrentLine()) });
                 }
                 catch
                 {
                     // May throw an exception if no files are open in the editor
-                    sourcePath = "";
-                    breakLines = new[] { 0u }; // ExecutionCompletedEventArgs requires at least one break line
+                    dummyInstance = new BreakInstance(0, new[] { ("Error", "", 0u) });
                 }
-                args = new ExecutionCompletedEventArgs(sourcePath, breakLines, isStepping, isSuccessful: false);
+                args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
             }
             ExecutionCompleted?.Invoke(this, args);
-            _breakLineTagger.OnExecutionCompleted(args);
+            _breakLineTagger.OnExecutionCompleted(_sourceManager, args);
             if (runResult?.BreakState != null)
-                runResult.BreakState.BreakFile = args.File;
+                runResult.BreakState.BreakFile = transients.ActiveSourceFullPath;
             BreakEntered(this, runResult?.BreakState);
         }
 

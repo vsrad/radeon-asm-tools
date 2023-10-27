@@ -1,15 +1,15 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Shell.Interop;
-using Task = System.Threading.Tasks.Task;
-using EnvDTE80;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -27,6 +27,7 @@ namespace VSRAD.Package.ProjectSystem
         string ProjectRoot { get; }
         void SaveProjectState();
         void SaveDocuments(DocumentSaveType type);
+        IVsTextBuffer GetDocumentTextBufferByPath(string path);
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
     }
 
@@ -34,17 +35,27 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
-        private readonly IProject _project;
-        private readonly SVsServiceProvider _serviceProvider;
-
         public string ProjectRoot { get; }
+
+        private readonly IProject _project;
+
+        private DTE2 _dte;
+        private RunningDocumentTable _runningDocumentTable;
+        private IVsRunningDocumentTable _vsRunningDocumentTable;
 
         [ImportingConstructor]
         public ProjectSourceManager(IProject project, SVsServiceProvider serviceProvider)
         {
             _project = project;
-            _serviceProvider = serviceProvider;
             ProjectRoot = Path.GetDirectoryName(project.UnconfiguredProject.FullPath);
+
+            _project.RunWhenLoaded((_) =>
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                _dte = (DTE2)serviceProvider.GetService(typeof(DTE));
+                _runningDocumentTable = new RunningDocumentTable(serviceProvider);
+                _vsRunningDocumentTable = serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
+            });
         }
 
         public void SaveProjectState()
@@ -58,40 +69,46 @@ namespace VSRAD.Package.ProjectSystem
         public void SaveDocuments(DocumentSaveType type)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = (DTE2)_serviceProvider.GetService(typeof(DTE));
-            Assumes.Present(dte);
             switch (type)
             {
                 case DocumentSaveType.ActiveDocument:
-                    if (dte.ActiveDocument?.Saved == false)
-                        dte.ActiveDocument.Save();
+                    Assumes.Present(_dte);
+                    if (_dte.ActiveDocument?.Saved == false)
+                        _dte.ActiveDocument.Save();
                     break;
                 case DocumentSaveType.OpenDocuments:
-                    var documentTable = new RunningDocumentTable(_serviceProvider);
-                    var vsDocumentTable = _serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
-                    Assumes.Present(vsDocumentTable);
-
-                    foreach (var document in documentTable)
+                    Assumes.Present(_runningDocumentTable);
+                    Assumes.Present(_vsRunningDocumentTable);
+                    foreach (var document in _runningDocumentTable)
                         // save only files in the tabs
                         if ((document.Flags & (uint)(_VSRDTFLAGS.RDT_VirtualDocument | _VSRDTFLAGS.RDT_CantSave)) == 0)
-                            vsDocumentTable.SaveDocuments(
+                            _vsRunningDocumentTable.SaveDocuments(
                                     (uint)__VSRDTSAVEOPTIONS.RDTSAVEOPT_SaveIfDirty,
                                     document.Hierarchy,
                                     document.ItemId,
                                     document.DocCookie);
                     break;
                 case DocumentSaveType.ProjectDocuments:
-                    if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
+                    Assumes.Present(_dte);
+                    if (_dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
                         if (activeSolutionProjects.GetValue(0) is EnvDTE.Project activeProject)
                             foreach (ProjectItem item in activeProject.ProjectItems)
                                 SaveDocumentsRecursively(item);
                     break;
                 case DocumentSaveType.SolutionDocuments:
-                    foreach (EnvDTE.Project project in dte.Solution.Projects)
+                    Assumes.Present(_dte);
+                    foreach (EnvDTE.Project project in _dte.Solution.Projects)
                         foreach (ProjectItem item in project.ProjectItems)
                             SaveDocumentsRecursively(item);
                     break;
             }
+        }
+
+        public IVsTextBuffer GetDocumentTextBufferByPath(string path)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_runningDocumentTable);
+            return _runningDocumentTable.FindDocument(path) as IVsTextBuffer;
         }
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()

@@ -17,21 +17,12 @@ namespace VSRAD.Deborgar
         public static DebugEngineInitialization InitializationCallback;
         public static DebugEngineTermination TerminationCallback;
 
-        private Program _program;
-        private EngineCallbacks _callbacks;
+        private DebugProgram _program;
 
         public int Attach(IDebugProgram2[] programs, IDebugProgramNode2[] programNodes, uint celtPrograms, IDebugEventCallback2 ad7Callback, enum_ATTACH_REASON dwReason)
         {
-            var integration = InitializationCallback();
-
-            ErrorHandler.ThrowOnFailure(programs[0].GetProcess(out var process));
-            _program = programs[0] as Program;
-            _callbacks = new EngineCallbacks(this, _program, process, ad7Callback);
-
-            /* Since VS will add breakpoints right after OnAttach callback, we need to invoke Program.AttachDebugger first */
-            _program.AttachDebugger(integration, _callbacks);
-            _callbacks.OnAttach();
-
+            _program = programs[0] as DebugProgram;
+            _program.AttachDebugger(this, ad7Callback, InitializationCallback());
             return VSConstants.S_OK;
         }
 
@@ -41,11 +32,10 @@ namespace VSRAD.Deborgar
             {
                 case AD7ProgramDestroyEvent _:
                     _program = null;
-                    _callbacks = null;
                     TerminationCallback();
                     break;
                 case AD7LoadCompleteEvent _:
-                    _program.Continue(thread: null);
+                    _program.Execute(step: false);
                     break;
             }
             return VSConstants.S_OK;
@@ -54,7 +44,6 @@ namespace VSRAD.Deborgar
         int IDebugEngine2.DestroyProgram(IDebugProgram2 program)
         {
             ErrorHandler.ThrowOnFailure(program.Terminate());
-            _callbacks.OnProgramTerminated();
             return VSConstants.S_OK;
         }
 
