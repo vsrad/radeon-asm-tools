@@ -40,7 +40,7 @@ namespace VSRAD.Package.Options
 
         private uint _waveSize = 64;
         [DefaultValue(64)]
-        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, Math.Max(value, 1)); }
+        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, value == 32 ? 32u : 64u); }
 
         private bool _stopOnHit;
         [DefaultValue(false)]
