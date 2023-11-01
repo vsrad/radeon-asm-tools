@@ -28,21 +28,19 @@ namespace VSRAD.Package.ProjectSystem
 
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
-        private readonly IActiveCodeEditor _codeEditor;
         private readonly IBreakpointTracker _breakpointTracker;
-        private readonly IProjectSourceManager _sourceManager;
+        private readonly IProjectSourceManager _projectSourceManager;
         private readonly BreakLineGlyphTaggerProvider _breakLineTagger;
 
         public bool DebugInProgress { get; private set; } = false;
 
         [ImportingConstructor]
-        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker, IProjectSourceManager sourceManager)
+        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IBreakpointTracker breakpointTracker, IProjectSourceManager projectSourceManager)
         {
             _project = project;
             _actionLauncher = actionLauncher;
-            _codeEditor = codeEditor;
             _breakpointTracker = breakpointTracker;
-            _sourceManager = sourceManager;
+            _projectSourceManager = projectSourceManager;
 
             // Cannot import BreakLineGlyphTaggerProvider directly because there are
             // multiple IViewTaggerProvider exports and we don't want to instantiate each one
@@ -105,7 +103,10 @@ namespace VSRAD.Package.ProjectSystem
                 BreakInstance dummyInstance;
                 try
                 {
-                    dummyInstance = new BreakInstance(0, new[] { ("Error", _codeEditor.GetAbsoluteSourcePath(), _codeEditor.GetCurrentLine()) });
+                    var activeEditor = _projectSourceManager.GetActiveEditorView();
+                    var (path, caretLine, scrollWin) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line, activeEditor.GetVerticalScrollWindow());
+                    var line = (caretLine >= scrollWin.FirstVisibleLine && caretLine < scrollWin.FirstVisibleLine + scrollWin.VisibleLines) ? caretLine : scrollWin.FirstVisibleLine;
+                    dummyInstance = new BreakInstance(0, new[] { ("Error", path, line) });
                 }
                 catch
                 {
@@ -115,7 +116,7 @@ namespace VSRAD.Package.ProjectSystem
                 args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
             }
             ExecutionCompleted?.Invoke(this, args);
-            _breakLineTagger.OnExecutionCompleted(_sourceManager, args);
+            _breakLineTagger.OnExecutionCompleted(_projectSourceManager, args);
             if (runResult?.BreakState != null)
                 runResult.BreakState.BreakFile = transients.ActiveSourceFullPath;
             BreakEntered(this, runResult?.BreakState);

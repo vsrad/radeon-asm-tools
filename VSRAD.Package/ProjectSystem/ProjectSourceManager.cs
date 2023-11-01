@@ -4,12 +4,14 @@ using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -28,6 +30,7 @@ namespace VSRAD.Package.ProjectSystem
         void SaveProjectState();
         void SaveDocuments(DocumentSaveType type);
         IVsTextBuffer GetDocumentTextBufferByPath(string path);
+        IEditorView GetActiveEditorView();
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
     }
 
@@ -35,19 +38,24 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
+        public const string NoFilesOpenError = "No files open in the editor.";
+
         public string ProjectRoot { get; }
 
         private readonly IProject _project;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
         private DTE2 _dte;
         private RunningDocumentTable _runningDocumentTable;
         private IVsRunningDocumentTable _vsRunningDocumentTable;
+        private IVsTextManager2 _textManager;
 
         [ImportingConstructor]
-        public ProjectSourceManager(IProject project, SVsServiceProvider serviceProvider)
+        public ProjectSourceManager(IProject project, ITextDocumentFactoryService textDocumentFactoryService, SVsServiceProvider serviceProvider)
         {
-            _project = project;
             ProjectRoot = Path.GetDirectoryName(project.UnconfiguredProject.FullPath);
+            _project = project;
+            _textDocumentFactoryService = textDocumentFactoryService;
 
             _project.RunWhenLoaded((_) =>
             {
@@ -55,6 +63,7 @@ namespace VSRAD.Package.ProjectSystem
                 _dte = (DTE2)serviceProvider.GetService(typeof(DTE));
                 _runningDocumentTable = new RunningDocumentTable(serviceProvider);
                 _vsRunningDocumentTable = serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
+                _textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
             });
         }
 
@@ -109,6 +118,14 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
             Assumes.Present(_runningDocumentTable);
             return _runningDocumentTable.FindDocument(path) as IVsTextBuffer;
+        }
+
+        public IEditorView GetActiveEditorView()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_textManager);
+            _textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
+            return activeView != null ? new VsEditorView(activeView, _textDocumentFactoryService) : throw new InvalidOperationException(NoFilesOpenError);
         }
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()

@@ -12,13 +12,13 @@ namespace VSRAD.Package.Commands
     public sealed class AddToWatchesCommand : ICommandHandler
     {
         private readonly IToolWindowIntegration _toolIntegration;
-        private readonly IActiveCodeEditor _codeEditor;
+        private readonly IProjectSourceManager _projectSourceManager;
 
         [ImportingConstructor]
-        public AddToWatchesCommand(IToolWindowIntegration toolIntegration, IActiveCodeEditor codeEditor)
+        public AddToWatchesCommand(IToolWindowIntegration toolIntegration, IProjectSourceManager projectSourceManager)
         {
             _toolIntegration = toolIntegration;
-            _codeEditor = codeEditor;
+            _projectSourceManager = projectSourceManager;
         }
 
         public Guid CommandSet => Constants.AddToWatchesCommandSet;
@@ -44,7 +44,7 @@ namespace VSRAD.Package.Commands
 
         public void Execute(uint commandId, uint commandExecOpt, IntPtr variantIn, IntPtr variantOut)
         {
-            var watchName = _codeEditor.GetActiveWord(_toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
+            var watchName = _projectSourceManager.GetActiveEditorView().GetActiveWord(_toolIntegration.ProjectOptions.VisualizerOptions.MatchBracketsOnAddToWatches);
             if (string.IsNullOrEmpty(watchName))
                 return;
 

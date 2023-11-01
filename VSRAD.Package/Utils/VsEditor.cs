@@ -1,6 +1,4 @@
-﻿using EnvDTE;
-using EnvDTE80;
-using Microsoft;
+﻿using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -14,21 +12,6 @@ namespace VSRAD.Package.Utils
 {
     public static class VsEditor
     {
-        public static void NavigateToFileAndLine(IServiceProvider serviceProvider, string documentPath, uint line)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            var dte = (DTE2)serviceProvider.GetService(typeof(DTE));
-            Assumes.Present(dte);
-
-            dte.ItemOperations.OpenFile(documentPath);
-
-            var document = (TextDocument)dte.ActiveDocument.Object("TextDocument");
-            var editPoint = document.StartPoint.CreateEditPoint();
-            editPoint.MoveToLineAndOffset((int)line + 1, 1);
-            editPoint.TryToShow(vsPaneShowHow.vsPaneShowCentered);
-        }
-
         public static IEnumerable<IVsTextLineMarker> GetTextLineMarkersOfType(IVsTextBuffer textBuffer, int type)
         {
             ThreadHelper.ThrowIfNotOnUIThread();

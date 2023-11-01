@@ -16,6 +16,7 @@ using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
@@ -60,9 +61,11 @@ namespace VSRAD.PackageTests.ProjectSystem
             { Executable = "ohmu", Arguments = "-break-line $(RadBreakLines) -source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
             project.Options.Profile.Actions[0].Steps.Add(readDebugDataStep);
 
-            var codeEditor = new Mock<IActiveCodeEditor>();
-            codeEditor.Setup(e => e.GetAbsoluteSourcePath()).Returns(@"C:\MEHVE\JATO.s");
-            codeEditor.Setup(e => e.GetCurrentLine()).Returns(13);
+            var activeEditor = new Mock<IEditorView>();
+            activeEditor.Setup(e => e.GetFilePath()).Returns(@"C:\MEHVE\JATO.s");
+            activeEditor.Setup(e => e.GetCaretPos()).Returns((13, 0));
+            var sourceManager = new Mock<IProjectSourceManager>();
+            sourceManager.Setup(m => m.GetActiveEditorView()).Returns(activeEditor.Object);
             var breakpointTracker = new Mock<IBreakpointTracker>();
             breakpointTracker.Setup(t => t.GoToBreakTarget(@"C:\MEHVE\JATO.s", BreakTargetSelector.NextBreakpoint)).Returns(new[] { 666u });
 
@@ -70,10 +73,9 @@ namespace VSRAD.PackageTests.ProjectSystem
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
 
             var channel = new MockCommunicationChannel();
-            var sourceManager = new Mock<IProjectSourceManager>();
             var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
-                codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
-            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object, sourceManager.Object);
+                breakpointTracker.Object, serviceProvider.Object);
+            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, breakpointTracker.Object, sourceManager.Object);
 
             /* Set up server responses */
 

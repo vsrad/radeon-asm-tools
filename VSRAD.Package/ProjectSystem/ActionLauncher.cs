@@ -37,8 +37,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IProject _project;
         private readonly IActionLogger _actionLogger;
         private readonly ICommunicationChannel _channel;
-        private readonly IProjectSourceManager _projectSources;
-        private readonly IActiveCodeEditor _codeEditor;
+        private readonly IProjectSourceManager _projectSourceManager;
         private readonly IBreakpointTracker _breakpointTracker;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
@@ -50,8 +49,7 @@ namespace VSRAD.Package.ProjectSystem
             IProject project,
             IActionLogger actionLogger,
             ICommunicationChannel channel,
-            IProjectSourceManager projectSources,
-            IActiveCodeEditor codeEditor,
+            IProjectSourceManager projectSourceManager,
             IBreakpointTracker breakpointTracker,
             SVsServiceProvider serviceProvider)
         {
@@ -59,8 +57,7 @@ namespace VSRAD.Package.ProjectSystem
             _actionLogger = actionLogger;
             _channel = channel;
             _serviceProvider = serviceProvider;
-            _projectSources = projectSources;
-            _codeEditor = codeEditor;
+            _projectSourceManager = projectSourceManager;
             _breakpointTracker = breakpointTracker;
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
@@ -88,8 +85,8 @@ namespace VSRAD.Package.ProjectSystem
                     $"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile."));
 
-            var activeFile = _codeEditor.GetAbsoluteSourcePath();
-            var activeFileLine = _codeEditor.GetCurrentLine();
+            var activeEditor = _projectSourceManager.GetActiveEditorView();
+            var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
             var breakLines = _breakpointTracker.GoToBreakTarget(activeFile, debugBreakTarget);
             var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, breakLines, watches);
@@ -116,7 +113,7 @@ namespace VSRAD.Package.ProjectSystem
                     return new ActionExecution(evalError);
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                _projectSources.SaveProjectState();
+                _projectSourceManager.SaveProjectState();
 
                 var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
