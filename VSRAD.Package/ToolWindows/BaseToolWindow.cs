@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -31,6 +33,12 @@ namespace VSRAD.Package.ToolWindows
         }
 
         protected abstract UIElement CreateToolControl(IToolWindowIntegration integration);
+
+        public void BringToFront()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            ErrorHandler.ThrowOnFailure(((IVsWindowFrame)Frame).Show());
+        }
 
         public void OnProjectLoaded(IToolWindowIntegration integration)
         {

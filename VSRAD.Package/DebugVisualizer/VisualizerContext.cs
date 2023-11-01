@@ -78,10 +78,13 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void EnterBreak(object sender, BreakState breakState)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             BreakState = breakState;
             if (breakState != null)
             {
                 GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
+                VSPackage.VisualizerToolWindow?.BringToFront();
             }
             else
             {
