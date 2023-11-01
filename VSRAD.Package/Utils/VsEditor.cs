@@ -73,9 +73,15 @@ namespace VSRAD.Package.Utils
                 ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, Guid.Empty, out _, out _, out _, out var newDocumentFrame));
 
                 if (line is uint caretLine)
-                    ErrorHandler.ThrowOnFailure(VsShellUtilities.GetTextView(newDocumentFrame).SetCaretPos((int)caretLine, 0));
+                {
+                    var textView = VsShellUtilities.GetTextView(newDocumentFrame);
+                    ErrorHandler.ThrowOnFailure(textView.SetCaretPos((int)caretLine, 0));
+                    ErrorHandler.ThrowOnFailure(textView.CenterLines((int)caretLine, 1));
+                }
                 else if (!string.IsNullOrEmpty(lineMarker))
+                {
                     SetCaretAtLineMarker(newDocumentFrame, lineMarker);
+                }
 
                 if (forceOppositeTab && originalDocumentFrame != null && originalDocumentFrame != newDocumentFrame)
                     MoveToOppositeTab(newDocumentFrame, originalDocumentFrame, preserveActiveDoc);
