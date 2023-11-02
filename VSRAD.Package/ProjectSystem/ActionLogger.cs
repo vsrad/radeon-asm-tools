@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
 using System.ComponentModel.Composition;
+using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
 using VSRAD.Package.Server;
@@ -53,7 +54,7 @@ namespace VSRAD.Package.ProjectSystem
         {
             var logIndent = new string('=', 2 * depth);
 
-            log.AppendFormat("{0}=> Fetched initial timestamps in {1}ms\r\n", logIndent, run.InitTimestampFetchMillis);
+            log.AppendFormat(CultureInfo.InvariantCulture, "{0}==> [OK {1}ms] Fetch initial timestamps\r\n", logIndent, run.InitTimestampFetchMillis);
 
             var prevStepsSucceeded = true;
             for (int i = 0; i < run.Steps.Count; ++i)
@@ -62,11 +63,11 @@ namespace VSRAD.Package.ProjectSystem
                 if (prevStepsSucceeded || run.ContinueOnError)
                 {
                     var result = run.StepResults[i];
-                    log.AppendFormat("{0}=> [{1}] {2} {3} in {4}ms\r\n", logIndent, i, step, result.Successful ? "SUCCEEDED" : "FAILED", run.StepRunMillis[i]);
+                    log.AppendFormat(CultureInfo.InvariantCulture, "{0}==> [{1} {2}ms] #{3} {4}\r\n", logIndent, result.Successful ? "OK" : "FAIL", run.StepRunMillis[i], i + 1, step);
                     if (!string.IsNullOrEmpty(result.Log))
                         log.Append(result.Log);
                     if (!string.IsNullOrEmpty(result.Warning))
-                        warnings.AppendFormat("* {0}\r\n", result.Warning);
+                        warnings.AppendFormat(CultureInfo.InvariantCulture, "* {0}\r\n", result.Warning);
                     prevStepsSucceeded = result.Successful;
 
                     if (run.StepResults[i].SubAction != null)
@@ -74,7 +75,7 @@ namespace VSRAD.Package.ProjectSystem
                 }
                 else
                 {
-                    log.AppendFormat("{0}=> [{1}] {2} SKIPPED\r\n", logIndent, i, step);
+                    log.AppendFormat(CultureInfo.InvariantCulture, "{0}==> [SKIP] #{1} {2}\r\n", logIndent, i + 1, step);
                 }
             }
 
