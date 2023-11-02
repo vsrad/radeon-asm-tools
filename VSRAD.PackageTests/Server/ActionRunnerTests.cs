@@ -456,7 +456,7 @@ namespace VSRAD.PackageTests.Server
 
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal(@"Output file does not match the expected size.
+            Assert.Equal(@"Debug data is invalid. Output file does not match the expected size.
 
 Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 7 DWORDs per lane, the output file is expected to be 114688 DWORDs long, but the actual size is 16384 DWORDs.",
 result.StepResults[0].Warning);
@@ -530,7 +530,7 @@ result.StepResults[0].Warning);
 
             var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file ({outputFileName}) was not modified. Data may be stale.", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is stale. Output file ({outputFileName}) was not modified by the debug action.", result.StepResults[0].Warning);
 
             /* Access denied */
 
@@ -541,21 +541,21 @@ result.StepResults[0].Warning);
             ((ReadDebugDataStep)steps[0]).OutputFile.CheckTimestamp = false;
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. Access to path {outputFileName} on the local machine is denied", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is missing. Output file could not be opened. Access to path {outputFileName} on the local machine is denied", result.StepResults[0].Warning);
 
             /* File not found */
 
             File.Delete(outputFile);
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. File {outputFileName} is not found on the local machine", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is missing. Output file could not be opened. File {outputFileName} is not found on the local machine", result.StepResults[0].Warning);
 
             /* Invalid path */
 
             ((ReadDebugDataStep)steps[0]).OutputFile.Path += "<>";
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{outputFileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is missing. Output file could not be opened. Local path contains illegal characters: \"{outputFileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
 
             /* Wrong output file size */
 
@@ -565,7 +565,7 @@ result.StepResults[0].Warning);
             File.WriteAllBytes(outputFile, new byte[1024]);
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal(@"Output file does not match the expected size.
+            Assert.Equal(@"Debug data is invalid. Output file does not match the expected size.
 
 Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 7 DWORDs per lane, the output file is expected to be 114688 DWORDs long, but the actual size is 256 DWORDs.",
 result.StepResults[0].Warning);

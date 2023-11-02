@@ -67,7 +67,7 @@ While the actual contents are:
                 var dispatchLaneCount = dispatchParams.GridSizeX * dispatchParams.GridSizeY * dispatchParams.GridSizeZ;
                 var expectedDwordCount = dispatchLaneCount * dwordsPerLane;
                 if (outputFile.DwordCount != expectedDwordCount)
-                    return new Error($"Output file does not match the expected size.\r\n\r\n" +
+                    return new Error($"Debug data is invalid. Output file does not match the expected size.\r\n\r\n" +
                         $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
                         $"or {dispatchLaneCount} lanes in total. With {dwordsPerLane} DWORDs per lane, the output file is expected to be {expectedDwordCount} DWORDs long, " +
                         $"but the actual size is {outputFile.DwordCount} DWORDs.");

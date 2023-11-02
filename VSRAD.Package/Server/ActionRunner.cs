@@ -217,9 +217,9 @@ namespace VSRAD.Package.Server
                     var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
 
                     if (response.Status == FetchStatus.FileNotFound)
-                        return new StepResult(false, $"Output file ({path}) could not be found.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is missing. Output file ({path}) could not be found.", "", breakState: null);
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file ({path}) was not modified by the debug action.", "", breakState: null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
@@ -230,11 +230,11 @@ namespace VSRAD.Package.Server
                     var fullPath = new[] { _environment.LocalWorkDir, path };
                     var timestamp = GetLocalFileTimestamp(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file ({path}) was not modified by the debug action.", "", breakState: null);
 
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
                     if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
-                        return new StepResult(false, "Output file could not be opened. " + readError, "", breakState: null);
+                        return new StepResult(false, "Debug data is missing. Output file could not be opened. " + readError, "", breakState: null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
