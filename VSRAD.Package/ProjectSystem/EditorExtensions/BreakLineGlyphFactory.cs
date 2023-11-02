@@ -36,8 +36,8 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
         public UIElement GenerateGlyph(IWpfTextViewLine line, IGlyphTag tag)
         {
-            if (tag is BreakLineGlyphTag breakLine)
-                return new Image { Source = Glyph, Width = 11, Height = 11, Margin = new Thickness(1, 2.5, 0, 0), ToolTip = breakLine.ToolTip };
+            if (tag is BreakLineGlyphTag _)
+                return new Image { Source = Glyph, Width = 11, Height = 11, Margin = new Thickness(1, 2.5, 0, 0) };
             return null;
         }
     }

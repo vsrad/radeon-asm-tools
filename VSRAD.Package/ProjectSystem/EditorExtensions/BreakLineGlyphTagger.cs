@@ -15,12 +15,6 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 {
     public sealed class BreakLineGlyphTag : IGlyphTag
     {
-        public string ToolTip { get; }
-
-        public BreakLineGlyphTag(string toolTip)
-        {
-            ToolTip = toolTip;
-        }
     }
 
     [Export(typeof(IViewTaggerProvider))]
@@ -32,10 +26,17 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         // Tagger provider can be instantiated before UnconfiguredProject,
         // so we can't use ImportingConstructor to access DebuggerIntegration's
         // ExecutionCompleted event directly.
-        internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
+        internal event EventHandler<EventArgs> BreakpointsHitChanged;
+
+        // Need to store the breakpoints from the last execution because new taggers may be created at any time and we want them to display the latest breakpoint markers.
+        internal List<BreakInstance> LastExecutionBreakpointsHit { get; } = new List<BreakInstance>();
 
         public virtual void OnExecutionCompleted(IProjectSourceManager sourceManager, ExecutionCompletedEventArgs execCompleted)
         {
+            LastExecutionBreakpointsHit.Clear();
+            if (execCompleted.IsSuccessful)
+                LastExecutionBreakpointsHit.AddRange(execCompleted.BreakInstances);
+
 #pragma warning disable VSTHRD001 // Need to schedule execution after VS debugger adds its line markers 
             ThreadHelper.Generic.BeginInvoke(() =>
 #pragma warning restore VSTHRD001
@@ -51,12 +52,15 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
                     foreach (var path in sourcePaths)
                     {
                         var textBuffer = sourceManager.GetDocumentTextBufferByPath(path);
-                        var vsDebuggerBreakLineMarkers = VsEditor.GetTextLineMarkersOfType(textBuffer, 63);
-                        foreach (var m in vsDebuggerBreakLineMarkers)
-                            m.Invalidate();
+                        if (textBuffer != null)
+                        {
+                            var vsDebuggerBreakLineMarkers = VsEditor.GetTextLineMarkersOfType(textBuffer, 63);
+                            foreach (var m in vsDebuggerBreakLineMarkers)
+                                m.Invalidate();
+                        }
                     }
                     // Draw our own markers instead
-                    DebugExecutionCompleted?.Invoke(this, execCompleted);
+                    BreakpointsHitChanged?.Invoke(this, new EventArgs());
                 }
                 catch (Exception e)
                 {
@@ -69,7 +73,8 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             try
             {
-                DebugExecutionCompleted?.Invoke(this, null);
+                LastExecutionBreakpointsHit.Clear();
+                BreakpointsHitChanged?.Invoke(this, new EventArgs());
             }
             catch (Exception e)
             {
@@ -91,6 +96,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
         private readonly ITextBuffer _buffer;
         private readonly ITextDocument _document;
+        private readonly BreakLineGlyphTaggerProvider _provider;
 
         private readonly List<TagSpan<BreakLineGlyphTag>> _tagSpans = new List<TagSpan<BreakLineGlyphTag>>();
 
@@ -98,24 +104,23 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             _buffer = buffer;
             _document = document;
-            provider.DebugExecutionCompleted += DebugExecutionCompleted;
+            _provider = provider;
+            _provider.BreakpointsHitChanged += BreakpointsHitChanged;
+            BreakpointsHitChanged(_provider, new EventArgs());
         }
 
-        private void DebugExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
+        private void BreakpointsHitChanged(object sender, EventArgs e)
         {
             _tagSpans.Clear();
 
-            if (e != null && e.IsSuccessful)
+            foreach (var breakpoint in _provider.LastExecutionBreakpointsHit)
             {
-                foreach (var instance in e.BreakInstances)
+                var topFrame = breakpoint.CallStack[0];
+                if (string.Equals(topFrame.SourcePath, _document.FilePath, StringComparison.OrdinalIgnoreCase) && topFrame.SourceLine < _buffer.CurrentSnapshot.LineCount)
                 {
-                    var topFrame = instance.CallStack[0];
-                    if (topFrame.SourcePath == _document.FilePath && topFrame.SourceLine < _buffer.CurrentSnapshot.LineCount)
-                    {
-                        var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)topFrame.SourceLine);
-                        var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
-                        _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag("")));
-                    }
+                    var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)topFrame.SourceLine);
+                    var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
+                    _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag()));
                 }
             }
 
