@@ -1,15 +1,19 @@
-﻿using Microsoft.VisualStudio.ProjectSystem;
+﻿using EnvDTE80;
+using Microsoft;
+using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Text;
-using System.Threading.Tasks;
 using VSRAD.Package.Server;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
 {
     public interface IActionLogger
     {
-        Task<Error?> LogActionWithWarningsAsync(ActionRunResult runResult);
+        Task LogActionRunAsync(ActionRunResult runResult);
     }
 
     [Export(typeof(IActionLogger))]
@@ -19,14 +23,23 @@ namespace VSRAD.Package.ProjectSystem
         private readonly IOutputWindowWriter _outputWriter;
         private readonly IErrorListManager _errorList;
 
+        private DTE2 _dte;
+
         [ImportingConstructor]
-        public ActionLogger(IOutputWindowManager outputWindow, IErrorListManager errorList)
+        public ActionLogger(IProject project, SVsServiceProvider serviceProvider, IOutputWindowManager outputWindow, IErrorListManager errorList)
         {
             _outputWriter = outputWindow.GetExecutionResultPane();
             _errorList = errorList;
+
+            project.RunWhenLoaded((options) =>
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                _dte = serviceProvider.GetService(typeof(SDTE)) as DTE2;
+                Assumes.Present(_dte);
+            });
         }
 
-        public async Task<Error?> LogActionWithWarningsAsync(ActionRunResult runResult)
+        public async Task LogActionRunAsync(ActionRunResult runResult)
         {
             await _outputWriter.ClearAsync();
 
@@ -41,13 +54,21 @@ namespace VSRAD.Package.ProjectSystem
             await _outputWriter.PrintMessageAsync(title, logString);
 
             var errorListOutput = runResult.GetStepOutputs();
-            await _errorList.AddToErrorListAsync(errorListOutput);
+            var errors = await _errorList.AddToErrorListAsync(errorListOutput);
 
-            if (warnings.Length == 0)
-                return null;
-            if (!actionSucceeded)
-                return new Error(message: warnings.ToString(), critical: true, title: "RAD Action Execution Failed");
-            return new Error(message: warnings.ToString(), critical: false, title: "RAD Action Execution Warnings");
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            if (errors.ErrorCount != 0)
+                _dte.ToolWindows.ErrorList.Parent.Activate();
+            else if (!actionSucceeded)
+                _dte.ToolWindows.OutputWindow.Parent.Activate();
+
+            if (warnings.Length != 0)
+            {
+                if (actionSucceeded)
+                    Errors.ShowWarning(warnings.ToString(), title: runResult.ActionName + " Warning");
+                else
+                    Errors.ShowCritical(warnings.ToString(), title: runResult.ActionName + " Error");
+            }
         }
 
         private bool LogAction(StringBuilder log, StringBuilder warnings, ActionRunResult run, int depth = 0)
@@ -67,7 +88,7 @@ namespace VSRAD.Package.ProjectSystem
                     if (!string.IsNullOrEmpty(result.Log))
                         log.Append(result.Log);
                     if (!string.IsNullOrEmpty(result.Warning))
-                        warnings.AppendFormat(CultureInfo.InvariantCulture, "* {0}\r\n", result.Warning);
+                        warnings.AppendFormat(CultureInfo.InvariantCulture, warnings.Length == 0 ? "{0}" : "\r\n\r\n{0}", result.Warning);
                     prevStepsSucceeded = result.Successful;
 
                     if (run.StepResults[i].SubAction != null)

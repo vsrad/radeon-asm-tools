@@ -45,6 +45,14 @@ namespace VSRAD.Package.Utils
                 Assumes.Present(vsUIShellOpenDocument);
                 ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, Guid.Empty, out _, out _, out _, out var newDocumentFrame));
 
+                if (forceOppositeTab && originalDocumentFrame != null && originalDocumentFrame != newDocumentFrame)
+                    MoveToOppositeTab(newDocumentFrame, originalDocumentFrame, preserveActiveDoc);
+
+                if (preserveActiveDoc)
+                    ErrorHandler.ThrowOnFailure(newDocumentFrame.ShowNoActivate());
+                else
+                    ErrorHandler.ThrowOnFailure(newDocumentFrame.Show());
+
                 if (line is uint caretLine)
                 {
                     var textView = VsShellUtilities.GetTextView(newDocumentFrame);
@@ -55,14 +63,6 @@ namespace VSRAD.Package.Utils
                 {
                     SetCaretAtLineMarker(newDocumentFrame, lineMarker);
                 }
-
-                if (forceOppositeTab && originalDocumentFrame != null && originalDocumentFrame != newDocumentFrame)
-                    MoveToOppositeTab(newDocumentFrame, originalDocumentFrame, preserveActiveDoc);
-
-                if (preserveActiveDoc)
-                    ErrorHandler.ThrowOnFailure(newDocumentFrame.ShowNoActivate());
-                else
-                    ErrorHandler.ThrowOnFailure(newDocumentFrame.Show());
             }
             catch (Exception e)
             {

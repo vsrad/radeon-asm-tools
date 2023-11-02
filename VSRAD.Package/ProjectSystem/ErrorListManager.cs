@@ -7,15 +7,15 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using VSRAD.Package.BuildTools;
 using static VSRAD.BuildTools.IPCBuildResult;
-using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
 {
     public interface IErrorListManager
     {
-        Task AddToErrorListAsync(IEnumerable<string> outputs);
+        Task<(int ErrorCount, int WarningCount, int MessageCount)> AddToErrorListAsync(IEnumerable<string> outputs);
     }
 
     [Export(typeof(IErrorListManager))]
@@ -38,9 +38,11 @@ namespace VSRAD.Package.ProjectSystem
             _project.Unloaded += () => _errorListProvider.Tasks.Clear();
         }
 
-        public async Task AddToErrorListAsync(IEnumerable<string> outputs)
+        public async Task<(int ErrorCount, int WarningCount, int MessageCount)> AddToErrorListAsync(IEnumerable<string> outputs)
         {
             _errorListProvider.Tasks.Clear();
+
+            var (errorCount, warningCount, messageCount) = (0, 0, 0);
 
             var errors = new List<ErrorTask>();
             var messages = await _buildErrorProcessor.ExtractMessagesAsync(outputs);
@@ -48,7 +50,7 @@ namespace VSRAD.Package.ProjectSystem
             {
                 var document = string.IsNullOrEmpty(message.SourceFile) // make unclickable error otherwise it will refer to the project root
                     ? ""
-                    : message.SourceFile.IndexOfAny(Path.GetInvalidPathChars()) == -1  
+                    : message.SourceFile.IndexOfAny(Path.GetInvalidPathChars()) == -1
                         ? Path.Combine(_project.RootPath, message.SourceFile)
                         : "";
                 var task = new ErrorTask
@@ -62,18 +64,23 @@ namespace VSRAD.Package.ProjectSystem
                 };
                 task.Navigate += (sender, e) =>
                 {
-                    task.Line++; // just because vs error list is dumb. inside it dec 1 and jumps to this line
-                    _errorListProvider.Navigate(task, Guid.Parse(/*EnvDTE.Constants.vsViewKindCode*/"{7651A701-06E5-11D1-8EBD-00A0C90F26EA}"));
-                    task.Line--;
+                    task.Line++; // Workaround for ErrorListProvider.Navigate
+                    _errorListProvider.Navigate(task, Guid.Parse(EnvDTE.Constants.vsViewKindCode));
+                    task.Line--; // Workaround for ErrorListProvider.Navigate
                 };
                 _errorListProvider.Tasks.Add(task);
                 errors.Add(task);
+
+                if (task.ErrorCategory == TaskErrorCategory.Error)
+                    errorCount++;
+                else if (task.ErrorCategory == TaskErrorCategory.Warning)
+                    warningCount++;
+                else if (task.ErrorCategory == TaskErrorCategory.Message)
+                    messageCount++;
             }
 
-            if (errors.Any(e => e.ErrorCategory == TaskErrorCategory.Error))
-                _errorListProvider.BringToFront();
-
             NotifyErrorTagger?.Invoke(errors);
+            return (errorCount, warningCount, messageCount);
         }
 
         private delegate void NotifyErrorTaggerDelegate(IEnumerable<ErrorTask> errorList);

@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Windows;
 using System.Windows.Controls;
@@ -37,7 +36,8 @@ namespace VSRAD.Package.ToolWindows
         public void BringToFront()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            ErrorHandler.ThrowOnFailure(((IVsWindowFrame)Frame).Show());
+            var window = VsShellUtilities.GetWindowObject((IVsWindowFrame)Frame);
+            window.Activate(); // Use Activate() instead of IVsWindowFrame.Show() because the latter doesn't open the window if it's set to Auto Hide
         }
 
         public void OnProjectLoaded(IToolWindowIntegration integration)

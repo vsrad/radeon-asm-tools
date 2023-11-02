@@ -102,9 +102,9 @@ namespace VSRAD.Package.Server
                 var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
                 if (response.Status == FetchStatus.FileNotFound)
-                    return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
+                    return new StepResult(false, $"Data is missing. File is not found on the remote machine at {step.SourcePath}", "");
                 if (step.CheckTimestamp && initTimestamp == response.Timestamp)
-                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                    return new StepResult(false, $"Data is stale. File was not modified on the remote machine at {step.SourcePath}", "");
                 sourceContents = response.Data;
             }
             else
@@ -112,7 +112,7 @@ namespace VSRAD.Package.Server
                 if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
                     return new StepResult(false, error, "");
                 if (step.CheckTimestamp && initTimestamp == GetLocalFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is not changed at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                    return new StepResult(false, $"Data is stale. File was not modified on the local machine at {step.SourcePath}", "");
             }
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
@@ -242,9 +242,9 @@ namespace VSRAD.Package.Server
                     var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
 
                     if (response.Status == FetchStatus.FileNotFound)
-                        return new StepResult(false, $"Debug data is missing. Output file ({path}) could not be found.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {path}", "", breakState: null);
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Debug data is stale. Output file ({path}) was not modified by the debug action.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the remote machine at {path}", "", breakState: null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
@@ -255,11 +255,11 @@ namespace VSRAD.Package.Server
                     var fullPath = new[] { _environment.LocalWorkDir, path };
                     var timestamp = GetLocalFileTimestamp(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Debug data is stale. Output file ({path}) was not modified by the debug action.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the local machine at {path}", "", breakState: null);
 
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
                     if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
-                        return new StepResult(false, "Debug data is missing. Output file could not be opened. " + readError, "", breakState: null);
+                        return new StepResult(false, "Debug data is missing. " + readError, "", breakState: null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
@@ -282,18 +282,18 @@ namespace VSRAD.Package.Server
                     new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
 
                 if (response.Status == FetchStatus.FileNotFound)
-                    return new Error($"{type} file ({path}) could not be found.");
+                    return new Error($"{type} data is missing. File could not be found on the remote machine at {path}");
                 if (checkTimestamp && response.Timestamp == initTimestamp)
-                    return new Error($"{type} file ({path}) was not modified.");
+                    return new Error($"{type} data is stale. File was not modified by the debug action on the remote machine at {path}");
 
                 return response.Data;
             }
             else
             {
                 if (checkTimestamp && GetLocalFileTimestamp(path) == initTimestamp)
-                    return new Error($"{type} file ({path}) was not modified.");
+                    return new Error($"{type} data is stale. File was not modified by the debug action on the local machine at {path}");
                 if (!ReadLocalFile(path, out var data, out var error))
-                    return new Error($"{type} file could not be opened. {error}");
+                    return new Error($"{type} data is missing. " + error);
                 return data;
             }
         }
@@ -323,11 +323,11 @@ namespace VSRAD.Package.Server
             }
             catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
             {
-                error = $"File {path} is not found on the local machine";
+                error = $"File is not found on the local machine at {path}";
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access to path {path} on the local machine is denied";
+                error = $"Access is denied to local file at {path}";
             }
             catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
             {
@@ -349,7 +349,7 @@ namespace VSRAD.Package.Server
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access to path {path} on the local machine is denied";
+                error = $"Access is denied to local file at {path}";
             }
             catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
             {

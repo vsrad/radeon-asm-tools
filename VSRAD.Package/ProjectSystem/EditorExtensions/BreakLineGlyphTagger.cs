@@ -38,7 +38,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
                 LastExecutionBreakpointsHit.AddRange(execCompleted.BreakInstances);
 
 #pragma warning disable VSTHRD001 // Need to schedule execution after VS debugger adds its line markers 
-            ThreadHelper.Generic.BeginInvoke(() =>
+            ThreadHelper.Generic.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
 #pragma warning restore VSTHRD001
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
@@ -54,7 +54,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
                         var textBuffer = sourceManager.GetDocumentTextBufferByPath(path);
                         if (textBuffer != null)
                         {
-                            var vsDebuggerBreakLineMarkers = VsEditor.GetTextLineMarkersOfType(textBuffer, 63);
+                            var vsDebuggerBreakLineMarkers = VsEditor.GetTextLineMarkersOfType(textBuffer, 63).Concat(VsEditor.GetTextLineMarkersOfType(textBuffer, 64));
                             foreach (var m in vsDebuggerBreakLineMarkers)
                                 m.Invalidate();
                         }

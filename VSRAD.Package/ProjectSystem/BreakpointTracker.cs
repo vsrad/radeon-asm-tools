@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -81,15 +82,17 @@ namespace VSRAD.Package.ProjectSystem
             if (_lastTarget.TryGetValue(file, out var lt) && lt.ForceRunToLine)
                 return GoToTarget(file, lt.Line);
 
-            var breakpoints = _dte.Debugger.Breakpoints.Cast<Breakpoint2>().Where(bp => bp.Enabled && !string.IsNullOrEmpty(bp.File)).ToList();
+            var multipleBreakpoints = _projectOptions.DebuggerOptions.EnableMultipleBreakpoints;
+            var breakpoints = _dte.Debugger.Breakpoints.Cast<Breakpoint2>()
+                .Where(bp => bp.Enabled && (multipleBreakpoints ? !string.IsNullOrEmpty(bp.File) : string.Equals(file, bp.File, StringComparison.OrdinalIgnoreCase))).ToList();
             breakpoints.Sort((a, b) =>
             {
-                int byFile = string.Compare(a.File, b.File, System.StringComparison.OrdinalIgnoreCase);
+                int byFile = string.Compare(a.File, b.File, StringComparison.OrdinalIgnoreCase);
                 int byLine = a.FileLine.CompareTo(b.FileLine);
 
-                if (string.Equals(file, a.File, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(file, a.File, StringComparison.OrdinalIgnoreCase))
                     return byFile == 0 ? byLine : -1;
-                else if (string.Equals(file, b.File, System.StringComparison.OrdinalIgnoreCase))
+                else if (string.Equals(file, b.File, StringComparison.OrdinalIgnoreCase))
                     return byFile == 0 ? byLine : 1;
                 else if (byFile == 0)
                     return byLine;
@@ -99,7 +102,7 @@ namespace VSRAD.Package.ProjectSystem
             if (breakpoints.Count == 0)
                 return new Error($"No breakpoints set\n\nSource file: {file}");
 
-            if (_projectOptions.DebuggerOptions.EnableMultipleBreakpoints)
+            if (multipleBreakpoints)
                 return GoToTarget(breakpoints);
 
             switch (selector)
@@ -143,20 +146,20 @@ namespace VSRAD.Package.ProjectSystem
         private BreakpointInfo[] GoToTarget(string file, uint targetLine)
         {
             _lastTarget[file] = (Line: targetLine, Breakpoint: null, ForceRunToLine: false);
-            return new[] { new BreakpointInfo(file, targetLine, _projectOptions.DebuggerOptions.Counter, _projectOptions.DebuggerOptions.StopOnHit) };
+            return new[] { new BreakpointInfo(file, targetLine, _projectOptions.DebuggerOptions.Counter, resume: !_projectOptions.DebuggerOptions.StopOnHit) };
         }
 
         private BreakpointInfo[] GoToTarget(string file, Breakpoint2 targetBreakpoint)
         {
             var targetLine = (uint)targetBreakpoint.FileLine - 1;
             _lastTarget[file] = (Line: targetLine, Breakpoint: targetBreakpoint, ForceRunToLine: false);
-            return new[] { new BreakpointInfo(file, targetLine, _projectOptions.DebuggerOptions.Counter, _projectOptions.DebuggerOptions.StopOnHit) };
+            return new[] { new BreakpointInfo(file, targetLine, _projectOptions.DebuggerOptions.Counter, resume: !_projectOptions.DebuggerOptions.StopOnHit) };
         }
 
         private BreakpointInfo[] GoToTarget(IEnumerable<Breakpoint2> multipleBreakpoints)
         {
             return multipleBreakpoints
-                .Select(b => new BreakpointInfo(b.File, (uint)b.FileLine - 1, _projectOptions.DebuggerOptions.Counter, _projectOptions.DebuggerOptions.StopOnHit))
+                .Select(b => new BreakpointInfo(b.File, (uint)b.FileLine - 1, _projectOptions.DebuggerOptions.Counter, resume: !_projectOptions.DebuggerOptions.StopOnHit))
                 .ToArray();
         }
     }

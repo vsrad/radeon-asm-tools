@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
@@ -27,6 +28,7 @@ namespace VSRAD.Package.ProjectSystem
 
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
+        private readonly IActionLogger _actionLogger;
         private readonly IBreakpointTracker _breakpointTracker;
         private readonly IProjectSourceManager _projectSourceManager;
         private readonly BreakLineGlyphTaggerProvider _breakLineTagger;
@@ -34,10 +36,11 @@ namespace VSRAD.Package.ProjectSystem
         public bool DebugInProgress { get; private set; } = false;
 
         [ImportingConstructor]
-        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IBreakpointTracker breakpointTracker, IProjectSourceManager projectSourceManager)
+        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActionLogger actionLogger, IBreakpointTracker breakpointTracker, IProjectSourceManager projectSourceManager)
         {
             _project = project;
             _actionLauncher = actionLauncher;
+            _actionLogger = actionLogger;
             _breakpointTracker = breakpointTracker;
             _projectSourceManager = projectSourceManager;
 
@@ -87,25 +90,24 @@ namespace VSRAD.Package.ProjectSystem
 
         public void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false)
         {
+            Error? error = null;
             var breakState = runResult?.BreakState;
-            BreakEntered(this, breakState); // Need to raise this event first to set GroupSize, WaveSize from dispatch parameters
-
             var breakInstances = new List<BreakInstance>();
             if (breakState != null)
             {
-                var breakpointIdsHit = breakState.Data.GetGlobalBreakpointIdsHit(
-                    (int)_project.Options.DebuggerOptions.WaveSize,
-                    _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null);
+                var waveSize = (int)(breakState.DispatchParameters?.WaveSize ?? _project.Options.DebuggerOptions.WaveSize);
+                var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
+                var breakpointIdsHit = breakState.Data.GetGlobalBreakpointIdsHit(waveSize, checkMagicNumber);
 
                 foreach (var breakpointId in breakpointIdsHit)
-                {
-                    if (breakpointId < breakState.Data.Breakpoints.Count)
-                    {
-                        var breakpoint = breakState.Data.Breakpoints[(int)breakpointId];
+                    if (breakpointId < breakState.Data.Breakpoints.Count && breakState.Data.Breakpoints[(int)breakpointId] is BreakpointInfo breakpoint)
                         breakInstances.Add(new BreakInstance(breakpointId, new[] { ("", breakpoint.File, breakpoint.Line) }));
-                    }
-                }
+
                 breakInstances.Sort((a, b) => a.InstanceId.CompareTo(b.InstanceId));
+
+                if (breakInstances.Count == 0)
+                    error = new Error("The following breakpoints were set but the program reached none:\n\n" +
+                        string.Join("\n", breakState.Data.Breakpoints.Select(b => "* " + b.Location)), critical: false, "No breakpoints hit");
             }
 
             ExecutionCompletedEventArgs args;
@@ -125,17 +127,21 @@ namespace VSRAD.Package.ProjectSystem
                     errorPath = activeEditor.GetFilePath();
                     var (caretLine, scrollWin) = (activeEditor.GetCaretPos().Line, activeEditor.GetVerticalScrollWindow());
                     errorLine = (caretLine >= scrollWin.FirstVisibleLine && caretLine < scrollWin.FirstVisibleLine + scrollWin.VisibleLines) ? caretLine : scrollWin.FirstVisibleLine;
-
                 }
                 catch
                 {
                     // May throw an exception if no files are open in the editor
                     (errorPath, errorLine) = ("", 0u);
                 }
-                var dummyInstance = new BreakInstance(0, new[] { (breakState != null ? "No Breakpoints Hit" : "Error", errorPath, errorLine) });
+                var dummyInstance = new BreakInstance(0, new[] { (error?.Title ?? "Error", errorPath, errorLine) });
                 args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
             }
-            ExecutionCompleted?.Invoke(this, args);
+
+            if (error is Error e)
+                Errors.Show(e);
+
+            ExecutionCompleted?.Invoke(this, args); // Raise first to override debugger behavior in later events
+            BreakEntered?.Invoke(this, breakState);
             _breakLineTagger.OnExecutionCompleted(_projectSourceManager, args);
         }
 
@@ -148,9 +154,11 @@ namespace VSRAD.Package.ProjectSystem
                     debugBreakTarget: step ? BreakTargetSelector.NextLine : BreakTargetSelector.NextBreakpoint);
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                if (result.Error is Error e)
-                    Errors.Show(e);
-                NotifyDebugActionExecuted(result.RunResult, step);
+                if (!result.TryGetResult(out var runResult, out var error))
+                    Errors.Show(error);
+                NotifyDebugActionExecuted(runResult, step);
+                if (runResult != null)
+                    await _actionLogger.LogActionRunAsync(runResult);
             },
             exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, step));
         }

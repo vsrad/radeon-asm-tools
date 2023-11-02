@@ -16,15 +16,17 @@ namespace VSRAD.Package.Commands
     {
         private readonly IProject _project;
         private readonly IActionLauncher _actionLauncher;
+        private readonly IActionLogger _actionLogger;
         private readonly IDebuggerIntegration _debuggerIntegration;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, IDebuggerIntegration debuggerIntegration)
+        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, IActionLogger actionLogger, IDebuggerIntegration debuggerIntegration)
         {
             _project = project;
             _actionLauncher = actionLauncher;
+            _actionLogger = actionLogger;
             _debuggerIntegration = debuggerIntegration;
         }
 
@@ -74,11 +76,12 @@ namespace VSRAD.Package.Commands
                                         : BreakTargetSelector.Last;
                     var result = await _actionLauncher.LaunchActionByNameAsync(actionName, debugNextTarget);
                     await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                    if (result.Error is Error e)
-                        Errors.Show(e);
-                    if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
-                        && _actionLauncher.IsDebugAction(action))
-                        _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult);
+                    if (!result.TryGetResult(out var runResult, out error))
+                        Errors.Show(error);
+                    if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action && _actionLauncher.IsDebugAction(action))
+                        _debuggerIntegration.NotifyDebugActionExecuted(runResult);
+                    if (runResult != null)
+                        await _actionLogger.LogActionRunAsync(runResult);
                 });
             }
             else

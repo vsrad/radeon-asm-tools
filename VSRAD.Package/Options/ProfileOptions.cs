@@ -1,9 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
 
