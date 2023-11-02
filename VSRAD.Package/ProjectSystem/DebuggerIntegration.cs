@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
-using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 
 namespace VSRAD.Package.ProjectSystem
@@ -16,7 +15,7 @@ namespace VSRAD.Package.ProjectSystem
         event EventHandler<BreakState> BreakEntered;
 
         bool TryCreateDebugSession();
-        void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients, bool isStepping = false);
+        void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false);
     }
 
     [Export(typeof(IDebuggerIntegration))]
@@ -86,40 +85,58 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
-        public void NotifyDebugActionExecuted(ActionRunResult runResult, MacroEvaluatorTransientValues transients, bool isStepping = false)
+        public void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false)
         {
-            ExecutionCompletedEventArgs args;
-            if (transients != null && transients.BreakLines.TryGetResult(out var breakLines, out _))
+            var breakState = runResult?.BreakState;
+            BreakEntered(this, breakState); // Need to raise this event first to set GroupSize, WaveSize from dispatch parameters
+
+            var breakInstances = new List<BreakInstance>();
+            if (breakState != null)
             {
-                var breakInstances = new List<BreakInstance>();
-                for (uint i = 0; i < breakLines.Length; ++i)
-                    breakInstances.Add(new BreakInstance(i, new[] { ("", transients.ActiveSourceFullPath, breakLines[i]) }));
+                var breakpointIdsHit = breakState.Data.GetGlobalBreakpointIdsHit(
+                    (int)_project.Options.DebuggerOptions.WaveSize,
+                    _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null);
+
+                foreach (var breakpointId in breakpointIdsHit)
+                {
+                    if (breakpointId < breakState.Data.Breakpoints.Count)
+                    {
+                        var breakpoint = breakState.Data.Breakpoints[(int)breakpointId];
+                        breakInstances.Add(new BreakInstance(breakpointId, new[] { ("", breakpoint.File, breakpoint.Line) }));
+                    }
+                }
+                breakInstances.Sort((a, b) => a.InstanceId.CompareTo(b.InstanceId));
+            }
+
+            ExecutionCompletedEventArgs args;
+            if (breakInstances.Count > 0)
+            {
                 args = new ExecutionCompletedEventArgs(breakInstances, isStepping, isSuccessful: true);
             }
             else
             {
                 // Error case: if we leave the source path empty, VS debugger will open a "Source Not Available/Frame not in module" tab.
                 // To avoid that, if the action execution failed and transients are not available, we attempt to pick the active file in the editor as the source.
-                BreakInstance dummyInstance;
+                string errorPath;
+                uint errorLine;
                 try
                 {
                     var activeEditor = _projectSourceManager.GetActiveEditorView();
-                    var (path, caretLine, scrollWin) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line, activeEditor.GetVerticalScrollWindow());
-                    var line = (caretLine >= scrollWin.FirstVisibleLine && caretLine < scrollWin.FirstVisibleLine + scrollWin.VisibleLines) ? caretLine : scrollWin.FirstVisibleLine;
-                    dummyInstance = new BreakInstance(0, new[] { ("Error", path, line) });
+                    errorPath = activeEditor.GetFilePath();
+                    var (caretLine, scrollWin) = (activeEditor.GetCaretPos().Line, activeEditor.GetVerticalScrollWindow());
+                    errorLine = (caretLine >= scrollWin.FirstVisibleLine && caretLine < scrollWin.FirstVisibleLine + scrollWin.VisibleLines) ? caretLine : scrollWin.FirstVisibleLine;
+
                 }
                 catch
                 {
                     // May throw an exception if no files are open in the editor
-                    dummyInstance = new BreakInstance(0, new[] { ("Error", "", 0u) });
+                    (errorPath, errorLine) = ("", 0u);
                 }
+                var dummyInstance = new BreakInstance(0, new[] { (breakState != null ? "No Breakpoints Hit" : "Error", errorPath, errorLine) });
                 args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
             }
             ExecutionCompleted?.Invoke(this, args);
             _breakLineTagger.OnExecutionCompleted(_projectSourceManager, args);
-            if (runResult?.BreakState != null)
-                runResult.BreakState.BreakFile = transients.ActiveSourceFullPath;
-            BreakEntered(this, runResult?.BreakState);
         }
 
         void IEngineIntegration.Execute(bool step)
@@ -133,14 +150,14 @@ namespace VSRAD.Package.ProjectSystem
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (result.Error is Error e)
                     Errors.Show(e);
-                NotifyDebugActionExecuted(result.RunResult, result.Transients, step);
+                NotifyDebugActionExecuted(result.RunResult, step);
             },
-            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, null, step));
+            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, step));
         }
 
         void IEngineIntegration.CauseBreak()
         {
-            NotifyDebugActionExecuted(null, null);
+            NotifyDebugActionExecuted(null);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using VSRAD.Package.Server;
+﻿using System;
+using VSRAD.Package.ProjectSystem;
+using VSRAD.Package.Server;
 using Xunit;
 
 namespace VSRAD.PackageTests.Server
@@ -19,7 +21,7 @@ wave_size 64";
 
             var debugData = new byte[512 * 5 * sizeof(uint)];
             Assert.False(BreakState.CreateBreakState(validWatches, dispatchParams,
-                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData).TryGetResult(out _, out var error));
+                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, Array.Empty<BreakpointInfo>()).TryGetResult(out _, out var error));
             Assert.Equal($@"Could not read the valid watches file.
 
 The following is an example of the expected file contents:

@@ -1,4 +1,5 @@
 ﻿using VSRAD.Package.DebugVisualizer.Wavemap;
+using VSRAD.Package.ProjectSystem;
 using Xunit;
 
 namespace VSRAD.PackageTests.DebugVisualizer
@@ -9,10 +10,11 @@ namespace VSRAD.PackageTests.DebugVisualizer
         public void ColorAssignTest()
         {
             // Same breakpoint for all waves
-            var wavemapView = new WavemapView((uint groupIndex, uint waveIndex, out uint[] systemData) =>
+            var wavemapView = new WavemapView(
+                getBreakpointList: () => new BreakpointInfo[313],
+                tryGetSystemData: (uint groupIndex, uint waveIndex, out uint magicNumber, out uint breakpointId, out ulong execMask) =>
             {
-                systemData = new uint[16];
-                systemData[Package.Server.BreakStateData.SystemBreakLineLane] = 313;
+                (magicNumber, breakpointId, execMask) = (0, 312, ~0ul);
                 return true;
             });
 
@@ -25,12 +27,13 @@ namespace VSRAD.PackageTests.DebugVisualizer
             }
 
             // Unique breakpoint per wave
-            wavemapView = new WavemapView((uint groupIndex, uint waveIndex, out uint[] systemData) =>
-            {
-                systemData = new uint[16];
-                systemData[Package.Server.BreakStateData.SystemBreakLineLane] = 313 * groupIndex + waveIndex;
-                return true;
-            });
+            wavemapView = new WavemapView(
+                getBreakpointList: () => new BreakpointInfo[313],
+                tryGetSystemData: (uint groupIndex, uint waveIndex, out uint magicNumber, out uint breakpointId, out ulong execMask) =>
+                {
+                    (magicNumber, breakpointId, execMask) = (0, 303 * groupIndex + waveIndex, ~0ul);
+                    return true;
+                });
 
             Assert.Equal(WavemapView.Blue, wavemapView.GetWaveInfo(0, 0, checkMagicNumber: null, checkInactiveLanes: false).BreakColor);
             Assert.Equal(WavemapView.Red, wavemapView.GetWaveInfo(1, 0, checkMagicNumber: null, checkInactiveLanes: false).BreakColor);

@@ -58,6 +58,7 @@
                 <MenuItem Header="Copy File" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyFileStep}" />
                 <MenuItem Header="Open in Editor" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:OpenInEditorStep}" />
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
+                <MenuItem Header="Write Debug Target" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:WriteDebugTargetStep}" />
                 <MenuItem Header="Read Debug Data" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:ReadDebugDataStep}" />
             </Menu>
         </Popup>
@@ -260,6 +261,22 @@
                             <Label Content="Action:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <ComboBox ItemsSource="{Binding DataContext.RunActionNames, ElementName=Root, Mode=OneWay}"
                                       SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
+                        </Grid>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:WriteDebugTargetStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="34"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Breakpoint List Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <TextBox Text="{Binding BreakpointListPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
+                                    Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
                         </Grid>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:ReadDebugDataStep}">

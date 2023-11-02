@@ -2,7 +2,6 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,16 +17,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
-        public Result<uint[]> BreakLines { get; }
-        public ReadOnlyCollection<string> Watches { get; }
+        public IReadOnlyList<string> Watches { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, Result<uint[]> breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, IReadOnlyList<string> watches, string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
-            BreakLines = breakLines;
             Watches = watches;
         }
     }
@@ -54,10 +51,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ActiveSourceFile = "RadActiveSourceFile";
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
         public const string Watches = "RadWatches";
-        public const string BreakLines = "RadBreakLines";
         public const string DebugAppArgs = "RadDebugAppArgs";
         public const string DebugBreakArgs = "RadDebugBreakArgs";
-        public const string Counter = "RadCounter";
         public const string NGroups = "RadNGroups";
         public const string GroupSize = "RadGroupSize";
 
@@ -124,19 +119,8 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.Watches: value = string.Join(RadMacros.WatchSeparator, _transientValues.Watches); break;
                 case RadMacros.DebugAppArgs: value = _debuggerOptions.AppArgs; break;
                 case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
-                case RadMacros.Counter: value = _debuggerOptions.Counter.ToString(); break;
                 case RadMacros.NGroups: value = _debuggerOptions.NGroups.ToString(); break;
                 case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
-                case RadMacros.BreakLines:
-                    if (_transientValues.BreakLines.TryGetResult(out var breakLines, out var error))
-                    {
-                        bool stopOnHit = _debuggerOptions.StopOnHit;
-                        var breakpointsStrings = breakLines.Select(line =>  line + RadMacros.BreakpointPropsSeparator + (stopOnHit ? "stop" : "resume"));
-                        value = string.Join(RadMacros.BreakLineSeparator, breakpointsStrings);
-                    }
-                    else
-                        return error;
-                    break;
                 default:
                     string unevaluated = null;
                     foreach (var macro in _profileOptions.Macros)
@@ -150,7 +134,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     if (unevaluated != null)
                     {
                         var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
-                        if (!evalResult.TryGetResult(out value, out error))
+                        if (!evalResult.TryGetResult(out value, out var error))
                             return error;
                     }
                     else

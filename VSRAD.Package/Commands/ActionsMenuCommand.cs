@@ -78,7 +78,7 @@ namespace VSRAD.Package.Commands
                         Errors.Show(e);
                     if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
                         && _actionLauncher.IsDebugAction(action))
-                        _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);
+                        _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult);
                 });
             }
             else

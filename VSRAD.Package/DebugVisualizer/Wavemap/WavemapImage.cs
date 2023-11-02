@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
@@ -101,7 +102,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             public uint GroupIndex { get; set; }
             public uint? WaveIndex { get; set; }
-            public uint? BreakLine { get; set; }
+            public BreakpointInfo Breakpoint { get; set; }
         }
 
         public event EventHandler<NagivationEventArgs> NavigationRequested;
@@ -160,10 +161,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 var goToWave = new MenuItem { Header = $"Go to Wave #{wave.WaveIndex} of Group #{wave.GroupIndex}" };
                 goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, WaveIndex = wave.WaveIndex });
                 menu.Items.Add(goToWave);
-                if (wave.BreakLine is uint breakLine)
+                if (wave.Breakpoint is BreakpointInfo breakpoint)
                 {
-                    var goToBreakLine = new MenuItem { Header = $"Go to Breakpoint (Line {breakLine + 1})" };
-                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, BreakLine = breakLine });
+                    var goToBreakLine = new MenuItem { Header = new TextBlock { Text = $"Go to Breakpoint ({breakpoint.Location})" } }; // use TextBlock because Location may contain underscores
+                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, Breakpoint = breakpoint });
                     menu.Items.Add(goToBreakLine);
                 }
                 else

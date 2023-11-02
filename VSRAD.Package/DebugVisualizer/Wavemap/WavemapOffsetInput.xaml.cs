@@ -62,18 +62,18 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 {
                     {
                         var info = $"G: {waveInfo.GroupIndex}\nW: {waveInfo.WaveIndex}";
-                        if (waveInfo.PartialExecMask && waveInfo.BreakLine != null)
+                        if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
                             info += " (E)";
                         info += "\n";
-                        info += waveInfo.BreakLine is uint breakLine ? $"L: {breakLine + 1}" : "No break";
+                        info += waveInfo.Breakpoint != null ? $"L: {waveInfo.Breakpoint.Line + 1}" : "No break";
                         WaveInfoTextBlock.Text = info;
                     }
                     {
                         var tooltip = $"Group: {waveInfo.GroupIndex}\nWave: {waveInfo.WaveIndex}";
-                        if (waveInfo.PartialExecMask && waveInfo.BreakLine != null)
+                        if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
                             tooltip += " (partial EXEC mask)";
                         tooltip += "\n";
-                        tooltip += waveInfo.BreakLine is uint breakLine ? $"Line: {breakLine + 1}" : "No breakpoint reached";
+                        tooltip += waveInfo.Breakpoint != null ? $"Location: {waveInfo.Breakpoint.Location}" : "No breakpoint reached";
                         WaveInfoTextBlock.ToolTip = tooltip;
                     }
                 }

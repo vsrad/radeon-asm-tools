@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +15,22 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
+    public sealed class ActionEnvironment
+    {
+        public string LocalWorkDir { get; }
+        public string RemoteWorkDir { get; }
+        public IReadOnlyList<string> Watches { get; }
+        public Result<IReadOnlyList<BreakpointInfo>> BreakTargets { get; }
+
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<IReadOnlyList<BreakpointInfo>> breakTargets = null)
+        {
+            LocalWorkDir = localWorkDir;
+            RemoteWorkDir = remoteWorkDir;
+            Watches = watches ?? Array.Empty<string>();
+            BreakTargets = breakTargets ?? Array.Empty<BreakpointInfo>();
+        }
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
@@ -56,6 +73,9 @@ namespace VSRAD.Package.Server
                         break;
                     case RunActionStep runAction:
                         result = await DoRunActionAsync(runAction, continueOnError);
+                        break;
+                    case WriteDebugTargetStep writeDebugTarget:
+                        result = await DoWriteDebugTargetAsync(writeDebugTarget);
                         break;
                     case ReadDebugDataStep readDebugData:
                         result = await DoReadDebugDataAsync(readDebugData);
@@ -106,20 +126,8 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                try
-                {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                    File.WriteAllBytes(localPath, sourceContents);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
-                }
+                if (!WriteLocalFile(step.TargetPath, sourceContents, out var error))
+                    return new StepResult(false, error, "");
             }
 
             return new StepResult(true, "", "");
@@ -176,7 +184,8 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, null, step.LineMarker,
+            var localPath = Path.Combine(_environment.LocalWorkDir, step.Path);
+            VsEditor.OpenFileInEditor(_serviceProvider, localPath, null, step.LineMarker,
                 _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
             return new StepResult(true, "", "");
         }
@@ -187,8 +196,24 @@ namespace VSRAD.Package.Server
             return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
         }
 
+        private async Task<StepResult> DoWriteDebugTargetAsync(WriteDebugTargetStep step)
+        {
+            if (!_environment.BreakTargets.TryGetResult(out var breakpointList, out var error))
+                return new StepResult(false, error.Message, "");
+
+            var breakpointListJson = JsonConvert.SerializeObject(breakpointList, Formatting.Indented);
+            if (!WriteLocalFile(step.BreakpointListPath, Encoding.UTF8.GetBytes(breakpointListJson), out var errorString))
+                return new StepResult(false, errorString, "");
+            return new StepResult(true, "", "");
+        }
+
         private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
+            IReadOnlyList<BreakpointInfo> breakpointList;
+            {
+                if (!_environment.BreakTargets.TryGetResult(out breakpointList, out var error))
+                    return new StepResult(false, error.Message, "");
+            }
             string validWatchesString;
             {
                 var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
@@ -241,8 +266,7 @@ namespace VSRAD.Package.Server
                     var dataDwordCount = localOutputData.Length / 4;
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
-
-                if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData).TryGetResult(out var breakState, out var error))
+                if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData, breakpointList).TryGetResult(out var breakState, out var error))
                     return new StepResult(true, "", "", breakState: breakState);
                 else
                     return new StepResult(false, error.Message, "", breakState: null);
@@ -310,6 +334,27 @@ namespace VSRAD.Package.Server
                 error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
             }
             data = null;
+            return false;
+        }
+
+        private bool WriteLocalFile(string path, byte[] data, out string error)
+        {
+            try
+            {
+                var localPath = Path.Combine(_environment.LocalWorkDir, path);
+                Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+                File.WriteAllBytes(localPath, data);
+                error = "";
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                error = $"Access to path {path} on the local machine is denied";
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+            }
             return false;
         }
 

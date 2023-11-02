@@ -275,6 +275,35 @@ namespace VSRAD.Package.Options
         }
     }
 
+    public sealed class WriteDebugTargetStep : DefaultNotifyPropertyChanged, IActionStep
+    {
+        private string _breakpointListPath = "";
+        public string BreakpointListPath { get => _breakpointListPath; set => SetField(ref _breakpointListPath, value); }
+
+        public override string ToString() =>
+            string.IsNullOrWhiteSpace(BreakpointListPath) ? "Write Debug Target (Breakpoint List)" : $"Write Debug Target (Breakpoint List) {BreakpointListPath}";
+
+        public override bool Equals(object obj) =>
+            obj is WriteDebugTargetStep step && BreakpointListPath == step.BreakpointListPath;
+
+        public override int GetHashCode() => 9;
+
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        {
+            if (string.IsNullOrWhiteSpace(BreakpointListPath))
+                return EvaluationError(sourceAction, "Write Debug Target", "No breakpoint list path specified");
+
+            var pathResult = await evaluator.EvaluateAsync(BreakpointListPath);
+            if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
+                return EvaluationError(sourceAction, "Write Debug Target", error.Message);
+
+            if (string.IsNullOrWhiteSpace(evaluatedPath))
+                return EvaluationError(sourceAction, "Write Debug Target", $"The specified file path for breakpoint list (\"{BreakpointListPath}\") evaluates to an empty string");
+
+            return new WriteDebugTargetStep { BreakpointListPath = evaluatedPath };
+        }
+    }
+
     public sealed class ReadDebugDataStep : DefaultNotifyPropertyChanged, IActionStep
     {
         private BuiltinActionFile _outputFile;
@@ -341,7 +370,7 @@ namespace VSRAD.Package.Options
             return $"Read Debug Data {env} {OutputFile.Path}";
         }
 
-        public override int GetHashCode() => 9;
+        public override int GetHashCode() => 11;
 
         public override bool Equals(object obj) =>
             obj is ReadDebugDataStep step &&
@@ -380,6 +409,7 @@ namespace VSRAD.Package.Options
                 case "CopyFile": return new CopyFileStep();
                 case "OpenInEditor": return new OpenInEditorStep();
                 case "RunAction": return new RunActionStep();
+                case "WriteDebugTarget": return new WriteDebugTargetStep();
                 case "ReadDebugData": return new ReadDebugDataStep();
             }
             throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
@@ -393,6 +423,7 @@ namespace VSRAD.Package.Options
                 case CopyFileStep _: return "CopyFile";
                 case OpenInEditorStep _: return "OpenInEditor";
                 case RunActionStep _: return "RunAction";
+                case WriteDebugTargetStep _: return "WriteDebugTarget";
                 case ReadDebugDataStep _: return "ReadDebugData";
             }
             throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));

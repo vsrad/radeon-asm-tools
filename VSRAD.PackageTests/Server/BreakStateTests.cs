@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Commands;
 using VSRAD.DebugServer.IPC.Responses;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using Xunit;
 
@@ -31,7 +32,7 @@ namespace VSRAD.PackageTests.Server
             var dwordsInBuffer = groupCount * dwordsPerGroup;
 
             var file = new BreakStateOutputFile(new[] { "/working/dir", "debug_buffer.bin" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: dwordsInBuffer);
-            var breakStateData = new BreakStateData(watches, dwordsPerLane, file);
+            var breakStateData = new BreakStateData(Array.Empty<BreakpointInfo>(), watches, dwordsPerLane, file);
 
             var data = new int[dwordsInBuffer];
             for (int group = 0; group < groupCount; ++group)
@@ -141,7 +142,7 @@ namespace VSRAD.PackageTests.Server
             var channel = new MockCommunicationChannel();
             var watches = new Dictionary<string, WatchMeta> { { "ThreadID", new WatchMeta(new[] { (Instance: 0u, DataSlot: (uint?)1, (uint?)null) }, Enumerable.Empty<WatchMeta>()) } };
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: 1024);
-            var breakStateData = new BreakStateData(watches, dwordsPerLane: 2, file);
+            var breakStateData = new BreakStateData(Array.Empty<BreakpointInfo>(), watches, dwordsPerLane: 2, file);
 
             channel.ThenRespond<FetchResultRange, ResultRangeFetched>(new ResultRangeFetched { Status = FetchStatus.Successful, Data = Array.Empty<byte>() },
             (command) =>
@@ -189,7 +190,7 @@ namespace VSRAD.PackageTests.Server
                 { "ThreadID", new WatchMeta(new[] { (Instance: (uint)instanceId, DataSlot: (uint?)2, (uint?)null) }, Enumerable.Empty<WatchMeta>()) },
             };
             var file = new BreakStateOutputFile(new[] { "/home/kyubey/projects", "log.tar" }, binaryOutput: true, offset: 0, timestamp: default, dwordCount: data.Length);
-            var breakStateData = new BreakStateData(watches, dwordsPerLane: 3, file, localData);
+            var breakStateData = new BreakStateData(Array.Empty<BreakpointInfo>(), watches, dwordsPerLane: 3, file, localData);
 
             var groupId = 1;
             var warning = await breakStateData.ChangeGroupWithWarningsAsync(channel: null, groupIndex: groupId, groupSize: groupSize, waveSize: waveSize);

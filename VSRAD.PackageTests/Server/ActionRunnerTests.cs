@@ -1,5 +1,4 @@
 ﻿using Moq;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -365,6 +364,36 @@ namespace VSRAD.PackageTests.Server
             Assert.Equal("level3", result.StepResults[0].SubAction.StepResults[1].SubAction.ActionName);
             Assert.Equal("Captured stdout (exit code 0):\r\nlevel3\r\n", result.StepResults[0].SubAction.StepResults[1].SubAction.StepResults[0].Log);
             Assert.Null(result.StepResults[1].SubAction);
+        }
+
+
+        [Fact]
+        public async Task WriteDebugTargetStepTestAsync()
+        {
+            var breakpointListFile = Path.GetTempFileName();
+            var steps = new List<IActionStep> { new WriteDebugTargetStep { BreakpointListPath = breakpointListFile } };
+            var breakpoints = new[] { new BreakpointInfo("C:\\Source.s", 139, 313, false), new BreakpointInfo("C:\\Include.s", 0, 1, true) };
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", breakTargets: breakpoints), _project);
+            var result = await runner.RunAsync("Debug", steps);
+
+            Assert.True(result.Successful);
+            Assert.Equal("", result.StepResults[0].Warning);
+
+            var breakpointListJson = File.ReadAllText(breakpointListFile);
+            Assert.Equal(@"[
+  {
+    ""File"": ""C:\\Source.s"",
+    ""Line"": 139,
+    ""HitCountTarget"": 313,
+    ""Resume"": 0
+  },
+  {
+    ""File"": ""C:\\Include.s"",
+    ""Line"": 0,
+    ""HitCountTarget"": 1,
+    ""Resume"": 1
+  }
+]", breakpointListJson);
         }
 
         #region ReadDebugDataStep

@@ -14,13 +14,11 @@ namespace VSRAD.Package.ProjectSystem
     public sealed class ActionExecution
     {
         public Error? Error { get; }
-        public MacroEvaluatorTransientValues Transients { get; }
         public ActionRunResult RunResult { get; }
 
-        public ActionExecution(Error? error, MacroEvaluatorTransientValues transients = null, ActionRunResult runResult = null)
+        public ActionExecution(Error? error, ActionRunResult runResult = null)
         {
             Error = error;
-            Transients = transients;
             RunResult = runResult;
         }
     }
@@ -88,8 +86,8 @@ namespace VSRAD.Package.ProjectSystem
             var activeEditor = _projectSourceManager.GetActiveEditorView();
             var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var breakLines = _breakpointTracker.GoToBreakTarget(activeFile, debugBreakTarget);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, breakLines, watches);
+            var breakTargets = _breakpointTracker.GoToBreakTarget(activeFile, debugBreakTarget);
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, watches);
 
             try
             {
@@ -115,11 +113,11 @@ namespace VSRAD.Package.ProjectSystem
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSourceManager.SaveProjectState();
 
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches);
+                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches, breakTargets);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 var actionError = await _actionLogger.LogActionWithWarningsAsync(runResult).ConfigureAwait(false);
-                return new ActionExecution(actionError, transients, runResult);
+                return new ActionExecution(actionError, runResult);
             }
             finally
             {
