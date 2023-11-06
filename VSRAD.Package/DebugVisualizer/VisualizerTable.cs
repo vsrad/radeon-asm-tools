@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Options;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -12,11 +13,11 @@ namespace VSRAD.Package.DebugVisualizer
     public sealed class VisualizerTable : DataGridView
     {
         public delegate void ChangeWatchState(IEnumerable<Watch> newState, IEnumerable<DataGridViewRow> invalidatedRows);
-        public delegate void RequestBreakpointLocation(uint threadId, ref string file, ref uint line);
+        public delegate void RequestBreakpointInfo(uint threadId, ref BreakpointInfo breakpointInfo);
         public delegate void NavigateToBreakpoint(string file, uint line);
 
         public event ChangeWatchState WatchStateChanged;
-        public event RequestBreakpointLocation BreakpointLocationRequested;
+        public event RequestBreakpointInfo BreakpointInfoRequested;
         public event NavigateToBreakpoint BreakpointNavigationRequested;
 
         public const int NameColumnIndex = 0;
@@ -736,13 +737,16 @@ namespace VSRAD.Package.DebugVisualizer
                     {
                         menu.MenuItems.Add(new MenuItem("-"));
 
-                        string file = null;
-                        uint line = 0;
-                        BreakpointLocationRequested(threadId, ref file, ref line);
-                        if (!string.IsNullOrEmpty(file))
-                            menu.MenuItems.Add(new MenuItem($"Go to Breakpoint (Line {line + 1})", (s, e) => BreakpointNavigationRequested(file, line)));
+                        BreakpointInfo breakpoint = null;
+                        BreakpointInfoRequested(threadId, ref breakpoint);
+                        if (breakpoint != null)
+                        {
+                            menu.MenuItems.Add(new MenuItem($"Go to Breakpoint ({breakpoint.Location})", (s, e) => BreakpointNavigationRequested(breakpoint.File, breakpoint.Line)));
+                        }
                         else
+                        {
                             menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                        }
                     }
                 }
 

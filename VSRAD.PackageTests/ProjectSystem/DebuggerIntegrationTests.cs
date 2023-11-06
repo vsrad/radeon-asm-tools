@@ -5,8 +5,6 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Moq;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using VSRAD.Deborgar;
 using VSRAD.DebugServer.IPC.Commands;
@@ -16,6 +14,7 @@ using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
@@ -49,46 +48,48 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableCategory.Hex, 32)));
 
             var readDebugDataStep = new ReadDebugDataStep { BinaryOutput = true, OutputOffset = 0 };
-            readDebugDataStep.OutputFile.CheckTimestamp = true;
-            readDebugDataStep.OutputFile.Path = "output-path";
-            readDebugDataStep.WatchesFile.CheckTimestamp = false;
+            readDebugDataStep.OutputFile.CheckTimestamp = false;
+            readDebugDataStep.OutputFile.Path = TestHelper.GetFixturePath("DebugBuffer.bin");
+            readDebugDataStep.OutputFile.Location = StepEnvironment.Local;
+            readDebugDataStep.WatchesFile.CheckTimestamp = true;
             readDebugDataStep.WatchesFile.Path = "watches-path";
             readDebugDataStep.DispatchParamsFile.CheckTimestamp = false;
             readDebugDataStep.DispatchParamsFile.Path = "dispatch-params-path";
 
             project.Options.Profile.Actions[0].Steps.Add(new ExecuteStep
-            { Executable = "ohmu", Arguments = "-break-line $(RadBreakLines) -source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
+            { Executable = "ohmu", Arguments = "-source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
             project.Options.Profile.Actions[0].Steps.Add(readDebugDataStep);
 
-            var codeEditor = new Mock<IActiveCodeEditor>();
-            codeEditor.Setup(e => e.GetAbsoluteSourcePath()).Returns(@"C:\MEHVE\JATO.s");
-            codeEditor.Setup(e => e.GetCurrentLine()).Returns(13);
+            var activeEditor = new Mock<IEditorView>();
+            activeEditor.Setup(e => e.GetFilePath()).Returns(@"C:\MEHVE\JATO.s");
+            activeEditor.Setup(e => e.GetCaretPos()).Returns((13, 0));
+            var sourceManager = new Mock<IProjectSourceManager>();
+            sourceManager.Setup(m => m.GetActiveEditorView()).Returns(activeEditor.Object);
             var breakpointTracker = new Mock<IBreakpointTracker>();
-            breakpointTracker.Setup(t => t.GoToBreakTarget(@"C:\MEHVE\JATO.s", BreakTargetSelector.NextBreakpoint)).Returns(new[] { 666u });
+            breakpointTracker.Setup(t => t.GoToBreakTarget(@"C:\MEHVE\JATO.s", BreakTargetSelector.NextBreakpoint))
+                .Returns(new[] { new BreakpointInfo(@"C:\MEHVE\JATO.s", 25u, 1, false), new BreakpointInfo(@"C:\MEHVE\JATO.s", 31u, 1, false) });
 
             var serviceProvider = new Mock<SVsServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
 
             var channel = new MockCommunicationChannel();
-            var sourceManager = new Mock<IProjectSourceManager>();
-            var actionLauncher = new ActionLauncher(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object,
-                codeEditor.Object, breakpointTracker.Object, serviceProvider.Object);
-            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, codeEditor.Object, breakpointTracker.Object);
+            var actionLauncher = new ActionLauncher(project, channel.Object, sourceManager.Object,
+                breakpointTracker.Object, serviceProvider.Object);
+            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, new Mock<IActionLogger>().Object, breakpointTracker.Object, sourceManager.Object);
 
             /* Set up server responses */
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata timestampFetch) =>
-                Assert.Equal(new[] { "/periphery/votw", "output-path" }, timestampFetch.FilePath));
+                Assert.Equal(new[] { "/periphery/votw", "watches-path" }, timestampFetch.FilePath));
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
-                Assert.Equal(@"-break-line 666:resume -source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
+                Assert.Equal(@"-source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
             });
-            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
+            channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100), Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "watches-path" }, watchesFetch.FilePath));
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Data = TestHelper.ReadFixtureBytes("DispatchParams.txt") }, (FetchResultRange dispatchParamsFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "dispatch-params-path" }, dispatchParamsFetch.FilePath));
-            channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") });
 
             /* Start debugging */
 
@@ -105,8 +106,9 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             Assert.Empty(packageErrors);
             Assert.NotNull(execCompletedEvent);
-            Assert.Equal(@"C:\MEHVE\JATO.s", execCompletedEvent.File);
-            Assert.Equal(666u, execCompletedEvent.Lines[0]);
+            Assert.Collection(execCompletedEvent.BreakInstances,
+                (i0) => Assert.Equal((@"C:\MEHVE\JATO.s", 25u), (i0.CallStack[0].SourcePath, i0.CallStack[0].SourceLine)),
+                (i1) => Assert.Equal((@"C:\MEHVE\JATO.s", 31u), (i1.CallStack[0].SourcePath, i1.CallStack[0].SourceLine)));
 
             sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
@@ -116,7 +118,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             Assert.Equal(64u, breakState.DispatchParameters.WaveSize);
             Assert.Equal(new[] { "a", "c", "tide", "tid", "lst", "lst[1]" }, breakState.Data.Watches.Keys);
 
-            breakLineTagger.Verify(t => t.OnExecutionCompleted(execCompletedEvent));
+            breakLineTagger.Verify(t => t.OnExecutionCompleted(sourceManager.Object, execCompletedEvent));
         }
     }
 }

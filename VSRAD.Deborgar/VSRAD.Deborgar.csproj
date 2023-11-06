@@ -63,16 +63,15 @@
     <Compile Include="AD7Enums.cs" />
     <Compile Include="AD7Events.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="DebugThread.cs" />
+    <Compile Include="DebugThreadFrame.cs" />
     <Compile Include="DebugEngine.cs" />
-    <Compile Include="EngineCallback.cs" />
     <Compile Include="IEngineIntegration.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="DebugProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Remote\RemotePort.cs" />
     <Compile Include="Remote\RemotePortSupplier.cs" />
     <Compile Include="Remote\RemoteProcess.cs" />
-    <Compile Include="SourceFileLineContext.cs" />
-    <Compile Include="StackFrame.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

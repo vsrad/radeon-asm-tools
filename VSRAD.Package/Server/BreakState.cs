@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
@@ -29,16 +30,13 @@ namespace VSRAD.Package.Server
         public BreakStateDispatchParameters DispatchParameters { get; }
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
-        /// FIXME: Break location should be parsed from debugger output as a map of instance to (file, line)
-        public string BreakFile { get; set; }
-
         public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters)
         {
             Data = breakStateData;
             DispatchParameters = dispatchParameters;
         }
 
-        public static Result<BreakState> CreateBreakState(string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData)
+        public static Result<BreakState> CreateBreakState(string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData, IReadOnlyList<BreakpointInfo> breakpoints)
         {
             var dwordsMatch = _watchDwordsRegex.Match(validWatchesString);
             var watches = new Dictionary<string, WatchMeta>();
@@ -67,13 +65,13 @@ While the actual contents are:
                 var dispatchLaneCount = dispatchParams.GridSizeX * dispatchParams.GridSizeY * dispatchParams.GridSizeZ;
                 var expectedDwordCount = dispatchLaneCount * dwordsPerLane;
                 if (outputFile.DwordCount != expectedDwordCount)
-                    return new Error($"Output file does not match the expected size.\r\n\r\n" +
+                    return new Error($"Debug data is invalid. Output file does not match the expected size.\r\n\r\n" +
                         $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
                         $"or {dispatchLaneCount} lanes in total. With {dwordsPerLane} DWORDs per lane, the output file is expected to be {expectedDwordCount} DWORDs long, " +
                         $"but the actual size is {outputFile.DwordCount} DWORDs.");
             }
 
-            var breakData = new BreakStateData(watches, (int)dwordsPerLane, outputFile, localOutputData);
+            var breakData = new BreakStateData(breakpoints, watches, (int)dwordsPerLane, outputFile, localOutputData);
             return new BreakState(breakData, dispatchParams);
         }
 

@@ -44,18 +44,13 @@ namespace VSRAD.Package.DebugVisualizer
                 foreach (var row in invalidatedRows)
                     SetRowContentsFromBreakState(row);
             };
-            _table.BreakpointLocationRequested += (uint threadId, ref string file, ref uint line) =>
+            _table.BreakpointInfoRequested += (uint threadId, ref BreakpointInfo breakpointInfo) =>
             {
                 var waveId = threadId / _context.Options.DebuggerOptions.WaveSize;
-                if (_context.BreakData != null && waveId < _context.BreakData.WavesPerGroup)
-                {
-                    var system = _context.BreakData.GetSystemData((int)waveId);
-                    if (system[Server.BreakStateData.SystemMagicNumberLane] == _context.Options.VisualizerOptions.MagicNumber || !_context.Options.VisualizerOptions.CheckMagicNumber)
-                    {
-                        file = _context.BreakState.BreakFile;
-                        line = system[Server.BreakStateData.SystemBreakLineLane];
-                    }
-                }
+                if (_context.BreakData.TryGetGlobalSystemData(_context.BreakData.GroupIndex, (int)waveId, _context.BreakData.GroupSize, _context.BreakData.WaveSize, out var magicNumber, out var breakpointId, out _))
+                    if (magicNumber == _context.Options.VisualizerOptions.MagicNumber || !_context.Options.VisualizerOptions.CheckMagicNumber)
+                        if (breakpointId < _context.BreakData.Breakpoints.Count)
+                            breakpointInfo = _context.BreakData.Breakpoints[(int)breakpointId];
             };
             _table.BreakpointNavigationRequested += integration.OpenFileInEditor;
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
@@ -68,8 +63,8 @@ namespace VSRAD.Package.DebugVisualizer
             _context.GroupIndex.GoToGroup(e.GroupIndex);
             if (e.WaveIndex is uint waveIdx)
                 _table.GoToWave(waveIdx, _context.Options.DebuggerOptions.WaveSize);
-            if (e.BreakLine is uint breakLine)
-                _integration.OpenFileInEditor(_context.BreakState.BreakFile, breakLine);
+            if (e.Breakpoint is BreakpointInfo breakpoint)
+                _integration.OpenFileInEditor(breakpoint.File, breakpoint.Line);
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)

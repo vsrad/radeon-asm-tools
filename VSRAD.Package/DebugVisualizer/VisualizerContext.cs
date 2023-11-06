@@ -78,15 +78,19 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void EnterBreak(object sender, BreakState breakState)
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             BreakState = breakState;
             if (breakState != null)
             {
                 GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
+                VSPackage.VisualizerToolWindow?.BringToFront();
             }
             else
             {
                 Status = "Run failed, see the Output window for more details";
                 Wavemap = null;
+                WatchDataValid = false;
             }
             WavemapSelection = null;
         }
@@ -115,8 +119,11 @@ namespace VSRAD.Package.DebugVisualizer
                 GroupIndexEditable = true;
             }
             WatchDataValid = e.IsGroupIndexValid;
-            Wavemap = new Wavemap.WavemapView((uint groupIndex, uint waveIndex, out uint[] systemData) =>
-                BreakData.TryGetGlobalSystemData((int)groupIndex, (int)waveIndex, (int)Options.DebuggerOptions.GroupSize, (int)Options.DebuggerOptions.WaveSize, out systemData));
+            Wavemap = new Wavemap.WavemapView(
+                () => BreakData.Breakpoints,
+                (uint groupIndex, uint waveIndex, out uint magicNumber, out uint breakpointId, out ulong execMask) =>
+                    BreakData.TryGetGlobalSystemData(
+                        (int)groupIndex, (int)waveIndex, (int)Options.DebuggerOptions.GroupSize, (int)Options.DebuggerOptions.WaveSize, out magicNumber, out breakpointId, out execMask));
             Status = FormatBreakStatusString(BreakState, Options.DebuggerOptions);
         }
 

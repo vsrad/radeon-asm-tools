@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
@@ -61,7 +62,7 @@ namespace VSRAD.Package
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var vsMonitorSelection = (IVsMonitorSelection)await GetServiceAsync(typeof(IVsMonitorSelection));
-            var dte = (DTE)await GetServiceAsync(typeof(DTE));
+            var dte = (DTE2)await GetServiceAsync(typeof(DTE));
             _solutionManager = new SolutionManager(vsMonitorSelection);
             _solutionManager.ProjectLoaded += (s, e) => ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => ProjectLoadedAsync(s, e));
 

@@ -36,7 +36,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;VS2019</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>
@@ -47,7 +47,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;VS2019</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
@@ -241,12 +241,12 @@
     <Compile Include="Utils\MruCollection.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\VsEditor.cs" />
+    <Compile Include="Utils\VsEditorView.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Options\ProfileOptions.cs" />
     <Compile Include="Options\ProjectOptions.cs" />
-    <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
     <Compile Include="ProjectSystem\Macros\DirtyProfileMacroEditor.cs" />
     <Compile Include="ProjectSystem\OutputWindow.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">

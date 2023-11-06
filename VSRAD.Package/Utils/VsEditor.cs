@@ -1,5 +1,4 @@
-﻿using EnvDTE;
-using Microsoft;
+﻿using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
@@ -13,43 +12,22 @@ namespace VSRAD.Package.Utils
 {
     public static class VsEditor
     {
-        public static void NavigateToFileAndLine(IServiceProvider serviceProvider, string documentPath, uint line)
+        public static IEnumerable<IVsTextLineMarker> GetTextLineMarkersOfType(IVsTextBuffer textBuffer, int type)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-
-            var dte = serviceProvider.GetService(typeof(DTE)) as DTE;
-            Assumes.Present(dte);
-
-            dte.ItemOperations.OpenFile(documentPath);
-
-            var document = (TextDocument)dte.ActiveDocument.Object("TextDocument");
-            var editPoint = document.StartPoint.CreateEditPoint();
-            editPoint.MoveToLineAndOffset((int)line + 1, 1);
-            editPoint.TryToShow(vsPaneShowHow.vsPaneShowCentered);
-        }
-
-        public static IEnumerable<IVsTextLineMarker> GetLineMarkersOfTypeInActiveView(IServiceProvider serviceProvider, int type)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
-            var textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
-            Assumes.Present(textManager);
-
-            textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-            activeView.GetBuffer(out var linesBuffer);
-            linesBuffer.EnumMarkers(0, 0, 0, 0, type, (uint)ENUMMARKERFLAGS.EM_ENTIREBUFFER, out var markersEnum);
-
+            ((IVsTextLines)textBuffer).EnumMarkers(0, 0, 0, 0, type, (uint)ENUMMARKERFLAGS.EM_ENTIREBUFFER, out var markersEnum);
             markersEnum.GetCount(out int markerCount);
             var markers = new IVsTextLineMarker[markerCount];
             for (int i = 0; i < markerCount; ++i)
-            {
-                markersEnum.Next(out var m);
-                markers[i] = m;
-            }
+                markersEnum.Next(out markers[i]);
             return markers;
         }
 
+#if VS2019
         private static readonly Type _sVsWindowManagerType = Type.GetType("Microsoft.Internal.VisualStudio.Shell.Interop.SVsWindowManager, Microsoft.VisualStudio.Platform.WindowManagement");
+#else
+        private static readonly Type _sVsWindowManagerType = Type.GetType("Microsoft.Internal.VisualStudio.Shell.Interop.SVsWindowManager, Microsoft.VisualStudio.Interop");
+#endif
         private static readonly Type _viewManagerType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.ViewManager, Microsoft.VisualStudio.Shell.ViewManager");
         private static readonly Type _viewDockOperationsType = Type.GetType("Microsoft.VisualStudio.PlatformUI.Shell.DockOperations, Microsoft.VisualStudio.Shell.ViewManager");
 
@@ -67,11 +45,6 @@ namespace VSRAD.Package.Utils
                 Assumes.Present(vsUIShellOpenDocument);
                 ErrorHandler.ThrowOnFailure(vsUIShellOpenDocument.OpenDocumentViaProject(path, Guid.Empty, out _, out _, out _, out var newDocumentFrame));
 
-                if (line is uint caretLine)
-                    ErrorHandler.ThrowOnFailure(VsShellUtilities.GetTextView(newDocumentFrame).SetCaretPos((int)caretLine, 0));
-                else if (!string.IsNullOrEmpty(lineMarker))
-                    SetCaretAtLineMarker(newDocumentFrame, lineMarker);
-
                 if (forceOppositeTab && originalDocumentFrame != null && originalDocumentFrame != newDocumentFrame)
                     MoveToOppositeTab(newDocumentFrame, originalDocumentFrame, preserveActiveDoc);
 
@@ -79,6 +52,17 @@ namespace VSRAD.Package.Utils
                     ErrorHandler.ThrowOnFailure(newDocumentFrame.ShowNoActivate());
                 else
                     ErrorHandler.ThrowOnFailure(newDocumentFrame.Show());
+
+                if (line is uint caretLine)
+                {
+                    var textView = VsShellUtilities.GetTextView(newDocumentFrame);
+                    ErrorHandler.ThrowOnFailure(textView.SetCaretPos((int)caretLine, 0));
+                    ErrorHandler.ThrowOnFailure(textView.CenterLines((int)caretLine, 1));
+                }
+                else if (!string.IsNullOrEmpty(lineMarker))
+                {
+                    SetCaretAtLineMarker(newDocumentFrame, lineMarker);
+                }
             }
             catch (Exception e)
             {

@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.ProjectSystem.Properties;
@@ -46,7 +47,7 @@ namespace VSRAD.Package.ProjectSystem
 
         // VS can load our extension after opening a solution (and raising OnElementValueChanged),
         // so we need to check the startup project manually after the extension is loaded
-        public void LoadCurrentSolution(DTE dte)
+        public void LoadCurrentSolution(DTE2 dte)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             if (dte.Solution is Solution sln && sln.SolutionBuild.StartupProjects is Array sp && sp.GetValue(0) is string startupProject)

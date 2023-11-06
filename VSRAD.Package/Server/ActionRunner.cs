@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Shell;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +15,22 @@ using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.Server
 {
+    public sealed class ActionEnvironment
+    {
+        public string LocalWorkDir { get; }
+        public string RemoteWorkDir { get; }
+        public IReadOnlyList<string> Watches { get; }
+        public Result<IReadOnlyList<BreakpointInfo>> BreakTargets { get; }
+
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<IReadOnlyList<BreakpointInfo>> breakTargets = null)
+        {
+            LocalWorkDir = localWorkDir;
+            RemoteWorkDir = remoteWorkDir;
+            Watches = watches ?? Array.Empty<string>();
+            BreakTargets = breakTargets ?? Array.Empty<BreakpointInfo>();
+        }
+    }
+
     public sealed class ActionRunner
     {
         private readonly ICommunicationChannel _channel;
@@ -57,6 +74,9 @@ namespace VSRAD.Package.Server
                     case RunActionStep runAction:
                         result = await DoRunActionAsync(runAction, continueOnError);
                         break;
+                    case WriteDebugTargetStep writeDebugTarget:
+                        result = await DoWriteDebugTargetAsync(writeDebugTarget);
+                        break;
                     case ReadDebugDataStep readDebugData:
                         result = await DoReadDebugDataAsync(readDebugData);
                         break;
@@ -82,9 +102,9 @@ namespace VSRAD.Package.Server
                 var command = new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, step.SourcePath } };
                 var response = await _channel.SendWithReplyAsync<ResultRangeFetched>(command);
                 if (response.Status == FetchStatus.FileNotFound)
-                    return new StepResult(false, $"File is not found on the remote machine at {step.SourcePath}", "");
+                    return new StepResult(false, $"Data is missing. File is not found on the remote machine at {step.SourcePath}", "");
                 if (step.CheckTimestamp && initTimestamp == response.Timestamp)
-                    return new StepResult(false, $"File is not changed on the remote machine at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                    return new StepResult(false, $"Data is stale. File was not modified on the remote machine at {step.SourcePath}", "");
                 sourceContents = response.Data;
             }
             else
@@ -92,7 +112,7 @@ namespace VSRAD.Package.Server
                 if (!ReadLocalFile(step.SourcePath, out sourceContents, out var error))
                     return new StepResult(false, error, "");
                 if (step.CheckTimestamp && initTimestamp == GetLocalFileTimestamp(step.SourcePath))
-                    return new StepResult(false, $"File is not changed at {step.SourcePath}. Disable Check Timestamp in step options to skip the modification date check", "");
+                    return new StepResult(false, $"Data is stale. File was not modified on the local machine at {step.SourcePath}", "");
             }
             /* Write target file */
             if (step.Direction == FileCopyDirection.LocalToRemote)
@@ -106,20 +126,8 @@ namespace VSRAD.Package.Server
             }
             else
             {
-                try
-                {
-                    var localPath = Path.Combine(_environment.LocalWorkDir, step.TargetPath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(localPath));
-                    File.WriteAllBytes(localPath, sourceContents);
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return new StepResult(false, $"Access to path {step.TargetPath} on the local machine is denied", "");
-                }
-                catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
-                {
-                    return new StepResult(false, $"Local path contains illegal characters: \"{step.TargetPath}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"", "");
-                }
+                if (!WriteLocalFile(step.TargetPath, sourceContents, out var error))
+                    return new StepResult(false, error, "");
             }
 
             return new StepResult(true, "", "");
@@ -176,7 +184,8 @@ namespace VSRAD.Package.Server
         private async Task<StepResult> DoOpenInEditorAsync(OpenInEditorStep step)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            VsEditor.OpenFileInEditor(_serviceProvider, step.Path, null, step.LineMarker,
+            var localPath = Path.Combine(_environment.LocalWorkDir, step.Path);
+            VsEditor.OpenFileInEditor(_serviceProvider, localPath, null, step.LineMarker,
                 _project.Options.DebuggerOptions.ForceOppositeTab, _project.Options.DebuggerOptions.PreserveActiveDoc);
             return new StepResult(true, "", "");
         }
@@ -187,8 +196,24 @@ namespace VSRAD.Package.Server
             return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
         }
 
+        private async Task<StepResult> DoWriteDebugTargetAsync(WriteDebugTargetStep step)
+        {
+            if (!_environment.BreakTargets.TryGetResult(out var breakpointList, out var error))
+                return new StepResult(false, error.Message, "");
+
+            var breakpointListJson = JsonConvert.SerializeObject(breakpointList, Formatting.Indented);
+            if (!WriteLocalFile(step.BreakpointListPath, Encoding.UTF8.GetBytes(breakpointListJson), out var errorString))
+                return new StepResult(false, errorString, "");
+            return new StepResult(true, "", "");
+        }
+
         private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
+            IReadOnlyList<BreakpointInfo> breakpointList;
+            {
+                if (!_environment.BreakTargets.TryGetResult(out breakpointList, out var error))
+                    return new StepResult(false, error.Message, "");
+            }
             string validWatchesString;
             {
                 var result = await ReadDebugDataFileAsync("Valid watches", step.WatchesFile.Path, step.WatchesFile.IsRemote(), step.WatchesFile.CheckTimestamp);
@@ -217,9 +242,9 @@ namespace VSRAD.Package.Server
                     var response = await _channel.SendWithReplyAsync<MetadataFetched>(new FetchMetadata { FilePath = fullPath, BinaryOutput = step.BinaryOutput });
 
                     if (response.Status == FetchStatus.FileNotFound)
-                        return new StepResult(false, $"Output file ({path}) could not be found.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is missing. Output file could not be found on the remote machine at {path}", "", breakState: null);
                     if (step.OutputFile.CheckTimestamp && response.Timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the remote machine at {path}", "", breakState: null);
 
                     var offset = step.BinaryOutput ? step.OutputOffset : step.OutputOffset * 4;
                     var dataDwordCount = Math.Max(0, (response.ByteCount - offset) / 4);
@@ -230,19 +255,18 @@ namespace VSRAD.Package.Server
                     var fullPath = new[] { _environment.LocalWorkDir, path };
                     var timestamp = GetLocalFileTimestamp(path);
                     if (step.OutputFile.CheckTimestamp && timestamp == initOutputTimestamp)
-                        return new StepResult(false, $"Output file ({path}) was not modified. Data may be stale.", "", breakState: null);
+                        return new StepResult(false, $"Debug data is stale. Output file was not modified by the debug action on the local machine at {path}", "", breakState: null);
 
                     var readOffset = step.BinaryOutput ? step.OutputOffset : 0;
                     if (!ReadLocalFile(path, out localOutputData, out var readError, readOffset))
-                        return new StepResult(false, "Output file could not be opened. " + readError, "", breakState: null);
+                        return new StepResult(false, "Debug data is missing. " + readError, "", breakState: null);
                     if (!step.BinaryOutput)
                         localOutputData = await TextDebuggerOutputParser.ReadTextOutputAsync(new MemoryStream(localOutputData), step.OutputOffset);
 
                     var dataDwordCount = localOutputData.Length / 4;
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
-
-                if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData).TryGetResult(out var breakState, out var error))
+                if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData, breakpointList).TryGetResult(out var breakState, out var error))
                     return new StepResult(true, "", "", breakState: breakState);
                 else
                     return new StepResult(false, error.Message, "", breakState: null);
@@ -258,18 +282,18 @@ namespace VSRAD.Package.Server
                     new FetchResultRange { FilePath = new[] { _environment.RemoteWorkDir, path } });
 
                 if (response.Status == FetchStatus.FileNotFound)
-                    return new Error($"{type} file ({path}) could not be found.");
+                    return new Error($"{type} data is missing. File could not be found on the remote machine at {path}");
                 if (checkTimestamp && response.Timestamp == initTimestamp)
-                    return new Error($"{type} file ({path}) was not modified.");
+                    return new Error($"{type} data is stale. File was not modified by the debug action on the remote machine at {path}");
 
                 return response.Data;
             }
             else
             {
                 if (checkTimestamp && GetLocalFileTimestamp(path) == initTimestamp)
-                    return new Error($"{type} file ({path}) was not modified.");
+                    return new Error($"{type} data is stale. File was not modified by the debug action on the local machine at {path}");
                 if (!ReadLocalFile(path, out var data, out var error))
-                    return new Error($"{type} file could not be opened. {error}");
+                    return new Error($"{type} data is missing. " + error);
                 return data;
             }
         }
@@ -299,17 +323,38 @@ namespace VSRAD.Package.Server
             }
             catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
             {
-                error = $"File {path} is not found on the local machine";
+                error = $"File is not found on the local machine at {path}";
             }
             catch (UnauthorizedAccessException)
             {
-                error = $"Access to path {path} on the local machine is denied";
+                error = $"Access is denied to local file at {path}";
             }
             catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
             {
                 error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
             }
             data = null;
+            return false;
+        }
+
+        private bool WriteLocalFile(string path, byte[] data, out string error)
+        {
+            try
+            {
+                var localPath = Path.Combine(_environment.LocalWorkDir, path);
+                Directory.CreateDirectory(Path.GetDirectoryName(localPath));
+                File.WriteAllBytes(localPath, data);
+                error = "";
+                return true;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                error = $"Access is denied to local file at {path}";
+            }
+            catch (ArgumentException e) when (e.Message == "Illegal characters in path.")
+            {
+                error = $"Local path contains illegal characters: \"{path}\"\r\nWorking directory: \"{_environment.LocalWorkDir}\"";
+            }
             return false;
         }
 

@@ -1,71 +1,70 @@
 ﻿using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System;
-using System.ComponentModel.Composition;
 using System.Text.RegularExpressions;
 
-namespace VSRAD.Package.ProjectSystem
+namespace VSRAD.Package.Utils
 {
-    public interface IActiveCodeEditor
+    public interface IEditorView
     {
-        string GetAbsoluteSourcePath();
-        uint GetCurrentLine();
+        string GetFilePath();
+        (uint Line, uint Column) GetCaretPos();
+        (uint FirstVisibleLine, uint VisibleLines) GetVerticalScrollWindow();
         string GetActiveWord(bool matchBrackets);
     }
 
-    [Export(typeof(IActiveCodeEditor))]
-    [AppliesTo(Constants.RadOrVisualCProjectCapability)]
-    public sealed class ActiveCodeEditor : IActiveCodeEditor
+    public sealed class VsEditorView : IEditorView
     {
-        public const string NoFilesOpenError = "No files open in the editor.";
+        private readonly IVsTextView _vsTextView;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
-        private readonly SVsServiceProvider _serviceProvider;
-        private readonly ITextDocumentFactoryService _textDocumentService;
-
-        // this regex matches words like `\vargs` without indices like [0]
+        // Match words like `\vargs` without indices like [0]
         private static readonly Regex _activeWordWithoutBracketsRegex = new Regex(@"[\w\\$]*", RegexOptions.Compiled | RegexOptions.Singleline);
-        // this regex find matches like `\vargs[kernarg_1:kernarg_2]`
+        // Match words like `\vargs[kernarg_1:kernarg_2]`
         private static readonly Regex _activeWordWithBracketsRegex = new Regex(@"[\w\\$]*\[[^\[\]]*\]", RegexOptions.Compiled | RegexOptions.Singleline);
-        // this regex find empty brackets
+        // Match empty brackets
         private static readonly Regex _emptyBracketsRegex = new Regex(@"\[\s*\]", RegexOptions.Compiled);
 
-        [ImportingConstructor]
-        public ActiveCodeEditor(SVsServiceProvider serviceProvider, ITextDocumentFactoryService textDocumentService)
+        public VsEditorView(IVsTextView vsTextView, ITextDocumentFactoryService textDocumentFactoryService)
         {
-            _serviceProvider = serviceProvider;
-            _textDocumentService = textDocumentService;
+            _vsTextView = vsTextView;
+            _textDocumentFactoryService = textDocumentFactoryService;
         }
 
-        string IActiveCodeEditor.GetAbsoluteSourcePath()
+        public string GetFilePath()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            var textBuffer = GetTextViewFromVsTextView(GetActiveTextView()).TextBuffer;
-            _textDocumentService.TryGetTextDocument(textBuffer, out var document);
+            var textBuffer = GetTextViewFromVsTextView(_vsTextView).TextBuffer;
+            Assumes.True(_textDocumentFactoryService.TryGetTextDocument(textBuffer, out var document));
             return document.FilePath;
         }
 
-        uint IActiveCodeEditor.GetCurrentLine()
+        public (uint Line, uint Column) GetCaretPos()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            GetActiveTextView().GetCaretPos(out var line, out _);
-            return (uint)line;
+            ErrorHandler.ThrowOnFailure(_vsTextView.GetCaretPos(out var line, out var column));
+            return ((uint)line, (uint)column);
         }
 
-        string IActiveCodeEditor.GetActiveWord(bool matchBrackets)
+        public (uint FirstVisibleLine, uint VisibleLines) GetVerticalScrollWindow()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            GetActiveTextView().GetSelectedText(out var activeWord);
+            ErrorHandler.ThrowOnFailure(_vsTextView.GetScrollInfo(1/*SB_VERT*/, out _, out _, out var visibleLines, out var firstVisibleLine));
+            return ((uint)firstVisibleLine, (uint)visibleLines);
+        }
+
+        public string GetActiveWord(bool matchBrackets)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            ErrorHandler.ThrowOnFailure(_vsTextView.GetSelectedText(out var activeWord));
             if (activeWord.Length == 0)
             {
-                var wpfTextView = GetTextViewFromVsTextView(GetActiveTextView());
-                activeWord = GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition,
-                    matchBrackets);
+                var wpfTextView = GetTextViewFromVsTextView(_vsTextView);
+                activeWord = GetWordOnPosition(wpfTextView.TextBuffer, wpfTextView.Caret.Position.BufferPosition, matchBrackets);
             }
             return activeWord.Trim();
         }
@@ -115,16 +114,6 @@ namespace VSRAD.Package.ProjectSystem
 
             var word = lineText.Substring(indexStart, indexEnd - indexStart);
             return word;
-        }
-
-        private IVsTextView GetActiveTextView()
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            var textManager = _serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
-            Assumes.Present(textManager);
-
-            textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-            return activeView ?? throw new InvalidOperationException(NoFilesOpenError);
         }
 
         private static IWpfTextView GetTextViewFromVsTextView(IVsTextView view)

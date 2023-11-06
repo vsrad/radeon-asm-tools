@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 my $dwords_per_lane = 7;
-my @instance_lines = (123, 456);
+my @instance_breakpoint_ids = (0, 1);
 
 open my $params_fh, '<', 'DispatchParams.txt' or die;
 read $params_fh, my $params, -s $params_fh;
@@ -22,7 +22,7 @@ for (my $gid = 0; $gid < $n_groups; $gid++) {
             $buf_data[$buf_offset + 0] = 0x77777777;
         }
         elsif ($tid % $wave_size == 1) {
-            $buf_data[$buf_offset + 0] = $instance_lines[$instance];
+            $buf_data[$buf_offset + 0] = $instance_breakpoint_ids[$instance];
         }
         elsif ($tid % $wave_size == 2) {
             $buf_data[$buf_offset + 0] = $instance;

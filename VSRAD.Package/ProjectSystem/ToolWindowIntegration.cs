@@ -64,7 +64,7 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
             if (_sliceVisualizerContext == null)
             {
-                var dte = (EnvDTE.DTE)_serviceProvider.GetService(typeof(EnvDTE.DTE));
+                var dte = (EnvDTE80.DTE2)_serviceProvider.GetService(typeof(EnvDTE.DTE));
                 Assumes.Present(dte);
                 var dteEvents = (EnvDTE80.Events2)dte.Events;
 

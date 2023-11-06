@@ -58,8 +58,9 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 new[] { "a", "tid", "c", "c[1]", "c[1][1]", "c[1][1][1]", "lst" }.Select(w => new Watch(w, new VariableType(VariableCategory.Uint, 32)))));
 
             var debugData = TestHelper.ReadFixtureBytes("DebugBuffer.bin");
+            var breakpoints = Array.Empty<BreakpointInfo>();
             Assert.True(BreakState.CreateBreakState(TestHelper.ReadFixture("ValidWatches.txt"), TestHelper.ReadFixture("DispatchParams.txt"),
-                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData).TryGetResult(out var breakState, out _));
+                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, breakpoints).TryGetResult(out var breakState, out _));
 
             vis.EnterBreak(breakState);
             vis.Context.GroupIndex.X = 13;

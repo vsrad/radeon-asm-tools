@@ -20,7 +20,7 @@ namespace VSRAD.Deborgar.Remote
                 ProcessIdType = (uint)enum_AD_PROCESS_ID.AD_PROCESS_ID_GUID,
                 guidProcessId = _id
             };
-            Program = new Program(this);
+            Program = new DebugProgram(this);
         }
 
         int IDebugProcess2.GetInfo(enum_PROCESS_INFO_FIELDS fields, PROCESS_INFO[] pProcessInfo)

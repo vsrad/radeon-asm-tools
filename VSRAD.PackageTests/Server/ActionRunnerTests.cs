@@ -1,5 +1,4 @@
 ﻿using Moq;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -69,14 +68,14 @@ namespace VSRAD.PackageTests.Server
             var result = await runner.RunAsync("HTMT", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("File is not found on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
+            Assert.Equal("Data is missing. File is not found on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) }); // init timestamp fetch
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100) });
             result = await runner.RunAsync("HTMT", steps, false);
             Assert.False(result.Successful);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("File is not changed on the remote machine at /home/mizu/machete/key3_49. Disable Check Timestamp in step options to skip the modification date check", result.StepResults[0].Warning);
+            Assert.Equal("Data is stale. File was not modified on the remote machine at /home/mizu/machete/key3_49", result.StepResults[0].Warning);
         }
 
         [Fact]
@@ -111,7 +110,7 @@ namespace VSRAD.PackageTests.Server
 
             var result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal($"Access to path {file} on the local machine is denied", result.StepResults[0].Warning);
+            Assert.Equal($"Access is denied to local file at {file}", result.StepResults[0].Warning);
 
             file = @"C:\Users\mizu*~*\raw >_<";
             steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, SourcePath = "raw3", TargetPath = file } };
@@ -159,13 +158,13 @@ namespace VSRAD.PackageTests.Server
             var steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = localPath, TargetPath = "", CheckTimestamp = true } };
             var result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal($@"File is not changed at {localPath}. Disable Check Timestamp in step options to skip the modification date check", result.StepResults[0].Warning);
+            Assert.Equal($@"Data is stale. File was not modified on the local machine at {localPath}", result.StepResults[0].Warning);
 
             var nonexistentPath = @"C:\Non\Existent\Path\To\Users\mizu\raw3";
             steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = nonexistentPath, TargetPath = "", CheckTimestamp = true } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal(@"File C:\Non\Existent\Path\To\Users\mizu\raw3 is not found on the local machine", result.StepResults[0].Warning);
+            Assert.Equal(@"File is not found on the local machine at C:\Non\Existent\Path\To\Users\mizu\raw3", result.StepResults[0].Warning);
 
             var lockedPath = Path.GetTempFileName();
             var acl = File.GetAccessControl(lockedPath);
@@ -175,7 +174,7 @@ namespace VSRAD.PackageTests.Server
             steps = new List<IActionStep> { new CopyFileStep { Direction = FileCopyDirection.LocalToRemote, SourcePath = lockedPath, TargetPath = "" } };
             result = await runner.RunAsync("HTMT", steps);
             Assert.False(result.Successful);
-            Assert.Equal($"Access to path {lockedPath} on the local machine is denied", result.StepResults[0].Warning);
+            Assert.Equal($"Access is denied to local file at {lockedPath}", result.StepResults[0].Warning);
             File.Delete(lockedPath);
 
             var illegalPath = @"C:\Users\mizu\raw *~* >_<";
@@ -367,6 +366,36 @@ namespace VSRAD.PackageTests.Server
             Assert.Null(result.StepResults[1].SubAction);
         }
 
+
+        [Fact]
+        public async Task WriteDebugTargetStepTestAsync()
+        {
+            var breakpointListFile = Path.GetTempFileName();
+            var steps = new List<IActionStep> { new WriteDebugTargetStep { BreakpointListPath = breakpointListFile } };
+            var breakpoints = new[] { new BreakpointInfo("C:\\Source.s", 139, 313, false), new BreakpointInfo("C:\\Include.s", 0, 1, true) };
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", breakTargets: breakpoints), _project);
+            var result = await runner.RunAsync("Debug", steps);
+
+            Assert.True(result.Successful);
+            Assert.Equal("", result.StepResults[0].Warning);
+
+            var breakpointListJson = File.ReadAllText(breakpointListFile);
+            Assert.Equal(@"[
+  {
+    ""File"": ""C:\\Source.s"",
+    ""Line"": 139,
+    ""HitCountTarget"": 313,
+    ""Resume"": 0
+  },
+  {
+    ""File"": ""C:\\Include.s"",
+    ""Line"": 0,
+    ""HitCountTarget"": 1,
+    ""Resume"": 1
+  }
+]", breakpointListJson);
+        }
+
         #region ReadDebugDataStep
         [Fact]
         public async Task ReadDebugDataRemoteTestAsync()
@@ -430,7 +459,7 @@ namespace VSRAD.PackageTests.Server
 
             var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("Valid watches file (remote/watches) could not be found.", result.StepResults[0].Warning);
+            Assert.Equal("Valid watches data is missing. File could not be found on the remote machine at remote/watches", result.StepResults[0].Warning);
 
             /* File not changed */
 
@@ -441,7 +470,7 @@ namespace VSRAD.PackageTests.Server
 
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal("Valid watches file (remote/watches) was not modified.", result.StepResults[0].Warning);
+            Assert.Equal("Valid watches data is stale. File was not modified by the debug action on the remote machine at remote/watches", result.StepResults[0].Warning);
 
             /* Wrong output file size */
 
@@ -456,7 +485,7 @@ namespace VSRAD.PackageTests.Server
 
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal(@"Output file does not match the expected size.
+            Assert.Equal(@"Debug data is invalid. Output file does not match the expected size.
 
 Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 7 DWORDs per lane, the output file is expected to be 114688 DWORDs long, but the actual size is 16384 DWORDs.",
 result.StepResults[0].Warning);
@@ -530,7 +559,7 @@ result.StepResults[0].Warning);
 
             var result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file ({outputFileName}) was not modified. Data may be stale.", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is stale. Output file was not modified by the debug action on the local machine at {outputFileName}", result.StepResults[0].Warning);
 
             /* Access denied */
 
@@ -541,21 +570,21 @@ result.StepResults[0].Warning);
             ((ReadDebugDataStep)steps[0]).OutputFile.CheckTimestamp = false;
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. Access to path {outputFileName} on the local machine is denied", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is missing. Access is denied to local file at {outputFileName}", result.StepResults[0].Warning);
 
             /* File not found */
 
             File.Delete(outputFile);
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. File {outputFileName} is not found on the local machine", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is missing. File is not found on the local machine at {outputFileName}", result.StepResults[0].Warning);
 
             /* Invalid path */
 
             ((ReadDebugDataStep)steps[0]).OutputFile.Path += "<>";
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal($"Output file could not be opened. Local path contains illegal characters: \"{outputFileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
+            Assert.Equal($"Debug data is missing. Local path contains illegal characters: \"{outputFileName}<>\"\r\nWorking directory: \"{Path.GetTempPath()}\"", result.StepResults[0].Warning);
 
             /* Wrong output file size */
 
@@ -565,7 +594,7 @@ result.StepResults[0].Warning);
             File.WriteAllBytes(outputFile, new byte[1024]);
             result = await runner.RunAsync("Debug", steps);
             Assert.False(result.StepResults[0].Successful);
-            Assert.Equal(@"Output file does not match the expected size.
+            Assert.Equal(@"Debug data is invalid. Output file does not match the expected size.
 
 Grid size as specified in the dispatch parameters file is (16384, 1, 1), or 16384 lanes in total. With 7 DWORDs per lane, the output file is expected to be 114688 DWORDs long, but the actual size is 256 DWORDs.",
 result.StepResults[0].Warning);

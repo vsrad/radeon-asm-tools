@@ -146,29 +146,4 @@ namespace VSRAD.Package.Options
         public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
         public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
     }
-
-    public readonly struct ActionEnvironment : IEquatable<ActionEnvironment>
-    {
-        public string LocalWorkDir { get; }
-        public string RemoteWorkDir { get; }
-        public ReadOnlyCollection<string> Watches { get; }
-
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir) :
-            this(localWorkDir, remoteWorkDir, new ReadOnlyCollection<string>(Array.Empty<string>()))
-        {
-        }
-
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir, ReadOnlyCollection<string> watches)
-        {
-            LocalWorkDir = localWorkDir;
-            RemoteWorkDir = remoteWorkDir;
-            Watches = watches;
-        }
-
-        public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;
-        public override bool Equals(object o) => o is ActionEnvironment env && Equals(env);
-        public override int GetHashCode() => (LocalWorkDir, RemoteWorkDir).GetHashCode();
-        public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
-        public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
-    }
 }

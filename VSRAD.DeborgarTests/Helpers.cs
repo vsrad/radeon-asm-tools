@@ -1,26 +1,23 @@
-﻿using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Debugger.Interop;
-using VSRAD.Deborgar;
-using Xunit;
+﻿using Microsoft.VisualStudio.Debugger.Interop;
+using Moq;
+using System;
 
 namespace VSRAD.DeborgarTests
 {
     static class Helpers
     {
-        public static void VerifyBreakFrameLocation(Program program, string expectedFile, uint expectedLine)
-        {
-            Assert.Equal(VSConstants.S_OK, program.EnumFrameInfo(enum_FRAMEINFO_FLAGS.FIF_ARGS_ALL, nRadix: 16, out var frameEnum));
-            var frameInfo = new FRAMEINFO[1];
-            uint fetched = 0;
-            Assert.Equal(VSConstants.S_OK, frameEnum.Next(1, frameInfo, ref fetched));
-            var frame = frameInfo[0].m_pFrame;
-            Assert.Equal(VSConstants.S_OK, frame.GetDocumentContext(out var context));
-            Assert.Equal(VSConstants.S_OK, context.GetName(default, out var documentName));
-            var position = new TEXT_POSITION[1];
-            Assert.Equal(VSConstants.S_OK, context.GetStatementRange(position, position));
+        public delegate int EventCallback(IDebugEngine2 pEngine, IDebugProcess2 pProcess, IDebugProgram2 pProgram,
+            IDebugThread2 pThread, IDebugEvent2 pEvent, ref Guid riidEvent, uint dwAttrib);
 
-            Assert.Equal(expectedFile, documentName);
-            Assert.Equal(expectedLine, position[0].dwLine);
+        public static Mock<IDebugEventCallback2> MakeCallbackMock(EventCallback callback)
+        {
+            var debugCallbackMock = new Mock<IDebugEventCallback2>();
+            debugCallbackMock
+                .Setup(cb => cb.Event(It.IsAny<IDebugEngine2>(), It.IsAny<IDebugProcess2>(),
+                    It.IsAny<IDebugProgram2>(), It.IsAny<IDebugThread2>(), It.IsAny<IDebugEvent2>(),
+                    ref It.Ref<Guid>.IsAny, It.IsAny<uint>()))
+                .Returns(callback);
+            return debugCallbackMock;
         }
     }
 }
