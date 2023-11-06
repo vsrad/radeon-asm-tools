@@ -32,7 +32,7 @@ namespace VSRAD.DeborgarTests
                     else if (!threadCreatedRaised)
                     {
                         Assert.IsType<AD7ThreadCreateEvent>(argEvent);
-                        Assert.Equal(AD7ThreadCreateEvent.GUID, argGuid);
+                        Assert.Equal(typeof(IDebugThreadCreateEvent2).GUID, argGuid);
                         debugThread = (DebugThread)argThread;
                         threadCreatedRaised = true;
                     }
@@ -41,12 +41,12 @@ namespace VSRAD.DeborgarTests
                         if (step)
                         {
                             Assert.IsType<AD7StepCompleteEvent>(argEvent);
-                            Assert.Equal(AD7StepCompleteEvent.GUID, argGuid);
+                            Assert.Equal(typeof(IDebugStepCompleteEvent2).GUID, argGuid);
                         }
                         else
                         {
                             Assert.IsType<AD7BreakCompleteEvent>(argEvent);
-                            Assert.Equal(AD7BreakCompleteEvent.GUID, argGuid);
+                            Assert.Equal(typeof(IDebugBreakEvent2).GUID, argGuid);
                         }
                         Assert.Equal(debugThread, argThread);
                         breakRaised = true;

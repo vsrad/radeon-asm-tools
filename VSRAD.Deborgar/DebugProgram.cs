@@ -29,9 +29,9 @@ namespace VSRAD.Deborgar
             _engineIntegration = engineIntegration;
             _engineIntegration.ExecutionCompleted += ExecutionCompleted;
 
-            SendAD7Event(new AD7EngineCreateEvent(ad7Engine), AD7EngineCreateEvent.GUID);
-            SendAD7Event(new AD7ProgramCreateEvent(), AD7ProgramCreateEvent.GUID);
-            SendAD7Event(new AD7LoadCompleteEvent(), AD7LoadCompleteEvent.GUID);
+            SendAD7Event(new AD7EngineCreateEvent(ad7Engine));
+            SendAD7Event(new AD7ProgramCreateEvent());
+            SendAD7Event(new AD7LoadCompleteEvent());
         }
 
         public void Execute(bool step)
@@ -45,7 +45,7 @@ namespace VSRAD.Deborgar
             _ad7Process.Terminate();
             _engineIntegration.ExecutionCompleted -= ExecutionCompleted;
             ClearBreakInstances();
-            SendAD7Event(new AD7ProgramDestroyEvent(), AD7ProgramDestroyEvent.GUID);
+            SendAD7Event(new AD7ProgramDestroyEvent());
             return VSConstants.S_OK;
         }
 
@@ -61,28 +61,28 @@ namespace VSRAD.Deborgar
             {
                 var thread = new DebugThread(this, instance.InstanceId, instance.CallStack);
                 _breakThreads.Add(thread);
-                SendAD7Event(new AD7ThreadCreateEvent(), AD7ThreadCreateEvent.GUID, thread);
+                SendAD7Event(new AD7ThreadCreateEvent(), thread);
             }
             // Must create all AD7 threads before sending break events
             foreach (var thread in _breakThreads)
             {
                 if (e.IsStepping)
-                    SendAD7Event(new AD7StepCompleteEvent(), AD7StepCompleteEvent.GUID, thread);
+                    SendAD7Event(new AD7StepCompleteEvent(), thread);
                 else
-                    SendAD7Event(new AD7BreakCompleteEvent(), AD7BreakCompleteEvent.GUID, thread);
+                    SendAD7Event(new AD7BreakCompleteEvent(), thread);
             }
         }
 
-        private void SendAD7Event(IDebugEvent2 eventObject, Guid eventGuid, IDebugThread2 ad7Thread = null)
+        private void SendAD7Event(AD7Event eventObject, IDebugThread2 ad7Thread = null)
         {
             ErrorHandler.ThrowOnFailure(eventObject.GetAttributes(out var attributes));
-            ErrorHandler.ThrowOnFailure(_ad7Callback.Event(_ad7Engine, _ad7Process, this, ad7Thread, eventObject, eventGuid, attributes));
+            ErrorHandler.ThrowOnFailure(_ad7Callback.Event(_ad7Engine, _ad7Process, this, ad7Thread, eventObject, eventObject.GUID, attributes));
         }
 
         private void ClearBreakInstances()
         {
             foreach (var oldInstance in _breakThreads)
-                SendAD7Event(new AD7ThreadDestroyEvent(), AD7ThreadDestroyEvent.GUID, oldInstance);
+                SendAD7Event(new AD7ThreadDestroyEvent(), oldInstance);
             _breakThreads.Clear();
         }
 

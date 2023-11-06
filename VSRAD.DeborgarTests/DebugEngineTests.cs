@@ -31,7 +31,7 @@ namespace VSRAD.DeborgarTests
                     if (!engineCreateRaised && !programCreateRaised && !loadCompleteRaised)
                     {
                         Assert.IsType<AD7EngineCreateEvent>(argEvent);
-                        Assert.Equal(AD7EngineCreateEvent.GUID, argGuid);
+                        Assert.Equal(typeof(IDebugEngineCreateEvent2).GUID, argGuid);
                         ((IDebugEngineCreateEvent2)argEvent).GetEngine(out var eventEngine);
                         Assert.Equal(engine, eventEngine);
                         engineCreateRaised = true;
@@ -39,13 +39,13 @@ namespace VSRAD.DeborgarTests
                     else if (engineCreateRaised && !programCreateRaised && !loadCompleteRaised)
                     {
                         Assert.IsType<AD7ProgramCreateEvent>(argEvent);
-                        Assert.Equal(AD7ProgramCreateEvent.GUID, argGuid);
+                        Assert.Equal(typeof(IDebugProgramCreateEvent2).GUID, argGuid);
                         programCreateRaised = true;
                     }
                     else if (engineCreateRaised && programCreateRaised && !loadCompleteRaised)
                     {
                         Assert.IsType<AD7LoadCompleteEvent>(argEvent);
-                        Assert.Equal(AD7LoadCompleteEvent.GUID, argGuid);
+                        Assert.Equal(typeof(IDebugLoadCompleteEvent2).GUID, argGuid);
                         loadCompleteRaised = true;
                     }
                     return VSConstants.S_OK;
