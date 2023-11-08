@@ -246,7 +246,9 @@
                                    Minimum="0" Step="1" Width="38" Height="24"/>
             </StackPanel>
             -->
-            <Label Content="{Binding Status, Mode=OneWay}" Height="26"/>
+            <Label Height="26">
+                <TextBlock Text="{Binding Status, Mode=OneWay}"/>
+            </Label>
         </WrapPanel>
         <Grid>
             <Grid.ColumnDefinitions>

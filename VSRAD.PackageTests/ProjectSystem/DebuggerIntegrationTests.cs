@@ -94,10 +94,10 @@ namespace VSRAD.PackageTests.ProjectSystem
             /* Start debugging */
 
             var tcs = new TaskCompletionSource<ExecutionCompletedEventArgs>();
-            BreakState breakState = null;
+            Result<BreakState> breakResult = null;
 
             debuggerIntegration.ExecutionCompleted += (s, e) => tcs.SetResult(e);
-            debuggerIntegration.BreakEntered += (s, e) => breakState = e;
+            debuggerIntegration.BreakEntered += (s, e) => breakResult = e;
 
             var engine = debuggerIntegration.RegisterEngine();
             engine.Execute(false);
@@ -112,7 +112,7 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
-            Assert.NotNull(breakState);
+            Assert.True(breakResult.TryGetResult(out var breakState, out _));
             Assert.Equal(16384u, breakState.DispatchParameters.GridSizeX);
             Assert.Equal(512u, breakState.DispatchParameters.GroupSizeX);
             Assert.Equal(64u, breakState.DispatchParameters.WaveSize);

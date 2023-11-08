@@ -7,6 +7,7 @@ using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
@@ -39,7 +40,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 Control = new VisualizerControl(ToolWindowIntegrationMock.Object, fontAndColorMock.Object);
             }
 
-            public void EnterBreak(BreakState breakState) => DebuggerMock.Raise(d => d.BreakEntered += null, null, breakState);
+            public void EnterBreak(Result<BreakState> breakResult) => DebuggerMock.Raise(d => d.BreakEntered += null, null, breakResult);
 
             public WatchNameCell GetNameCell(int rowIndex) => (WatchNameCell)Control.Table.Rows[rowIndex].Cells[VisualizerTable.NameColumnIndex];
 

@@ -76,23 +76,23 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void EnterBreak(object sender, BreakState breakState)
+        private void EnterBreak(object sender, Result<BreakState> breakResult)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-
-            BreakState = breakState;
-            if (breakState != null)
+            if (breakResult.TryGetResult(out var breakState, out var error))
             {
+                BreakState = breakState;
                 GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
-                VSPackage.VisualizerToolWindow?.BringToFront();
             }
             else
             {
-                Status = "Run failed, see the Output window for more details";
+                BreakState = null;
                 Wavemap = null;
                 WatchDataValid = false;
+                Status = error.Message;
             }
             WavemapSelection = null;
+            VSPackage.VisualizerToolWindow?.BringToFront();
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)

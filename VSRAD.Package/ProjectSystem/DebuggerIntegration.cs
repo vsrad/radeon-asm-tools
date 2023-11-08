@@ -4,7 +4,6 @@ using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
@@ -14,7 +13,7 @@ namespace VSRAD.Package.ProjectSystem
 {
     public interface IDebuggerIntegration : IEngineIntegration
     {
-        event EventHandler<BreakState> BreakEntered;
+        event EventHandler<Result<BreakState>> BreakEntered;
 
         bool TryCreateDebugSession();
         void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false);
@@ -24,7 +23,7 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class DebuggerIntegration : IDebuggerIntegration
     {
-        public event EventHandler<BreakState> BreakEntered;
+        public event EventHandler<Result<BreakState>> BreakEntered;
         public event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
 
         private readonly IProject _project;
@@ -91,10 +90,11 @@ namespace VSRAD.Package.ProjectSystem
 
         public void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false)
         {
-            Error? error = null;
-            var breakState = runResult?.BreakState;
+            ThreadHelper.ThrowIfNotOnUIThread();
+
+            Result<BreakState> breakResult;
             var breakInstances = new List<BreakInstance>();
-            if (breakState != null)
+            if (runResult?.BreakState is BreakState breakState)
             {
                 var waveSize = (int)(breakState.DispatchParameters?.WaveSize ?? _project.Options.DebuggerOptions.WaveSize);
                 var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
@@ -106,9 +106,14 @@ namespace VSRAD.Package.ProjectSystem
 
                 breakInstances.Sort((a, b) => a.InstanceId.CompareTo(b.InstanceId));
 
-                if (breakInstances.Count == 0)
-                    error = new Error("The following breakpoints were set but the program reached none:\n\n" +
-                        string.Join("\n", breakState.Data.Breakpoints.Select(b => "* " + b.Location)), critical: false, "No breakpoints hit");
+                if (breakInstances.Count > 0)
+                    breakResult = breakState;
+                else
+                    breakResult = new Error(breakState.Data.Breakpoints.Count == 1 ? $"Breakpoint not hit at {breakState.Data.Breakpoints[0].Location}" : "No breakpoints hit");
+            }
+            else
+            {
+                breakResult = new Error("Run failed, see the Output window for more details");
             }
 
             ExecutionCompletedEventArgs args;
@@ -134,12 +139,9 @@ namespace VSRAD.Package.ProjectSystem
                     // May throw an exception if no files are open in the editor
                     (errorPath, errorLine) = ("", 0u);
                 }
-                var dummyInstance = new BreakInstance(0, new[] { (error?.Title ?? "Error", errorPath, errorLine) });
+                var dummyInstance = new BreakInstance(0, new[] { ("Error", errorPath, errorLine) });
                 args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
             }
-
-            if (error is Error e)
-                Errors.Show(e);
 
             // Notify VS debugger that we stopped at a breakpoint, do this first so we can override debugger behavior in later events
             ExecutionCompleted?.Invoke(this, args);
@@ -149,8 +151,8 @@ namespace VSRAD.Package.ProjectSystem
                 var breakLocation = args.BreakInstances[0].CallStack[0];
                 _projectSourceManager.OpenDocument(breakLocation.SourcePath, breakLocation.SourceLine);
             }
-            // Notify Visualizer after navigating to the break line so the Visualizer window can becomes active
-            BreakEntered?.Invoke(this, breakState);
+            // Notify Visualizer after navigating to the break line so the Visualizer window can become active
+            BreakEntered?.Invoke(this, breakResult);
             // Finally, override VS debugger break line markers
             _breakLineTagger.OnExecutionCompleted(_projectSourceManager, args);
         }
