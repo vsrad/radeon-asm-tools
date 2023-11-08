@@ -8,6 +8,7 @@ using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -140,8 +141,17 @@ namespace VSRAD.Package.ProjectSystem
             if (error is Error e)
                 Errors.Show(e);
 
-            ExecutionCompleted?.Invoke(this, args); // Raise first to override debugger behavior in later events
+            // Notify VS debugger that we stopped at a breakpoint, do this first so we can override debugger behavior in later events
+            ExecutionCompleted?.Invoke(this, args);
+            // VS debugger (via ExecutionCompleted) will navigate to the break line when using F5, but for Rerun Debug and Reverse Debug we need to do it ourselves
+            if (args.IsSuccessful)
+            {
+                var breakLocation = args.BreakInstances[0].CallStack[0];
+                _projectSourceManager.OpenDocument(breakLocation.SourcePath, breakLocation.SourceLine);
+            }
+            // Notify Visualizer after navigating to the break line so the Visualizer window can becomes active
             BreakEntered?.Invoke(this, breakState);
+            // Finally, override VS debugger break line markers
             _breakLineTagger.OnExecutionCompleted(_projectSourceManager, args);
         }
 
