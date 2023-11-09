@@ -43,6 +43,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.Profile.General.LocalWorkDir = "local/dir";
             project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
             project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
+            project.Options.DebuggerOptions.EnableMultipleBreakpoints = true;
             project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableType(VariableCategory.Hex, 32)));
             project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableType(VariableCategory.Hex, 32)));
             project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableCategory.Hex, 32)));
@@ -66,8 +67,8 @@ namespace VSRAD.PackageTests.ProjectSystem
             var sourceManager = new Mock<IProjectSourceManager>();
             sourceManager.Setup(m => m.GetActiveEditorView()).Returns(activeEditor.Object);
             var breakpointTracker = new Mock<IBreakpointTracker>();
-            breakpointTracker.Setup(t => t.GoToBreakTarget(@"C:\MEHVE\JATO.s", BreakTargetSelector.NextBreakpoint))
-                .Returns(new[] { new BreakpointInfo(@"C:\MEHVE\JATO.s", 25u, 1, false), new BreakpointInfo(@"C:\MEHVE\JATO.s", 31u, 1, false) });
+            breakpointTracker.Setup(t => t.GetTarget(@"C:\MEHVE\JATO.s", BreakTargetSelector.Multiple))
+                .Returns(new BreakTarget(new[] { new BreakpointInfo(@"C:\MEHVE\JATO.s", 25u, 1, false), new BreakpointInfo(@"C:\MEHVE\JATO.s", 31u, 1, false) }, BreakTargetSelector.Multiple, "", 0, ""));
 
             var serviceProvider = new Mock<SVsServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
@@ -104,9 +105,10 @@ namespace VSRAD.PackageTests.ProjectSystem
 
             var execCompletedEvent = await tcs.Task;
 
+            Assert.True(execCompletedEvent.IsSuccessful);
             Assert.Empty(packageErrors);
             Assert.NotNull(execCompletedEvent);
-            Assert.Collection(execCompletedEvent.BreakInstances,
+            Assert.Collection(execCompletedEvent.BreakLocations,
                 (i0) => Assert.Equal((@"C:\MEHVE\JATO.s", 25u), (i0.CallStack[0].SourcePath, i0.CallStack[0].SourceLine)),
                 (i1) => Assert.Equal((@"C:\MEHVE\JATO.s", 31u), (i1.CallStack[0].SourcePath, i1.CallStack[0].SourceLine)));
 

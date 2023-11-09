@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Server
@@ -58,7 +57,6 @@ namespace VSRAD.Package.Server
 
     public sealed class BreakStateData
     {
-        public IReadOnlyList<BreakpointInfo> Breakpoints { get; }
         public IReadOnlyDictionary<string, WatchMeta> Watches { get; }
         public int DwordsPerLane { get; }
         public int NumThreadsInProgram { get; }
@@ -76,9 +74,8 @@ namespace VSRAD.Package.Server
 
         private static readonly Regex _watchIndexRegex = new Regex(@"\[(\d+)\]$", RegexOptions.Compiled);
 
-        public BreakStateData(IReadOnlyList<BreakpointInfo> breakpoints, IReadOnlyDictionary<string, WatchMeta> watches, int dwordsPerLane, BreakStateOutputFile file, byte[] localData = null)
+        public BreakStateData(IReadOnlyDictionary<string, WatchMeta> watches, int dwordsPerLane, BreakStateOutputFile file, byte[] localData = null)
         {
-            Breakpoints = breakpoints;
             Watches = watches;
             DwordsPerLane = dwordsPerLane;
             NumThreadsInProgram = file.DwordCount / dwordsPerLane;
@@ -130,9 +127,9 @@ namespace VSRAD.Package.Server
 
         public uint[] GetSystemData(int waveIndex) => GetWatchData(waveIndex, 0);
 
-        public bool TryGetGlobalSystemData(int groupIndex, int waveIndex, int groupSize, int waveSize, out uint magicNumber, out uint breakpointId, out ulong execMask)
+        public bool TryGetGlobalSystemData(int groupIndex, int waveIndex, int groupSize, int waveSize, out uint magicNumber, out uint instanceId, out ulong execMask)
         {
-            (magicNumber, breakpointId, execMask) = (0, 0, 0);
+            (magicNumber, instanceId, execMask) = (0, 0, 0);
 
             var wavesPerGroup = MathUtils.RoundUpQuotient(groupSize, waveSize);
             var groupCount = NumThreadsInProgram / MathUtils.RoundUpToMultiple(groupSize, waveSize);
@@ -143,35 +140,33 @@ namespace VSRAD.Package.Server
             var dataEnd = Math.Min((globalWaveIndex + 1) * waveSize * DwordsPerLane, _data.Length);
 
             var magicNumberOffset = dataStart + DwordsPerLane * SystemMagicNumberLane;
-            var breakpointIdOffset = dataStart + DwordsPerLane * SystemBreakpointIdLine;
+            var instanceIdOffset = dataStart + DwordsPerLane * SystemInstanceIdLane;
             var execLoOffset = dataStart + DwordsPerLane * SystemExecLoLane;
             var execHiOffset = dataStart + DwordsPerLane * SystemExecLoLane;
-            if (magicNumberOffset >= dataEnd || breakpointIdOffset >= dataEnd || execLoOffset >= dataEnd || execHiOffset >= dataEnd)
+            if (magicNumberOffset >= dataEnd || instanceIdOffset >= dataEnd || execLoOffset >= dataEnd || execHiOffset >= dataEnd)
                 return false;
 
-            (magicNumber, breakpointId, execMask) = (_data[magicNumberOffset], _data[breakpointIdOffset], (((ulong)_data[execHiOffset]) << 32) | _data[execLoOffset]);
+            (magicNumber, instanceId, execMask) = (_data[magicNumberOffset], _data[instanceIdOffset], (((ulong)_data[execHiOffset]) << 32) | _data[execLoOffset]);
             return true;
         }
 
-        public IEnumerable<uint> GetGlobalBreakpointIdsHit(int waveSize, uint? checkMagicNumber)
+        public ISet<uint> GetGlobalInstancesHit(int waveSize, uint? checkMagicNumber)
         {
-            var breakpointIdsHit = new HashSet<uint>();
-
+            var instanceIds = new HashSet<uint>();
             var stride = waveSize * DwordsPerLane;
-            var lanesRead = Math.Max(SystemMagicNumberLane, SystemBreakpointIdLine);
+            var (magicNumberOffset, instanceIdOffset) = (SystemMagicNumberLane * DwordsPerLane, SystemInstanceIdLane * DwordsPerLane);
+            var lanesRead = Math.Max(magicNumberOffset, instanceIdOffset);
             for (var offset = 0; offset + lanesRead < _data.Length; offset += stride)
             {
-                var (magicNumber, breakpointId) = (_data[offset + DwordsPerLane * SystemMagicNumberLane], _data[offset + DwordsPerLane * SystemBreakpointIdLine]);
+                var (magicNumber, instanceId) = (_data[offset + magicNumberOffset], _data[offset + instanceIdOffset]);
                 if (checkMagicNumber is uint expectedMagicNumber && expectedMagicNumber != magicNumber)
                     continue;
-                breakpointIdsHit.Add(breakpointId);
+                instanceIds.Add(instanceId);
             }
-
-            return breakpointIdsHit;
+            return instanceIds;
         }
 
         public const int SystemMagicNumberLane = 0;
-        public const int SystemBreakpointIdLine = 1;
         public const int SystemInstanceIdLane = 2;
         public const int SystemSccLane = 3;
         public const int SystemExecLoLane = 8;

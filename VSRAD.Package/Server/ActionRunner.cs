@@ -20,14 +20,14 @@ namespace VSRAD.Package.Server
         public string LocalWorkDir { get; }
         public string RemoteWorkDir { get; }
         public IReadOnlyList<string> Watches { get; }
-        public Result<IReadOnlyList<BreakpointInfo>> BreakTargets { get; }
+        public Result<BreakTarget> BreakTarget { get; }
 
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<IReadOnlyList<BreakpointInfo>> breakTargets = null)
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<BreakTarget> breakTarget = null)
         {
             LocalWorkDir = localWorkDir;
             RemoteWorkDir = remoteWorkDir;
             Watches = watches ?? Array.Empty<string>();
-            BreakTargets = breakTargets ?? Array.Empty<BreakpointInfo>();
+            BreakTarget = breakTarget ?? ProjectSystem.BreakTarget.Empty;
         }
     }
 
@@ -198,7 +198,7 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoWriteDebugTargetAsync(WriteDebugTargetStep step)
         {
-            if (!_environment.BreakTargets.TryGetResult(out var breakpointList, out var error))
+            if (!_environment.BreakTarget.TryGetResult(out var breakpointList, out var error))
                 return new StepResult(false, error.Message, "");
 
             var breakpointListJson = JsonConvert.SerializeObject(breakpointList, Formatting.Indented);
@@ -209,10 +209,10 @@ namespace VSRAD.Package.Server
 
         private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step)
         {
-            IReadOnlyList<BreakpointInfo> breakpointList;
+            BreakTarget breakTarget;
             {
-                if (!_environment.BreakTargets.TryGetResult(out breakpointList, out var error))
-                    return new StepResult(false, error.Message, "");
+                if (!_environment.BreakTarget.TryGetResult(out breakTarget, out var error))
+                    return new StepResult(false, error.Message, "", breakState: null);
             }
             string validWatchesString;
             {
@@ -266,7 +266,8 @@ namespace VSRAD.Package.Server
                     var dataDwordCount = localOutputData.Length / 4;
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
-                if (BreakState.CreateBreakState(validWatchesString, dispatchParamsString, outputFile, localOutputData, breakpointList).TryGetResult(out var breakState, out var error))
+                var breakStateResult = BreakState.CreateBreakState(breakTarget, validWatchesString, dispatchParamsString, outputFile, localOutputData);
+                if (breakStateResult.TryGetResult(out var breakState, out var error))
                     return new StepResult(true, "", "", breakState: breakState);
                 else
                     return new StepResult(false, error.Message, "", breakState: null);

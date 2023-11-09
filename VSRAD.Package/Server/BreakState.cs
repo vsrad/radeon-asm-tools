@@ -23,32 +23,39 @@ namespace VSRAD.Package.Server
 
     public sealed class BreakState
     {
-        private static readonly Regex _watchDwordsRegex = new Regex(@"Max items per instance including System watch: (?<dwords_per_lane>\d+)", RegexOptions.Compiled);
-        private static readonly Regex _watchInstanceRegex = new Regex(@"\s*(?:Instance (?<instance>\d+) (?:names: (?<instance_names>[^\r\n]*)|items: (?<instance_items>[^\r\n]*)))[\r\n]*", RegexOptions.Compiled);
+        private static readonly Regex _watchDwordsRegex =
+            new Regex(@"max items per instance including system watch: (?<dwords_per_lane>\d+)", RegexOptions.Compiled);
+        private static readonly Regex _watchInstancesRegex =
+            new Regex(@"\s*(?:instance (?<instance>\d+) (?:breakpoint: (?<instance_bp>[^\r\n]*)|watchnames: (?<instance_names>[^\r\n]*)|watchitems: (?<instance_items>[^\r\n]*)))[\r\n]*", RegexOptions.Compiled);
 
         public BreakStateData Data { get; }
         public BreakStateDispatchParameters DispatchParameters { get; }
+        public BreakTarget Target { get; }
+        /// <summary>Mapping of instance ids to indexes into the Target.Breakpoints list. Breakpoint indexes are guaranteed to be valid (within the breakpoint list bounds).</summary>
+        public IReadOnlyDictionary<uint, uint> BreakpointIndexPerInstance { get; }
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
-        public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters)
+        public BreakState(BreakStateData data, BreakStateDispatchParameters dispatchParameters, BreakTarget target, IReadOnlyDictionary<uint, uint> breakpointIndexPerInstance)
         {
-            Data = breakStateData;
+            Data = data;
             DispatchParameters = dispatchParameters;
+            Target = target;
+            BreakpointIndexPerInstance = breakpointIndexPerInstance;
         }
 
-        public static Result<BreakState> CreateBreakState(string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData, IReadOnlyList<BreakpointInfo> breakpoints)
+        public static Result<BreakState> CreateBreakState(BreakTarget breakTarget, string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData)
         {
             var dwordsMatch = _watchDwordsRegex.Match(validWatchesString);
-            var watches = new Dictionary<string, WatchMeta>();
-
-            if (!dwordsMatch.Success || !TryParseInstances(watches, validWatchesString))
+            var (watches, breakpoints) = (new Dictionary<string, WatchMeta>(), new Dictionary<uint, uint>());
+            if (!dwordsMatch.Success || !TryParseInstances(breakTarget, breakpoints, watches, validWatchesString))
                 return new Error($@"Could not read the valid watches file.
 
 The following is an example of the expected file contents:
 
-Max items per instance including System watch: 10
-Instance 0 names: a;b;c
-Instance 0 items: [1,[1,0,1,1],[1,[1,1],0,[1],[],1]]
+max items per instance including system watch: 10
+instance 0 breakpoint: 0
+Instance 0 watchnames: a;b;c
+Instance 0 watchitems: [1,[1,0,1,1],[1,[1,1],0,[1],[],1]]
 
 While the actual contents are:
 
@@ -71,14 +78,22 @@ While the actual contents are:
                         $"but the actual size is {outputFile.DwordCount} DWORDs.");
             }
 
-            var breakData = new BreakStateData(breakpoints, watches, (int)dwordsPerLane, outputFile, localOutputData);
-            return new BreakState(breakData, dispatchParams);
+            var breakData = new BreakStateData(watches, (int)dwordsPerLane, outputFile, localOutputData);
+            return new BreakState(breakData, dispatchParams, breakTarget, breakpoints);
         }
 
-        private static bool TryParseInstances(Dictionary<string, WatchMeta> watches, string validWatchesString)
+        private static bool TryParseInstances(BreakTarget breakTarget, Dictionary<uint, uint> breakpoints, Dictionary<string, WatchMeta> watches, string validWatchesString)
         {
-            foreach (var instance in _watchInstanceRegex.Matches(validWatchesString).Cast<Match>().GroupBy(m => uint.Parse(m.Groups["instance"].Value)))
+            foreach (var instance in _watchInstancesRegex.Matches(validWatchesString).Cast<Match>().GroupBy(m => uint.Parse(m.Groups["instance"].Value)))
             {
+                if (!(instance.FirstOrDefault(m => m.Groups["instance_bp"].Success) is Match mBreakpoint))
+                    return false;
+                if (!uint.TryParse(mBreakpoint.Groups["instance_bp"].Value, out var breakpointIdx))
+                    return false;
+
+                if (breakpointIdx < breakTarget.Breakpoints.Count)
+                    breakpoints[instance.Key] = breakpointIdx;
+
                 if (!(instance.FirstOrDefault(m => m.Groups["instance_names"].Success) is Match mNames && instance.FirstOrDefault(m => m.Groups["instance_items"].Success) is Match mItems))
                     return false;
                 if (!TryParseInstanceWatches(watches, instance.Key, mNames.Groups["instance_names"].Value, mItems.Groups["instance_items"].Value))

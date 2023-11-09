@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.ProjectSystem.EditorExtensions;
 using VSRAD.Package.Server;
@@ -59,7 +60,7 @@ namespace VSRAD.Package.ProjectSystem
 
             // When entering the debug mode, we always want to start from the first breakpoint. The current next break target
             // may be different, however, because the debug action may have been run in the edit mode, so we need to reset the state.
-            _breakpointTracker.ResetToFirstBreakTarget();
+            _breakpointTracker.ResetTargets();
             _breakLineTagger.RemoveBreakLineMarkers();
 
             DebugInProgress = true;
@@ -68,7 +69,7 @@ namespace VSRAD.Package.ProjectSystem
 
         public void DeregisterEngine()
         {
-            _breakpointTracker.ResetToFirstBreakTarget();
+            _breakpointTracker.ResetTargets();
             _breakLineTagger.RemoveBreakLineMarkers();
 
             DebugInProgress = false;
@@ -93,23 +94,33 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
 
             Result<BreakState> breakResult;
-            var breakInstances = new List<BreakInstance>();
+            var breakLocations = new List<BreakLocation>();
             if (runResult?.BreakState is BreakState breakState)
             {
+                var validBreakpoints = breakState.BreakpointIndexPerInstance.Values.Distinct().ToList();
+                _breakpointTracker.UpdateOnBreak(breakState.Target, validBreakpoints);
+
                 var waveSize = (int)(breakState.DispatchParameters?.WaveSize ?? _project.Options.DebuggerOptions.WaveSize);
                 var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
-                var breakpointIdsHit = breakState.Data.GetGlobalBreakpointIdsHit(waveSize, checkMagicNumber);
+                var instancesHit = breakState.Data.GetGlobalInstancesHit(waveSize, checkMagicNumber);
+                foreach (var instanceId in instancesHit)
+                {
+                    if (breakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out var breakpointIdx) &&
+                        breakpointIdx < breakState.Target.Breakpoints.Count &&
+                        !breakLocations.Exists(i => i.LocationId == breakpointIdx))
+                    {
+                        var breakpoint = breakState.Target.Breakpoints[(int)breakpointIdx];
+                        breakLocations.Add(new BreakLocation(breakpointIdx, new[] { ("", breakpoint.File, breakpoint.Line) }));
+                    }
+                }
 
-                foreach (var breakpointId in breakpointIdsHit)
-                    if (breakpointId < breakState.Data.Breakpoints.Count && breakState.Data.Breakpoints[(int)breakpointId] is BreakpointInfo breakpoint)
-                        breakInstances.Add(new BreakInstance(breakpointId, new[] { ("", breakpoint.File, breakpoint.Line) }));
+                breakLocations.Sort((a, b) => a.LocationId.CompareTo(b.LocationId));
 
-                breakInstances.Sort((a, b) => a.InstanceId.CompareTo(b.InstanceId));
-
-                if (breakInstances.Count > 0)
+                if (breakLocations.Count > 0)
                     breakResult = breakState;
                 else
-                    breakResult = new Error(breakState.Data.Breakpoints.Count == 1 ? $"Breakpoint not hit at {breakState.Data.Breakpoints[0].Location}" : "No breakpoints hit");
+                    breakResult = new Error(validBreakpoints.Count == 1 ?
+                        $"Breakpoint not hit at {breakState.Target.Breakpoints[(int)validBreakpoints[0]].Location}" : "No breakpoints hit");
             }
             else
             {
@@ -117,9 +128,9 @@ namespace VSRAD.Package.ProjectSystem
             }
 
             ExecutionCompletedEventArgs args;
-            if (breakInstances.Count > 0)
+            if (breakLocations.Count > 0)
             {
-                args = new ExecutionCompletedEventArgs(breakInstances, isStepping, isSuccessful: true);
+                args = new ExecutionCompletedEventArgs(breakLocations, isStepping, isSuccessful: true);
             }
             else
             {
@@ -139,7 +150,7 @@ namespace VSRAD.Package.ProjectSystem
                     // May throw an exception if no files are open in the editor
                     (errorPath, errorLine) = ("", 0u);
                 }
-                var dummyInstance = new BreakInstance(0, new[] { ("Error", errorPath, errorLine) });
+                var dummyInstance = new BreakLocation(0, new[] { ("Error", errorPath, errorLine) });
                 args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
             }
 
@@ -148,7 +159,7 @@ namespace VSRAD.Package.ProjectSystem
             // VS debugger (via ExecutionCompleted) will navigate to the break line when using F5, but for Rerun Debug and Reverse Debug we need to do it ourselves
             if (args.IsSuccessful)
             {
-                var breakLocation = args.BreakInstances[0].CallStack[0];
+                var breakLocation = args.BreakLocations[0].CallStack[0];
                 _projectSourceManager.OpenDocument(breakLocation.SourcePath, breakLocation.SourceLine);
             }
             // Notify Visualizer after navigating to the break line so the Visualizer window can become active
@@ -161,9 +172,10 @@ namespace VSRAD.Package.ProjectSystem
         {
             ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
             {
-                var result = await _actionLauncher.LaunchActionByNameAsync(
-                    _project.Options.Profile.MenuCommands.DebugAction,
-                    debugBreakTarget: step ? BreakTargetSelector.NextLine : BreakTargetSelector.NextBreakpoint);
+                var debugBreakTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
+                    : step ? BreakTargetSelector.SingleStep
+                    : BreakTargetSelector.SingleNext;
+                var result = await _actionLauncher.LaunchActionByNameAsync(_project.Options.Profile.MenuCommands.DebugAction, debugBreakTarget);
 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (!result.TryGetResult(out var runResult, out var error))

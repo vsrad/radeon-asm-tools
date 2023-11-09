@@ -1,5 +1,7 @@
-Max items per instance including System watch: 7
-Instance 0 names: a;c;tide
-Instance 0 items: [1,1,1]
-Instance 1 names: tid;lst;c;lst[1]
-Instance 1 items: [1,[0,1,0],[0,[1,1],0,[0],[],1],1]
+max items per instance including system watch: 7
+instance 0 breakpoint: 0
+instance 0 watchnames: a;c;tide
+instance 0 watchitems: [1,1,1]
+instance 1 breakpoint: 1
+instance 1 watchnames: tid;lst;c;lst[1]
+instance 1 watchitems: [1,[0,1,0],[0,[1,1],0,[0],[],1],1]

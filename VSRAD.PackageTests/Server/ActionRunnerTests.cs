@@ -372,28 +372,34 @@ namespace VSRAD.PackageTests.Server
         {
             var breakpointListFile = Path.GetTempFileName();
             var steps = new List<IActionStep> { new WriteDebugTargetStep { BreakpointListPath = breakpointListFile } };
-            var breakpoints = new[] { new BreakpointInfo("C:\\Source.s", 139, 313, false), new BreakpointInfo("C:\\Include.s", 0, 1, true) };
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", breakTargets: breakpoints), _project);
+            var breakpoints = new[] { new BreakpointInfo(@"C:\Source.s", 139, 1, false), new BreakpointInfo(@"C:\Include.s", 313, 1, true) };
+            var breakTarget = new BreakTarget(breakpoints, BreakTargetSelector.Multiple, @"C:\PrevFile.s", 471, @"C:\Main.s");
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", breakTarget: breakTarget), _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
             Assert.Equal("", result.StepResults[0].Warning);
 
             var breakpointListJson = File.ReadAllText(breakpointListFile);
-            Assert.Equal(@"[
-  {
-    ""File"": ""C:\\Source.s"",
-    ""Line"": 139,
-    ""HitCountTarget"": 313,
-    ""Resume"": 0
-  },
-  {
-    ""File"": ""C:\\Include.s"",
-    ""Line"": 0,
-    ""HitCountTarget"": 1,
-    ""Resume"": 1
-  }
-]", breakpointListJson);
+            Assert.Equal(@"{
+  ""Breakpoints"": [
+    {
+      ""File"": ""C:\\Source.s"",
+      ""Line"": 139,
+      ""HitCountTarget"": 1,
+      ""StopOnHit"": 0
+    },
+    {
+      ""File"": ""C:\\Include.s"",
+      ""Line"": 313,
+      ""HitCountTarget"": 1,
+      ""StopOnHit"": 1
+    }
+  ],
+  ""Select"": ""Multiple"",
+  ""PrevTargetFile"": ""C:\\PrevFile.s"",
+  ""PrevTargetLine"": 471
+}", breakpointListJson);
         }
 
         #region ReadDebugDataStep
