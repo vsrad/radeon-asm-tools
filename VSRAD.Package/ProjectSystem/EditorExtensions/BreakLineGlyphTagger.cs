@@ -29,13 +29,13 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         internal event EventHandler<EventArgs> BreakpointsHitChanged;
 
         // Need to store the breakpoints from the last execution because new taggers may be created at any time and we want them to display the latest breakpoint markers.
-        internal List<BreakInstance> LastExecutionBreakpointsHit { get; } = new List<BreakInstance>();
+        internal List<BreakLocation> LastExecutionBreakpointsHit { get; } = new List<BreakLocation>();
 
         public virtual void OnExecutionCompleted(IProjectSourceManager sourceManager, ExecutionCompletedEventArgs execCompleted)
         {
             LastExecutionBreakpointsHit.Clear();
             if (execCompleted.IsSuccessful)
-                LastExecutionBreakpointsHit.AddRange(execCompleted.BreakInstances);
+                LastExecutionBreakpointsHit.AddRange(execCompleted.BreakLocations);
 
 #pragma warning disable VSTHRD001 // Need to schedule execution after VS debugger adds its line markers 
             ThreadHelper.Generic.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
@@ -48,7 +48,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
                     // 1) They shouldn't be shown when execution fails, but our debugger needs to report the current caret position as the break line, otherwise
                     //    VS switches focus to a "Source Not Available" tab, however the break line marker shouldn't be displayed in the editor as no break occurred.
                     // 2) The markers may be stale: clicking Debug in our toolbar does not update them, for instance.
-                    var sourcePaths = execCompleted.BreakInstances.Select(i => i.CallStack[0].SourcePath).Where(p => !string.IsNullOrEmpty(p)).Distinct();
+                    var sourcePaths = execCompleted.BreakLocations.Select(i => i.CallStack[0].SourcePath).Where(p => !string.IsNullOrEmpty(p)).Distinct();
                     foreach (var path in sourcePaths)
                     {
                         var textBuffer = sourceManager.GetDocumentTextBufferByPath(path);
