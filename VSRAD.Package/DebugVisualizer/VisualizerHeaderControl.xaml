@@ -54,23 +54,42 @@
                             BorderThickness="1" />
                     <Path x:Name="Arrow"
                           Grid.Column="0"
-                          Fill="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBrushKey}}"
+                          Fill="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextBrushKey}}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z"/>
                 </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundFocusedBrushKey}}" />
+                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderFocusedBrushKey}}" />
+                        <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextFocusedBrushKey}}" />
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundFocusedBrushKey}}" />
+                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderFocusedBrushKey}}" />
+                        <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextFocusedBrushKey}}" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
             </ControlTemplate>
 
             <ControlTemplate TargetType="{x:Type ComboBoxItem}" x:Key="ComboBoxItemTemplate">
-                <StackPanel Orientation="Horizontal" x:Name="SP" Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}">
-                    <Button x:Name="PinButton"
-                            Width="22" Height="22"
+                <Grid x:Name="Grid" Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+                    <Label x:Name="Text" Grid.Column="1" Content="{Binding Value}" Padding="0,2" VerticalContentAlignment="Center"
+                           Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextBrushKey}}"/>
+                    <Button x:Name="PinButton" Grid.Column="2" Width="24" Height="24"
                             Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
-                            Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextBrushKey}}"
-                            RenderTransformOrigin="0.5 0.5" BorderThickness="0">
+                            Background="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBrushKey}}"
+                            Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonTextBrushKey}}"
+                            BorderThickness="0" RenderTransformOrigin="0.5 0.5">
                         <Button.Content>
                             <TextBlock>
-                                📌
+                            📌
                                 <TextBlock.RenderTransform>
                                     <TransformGroup>
                                         <RotateTransform Angle="{Binding Pinned, Converter={StaticResource PinnedButtonRotConverter}}"/>
@@ -81,20 +100,19 @@
                             </TextBlock>
                         </Button.Content>
                     </Button>
-                    <Label Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
-                           Background="Transparent" Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextBrushKey}}"/>
-                </StackPanel>
+                </Grid>
                 <ControlTemplate.Triggers>
                     <Trigger SourceName="PinButton" Property="IsMouseOver" Value="True">
                         <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverBrushKey}}"/>
+                        <Setter TargetName="PinButton" Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverTextBrushKey}}"/>
                     </Trigger>
-                    <Trigger Property="IsHighlighted" Value="True">
-                        <Setter TargetName="SP" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemBackgroundHoverBrushKey}}" />
-                        <Setter TargetName="CL" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemBackgroundHoverBrushKey}}" />
+                    <Trigger SourceName="PinButton" Property="IsPressed" Value="True">
+                        <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedBrushKey}}" />
+                        <Setter TargetName="PinButton" Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedTextBrushKey}}" />
+                    </Trigger>
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Grid" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemBackgroundHoverBrushKey}}" />
                         <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextHoverBrushKey}}" />
-                    </Trigger>
-                    <Trigger Property="IsEnabled" Value="False">
-                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
                     </Trigger>
                 </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -120,7 +138,7 @@
                             <Border BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderBrushKey}}" BorderThickness="1" x:Name="Brd">
                                 <Grid x:Name="ComboGrid" Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="22"/>
+                                        <ColumnDefinition Width="20"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <ToggleButton Name="ToggleButton"
