@@ -353,7 +353,7 @@ namespace VSRAD.PackageTests.Server
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.Successful, Timestamp = DateTime.Now, ByteCount = TestHelper.GetFixtureSize("DebugBuffer.bin") });
             // 4. Level 1 Copy File
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(101), Data = Encoding.UTF8.GetBytes("file-contents") });
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete"), _project);
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/home/mizu/machete", watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
             var result = await runner.RunAsync("HTMT", level1Steps);
 
             Assert.True(result.Successful);
@@ -370,11 +370,12 @@ namespace VSRAD.PackageTests.Server
         [Fact]
         public async Task WriteDebugTargetStepTestAsync()
         {
-            var breakpointListFile = Path.GetTempFileName();
-            var steps = new List<IActionStep> { new WriteDebugTargetStep { BreakpointListPath = breakpointListFile } };
+            var (breakpointListFile, watchListFile) = (Path.GetTempFileName(), Path.GetTempFileName());
+            var steps = new List<IActionStep> { new WriteDebugTargetStep { BreakpointListPath = breakpointListFile, WatchListPath = watchListFile } };
+            var watches = new[] { "a", "c", "tide" };
             var breakpoints = new[] { new BreakpointInfo(@"C:\Source.s", 139, 1, false), new BreakpointInfo(@"C:\Include.s", 313, 1, true) };
             var breakTarget = new BreakTarget(breakpoints, BreakTargetSelector.Multiple, @"C:\PrevFile.s", 471, @"C:\Main.s");
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", breakTarget: breakTarget), _project);
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", watches: watches, breakTarget: breakTarget), _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
@@ -400,6 +401,9 @@ namespace VSRAD.PackageTests.Server
   ""PrevTargetFile"": ""C:\\PrevFile.s"",
   ""PrevTargetLine"": 471
 }", breakpointListJson);
+
+            var watchListLines = File.ReadAllText(watchListFile);
+            Assert.Equal("a\r\nc\r\ntide", watchListLines);
         }
 
         #region ReadDebugDataStep
@@ -417,7 +421,7 @@ namespace VSRAD.PackageTests.Server
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"), _project);
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city", watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
 
             channel.ThenRespond(new MetadataFetched { Status = FetchStatus.FileNotFound }, (FetchMetadata initTimestampFetch) =>
                 Assert.Equal(new[] { "/glitch/city", "output" }, initTimestampFetch.FilePath));
@@ -455,7 +459,7 @@ namespace VSRAD.PackageTests.Server
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city"), _project);
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "/glitch/city", watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
 
             /* File not found */
 
@@ -508,7 +512,7 @@ result.StepResults[0].Warning);
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DispatchParams.txt"), CheckTimestamp = false },
                     binaryOutput: true, outputOffset: 0)
             };
-            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), ""), _project);
+            var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
             var result = await runner.RunAsync("Debug", steps);
 
             Assert.True(result.Successful);
@@ -518,7 +522,7 @@ result.StepResults[0].Warning);
             Assert.Equal(512u, result.BreakState.DispatchParameters.GroupSizeX);
             Assert.Equal(64u, result.BreakState.DispatchParameters.WaveSize);
             Assert.Equal(7, result.BreakState.Data.DwordsPerLane);
-            Assert.Equal(new[] { "a", "c", "tide", "tid", "lst", "lst[1]" }, result.BreakState.Data.Watches.Keys);
+            Assert.Equal(new[] { "tid", "lst", "a", "c", "tide", "lst[1]" }, result.BreakState.Data.Watches.Keys);
 
             Assert.Equal((Instance: 0, DataSlot: 2, ListSize: null), result.BreakState.Data.Watches["c"].Instances[0]);
             Assert.Equal((Instance: 1, DataSlot: null, ListSize: 6), result.BreakState.Data.Watches["c"].Instances[1]);
@@ -559,7 +563,7 @@ result.StepResults[0].Warning);
             };
 
             var channel = new MockCommunicationChannel();
-            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: ""), _project);
+            var runner = new ActionRunner(channel.Object, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), remoteWorkDir: "", watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
 
             /* File not changed (GetTempFileName creates an empty file) */
 

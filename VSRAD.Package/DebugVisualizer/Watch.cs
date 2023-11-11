@@ -16,7 +16,7 @@ namespace VSRAD.Package.DebugVisualizer
         }
 
         public static bool IsWatchNameValid(string name) =>
-            !string.IsNullOrWhiteSpace(name) && !name.Contains(ProjectSystem.Macros.RadMacros.WatchSeparator);
+            !string.IsNullOrWhiteSpace(name) && name.IndexOfAny(new[] { '\n', '\r' }) == -1;
 
         public bool Equals(Watch w) => Name == w.Name && Info == w.Info;
         public override bool Equals(object o) => o is Watch w && Equals(w);

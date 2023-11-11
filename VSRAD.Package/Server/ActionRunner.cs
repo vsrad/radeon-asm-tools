@@ -204,6 +204,11 @@ namespace VSRAD.Package.Server
             var breakpointListJson = JsonConvert.SerializeObject(breakpointList, Formatting.Indented);
             if (!WriteLocalFile(step.BreakpointListPath, Encoding.UTF8.GetBytes(breakpointListJson), out var errorString))
                 return new StepResult(false, errorString, "");
+
+            var watchListLines = string.Join(Environment.NewLine, _environment.Watches);
+            if (!WriteLocalFile(step.WatchListPath, Encoding.UTF8.GetBytes(watchListLines), out errorString))
+                return new StepResult(false, errorString, "");
+
             return new StepResult(true, "", "");
         }
 
@@ -266,7 +271,7 @@ namespace VSRAD.Package.Server
                     var dataDwordCount = localOutputData.Length / 4;
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
-                var breakStateResult = BreakState.CreateBreakState(breakTarget, validWatchesString, dispatchParamsString, outputFile, localOutputData);
+                var breakStateResult = BreakState.CreateBreakState(breakTarget, _environment.Watches, validWatchesString, dispatchParamsString, outputFile, localOutputData);
                 if (breakStateResult.TryGetResult(out var breakState, out var error))
                     return new StepResult(true, "", "", breakState: breakState);
                 else

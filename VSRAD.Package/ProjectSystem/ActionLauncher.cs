@@ -68,7 +68,7 @@ namespace VSRAD.Package.ProjectSystem
             var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
             var breakTarget = _breakpointTracker.GetTarget(activeFile, debugBreakTarget);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, watches);
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile);
 
             try
             {
@@ -94,7 +94,7 @@ namespace VSRAD.Package.ProjectSystem
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSourceManager.SaveProjectState();
 
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches, breakTarget);
+                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 return runResult;

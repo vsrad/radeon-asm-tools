@@ -33,6 +33,9 @@ namespace VSRAD.PackageTests
         public static string ReadFixture(string fixtureName) =>
             File.ReadAllText(GetFixturePath(fixtureName));
 
+        public static string[] ReadFixtureLines(string fixtureName) =>
+            File.ReadAllLines(GetFixturePath(fixtureName));
+
         public static byte[] ReadFixtureBytes(string fixtureName) =>
             File.ReadAllBytes(GetFixturePath(fixtureName));
 

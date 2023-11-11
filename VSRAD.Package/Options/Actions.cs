@@ -280,27 +280,32 @@ namespace VSRAD.Package.Options
         private string _breakpointListPath = "";
         public string BreakpointListPath { get => _breakpointListPath; set => SetField(ref _breakpointListPath, value); }
 
+        private string _watchListPath = "";
+        public string WatchListPath { get => _watchListPath; set => SetField(ref _watchListPath, value); }
+
         public override string ToString() =>
-            string.IsNullOrWhiteSpace(BreakpointListPath) ? "Write Debug Target (Breakpoint List)" : $"Write Debug Target (Breakpoint List) {BreakpointListPath}";
+            string.IsNullOrWhiteSpace(BreakpointListPath) ? "Write Debug Target (Breakpoint List) (Watch List)" : $"Write Debug Target (Breakpoint List {BreakpointListPath}) (Watch List {WatchListPath})";
 
         public override bool Equals(object obj) =>
-            obj is WriteDebugTargetStep step && BreakpointListPath == step.BreakpointListPath;
+            obj is WriteDebugTargetStep step && BreakpointListPath == step.BreakpointListPath && WatchListPath == step.WatchListPath;
 
         public override int GetHashCode() => 9;
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
         {
-            if (string.IsNullOrWhiteSpace(BreakpointListPath))
-                return EvaluationError(sourceAction, "Write Debug Target", "No breakpoint list path specified");
-
-            var pathResult = await evaluator.EvaluateAsync(BreakpointListPath);
-            if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
+            var breakpointsResult = await evaluator.EvaluateAsync(BreakpointListPath);
+            if (!breakpointsResult.TryGetResult(out var breakpointsPath, out var error))
                 return EvaluationError(sourceAction, "Write Debug Target", error.Message);
+            if (string.IsNullOrEmpty(breakpointsPath))
+                return EvaluationError(sourceAction, "Write Debug Target", "Breakpoint list path is not specified or evaluates to an empty string");
 
-            if (string.IsNullOrWhiteSpace(evaluatedPath))
-                return EvaluationError(sourceAction, "Write Debug Target", $"The specified file path for breakpoint list (\"{BreakpointListPath}\") evaluates to an empty string");
+            var watchesResult = await evaluator.EvaluateAsync(WatchListPath);
+            if (!watchesResult.TryGetResult(out var watchesPath, out error))
+                return EvaluationError(sourceAction, "Write Debug Target", error.Message);
+            if (string.IsNullOrEmpty(watchesPath))
+                return EvaluationError(sourceAction, "Write Debug Target", "Watch list path is not specified or evaluates to an empty string");
 
-            return new WriteDebugTargetStep { BreakpointListPath = evaluatedPath };
+            return new WriteDebugTargetStep { BreakpointListPath = breakpointsPath, WatchListPath = watchesPath };
         }
     }
 

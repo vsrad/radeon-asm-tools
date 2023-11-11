@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using Moq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Deborgar;
 using VSRAD.DebugServer.IPC.Commands;
@@ -44,9 +45,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             project.Options.Profile.General.RemoteWorkDir = "/periphery/votw";
             project.Options.Profile.Actions.Add(new ActionProfileOptions { Name = "Debug" });
             project.Options.DebuggerOptions.EnableMultipleBreakpoints = true;
-            project.Options.DebuggerOptions.Watches.Add(new Watch("a", new VariableType(VariableCategory.Hex, 32)));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("c", new VariableType(VariableCategory.Hex, 32)));
-            project.Options.DebuggerOptions.Watches.Add(new Watch("tide", new VariableType(VariableCategory.Hex, 32)));
+            project.Options.DebuggerOptions.Watches.AddRange(TestHelper.ReadFixtureLines("Watches.txt").Select(w => new Watch(w, new VariableType(VariableCategory.Hex, 32))));
 
             var readDebugDataStep = new ReadDebugDataStep { BinaryOutput = true, OutputOffset = 0 };
             readDebugDataStep.OutputFile.CheckTimestamp = false;
@@ -58,7 +57,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             readDebugDataStep.DispatchParamsFile.Path = "dispatch-params-path";
 
             project.Options.Profile.Actions[0].Steps.Add(new ExecuteStep
-            { Executable = "ohmu", Arguments = "-source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine) -watch $(RadWatches)" });
+            { Executable = "ohmu", Arguments = "-source $(RadActiveSourceFile) -source-line $(RadActiveSourceFileLine)" });
             project.Options.Profile.Actions[0].Steps.Add(readDebugDataStep);
 
             var activeEditor = new Mock<IEditorView>();
@@ -85,7 +84,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             channel.ThenRespond(new ExecutionCompleted { Status = ExecutionStatus.Completed, ExitCode = 0 }, (Execute execute) =>
             {
                 Assert.Equal("ohmu", execute.Executable);
-                Assert.Equal(@"-source JATO.s -source-line 13 -watch a;c;tide", execute.Arguments);
+                Assert.Equal(@"-source JATO.s -source-line 13", execute.Arguments);
             });
             channel.ThenRespond(new ResultRangeFetched { Status = FetchStatus.Successful, Timestamp = DateTime.FromBinary(100), Data = TestHelper.ReadFixtureBytes("ValidWatches.txt") }, (FetchResultRange watchesFetch) =>
                 Assert.Equal(new[] { "/periphery/votw", "watches-path" }, watchesFetch.FilePath));
@@ -118,7 +117,7 @@ namespace VSRAD.PackageTests.ProjectSystem
             Assert.Equal(16384u, breakState.DispatchParameters.GridSizeX);
             Assert.Equal(512u, breakState.DispatchParameters.GroupSizeX);
             Assert.Equal(64u, breakState.DispatchParameters.WaveSize);
-            Assert.Equal(new[] { "a", "c", "tide", "tid", "lst", "lst[1]" }, breakState.Data.Watches.Keys);
+            Assert.Equal(new[] { "tid", "lst", "a", "c", "tide", "lst[1]" }, breakState.Data.Watches.Keys);
 
             breakLineTagger.Verify(t => t.OnExecutionCompleted(sourceManager.Object, execCompletedEvent));
         }

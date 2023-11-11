@@ -171,6 +171,7 @@
   <ItemGroup>
     <Content Include="Fixtures\DispatchParams.txt" />
     <Content Include="Fixtures\ValidWatches.txt" />
+    <Content Include="Fixtures\Watches.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
