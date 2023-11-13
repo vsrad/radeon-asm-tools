@@ -17,13 +17,15 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
+        public string TargetProcessor { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string targetProcessor = "", string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
+            TargetProcessor = targetProcessor;
         }
     }
 
@@ -52,6 +54,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string DebugBreakArgs = "RadDebugBreakArgs";
         public const string NGroups = "RadNGroups";
         public const string GroupSize = "RadGroupSize";
+        public const string TargetProcessor = "RadTargetProcessor";
     }
 
     public interface IMacroEvaluator
@@ -113,6 +116,10 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
                 case RadMacros.NGroups: value = _debuggerOptions.NGroups.ToString(); break;
                 case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
+                case RadMacros.TargetProcessor:
+                    if (!(await EvaluateAsync(_transientValues.TargetProcessor, evaluationChain)).TryGetResult(out value, out var error))
+                        return error;
+                    break;
                 default:
                     string unevaluated = null;
                     foreach (var macro in _profileOptions.Macros)
@@ -126,7 +133,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     if (unevaluated != null)
                     {
                         var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
-                        if (!evalResult.TryGetResult(out value, out var error))
+                        if (!evalResult.TryGetResult(out value, out error))
                             return error;
                     }
                     else

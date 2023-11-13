@@ -108,6 +108,9 @@ namespace VSRAD.Package.Options
         private string _remoteWorkDir = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
 
+        private string _defaultTargetProcessor;
+        public string DefaultTargetProcessor { get => _defaultTargetProcessor; set => SetField(ref _defaultTargetProcessor, value); }
+
         public async Task<Result<GeneralProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator)
         {
             var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
@@ -122,7 +125,8 @@ namespace VSRAD.Package.Options
                 ProfileName = ProfileName,
                 RunActionsLocally = RunActionsLocally,
                 LocalWorkDir = evaluatedLocalDir,
-                RemoteWorkDir = evaluatedRemoteDir
+                RemoteWorkDir = evaluatedRemoteDir,
+                DefaultTargetProcessor = DefaultTargetProcessor
             };
         }
     }

@@ -68,7 +68,7 @@ namespace VSRAD.Package.ProjectSystem
             var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
             var breakTarget = _breakpointTracker.GetTarget(activeFile, debugBreakTarget);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile);
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, _project.Options.TargetProcessor);
 
             try
             {

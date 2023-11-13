@@ -32,6 +32,15 @@ namespace VSRAD.Package.Options
         public MruCollection<string> TargetHosts { get; } =
             new MruCollection<string>();
 
+        [JsonConverter(typeof(MruCollection<string>.Converter))]
+        public MruCollection<string> TargetProcessors { get; } =
+            new MruCollection<string>();
+
+        [JsonIgnore]
+        public string TargetProcessor { get => TargetProcessors.Count > 0 ? TargetProcessors[0] : DefaultTargetProcessor; set => TargetProcessors.Add(value); }
+        [JsonIgnore]
+        public string DefaultTargetProcessor => Profile?.General?.DefaultTargetProcessor ?? "";
+
         public ProjectOptions() { }
 
         public ProjectOptions(DebuggerOptions debugger, VisualizerOptions visualizer, SliceVisualizerOptions slice, VisualizerAppearance appearance, DebugVisualizer.ColumnStylingOptions styling)

@@ -129,9 +129,9 @@
     <Compile Include="BuildTools\Errors\Parser.cs" />
     <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
-    <Compile Include="Commands\BaseCommand.cs" />
     <Compile Include="Commands\BreakpointMenuCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
+    <Compile Include="Commands\TargetProcessorDropdownCommand.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
@@ -211,9 +211,6 @@
       <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
-    <Compile Include="ProjectSystem\Profiles\TargetHostsEditor.xaml.cs">
-      <DependentUpon>TargetHostsEditor.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -243,6 +240,9 @@
     <Compile Include="Utils\VsEditor.cs" />
     <Compile Include="Utils\VsEditorView.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
+    <Compile Include="Utils\WpfMruEditor.xaml.cs">
+      <DependentUpon>WpfMruEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Options\ProfileOptions.cs" />
@@ -447,10 +447,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ProjectSystem\Profiles\TargetHostsEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="ToolWindows\ControlStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -460,6 +456,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\OptionsControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Utils\WpfMruEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -7,10 +7,9 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Windows;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ProjectSystem.Profiles;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.Commands
 {
@@ -95,7 +94,7 @@ namespace VSRAD.Package.Commands
             }
             else
             {
-                if (!TargetHostsEditor.TryParseHost(selected, out var formattedHost, out var hostname, out var port))
+                if (!TryParseHost(selected, out var formattedHost, out var hostname, out var port))
                     return;
 
                 _project.Options.TargetHosts.Add(formattedHost);
@@ -108,7 +107,78 @@ namespace VSRAD.Package.Commands
             _project.Options.UpdateActiveProfile(updatedProfile);
         }
 
-        private void OpenHostsEditor() =>
-            new TargetHostsEditor(_project) { ShowInTaskbar = false }.ShowModal();
+        private static bool TryParseHost(string input, out string formatted, out string hostname, out ushort port)
+        {
+            formatted = "";
+            hostname = "";
+            port = 0;
+
+            var hostnamePort = input.Split(new[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+            if (hostnamePort.Length == 0)
+                return false;
+
+            hostname = hostnamePort[0];
+            if (hostnamePort.Length < 2 || !ushort.TryParse(hostnamePort[1], out port))
+                port = 9339;
+
+            formatted = $"{hostname}:{port}";
+            return true;
+        }
+
+        public sealed class HostItem : DefaultNotifyPropertyChanged
+        {
+            private string _value = "";
+            public string Value { get => _value; set => SetField(ref _value, value); }
+
+            public bool UsedInActiveProfile { get; set; }
+        }
+
+        private void OpenHostsEditor()
+        {
+            var initHostItems = _project.Options.TargetHosts.Select(h =>
+                 new HostItem { Value = h, UsedInActiveProfile = !_project.Options.Profile.General.RunActionsLocally && _project.Options.Connection.ToString() == h });
+            var editor = new WpfMruEditor("Host", initHostItems)
+            {
+                CreateItem = () => new HostItem { Value = "", UsedInActiveProfile = false },
+                ValidateEditedItem = (item) =>
+                {
+                    if (item is HostItem host && TryParseHost(host.Value, out var formattedHost, out _, out _))
+                    {
+                        host.Value = formattedHost;
+                        return true;
+                    }
+                    return false;
+                },
+                CheckHaveUnsavedChanges = (items) =>
+                {
+                    if (items.Count != _project.Options.TargetHosts.Count)
+                        return true;
+                    for (int i = 0; i < items.Count; ++i)
+                        if (((HostItem)items[i]).Value != _project.Options.TargetHosts[i])
+                            return true;
+                    return false;
+                },
+                SaveChanges = (items) =>
+                {
+                    _project.Options.TargetHosts.Clear();
+                    _project.Options.TargetHosts.AddRange(items.Select(h => ((HostItem)h).Value).Distinct());
+
+                    var updatedProfile = (ProfileOptions)_project.Options.Profile.Clone();
+                    if (items.FirstOrDefault(h => ((HostItem)h).UsedInActiveProfile) is HostItem hi && TryParseHost(hi.Value, out _, out var hostname, out var port))
+                    {
+                        _project.Options.RemoteMachine = hostname;
+                        _project.Options.Port = port;
+                    }
+                    else
+                    {
+                        updatedProfile.General.RunActionsLocally = true;
+                    }
+                    _project.Options.UpdateActiveProfile(updatedProfile);
+
+                    _project.SaveOptions();
+                }
+            };
+            editor.ShowModal();
+        }
     }
 }

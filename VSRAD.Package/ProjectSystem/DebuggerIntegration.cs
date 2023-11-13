@@ -105,9 +105,9 @@ namespace VSRAD.Package.ProjectSystem
                 var instancesHit = breakState.Data.GetGlobalInstancesHit(waveSize, checkMagicNumber);
                 foreach (var instanceId in instancesHit)
                 {
-                    if (breakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out var breakpointIdx) &&
-                        breakpointIdx < breakState.Target.Breakpoints.Count &&
-                        !breakLocations.Exists(i => i.LocationId == breakpointIdx))
+                    if (breakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out var breakpointIdx)
+                        && breakpointIdx < breakState.Target.Breakpoints.Count
+                        && !breakLocations.Exists(i => i.LocationId == breakpointIdx))
                     {
                         var breakpoint = breakState.Target.Breakpoints[(int)breakpointIdx];
                         breakLocations.Add(new BreakLocation(breakpointIdx, new[] { ("", breakpoint.File, breakpoint.Line) }));
