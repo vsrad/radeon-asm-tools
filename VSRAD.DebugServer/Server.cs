@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Text;
 using VSRAD.DebugServer.IPC.Commands;
+
 namespace VSRAD.DebugServer
 {
     public sealed class Server
     {
         private readonly SemaphoreSlim _commandExecutionLock = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _actionExecutionLock = new SemaphoreSlim(1, 1);
         private readonly TcpListener _listener;
         private readonly bool _verboseLogging;
         private static Version _serverVersion = typeof(Server).Assembly.GetName().Version;
@@ -71,6 +73,27 @@ namespace VSRAD.DebugServer
             Task.Run(() => BeginClientLoopAsync(networkClient, clientLog));
         }
 
+        private async Task<bool> AcquireLock(NetworkClient client, ClientLogger clientLog)
+        {
+            try
+            {
+                await _actionExecutionLock.WaitAsync();
+                clientLog.LockAcquired();
+                StreamWriter writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
+                await writer.WriteLineAsync(LockStatus.lockAcquired.ToString());
+            }
+            catch (Exception e)
+            {
+                _actionExecutionLock.Release();
+                clientLog.LockReleased();
+                clientLog.FatalClientException(e);
+                client.Disconnect();
+                clientLog.CliendDisconnected();
+                return false;
+            }
+            return true;
+        }
+
         private async Task<bool> TryProcessServerHandshake(TcpClient client, ClientLogger clientLog)
         {
             try
@@ -118,6 +141,7 @@ namespace VSRAD.DebugServer
             } catch (Exception)
             {
                 clientLog.ConnectionTimeoutOnHandShake();
+
                 return false;
             }
             return true;
@@ -125,16 +149,17 @@ namespace VSRAD.DebugServer
 
         private async Task BeginClientLoopAsync(NetworkClient client, ClientLogger clientLog)
         {
-            while (true)
+            // Client closed connection during acquire lock phase
+            //
+            if (!await AcquireLock(client, clientLog))
+                return;
+
+            try
             {
-                var lockAcquired = false;
-                try
+                while (true)
                 {
                     var command = await client.ReceiveCommandAsync().ConfigureAwait(false);
                     clientLog.CommandReceived(command);
-
-                    await _commandExecutionLock.WaitAsync();
-                    lockAcquired = true;
 
                     var response = await Dispatcher.DispatchAsync(command, clientLog).ConfigureAwait(false);
                     if (response != null) // commands like Deploy do not return a response
@@ -144,24 +169,19 @@ namespace VSRAD.DebugServer
                     }
                     clientLog.CommandProcessed();
                 }
-                catch (ConnectionFailedException)
-                {
-                    client.Disconnect();
-                    clientLog.CliendDisconnected();
-                    break;
-                }
-                catch (Exception e)
-                {
-                    client.Disconnect();
-                    clientLog.FatalClientException(e);
-                    break;
-                }
-                finally
-                {
-                    if (lockAcquired)
-                        _commandExecutionLock.Release();
-                }
             }
+            catch (ConnectionFailedException)
+            {
+                clientLog.CliendDisconnected();
+            }
+            catch (Exception e)
+            {
+                clientLog.FatalClientException(e);
+            }
+
+            client.Disconnect();
+            _actionExecutionLock.Release();
+            clientLog.LockReleased();
         }
     }
 }

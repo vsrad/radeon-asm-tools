@@ -38,6 +38,10 @@ namespace VSRAD.DebugServer
             }
         }
         
+        public NetworkStream GetStream()
+        {
+            return _socket.GetStream();
+        }
 
         public Task<int> SendResponseAsync(IPC.Responses.IResponse response) =>
              _socket.GetStream().WriteSerializedMessageAsync(response);

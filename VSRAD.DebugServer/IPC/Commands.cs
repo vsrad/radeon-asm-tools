@@ -22,6 +22,11 @@ namespace VSRAD.DebugServer.IPC.Commands
         ServerNotAccepted
     }
 
+    public enum LockStatus
+    {
+        lockNotAckquired,
+        lockAcquired
+    }
     public interface ICommand
     {
         void Serialize(IPCWriter writer);
