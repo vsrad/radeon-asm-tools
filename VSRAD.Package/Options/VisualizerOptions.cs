@@ -29,10 +29,6 @@ namespace VSRAD.Package.Options
         [JsonConverter(typeof(MagicNumberConverter))]
         public uint MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
 
-        private bool _manualMode;
-        [DefaultValue(false)]
-        public bool ManualMode { get => _manualMode; set => SetField(ref _manualMode, value); }
-
         private bool _showColumnsField;
         [DefaultValue(true)]
         public bool ShowColumnsField { get => _showColumnsField; set => SetField(ref _showColumnsField, value); }

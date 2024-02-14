@@ -13,7 +13,6 @@
     <UserControl.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Show hidden system variable" IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="Manual override dispatch" IsChecked="{Binding Options.VisualizerOptions.ManualMode, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="3D NDRange" IsChecked="{Binding Options.VisualizerOptions.NDRange3D, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem IsEnabled="False" Header="Show:"/>
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
@@ -238,32 +237,6 @@
                 <local:NumberInput Value="{Binding GroupIndex.Z, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumZ, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Groups:" Height="26" Visibility="{Binding Options.VisualizerOptions.NDRange3D, Converter={StaticResource BoolToVisibility}}"/>
-                <local:NumberInput Value="{Binding GroupIndex.DimX, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding GroupIndex.DimY, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding GroupIndex.DimZ, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Group size:" Height="26"/>
-                <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.DebuggerOptions.GroupSize, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Step="64" Width="38" Height="24"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Wave size:" Height="26"/>
-                <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.DebuggerOptions.WaveSize, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="32" Step="32" Maximum="64" Width="38" Height="24"/>
-            </StackPanel>
-            <!--
-            <StackPanel Orientation="Horizontal">
-                <Label Content="NGroups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding Options.DebuggerOptions.NGroups, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="0" Step="1" Width="38" Height="24"/>
-            </StackPanel>
-            -->
             <Label Height="26">
                 <TextBlock Text="{Binding Status, Mode=OneWay}"/>
             </Label>

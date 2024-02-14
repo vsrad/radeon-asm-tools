@@ -61,7 +61,6 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _updateOptions = true;
 
         private uint _numThreadsInProgram;
-        private BreakStateDispatchParameters _currentDispatchParams;
 
         private readonly Options.ProjectOptions _projectOptions;
 
@@ -76,10 +75,6 @@ namespace VSRAD.Package.DebugVisualizer
         {
             switch (e.PropertyName)
             {
-                case nameof(Options.VisualizerOptions.ManualMode):
-                    if (!_projectOptions.VisualizerOptions.ManualMode && _currentDispatchParams != null)
-                        SetOptionsFromDispatchParams();
-                    break;
                 case nameof(Options.VisualizerOptions.NDRange3D):
                     RaisePropertyChanged(nameof(MaximumX));
                     if (_updateOptions) Update();
@@ -95,30 +90,26 @@ namespace VSRAD.Package.DebugVisualizer
         public void UpdateOnBreak(uint numThreadsInProgram, BreakStateDispatchParameters dispatchParams)
         {
             _numThreadsInProgram = numThreadsInProgram;
-            _currentDispatchParams = dispatchParams;
-            if (!_projectOptions.VisualizerOptions.ManualMode && _currentDispatchParams != null)
-                SetOptionsFromDispatchParams();
-            else
-                Update();
+            SetOptionsFromDispatchParams(dispatchParams);
         }
 
-        private void SetOptionsFromDispatchParams()
+        private void SetOptionsFromDispatchParams(BreakStateDispatchParameters dispatchParams)
         {
             _updateOptions = false;
 
-            _projectOptions.VisualizerOptions.NDRange3D = _currentDispatchParams.NDRange3D;
-            _projectOptions.DebuggerOptions.WaveSize = _currentDispatchParams.WaveSize;
+            _projectOptions.VisualizerOptions.NDRange3D = dispatchParams.NDRange3D;
+            _projectOptions.DebuggerOptions.WaveSize = dispatchParams.WaveSize;
 
-            DimX = _currentDispatchParams.DimX;
-            DimY = _currentDispatchParams.DimY;
-            DimZ = _currentDispatchParams.DimZ;
+            DimX = dispatchParams.DimX;
+            DimY = dispatchParams.DimY;
+            DimZ = dispatchParams.DimZ;
 
-            _projectOptions.DebuggerOptions.NGroups = _currentDispatchParams.NDRange3D
-                ? _currentDispatchParams.DimX * _currentDispatchParams.DimY * _currentDispatchParams.DimZ
-                : _currentDispatchParams.DimX;
-            _projectOptions.DebuggerOptions.GroupSize = _currentDispatchParams.NDRange3D
-                ? _currentDispatchParams.GroupSizeX * _currentDispatchParams.GroupSizeY * _currentDispatchParams.GroupSizeZ
-                : _currentDispatchParams.GroupSizeX;
+            _projectOptions.DebuggerOptions.NGroups = dispatchParams.NDRange3D
+                ? dispatchParams.DimX * dispatchParams.DimY * dispatchParams.DimZ
+                : dispatchParams.DimX;
+            _projectOptions.DebuggerOptions.GroupSize = dispatchParams.NDRange3D
+                ? dispatchParams.GroupSizeX * dispatchParams.GroupSizeY * dispatchParams.GroupSizeZ
+                : dispatchParams.GroupSizeX;
 
             _updateOptions = true;
             Update();
