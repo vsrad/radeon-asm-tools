@@ -149,8 +149,8 @@ namespace VSRAD.Package.DebugVisualizer
 
             var status = new StringBuilder();
             status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0} | Wave size: {1} | Breakpoints hit: {2}", groupCount, waveSize, breakState.HitBreakpoints.Count);
-            if (breakState.DispatchParameters?.StatusString is string dispatchStatus && dispatchStatus.Length != 0)
-                status.Append(", status: ").Append(dispatchStatus);
+            if (!string.IsNullOrEmpty(breakState.DispatchParameters.StatusString))
+                status.Append(" | Status: ").Append(breakState.DispatchParameters.StatusString);
             status.AppendFormat(CultureInfo.InvariantCulture, " | Last run: {0:HH:mm:ss}", lastRunAt);
             return status.ToString();
         }

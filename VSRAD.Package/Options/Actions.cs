@@ -354,6 +354,8 @@ namespace VSRAD.Package.Options
             var dispatchParamsResult = await DispatchParamsFile.EvaluateAsync(evaluator);
             if (!dispatchParamsResult.TryGetResult(out var dispatchParamsFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            if (string.IsNullOrEmpty(dispatchParamsFile.Path))
+                return EvaluationError(sourceAction, "Read Debug Data", "Dispatch parameters path is not specified");
 
             if (profile.General.RunActionsLocally)
             {

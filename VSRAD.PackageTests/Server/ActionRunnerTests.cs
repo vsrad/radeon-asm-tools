@@ -623,6 +623,8 @@ result.StepResults[0].Warning);
             readDebugData.WatchesFile.Location = StepEnvironment.Remote;
             readDebugData.WatchesFile.CheckTimestamp = false;
             readDebugData.WatchesFile.Path = "/home/parker/audio/copy";
+            readDebugData.DispatchParamsFile.Location = StepEnvironment.Remote;
+            readDebugData.DispatchParamsFile.CheckTimestamp = false;
             var steps = new List<IActionStep>
             {
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
@@ -643,6 +645,7 @@ result.StepResults[0].Warning);
                 (FetchResultRange command) => Assert.Equal(new[] { "/home/parker", "/home/parker/audio/unchecked" }, command.FilePath));
 
             // ReadDebugDataStep
+            channel.ThenRespond(new ResultRangeFetched());
             channel.ThenRespond(new ResultRangeFetched());
             channel.ThenRespond(new MetadataFetched());
 

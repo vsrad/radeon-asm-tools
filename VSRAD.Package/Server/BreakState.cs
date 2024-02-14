@@ -73,20 +73,15 @@ The actual file contents are:
 
             var dwordsPerLane = uint.Parse(dwordsMatch.Groups["dwords_per_lane"].Value);
 
-            BreakStateDispatchParameters dispatchParams = null;
-            if (dispatchParamsString != null && !BreakStateDispatchParameters.Parse(dispatchParamsString).TryGetResult(out dispatchParams, out var error))
+            if (!BreakStateDispatchParameters.Parse(dispatchParamsString).TryGetResult(out var dispatchParams, out var error))
                 return error;
-
-            if (dispatchParams != null)
-            {
-                var dispatchLaneCount = dispatchParams.GridSizeX * dispatchParams.GridSizeY * dispatchParams.GridSizeZ;
-                var expectedDwordCount = dispatchLaneCount * dwordsPerLane;
-                if (outputFile.DwordCount != expectedDwordCount)
-                    return new Error($"Debug data is invalid. Output file does not match the expected size.\r\n\r\n" +
-                        $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
-                        $"or {dispatchLaneCount} lanes in total. With {dwordsPerLane} DWORDs per lane, the output file is expected to be {expectedDwordCount} DWORDs long, " +
-                        $"but the actual size is {outputFile.DwordCount} DWORDs.");
-            }
+            var dispatchLaneCount = dispatchParams.GridSizeX * dispatchParams.GridSizeY * dispatchParams.GridSizeZ;
+            var expectedDwordCount = dispatchLaneCount * dwordsPerLane;
+            if (outputFile.DwordCount != expectedDwordCount)
+                return new Error($"Debug data is invalid. Output file does not match the expected size.\r\n\r\n" +
+                    $"Grid size as specified in the dispatch parameters file is ({dispatchParams.GridSizeX}, {dispatchParams.GridSizeY}, {dispatchParams.GridSizeZ}), " +
+                    $"or {dispatchLaneCount} lanes in total. With {dwordsPerLane} DWORDs per lane, the output file is expected to be {expectedDwordCount} DWORDs long, " +
+                    $"but the actual size is {outputFile.DwordCount} DWORDs.");
 
             var breakData = new BreakStateData(watches, (int)dwordsPerLane, outputFile, localOutputData);
             return new BreakState(breakData, dispatchParams, breakTarget, breakpoints, checkMagicNumber);

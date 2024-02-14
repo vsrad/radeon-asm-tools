@@ -228,8 +228,7 @@ namespace VSRAD.Package.Server
                     return new StepResult(false, error.Message, "", breakState: null);
                 validWatchesString = Encoding.UTF8.GetString(data);
             }
-            string dispatchParamsString = null;
-            if (!string.IsNullOrEmpty(step.DispatchParamsFile.Path))
+            string dispatchParamsString;
             {
                 var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
