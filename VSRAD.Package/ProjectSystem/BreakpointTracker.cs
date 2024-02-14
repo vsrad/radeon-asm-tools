@@ -65,7 +65,7 @@ namespace VSRAD.Package.ProjectSystem
     public interface IBreakpointTracker
     {
         Result<BreakTarget> GetTarget(string mainFile, BreakTargetSelector mode);
-        void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<uint> validBreakpointIndexes);
+        void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<BreakpointInfo> validBreakpoints);
         void SetRunToLine(string mainFile, uint line);
         void ResetTargets();
     }
@@ -166,13 +166,11 @@ namespace VSRAD.Package.ProjectSystem
             }
         }
 
-        public void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<uint> validBreakpointIndexes)
+        public void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<BreakpointInfo> validBreakpoints)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            if (breakTarget.Select != BreakTargetSelector.Multiple && validBreakpointIndexes.Count == 1 && validBreakpointIndexes[0] < breakTarget.Breakpoints.Count)
+            if (breakTarget.Select != BreakTargetSelector.Multiple && validBreakpoints.Count == 1 && validBreakpoints[0] is BreakpointInfo breakpoint)
             {
-                var breakpoint = breakTarget.Breakpoints[(int)validBreakpointIndexes[0]];
-
                 Breakpoint2 dteBreakpoint = _dte.Debugger.Breakpoints.Cast<Breakpoint2>()
                     .FirstOrDefault(bp => bp.Enabled && breakpoint.Line == (uint)bp.FileLine - 1 && string.Equals(breakpoint.File, bp.File, StringComparison.OrdinalIgnoreCase));
 
