@@ -31,19 +31,28 @@ namespace VSRAD.Package.Server
         public BreakStateData Data { get; }
         public BreakStateDispatchParameters DispatchParameters { get; }
         public BreakTarget Target { get; }
-        /// <summary>Mapping of instance ids to indexes into the Target.Breakpoints list. Breakpoint indexes are guaranteed to be valid (within the breakpoint list bounds).</summary>
+        /// <summary>Mapping of instance ids to indexes into the Target.Breakpoints list. The set of values represents all valid breakpoints (a subset of target breakpoints).</summary>
         public IReadOnlyDictionary<uint, uint> BreakpointIndexPerInstance { get; }
-        public DateTime ExecutedAt { get; } = DateTime.Now;
+        /// <summary>Indexes into the Target.Breakpoints list of breakpoints that were hit at least once (a subset of valid breakpoints).</summary>
+        public SortedSet<uint> HitBreakpoints { get; }
 
-        public BreakState(BreakStateData data, BreakStateDispatchParameters dispatchParameters, BreakTarget target, IReadOnlyDictionary<uint, uint> breakpointIndexPerInstance)
+        public BreakState(BreakStateData data, BreakStateDispatchParameters dispatchParameters, BreakTarget target, IReadOnlyDictionary<uint, uint> breakpointIndexPerInstance, uint? checkMagicNumber)
         {
             Data = data;
             DispatchParameters = dispatchParameters;
             Target = target;
             BreakpointIndexPerInstance = breakpointIndexPerInstance;
+
+            HitBreakpoints = new SortedSet<uint>();
+            var hitInstances = Data.GetGlobalInstancesHit((int)DispatchParameters.WaveSize, checkMagicNumber);
+            foreach (var instanceId in hitInstances)
+            {
+                if (BreakpointIndexPerInstance.TryGetValue(instanceId, out var breakpointIdx))
+                    HitBreakpoints.Add(breakpointIdx);
+            }
         }
 
-        public static Result<BreakState> CreateBreakState(BreakTarget breakTarget, IReadOnlyList<string> watchNames, string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData)
+        public static Result<BreakState> CreateBreakState(BreakTarget breakTarget, IReadOnlyList<string> watchNames, string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData, uint? checkMagicNumber)
         {
             var dwordsMatch = _watchDwordsRegex.Match(validWatchesString);
             var (breakpoints, watches) = (new Dictionary<uint, uint>(), new Dictionary<string, WatchMeta>());
@@ -80,7 +89,7 @@ The actual file contents are:
             }
 
             var breakData = new BreakStateData(watches, (int)dwordsPerLane, outputFile, localOutputData);
-            return new BreakState(breakData, dispatchParams, breakTarget, breakpoints);
+            return new BreakState(breakData, dispatchParams, breakTarget, breakpoints, checkMagicNumber);
         }
 
         private static bool TryParseInstances(Dictionary<uint, uint> breakpoints, Dictionary<string, WatchMeta> watches, BreakTarget breakTarget, IReadOnlyList<string> watchNames, string validWatchesString)

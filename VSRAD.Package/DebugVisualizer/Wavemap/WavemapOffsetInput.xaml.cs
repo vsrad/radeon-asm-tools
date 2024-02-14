@@ -73,7 +73,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                         if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
                             tooltip += " (partial EXEC mask)";
                         tooltip += "\n";
-                        tooltip += waveInfo.Breakpoint != null ? $"Location: {waveInfo.Breakpoint.Location}" : "No breakpoint reached";
+                        tooltip += waveInfo.Breakpoint != null ? $"Location: {waveInfo.Breakpoint.Location}" : "No breakpoint hit";
                         WaveInfoTextBlock.ToolTip = tooltip;
                     }
                 }

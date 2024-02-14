@@ -94,7 +94,8 @@ namespace VSRAD.Package.ProjectSystem
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSourceManager.SaveProjectState();
 
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
+                var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
+                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget, checkMagicNumber);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 return runResult;

@@ -19,7 +19,7 @@ wave_size 64";
 
             var debugData = new byte[512 * 5 * sizeof(uint)];
             Assert.False(BreakState.CreateBreakState(new BreakTarget(new[] { new BreakpointInfo("", 0, 1, false) }, BreakTargetSelector.SingleNext, "", 0, ""), new[] { "m", "c", "ride" },
-                validWatches, dispatchParams, new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData).TryGetResult(out _, out var error));
+                validWatches, dispatchParams, new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, null).TryGetResult(out _, out var error));
             Assert.Equal($@"Could not read the valid watches file.
 
 The following is an example of the expected file contents:

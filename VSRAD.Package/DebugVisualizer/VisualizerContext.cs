@@ -51,6 +51,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         public BreakState BreakState { get; private set; }
         public BreakStateData BreakData => BreakState?.Data;
+        public DateTime LastRunTime { get; private set; }
 
         private readonly ICommunicationChannel _channel;
 
@@ -96,6 +97,7 @@ namespace VSRAD.Package.DebugVisualizer
         private void EnterBreak(object sender, Result<BreakState> breakResult)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+            LastRunTime = DateTime.Now;
             if (breakResult.TryGetResult(out var breakState, out var error))
             {
                 BreakState = breakState;
@@ -106,7 +108,7 @@ namespace VSRAD.Package.DebugVisualizer
                 BreakState = null;
                 Wavemap = null;
                 WatchDataValid = false;
-                Status = error.Message;
+                Status = FormatErrorStatusString(error, LastRunTime);
             }
             WavemapSelection = null;
             VSPackage.VisualizerToolWindow?.BringToFront();
@@ -137,19 +139,25 @@ namespace VSRAD.Package.DebugVisualizer
             }
             WatchDataValid = e.IsGroupIndexValid;
             Wavemap = new Wavemap.WavemapView(TryGetWaveHitInfo);
-            Status = FormatBreakStatusString(BreakState, Options.DebuggerOptions);
+            Status = FormatBreakStatusString(BreakState, LastRunTime, Options.DebuggerOptions);
         }
 
-        private static string FormatBreakStatusString(BreakState breakState, Options.DebuggerOptions debuggerOptions)
+        private static string FormatBreakStatusString(BreakState breakState, DateTime lastRunAt, Options.DebuggerOptions debuggerOptions)
         {
             var groupCount = breakState.Data.NumThreadsInProgram / MathUtils.RoundUpToMultiple(debuggerOptions.GroupSize, debuggerOptions.WaveSize);
             var waveSize = debuggerOptions.WaveSize;
 
             var status = new StringBuilder();
-            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0}, wave size: {1}, last run at: {2:HH:mm:ss}", groupCount, waveSize, breakState.ExecutedAt);
+            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0} | Wave size: {1} | Breakpoints hit: {2}", groupCount, waveSize, breakState.HitBreakpoints.Count);
             if (breakState.DispatchParameters?.StatusString is string dispatchStatus && dispatchStatus.Length != 0)
                 status.Append(", status: ").Append(dispatchStatus);
+            status.AppendFormat(CultureInfo.InvariantCulture, " | Last run: {0:HH:mm:ss}", lastRunAt);
             return status.ToString();
+        }
+
+        private static string FormatErrorStatusString(Error error, DateTime lastRunAt)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0} | Last run: {1:HH:mm:ss}", error.Message, lastRunAt);
         }
     }
 }

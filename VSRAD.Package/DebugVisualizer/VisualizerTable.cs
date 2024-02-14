@@ -745,7 +745,7 @@ namespace VSRAD.Package.DebugVisualizer
                         }
                         else
                         {
-                            menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                            menu.MenuItems.Add(new MenuItem("No Breakpoint Hit") { Enabled = false });
                         }
                     }
                 }

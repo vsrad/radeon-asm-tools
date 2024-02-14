@@ -169,7 +169,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 }
                 else
                 {
-                    menu.Items.Add(new MenuItem { Header = "No Breakpoint Reached", IsEnabled = false });
+                    menu.Items.Add(new MenuItem { Header = "No Breakpoint Hit", IsEnabled = false });
                 }
                 menu.IsOpen = true;
             }
