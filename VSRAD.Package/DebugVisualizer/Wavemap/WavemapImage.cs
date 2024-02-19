@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
@@ -10,35 +10,6 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
-    /*
-     * ----------- Bitmap header -----------
-     * 0x42 0x4d            -- magic number
-     * 0xS  0x00 0x00 0x00  -- size of file (54 bytes of header + X bytes of data)
-     * 0x00 0x00            -- Unused
-     * 0x00 0x00            -- Unused
-     * 0x7a 0x00 0x00 0x00  -- Data offset
-     * 0x6c 0x00 0x00 0x00  -- DIB header size
-     * 0xW  0x00 0x00 0x00  -- Width in pixels
-     * 0xH  0x00 0x00 0x00  -- Height in pixels
-     * 0x01 0x00            -- Number of color planes
-     * 0x20 0x00            -- Bits per pixel (32 for RGBA)
-     * 0x03 0x00 0x00 0x00  -- BI_BITFIELDS, no pixel array compression used
-     * 0xDS 0x00 0x00 0x00  -- Data size (pixels * 8)
-     * 0xc4 0x0e 0x00 0x00  -- horizontal DPM, must be set to 96 dpi
-     * 0xc4 0x0e 0x00 0x00  -- vertical DPM, must be set to 96 dpi
-     * 0x00 0x00 0x00 0x00  -- Number of colors in the palette
-     * 0x00 0x00 0x00 0x00  -- 0 means all colors are important 
-     * 0x00 0x00 0xff 0x00  -- Red channel bit mask
-     * 0x00 0xff 0x00 0x00  -- Green channel bit mask
-     * 0xff 0x00 0x00 0x00  -- Blue channel bit mask
-     * 0x00 0x00 0x00 0xff  -- Alpha channel bit mask
-     * 0x20 0x6E 0x69 0x57  -- LCS_WINDOWS_COLOR_SPACE
-     * 24h* 00...00         -- CIEXYZTRIPLE Color Space endpoints
-     * 0x00 0x00 0x00 0x00  -- Red Gamma
-     * 0x00 0x00 0x00 0x00  -- Green Gamma
-     * 0x00 0x00 0x00 0x00  -- Blue Gamma
-     * ------------ DATA ------------
-     */
     public sealed class WavemapImage
     {
         public static readonly System.Drawing.Color Blue = System.Drawing.Color.FromArgb(69, 115, 167);
@@ -47,48 +18,18 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         public static readonly System.Drawing.Color Violet = System.Drawing.Color.FromArgb(112, 89, 145);
         public static readonly System.Drawing.Color Pink = System.Drawing.Color.FromArgb(208, 147, 146);
         public static readonly System.Drawing.Color[] BreakpointColors = new[] { Blue, Red, Green, Violet, Pink };
+        public static readonly System.Drawing.Color NoBreakpointColor = System.Drawing.Color.FromArgb(150, 150, 150);
 
-        // initialize data with empty header
-        private readonly List<byte> _header = new List<byte>
+        public sealed class NagivationEventArgs : EventArgs
         {
-            0x42, 0x4d,
-            0x36, 0x00, 0x00, 0x00, // VARIABLE: size of file, add data size. Offset 2
-            0x00, 0x00,
-            0x00, 0x00,
-            0x7a, 0x00, 0x00, 0x00,
-            0x6c, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, // VARIABLE: width in pixels. Offset 18
-            0x00, 0x00, 0x00, 0x00, // VARIABLE: height in pixels. Offset 22
-            0x01, 0x00,
-            0x20, 0x00,
-            0x03, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, // VARIABLE: data size. Offset 34
-            0xc4, 0x0e, 0x00, 0x00,
-            0xc4, 0x0e, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0xff, 0x00,
-            0x00, 0xff, 0x00, 0x00,
-            0xff, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0xff,
-            0x20, 0x6E, 0x69, 0x57,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00
-        };
+            public uint GroupIndex { get; set; }
+            public uint? WaveIndex { get; set; }
+            public BreakpointInfo Breakpoint { get; set; }
+        }
 
-        private int _headerSize => _header.Count;
-        private readonly Image _img;
-        private readonly VisualizerContext _context;
+        public event EventHandler<NagivationEventArgs> NavigationRequested;
+
+        public event EventHandler Updated;
 
         private uint _gridSizeX;
         public uint GridSizeX
@@ -106,28 +47,20 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             set { _firstGroup = value; DrawImage(); }
         }
 
-        public sealed class NagivationEventArgs : EventArgs
-        {
-            public uint GroupIndex { get; set; }
-            public uint? WaveIndex { get; set; }
-            public BreakpointInfo Breakpoint { get; set; }
-        }
-
-        public event EventHandler<NagivationEventArgs> NavigationRequested;
-
-        public event EventHandler Updated;
+        private readonly Image _imageControl;
+        private readonly VisualizerContext _context;
 
         public WavemapImage(Image image, VisualizerContext context)
         {
-            _img = image;
-            _img.MouseMove += ShowWaveInfo;
-            _img.MouseRightButtonUp += ShowWaveMenu;
+            _imageControl = image;
+            _imageControl.MouseMove += ShowWaveInfo;
+            _imageControl.MouseRightButtonUp += ShowWaveMenu;
 
             _context = context;
             _context.PropertyChanged += VisualizerStateChanged;
             _context.Options.VisualizerOptions.PropertyChanged += VisualizerStateChanged;
 
-            ((FrameworkElement)_img.Parent).SizeChanged += RecomputeGridSize;
+            ((FrameworkElement)_imageControl.Parent).SizeChanged += RecomputeGridSize;
         }
 
         private void VisualizerStateChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -148,21 +81,21 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private void RecomputeGridSize(object sender, SizeChangedEventArgs e)
         {
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
-            var newGridSizeX = (int)((FrameworkElement)_img.Parent).ActualWidth / rSize;
+            var newGridSizeX = (int)((FrameworkElement)_imageControl.Parent).ActualWidth / rSize;
             if (newGridSizeX != GridSizeX)
                 DrawImage();
         }
 
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            _context.WavemapSelection = GetCellAtImagePos(e.GetPosition(_img));
+            _context.WavemapSelection = GetCellAtImagePos(e.GetPosition(_imageControl));
         }
 
         private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (GetCellAtImagePos(e.GetPosition(_img)) is WavemapCell cell)
+            if (GetCellAtImagePos(e.GetPosition(_imageControl)) is WavemapCell cell)
             {
-                var menu = new ContextMenu { PlacementTarget = _img };
+                var menu = new ContextMenu { PlacementTarget = _imageControl };
                 var goToGroup = new MenuItem { Header = $"Go to Group #{cell.GroupIndex}" };
                 goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = cell.GroupIndex });
                 menu.Items.Add(goToGroup);
@@ -186,9 +119,9 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private WavemapCell? GetCellAtImagePos(Point p)
         {
-            var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
-            uint waveIndex = (uint)(p.Y / rSize);
-            uint groupIndex = (uint)(p.X / rSize) + FirstGroup;
+            var cellSize = _context.Options.VisualizerOptions.WavemapElementSize;
+            uint waveIndex = (uint)(p.Y / cellSize);
+            uint groupIndex = (uint)(p.X / cellSize) + FirstGroup;
             if (_context.BreakState is BreakState breakState && waveIndex < breakState.WavesPerGroup && groupIndex < breakState.NumGroups)
                 return new WavemapCell(waveIndex: waveIndex, groupIndex: groupIndex, breakState.WaveStatus[(int)(breakState.WavesPerGroup * groupIndex + waveIndex)]);
             else
@@ -197,50 +130,34 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void DrawImage()
         {
-            var imageContainer = (FrameworkElement)_img.Parent;
-
+            var imageContainer = (FrameworkElement)_imageControl.Parent;
             if (_context.BreakState == null || imageContainer.ActualHeight == 0)
             {
-                _img.Source = null;
+                _imageControl.Source = null;
                 Updated?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
+            var cellSize = _context.Options.VisualizerOptions.WavemapElementSize;
+            GridSizeX = (uint)(imageContainer.ActualWidth / cellSize);
+            GridSizeY = _context.BreakState.WavesPerGroup;
+
+            var (pixelWidth, pixelHeight) = (GridSizeX * cellSize, GridSizeY * cellSize);
+            var pixelCount = pixelWidth * pixelHeight;
+            var pixelData = new byte[pixelCount * 4]; // BGRA
+
             var breakpointColorMapping = new Dictionary<uint, System.Drawing.Color>();
             var currentColorIndex = 0;
 
-            var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
-            GridSizeX = (uint)(imageContainer.ActualWidth / rSize);
-            GridSizeY = _context.BreakState.WavesPerGroup;
-
-            var pixelCount = GridSizeX * GridSizeY * rSize * rSize;
-            var byteCount = pixelCount * 4;
-            var imageData = new byte[byteCount + _headerSize];
-            _header.CopyTo(imageData, 0);
-            var fileSizeBytes = BitConverter.GetBytes(_headerSize + byteCount);
-            var widthBytes = BitConverter.GetBytes(GridSizeX * rSize);
-            var heightBytes = BitConverter.GetBytes(GridSizeY * rSize);
-            var dataSizeBytes = BitConverter.GetBytes(byteCount);
-
-            for (int i = 0; i < 4; i++)
+            for (uint p = 0; p < pixelCount; p += cellSize)
             {
-                imageData[2 + i] = fileSizeBytes[i];
-                imageData[18 + i] = widthBytes[i];
-                imageData[22 + i] = heightBytes[i];
-                imageData[34 + i] = dataSizeBytes[i];
-            }
+                uint row = p / pixelWidth;
+                uint col = p % pixelWidth;
+                var byteIdx = p * 4;
 
-            var byteWidth = GridSizeX * rSize * 4;
-
-            for (uint i = 0; i < byteCount - 3; i += rSize * 4)
-            {
-                uint row = i / byteWidth;
-                uint col = i % byteWidth;
-                var flatIdx = i + _headerSize;   // header offset
-
-                if (GetCellAtImagePos(new Point(col / 4, GridSizeY * rSize - 1 - row)) is WavemapCell cell)
+                if (GetCellAtImagePos(new Point(col, row)) is WavemapCell cell)
                 {
-                    var cellColor = System.Drawing.Color.Gray;
+                    var cellColor = NoBreakpointColor;
                     if (cell.Wave.BreakpointIndex is uint breakpointIndex)
                     {
                         if (!breakpointColorMapping.TryGetValue(breakpointIndex, out cellColor))
@@ -255,51 +172,45 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     if (cell == _context.WavemapSelection)
                         cellColor = cellColor.ScaleLightness(1.375f);
 
-                    if ((row % rSize) == 0 || (row % rSize) == rSize - 1)
+                    var cellRow = row % cellSize;
+                    if (cellRow == 0 || cellRow == cellSize - 1)
                     {
-                        for (int rwidth = 0; rwidth < rSize; ++rwidth)
+                        for (var r = 0; r < cellSize; ++r)
                         {
-                            imageData[flatIdx + 3] = 255; // Black
-                            flatIdx += 4;
+                            pixelData[byteIdx + 3] = 255; // Black
+                            byteIdx += 4;
                         }
                     }
                     else
                     {
-                        imageData[flatIdx + 3] = 255; // Black
-                        flatIdx += 4;
+                        pixelData[byteIdx + 3] = 255; // Black
+                        byteIdx += 4;
 
-                        for (int rwidth = 1; rwidth < rSize - 1; ++rwidth)
+                        for (var r = 1; r < cellSize - 1; ++r)
                         {
-                            imageData[flatIdx + 0] = cellColor.B;
-                            imageData[flatIdx + 1] = cellColor.G;
-                            imageData[flatIdx + 2] = cellColor.R;
-                            imageData[flatIdx + 3] = cellColor.A;
-                            flatIdx += 4;
+                            pixelData[byteIdx + 0] = cellColor.B;
+                            pixelData[byteIdx + 1] = cellColor.G;
+                            pixelData[byteIdx + 2] = cellColor.R;
+                            pixelData[byteIdx + 3] = cellColor.A;
+                            byteIdx += 4;
                         }
 
-                        imageData[flatIdx + 3] = 255; // Black
+                        pixelData[byteIdx + 3] = 255; // Black
                     }
                 }
             }
 
-            _img.Source = LoadImage(imageData);
-            Updated?.Invoke(this, EventArgs.Empty);
-        }
-
-        private static BitmapImage LoadImage(byte[] imageData)
-        {
-            if (imageData == null || imageData.Length == 0) return null;
-
-            var bitmap = new BitmapImage();
-            using (var stream = new MemoryStream(imageData))
+            if (_imageControl.Source is WriteableBitmap b && b.PixelWidth == pixelWidth && b.PixelHeight == pixelHeight)
             {
-                bitmap.BeginInit();
-                bitmap.StreamSource = stream;
-                bitmap.CacheOption = BitmapCacheOption.OnLoad;
-                bitmap.EndInit();
-                bitmap.Freeze();
+                b.WritePixels(new Int32Rect(0, 0, b.PixelWidth, b.PixelHeight), pixelData, b.PixelWidth * 4, 0);
             }
-            return bitmap;
+            else
+            {
+                b = new WriteableBitmap((int)pixelWidth, (int)pixelHeight, 96, 96, PixelFormats.Bgra32, null);
+                b.WritePixels(new Int32Rect(0, 0, b.PixelWidth, b.PixelHeight), pixelData, b.PixelWidth * 4, 0);
+                _imageControl.Source = b;
+            }
+            Updated?.Invoke(this, EventArgs.Empty);
         }
     }
 }
