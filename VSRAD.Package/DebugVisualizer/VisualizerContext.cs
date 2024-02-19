@@ -142,8 +142,13 @@ namespace VSRAD.Package.DebugVisualizer
         private static string FormatBreakStatusString(BreakState breakState, DateTime lastRunAt)
         {
             var status = new StringBuilder();
-            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0} | Wave size: {1} | Breakpoints hit: {2}",
-                breakState.NumGroups, breakState.Dispatch.WaveSize, breakState.HitBreakpoints.Count);
+            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0}", breakState.NumGroups);
+            if (breakState.Dispatch.NDRange3D)
+                status.AppendFormat(CultureInfo.InvariantCulture, " | Group size: ({0}, {1}, {2})", breakState.Dispatch.GroupSizeX, breakState.Dispatch.GroupSizeY, breakState.Dispatch.GroupSizeZ);
+            else
+                status.AppendFormat(CultureInfo.InvariantCulture, " | Group size: {0}", breakState.Dispatch.GroupSizeX);
+            status.AppendFormat(CultureInfo.InvariantCulture, " | Wave size: {0}", breakState.Dispatch.WaveSize);
+            status.AppendFormat(CultureInfo.InvariantCulture, " | Breakpoints hit: {0}", breakState.HitBreakpoints.Count);
             if (!string.IsNullOrEmpty(breakState.Dispatch.StatusString))
                 status.Append(" | Status: ").Append(breakState.Dispatch.StatusString);
             status.AppendFormat(CultureInfo.InvariantCulture, " | Last run: {0:HH:mm:ss}", lastRunAt);
