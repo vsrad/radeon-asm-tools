@@ -56,9 +56,10 @@ namespace VSRAD.Package.DebugVisualizer
 
         private void NavigateFromWavemap(object sender, WavemapImage.NagivationEventArgs e)
         {
-            _context.GroupIndex.GoToGroup(e.GroupIndex);
-            if (e.WaveIndex is uint waveIdx && _context.BreakState != null)
-                _table.GoToWave(waveIdx, _context.BreakState.Dispatch.WaveSize);
+            if (e.GroupIndex is uint groupIndex)
+                _context.GroupIndex.GoToGroup(groupIndex);
+            if (e.WaveIndex is uint waveIndex && _context.BreakState != null)
+                _table.GoToWave(waveIndex, _context.BreakState.Dispatch.WaveSize);
             if (e.Breakpoint is BreakpointInfo breakpoint)
                 _integration.OpenFileInEditor(breakpoint.File, breakpoint.Line);
         }

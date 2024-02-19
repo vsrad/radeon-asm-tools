@@ -100,12 +100,24 @@ namespace VSRAD.Package.DebugVisualizer
             RaiseWatchStateChanged(new[] { watchRow });
         }
 
-        public void GoToWave(uint waveIdx, uint waveSize)
+        public void GoToWave(uint waveIndex, uint waveSize)
         {
-            var firstCol = waveIdx * waveSize;
-            var lastCol = (waveIdx + 1) * waveSize - 1;
-            if (!_selectionController.SelectAllColumnsInRange((int)firstCol + DataColumnOffset, (int)lastCol + DataColumnOffset))
-                Errors.ShowWarning($"All columns of the target wave ({firstCol}-{lastCol}) are hidden.");
+            var firstLane = waveIndex * waveSize;
+            var lastLane = firstLane + waveSize - 1;
+            var firstColumn = (int)(DataColumnOffset + firstLane);
+            var lastColumn = (int)Math.Min(DataColumnOffset + lastLane, Columns.Count - 1);
+            bool anyLaneVisible = false;
+            for (int i = firstColumn; i <= lastColumn; ++i)
+            {
+                if (Columns[i].Visible)
+                {
+                    FirstDisplayedScrollingColumnIndex = i;
+                    anyLaneVisible = true;
+                    break;
+                }
+            }
+            if (!anyLaneVisible)
+                Errors.ShowWarning($"All columns of the target wave ({firstLane}-{lastLane}) are hidden.");
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
