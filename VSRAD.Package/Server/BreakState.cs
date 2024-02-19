@@ -103,7 +103,7 @@ namespace VSRAD.Package.Server
                 _fetchedDataWaves = new BitArray((int)MathUtils.RoundUpQuotient(TotalNumLanes, Dispatch.WaveSize), false);
             }
 
-            WaveStatus = ReadGlobalSystemData(checkMagicNumber);
+            WaveStatus = ReadWaveStatus(checkMagicNumber);
             HitBreakpoints = new SortedSet<uint>(WaveStatus.Where(s => s.BreakpointIndex != null).Select(s => (uint)s.BreakpointIndex));
         }
 
@@ -149,19 +149,28 @@ namespace VSRAD.Package.Server
             return watchData;
         }
 
+        public const int SystemMagicNumberLane = 0;
+        public const int SystemInstanceIdLane = 2;
+        public const int SystemSccLane = 3;
+        public const int SystemExecLoLane = 8;
+        public const int SystemExecHiLane = 9;
+
         public uint[] GetSystemData(uint waveIndex) => GetWatchData(waveIndex, 0);
 
-        private IReadOnlyList<WaveStatus> ReadGlobalSystemData(uint? checkMagicNumber)
+        private IReadOnlyList<WaveStatus> ReadWaveStatus(uint? checkMagicNumber)
         {
             var waveStatus = new List<WaveStatus>();
             var (magicNumberOffset, instanceIdOffset) = (SystemMagicNumberLane * DwordsPerLane, SystemInstanceIdLane * DwordsPerLane);
             var (sccOffset, execLoOffset, execHiOffset) = (SystemSccLane * DwordsPerLane, SystemExecLoLane * DwordsPerLane, SystemExecHiLane * DwordsPerLane);
-            var lanesRead = Enumerable.Max(new[] { magicNumberOffset, instanceIdOffset, sccOffset, execLoOffset, execHiOffset });
+            var lastOffset = Enumerable.Max(new[] { magicNumberOffset, instanceIdOffset, sccOffset, execLoOffset, execHiOffset });
+            var lastSystemLane = Enumerable.Max(new[] { SystemMagicNumberLane, SystemInstanceIdLane, SystemSccLane, SystemExecLoLane, SystemExecHiLane });
+            if (lastSystemLane >= Dispatch.WaveSize)
+                throw new ArgumentException($"Cannot read wave status from debug data: expected at least {lastSystemLane + 1} lanes inside the System watch, but wave size is {Dispatch.WaveSize}");
             var stride = Dispatch.WaveSize * DwordsPerLane;
-            for (uint offset = 0; offset + lanesRead < _data.Length; offset += stride)
+            for (uint o = 0; o + lastOffset < _data.Length; o += stride)
             {
-                var (sysMagicNumber, sysInstanceId) = (_data[offset + magicNumberOffset], _data[offset + instanceIdOffset]);
-                var (sysScc, sysExec) = (_data[offset + sccOffset], (((ulong)_data[offset + execHiOffset]) << 32) | _data[offset + execLoOffset]);
+                var (sysMagicNumber, sysInstanceId) = (_data[o + magicNumberOffset], _data[o + instanceIdOffset]);
+                var (sysScc, sysExec) = (_data[o + sccOffset], (((ulong)_data[o + execHiOffset]) << 32) | _data[o + execLoOffset]);
 
                 bool hitBreak = !(checkMagicNumber is uint expectedMagicNumber && expectedMagicNumber != sysMagicNumber);
                 var instanceId = hitBreak ? sysInstanceId : (uint?)null;
@@ -171,12 +180,6 @@ namespace VSRAD.Package.Server
             }
             return waveStatus;
         }
-
-        public const int SystemMagicNumberLane = 0;
-        public const int SystemInstanceIdLane = 2;
-        public const int SystemSccLane = 3;
-        public const int SystemExecLoLane = 8;
-        public const int SystemExecHiLane = 9;
 
         public async Task<string> ChangeGroupWithWarningsAsync(ICommunicationChannel channel, uint groupIndex, bool fetchWholeFile = false)
         {

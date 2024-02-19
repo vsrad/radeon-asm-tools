@@ -181,7 +181,7 @@ namespace VSRAD.Package.DebugVisualizer
                     }
                     for (int wave = 0, tid = 0; wave < _context.BreakState.WavesPerGroup; ++wave)
                     {
-                        var instance = _context.BreakState.GetSystemData((uint)wave)[Server.BreakState.SystemInstanceIdLane];
+                        var instance = _context.BreakState.GetWaveStatus((uint)wave).InstanceId;
                         var (_, DataSlot, ListSize) = watchMeta != null ? watchMeta.Instances.Find(v => v.Instance == instance) : default;
                         if (DataSlot is uint dataSlot)
                         {

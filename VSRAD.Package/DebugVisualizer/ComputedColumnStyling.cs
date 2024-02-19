@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -35,18 +34,17 @@ namespace VSRAD.Package.DebugVisualizer
         {
             for (uint wave = 0, waveStartId = 0; wave < breakState.WavesPerGroup; wave += 1, waveStartId += breakState.Dispatch.WaveSize)
             {
-                var waveSystemData = breakState.GetSystemData(wave);
+                var waveStatus = breakState.GetWaveStatus(wave);
                 var waveEndId = Math.Min(waveStartId + breakState.Dispatch.WaveSize, breakState.GroupSize);
-                if (options.CheckMagicNumber && waveSystemData[Server.BreakState.SystemMagicNumberLane] != options.MagicNumber)
+                if (waveStatus.InstanceId == null)
                 {
                     for (var lane = 0; lane + waveStartId < waveEndId; ++lane)
                         _columnState[lane + waveStartId] |= ColumnStates.Inactive;
                 }
                 else if (options.MaskLanes)
                 {
-                    var execMask = new BitArray(new[] { (int)waveSystemData[Server.BreakState.SystemExecLoLane], (int)waveSystemData[Server.BreakState.SystemExecHiLane] });
                     for (var lane = 0; lane + waveStartId < waveEndId; ++lane)
-                        if (!execMask[lane])
+                        if ((waveStatus.Exec & (1ul << lane)) == 0)
                             _columnState[lane + waveStartId] |= ColumnStates.Inactive;
                 }
             }

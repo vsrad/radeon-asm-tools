@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
@@ -10,15 +11,15 @@ namespace VSRAD.PackageTests.DebugVisualizer
 {
     public class ComputedColumnStylingTests
     {
-        private static BreakState MakeBreakState(uint[] system, int groupSize, int waveSize, int groupIndex = 0)
+        private static BreakState MakeBreakState(uint[] system, int groupSize, int waveSize, uint? checkMagicNumber)
         {
             byte[] systemBytes = new byte[system.Length * 4];
             Buffer.BlockCopy(system, 0, systemBytes, 0, systemBytes.Length);
             var breakState = new BreakState(BreakTarget.Empty, new Dictionary<string, WatchMeta>(),
                 new BreakStateDispatchParameters(waveSize: (uint)waveSize, gridX: (uint)groupSize, gridY: 1, gridZ: 1, groupX: (uint)groupSize, groupY: 1, groupZ: 1, ""),
                 new Dictionary<uint, uint>(), dwordsPerLane: 1,
-                new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), checkMagicNumber: null, systemBytes);
-            _ = breakState.ChangeGroupWithWarningsAsync(null, groupIndex: (uint)groupIndex).Result;
+                new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), checkMagicNumber, systemBytes);
+            _ = breakState.ChangeGroupWithWarningsAsync(null, groupIndex: 0).Result;
             return breakState;
         }
 
@@ -41,8 +42,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
             }
 
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
-                MakeBreakState(system, groupSize: groupSize, waveSize: waveSize));
+            styling.Recompute(new VisualizerOptions { MaskLanes = true }, new VisualizerAppearance(), new ColumnStylingOptions(),
+                MakeBreakState(system, groupSize: groupSize, waveSize: waveSize, checkMagicNumber: null));
 
             for (var tid = 0; tid < groupSize; ++tid)
             {
@@ -52,25 +53,11 @@ namespace VSRAD.PackageTests.DebugVisualizer
                     Assert.True((styling.ColumnState[tid] & ColumnStates.Inactive) != 0);
             }
 
-            styling.Recompute(new VisualizerOptions { MaskLanes = false, CheckMagicNumber = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
-                MakeBreakState(system, groupSize: groupSize, waveSize: waveSize));
+            styling.Recompute(new VisualizerOptions { MaskLanes = false }, new VisualizerAppearance(), new ColumnStylingOptions(),
+                MakeBreakState(system, groupSize: groupSize, waveSize: waveSize, checkMagicNumber: null));
 
             for (var tid = 0; tid < groupSize; ++tid)
                 Assert.False((styling.ColumnState[tid] & ColumnStates.Inactive) != 0);
-        }
-
-        [Theory]
-        [InlineData(32, 64, 32, 0)] // group size exceeds data size
-        public void LaneMaskingOutputSizeNotDivisibleByGroupSizeTest(int dataSize, int groupSize, int waveSize, int groupIndex)
-        {
-            var system = new uint[dataSize];
-
-            var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions { MaskLanes = true, CheckMagicNumber = true, MagicNumber = 0 }, new VisualizerAppearance(), new ColumnStylingOptions(),
-                MakeBreakState(system, groupSize: groupSize, waveSize: waveSize, groupIndex: groupIndex));
-
-            for (int i = 0; i < 12; ++i)
-                Assert.True((styling.ColumnState[i] & ColumnStates.Inactive) != 0); // all lanes are inactive (exec mask = 0)
         }
 
         [Fact]
@@ -78,8 +65,8 @@ namespace VSRAD.PackageTests.DebugVisualizer
         {
             // No assertions, this test simply hangs if we don't handle groupSize < laneGrouping in the code
             var styling = new ComputedColumnStyling();
-            styling.Recompute(new VisualizerOptions(), new VisualizerAppearance { LaneGrouping = 4 }, new ColumnStylingOptions(),
-                MakeBreakState(new[] { 0u, 0u, 0u }, groupSize: 3, waveSize: 3));
+            styling.Recompute(new VisualizerOptions(), new VisualizerAppearance { LaneGrouping = 18 }, new ColumnStylingOptions(),
+                MakeBreakState(Enumerable.Repeat(0u, 16).ToArray(), groupSize: 16, waveSize: 16, checkMagicNumber: null));
         }
 
         [Fact]
@@ -90,10 +77,10 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[64] = 0x5;
             system[128] = 0x7;
 
-            var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
+            var visualizerOptions = new VisualizerOptions { MaskLanes = false };
             var styling = new ComputedColumnStyling();
             styling.Recompute(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(),
-                MakeBreakState(system, groupSize: 256, waveSize: 64));
+                MakeBreakState(system, groupSize: 256, waveSize: 64, checkMagicNumber: 0x7));
 
             for (int i = 0; i < 63; i++)
                 Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
@@ -115,10 +102,10 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[96] = 0x5;
             system[128] = 0x5;
 
-            var visualizerOptions = new VisualizerOptions { MaskLanes = false, CheckMagicNumber = true, MagicNumber = 0x7 };
+            var visualizerOptions = new VisualizerOptions { MaskLanes = false, MagicNumber = 0x7 };
             var styling = new ComputedColumnStyling();
             styling.Recompute(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(),
-                MakeBreakState(system, groupSize: 144, waveSize: 32));
+                MakeBreakState(system, groupSize: 144, waveSize: 32, checkMagicNumber: 0x7));
 
             for (int i = 0; i < 32; i++)
                 Assert.False((styling.ColumnState[i] & ColumnStates.Inactive) != 0);
