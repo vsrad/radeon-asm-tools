@@ -40,8 +40,8 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _watchDataValid;
         public bool WatchDataValid { get => _watchDataValid; set => SetField(ref _watchDataValid, value); }
 
-        private Wavemap.WavemapCell _wavemapSelection;
-        public Wavemap.WavemapCell WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
+        private Wavemap.WavemapCell? _wavemapSelection;
+        public Wavemap.WavemapCell? WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
 
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }

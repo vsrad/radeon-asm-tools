@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -134,6 +135,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             switch (e.PropertyName)
             {
                 case nameof(VisualizerContext.BreakState):
+                case nameof(VisualizerContext.WavemapSelection):
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerOptions.MagicNumber):
@@ -158,8 +160,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            var cell = GetCellAtImagePos(e.GetPosition(_img));
-            if (cell != null)
+            if (GetCellAtImagePos(e.GetPosition(_img)) is WavemapCell cell)
             {
                 var menu = new ContextMenu { PlacementTarget = _img };
                 var goToGroup = new MenuItem { Header = $"Go to Group #{cell.GroupIndex}" };
@@ -183,7 +184,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-        private WavemapCell GetCellAtImagePos(Point p)
+        private WavemapCell? GetCellAtImagePos(Point p)
         {
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
             uint waveIndex = (uint)(p.Y / rSize);
@@ -237,46 +238,47 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                 uint col = i % byteWidth;
                 var flatIdx = i + _headerSize;   // header offset
 
-                var cell = GetCellAtImagePos(new Point(col / 4, GridSizeY * rSize - 1 - row));
-                if (cell == null)
-                    continue;
-
-                var breakColor = System.Drawing.Color.Gray;
-                if (cell.Wave.BreakpointIndex is uint breakpointIndex)
+                if (GetCellAtImagePos(new Point(col / 4, GridSizeY * rSize - 1 - row)) is WavemapCell cell)
                 {
-                    if (!breakpointColorMapping.TryGetValue(breakpointIndex, out breakColor))
+                    var cellColor = System.Drawing.Color.Gray;
+                    if (cell.Wave.BreakpointIndex is uint breakpointIndex)
                     {
-                        breakColor = BreakpointColors[currentColorIndex];
-                        currentColorIndex = (currentColorIndex + 1) % BreakpointColors.Length;
-                        breakpointColorMapping.Add(breakpointIndex, breakColor);
+                        if (!breakpointColorMapping.TryGetValue(breakpointIndex, out cellColor))
+                        {
+                            cellColor = BreakpointColors[currentColorIndex];
+                            currentColorIndex = (currentColorIndex + 1) % BreakpointColors.Length;
+                            breakpointColorMapping.Add(breakpointIndex, cellColor);
+                        }
+                        if (_context.Options.VisualizerOptions.MaskLanes && cell.Wave.PartialExec)
+                            cellColor = cellColor.ScaleLightness(0.75f);
                     }
-                    if (_context.Options.VisualizerOptions.MaskLanes && cell.Wave.PartialExec)
-                        breakColor = System.Drawing.Color.FromArgb(breakColor.R / 2, breakColor.G / 2, breakColor.B / 2);
-                }
+                    if (cell == _context.WavemapSelection)
+                        cellColor = cellColor.ScaleLightness(1.375f);
 
-                if ((row % rSize) == 0 || (row % rSize) == rSize - 1)
-                {
-                    for (int rwidth = 0; rwidth < rSize; ++rwidth)
+                    if ((row % rSize) == 0 || (row % rSize) == rSize - 1)
+                    {
+                        for (int rwidth = 0; rwidth < rSize; ++rwidth)
+                        {
+                            imageData[flatIdx + 3] = 255; // Black
+                            flatIdx += 4;
+                        }
+                    }
+                    else
                     {
                         imageData[flatIdx + 3] = 255; // Black
                         flatIdx += 4;
-                    }
-                }
-                else
-                {
-                    imageData[flatIdx + 3] = 255; // Black
-                    flatIdx += 4;
 
-                    for (int rwidth = 1; rwidth < rSize - 1; ++rwidth)
-                    {
-                        imageData[flatIdx + 0] = breakColor.B;
-                        imageData[flatIdx + 1] = breakColor.G;
-                        imageData[flatIdx + 2] = breakColor.R;
-                        imageData[flatIdx + 3] = breakColor.A;
-                        flatIdx += 4;
-                    }
+                        for (int rwidth = 1; rwidth < rSize - 1; ++rwidth)
+                        {
+                            imageData[flatIdx + 0] = cellColor.B;
+                            imageData[flatIdx + 1] = cellColor.G;
+                            imageData[flatIdx + 2] = cellColor.R;
+                            imageData[flatIdx + 3] = cellColor.A;
+                            flatIdx += 4;
+                        }
 
-                    imageData[flatIdx + 3] = 255; // Black
+                        imageData[flatIdx + 3] = 255; // Black
+                    }
                 }
             }
 

@@ -55,8 +55,8 @@ namespace VSRAD.Package.DebugVisualizer
             if (_appearance.DarkenAlternatingRowsBy == 0 || e.RowIndex % 2 == 0 || e.RowIndex == _table.NewWatchRowIndex)
                 return;
 
-            e.CellStyle.ForeColor = DarkenColor(e.CellStyle.ForeColor, _appearance.DarkenAlternatingRowsBy / 100f);
-            e.CellStyle.BackColor = DarkenColor(e.CellStyle.BackColor, _appearance.DarkenAlternatingRowsBy / 100f);
+            e.CellStyle.ForeColor = e.CellStyle.ForeColor.ScaleLightness(1.0f - 0.01f * _appearance.DarkenAlternatingRowsBy);
+            e.CellStyle.BackColor = e.CellStyle.BackColor.ScaleLightness(1.0f - 0.01f * _appearance.DarkenAlternatingRowsBy);
         }
 
         private void PaintInvalidWatchName(DataGridViewCellPaintingEventArgs e)
@@ -105,14 +105,6 @@ namespace VSRAD.Package.DebugVisualizer
             e.Graphics.FillRectangle(color, r);
             e.Graphics.ResetClip();
             e.Handled = true;
-        }
-
-        private static Color DarkenColor(Color c, float by)
-        {
-            ushort h = 0, l = 0, s = 0;
-            c.ToHls(ref h, ref l, ref s);
-            l = (ushort)(l * (1 - by));
-            return FromHls(h, l, s);
         }
     }
 }

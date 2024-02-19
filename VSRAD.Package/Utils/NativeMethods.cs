@@ -37,5 +37,13 @@ namespace VSRAD.Package.Utils
 
         public static Color FromHls(ushort h, ushort l, ushort s) =>
             ColorTranslator.FromWin32(ColorHLSToRGB(h, l, s));
+
+        public static Color ScaleLightness(this Color c, float k)
+        {
+            ushort h = 0, l = 0, s = 0;
+            c.ToHls(ref h, ref l, ref s);
+            l = (ushort)(l * k);
+            return FromHls(h, l, s);
+        }
     }
 }
