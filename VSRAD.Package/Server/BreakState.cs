@@ -23,6 +23,23 @@ namespace VSRAD.Package.Server
         }
     }
 
+    public sealed class WaveStatus
+    {
+        public uint? InstanceId { get; }
+        public uint? BreakpointIndex { get; }
+        public bool Scc { get; }
+        public ulong Exec { get; }
+        public bool PartialExec => Exec != 0xffffffff_ffffffff;
+
+        public WaveStatus(uint? instanceId, uint? breakpointIndex, bool scc, ulong exec)
+        {
+            InstanceId = instanceId;
+            BreakpointIndex = breakpointIndex;
+            Scc = scc;
+            Exec = exec;
+        }
+    }
+
     public sealed class BreakState
     {
         private static readonly Regex _watchDwordsRegex =
@@ -39,6 +56,8 @@ namespace VSRAD.Package.Server
         public IReadOnlyDictionary<uint, uint> BreakpointIndexPerInstance { get; }
         /// <summary>Indexes into the Target.Breakpoints list of breakpoints that were hit at least once (a subset of valid breakpoints).</summary>
         public SortedSet<uint> HitBreakpoints { get; }
+        /// <summary>Per-wave status information extracted from the System watch (WavesPerGroup * NumGroups elements). InstanceId and BreakpointIndex are null if the wave has not hit a breakpoint (magic number mismatch).</summary>
+        public IReadOnlyList<WaveStatus> WaveStatus { get; }
 
         public uint DwordsPerLane { get; }
         public uint TotalNumLanes { get; }
@@ -53,7 +72,7 @@ namespace VSRAD.Package.Server
         // };
         // lane_data log_file[group_count][group_size]
         //
-        // system[64] is spread across a wavefront (64 lanes)
+        // system[wave_size] is spread across a wave (system[0] in lane 0, system[1] in lane 1, ...)
         private readonly uint[] _data;
         private readonly BitArray _fetchedDataWaves; // 1 bit per wavefront data, null if _data is loaded from a local file
         private readonly BreakStateOutputFile _outputFile;
@@ -84,7 +103,8 @@ namespace VSRAD.Package.Server
                 _fetchedDataWaves = new BitArray((int)MathUtils.RoundUpQuotient(TotalNumLanes, Dispatch.WaveSize), false);
             }
 
-            HitBreakpoints = GetBreakpointIndexesHit(checkMagicNumber);
+            WaveStatus = ReadGlobalSystemData(checkMagicNumber);
+            HitBreakpoints = new SortedSet<uint>(WaveStatus.Where(s => s.BreakpointIndex != null).Select(s => (uint)s.BreakpointIndex));
         }
 
         public WatchMeta GetWatchMeta(string watch)
@@ -101,6 +121,14 @@ namespace VSRAD.Package.Server
             }
 
             return null;
+        }
+
+        public WaveStatus GetWaveStatus(uint waveIndex)
+        {
+            if (waveIndex >= WavesPerGroup)
+                throw new ArgumentOutOfRangeException(nameof(waveIndex), waveIndex, $"Wave index must be less than the number of waves per group ({WavesPerGroup})");
+            var globalWaveIndex = WavesPerGroup * GroupIndex + waveIndex;
+            return WaveStatus[(int)globalWaveIndex];
         }
 
         /// <returns>An array of exactly n=WaveSize elements, with 0s for missing data</returns>
@@ -123,46 +151,25 @@ namespace VSRAD.Package.Server
 
         public uint[] GetSystemData(uint waveIndex) => GetWatchData(waveIndex, 0);
 
-        public bool TryGetGlobalSystemData(uint groupIndex, uint waveIndex, out uint magicNumber, out uint instanceId, out ulong execMask)
+        private IReadOnlyList<WaveStatus> ReadGlobalSystemData(uint? checkMagicNumber)
         {
-            (magicNumber, instanceId, execMask) = (0, 0, 0);
-
-            if (waveIndex >= WavesPerGroup || groupIndex >= NumGroups || DwordsPerLane == 0)
-                return false;
-            var globalWaveIndex = WavesPerGroup * groupIndex + waveIndex;
-            var dataStart = globalWaveIndex * Dispatch.WaveSize * DwordsPerLane;
-            var dataEnd = Math.Min((globalWaveIndex + 1) * Dispatch.WaveSize * DwordsPerLane, _data.Length);
-
-            var magicNumberOffset = dataStart + DwordsPerLane * SystemMagicNumberLane;
-            var instanceIdOffset = dataStart + DwordsPerLane * SystemInstanceIdLane;
-            var execLoOffset = dataStart + DwordsPerLane * SystemExecLoLane;
-            var execHiOffset = dataStart + DwordsPerLane * SystemExecLoLane;
-            if (magicNumberOffset >= dataEnd || instanceIdOffset >= dataEnd || execLoOffset >= dataEnd || execHiOffset >= dataEnd)
-                return false;
-
-            (magicNumber, instanceId, execMask) = (_data[magicNumberOffset], _data[instanceIdOffset], (((ulong)_data[execHiOffset]) << 32) | _data[execLoOffset]);
-            return true;
-        }
-
-        private SortedSet<uint> GetBreakpointIndexesHit(uint? checkMagicNumber)
-        {
-            var instanceIds = new SortedSet<uint>();
+            var waveStatus = new List<WaveStatus>();
             var (magicNumberOffset, instanceIdOffset) = (SystemMagicNumberLane * DwordsPerLane, SystemInstanceIdLane * DwordsPerLane);
-            var (stride, lanesRead) = (Dispatch.WaveSize * DwordsPerLane, Math.Max(magicNumberOffset, instanceIdOffset));
+            var (sccOffset, execLoOffset, execHiOffset) = (SystemSccLane * DwordsPerLane, SystemExecLoLane * DwordsPerLane, SystemExecHiLane * DwordsPerLane);
+            var lanesRead = Enumerable.Max(new[] { magicNumberOffset, instanceIdOffset, sccOffset, execLoOffset, execHiOffset });
+            var stride = Dispatch.WaveSize * DwordsPerLane;
             for (uint offset = 0; offset + lanesRead < _data.Length; offset += stride)
             {
-                var (magicNumber, instanceId) = (_data[offset + magicNumberOffset], _data[offset + instanceIdOffset]);
-                if (checkMagicNumber is uint expectedMagicNumber && expectedMagicNumber != magicNumber)
-                    continue;
-                instanceIds.Add(instanceId);
+                var (sysMagicNumber, sysInstanceId) = (_data[offset + magicNumberOffset], _data[offset + instanceIdOffset]);
+                var (sysScc, sysExec) = (_data[offset + sccOffset], (((ulong)_data[offset + execHiOffset]) << 32) | _data[offset + execLoOffset]);
+
+                bool hitBreak = !(checkMagicNumber is uint expectedMagicNumber && expectedMagicNumber != sysMagicNumber);
+                var instanceId = hitBreak ? sysInstanceId : (uint?)null;
+                var breakpointIndex = hitBreak && BreakpointIndexPerInstance.TryGetValue(sysInstanceId, out var i) ? i : (uint?)null;
+
+                waveStatus.Add(new WaveStatus(instanceId: instanceId, breakpointIndex: breakpointIndex, scc: sysScc != 0, exec: sysExec));
             }
-            var breakpointIdxs = new SortedSet<uint>();
-            foreach (var instanceId in instanceIds)
-            {
-                if (BreakpointIndexPerInstance.TryGetValue(instanceId, out var breakpointIdx))
-                    breakpointIdxs.Add(breakpointIdx);
-            }
-            return breakpointIdxs;
+            return waveStatus;
         }
 
         public const int SystemMagicNumberLane = 0;

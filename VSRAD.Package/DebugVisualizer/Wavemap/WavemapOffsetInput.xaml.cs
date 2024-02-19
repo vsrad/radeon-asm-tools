@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using VSRAD.Package.Utils;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -58,22 +58,23 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             if (e.PropertyName == nameof(VisualizerContext.WavemapSelection))
             {
-                if (_context.WavemapSelection is WaveInfo waveInfo)
+                if (_context.BreakState is BreakState breakState && _context.WavemapSelection is WavemapCell cell)
                 {
+                    var breakpoint = cell.Wave.BreakpointIndex != null ? breakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex] : null;
                     {
-                        var info = $"G: {waveInfo.GroupIndex}\nW: {waveInfo.WaveIndex}";
-                        if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
+                        var info = $"G: {cell.GroupIndex}\nW: {cell.WaveIndex}";
+                        if (cell.Wave.PartialExec && breakpoint != null)
                             info += " (E)";
                         info += "\n";
-                        info += waveInfo.Breakpoint != null ? $"L: {waveInfo.Breakpoint.Line + 1}" : "No break";
+                        info += breakpoint != null ? $"L: {breakpoint.Line + 1}" : "No break";
                         WaveInfoTextBlock.Text = info;
                     }
                     {
-                        var tooltip = $"Group: {waveInfo.GroupIndex}\nWave: {waveInfo.WaveIndex}";
-                        if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
+                        var tooltip = $"Group: {cell.GroupIndex}\nWave: {cell.WaveIndex}";
+                        if (cell.Wave.PartialExec && breakpoint != null)
                             tooltip += " (partial EXEC mask)";
                         tooltip += "\n";
-                        tooltip += waveInfo.Breakpoint != null ? $"Location: {waveInfo.Breakpoint.Location}" : "No breakpoint hit";
+                        tooltip += breakpoint != null ? $"Location: {breakpoint.Location}" : "No breakpoint hit";
                         WaveInfoTextBlock.ToolTip = tooltip;
                     }
                 }

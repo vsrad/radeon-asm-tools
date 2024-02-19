@@ -40,16 +40,15 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _watchDataValid;
         public bool WatchDataValid { get => _watchDataValid; set => SetField(ref _watchDataValid, value); }
 
-        private Wavemap.WavemapView _wavemap;
-        public Wavemap.WavemapView Wavemap { get => _wavemap; set => SetField(ref _wavemap, value); }
-
-        private Wavemap.WaveInfo _wavemapSelection;
-        public Wavemap.WaveInfo WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
+        private Wavemap.WavemapCell _wavemapSelection;
+        public Wavemap.WavemapCell WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
 
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 
-        public BreakState BreakState { get; private set; }
+        private BreakState _breakState;
+        public BreakState BreakState { get => _breakState; private set => SetField(ref _breakState, value); }
+
         public DateTime LastRunTime { get; private set; }
 
         private readonly ICommunicationChannel _channel;
@@ -66,20 +65,10 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
 
-        public BreakpointInfo GetBreakpointByThreadId(uint threadId) =>
-            TryGetWaveHitInfo(BreakState.GroupIndex, threadId / BreakState.Dispatch.WaveSize, out _, out var breakpoint, out _) ? breakpoint : null;
-
-        /// <returns>True if the wave exist, false otherwise. Breakpoint may be null even if the wave exist, in which case breakpointIdx and execMask should be treated as invalid.</returns>
-        public bool TryGetWaveHitInfo(uint groupIndex, uint waveIndex, out uint breakpointIdx, out BreakpointInfo breakpoint, out ulong execMask)
+        public BreakpointInfo GetBreakpointByThreadId(uint threadId)
         {
-            (breakpointIdx, breakpoint) = (0, null);
-            if (!BreakState.TryGetGlobalSystemData(groupIndex, waveIndex, out uint magicNumber, out var instanceId, out execMask))
-                return false;
-            if ((magicNumber == Options.VisualizerOptions.MagicNumber || !Options.VisualizerOptions.CheckMagicNumber)
-                    && BreakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out breakpointIdx)
-                    && breakpointIdx < BreakState.Target.Breakpoints.Count)
-                breakpoint = BreakState.Target.Breakpoints[(int)breakpointIdx];
-            return true;
+            var waveStatus = BreakState.GetWaveStatus(threadId / BreakState.Dispatch.WaveSize);
+            return waveStatus.BreakpointIndex is uint idx ? BreakState.Target.Breakpoints[(int)idx] : null;
         }
 
         private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -104,7 +93,6 @@ namespace VSRAD.Package.DebugVisualizer
             else
             {
                 BreakState = null;
-                Wavemap = null;
                 WatchDataValid = false;
                 Status = FormatErrorStatusString(error, LastRunTime);
             }
@@ -135,7 +123,6 @@ namespace VSRAD.Package.DebugVisualizer
                 GroupIndexEditable = true;
             }
             WatchDataValid = e.IsGroupIndexValid;
-            Wavemap = new Wavemap.WavemapView(TryGetWaveHitInfo);
             Status = FormatBreakStatusString(BreakState, LastRunTime);
         }
 

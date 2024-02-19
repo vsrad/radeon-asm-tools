@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Utils;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -40,6 +40,13 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
      */
     public sealed class WavemapImage
     {
+        public static readonly System.Drawing.Color Blue = System.Drawing.Color.FromArgb(69, 115, 167);
+        public static readonly System.Drawing.Color Red = System.Drawing.Color.FromArgb(172, 69, 70);
+        public static readonly System.Drawing.Color Green = System.Drawing.Color.FromArgb(137, 166, 76);
+        public static readonly System.Drawing.Color Violet = System.Drawing.Color.FromArgb(112, 89, 145);
+        public static readonly System.Drawing.Color Pink = System.Drawing.Color.FromArgb(208, 147, 146);
+        public static readonly System.Drawing.Color[] BreakpointColors = new[] { Blue, Red, Green, Violet, Pink };
+
         // initialize data with empty header
         private readonly List<byte> _header = new List<byte>
         {
@@ -82,17 +89,17 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private readonly Image _img;
         private readonly VisualizerContext _context;
 
-        private int _gridSizeX;
-        public int GridSizeX
+        private uint _gridSizeX;
+        public uint GridSizeX
         {
             get => _gridSizeX;
             private set { if (value >= 8) _gridSizeX = value; }
         }
 
-        public int GridSizeY { get; private set; }
+        public uint GridSizeY { get; private set; }
 
-        private int _firstGroup;
-        public int FirstGroup
+        private uint _firstGroup;
+        public uint FirstGroup
         {
             get => _firstGroup;
             set { _firstGroup = value; DrawImage(); }
@@ -126,7 +133,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             switch (e.PropertyName)
             {
-                case nameof(VisualizerContext.Wavemap):
+                case nameof(VisualizerContext.BreakState):
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerOptions.MagicNumber):
@@ -146,25 +153,26 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void ShowWaveInfo(object sender, System.Windows.Input.MouseEventArgs e)
         {
-            if (GetWaveAtImagePos(e.GetPosition(_img)) is WaveInfo wave)
-                _context.WavemapSelection = wave;
+            _context.WavemapSelection = GetCellAtImagePos(e.GetPosition(_img));
         }
 
         private void ShowWaveMenu(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            if (GetWaveAtImagePos(e.GetPosition(_img)) is WaveInfo wave)
+            var cell = GetCellAtImagePos(e.GetPosition(_img));
+            if (cell != null)
             {
                 var menu = new ContextMenu { PlacementTarget = _img };
-                var goToGroup = new MenuItem { Header = $"Go to Group #{wave.GroupIndex}" };
-                goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex });
+                var goToGroup = new MenuItem { Header = $"Go to Group #{cell.GroupIndex}" };
+                goToGroup.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = cell.GroupIndex });
                 menu.Items.Add(goToGroup);
-                var goToWave = new MenuItem { Header = $"Go to Wave #{wave.WaveIndex} of Group #{wave.GroupIndex}" };
-                goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, WaveIndex = wave.WaveIndex });
+                var goToWave = new MenuItem { Header = $"Go to Wave #{cell.WaveIndex} of Group #{cell.GroupIndex}" };
+                goToWave.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = cell.GroupIndex, WaveIndex = cell.WaveIndex });
                 menu.Items.Add(goToWave);
-                if (wave.Breakpoint is BreakpointInfo breakpoint)
+                if (cell.Wave.BreakpointIndex != null)
                 {
+                    var breakpoint = _context.BreakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex];
                     var goToBreakLine = new MenuItem { Header = new TextBlock { Text = $"Go to Breakpoint ({breakpoint.Location})" } }; // use TextBlock because Location may contain underscores
-                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = wave.GroupIndex, Breakpoint = breakpoint });
+                    goToBreakLine.Click += (s, _) => NavigationRequested(this, new NagivationEventArgs { GroupIndex = cell.GroupIndex, Breakpoint = breakpoint });
                     menu.Items.Add(goToBreakLine);
                 }
                 else
@@ -175,31 +183,34 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             }
         }
 
-        private WaveInfo GetWaveAtImagePos(Point p)
+        private WavemapCell GetCellAtImagePos(Point p)
         {
-            if (_context.Wavemap == null)
-                return null;
-
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
-            var row = (int)(p.Y / rSize);
-            var col = (int)(p.X / rSize) + FirstGroup;
-            return _context.Wavemap.GetWaveInfo((uint)col, (uint)row, _context.Options.VisualizerOptions.MaskLanes);
+            uint waveIndex = (uint)(p.Y / rSize);
+            uint groupIndex = (uint)(p.X / rSize) + FirstGroup;
+            if (_context.BreakState is BreakState breakState && waveIndex < breakState.WavesPerGroup && groupIndex < breakState.NumGroups)
+                return new WavemapCell(waveIndex: waveIndex, groupIndex: groupIndex, breakState.WaveStatus[(int)(breakState.WavesPerGroup * groupIndex + waveIndex)]);
+            else
+                return null;
         }
 
         private void DrawImage()
         {
             var imageContainer = (FrameworkElement)_img.Parent;
 
-            if (_context.Wavemap == null || _context.BreakState == null || imageContainer.ActualHeight == 0)
+            if (_context.BreakState == null || imageContainer.ActualHeight == 0)
             {
                 _img.Source = null;
                 Updated?.Invoke(this, EventArgs.Empty);
                 return;
             }
 
+            var breakpointColorMapping = new Dictionary<uint, System.Drawing.Color>();
+            var currentColorIndex = 0;
+
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
-            GridSizeX = (int)imageContainer.ActualWidth / rSize;
-            GridSizeY = (int)_context.BreakState.WavesPerGroup;
+            GridSizeX = (uint)(imageContainer.ActualWidth / rSize);
+            GridSizeY = _context.BreakState.WavesPerGroup;
 
             var pixelCount = GridSizeX * GridSizeY * rSize * rSize;
             var byteCount = pixelCount * 4;
@@ -220,15 +231,28 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
             var byteWidth = GridSizeX * rSize * 4;
 
-            for (int i = 0; i < byteCount - 3; i += rSize * 4)
+            for (uint i = 0; i < byteCount - 3; i += rSize * 4)
             {
-                int row = i / byteWidth;
-                int col = i % byteWidth;
+                uint row = i / byteWidth;
+                uint col = i % byteWidth;
                 var flatIdx = i + _headerSize;   // header offset
 
-                var waveInfo = GetWaveAtImagePos(new Point(col / 4, GridSizeY * rSize - 1 - row));
-                if (waveInfo == null)
+                var cell = GetCellAtImagePos(new Point(col / 4, GridSizeY * rSize - 1 - row));
+                if (cell == null)
                     continue;
+
+                var breakColor = System.Drawing.Color.Gray;
+                if (cell.Wave.BreakpointIndex is uint breakpointIndex)
+                {
+                    if (!breakpointColorMapping.TryGetValue(breakpointIndex, out breakColor))
+                    {
+                        breakColor = BreakpointColors[currentColorIndex];
+                        currentColorIndex = (currentColorIndex + 1) % BreakpointColors.Length;
+                        breakpointColorMapping.Add(breakpointIndex, breakColor);
+                    }
+                    if (_context.Options.VisualizerOptions.MaskLanes && cell.Wave.PartialExec)
+                        breakColor = System.Drawing.Color.FromArgb(breakColor.R / 2, breakColor.G / 2, breakColor.B / 2);
+                }
 
                 if ((row % rSize) == 0 || (row % rSize) == rSize - 1)
                 {
@@ -245,10 +269,10 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
                     for (int rwidth = 1; rwidth < rSize - 1; ++rwidth)
                     {
-                        imageData[flatIdx + 0] = waveInfo.BreakColor.B; // B
-                        imageData[flatIdx + 1] = waveInfo.BreakColor.G; // G
-                        imageData[flatIdx + 2] = waveInfo.BreakColor.R; // R
-                        imageData[flatIdx + 3] = waveInfo.BreakColor.A; // Alpha
+                        imageData[flatIdx + 0] = breakColor.B;
+                        imageData[flatIdx + 1] = breakColor.G;
+                        imageData[flatIdx + 2] = breakColor.R;
+                        imageData[flatIdx + 3] = breakColor.A;
                         flatIdx += 4;
                     }
 

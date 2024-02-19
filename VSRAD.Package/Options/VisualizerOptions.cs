@@ -18,9 +18,9 @@ namespace VSRAD.Package.Options
         private bool _ndrange3d = false;
         public bool NDRange3D { get => _ndrange3d; set => SetField(ref _ndrange3d, value); }
 
-        private int _wavemapElementSize = 8;
+        private uint _wavemapElementSize = 8;
         [DefaultValue(8)]
-        public int WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
+        public uint WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
 
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }

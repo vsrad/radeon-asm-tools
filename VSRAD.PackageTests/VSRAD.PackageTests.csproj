@@ -72,7 +72,6 @@
     <Compile Include="DebugVisualizer\DataFormattingTests.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStylingTests.cs" />
     <Compile Include="DebugVisualizer\VisualizerIntegrationTests.cs" />
-    <Compile Include="DebugVisualizer\WavemapTests.cs" />
     <Compile Include="MockCommunicationChannel.cs" />
     <Compile Include="ProjectSystem\DebuggerIntegrationTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEvaluatorTests.cs" />
