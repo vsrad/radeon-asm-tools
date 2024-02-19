@@ -24,8 +24,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
     public sealed class WavemapView
     {
-        public delegate IReadOnlyList<BreakpointInfo> GetBreakpointList();
-        public delegate bool TryGetSystemData(uint groupIndex, uint waveIndex, out uint magicNumber, out uint breakpointId, out ulong execMask);
+        public delegate bool TryGetGlobalWaveMeta(uint groupIndex, uint waveIndex, out uint breakpointIdx, out BreakpointInfo breakpoint, out ulong execMask);
 
         public static readonly Color Blue = Color.FromArgb(69, 115, 167);
         public static readonly Color Red = Color.FromArgb(172, 69, 70);
@@ -37,50 +36,33 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private readonly Color[] _colors = new[] { WavemapView.Blue, WavemapView.Red, WavemapView.Green, WavemapView.Violet, WavemapView.Pink };
         private int _currentColorIndex = 0;
 
-        private readonly GetBreakpointList _getBreakpointList;
-        private readonly TryGetSystemData _tryGetSystemData;
+        private readonly TryGetGlobalWaveMeta _tryGetGlobalWaveMeta;
 
-        public WavemapView(GetBreakpointList getBreakpointList, TryGetSystemData tryGetSystemData)
+        public WavemapView(TryGetGlobalWaveMeta tryGetGlobalWaveMeta)
         {
-            _getBreakpointList = getBreakpointList;
-            _tryGetSystemData = tryGetSystemData;
+            _tryGetGlobalWaveMeta = tryGetGlobalWaveMeta;
         }
 
-        public WaveInfo GetWaveInfo(uint groupIndex, uint waveIndex, uint? checkMagicNumber, bool checkInactiveLanes)
+        public WaveInfo GetWaveInfo(uint groupIndex, uint waveIndex, bool checkInactiveLanes)
         {
-            if (!_tryGetSystemData(groupIndex, waveIndex, out var magicNumber, out var breakpointId, out var execMask))
+            if (!_tryGetGlobalWaveMeta(groupIndex, waveIndex, out var breakpointIdx, out var breakpoint, out var execMask))
                 return null;
 
-            var breakpointList = _getBreakpointList();
-            var breakpointValid = breakpointId < breakpointList.Count;
-            if (checkMagicNumber is uint expectedMagicNumber)
-                breakpointValid = breakpointValid && expectedMagicNumber == magicNumber;
-
-            var partialExecMask = checkInactiveLanes && (execMask != 0xffffffff_ffffffff);
-
-            Color breakColor;
-            if (breakpointValid)
+            var (breakColor, partialExecMask) = (Color.Gray, false);
+            if (breakpoint != null)
             {
-                if (!_breakpointColorMapping.TryGetValue(breakpointId, out breakColor))
+                if (!_breakpointColorMapping.TryGetValue(breakpointIdx, out breakColor))
                 {
                     breakColor = _colors[_currentColorIndex];
                     _currentColorIndex = (_currentColorIndex + 1) % _colors.Length;
-                    _breakpointColorMapping.Add(breakpointId, breakColor);
+                    _breakpointColorMapping.Add(breakpointIdx, breakColor);
                 }
 
+                partialExecMask = checkInactiveLanes && (execMask != 0xffffffff_ffffffff);
                 if (partialExecMask)
                     breakColor = Color.FromArgb(breakColor.R / 2, breakColor.G / 2, breakColor.B / 2);
             }
-            else
-            {
-                breakColor = Color.Gray;
-            }
-
-            return new WaveInfo(breakColor: breakColor,
-                breakpoint: breakpointValid ? breakpointList[(int)breakpointId] : null,
-                groupIndex: groupIndex,
-                waveIndex: waveIndex,
-                partialExecMask: partialExecMask);
+            return new WaveInfo(breakColor, breakpoint, groupIndex: groupIndex, waveIndex: waveIndex, partialExecMask: partialExecMask);
         }
     }
 }

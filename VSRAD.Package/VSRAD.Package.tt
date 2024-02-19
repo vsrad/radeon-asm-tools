@@ -290,7 +290,7 @@
     </Groups>
 
     <Combos>
-       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="120" idCommandList="ProfileTargetMachineDropdownListId">
+       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -298,6 +298,15 @@
         <Strings>
           <ButtonText>Target Host</ButtonText>
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
+        </Strings>
+      </Combo>
+      <Combo guid="guidCmdSetTargetProcessorDropdown" id="TargetProcessorDropdownId" priority="110" type="DynamicCombo" defaultWidth="105" idCommandList="TargetProcessorDropdownListId">
+        <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Target Processor</ButtonText>
         </Strings>
       </Combo>
     </Combos>
@@ -380,6 +389,10 @@
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">
       <IDSymbol name="ProfileTargetMachineDropdownId" value="0x10" />
       <IDSymbol name="ProfileTargetMachineDropdownListId" value="0x100" />
+    </GuidSymbol>
+    <GuidSymbol name="guidCmdSetTargetProcessorDropdown" value="{E42D9A90-0657-4A20-B110-9B138039E044}">
+      <IDSymbol name="TargetProcessorDropdownId" value="0x10" />
+      <IDSymbol name="TargetProcessorDropdownListId" value="0x100" />
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{654146df-5335-4701-a9c2-73e8cb4d3bdf}">

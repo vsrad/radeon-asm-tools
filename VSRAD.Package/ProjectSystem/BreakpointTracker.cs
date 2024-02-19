@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -13,40 +14,73 @@ using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
+    /// <summary>Created before the debug run to provide the debuggee a list of breakpoints set in the IDE and a selector for which ones will be used for this debug run.</summary>
+    public sealed class BreakTarget
+    {
+        public static readonly BreakTarget Empty = new BreakTarget(Array.Empty<BreakpointInfo>(), BreakTargetSelector.Multiple, string.Empty, 0, string.Empty);
+
+        public IReadOnlyList<BreakpointInfo> Breakpoints { get; }
+        public BreakTargetSelector Select { get; }
+        public string PrevTargetFile { get; }
+        public uint PrevTargetLine { get; }
+
+        /// <summary>
+        /// (Internal to Visual Studio) The main file for this debug run, may be different from target files for breakpoints set in include files.
+        /// </summary>
+        [JsonIgnore]
+        public string MainFile { get; }
+
+        public BreakTarget(IReadOnlyList<BreakpointInfo> allBreakpoints, BreakTargetSelector select, string prevTargetFile, uint prevTargetLine, string mainFile)
+        {
+            Breakpoints = allBreakpoints;
+            Select = select;
+            PrevTargetFile = prevTargetFile;
+            PrevTargetLine = prevTargetLine;
+            MainFile = mainFile;
+        }
+    }
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum BreakTargetSelector { Multiple, SingleRerun, SingleNext, SinglePrev, SingleStep }
+
     public sealed class BreakpointInfo
     {
         public string File { get; }
         public uint Line { get; }
         public uint HitCountTarget { get; }
-        public uint Resume { get; }
+        public uint StopOnHit { get; }
 
         [JsonIgnore]
         public string Location => $"{System.IO.Path.GetFileName(File)}:{Line + 1}";
 
-        public BreakpointInfo(string file, uint line, uint hitCountTarget, bool resume)
+        public BreakpointInfo(string file, uint line, uint hitCountTarget, bool stopOnHit)
         {
             File = file;
             Line = line;
             HitCountTarget = hitCountTarget;
-            Resume = resume ? 1u : 0u;
+            StopOnHit = stopOnHit ? 1u : 0u;
         }
     }
 
-    public enum BreakTargetSelector { Last, NextBreakpoint, PrevBreakpoint, NextLine }
-
     public interface IBreakpointTracker
     {
-        Result<IReadOnlyList<BreakpointInfo>> GoToBreakTarget(string file, BreakTargetSelector selector);
-        void SetRunToLine(string file, uint line);
-        void ResetToFirstBreakTarget();
+        Result<BreakTarget> GetTarget(string mainFile, BreakTargetSelector mode);
+        void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<uint> validBreakpointIndexes);
+        void SetRunToLine(string mainFile, uint line);
+        void ResetTargets();
     }
 
     [Export(typeof(IBreakpointTracker))]
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class BreakpointTracker : IBreakpointTracker
     {
-        private readonly Dictionary<string, (uint Line, Breakpoint2 Breakpoint, bool ForceRunToLine)> _lastTarget =
-            new Dictionary<string, (uint, Breakpoint2, bool)>();
+        /// <summary>
+        /// Indexed by main source file (breakpoint file may be different if set in include file); paths are case-insensitive as we're on Windows.
+        /// Break location should be read from the Breakpoint field if it is non-null, as it tracks line changes due to edits in the source file.
+        /// The Breakpoint field may be null if the previous run target is not a valid breakpoint, in which case the location should be read from the File and Line fields.
+        /// </summary>
+        private readonly Dictionary<string, (string File, uint Line, Breakpoint2 Breakpoint, bool ForceRunToLine)> _lastTarget =
+            new Dictionary<string, (string, uint, Breakpoint2, bool)>(StringComparer.OrdinalIgnoreCase);
 
         private DTE2 _dte;
         private ProjectOptions _projectOptions;
@@ -67,100 +101,83 @@ namespace VSRAD.Package.ProjectSystem
 
         public void SetRunToLine(string file, uint line)
         {
-            _lastTarget[file] = (Line: line, Breakpoint: null, ForceRunToLine: true);
+            _lastTarget[file] = (File: file, Line: line, Breakpoint: null, ForceRunToLine: true);
         }
 
-        public void ResetToFirstBreakTarget()
+        public void ResetTargets()
         {
             _lastTarget.Clear();
         }
 
-        public Result<IReadOnlyList<BreakpointInfo>> GoToBreakTarget(string file, BreakTargetSelector selector)
+        public Result<BreakTarget> GetTarget(string mainFile, BreakTargetSelector selector)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            if (_lastTarget.TryGetValue(file, out var lt) && lt.ForceRunToLine)
-                return GoToTarget(file, lt.Line);
-
-            var multipleBreakpoints = _projectOptions.DebuggerOptions.EnableMultipleBreakpoints;
-            var breakpoints = _dte.Debugger.Breakpoints.Cast<Breakpoint2>()
-                .Where(bp => bp.Enabled && (multipleBreakpoints ? !string.IsNullOrEmpty(bp.File) : string.Equals(file, bp.File, StringComparison.OrdinalIgnoreCase))).ToList();
-            breakpoints.Sort((a, b) =>
+            var (hitCountTarget, stopOnHit) = (_projectOptions.DebuggerOptions.Counter, _projectOptions.DebuggerOptions.StopOnHit);
+            var (prevTargetFile, prevTargetLine) = ("", 0u);
+            if (_lastTarget.TryGetValue(mainFile, out var lt))
             {
-                int byFile = string.Compare(a.File, b.File, StringComparison.OrdinalIgnoreCase);
-                int byLine = a.FileLine.CompareTo(b.FileLine);
+                if (lt.ForceRunToLine)
+                    return new BreakTarget(new[] { new BreakpointInfo(lt.File, lt.Line, hitCountTarget, stopOnHit) }, BreakTargetSelector.SingleNext, "", 0u, mainFile);
 
-                if (string.Equals(file, a.File, StringComparison.OrdinalIgnoreCase))
-                    return byFile == 0 ? byLine : -1;
-                else if (string.Equals(file, b.File, StringComparison.OrdinalIgnoreCase))
-                    return byFile == 0 ? byLine : 1;
-                else if (byFile == 0)
-                    return byLine;
+                if (lt.Breakpoint != null)
+                {
+                    try
+                    {
+                        (prevTargetFile, prevTargetLine) = (lt.Breakpoint.File, (uint)lt.Breakpoint.FileLine - 1);
+                    }
+                    catch (System.Runtime.InteropServices.COMException) // DTE breakpoint is no longer valid (has been removed)
+                    {
+                        (prevTargetFile, prevTargetLine) = (lt.File, lt.Line);
+                    }
+                }
                 else
-                    return byFile;
-            });
-            if (breakpoints.Count == 0)
-                return new Error($"No breakpoints set\n\nSource file: {file}");
-
-            if (multipleBreakpoints)
-                return GoToTarget(breakpoints);
-
+                {
+                    (prevTargetFile, prevTargetLine) = (lt.File, lt.Line);
+                }
+            }
             switch (selector)
             {
-                case BreakTargetSelector.Last:
-                    if (_lastTarget.TryGetValue(file, out lt))
+                // Implemented by debuggee
+                case BreakTargetSelector.Multiple:
+                case BreakTargetSelector.SingleRerun:
+                case BreakTargetSelector.SingleNext:
+                case BreakTargetSelector.SinglePrev:
                     {
-                        if (breakpoints.Contains(lt.Breakpoint))
-                            return GoToTarget(file, lt.Breakpoint);
-                        else if (lt.Breakpoint == null) // stepping
-                            return GoToTarget(file, lt.Line);
-                    }
-                    goto case BreakTargetSelector.NextBreakpoint;
-                case BreakTargetSelector.NextBreakpoint:
-                    if (_lastTarget.TryGetValue(file, out lt))
-                    {
-                        if (lt.Breakpoint != null && breakpoints.IndexOf(lt.Breakpoint) is int lastIdx && lastIdx != -1)
-                            return GoToTarget(file, breakpoints[(lastIdx + 1) % breakpoints.Count]);
+                        var breakpoints = new List<BreakpointInfo>();
+                        foreach (Breakpoint2 bp in _dte.Debugger.Breakpoints)
+                            if (bp.Enabled && !string.IsNullOrEmpty(bp.File))
+                                breakpoints.Add(new BreakpointInfo(bp.File, (uint)bp.FileLine - 1, hitCountTarget, stopOnHit));
+
+                        if (breakpoints.Count == 0)
+                            return new Error($"No breakpoints set\n\nSource file: {mainFile}");
                         else
-                            return GoToTarget(file, breakpoints.Find(b => ((uint)b.FileLine - 1) > lt.Line) ?? breakpoints[0]);
+                            return new BreakTarget(breakpoints, selector, prevTargetFile, prevTargetLine, mainFile);
                     }
-                    return GoToTarget(file, breakpoints[0]);
-                case BreakTargetSelector.PrevBreakpoint:
-                    if (_lastTarget.TryGetValue(file, out lt))
+                // Emulated
+                case BreakTargetSelector.SingleStep:
                     {
-                        if (lt.Breakpoint != null && breakpoints.IndexOf(lt.Breakpoint) is int lastIdx && lastIdx != -1)
-                            return GoToTarget(file, breakpoints[lastIdx == 0 ? breakpoints.Count - 1 : lastIdx - 1]);
-                        else
-                            return GoToTarget(file, breakpoints.Find(b => ((uint)b.FileLine - 1) < lt.Line) ?? breakpoints[breakpoints.Count - 1]);
+                        if (string.IsNullOrEmpty(prevTargetFile))
+                            return new Error($"Cannot step until a breakpoint has been hit\n\nSource file: {mainFile}");
+                        return new BreakTarget(new[] { new BreakpointInfo(lt.File, lt.Line + 1, hitCountTarget, stopOnHit) }, BreakTargetSelector.SingleNext, "", 0u, mainFile);
                     }
-                    return GoToTarget(file, breakpoints[breakpoints.Count - 1]);
-                case BreakTargetSelector.NextLine:
-                    if (_lastTarget.TryGetValue(file, out lt))
-                        return GoToTarget(file, lt.Line + 1);
-                    return new Error($"Stepping is not available until a breakpoint has been hit.\n\nSource file: {file}");
                 default:
-                    return new Error("Undefined break target selector.");
+                    throw new NotImplementedException();
             }
         }
 
-        private BreakpointInfo[] GoToTarget(string file, uint targetLine)
+        public void UpdateOnBreak(BreakTarget breakTarget, IReadOnlyList<uint> validBreakpointIndexes)
         {
-            _lastTarget[file] = (Line: targetLine, Breakpoint: null, ForceRunToLine: false);
-            return new[] { new BreakpointInfo(file, targetLine, _projectOptions.DebuggerOptions.Counter, resume: !_projectOptions.DebuggerOptions.StopOnHit) };
-        }
+            ThreadHelper.ThrowIfNotOnUIThread();
+            if (breakTarget.Select != BreakTargetSelector.Multiple && validBreakpointIndexes.Count == 1 && validBreakpointIndexes[0] < breakTarget.Breakpoints.Count)
+            {
+                var breakpoint = breakTarget.Breakpoints[(int)validBreakpointIndexes[0]];
 
-        private BreakpointInfo[] GoToTarget(string file, Breakpoint2 targetBreakpoint)
-        {
-            var targetLine = (uint)targetBreakpoint.FileLine - 1;
-            _lastTarget[file] = (Line: targetLine, Breakpoint: targetBreakpoint, ForceRunToLine: false);
-            return new[] { new BreakpointInfo(file, targetLine, _projectOptions.DebuggerOptions.Counter, resume: !_projectOptions.DebuggerOptions.StopOnHit) };
-        }
+                Breakpoint2 dteBreakpoint = _dte.Debugger.Breakpoints.Cast<Breakpoint2>()
+                    .FirstOrDefault(bp => bp.Enabled && breakpoint.Line == (uint)bp.FileLine - 1 && string.Equals(breakpoint.File, bp.File, StringComparison.OrdinalIgnoreCase));
 
-        private BreakpointInfo[] GoToTarget(IEnumerable<Breakpoint2> multipleBreakpoints)
-        {
-            return multipleBreakpoints
-                .Select(b => new BreakpointInfo(b.File, (uint)b.FileLine - 1, _projectOptions.DebuggerOptions.Counter, resume: !_projectOptions.DebuggerOptions.StopOnHit))
-                .ToArray();
+                _lastTarget[breakTarget.MainFile] = (File: breakpoint.File, Line: breakpoint.Line, Breakpoint: dteBreakpoint, ForceRunToLine: false);
+            }
         }
     }
 }

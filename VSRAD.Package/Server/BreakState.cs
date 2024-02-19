@@ -23,34 +23,42 @@ namespace VSRAD.Package.Server
 
     public sealed class BreakState
     {
-        private static readonly Regex _watchDwordsRegex = new Regex(@"Max items per instance including System watch: (?<dwords_per_lane>\d+)", RegexOptions.Compiled);
-        private static readonly Regex _watchInstanceRegex = new Regex(@"\s*(?:Instance (?<instance>\d+) (?:names: (?<instance_names>[^\r\n]*)|items: (?<instance_items>[^\r\n]*)))[\r\n]*", RegexOptions.Compiled);
+        private static readonly Regex _watchDwordsRegex =
+            new Regex(@"max items per instance including system watch: (?<dwords_per_lane>\d+)", RegexOptions.Compiled);
+        private static readonly Regex _watchInstancesRegex =
+            new Regex(@"\s*(?:instance (?<instance>\d+) (?:breakpoint id: (?<instance_bp>[^\r\n]*)|valid watches: (?<instance_watches>[^\r\n]*)))[\r\n]*", RegexOptions.Compiled);
 
         public BreakStateData Data { get; }
         public BreakStateDispatchParameters DispatchParameters { get; }
+        public BreakTarget Target { get; }
+        /// <summary>Mapping of instance ids to indexes into the Target.Breakpoints list. Breakpoint indexes are guaranteed to be valid (within the breakpoint list bounds).</summary>
+        public IReadOnlyDictionary<uint, uint> BreakpointIndexPerInstance { get; }
         public DateTime ExecutedAt { get; } = DateTime.Now;
 
-        public BreakState(BreakStateData breakStateData, BreakStateDispatchParameters dispatchParameters)
+        public BreakState(BreakStateData data, BreakStateDispatchParameters dispatchParameters, BreakTarget target, IReadOnlyDictionary<uint, uint> breakpointIndexPerInstance)
         {
-            Data = breakStateData;
+            Data = data;
             DispatchParameters = dispatchParameters;
+            Target = target;
+            BreakpointIndexPerInstance = breakpointIndexPerInstance;
         }
 
-        public static Result<BreakState> CreateBreakState(string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData, IReadOnlyList<BreakpointInfo> breakpoints)
+        public static Result<BreakState> CreateBreakState(BreakTarget breakTarget, IReadOnlyList<string> watchNames, string validWatchesString, string dispatchParamsString, BreakStateOutputFile outputFile, byte[] localOutputData)
         {
             var dwordsMatch = _watchDwordsRegex.Match(validWatchesString);
-            var watches = new Dictionary<string, WatchMeta>();
-
-            if (!dwordsMatch.Success || !TryParseInstances(watches, validWatchesString))
+            var (breakpoints, watches) = (new Dictionary<uint, uint>(), new Dictionary<string, WatchMeta>());
+            if (!dwordsMatch.Success || !TryParseInstances(breakpoints, watches, breakTarget, watchNames, validWatchesString))
                 return new Error($@"Could not read the valid watches file.
 
 The following is an example of the expected file contents:
 
-Max items per instance including System watch: 10
-Instance 0 names: a;b;c
-Instance 0 items: [1,[1,0,1,1],[1,[1,1],0,[1],[],1]]
+max items per instance including system watch: 10
+instance 0 breakpoint id: 0
+Instance 0 valid watches: [1,[1,0,1,1],[1,[1,1],0,[1],[],1]]
 
-While the actual contents are:
+Where ""breakpoint id"" refers to an item from the target breakpoints file and ""valid watches"" is a list referring to items from the target watches file.
+
+The actual file contents are:
 
 {validWatchesString}");
 
@@ -71,25 +79,32 @@ While the actual contents are:
                         $"but the actual size is {outputFile.DwordCount} DWORDs.");
             }
 
-            var breakData = new BreakStateData(breakpoints, watches, (int)dwordsPerLane, outputFile, localOutputData);
-            return new BreakState(breakData, dispatchParams);
+            var breakData = new BreakStateData(watches, (int)dwordsPerLane, outputFile, localOutputData);
+            return new BreakState(breakData, dispatchParams, breakTarget, breakpoints);
         }
 
-        private static bool TryParseInstances(Dictionary<string, WatchMeta> watches, string validWatchesString)
+        private static bool TryParseInstances(Dictionary<uint, uint> breakpoints, Dictionary<string, WatchMeta> watches, BreakTarget breakTarget, IReadOnlyList<string> watchNames, string validWatchesString)
         {
-            foreach (var instance in _watchInstanceRegex.Matches(validWatchesString).Cast<Match>().GroupBy(m => uint.Parse(m.Groups["instance"].Value)))
+            foreach (var instance in _watchInstancesRegex.Matches(validWatchesString).Cast<Match>().GroupBy(m => uint.Parse(m.Groups["instance"].Value)))
             {
-                if (!(instance.FirstOrDefault(m => m.Groups["instance_names"].Success) is Match mNames && instance.FirstOrDefault(m => m.Groups["instance_items"].Success) is Match mItems))
+                if (!(instance.FirstOrDefault(m => m.Groups["instance_bp"].Success) is Match mBreakpoint))
                     return false;
-                if (!TryParseInstanceWatches(watches, instance.Key, mNames.Groups["instance_names"].Value, mItems.Groups["instance_items"].Value))
+                if (!uint.TryParse(mBreakpoint.Groups["instance_bp"].Value, out var breakpointIdx))
+                    return false;
+
+                if (breakpointIdx < breakTarget.Breakpoints.Count)
+                    breakpoints[instance.Key] = breakpointIdx;
+
+                if (!(instance.FirstOrDefault(m => m.Groups["instance_watches"].Success) is Match mWatches))
+                    return false;
+                if (!TryParseInstanceWatches(watches, instance.Key, watchNames, mWatches.Groups["instance_watches"].Value))
                     return false;
             }
             return true;
         }
 
-        private static bool TryParseInstanceWatches(Dictionary<string, WatchMeta> watches, uint instance, string instanceNames, string instanceItems)
+        private static bool TryParseInstanceWatches(Dictionary<string, WatchMeta> watches, uint instance, IReadOnlyList<string> watchNames, string validWatches)
         {
-            var watchNames = instanceNames.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
             WatchMeta GetListItemMeta(WatchMeta acc, uint idx)
             {
                 while (idx >= acc.ListItems.Count)
@@ -98,7 +113,7 @@ While the actual contents are:
             }
             var watchIndexes = new List<uint>();
             uint dataSlot = 1; // slot 0 is reserved for System watch
-            foreach (char c in instanceItems)
+            foreach (char c in validWatches)
             {
                 switch (c)
                 {
@@ -107,10 +122,10 @@ While the actual contents are:
                         break;
                     case '0':
                     case '1':
-                        if (watchIndexes.Count == 0 || watchIndexes[0] >= watchNames.Length)
+                        if (watchIndexes.Count == 0 || watchIndexes[0] >= watchNames.Count)
                             return false;
-                        if (!watches.TryGetValue(watchNames[watchIndexes[0]], out var rootWatchMeta))
-                            watches.Add(watchNames[watchIndexes[0]], rootWatchMeta = new WatchMeta());
+                        if (!watches.TryGetValue(watchNames[(int)watchIndexes[0]], out var rootWatchMeta))
+                            watches.Add(watchNames[(int)watchIndexes[0]], rootWatchMeta = new WatchMeta());
                         var itemMeta = watchIndexes.Skip(1).Aggregate(rootWatchMeta, GetListItemMeta);
                         if (c == '1')
                             itemMeta.Instances.Add((instance, DataSlot: dataSlot++, ListSize: null));
@@ -123,10 +138,10 @@ While the actual contents are:
                         watchIndexes.RemoveAt(watchIndexes.Count - 1);
                         if (watchIndexes.Count > 0)
                         {
-                            if (watchIndexes[0] >= watchNames.Length)
+                            if (watchIndexes[0] >= watchNames.Count)
                                 return false;
-                            if (!watches.TryGetValue(watchNames[watchIndexes[0]], out rootWatchMeta))
-                                watches.Add(watchNames[watchIndexes[0]], rootWatchMeta = new WatchMeta());
+                            if (!watches.TryGetValue(watchNames[(int)watchIndexes[0]], out rootWatchMeta))
+                                watches.Add(watchNames[(int)watchIndexes[0]], rootWatchMeta = new WatchMeta());
                             var parentListMeta = watchIndexes.Skip(1).Aggregate(rootWatchMeta, GetListItemMeta);
                             parentListMeta.Instances.Add((instance, DataSlot: null, ListSize: length));
                             watchIndexes[watchIndexes.Count - 1]++;

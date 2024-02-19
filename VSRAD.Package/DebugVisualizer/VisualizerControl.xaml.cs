@@ -46,11 +46,7 @@ namespace VSRAD.Package.DebugVisualizer
             };
             _table.BreakpointInfoRequested += (uint threadId, ref BreakpointInfo breakpointInfo) =>
             {
-                var waveId = threadId / _context.Options.DebuggerOptions.WaveSize;
-                if (_context.BreakData.TryGetGlobalSystemData(_context.BreakData.GroupIndex, (int)waveId, _context.BreakData.GroupSize, _context.BreakData.WaveSize, out var magicNumber, out var breakpointId, out _))
-                    if (magicNumber == _context.Options.VisualizerOptions.MagicNumber || !_context.Options.VisualizerOptions.CheckMagicNumber)
-                        if (breakpointId < _context.BreakData.Breakpoints.Count)
-                            breakpointInfo = _context.BreakData.Breakpoints[(int)breakpointId];
+                breakpointInfo = _context.GetWaveBreakpoint(threadId / _context.Options.DebuggerOptions.WaveSize);
             };
             _table.BreakpointNavigationRequested += integration.OpenFileInEditor;
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);

@@ -116,6 +116,7 @@
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Profile Name:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Height="22" VerticalContentAlignment="Center" Grid.Row="0" Grid.Column="1">
@@ -156,7 +157,13 @@
                                     CommandParameter="{Binding RelativeSource={RelativeSource Self}}"
                                     IsEnabled="{Binding RunActionsLocally, Mode=OneWay, Converter={StaticResource InverseBoolConverter}}"/>
 
-                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                            <Label Content="Default Target Processor:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="4" Grid.Column="0"/>
+                            <TextBox Text="{Binding DefaultTargetProcessor}" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="1"/>
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="4" Grid.Column="2" Tag="DefaultTargetProcessor"
+                                    Command="{Binding DataContext.RichEditCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
                                 <Label Content="Continue action execution on errors:" VerticalContentAlignment="Center" Margin="0,0" Padding="4,0" Height="22" HorizontalContentAlignment="Left"/>
                                 <CheckBox VerticalContentAlignment="Center" Height="22"
                                       IsChecked="{Binding ContinueActionExecOnError, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"

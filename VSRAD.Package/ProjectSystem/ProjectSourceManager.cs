@@ -29,6 +29,7 @@ namespace VSRAD.Package.ProjectSystem
         string ProjectRoot { get; }
         void SaveProjectState();
         void SaveDocuments(DocumentSaveType type);
+        void OpenDocument(string path, uint? line);
         IVsTextBuffer GetDocumentTextBufferByPath(string path);
         IEditorView GetActiveEditorView();
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
@@ -43,6 +44,7 @@ namespace VSRAD.Package.ProjectSystem
         public string ProjectRoot { get; }
 
         private readonly IProject _project;
+        private readonly SVsServiceProvider _serviceProvider;
         private readonly ITextDocumentFactoryService _textDocumentFactoryService;
 
         private DTE2 _dte;
@@ -51,19 +53,20 @@ namespace VSRAD.Package.ProjectSystem
         private IVsTextManager2 _textManager;
 
         [ImportingConstructor]
-        public ProjectSourceManager(IProject project, ITextDocumentFactoryService textDocumentFactoryService, SVsServiceProvider serviceProvider)
+        public ProjectSourceManager(IProject project, SVsServiceProvider serviceProvider, ITextDocumentFactoryService textDocumentFactoryService)
         {
             ProjectRoot = Path.GetDirectoryName(project.UnconfiguredProject.FullPath);
             _project = project;
+            _serviceProvider = serviceProvider;
             _textDocumentFactoryService = textDocumentFactoryService;
 
             _project.RunWhenLoaded((_) =>
             {
                 ThreadHelper.ThrowIfNotOnUIThread();
-                _dte = (DTE2)serviceProvider.GetService(typeof(DTE));
-                _runningDocumentTable = new RunningDocumentTable(serviceProvider);
-                _vsRunningDocumentTable = serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
-                _textManager = serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
+                _dte = (DTE2)_serviceProvider.GetService(typeof(DTE));
+                _runningDocumentTable = new RunningDocumentTable(_serviceProvider);
+                _vsRunningDocumentTable = _serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
+                _textManager = _serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
             });
         }
 
@@ -111,6 +114,11 @@ namespace VSRAD.Package.ProjectSystem
                             SaveDocumentsRecursively(item);
                     break;
             }
+        }
+
+        public void OpenDocument(string path, uint? line)
+        {
+            VsEditor.OpenFileInEditor(_serviceProvider, path, line, null, forceOppositeTab: false, preserveActiveDoc: false);
         }
 
         public IVsTextBuffer GetDocumentTextBufferByPath(string path)

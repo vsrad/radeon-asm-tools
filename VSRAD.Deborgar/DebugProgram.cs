@@ -36,7 +36,7 @@ namespace VSRAD.Deborgar
 
         public void Execute(bool step)
         {
-            ClearBreakInstances();
+            ClearBreakLocations();
             _engineIntegration.Execute(step);
         }
 
@@ -44,7 +44,7 @@ namespace VSRAD.Deborgar
         {
             _ad7Process.Terminate();
             _engineIntegration.ExecutionCompleted -= ExecutionCompleted;
-            ClearBreakInstances();
+            ClearBreakLocations();
             SendAD7Event(new AD7ProgramDestroyEvent());
             return VSConstants.S_OK;
         }
@@ -57,9 +57,9 @@ namespace VSRAD.Deborgar
 
         private void ExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
         {
-            foreach (var instance in e.BreakInstances)
+            foreach (var instance in e.BreakLocations)
             {
-                var thread = new DebugThread(this, instance.InstanceId, instance.CallStack);
+                var thread = new DebugThread(this, instance.LocationId, instance.CallStack);
                 _breakThreads.Add(thread);
                 SendAD7Event(new AD7ThreadCreateEvent(), thread);
             }
@@ -79,7 +79,7 @@ namespace VSRAD.Deborgar
             ErrorHandler.ThrowOnFailure(_ad7Callback.Event(_ad7Engine, _ad7Process, this, ad7Thread, eventObject, eventObject.GUID, attributes));
         }
 
-        private void ClearBreakInstances()
+        private void ClearBreakLocations()
         {
             foreach (var oldInstance in _breakThreads)
                 SendAD7Event(new AD7ThreadDestroyEvent(), oldInstance);

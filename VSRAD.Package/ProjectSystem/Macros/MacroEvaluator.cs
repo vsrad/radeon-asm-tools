@@ -17,15 +17,15 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
-        public IReadOnlyList<string> Watches { get; }
+        public string TargetProcessor { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, IReadOnlyList<string> watches, string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string targetProcessor = "", string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
-            Watches = watches;
+            TargetProcessor = targetProcessor;
         }
     }
 
@@ -50,15 +50,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ActiveSourceDir = "RadActiveSourceDir";
         public const string ActiveSourceFile = "RadActiveSourceFile";
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
-        public const string Watches = "RadWatches";
         public const string DebugAppArgs = "RadDebugAppArgs";
         public const string DebugBreakArgs = "RadDebugBreakArgs";
         public const string NGroups = "RadNGroups";
         public const string GroupSize = "RadGroupSize";
-
-        public const string WatchSeparator = ";";
-        public const string BreakLineSeparator = ";";
-        public const string BreakpointPropsSeparator = ":";
+        public const string TargetProcessor = "RadTargetProcessor";
     }
 
     public interface IMacroEvaluator
@@ -116,11 +112,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.ActiveSourceDir: value = _transientValues.ActiveSourceDir; break;
                 case RadMacros.ActiveSourceFile: value = _transientValues.ActiveSourceFile; break;
                 case RadMacros.ActiveSourceFileLine: value = _transientValues.ActiveSourceLine.ToString(); break;
-                case RadMacros.Watches: value = string.Join(RadMacros.WatchSeparator, _transientValues.Watches); break;
                 case RadMacros.DebugAppArgs: value = _debuggerOptions.AppArgs; break;
                 case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
                 case RadMacros.NGroups: value = _debuggerOptions.NGroups.ToString(); break;
                 case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
+                case RadMacros.TargetProcessor:
+                    if (!(await EvaluateAsync(_transientValues.TargetProcessor, evaluationChain)).TryGetResult(out value, out var error))
+                        return error;
+                    break;
                 default:
                     string unevaluated = null;
                     foreach (var macro in _profileOptions.Macros)
@@ -134,7 +133,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
                     if (unevaluated != null)
                     {
                         var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
-                        if (!evalResult.TryGetResult(out value, out var error))
+                        if (!evalResult.TryGetResult(out value, out error))
                             return error;
                     }
                     else

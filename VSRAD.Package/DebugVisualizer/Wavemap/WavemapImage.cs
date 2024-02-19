@@ -183,8 +183,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
             var row = (int)(p.Y / rSize);
             var col = (int)(p.X / rSize) + FirstGroup;
-            return _context.Wavemap.GetWaveInfo((uint)col, (uint)row,
-                _context.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_context.Options.VisualizerOptions.MagicNumber : null, _context.Options.VisualizerOptions.MaskLanes);
+            return _context.Wavemap.GetWaveInfo((uint)col, (uint)row, _context.Options.VisualizerOptions.MaskLanes);
         }
 
         private void DrawImage()

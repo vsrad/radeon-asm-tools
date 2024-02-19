@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using Xunit;
 
@@ -14,7 +13,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
         {
             byte[] systemBytes = new byte[system.Length * 4];
             Buffer.BlockCopy(system, 0, systemBytes, 0, systemBytes.Length);
-            var data = new BreakStateData(Array.Empty<BreakpointInfo>(), new Dictionary<string, WatchMeta>(), dwordsPerLane: 1,
+            var data = new BreakStateData(new Dictionary<string, WatchMeta>(), dwordsPerLane: 1,
                 new BreakStateOutputFile(Array.Empty<string>(), false, 0, default, dwordCount: system.Length), systemBytes);
             _ = data.ChangeGroupWithWarningsAsync(null, groupIndex: groupIndex, groupSize: groupSize, waveSize: waveSize).Result;
             return data;

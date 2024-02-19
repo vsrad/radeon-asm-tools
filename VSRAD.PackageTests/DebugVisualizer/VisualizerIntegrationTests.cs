@@ -7,6 +7,7 @@ using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
+using VSRAD.Package.Utils;
 using Xunit;
 using Task = System.Threading.Tasks.Task;
 
@@ -39,7 +40,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 Control = new VisualizerControl(ToolWindowIntegrationMock.Object, fontAndColorMock.Object);
             }
 
-            public void EnterBreak(BreakState breakState) => DebuggerMock.Raise(d => d.BreakEntered += null, null, breakState);
+            public void EnterBreak(Result<BreakState> breakResult) => DebuggerMock.Raise(d => d.BreakEntered += null, null, breakResult);
 
             public WatchNameCell GetNameCell(int rowIndex) => (WatchNameCell)Control.Table.Rows[rowIndex].Cells[VisualizerTable.NameColumnIndex];
 
@@ -58,9 +59,9 @@ namespace VSRAD.PackageTests.DebugVisualizer
                 new[] { "a", "tid", "c", "c[1]", "c[1][1]", "c[1][1][1]", "lst" }.Select(w => new Watch(w, new VariableType(VariableCategory.Uint, 32)))));
 
             var debugData = TestHelper.ReadFixtureBytes("DebugBuffer.bin");
-            var breakpoints = Array.Empty<BreakpointInfo>();
-            Assert.True(BreakState.CreateBreakState(TestHelper.ReadFixture("ValidWatches.txt"), TestHelper.ReadFixture("DispatchParams.txt"),
-                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, breakpoints).TryGetResult(out var breakState, out _));
+            Assert.True(BreakState.CreateBreakState(BreakTarget.Empty,
+                TestHelper.ReadFixtureLines("Watches.txt"), TestHelper.ReadFixture("ValidWatches.txt"), TestHelper.ReadFixture("DispatchParams.txt"),
+                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData).TryGetResult(out var breakState, out _));
 
             vis.EnterBreak(breakState);
             vis.Context.GroupIndex.X = 13;

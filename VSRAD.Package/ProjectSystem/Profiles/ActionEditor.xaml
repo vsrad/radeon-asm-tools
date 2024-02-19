@@ -272,11 +272,17 @@
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
                             </Grid.RowDefinitions>
                             <Label Content="Breakpoint List Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
                             <TextBox Text="{Binding BreakpointListPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
                             <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
-                                    Tag="Path" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                                    Tag="BreakpointListPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Watch List Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding WatchListPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                                    Tag="WatchListPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
                         </Grid>
                     </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:ReadDebugDataStep}">

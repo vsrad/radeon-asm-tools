@@ -17,7 +17,7 @@ namespace VSRAD.DeborgarTests
             var integrationMock = new Mock<IEngineIntegration>();
             integrationMock.Setup((i) => i.Execute(step)).Callback(() =>
                 integrationMock.Raise((i) => i.ExecutionCompleted += null, null,
-                new ExecutionCompletedEventArgs(new[] { new BreakInstance(1, new[] { ("", "h.s", 7u) }) }, isStepping: step, isSuccessful: true)));
+                new ExecutionCompletedEventArgs(new[] { new BreakLocation(1, new[] { ("", "h.s", 7u) }) }, isStepping: step, isSuccessful: true)));
 
             bool loadCompleteRaised = false, threadCreatedRaised = false, breakRaised = false;
             DebugThread debugThread = null;

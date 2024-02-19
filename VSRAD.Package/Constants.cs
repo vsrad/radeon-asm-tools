@@ -42,6 +42,8 @@ namespace VSRAD.Package
         public const int AddArrayToWatchesToHeaderOffset = 0x1200;
         public const int ProfileTargetMachineDropdownId = 0x10;
         public const int ProfileTargetMachineDropdownListId = 0x100;
+        public const int TargetProcessorDropdownId = 0x10;
+        public const int TargetProcessorDropdownListId = 0x100;
         public const int ToggleMultipleBreakpointsCommandId = 0x10;
         public static readonly Guid ToolWindowCommandSet = new Guid("03c8f3ba-2e44-4159-ac37-b08fc295a0cc");
         public static readonly Guid ForceRunToCursorCommandSet = new Guid("cefc8250-7cd1-46c1-b4f6-46a0a22a1c81");
@@ -49,6 +51,7 @@ namespace VSRAD.Package
         public static readonly Guid ToolbarCommandSet = new Guid("E1436EB5-1D47-4714-85CB-6177E62AB2AD");
         public static readonly Guid ActionsMenuCommandSet = new Guid("7CF54FFE-BCAC-4751-BEEC-D103FD953C8B");
         public static readonly Guid ProfileDropdownCommandSet = new Guid("912C011A-EDAA-4922-85F2-74436F2265CA");
+        public static readonly Guid TargetProcessorDropdownCommandSet = new Guid("E42D9A90-0657-4A20-B110-9B138039E044");
         public static readonly Guid BreakpointMenuCommandSet = new Guid("EADE0887-3138-4DBF-8A14-FCEB0017E5E8");
 
         public const string OutputPaneServerTitle = "RAD Debug Server";

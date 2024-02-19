@@ -46,11 +46,11 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.ActiveSourceDir, "<current source dir name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFile, "<current source file name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
-            new MacroItem(RadMacros.Watches, "<visualizer watches, semicolon-separated>", userDefined: false),
             new MacroItem(RadMacros.DebugAppArgs, "<app args, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.DebugBreakArgs, "<break args, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.GroupSize, "<group size, set in visualizer>", userDefined: false)
+            new MacroItem(RadMacros.GroupSize, "<group size, set in visualizer>", userDefined: false),
+            new MacroItem(RadMacros.TargetProcessor, "<target processor, set in toolbar>", userDefined: false)
         };
 
         public ICommand DeleteMacroCommand { get; }

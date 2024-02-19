@@ -1,5 +1,4 @@
-﻿using System;
-using VSRAD.Package.ProjectSystem;
+﻿using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using Xunit;
 
@@ -8,10 +7,9 @@ namespace VSRAD.PackageTests.Server
     public class BreakStateValidWatchesTests
     {
         [Theory]
-        [InlineData("Max items per instance including System watch: 5\r\nInstance 0 names: a;tide\r\nInstance 0 items: [1,[1,1],1]")]
-        [InlineData("Max items per instance including System watch: 5\r\nInstance 0 names: a;tide\r\nInstance 0 items: 1,[1,1],1]")]
-        [InlineData("Max items per instance including System watch: 5\r\nInstance 0 names: a;tide\r\nInstance 0 items: 0,]]]")]
-        [InlineData("Max items per instance including System watch: 5\r\nInstance 0 names: a;tide\r\nInstance 0 items: [1,1")]
+        [InlineData("max items per instance including system watch: 5\r\ninstance 0 breakpoint id: 0\r\ninstance 0 valid watches: 1,[1,1],1]")]
+        [InlineData("max items per instance including system watch: 5\r\ninstance 0 breakpoint id: 0\r\ninstance 0 valid watches: 0,]]]")]
+        [InlineData("max items per instance including system watch: 5\r\ninstance 0 breakpoint id: 0\r\ninstance 0 valid watches: [1,1")]
         public void InvalidInstanceMetadataTest(string validWatches)
         {
             string dispatchParams = @"
@@ -20,17 +18,19 @@ group_size (512, 1, 1)
 wave_size 64";
 
             var debugData = new byte[512 * 5 * sizeof(uint)];
-            Assert.False(BreakState.CreateBreakState(validWatches, dispatchParams,
-                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, Array.Empty<BreakpointInfo>()).TryGetResult(out _, out var error));
+            Assert.False(BreakState.CreateBreakState(new BreakTarget(new[] { new BreakpointInfo("", 0, 1, false) }, BreakTargetSelector.SingleNext, "", 0, ""), new[] { "m", "c", "ride" },
+                validWatches, dispatchParams, new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData).TryGetResult(out _, out var error));
             Assert.Equal($@"Could not read the valid watches file.
 
 The following is an example of the expected file contents:
 
-Max items per instance including System watch: 10
-Instance 0 names: a;b;c
-Instance 0 items: [1,[1,0,1,1],[1,[1,1],0,[1],[],1]]
+max items per instance including system watch: 10
+instance 0 breakpoint id: 0
+Instance 0 valid watches: [1,[1,0,1,1],[1,[1,1],0,[1],[],1]]
 
-While the actual contents are:
+Where ""breakpoint id"" refers to an item from the target breakpoints file and ""valid watches"" is a list referring to items from the target watches file.
+
+The actual file contents are:
 
 {validWatches}", error.Message);
         }

@@ -71,9 +71,10 @@ namespace VSRAD.Package.Commands
             {
                 ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
-                    var debugNextTarget = commandId == Constants.DebugActionCommandId ? BreakTargetSelector.NextBreakpoint
-                                        : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.PrevBreakpoint
-                                        : BreakTargetSelector.Last;
+                    var debugNextTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
+                                        : commandId == Constants.DebugActionCommandId ? BreakTargetSelector.SingleNext
+                                        : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.SinglePrev
+                                        : BreakTargetSelector.SingleRerun;
                     var result = await _actionLauncher.LaunchActionByNameAsync(actionName, debugNextTarget);
                     await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     if (!result.TryGetResult(out var runResult, out error))

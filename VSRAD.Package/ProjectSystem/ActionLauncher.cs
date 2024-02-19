@@ -13,7 +13,7 @@ namespace VSRAD.Package.ProjectSystem
 {
     public interface IActionLauncher
     {
-        Task<Result<ActionRunResult>> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.Last);
+        Task<Result<ActionRunResult>> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.SingleRerun);
         bool IsDebugAction(ActionProfileOptions action);
     }
 
@@ -45,7 +45,7 @@ namespace VSRAD.Package.ProjectSystem
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
-        public async Task<Result<ActionRunResult>> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.Last)
+        public async Task<Result<ActionRunResult>> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.SingleRerun)
         {
             if (_currentlyRunningActionName != null)
                 return new Error($"Action {_currentlyRunningActionName} is already running.\r\n\r\n" +
@@ -60,15 +60,15 @@ namespace VSRAD.Package.ProjectSystem
                 return new Error($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
                     "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
 
-            if (debugBreakTarget != BreakTargetSelector.Last && !IsDebugAction(action))
+            if (debugBreakTarget != BreakTargetSelector.SingleRerun && debugBreakTarget != BreakTargetSelector.Multiple && !IsDebugAction(action))
                 return new Error($"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
 
             var activeEditor = _projectSourceManager.GetActiveEditorView();
             var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-            var breakTargets = _breakpointTracker.GoToBreakTarget(activeFile, debugBreakTarget);
-            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, watches);
+            var breakTarget = _breakpointTracker.GetTarget(activeFile, debugBreakTarget);
+            var transients = new MacroEvaluatorTransientValues(activeFileLine, activeFile, _project.Options.TargetProcessor);
 
             try
             {
@@ -94,7 +94,7 @@ namespace VSRAD.Package.ProjectSystem
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSourceManager.SaveProjectState();
 
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, transients.Watches, breakTargets);
+                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
                 return runResult;

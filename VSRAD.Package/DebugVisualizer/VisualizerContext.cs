@@ -66,6 +66,23 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
 
+        public BreakpointInfo GetWaveBreakpoint(uint waveIndex) =>
+            TryGetWaveHitInfo((uint)BreakData.GroupIndex, waveIndex, out _, out var breakpoint, out _) ? breakpoint : null;
+
+        /// <returns>True if the wave exist, false otherwise. Breakpoint may be null even if the wave exist, in which case breakpointIdx and execMask should be treated as invalid.</returns>
+        public bool TryGetWaveHitInfo(uint groupIndex, uint waveIndex, out uint breakpointIdx, out BreakpointInfo breakpoint, out ulong execMask)
+        {
+            (breakpointIdx, breakpoint) = (0, null);
+            var (groupSize, waveSize) = (Options.DebuggerOptions.GroupSize, Options.DebuggerOptions.WaveSize);
+            if (!BreakData.TryGetGlobalSystemData((int)groupIndex, (int)waveIndex, (int)groupSize, (int)waveSize, out uint magicNumber, out var instanceId, out execMask))
+                return false;
+            if ((magicNumber == Options.VisualizerOptions.MagicNumber || !Options.VisualizerOptions.CheckMagicNumber)
+                    && BreakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out breakpointIdx)
+                    && breakpointIdx < BreakState.Target.Breakpoints.Count)
+                breakpoint = BreakState.Target.Breakpoints[(int)breakpointIdx];
+            return true;
+        }
+
         private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
@@ -76,23 +93,23 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void EnterBreak(object sender, BreakState breakState)
+        private void EnterBreak(object sender, Result<BreakState> breakResult)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-
-            BreakState = breakState;
-            if (breakState != null)
+            if (breakResult.TryGetResult(out var breakState, out var error))
             {
+                BreakState = breakState;
                 GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
-                VSPackage.VisualizerToolWindow?.BringToFront();
             }
             else
             {
-                Status = "Run failed, see the Output window for more details";
+                BreakState = null;
                 Wavemap = null;
                 WatchDataValid = false;
+                Status = error.Message;
             }
             WavemapSelection = null;
+            VSPackage.VisualizerToolWindow?.BringToFront();
         }
 
         private void GroupIndexChanged(object sender, GroupIndexChangedEventArgs e)
@@ -119,11 +136,7 @@ namespace VSRAD.Package.DebugVisualizer
                 GroupIndexEditable = true;
             }
             WatchDataValid = e.IsGroupIndexValid;
-            Wavemap = new Wavemap.WavemapView(
-                () => BreakData.Breakpoints,
-                (uint groupIndex, uint waveIndex, out uint magicNumber, out uint breakpointId, out ulong execMask) =>
-                    BreakData.TryGetGlobalSystemData(
-                        (int)groupIndex, (int)waveIndex, (int)Options.DebuggerOptions.GroupSize, (int)Options.DebuggerOptions.WaveSize, out magicNumber, out breakpointId, out execMask));
+            Wavemap = new Wavemap.WavemapView(TryGetWaveHitInfo);
             Status = FormatBreakStatusString(BreakState, Options.DebuggerOptions);
         }
 
