@@ -56,3 +56,47 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         };
     }
 }
+
+namespace VSRAD.Package.Server
+{
+    public sealed class SliceWatchView
+    {
+        public int ColumnCount { get; }
+        public int RowCount { get; }
+
+        private readonly int _laneDataOffset;
+        private readonly int _laneDataSize;
+        private readonly int _lastValidIndex;
+
+        private readonly uint[] _data;
+
+        public SliceWatchView(uint[] data, int groupsInRow, int groupSize, int groupCount, int laneDataOffset, int laneDataSize)
+        {
+            _data = data;
+            _laneDataOffset = laneDataOffset;
+            _laneDataSize = laneDataSize;
+            _lastValidIndex = groupSize * groupCount * laneDataSize + _laneDataOffset;
+
+            ColumnCount = groupsInRow * groupSize;
+            RowCount = (_data.Length / _laneDataSize / ColumnCount) + groupCount % groupsInRow;
+        }
+
+        public bool IsInactiveCell(int row, int column)
+        {
+            var groupIdx = row * ColumnCount + column;
+            var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
+            return dwordIdx > _lastValidIndex;
+        }
+
+        public uint this[int row, int column]
+        {
+            get
+            {
+                var groupIdx = row * ColumnCount + column;
+                var dwordIdx = groupIdx * _laneDataSize + _laneDataOffset;
+                return dwordIdx <= _lastValidIndex ? _data[dwordIdx] : 0;
+            }
+        }
+    }
+
+}

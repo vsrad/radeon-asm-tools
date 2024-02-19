@@ -223,7 +223,6 @@
     <Compile Include="Errors.cs" />
     <Compile Include="Server\ActionRunner.cs" />
     <Compile Include="Server\ActionRunResult.cs" />
-    <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
     <Compile Include="Server\BreakStateOutputFile.cs" />
     <Compile Include="ToolWindows\FloatInspectorControl.xaml.cs">

@@ -189,9 +189,8 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         private void DrawImage()
         {
             var imageContainer = (FrameworkElement)_img.Parent;
-            var wavesPerGroup = MathUtils.RoundUpQuotient((int)_context.Options.DebuggerOptions.GroupSize, (int)_context.Options.DebuggerOptions.WaveSize);
 
-            if (_context.Wavemap == null || wavesPerGroup == 0 || imageContainer.ActualHeight == 0)
+            if (_context.Wavemap == null || _context.BreakState == null || imageContainer.ActualHeight == 0)
             {
                 _img.Source = null;
                 Updated?.Invoke(this, EventArgs.Empty);
@@ -200,7 +199,7 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
             var rSize = _context.Options.VisualizerOptions.WavemapElementSize;
             GridSizeX = (int)imageContainer.ActualWidth / rSize;
-            GridSizeY = wavesPerGroup;
+            GridSizeY = (int)_context.BreakState.WavesPerGroup;
 
             var pixelCount = GridSizeX * GridSizeY * rSize * rSize;
             var byteCount = pixelCount * 4;

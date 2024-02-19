@@ -46,7 +46,7 @@ namespace VSRAD.Package.DebugVisualizer
             };
             _table.BreakpointInfoRequested += (uint threadId, ref BreakpointInfo breakpointInfo) =>
             {
-                breakpointInfo = _context.GetWaveBreakpoint(threadId / _context.Options.DebuggerOptions.WaveSize);
+                breakpointInfo = _context.GetBreakpointByThreadId(threadId);
             };
             _table.BreakpointNavigationRequested += integration.OpenFileInEditor;
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
@@ -57,8 +57,8 @@ namespace VSRAD.Package.DebugVisualizer
         private void NavigateFromWavemap(object sender, WavemapImage.NagivationEventArgs e)
         {
             _context.GroupIndex.GoToGroup(e.GroupIndex);
-            if (e.WaveIndex is uint waveIdx)
-                _table.GoToWave(waveIdx, _context.Options.DebuggerOptions.WaveSize);
+            if (e.WaveIndex is uint waveIdx && _context.BreakState != null)
+                _table.GoToWave(waveIdx, _context.BreakState.Dispatch.WaveSize);
             if (e.Breakpoint is BreakpointInfo breakpoint)
                 _integration.OpenFileInEditor(breakpoint.File, breakpoint.Line);
         }
@@ -72,7 +72,7 @@ namespace VSRAD.Package.DebugVisualizer
             _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_context.Options, _context.BreakData);
+            _table.ApplyDataStyling(_context.Options, _context.BreakState);
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
         {
@@ -114,7 +114,6 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerAppearance.ScalingMode):
                     _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
-                case nameof(Options.DebuggerOptions.GroupSize):
                 case nameof(Options.VisualizerOptions.MaskLanes):
                 case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerAppearance.LaneGrouping):
@@ -122,9 +121,6 @@ namespace VSRAD.Package.DebugVisualizer
                 case nameof(Options.VisualizerAppearance.LaneSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
-                    RefreshDataStyling();
-                    break;
-                case nameof(Options.DebuggerOptions.WaveSize):
                     RefreshDataStyling();
                     break;
                 case nameof(Options.VisualizerOptions.MagicNumber):
@@ -153,7 +149,7 @@ namespace VSRAD.Package.DebugVisualizer
         private int SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
             var nChildRows = 0;
-            if (_context.BreakData != null && row.Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nameCell && nameCell.Value != null)
+            if (_context.BreakState != null && row.Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nameCell && nameCell.Value != null)
             {
                 var watchType = VariableTypeUtils.TypeFromShortName((string)row.HeaderCell.Value);
                 var binHexSeparator = _context.Options.VisualizerAppearance.BinHexSeparator;
@@ -163,10 +159,10 @@ namespace VSRAD.Package.DebugVisualizer
                 if (row.Index == 0) // System watch
                 {
                     int tid = 0;
-                    for (var wave = 0; wave < _context.BreakData.WavesPerGroup; ++wave)
+                    for (uint wave = 0; wave < _context.BreakState.WavesPerGroup; ++wave)
                     {
-                        var data = _context.BreakData.GetSystemData(wave);
-                        for (var lane = 0; lane < data.Length && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                        var data = _context.BreakState.GetSystemData(wave);
+                        for (var lane = 0; lane < data.Length && tid < _context.BreakState.GroupSize; ++tid, ++lane)
                         {
                             row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = data[lane];
                             row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
@@ -179,18 +175,18 @@ namespace VSRAD.Package.DebugVisualizer
                     foreach (var r in nameCell.ParentRows.Append(row))
                     {
                         if (watchMeta == null)
-                            watchMeta = _context.BreakData.GetWatchMeta((string)r.Cells[VisualizerTable.NameColumnIndex].Value);
+                            watchMeta = _context.BreakState.GetWatchMeta((string)r.Cells[VisualizerTable.NameColumnIndex].Value);
                         else
                             watchMeta = watchMeta.ListItems[((WatchNameCell)r.Cells[VisualizerTable.NameColumnIndex]).IndexInList];
                     }
-                    for (int wave = 0, tid = 0; wave < _context.BreakData.WavesPerGroup; ++wave)
+                    for (int wave = 0, tid = 0; wave < _context.BreakState.WavesPerGroup; ++wave)
                     {
-                        var instance = _context.BreakData.GetSystemData(wave)[Server.BreakStateData.SystemInstanceIdLane];
+                        var instance = _context.BreakState.GetSystemData((uint)wave)[Server.BreakState.SystemInstanceIdLane];
                         var (_, DataSlot, ListSize) = watchMeta != null ? watchMeta.Instances.Find(v => v.Instance == instance) : default;
                         if (DataSlot is uint dataSlot)
                         {
-                            var data = _context.BreakData.GetWatchData(wave, (int)dataSlot);
-                            for (var lane = 0; lane < data.Length && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                            var data = _context.BreakState.GetWatchData((uint)wave, dataSlot);
+                            for (var lane = 0; lane < data.Length && tid < _context.BreakState.GroupSize; ++tid, ++lane)
                             {
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = data[lane];
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
@@ -199,7 +195,7 @@ namespace VSRAD.Package.DebugVisualizer
                         else
                         {
                             var label = (ListSize is uint listSize) ? $"[{listSize}]" : "";
-                            for (var lane = 0; lane < _context.BreakData.WaveSize && tid < _context.BreakData.GroupSize; ++tid, ++lane)
+                            for (var lane = 0; lane < _context.BreakState.Dispatch.WaveSize && tid < _context.BreakState.GroupSize; ++tid, ++lane)
                             {
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = null;
                                 row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;

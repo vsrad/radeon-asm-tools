@@ -19,9 +19,6 @@ namespace VSRAD.Package.Options
         public ReadOnlyCollection<string> GetWatchSnapshot() =>
             new ReadOnlyCollection<string>(Watches.Select(w => w.Name).Where(Watch.IsWatchNameValid).Distinct().ToList());
 
-        private uint _nGroups;
-        public uint NGroups { get => _nGroups; set => SetField(ref _nGroups, (uint)0); } // always 0 for now as it should be refactored (see ce37993)
-
         private uint _counter;
         public uint Counter { get => _counter; set => SetField(ref _counter, Math.Max(value, 1)); }
 
@@ -33,14 +30,6 @@ namespace VSRAD.Package.Options
 
         private bool _autosave = true;
         public bool Autosave { get => _autosave; set => SetField(ref _autosave, value); }
-
-        private uint _groupSize = 512;
-        [DefaultValue(512)]
-        public uint GroupSize { get => _groupSize; set => SetField(ref _groupSize, Math.Max(value, 1)); }
-
-        private uint _waveSize = 64;
-        [DefaultValue(64)]
-        public uint WaveSize { get => _waveSize; set => SetField(ref _waveSize, value == 32 ? 32u : 64u); }
 
         private bool _stopOnHit;
         [DefaultValue(false)]

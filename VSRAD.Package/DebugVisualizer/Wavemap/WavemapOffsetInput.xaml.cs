@@ -87,17 +87,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void UpdateControls(object sender, EventArgs e)
         {
-            var groupCount = (_context.BreakData?.NumThreadsInProgram ?? 0) / MathUtils.RoundUpToMultiple(_context.Options.DebuggerOptions.GroupSize, _context.Options.DebuggerOptions.WaveSize);
-            if (groupCount > 0 && _image.GridSizeX > 0)
+            if (_image.GridSizeX > 0 && _context.BreakState != null && _context.BreakState.NumGroups > 0)
             {
                 DecButton.IsEnabled = _image.FirstGroup != 0;
-                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
+                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _context.BreakState.NumGroups;
 
                 ShowOffsetSelector = _image.FirstGroup != 0 || IncButton.IsEnabled;
 
-                if (_image.FirstGroup < groupCount)
+                if (_image.FirstGroup < _context.BreakState.NumGroups)
                 {
-                    var lastDisplayedGroup = Math.Min(groupCount, _image.FirstGroup + _image.GridSizeX) - 1;
+                    var lastDisplayedGroup = Math.Min(_context.BreakState.NumGroups, _image.FirstGroup + _image.GridSizeX) - 1;
                     OffsetLabel = $"{_image.FirstGroup} - {lastDisplayedGroup}";
                 }
                 else

@@ -50,7 +50,6 @@ namespace VSRAD.Package.DebugVisualizer
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 
         public BreakState BreakState { get; private set; }
-        public BreakStateData BreakData => BreakState?.Data;
         public DateTime LastRunTime { get; private set; }
 
         private readonly ICommunicationChannel _channel;
@@ -67,15 +66,14 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
 
-        public BreakpointInfo GetWaveBreakpoint(uint waveIndex) =>
-            TryGetWaveHitInfo((uint)BreakData.GroupIndex, waveIndex, out _, out var breakpoint, out _) ? breakpoint : null;
+        public BreakpointInfo GetBreakpointByThreadId(uint threadId) =>
+            TryGetWaveHitInfo(BreakState.GroupIndex, threadId / BreakState.Dispatch.WaveSize, out _, out var breakpoint, out _) ? breakpoint : null;
 
         /// <returns>True if the wave exist, false otherwise. Breakpoint may be null even if the wave exist, in which case breakpointIdx and execMask should be treated as invalid.</returns>
         public bool TryGetWaveHitInfo(uint groupIndex, uint waveIndex, out uint breakpointIdx, out BreakpointInfo breakpoint, out ulong execMask)
         {
             (breakpointIdx, breakpoint) = (0, null);
-            var (groupSize, waveSize) = (Options.DebuggerOptions.GroupSize, Options.DebuggerOptions.WaveSize);
-            if (!BreakData.TryGetGlobalSystemData((int)groupIndex, (int)waveIndex, (int)groupSize, (int)waveSize, out uint magicNumber, out var instanceId, out execMask))
+            if (!BreakState.TryGetGlobalSystemData(groupIndex, waveIndex, out uint magicNumber, out var instanceId, out execMask))
                 return false;
             if ((magicNumber == Options.VisualizerOptions.MagicNumber || !Options.VisualizerOptions.CheckMagicNumber)
                     && BreakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out breakpointIdx)
@@ -101,7 +99,7 @@ namespace VSRAD.Package.DebugVisualizer
             if (breakResult.TryGetResult(out var breakState, out var error))
             {
                 BreakState = breakState;
-                GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
+                GroupIndex.UpdateOnBreak(breakState); // Will invoke GroupIndexChanged, see below
             }
             else
             {
@@ -131,26 +129,23 @@ namespace VSRAD.Package.DebugVisualizer
                 Status = fetchArgs.FetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
                 GroupIndexEditable = false;
 
-                var warning = await BreakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
-                    (int)Options.DebuggerOptions.WaveSize, fetchArgs.FetchWholeFile);
+                var warning = await BreakState.ChangeGroupWithWarningsAsync(_channel, e.GroupIndex, fetchArgs.FetchWholeFile);
 
-                GroupFetched(this, new GroupFetchedEventArgs(BreakState.DispatchParameters, warning));
+                GroupFetched(this, new GroupFetchedEventArgs(BreakState.Dispatch, warning));
                 GroupIndexEditable = true;
             }
             WatchDataValid = e.IsGroupIndexValid;
             Wavemap = new Wavemap.WavemapView(TryGetWaveHitInfo);
-            Status = FormatBreakStatusString(BreakState, LastRunTime, Options.DebuggerOptions);
+            Status = FormatBreakStatusString(BreakState, LastRunTime);
         }
 
-        private static string FormatBreakStatusString(BreakState breakState, DateTime lastRunAt, Options.DebuggerOptions debuggerOptions)
+        private static string FormatBreakStatusString(BreakState breakState, DateTime lastRunAt)
         {
-            var groupCount = breakState.Data.NumThreadsInProgram / MathUtils.RoundUpToMultiple(debuggerOptions.GroupSize, debuggerOptions.WaveSize);
-            var waveSize = debuggerOptions.WaveSize;
-
             var status = new StringBuilder();
-            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0} | Wave size: {1} | Breakpoints hit: {2}", groupCount, waveSize, breakState.HitBreakpoints.Count);
-            if (!string.IsNullOrEmpty(breakState.DispatchParameters.StatusString))
-                status.Append(" | Status: ").Append(breakState.DispatchParameters.StatusString);
+            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0} | Wave size: {1} | Breakpoints hit: {2}",
+                breakState.NumGroups, breakState.Dispatch.WaveSize, breakState.HitBreakpoints.Count);
+            if (!string.IsNullOrEmpty(breakState.Dispatch.StatusString))
+                status.Append(" | Status: ").Append(breakState.Dispatch.StatusString);
             status.AppendFormat(CultureInfo.InvariantCulture, " | Last run: {0:HH:mm:ss}", lastRunAt);
             return status.ToString();
         }

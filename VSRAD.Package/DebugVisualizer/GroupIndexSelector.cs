@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using VSRAD.Package.Server;
-using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -13,14 +12,12 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public string Coordinates { get; }
         public uint GroupIndex { get; }
-        public uint GroupSize { get; }
         public bool IsGroupIndexValid { get; }
 
         public GroupIndexChangedEventArgs(string coordinates, uint groupIndex, uint groupSize, bool isGroupIndexValid)
         {
             Coordinates = coordinates;
             GroupIndex = groupIndex;
-            GroupSize = groupSize;
             IsGroupIndexValid = isGroupIndexValid;
         }
     }
@@ -60,7 +57,7 @@ namespace VSRAD.Package.DebugVisualizer
 
         private bool _updateOptions = true;
 
-        private uint _numThreadsInProgram;
+        private BreakState _breakState;
 
         private readonly Options.ProjectOptions _projectOptions;
 
@@ -79,38 +76,18 @@ namespace VSRAD.Package.DebugVisualizer
                     RaisePropertyChanged(nameof(MaximumX));
                     if (_updateOptions) Update();
                     break;
-                case nameof(Options.DebuggerOptions.WaveSize):
-                case nameof(Options.DebuggerOptions.GroupSize):
-                case nameof(Options.DebuggerOptions.NGroups):
-                    if (_updateOptions) Update();
-                    break;
             }
         }
 
-        public void UpdateOnBreak(uint numThreadsInProgram, BreakStateDispatchParameters dispatchParams)
+        public void UpdateOnBreak(BreakState breakState)
         {
-            _numThreadsInProgram = numThreadsInProgram;
-            SetOptionsFromDispatchParams(dispatchParams);
-        }
+            _breakState = breakState;
 
-        private void SetOptionsFromDispatchParams(BreakStateDispatchParameters dispatchParams)
-        {
             _updateOptions = false;
-
-            _projectOptions.VisualizerOptions.NDRange3D = dispatchParams.NDRange3D;
-            _projectOptions.DebuggerOptions.WaveSize = dispatchParams.WaveSize;
-
-            DimX = dispatchParams.DimX;
-            DimY = dispatchParams.DimY;
-            DimZ = dispatchParams.DimZ;
-
-            _projectOptions.DebuggerOptions.NGroups = dispatchParams.NDRange3D
-                ? dispatchParams.DimX * dispatchParams.DimY * dispatchParams.DimZ
-                : dispatchParams.DimX;
-            _projectOptions.DebuggerOptions.GroupSize = dispatchParams.NDRange3D
-                ? dispatchParams.GroupSizeX * dispatchParams.GroupSizeY * dispatchParams.GroupSizeZ
-                : dispatchParams.GroupSizeX;
-
+            _projectOptions.VisualizerOptions.NDRange3D = breakState.Dispatch.NDRange3D;
+            DimX = breakState.Dispatch.NumGroupsX;
+            DimY = breakState.Dispatch.NumGroupsY;
+            DimZ = breakState.Dispatch.NumGroupsZ;
             _updateOptions = true;
             Update();
         }
@@ -136,30 +113,20 @@ namespace VSRAD.Package.DebugVisualizer
 
         public void Update()
         {
-            var index = _projectOptions.VisualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
-            var coordinates = _projectOptions.VisualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
-
-            var groupSize = _projectOptions.DebuggerOptions.GroupSize;
-            var waveSize = _projectOptions.DebuggerOptions.WaveSize;
-            var nGroups = _projectOptions.DebuggerOptions.NGroups;
-
-            GroupIndexChangedEventArgs args;
-            if (_numThreadsInProgram != 0)
+            if (_breakState != null)
             {
-                var dataGroupCount = _numThreadsInProgram / MathUtils.RoundUpToMultiple(groupSize, waveSize);
-                var groupIndexValid = index < dataGroupCount;
-                _error = groupIndexValid ? null : $"Invalid group index: {index} >= {dataGroupCount}";
-                args = new GroupIndexChangedEventArgs(coordinates, index, groupSize, groupIndexValid);
+                var index = _projectOptions.VisualizerOptions.NDRange3D ? (X + Y * DimX + Z * DimX * DimY) : X;
+                var coordinates = _projectOptions.VisualizerOptions.NDRange3D ? $"({X}; {Y}; {Z})" : $"({X})";
+
+                GroupIndexChangedEventArgs args;
+                var groupIndexValid = index < _breakState.NumGroups;
+                _error = groupIndexValid ? null : $"Invalid group index: {index} >= {_breakState.NumGroups}";
+                args = new GroupIndexChangedEventArgs(coordinates, index, _breakState.GroupSize, groupIndexValid);
+                IndexChanged?.Invoke(this, args);
+                ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(X)));
+                ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Y)));
+                ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Z)));
             }
-            else
-            {
-                _error = null;
-                args = new GroupIndexChangedEventArgs(coordinates, index, groupSize, isGroupIndexValid: true);
-            }
-            IndexChanged?.Invoke(this, args);
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(X)));
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Y)));
-            ErrorsChanged?.Invoke(this, new DataErrorsChangedEventArgs(nameof(Z)));
         }
 
         public IEnumerable GetErrors(string propertyName)
