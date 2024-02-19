@@ -63,16 +63,18 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
                     var breakpoint = cell.Wave.BreakpointIndex != null ? breakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex] : null;
                     {
                         var info = $"G: {cell.GroupIndex}\nW: {cell.WaveIndex}";
-                        if (cell.Wave.PartialExec && breakpoint != null)
-                            info += " (E)";
+                        if (breakpoint != null && (cell.Wave.Scc || cell.Wave.PartialExec))
+                            info += cell.Wave.Scc && cell.Wave.PartialExec ? " (SCC,E)" : cell.Wave.Scc ? " (SCC)" : " (E)";
                         info += "\n";
                         info += breakpoint != null ? $"L: {breakpoint.Line + 1}" : "No break";
                         WaveInfoTextBlock.Text = info;
                     }
                     {
                         var tooltip = $"Group: {cell.GroupIndex}\nWave: {cell.WaveIndex}";
-                        if (cell.Wave.PartialExec && breakpoint != null)
-                            tooltip += " (partial EXEC mask)";
+                        if (breakpoint != null && cell.Wave.Scc)
+                            tooltip += " (SCC = 1)";
+                        if (breakpoint != null && cell.Wave.PartialExec)
+                            tooltip += " (Partial EXEC)";
                         tooltip += "\n";
                         tooltip += breakpoint != null ? $"Location: {breakpoint.Location}" : "No breakpoint hit";
                         WaveInfoTextBlock.ToolTip = tooltip;
