@@ -15,27 +15,22 @@ namespace VSRAD.Package.Commands
     public sealed class ActionsMenuCommand : ICommandHandler
     {
         private readonly IProject _project;
-        private readonly IActionLauncher _actionLauncher;
-        private readonly IActionLogger _actionLogger;
-        private readonly IDebuggerIntegration _debuggerIntegration;
+        private readonly IActionController _actionController;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, IActionLogger actionLogger, IDebuggerIntegration debuggerIntegration)
+        public ActionsMenuCommand(IProject project, IActionController actionController)
         {
             _project = project;
-            _actionLauncher = actionLauncher;
-            _actionLogger = actionLogger;
-            _debuggerIntegration = debuggerIntegration;
+            _actionController = actionController;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
 
         public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
-            if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out _)
-                && SelectedProfile.Actions.Any(a => a.Name == actionName))
+            if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out _) && SelectedProfile.Actions.Any(a => a.Name == actionName))
             {
                 var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
@@ -69,20 +64,16 @@ namespace VSRAD.Package.Commands
         {
             if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out var error))
             {
+                var debugBreakTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
+                                     : commandId == Constants.DebugActionCommandId ? BreakTargetSelector.SingleNext
+                                     : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.SinglePrev
+                                     : BreakTargetSelector.SingleRerun;
                 ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
                 {
-                    var debugNextTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
-                                        : commandId == Constants.DebugActionCommandId ? BreakTargetSelector.SingleNext
-                                        : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.SinglePrev
-                                        : BreakTargetSelector.SingleRerun;
-                    var result = await _actionLauncher.LaunchActionByNameAsync(actionName, debugNextTarget);
+                    var result = await _actionController.RunActionAsync(actionName, debugBreakTarget);
                     await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                    if (!result.TryGetResult(out var runResult, out error))
+                    if (!result.TryGetResult(out _, out error))
                         Errors.Show(error);
-                    if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action && _actionLauncher.IsDebugAction(action))
-                        _debuggerIntegration.NotifyDebugActionExecuted(runResult);
-                    if (runResult != null)
-                        await _actionLogger.LogActionRunAsync(runResult);
                 });
             }
             else

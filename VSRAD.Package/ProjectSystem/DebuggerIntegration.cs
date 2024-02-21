@@ -17,7 +17,7 @@ namespace VSRAD.Package.ProjectSystem
         event EventHandler<Result<BreakState>> BreakEntered;
 
         bool TryCreateDebugSession();
-        void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false);
+        void NotifyDebugActionExecuted(ActionRunResult runResult, BreakTargetSelector breakTarget);
     }
 
     [Export(typeof(IDebuggerIntegration))]
@@ -28,8 +28,7 @@ namespace VSRAD.Package.ProjectSystem
         public event EventHandler<ExecutionCompletedEventArgs> ExecutionCompleted;
 
         private readonly IProject _project;
-        private readonly IActionLauncher _actionLauncher;
-        private readonly IActionLogger _actionLogger;
+        private readonly Lazy<IActionController> _actionController;
         private readonly IBreakpointTracker _breakpointTracker;
         private readonly IProjectSourceManager _projectSourceManager;
         private readonly BreakLineGlyphTaggerProvider _breakLineTagger;
@@ -37,11 +36,14 @@ namespace VSRAD.Package.ProjectSystem
         public bool DebugInProgress { get; private set; } = false;
 
         [ImportingConstructor]
-        public DebuggerIntegration(IProject project, IActionLauncher actionLauncher, IActionLogger actionLogger, IBreakpointTracker breakpointTracker, IProjectSourceManager projectSourceManager)
+        public DebuggerIntegration(
+            IProject project,
+            Lazy<IActionController> actionController, // Must be imported lazily due to circular dependency
+            IBreakpointTracker breakpointTracker,
+            IProjectSourceManager projectSourceManager)
         {
             _project = project;
-            _actionLauncher = actionLauncher;
-            _actionLogger = actionLogger;
+            _actionController = actionController;
             _breakpointTracker = breakpointTracker;
             _projectSourceManager = projectSourceManager;
 
@@ -89,7 +91,7 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
-        public void NotifyDebugActionExecuted(ActionRunResult runResult, bool isStepping = false)
+        public void NotifyDebugActionExecuted(ActionRunResult runResult, BreakTargetSelector breakTarget)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
@@ -115,6 +117,7 @@ namespace VSRAD.Package.ProjectSystem
                 breakResult = new Error("Run failed, see the Output window for more details");
             }
 
+            var isStepping = breakTarget == BreakTargetSelector.SingleStep;
             ExecutionCompletedEventArgs args;
             if (hitLocations.Count > 0)
             {
@@ -167,21 +170,16 @@ namespace VSRAD.Package.ProjectSystem
                 var debugBreakTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
                     : step ? BreakTargetSelector.SingleStep
                     : BreakTargetSelector.SingleNext;
-                var result = await _actionLauncher.LaunchActionByNameAsync(_project.Options.Profile.MenuCommands.DebugAction, debugBreakTarget);
-
+                var result = await _actionController.Value.RunActionAsync(_project.Options.Profile.MenuCommands.DebugAction, debugBreakTarget);
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (!result.TryGetResult(out var runResult, out var error))
                     Errors.Show(error);
-                NotifyDebugActionExecuted(runResult, step);
-                if (runResult != null)
-                    await _actionLogger.LogActionRunAsync(runResult);
-            },
-            exceptionCallbackOnMainThread: () => NotifyDebugActionExecuted(null, step));
+            });
         }
 
         void IEngineIntegration.CauseBreak()
         {
-            NotifyDebugActionExecuted(null);
+            _actionController.Value.AbortRunningAction();
         }
     }
 }

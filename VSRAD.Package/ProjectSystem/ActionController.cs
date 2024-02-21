@@ -3,54 +3,62 @@ using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
-    public interface IActionLauncher
+    public interface IActionController
     {
-        Task<Result<ActionRunResult>> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.SingleRerun);
-        bool IsDebugAction(ActionProfileOptions action);
+        bool IsActionRunning { get; }
+
+        Task<Result<ActionRunResult>> RunActionAsync(string actionName, BreakTargetSelector debugBreakTarget);
+        void AbortRunningAction();
     }
 
-    [Export(typeof(IActionLauncher))]
-    public sealed class ActionLauncher : IActionLauncher
+    [Export(typeof(IActionController))]
+    public sealed class ActionController : IActionController
     {
         private readonly IProject _project;
+        private readonly IActionLogger _actionLogger;
         private readonly ICommunicationChannel _channel;
         private readonly IProjectSourceManager _projectSourceManager;
+        private readonly IDebuggerIntegration _debuggerIntegration;
         private readonly IBreakpointTracker _breakpointTracker;
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
-        private string _currentlyRunningActionName;
+        private readonly object _runningActionLock = new object();
+        private string _runningActionName;
+        private CancellationTokenSource _runningActionTokenSource;
+
+        public bool IsActionRunning => _runningActionName != null;
 
         [ImportingConstructor]
-        public ActionLauncher(
+        public ActionController(
             IProject project,
+            IActionLogger actionLogger,
             ICommunicationChannel channel,
             IProjectSourceManager projectSourceManager,
+            IDebuggerIntegration debuggerIntegration,
             IBreakpointTracker breakpointTracker,
             SVsServiceProvider serviceProvider)
         {
             _project = project;
+            _actionLogger = actionLogger;
             _channel = channel;
-            _serviceProvider = serviceProvider;
             _projectSourceManager = projectSourceManager;
+            _debuggerIntegration = debuggerIntegration;
             _breakpointTracker = breakpointTracker;
+            _serviceProvider = serviceProvider;
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
-        public async Task<Result<ActionRunResult>> LaunchActionByNameAsync(string actionName, BreakTargetSelector debugBreakTarget = BreakTargetSelector.SingleRerun)
+        public async Task<Result<ActionRunResult>> RunActionAsync(string actionName, BreakTargetSelector debugBreakTarget)
         {
-            if (_currentlyRunningActionName != null)
-                return new Error($"Action {_currentlyRunningActionName} is already running.\r\n\r\n" +
-                    "If you believe this to be a hang, use the Disconnect button available in Tools -> RAD Debug -> Options to abort the currently running action.");
-
             if (string.IsNullOrEmpty(actionName))
                 return new Error("No action is set for this command. To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
                     "You can find command mappings in the Toolbar section.");
@@ -60,10 +68,51 @@ namespace VSRAD.Package.ProjectSystem
                 return new Error($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
                     "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
 
-            if (debugBreakTarget != BreakTargetSelector.SingleRerun && debugBreakTarget != BreakTargetSelector.Multiple && !IsDebugAction(action))
+            bool actionReadsDebugData = _project.Options.Profile.ActionReadsDebugData(action);
+            if (actionName == _project.Options.Profile.MenuCommands.DebugAction && !actionReadsDebugData)
                 return new Error($"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
 
+            lock (_runningActionLock)
+            {
+                if (_runningActionName != null)
+                    return new Error($"Action {_runningActionName} is already running.\r\n\r\n" +
+                        "You may abort it by clicking on the \"Abort Running Action\" icon in the RAD Debug toolbar.");
+                _runningActionName = action.Name;
+                _runningActionTokenSource = new CancellationTokenSource();
+            }
+            ActionRunResult runResult = null;
+            try
+            {
+                var launchResult = await LaunchActionAsync(action, debugBreakTarget);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                if (launchResult.TryGetResult(out runResult, out var error) && runResult != null)
+                    await _actionLogger.LogActionRunAsync(runResult);
+                return launchResult;
+            }
+            finally
+            {
+                if (actionReadsDebugData)
+                    _debuggerIntegration.NotifyDebugActionExecuted(runResult, debugBreakTarget);
+
+                lock (_runningActionLock)
+                {
+                    _runningActionName = null;
+                    _runningActionTokenSource = null;
+                }
+            }
+        }
+
+        public void AbortRunningAction()
+        {
+            lock (_runningActionLock)
+            {
+                _runningActionTokenSource?.Cancel();
+            }
+        }
+
+        private async Task<Result<ActionRunResult>> LaunchActionAsync(Options.ActionProfileOptions action, BreakTargetSelector debugBreakTarget)
+        {
             var activeEditor = _projectSourceManager.GetActiveEditorView();
             var (activeFile, activeFileLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
             var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
@@ -72,7 +121,6 @@ namespace VSRAD.Package.ProjectSystem
 
             try
             {
-                _currentlyRunningActionName = action.Name;
                 await _statusBar.SetTextAsync("Running " + action.Name + " action...");
 
                 _project.Options.DebuggerOptions.UpdateLastAppArgs();
@@ -94,31 +142,17 @@ namespace VSRAD.Package.ProjectSystem
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 _projectSourceManager.SaveProjectState();
 
+                var continueOnError = _project.Options.Profile.General.ContinueActionExecOnError;
                 var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
                 var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget, checkMagicNumber);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
-                var runResult = await runner.RunAsync(action.Name, action.Steps, _project.Options.Profile.General.ContinueActionExecOnError).ConfigureAwait(false);
+                var runResult = await runner.RunAsync(action.Name, action.Steps, continueOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
                 return runResult;
             }
             finally
             {
-                _currentlyRunningActionName = null;
                 await _statusBar.ClearAsync();
             }
-        }
-
-        public bool IsDebugAction(ActionProfileOptions action)
-        {
-            foreach (var step in action.Steps)
-            {
-                if (step is ReadDebugDataStep)
-                    return true;
-                if (step is RunActionStep runAction
-                    && _project.Options.Profile.Actions.FirstOrDefault(a => a.Name == runAction.Name) is ActionProfileOptions nestedAction
-                    && IsDebugAction(nestedAction))
-                    return true;
-            }
-            return false;
         }
     }
 }

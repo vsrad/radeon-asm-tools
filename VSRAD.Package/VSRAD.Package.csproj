@@ -191,7 +191,7 @@
     <Compile Include="Options\MacroItem.cs" />
     <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
-    <Compile Include="ProjectSystem\ActionLauncher.cs" />
+    <Compile Include="ProjectSystem\ActionController.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
     <Compile Include="ProjectSystem\BreakpointTracker.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphFactory.cs" />
