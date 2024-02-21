@@ -17,7 +17,7 @@ namespace VSRAD.Package.ProjectSystem
         event EventHandler<Result<BreakState>> BreakEntered;
 
         bool TryCreateDebugSession();
-        void NotifyDebugActionExecuted(ActionRunResult runResult, BreakTargetSelector breakTarget);
+        void NotifyDebugActionExecuted(Result<ActionRunResult> actionRun, BreakTargetSelector breakTarget);
     }
 
     [Export(typeof(IDebuggerIntegration))]
@@ -91,14 +91,14 @@ namespace VSRAD.Package.ProjectSystem
             return true;
         }
 
-        public void NotifyDebugActionExecuted(ActionRunResult runResult, BreakTargetSelector breakTarget)
+        public void NotifyDebugActionExecuted(Result<ActionRunResult> actionRun, BreakTargetSelector breakTarget)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
             Result<BreakState> breakResult;
             var validBreakpoints = new List<BreakpointInfo>();
             var hitLocations = new List<BreakLocation>();
-            if (runResult?.BreakState is BreakState breakState)
+            if (actionRun.TryGetResult(out var runResult, out _) && runResult?.BreakState is BreakState breakState)
             {
                 foreach (int breakpointIdx in breakState.BreakpointIndexPerInstance.Values.Distinct())
                     validBreakpoints.Add(breakState.Target.Breakpoints[breakpointIdx]);
@@ -165,16 +165,11 @@ namespace VSRAD.Package.ProjectSystem
 
         void IEngineIntegration.Execute(bool step)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
-            {
-                var debugBreakTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
-                    : step ? BreakTargetSelector.SingleStep
-                    : BreakTargetSelector.SingleNext;
-                var result = await _actionController.Value.RunActionAsync(_project.Options.Profile.MenuCommands.DebugAction, debugBreakTarget);
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                if (!result.TryGetResult(out var runResult, out var error))
-                    Errors.Show(error);
-            });
+            var debugBreakTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
+                : step ? BreakTargetSelector.SingleStep
+                : BreakTargetSelector.SingleNext;
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
+                _actionController.Value.RunActionAsync(_project.Options.Profile.MenuCommands.DebugAction, debugBreakTarget));
         }
 
         void IEngineIntegration.CauseBreak()

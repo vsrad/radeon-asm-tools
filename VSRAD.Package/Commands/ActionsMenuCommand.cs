@@ -68,13 +68,8 @@ namespace VSRAD.Package.Commands
                                      : commandId == Constants.DebugActionCommandId ? BreakTargetSelector.SingleNext
                                      : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.SinglePrev
                                      : BreakTargetSelector.SingleRerun;
-                ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
-                {
-                    var result = await _actionController.RunActionAsync(actionName, debugBreakTarget);
-                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                    if (!result.TryGetResult(out _, out error))
-                        Errors.Show(error);
-                });
+                ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
+                    _actionController.RunActionAsync(actionName, debugBreakTarget));
             }
             else
             {

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -16,7 +17,7 @@ namespace VSRAD.Package.ProjectSystem
     {
         bool IsActionRunning { get; }
 
-        Task<Result<ActionRunResult>> RunActionAsync(string actionName, BreakTargetSelector debugBreakTarget);
+        Task RunActionAsync(string actionName, BreakTargetSelector debugBreakTarget);
         void AbortRunningAction();
     }
 
@@ -59,55 +60,63 @@ namespace VSRAD.Package.ProjectSystem
             _statusBar = new VsStatusBarWriter(serviceProvider);
         }
 
-        public async Task<Result<ActionRunResult>> RunActionAsync(string actionName, BreakTargetSelector debugBreakTarget)
+        public async Task RunActionAsync(string actionName, BreakTargetSelector debugBreakTarget)
         {
-            if (string.IsNullOrEmpty(actionName))
-                return new Error("No action is set for this command. To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
-                    "You can find command mappings in the Toolbar section.");
-
-            var action = _project.Options.Profile.Actions.FirstOrDefault(a => a.Name == actionName);
-            if (action == null)
-                return new Error($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
-                    "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
-
-            bool actionReadsDebugData = _project.Options.Profile.ActionReadsDebugData(action);
-            if (actionName == _project.Options.Profile.MenuCommands.DebugAction && !actionReadsDebugData)
-                return new Error($"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
-                    "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            ActionRunResult runResult = null;
-            lock (_runningActionLock)
-            {
-                if (_runningActionName != null)
-                {
-                    _runningActionWarningBar?.Close();
-                    var warningText = new[] { new InfoBarTextSpan($"Cannot launch a new action because {_runningActionName} is already running. "), new InfoBarButton("Abort") };
-                    _runningActionWarningBar = new VsInfoBar(_serviceProvider, new InfoBarModel(warningText, KnownMonikers.StatusNo, true), (s, e) => AbortRunningAction());
-                    return runResult;
-                }
-                _runningActionName = action.Name;
-                _runningActionTokenSource = new CancellationTokenSource();
-            }
+            Result<ActionRunResult> actionRun = (ActionRunResult)null;
+            bool anotherActionRunning = false;
+            bool actionReadsDebugData = false;
             try
             {
-                var launchResult = await LaunchActionAsync(action, debugBreakTarget);
-                if (launchResult.TryGetResult(out runResult, out var error) && runResult != null)
-                    await _actionLogger.LogActionRunAsync(runResult);
-                return launchResult;
-            }
-            finally
-            {
-                if (actionReadsDebugData)
-                    _debuggerIntegration.NotifyDebugActionExecuted(runResult, debugBreakTarget);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
                 lock (_runningActionLock)
                 {
-                    _runningActionName = null;
-                    _runningActionTokenSource = null;
-                    _runningActionWarningBar?.Close();
-                    _runningActionWarningBar = null;
+                    if (_runningActionName != null)
+                    {
+                        anotherActionRunning = true;
+                        return;
+                    }
+                    _runningActionName = actionName;
+                    _runningActionTokenSource = new CancellationTokenSource();
+                }
+
+                Options.ActionProfileOptions action;
+
+                if (string.IsNullOrEmpty(actionName))
+                    actionRun = new Error("No action is set for this command. To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
+                        "You can find command mappings in the Toolbar section.");
+                else if ((action = _project.Options.Profile.Actions.FirstOrDefault(a => a.Name == actionName)) == null)
+                    actionRun = new Error($"Action {actionName} is not defined. To create it, go to Tools -> RAD Debug -> Options and edit your current profile.\r\n\r\n" +
+                        "Alternatively, you can set a different action for this command in the Toolbar section of your profile.");
+                else if (!(actionReadsDebugData = _project.Options.Profile.ActionReadsDebugData(action)) && actionName == _project.Options.Profile.MenuCommands.DebugAction)
+                    actionRun = new Error($"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
+                        "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
+                else
+                    actionRun = await LaunchActionAsync(action, debugBreakTarget);
+            }
+            finally
+            {
+                var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
+                if (actionReadsDebugData)
+                    _debuggerIntegration.NotifyDebugActionExecuted(actionRun, debugBreakTarget);
+                if (error != default)
+                    Errors.Show(error);
+
+                lock (_runningActionLock)
+                {
+                    if (anotherActionRunning)
+                    {
+                        _runningActionWarningBar?.Close();
+                        var warningText = new[] { new InfoBarTextSpan($"Cannot launch a new action because {_runningActionName} is already running. "), new InfoBarButton("Abort") };
+                        _runningActionWarningBar = new VsInfoBar(_serviceProvider, new InfoBarModel(warningText, KnownMonikers.StatusNo, true), (s, e) => AbortRunningAction());
+                    }
+                    else
+                    {
+                        _runningActionName = null;
+                        _runningActionTokenSource = null;
+                        _runningActionWarningBar?.Close();
+                        _runningActionWarningBar = null;
+                    }
                 }
             }
         }
