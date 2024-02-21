@@ -238,6 +238,7 @@
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\VsEditor.cs" />
     <Compile Include="Utils\VsEditorView.cs" />
+    <Compile Include="Utils\VsInfoBar.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
     <Compile Include="Utils\WpfMruEditor.xaml.cs">
       <DependentUpon>WpfMruEditor.xaml</DependentUpon>

@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Shell;
+﻿using Microsoft.VisualStudio.Imaging;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -34,6 +35,7 @@ namespace VSRAD.Package.ProjectSystem
         private readonly object _runningActionLock = new object();
         private string _runningActionName;
         private CancellationTokenSource _runningActionTokenSource;
+        private VsInfoBar _runningActionWarningBar;
 
         public bool IsActionRunning => _runningActionName != null;
 
@@ -73,19 +75,24 @@ namespace VSRAD.Package.ProjectSystem
                 return new Error($"Action {actionName} is set as the debug action, but does not contain a Read Debug Data step.\r\n\r\n" +
                     "To configure it, go to Tools -> RAD Debug -> Options and edit your current profile.");
 
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            ActionRunResult runResult = null;
             lock (_runningActionLock)
             {
                 if (_runningActionName != null)
-                    return new Error($"Action {_runningActionName} is already running.\r\n\r\n" +
-                        "You may abort it by clicking on the \"Abort Running Action\" icon in the RAD Debug toolbar.");
+                {
+                    _runningActionWarningBar?.Close();
+                    var warningText = new[] { new InfoBarTextSpan($"Cannot launch a new action because {_runningActionName} is already running. "), new InfoBarButton("Abort") };
+                    _runningActionWarningBar = new VsInfoBar(_serviceProvider, new InfoBarModel(warningText, KnownMonikers.StatusNo, true), (s, e) => AbortRunningAction());
+                    return runResult;
+                }
                 _runningActionName = action.Name;
                 _runningActionTokenSource = new CancellationTokenSource();
             }
-            ActionRunResult runResult = null;
             try
             {
                 var launchResult = await LaunchActionAsync(action, debugBreakTarget);
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 if (launchResult.TryGetResult(out runResult, out var error) && runResult != null)
                     await _actionLogger.LogActionRunAsync(runResult);
                 return launchResult;
@@ -99,6 +106,8 @@ namespace VSRAD.Package.ProjectSystem
                 {
                     _runningActionName = null;
                     _runningActionTokenSource = null;
+                    _runningActionWarningBar?.Close();
+                    _runningActionWarningBar = null;
                 }
             }
         }
