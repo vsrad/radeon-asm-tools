@@ -21,13 +21,15 @@ namespace VSRAD.Package.Server
         public string RemoteWorkDir { get; }
         public IReadOnlyList<string> Watches { get; }
         public Result<BreakTarget> BreakTarget { get; }
+        public uint? CheckMagicNumber { get; }
 
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<BreakTarget> breakTarget = null)
+        public ActionEnvironment(string localWorkDir, string remoteWorkDir, IReadOnlyList<string> watches = null, Result<BreakTarget> breakTarget = null, uint? checkMagicNumber = null)
         {
             LocalWorkDir = localWorkDir;
             RemoteWorkDir = remoteWorkDir;
             Watches = watches ?? Array.Empty<string>();
             BreakTarget = breakTarget ?? ProjectSystem.BreakTarget.Empty;
+            CheckMagicNumber = checkMagicNumber;
         }
     }
 
@@ -226,8 +228,7 @@ namespace VSRAD.Package.Server
                     return new StepResult(false, error.Message, "", breakState: null);
                 validWatchesString = Encoding.UTF8.GetString(data);
             }
-            string dispatchParamsString = null;
-            if (!string.IsNullOrEmpty(step.DispatchParamsFile.Path))
+            string dispatchParamsString;
             {
                 var result = await ReadDebugDataFileAsync("Dispatch parameters", step.DispatchParamsFile.Path, step.DispatchParamsFile.IsRemote(), step.DispatchParamsFile.CheckTimestamp);
                 if (!result.TryGetResult(out var data, out var error))
@@ -271,7 +272,7 @@ namespace VSRAD.Package.Server
                     var dataDwordCount = localOutputData.Length / 4;
                     outputFile = new BreakStateOutputFile(fullPath, step.BinaryOutput, offset: 0, timestamp, dataDwordCount);
                 }
-                var breakStateResult = BreakState.CreateBreakState(breakTarget, _environment.Watches, validWatchesString, dispatchParamsString, outputFile, localOutputData);
+                var breakStateResult = BreakState.CreateBreakState(breakTarget, _environment.Watches, validWatchesString, dispatchParamsString, outputFile, localOutputData, _environment.CheckMagicNumber);
                 if (breakStateResult.TryGetResult(out var breakState, out var error))
                     return new StepResult(true, "", "", breakState: breakState);
                 else

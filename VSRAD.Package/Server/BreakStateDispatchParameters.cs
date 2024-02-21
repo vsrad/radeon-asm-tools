@@ -15,13 +15,14 @@ namespace VSRAD.Package.Server
         public uint GroupSizeX { get; }
         public uint GroupSizeY { get; }
         public uint GroupSizeZ { get; }
-        public uint DimX { get; }
-        public uint DimY { get; }
-        public uint DimZ { get; }
-        public bool NDRange3D { get; }
+        public uint NumGroupsX { get; }
+        public uint NumGroupsY { get; }
+        public uint NumGroupsZ { get; }
         public string StatusString { get; }
 
-        private BreakStateDispatchParameters(uint waveSize, uint gridX, uint gridY, uint gridZ, uint groupX, uint groupY, uint groupZ, string statusString)
+        public bool NDRange3D => GroupSizeY > 1 || GroupSizeZ > 1;
+
+        public BreakStateDispatchParameters(uint waveSize, uint gridX, uint gridY, uint gridZ, uint groupX, uint groupY, uint groupZ, string statusString)
         {
             WaveSize = waveSize;
             GroupSizeX = Math.Max(1, groupX);
@@ -30,10 +31,9 @@ namespace VSRAD.Package.Server
             GridSizeX = Math.Max(1, gridX);
             GridSizeY = Math.Max(1, gridY);
             GridSizeZ = Math.Max(1, gridZ);
-            DimX = gridX / GroupSizeX;
-            DimY = gridY > 1 ? gridY / GroupSizeY : 0;
-            DimZ = gridZ > 1 ? gridZ / GroupSizeZ : 0;
-            NDRange3D = gridY > 1 || gridZ > 1;
+            NumGroupsX = gridX / GroupSizeX;
+            NumGroupsY = gridY / GroupSizeY;
+            NumGroupsZ = gridZ / GroupSizeZ;
             StatusString = statusString;
         }
 

@@ -77,7 +77,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void WatchSelectionChanged()
         {
-            if (!_windowVisible || string.IsNullOrEmpty(SelectedWatch) || _visualizerContext.BreakData == null)
+            if (!_windowVisible || string.IsNullOrEmpty(SelectedWatch) || _visualizerContext.BreakState == null)
                 return;
             _visualizerContext.GroupIndex.Update();
         }

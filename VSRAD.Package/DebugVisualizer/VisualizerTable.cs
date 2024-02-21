@@ -100,12 +100,24 @@ namespace VSRAD.Package.DebugVisualizer
             RaiseWatchStateChanged(new[] { watchRow });
         }
 
-        public void GoToWave(uint waveIdx, uint waveSize)
+        public void GoToWave(uint waveIndex, uint waveSize)
         {
-            var firstCol = waveIdx * waveSize;
-            var lastCol = (waveIdx + 1) * waveSize - 1;
-            if (!_selectionController.SelectAllColumnsInRange((int)firstCol + DataColumnOffset, (int)lastCol + DataColumnOffset))
-                Errors.ShowWarning($"All columns of the target wave ({firstCol}-{lastCol}) are hidden.");
+            var firstLane = waveIndex * waveSize;
+            var lastLane = firstLane + waveSize - 1;
+            var firstColumn = (int)(DataColumnOffset + firstLane);
+            var lastColumn = (int)Math.Min(DataColumnOffset + lastLane, Columns.Count - 1);
+            bool anyLaneVisible = false;
+            for (int i = firstColumn; i <= lastColumn; ++i)
+            {
+                if (Columns[i].Visible)
+                {
+                    FirstDisplayedScrollingColumnIndex = i;
+                    anyLaneVisible = true;
+                    break;
+                }
+            }
+            if (!anyLaneVisible)
+                Errors.ShowWarning($"All columns of the target wave ({firstLane}-{lastLane}) are hidden.");
         }
 
         public void SetScalingMode(ScalingMode mode) => _state.ScalingMode = mode;
@@ -363,27 +375,29 @@ namespace VSRAD.Package.DebugVisualizer
                 base.OnColumnDividerWidthChanged(e);
         }
 
-        public void ApplyDataStyling(ProjectOptions options, Server.BreakStateData breakData)
+        public void ApplyDataStyling(ProjectOptions options, Server.BreakState breakState)
         {
-            ((Control)this).SuspendDrawing();
-            _disableColumnWidthChangeHandler = true;
+            if (breakState != null)
+            {
+                ((Control)this).SuspendDrawing();
+                _disableColumnWidthChangeHandler = true;
 
-            CreateMissingDataColumns((int)options.DebuggerOptions.GroupSize);
+                CreateMissingDataColumns((int)breakState.GroupSize);
 
-            _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerAppearance, options.VisualizerColumnStyling,
-                options.DebuggerOptions.GroupSize, options.DebuggerOptions.WaveSize, breakData);
+                _computedStyling.Recompute(options.VisualizerOptions, options.VisualizerAppearance, options.VisualizerColumnStyling, breakState);
 
-            ApplyFontAndColorInfo();
+                ApplyFontAndColorInfo();
 
-            var columnStyling = new ColumnStyling(
-                options.VisualizerAppearance,
-                options.VisualizerColumnStyling,
-                _computedStyling,
-                _fontAndColor.FontAndColorState);
-            columnStyling.Apply(_state.DataColumns);
+                var columnStyling = new ColumnStyling(
+                    options.VisualizerAppearance,
+                    options.VisualizerColumnStyling,
+                    _computedStyling,
+                    _fontAndColor.FontAndColorState);
+                columnStyling.Apply(_state.DataColumns);
 
-            _disableColumnWidthChangeHandler = false;
-            ((Control)this).ResumeDrawing();
+                _disableColumnWidthChangeHandler = false;
+                ((Control)this).ResumeDrawing();
+            }
         }
 
         private void ApplyFontAndColorInfo()
@@ -639,13 +653,15 @@ namespace VSRAD.Package.DebugVisualizer
 
         private bool ShowColumnContextMenu(HitTestInfo hit, Point loc)
         {
+            var groupSize = (uint)_computedStyling.ColumnState.Length;
+
             EventHandler SelectPartialSubgroupsHandler(uint subgroupSize, uint displayedCount, bool displayLast)
             {
                 return (s, e) => SelectPartialSubgroups(subgroupSize, displayedCount, displayLast);
             }
             void SelectPartialSubgroups(uint subgroupSize, uint displayedCount, bool displayLast)
             {
-                string subgroupsSelector = ColumnSelector.PartialSubgroups(_options.DebuggerOptions.GroupSize, subgroupSize, displayedCount, displayLast);
+                string subgroupsSelector = ColumnSelector.PartialSubgroups(groupSize, subgroupSize, displayedCount, displayLast);
                 string newSelector = ColumnSelector.GetSelectorMultiplication(_options.VisualizerColumnStyling.VisibleColumns, subgroupsSelector, DataColumnCount);
                 SetColumnSelector(newSelector);
             }
@@ -688,7 +704,7 @@ namespace VSRAD.Package.DebugVisualizer
                     keepLastSubmenu.MenuItems.Add(submenu);
                 }
                 menu.MenuItems.Add(keepLastSubmenu);
-                menu.MenuItems.Add(new MenuItem("Show All Columns", (s, e) => SetColumnSelector($"0-{_options.DebuggerOptions.GroupSize - 1}")));
+                menu.MenuItems.Add(new MenuItem("Show All Columns", (s, e) => SetColumnSelector($"0-{groupSize - 1}")));
                 menu.MenuItems.Add(new MenuItem("-"));
                 menu.MenuItems.Add(new MenuItem("Font Color", new[]
                 {
@@ -745,7 +761,7 @@ namespace VSRAD.Package.DebugVisualizer
                         }
                         else
                         {
-                            menu.MenuItems.Add(new MenuItem("No Breakpoint Reached") { Enabled = false });
+                            menu.MenuItems.Add(new MenuItem("No Breakpoint Hit") { Enabled = false });
                         }
                     }
                 }

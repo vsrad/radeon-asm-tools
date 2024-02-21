@@ -52,8 +52,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
         public const string DebugAppArgs = "RadDebugAppArgs";
         public const string DebugBreakArgs = "RadDebugBreakArgs";
-        public const string NGroups = "RadNGroups";
-        public const string GroupSize = "RadGroupSize";
         public const string TargetProcessor = "RadTargetProcessor";
     }
 
@@ -114,8 +112,6 @@ namespace VSRAD.Package.ProjectSystem.Macros
                 case RadMacros.ActiveSourceFileLine: value = _transientValues.ActiveSourceLine.ToString(); break;
                 case RadMacros.DebugAppArgs: value = _debuggerOptions.AppArgs; break;
                 case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
-                case RadMacros.NGroups: value = _debuggerOptions.NGroups.ToString(); break;
-                case RadMacros.GroupSize: value = _debuggerOptions.GroupSize.ToString(); break;
                 case RadMacros.TargetProcessor:
                     if (!(await EvaluateAsync(_transientValues.TargetProcessor, evaluationChain)).TryGetResult(out value, out var error))
                         return error;

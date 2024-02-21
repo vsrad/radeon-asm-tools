@@ -18,9 +18,9 @@ namespace VSRAD.Package.Options
         private bool _ndrange3d = false;
         public bool NDRange3D { get => _ndrange3d; set => SetField(ref _ndrange3d, value); }
 
-        private int _wavemapElementSize = 8;
+        private uint _wavemapElementSize = 8;
         [DefaultValue(8)]
-        public int WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
+        public uint WavemapElementSize { get => _wavemapElementSize; set => SetField(ref _wavemapElementSize, Math.Max(value, 7)); }
 
         private bool _checkMagicNumber = true;
         public bool CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
@@ -28,10 +28,6 @@ namespace VSRAD.Package.Options
         private uint _magicNumber = 0x77777777; // Default value, do not change
         [JsonConverter(typeof(MagicNumberConverter))]
         public uint MagicNumber { get => _magicNumber; set => SetField(ref _magicNumber, value); }
-
-        private bool _manualMode;
-        [DefaultValue(false)]
-        public bool ManualMode { get => _manualMode; set => SetField(ref _manualMode, value); }
 
         private bool _showColumnsField;
         [DefaultValue(true)]

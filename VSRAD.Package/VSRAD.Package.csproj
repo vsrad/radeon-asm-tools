@@ -185,9 +185,9 @@
       <DependentUpon>WavemapOffsetInput.xaml</DependentUpon>
     </Compile>
     <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
+    <Compile Include="DebugVisualizer\Wavemap\WavemapCell.cs" />
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
-    <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />
     <Compile Include="Options\MacroItem.cs" />
     <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
@@ -223,7 +223,6 @@
     <Compile Include="Errors.cs" />
     <Compile Include="Server\ActionRunner.cs" />
     <Compile Include="Server\ActionRunResult.cs" />
-    <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
     <Compile Include="Server\BreakStateOutputFile.cs" />
     <Compile Include="ToolWindows\FloatInspectorControl.xaml.cs">

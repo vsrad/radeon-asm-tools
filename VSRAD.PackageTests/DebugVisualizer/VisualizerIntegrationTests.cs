@@ -61,7 +61,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             var debugData = TestHelper.ReadFixtureBytes("DebugBuffer.bin");
             Assert.True(BreakState.CreateBreakState(BreakTarget.Empty,
                 TestHelper.ReadFixtureLines("Watches.txt"), TestHelper.ReadFixture("ValidWatches.txt"), TestHelper.ReadFixture("DispatchParams.txt"),
-                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData).TryGetResult(out var breakState, out _));
+                new BreakStateOutputFile(new[] { "" }, true, 0, default, debugData.Length / 4), debugData, null).TryGetResult(out var breakState, out _));
 
             vis.EnterBreak(breakState);
             vis.Context.GroupIndex.X = 13;
@@ -71,20 +71,20 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.Equal(vis.Options.DebuggerOptions.Watches, vis.Control.Table.GetCurrentWatchState());
 
             Assert.Equal("System", vis.GetNameCell(0).Value);
-            for (var wave = 0; wave < breakState.Data.WavesPerGroup; ++wave)
+            for (int wave = 0; wave < breakState.WavesPerGroup; ++wave)
             {
-                var waveColOffset = VisualizerTable.DataColumnOffset + wave * breakState.Data.WaveSize;
-                Assert.Equal("0x77777777", vis.Control.Table.Rows[0].Cells[waveColOffset + BreakStateData.SystemMagicNumberLane].Value);
-                Assert.Equal(wave % 2 == 0 ? "0x0" : "0x1", vis.Control.Table.Rows[0].Cells[waveColOffset + BreakStateData.SystemInstanceIdLane].Value);
+                var waveColOffset = VisualizerTable.DataColumnOffset + wave * (int)breakState.Dispatch.WaveSize;
+                Assert.Equal("0x77777777", vis.Control.Table.Rows[0].Cells[waveColOffset + BreakState.SystemMagicNumberLane].Value);
+                Assert.Equal(wave % 2 == 0 ? "0x0" : "0x1", vis.Control.Table.Rows[0].Cells[waveColOffset + BreakState.SystemInstanceIdLane].Value);
             }
 
             Assert.Equal("a", vis.GetNameCell(1).Value);
-            for (var wave = 0; wave < breakState.Data.WavesPerGroup; ++wave)
-                for (var tid = wave * breakState.Data.WaveSize; tid < (wave + 1) * breakState.Data.WaveSize; ++tid)
+            for (int wave = 0; wave < breakState.WavesPerGroup; ++wave)
+                for (int tid = wave * (int)breakState.Dispatch.WaveSize; tid < (wave + 1) * breakState.Dispatch.WaveSize; ++tid)
                     Assert.Equal(wave % 2 == 0 ? $"{tid}" : "", vis.Control.Table.Rows[1].Cells[VisualizerTable.DataColumnOffset + tid].Value);
             Assert.Equal("tid", vis.GetNameCell(2).Value);
-            for (var wave = 0; wave < breakState.Data.WavesPerGroup; ++wave)
-                for (var tid = wave * breakState.Data.WaveSize; tid < (wave + 1) * breakState.Data.WaveSize; ++tid)
+            for (int wave = 0; wave < breakState.WavesPerGroup; ++wave)
+                for (int tid = wave * (int)breakState.Dispatch.WaveSize; tid < (wave + 1) * breakState.Dispatch.WaveSize; ++tid)
                     Assert.Equal(wave % 2 == 0 ? "" : $"{tid}", vis.Control.Table.Rows[2].Cells[VisualizerTable.DataColumnOffset + tid].Value);
 
             int c = 3, c0 = 4, c1 = 5, c10 = 6, c11 = 7, c2 = 8, c3 = 9, c30 = 10, c4 = 11, c5 = 12;
@@ -98,14 +98,14 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.Equal(("c[3][0]", $"{c},{c3}"), (vis.GetNameCell(c30).Value, vis.GetNameCellParentRowIndexes(c30)));
             Assert.Equal(("c[4]", $"{c}"), (vis.GetNameCell(c4).Value, vis.GetNameCellParentRowIndexes(c4)));
             Assert.Equal(("c[5]", $"{c}"), (vis.GetNameCell(c5).Value, vis.GetNameCellParentRowIndexes(c5)));
-            for (var wave = 0; wave < breakState.Data.WavesPerGroup; ++wave)
+            for (int wave = 0; wave < breakState.WavesPerGroup; ++wave)
             {
-                for (var tid = wave * breakState.Data.WaveSize; tid < (wave + 1) * breakState.Data.WaveSize; ++tid)
+                for (int tid = wave * (int)breakState.Dispatch.WaveSize; tid < (wave + 1) * breakState.Dispatch.WaveSize; ++tid)
                 {
                     Assert.Equal(wave % 2 == 0 ? $"{wave}" : "[6]", vis.GetDataCell(c, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "", vis.GetDataCell(c0, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "[2]", vis.GetDataCell(c1, tid).Value);
-                    Assert.Equal(wave % 2 == 0 ? "" : $"{tid % breakState.Data.WaveSize}", vis.GetDataCell(c10, tid).Value);
+                    Assert.Equal(wave % 2 == 0 ? "" : $"{tid % breakState.Dispatch.WaveSize}", vis.GetDataCell(c10, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : $"{vis.Context.GroupIndex.X}", vis.GetDataCell(c11, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "", vis.GetDataCell(c2, tid).Value);
                     Assert.Equal(wave % 2 == 0 ? "" : "[1]", vis.GetDataCell(c3, tid).Value);
@@ -119,7 +119,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             Assert.Equal(("c[1]", ""), (vis.GetNameCell(c_1).Value, vis.GetNameCellParentRowIndexes(c_1)));
             Assert.Equal(("c[1][0]", $"{c_1}"), (vis.GetNameCell(c_10).Value, vis.GetNameCellParentRowIndexes(c_10)));
             Assert.Equal(("c[1][1]", $"{c_1}"), (vis.GetNameCell(c_11).Value, vis.GetNameCellParentRowIndexes(c_11)));
-            for (var tid = 0; tid < breakState.Data.GroupSize; ++tid)
+            for (var tid = 0; tid < breakState.GroupSize; ++tid)
             {
                 Assert.Equal(vis.GetDataCell(c1, tid).Value, vis.GetDataCell(c_1, tid).Value);
                 Assert.Equal(vis.GetDataCell(c10, tid).Value, vis.GetDataCell(c_10, tid).Value);
@@ -128,12 +128,12 @@ namespace VSRAD.PackageTests.DebugVisualizer
 
             int c_1_1 = 16;
             Assert.Equal(("c[1][1]", ""), (vis.GetNameCell(c_1_1).Value, vis.GetNameCellParentRowIndexes(c_1_1)));
-            for (var tid = 0; tid < breakState.Data.GroupSize; ++tid)
+            for (var tid = 0; tid < breakState.GroupSize; ++tid)
                 Assert.Equal(vis.GetDataCell(c11, tid).Value, vis.GetDataCell(c_1_1, tid).Value);
 
             int c_1_1_1 = 17;
             Assert.Equal(("c[1][1][1]", ""), (vis.GetNameCell(c_1_1_1).Value, vis.GetNameCellParentRowIndexes(c_1_1_1)));
-            for (var tid = 0; tid < breakState.Data.GroupSize; ++tid)
+            for (var tid = 0; tid < breakState.GroupSize; ++tid)
                 Assert.Equal("", vis.GetDataCell(c_1_1_1, tid).Value);
 
             int lst = 18, lst0 = 19, lst1 = 20, lst2 = 21;

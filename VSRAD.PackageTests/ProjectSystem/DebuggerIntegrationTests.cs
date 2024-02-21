@@ -114,10 +114,10 @@ namespace VSRAD.PackageTests.ProjectSystem
             sourceManager.Verify(s => s.SaveProjectState(), Times.Once);
 
             Assert.True(breakResult.TryGetResult(out var breakState, out _));
-            Assert.Equal(16384u, breakState.DispatchParameters.GridSizeX);
-            Assert.Equal(512u, breakState.DispatchParameters.GroupSizeX);
-            Assert.Equal(64u, breakState.DispatchParameters.WaveSize);
-            Assert.Equal(new[] { "tid", "lst", "a", "c", "tide", "lst[1]" }, breakState.Data.Watches.Keys);
+            Assert.Equal(16384u, breakState.Dispatch.GridSizeX);
+            Assert.Equal(512u, breakState.Dispatch.GroupSizeX);
+            Assert.Equal(64u, breakState.Dispatch.WaveSize);
+            Assert.Equal(new[] { "tid", "lst", "a", "c", "tide", "lst[1]" }, breakState.Watches.Keys);
 
             breakLineTagger.Verify(t => t.OnExecutionCompleted(sourceManager.Object, execCompletedEvent));
         }

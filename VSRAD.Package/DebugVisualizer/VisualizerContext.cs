@@ -40,17 +40,16 @@ namespace VSRAD.Package.DebugVisualizer
         private bool _watchDataValid;
         public bool WatchDataValid { get => _watchDataValid; set => SetField(ref _watchDataValid, value); }
 
-        private Wavemap.WavemapView _wavemap;
-        public Wavemap.WavemapView Wavemap { get => _wavemap; set => SetField(ref _wavemap, value); }
-
-        private Wavemap.WaveInfo _wavemapSelection;
-        public Wavemap.WaveInfo WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
+        private Wavemap.WavemapCell? _wavemapSelection;
+        public Wavemap.WavemapCell? WavemapSelection { get => _wavemapSelection; set => SetField(ref _wavemapSelection, value); }
 
         private bool _groupIndexEditable = true;
         public bool GroupIndexEditable { get => _groupIndexEditable; set => SetField(ref _groupIndexEditable, value); }
 
-        public BreakState BreakState { get; private set; }
-        public BreakStateData BreakData => BreakState?.Data;
+        private BreakState _breakState;
+        public BreakState BreakState { get => _breakState; private set => SetField(ref _breakState, value); }
+
+        public DateTime LastRunTime { get; private set; }
 
         private readonly ICommunicationChannel _channel;
 
@@ -66,21 +65,10 @@ namespace VSRAD.Package.DebugVisualizer
             GroupIndex.IndexChanged += GroupIndexChanged;
         }
 
-        public BreakpointInfo GetWaveBreakpoint(uint waveIndex) =>
-            TryGetWaveHitInfo((uint)BreakData.GroupIndex, waveIndex, out _, out var breakpoint, out _) ? breakpoint : null;
-
-        /// <returns>True if the wave exist, false otherwise. Breakpoint may be null even if the wave exist, in which case breakpointIdx and execMask should be treated as invalid.</returns>
-        public bool TryGetWaveHitInfo(uint groupIndex, uint waveIndex, out uint breakpointIdx, out BreakpointInfo breakpoint, out ulong execMask)
+        public BreakpointInfo GetBreakpointByThreadId(uint threadId)
         {
-            (breakpointIdx, breakpoint) = (0, null);
-            var (groupSize, waveSize) = (Options.DebuggerOptions.GroupSize, Options.DebuggerOptions.WaveSize);
-            if (!BreakData.TryGetGlobalSystemData((int)groupIndex, (int)waveIndex, (int)groupSize, (int)waveSize, out uint magicNumber, out var instanceId, out execMask))
-                return false;
-            if ((magicNumber == Options.VisualizerOptions.MagicNumber || !Options.VisualizerOptions.CheckMagicNumber)
-                    && BreakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out breakpointIdx)
-                    && breakpointIdx < BreakState.Target.Breakpoints.Count)
-                breakpoint = BreakState.Target.Breakpoints[(int)breakpointIdx];
-            return true;
+            var waveStatus = BreakState.GetWaveStatus(threadId / BreakState.Dispatch.WaveSize);
+            return waveStatus.BreakpointIndex is uint idx ? BreakState.Target.Breakpoints[(int)idx] : null;
         }
 
         private void OptionsChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -96,17 +84,17 @@ namespace VSRAD.Package.DebugVisualizer
         private void EnterBreak(object sender, Result<BreakState> breakResult)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+            LastRunTime = DateTime.Now;
             if (breakResult.TryGetResult(out var breakState, out var error))
             {
                 BreakState = breakState;
-                GroupIndex.UpdateOnBreak((uint)breakState.Data.NumThreadsInProgram, breakState.DispatchParameters); // Will invoke GroupIndexChanged, see below
+                GroupIndex.UpdateOnBreak(breakState); // Will invoke GroupIndexChanged, see below
             }
             else
             {
                 BreakState = null;
-                Wavemap = null;
                 WatchDataValid = false;
-                Status = error.Message;
+                Status = FormatErrorStatusString(error, LastRunTime);
             }
             WavemapSelection = null;
             VSPackage.VisualizerToolWindow?.BringToFront();
@@ -129,27 +117,34 @@ namespace VSRAD.Package.DebugVisualizer
                 Status = fetchArgs.FetchWholeFile ? "Fetching results" : $"Fetching group {e.Coordinates}";
                 GroupIndexEditable = false;
 
-                var warning = await BreakState.Data.ChangeGroupWithWarningsAsync(_channel, (int)e.GroupIndex, (int)e.GroupSize,
-                    (int)Options.DebuggerOptions.WaveSize, fetchArgs.FetchWholeFile);
+                var warning = await BreakState.ChangeGroupWithWarningsAsync(_channel, e.GroupIndex, fetchArgs.FetchWholeFile);
 
-                GroupFetched(this, new GroupFetchedEventArgs(BreakState.DispatchParameters, warning));
+                GroupFetched(this, new GroupFetchedEventArgs(BreakState.Dispatch, warning));
                 GroupIndexEditable = true;
             }
             WatchDataValid = e.IsGroupIndexValid;
-            Wavemap = new Wavemap.WavemapView(TryGetWaveHitInfo);
-            Status = FormatBreakStatusString(BreakState, Options.DebuggerOptions);
+            Status = FormatBreakStatusString(BreakState, LastRunTime);
         }
 
-        private static string FormatBreakStatusString(BreakState breakState, Options.DebuggerOptions debuggerOptions)
+        private static string FormatBreakStatusString(BreakState breakState, DateTime lastRunAt)
         {
-            var groupCount = breakState.Data.NumThreadsInProgram / MathUtils.RoundUpToMultiple(debuggerOptions.GroupSize, debuggerOptions.WaveSize);
-            var waveSize = debuggerOptions.WaveSize;
-
             var status = new StringBuilder();
-            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0}, wave size: {1}, last run at: {2:HH:mm:ss}", groupCount, waveSize, breakState.ExecutedAt);
-            if (breakState.DispatchParameters?.StatusString is string dispatchStatus && dispatchStatus.Length != 0)
-                status.Append(", status: ").Append(dispatchStatus);
+            status.AppendFormat(CultureInfo.InvariantCulture, "Groups: {0}", breakState.NumGroups);
+            if (breakState.Dispatch.NDRange3D)
+                status.AppendFormat(CultureInfo.InvariantCulture, " | Group size: ({0}, {1}, {2})", breakState.Dispatch.GroupSizeX, breakState.Dispatch.GroupSizeY, breakState.Dispatch.GroupSizeZ);
+            else
+                status.AppendFormat(CultureInfo.InvariantCulture, " | Group size: {0}", breakState.Dispatch.GroupSizeX);
+            status.AppendFormat(CultureInfo.InvariantCulture, " | Wave size: {0}", breakState.Dispatch.WaveSize);
+            status.AppendFormat(CultureInfo.InvariantCulture, " | Breakpoints hit: {0}", breakState.HitBreakpoints.Count);
+            if (!string.IsNullOrEmpty(breakState.Dispatch.StatusString))
+                status.Append(" | Status: ").Append(breakState.Dispatch.StatusString);
+            status.AppendFormat(CultureInfo.InvariantCulture, " | Last run: {0:HH:mm:ss}", lastRunAt);
             return status.ToString();
+        }
+
+        private static string FormatErrorStatusString(Error error, DateTime lastRunAt)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0} | Last run: {1:HH:mm:ss}", error.Message, lastRunAt);
         }
     }
 }

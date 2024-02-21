@@ -94,33 +94,21 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
 
             Result<BreakState> breakResult;
-            var breakLocations = new List<BreakLocation>();
+            var validBreakpoints = new List<BreakpointInfo>();
+            var hitLocations = new List<BreakLocation>();
             if (runResult?.BreakState is BreakState breakState)
             {
-                var validBreakpoints = breakState.BreakpointIndexPerInstance.Values.Distinct().ToList();
+                foreach (int breakpointIdx in breakState.BreakpointIndexPerInstance.Values.Distinct())
+                    validBreakpoints.Add(breakState.Target.Breakpoints[breakpointIdx]);
                 _breakpointTracker.UpdateOnBreak(breakState.Target, validBreakpoints);
 
-                var waveSize = (int)(breakState.DispatchParameters?.WaveSize ?? _project.Options.DebuggerOptions.WaveSize);
-                var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
-                var instancesHit = breakState.Data.GetGlobalInstancesHit(waveSize, checkMagicNumber);
-                foreach (var instanceId in instancesHit)
+                foreach (var breakpointIdx in breakState.HitBreakpoints)
                 {
-                    if (breakState.BreakpointIndexPerInstance.TryGetValue(instanceId, out var breakpointIdx)
-                        && breakpointIdx < breakState.Target.Breakpoints.Count
-                        && !breakLocations.Exists(i => i.LocationId == breakpointIdx))
-                    {
-                        var breakpoint = breakState.Target.Breakpoints[(int)breakpointIdx];
-                        breakLocations.Add(new BreakLocation(breakpointIdx, new[] { ("", breakpoint.File, breakpoint.Line) }));
-                    }
+                    var breakpoint = breakState.Target.Breakpoints[(int)breakpointIdx];
+                    hitLocations.Add(new BreakLocation(breakpointIdx, new[] { ("", breakpoint.File, breakpoint.Line) }));
                 }
 
-                breakLocations.Sort((a, b) => a.LocationId.CompareTo(b.LocationId));
-
-                if (breakLocations.Count > 0)
-                    breakResult = breakState;
-                else
-                    breakResult = new Error(validBreakpoints.Count == 1 ?
-                        $"Breakpoint not hit at {breakState.Target.Breakpoints[(int)validBreakpoints[0]].Location}" : "No breakpoints hit");
+                breakResult = breakState;
             }
             else
             {
@@ -128,40 +116,44 @@ namespace VSRAD.Package.ProjectSystem
             }
 
             ExecutionCompletedEventArgs args;
-            if (breakLocations.Count > 0)
+            if (hitLocations.Count > 0)
             {
-                args = new ExecutionCompletedEventArgs(breakLocations, isStepping, isSuccessful: true);
+                args = new ExecutionCompletedEventArgs(hitLocations, isStepping, isSuccessful: true);
             }
             else
             {
-                // Error case: if we leave the source path empty, VS debugger will open a "Source Not Available/Frame not in module" tab.
-                // To avoid that, if the action execution failed and transients are not available, we attempt to pick the active file in the editor as the source.
-                string errorPath;
-                uint errorLine;
-                try
+                BreakLocation errorLocation;
+                if (validBreakpoints.Count > 0)
                 {
-                    var activeEditor = _projectSourceManager.GetActiveEditorView();
-                    errorPath = activeEditor.GetFilePath();
-                    var (caretLine, scrollWin) = (activeEditor.GetCaretPos().Line, activeEditor.GetVerticalScrollWindow());
-                    errorLine = (caretLine >= scrollWin.FirstVisibleLine && caretLine < scrollWin.FirstVisibleLine + scrollWin.VisibleLines) ? caretLine : scrollWin.FirstVisibleLine;
+                    errorLocation = new BreakLocation(0, new[] { ("No breakpoints hit", validBreakpoints[0].File, validBreakpoints[0].Line) });
                 }
-                catch
+                else
                 {
-                    // May throw an exception if no files are open in the editor
-                    (errorPath, errorLine) = ("", 0u);
+                    // If we leave the source path empty, VS debugger will open a "Source Not Available/Frame not in module" tab.
+                    // To avoid that, if the action execution failed and transients are not available, we attempt to pick the active file in the editor as the source.
+                    string errorPath;
+                    uint errorLine;
+                    try
+                    {
+                        var activeEditor = _projectSourceManager.GetActiveEditorView();
+                        errorPath = activeEditor.GetFilePath();
+                        var (caretLine, scrollWin) = (activeEditor.GetCaretPos().Line, activeEditor.GetVerticalScrollWindow());
+                        errorLine = (caretLine >= scrollWin.FirstVisibleLine && caretLine < scrollWin.FirstVisibleLine + scrollWin.VisibleLines) ? caretLine : scrollWin.FirstVisibleLine;
+                    }
+                    catch
+                    {
+                        // May throw an exception if no files are open in the editor
+                        (errorPath, errorLine) = ("", 0u);
+                    }
+                    errorLocation = new BreakLocation(0, new[] { ("Error", errorPath, errorLine) });
                 }
-                var dummyInstance = new BreakLocation(0, new[] { ("Error", errorPath, errorLine) });
-                args = new ExecutionCompletedEventArgs(new[] { dummyInstance }, isStepping, isSuccessful: false);
+                args = new ExecutionCompletedEventArgs(new[] { errorLocation }, isStepping, isSuccessful: false);
             }
 
             // Notify VS debugger that we stopped at a breakpoint, do this first so we can override debugger behavior in later events
             ExecutionCompleted?.Invoke(this, args);
-            // VS debugger (via ExecutionCompleted) will navigate to the break line when using F5, but for Rerun Debug and Reverse Debug we need to do it ourselves
-            if (args.IsSuccessful)
-            {
-                var breakLocation = args.BreakLocations[0].CallStack[0];
-                _projectSourceManager.OpenDocument(breakLocation.SourcePath, breakLocation.SourceLine);
-            }
+            // VS debugger (via ExecutionCompleted) will navigate to the break location when using F5, but for Rerun Debug and Reverse Debug we need to do it ourselves
+            _projectSourceManager.OpenDocument(args.BreakLocations[0].CallStack[0].SourcePath, args.BreakLocations[0].CallStack[0].SourceLine);
             // Notify Visualizer after navigating to the break line so the Visualizer window can become active
             BreakEntered?.Invoke(this, breakResult);
             // Finally, override VS debugger break line markers

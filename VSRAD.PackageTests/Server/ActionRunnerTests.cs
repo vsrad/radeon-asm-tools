@@ -438,12 +438,12 @@ namespace VSRAD.PackageTests.Server
             Assert.True(channel.AllInteractionsHandled);
             Assert.True(result.Successful);
             Assert.NotNull(result.BreakState);
-            Assert.NotNull(result.BreakState.DispatchParameters);
-            Assert.Equal(16384u / 512, result.BreakState.DispatchParameters.DimX);
-            Assert.Equal(512u, result.BreakState.DispatchParameters.GroupSizeX);
-            Assert.Equal(64u, result.BreakState.DispatchParameters.WaveSize);
-            Assert.False(result.BreakState.DispatchParameters.NDRange3D);
-            Assert.Equal("115200", result.BreakState.DispatchParameters.StatusString);
+            Assert.NotNull(result.BreakState.Dispatch);
+            Assert.Equal(16384u / 512, result.BreakState.Dispatch.NumGroupsX);
+            Assert.Equal(512u, result.BreakState.Dispatch.GroupSizeX);
+            Assert.Equal(64u, result.BreakState.Dispatch.WaveSize);
+            Assert.False(result.BreakState.Dispatch.NDRange3D);
+            Assert.Equal("115200", result.BreakState.Dispatch.StatusString);
         }
 
         [Fact]
@@ -518,31 +518,31 @@ result.StepResults[0].Warning);
             Assert.True(result.Successful);
             Assert.Equal("", result.StepResults[0].Warning);
             Assert.NotNull(result.BreakState);
-            Assert.Equal(16384u, result.BreakState.DispatchParameters.GridSizeX);
-            Assert.Equal(512u, result.BreakState.DispatchParameters.GroupSizeX);
-            Assert.Equal(64u, result.BreakState.DispatchParameters.WaveSize);
-            Assert.Equal(7, result.BreakState.Data.DwordsPerLane);
-            Assert.Equal(new[] { "tid", "lst", "a", "c", "tide", "lst[1]" }, result.BreakState.Data.Watches.Keys);
+            Assert.Equal(16384u, result.BreakState.Dispatch.GridSizeX);
+            Assert.Equal(512u, result.BreakState.Dispatch.GroupSizeX);
+            Assert.Equal(64u, result.BreakState.Dispatch.WaveSize);
+            Assert.Equal(7u, result.BreakState.DwordsPerLane);
+            Assert.Equal(new[] { "tid", "lst", "a", "c", "tide", "lst[1]" }, result.BreakState.Watches.Keys);
 
-            Assert.Equal((Instance: 0, DataSlot: 2, ListSize: null), result.BreakState.Data.Watches["c"].Instances[0]);
-            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 6), result.BreakState.Data.Watches["c"].Instances[1]);
-            Assert.Equal(6, result.BreakState.Data.Watches["c"].ListItems.Count);
-            Assert.Empty(result.BreakState.Data.Watches["c"].ListItems[0].Instances);
-            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 2), result.BreakState.Data.Watches["c"].ListItems[1].Instances[0]);
-            Assert.Equal((Instance: 1, DataSlot: 3, ListSize: null), result.BreakState.Data.Watches["c"].ListItems[1].ListItems[0].Instances[0]);
-            Assert.Equal((Instance: 1, DataSlot: 4, ListSize: null), result.BreakState.Data.Watches["c"].ListItems[1].ListItems[1].Instances[0]);
-            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 1), result.BreakState.Data.Watches["c"].ListItems[3].Instances[0]);
-            Assert.Empty(result.BreakState.Data.Watches["c"].ListItems[3].ListItems[0].Instances);
-            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 0), result.BreakState.Data.Watches["c"].ListItems[4].Instances[0]);
-            Assert.Equal((Instance: 1, DataSlot: 5, ListSize: null), result.BreakState.Data.Watches["c"].ListItems[5].Instances[0]);
+            Assert.Equal((Instance: 0, DataSlot: 2, ListSize: null), result.BreakState.Watches["c"].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 6), result.BreakState.Watches["c"].Instances[1]);
+            Assert.Equal(6, result.BreakState.Watches["c"].ListItems.Count);
+            Assert.Empty(result.BreakState.Watches["c"].ListItems[0].Instances);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 2), result.BreakState.Watches["c"].ListItems[1].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: 3, ListSize: null), result.BreakState.Watches["c"].ListItems[1].ListItems[0].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: 4, ListSize: null), result.BreakState.Watches["c"].ListItems[1].ListItems[1].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 1), result.BreakState.Watches["c"].ListItems[3].Instances[0]);
+            Assert.Empty(result.BreakState.Watches["c"].ListItems[3].ListItems[0].Instances);
+            Assert.Equal((Instance: 1, DataSlot: null, ListSize: 0), result.BreakState.Watches["c"].ListItems[4].Instances[0]);
+            Assert.Equal((Instance: 1, DataSlot: 5, ListSize: null), result.BreakState.Watches["c"].ListItems[5].Instances[0]);
 
-            var (tidInstance, tidSlot, tidListSize) = result.BreakState.Data.Watches["tid"].Instances.First();
+            var (tidInstance, tidSlot, tidListSize) = result.BreakState.Watches["tid"].Instances.First();
             Assert.Equal(1u, tidInstance);
             Assert.Equal(1u, tidSlot);
             Assert.Null(tidListSize);
 
-            await result.BreakState.Data.ChangeGroupWithWarningsAsync(null, groupIndex: (int)tidInstance, groupSize: 512, waveSize: 64);
-            var tidData = result.BreakState.Data.GetWatchData(4, (int)tidSlot);
+            await result.BreakState.ChangeGroupWithWarningsAsync(null, groupIndex: tidInstance);
+            var tidData = result.BreakState.GetWatchData(4, (uint)tidSlot);
             for (int i = 0; i < 64; ++i)
                 Assert.Equal(4u * 64 + i, tidData[i]);
         }
@@ -623,6 +623,8 @@ result.StepResults[0].Warning);
             readDebugData.WatchesFile.Location = StepEnvironment.Remote;
             readDebugData.WatchesFile.CheckTimestamp = false;
             readDebugData.WatchesFile.Path = "/home/parker/audio/copy";
+            readDebugData.DispatchParamsFile.Location = StepEnvironment.Remote;
+            readDebugData.DispatchParamsFile.CheckTimestamp = false;
             var steps = new List<IActionStep>
             {
                 new CopyFileStep { Direction = FileCopyDirection.RemoteToLocal, CheckTimestamp = true, SourcePath = "/home/parker/audio/checked", TargetPath = Path.GetTempFileName() },
@@ -643,6 +645,7 @@ result.StepResults[0].Warning);
                 (FetchResultRange command) => Assert.Equal(new[] { "/home/parker", "/home/parker/audio/unchecked" }, command.FilePath));
 
             // ReadDebugDataStep
+            channel.ThenRespond(new ResultRangeFetched());
             channel.ThenRespond(new ResultRangeFetched());
             channel.ThenRespond(new MetadataFetched());
 

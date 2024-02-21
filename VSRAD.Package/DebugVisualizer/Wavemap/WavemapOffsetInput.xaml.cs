@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using VSRAD.Package.Utils;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -58,22 +58,25 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
         {
             if (e.PropertyName == nameof(VisualizerContext.WavemapSelection))
             {
-                if (_context.WavemapSelection is WaveInfo waveInfo)
+                if (_context.BreakState is BreakState breakState && _context.WavemapSelection is WavemapCell cell)
                 {
+                    var breakpoint = cell.Wave.BreakpointIndex != null ? breakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex] : null;
                     {
-                        var info = $"G: {waveInfo.GroupIndex}\nW: {waveInfo.WaveIndex}";
-                        if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
-                            info += " (E)";
+                        var info = $"G: {cell.GroupIndex}\nW: {cell.WaveIndex}";
+                        if (breakpoint != null && (cell.Wave.Scc || cell.Wave.PartialExec))
+                            info += cell.Wave.Scc && cell.Wave.PartialExec ? " (SCC,E)" : cell.Wave.Scc ? " (SCC)" : " (E)";
                         info += "\n";
-                        info += waveInfo.Breakpoint != null ? $"L: {waveInfo.Breakpoint.Line + 1}" : "No break";
+                        info += breakpoint != null ? $"L: {breakpoint.Line + 1}" : "No break";
                         WaveInfoTextBlock.Text = info;
                     }
                     {
-                        var tooltip = $"Group: {waveInfo.GroupIndex}\nWave: {waveInfo.WaveIndex}";
-                        if (waveInfo.PartialExecMask && waveInfo.Breakpoint != null)
-                            tooltip += " (partial EXEC mask)";
+                        var tooltip = $"Group: {cell.GroupIndex}\nWave: {cell.WaveIndex}";
+                        if (breakpoint != null && cell.Wave.Scc)
+                            tooltip += " (SCC = 1)";
+                        if (breakpoint != null && cell.Wave.PartialExec)
+                            tooltip += " (Partial EXEC)";
                         tooltip += "\n";
-                        tooltip += waveInfo.Breakpoint != null ? $"Location: {waveInfo.Breakpoint.Location}" : "No breakpoint reached";
+                        tooltip += breakpoint != null ? $"Location: {breakpoint.Location}" : "No breakpoint hit";
                         WaveInfoTextBlock.ToolTip = tooltip;
                     }
                 }
@@ -87,17 +90,16 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void UpdateControls(object sender, EventArgs e)
         {
-            var groupCount = (_context.BreakData?.NumThreadsInProgram ?? 0) / MathUtils.RoundUpToMultiple(_context.Options.DebuggerOptions.GroupSize, _context.Options.DebuggerOptions.WaveSize);
-            if (groupCount > 0 && _image.GridSizeX > 0)
+            if (_image.GridSizeX > 0 && _context.BreakState != null && _context.BreakState.NumGroups > 0)
             {
                 DecButton.IsEnabled = _image.FirstGroup != 0;
-                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
+                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _context.BreakState.NumGroups;
 
                 ShowOffsetSelector = _image.FirstGroup != 0 || IncButton.IsEnabled;
 
-                if (_image.FirstGroup < groupCount)
+                if (_image.FirstGroup < _context.BreakState.NumGroups)
                 {
-                    var lastDisplayedGroup = Math.Min(groupCount, _image.FirstGroup + _image.GridSizeX) - 1;
+                    var lastDisplayedGroup = Math.Min(_context.BreakState.NumGroups, _image.FirstGroup + _image.GridSizeX) - 1;
                     OffsetLabel = $"{_image.FirstGroup} - {lastDisplayedGroup}";
                 }
                 else
