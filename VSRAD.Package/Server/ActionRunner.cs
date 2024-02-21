@@ -62,6 +62,8 @@ namespace VSRAD.Package.Server
 
             for (int i = 0; i < steps.Count; ++i)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+
                 StepResult result;
                 switch (steps[i])
                 {
@@ -69,13 +71,13 @@ namespace VSRAD.Package.Server
                         result = await DoCopyFileAsync(copyFile);
                         break;
                     case ExecuteStep execute:
-                        result = await DoExecuteAsync(execute);
+                        result = await DoExecuteAsync(execute, cancellationToken);
                         break;
                     case OpenInEditorStep openInEditor:
                         result = await DoOpenInEditorAsync(openInEditor);
                         break;
                     case RunActionStep runAction:
-                        result = await DoRunActionAsync(runAction, continueOnError);
+                        result = await DoRunActionAsync(runAction, continueOnError, cancellationToken);
                         break;
                     case WriteDebugTargetStep writeDebugTarget:
                         result = await DoWriteDebugTargetAsync(writeDebugTarget);
@@ -136,7 +138,7 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoExecuteAsync(ExecuteStep step)
+        private async Task<StepResult> DoExecuteAsync(ExecuteStep step, CancellationToken cancellationToken)
         {
             var workDir = step.WorkingDirectory;
             if (string.IsNullOrEmpty(workDir))
@@ -153,7 +155,7 @@ namespace VSRAD.Package.Server
             };
             ExecutionCompleted response;
             if (step.Environment == StepEnvironment.Local)
-                response = await new ObservableProcess(command).StartAndObserveAsync();
+                response = await new ObservableProcess(command).StartAndObserveAsync(cancellationToken);
             else
                 response = await _channel.SendWithReplyAsync<ExecutionCompleted>(command);
 
@@ -193,26 +195,26 @@ namespace VSRAD.Package.Server
             return new StepResult(true, "", "");
         }
 
-        private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError)
+        private async Task<StepResult> DoRunActionAsync(RunActionStep step, bool continueOnError, CancellationToken cancellationToken)
         {
-            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError);
+            var subActionResult = await RunAsync(step.Name, step.EvaluatedSteps, continueOnError, cancellationToken);
             return new StepResult(subActionResult.Successful, "", "", subAction: subActionResult);
         }
 
-        private async Task<StepResult> DoWriteDebugTargetAsync(WriteDebugTargetStep step)
+        private Task<StepResult> DoWriteDebugTargetAsync(WriteDebugTargetStep step)
         {
             if (!_environment.BreakTarget.TryGetResult(out var breakpointList, out var error))
-                return new StepResult(false, error.Message, "");
+                return Task.FromResult(new StepResult(false, error.Message, ""));
 
             var breakpointListJson = JsonConvert.SerializeObject(breakpointList, Formatting.Indented);
             if (!WriteLocalFile(step.BreakpointListPath, Encoding.UTF8.GetBytes(breakpointListJson), out var errorString))
-                return new StepResult(false, errorString, "");
+                return Task.FromResult(new StepResult(false, errorString, ""));
 
             var watchListLines = string.Join(Environment.NewLine, _environment.Watches);
             if (!WriteLocalFile(step.WatchListPath, Encoding.UTF8.GetBytes(watchListLines), out errorString))
-                return new StepResult(false, errorString, "");
+                return Task.FromResult(new StepResult(false, errorString, ""));
 
-            return new StepResult(true, "", "");
+            return Task.FromResult(new StepResult(true, "", ""));
         }
 
         private async Task<StepResult> DoReadDebugDataAsync(ReadDebugDataStep step)
