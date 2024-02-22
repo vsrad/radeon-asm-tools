@@ -45,7 +45,7 @@ namespace VSRAD.Package
         public const int TargetProcessorDropdownId = 0x10;
         public const int TargetProcessorDropdownListId = 0x100;
         public const int ToggleMultipleBreakpointsCommandId = 0x10;
-        public static readonly Guid ToolWindowCommandSet = new Guid("03c8f3ba-2e44-4159-ac37-b08fc295a0cc");
+        public static readonly Guid ToolWindowCommandSet = new Guid("03C8F3BA-2E44-4159-AC37-B08FC295A0CC");
         public static readonly Guid ForceRunToCursorCommandSet = new Guid("cefc8250-7cd1-46c1-b4f6-46a0a22a1c81");
         public static readonly Guid AddToWatchesCommandSet = new Guid("8560BD12-1D31-40BA-B300-1A31FC901E93");
         public static readonly Guid ToolbarCommandSet = new Guid("E1436EB5-1D47-4714-85CB-6177E62AB2AD");
