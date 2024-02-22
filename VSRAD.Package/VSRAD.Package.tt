@@ -182,8 +182,8 @@
         </Strings>
       </Button>
       <!-- Breakpoint settings menu -->
-      <Button guid="guidCmdSetBreakpointMenu" id="ToggleMultipleBreakpointsCommandId" priority="1" type="Button">
-        <Parent guid="guidCmdSetBreakpointMenu" id="BreakpointMenuGroup" />
+      <Button guid="guidCmdSetDebugMenu" id="DebugMultipleBreakpointsCommandId" priority="2" type="Button">
+        <Parent guid="guidCmdSetDebugMenu" id="DebugMenuGroup" />
         <Icon guid="guidImages" id="multipleBreakpointsIcon" />
         <CommandFlag>DefaultInvisible</CommandFlag>
         <CommandFlag>DynamicVisibility</CommandFlag>
@@ -276,7 +276,7 @@
       <Group guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="2">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
       </Group>
-      <Group guid="guidCmdSetBreakpointMenu" id="BreakpointMenuGroup" priority="4">
+      <Group guid="guidCmdSetDebugMenu" id="DebugMenuGroup" priority="4">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuId" />
       </Group>
       <!-- Actions menu -->
@@ -301,7 +301,17 @@
     </Groups>
 
     <Combos>
-       <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
+      <Combo guid="guidCmdSetDebugMenu" id="DebugFileDropdownId" priority="1" type="IndexCombo" defaultWidth="130" idCommandList="DebugFileDropdownListId">
+        <Parent guid="guidCmdSetDebugMenu" id="DebugMenuGroup" />
+        <CommandFlag>IconAndText</CommandFlag>
+        <CommandFlag>CommandWellOnly</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Debug:</ButtonText>
+        </Strings>
+      </Combo>
+      <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -339,7 +349,7 @@
     <CommandPlacement guid="guidCmdSetActionsMenu" id="ActionsMenuGroup" priority="2">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
-    <CommandPlacement guid="guidCmdSetBreakpointMenu" id="BreakpointMenuGroup" priority="4">
+    <CommandPlacement guid="guidCmdSetDebugMenu" id="DebugMenuGroup" priority="4">
       <Parent guid="guidCmdSetToolbar" id="ToolbarId"/>
     </CommandPlacement>
     <CommandPlacement guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" priority="0x0100">
@@ -386,10 +396,12 @@
       <IDSymbol name="ActionListMenuGroup" value="0x0700" />
     </GuidSymbol>
 
-    <GuidSymbol name="guidCmdSetBreakpointMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
-      <IDSymbol name="BreakpointMenuId" value="0x1010" />
-      <IDSymbol name="BreakpointMenuGroup" value="0x0700" />
-      <IDSymbol name="ToggleMultipleBreakpointsCommandId" value="0x10" />
+    <GuidSymbol name="guidCmdSetDebugMenu" value="{EADE0887-3138-4DBF-8A14-FCEB0017E5E8}">
+      <IDSymbol name="DebugMenuId" value="0x1010" />
+      <IDSymbol name="DebugMenuGroup" value="0x0700" />
+      <IDSymbol name="DebugMultipleBreakpointsCommandId" value="0x10" />
+      <IDSymbol name="DebugFileDropdownId" value="0x100" />
+      <IDSymbol name="DebugFileDropdownListId" value="0x101" />
     </GuidSymbol>
 
     <GuidSymbol name="guidCmdSetProfileDropdown" value="{912C011A-EDAA-4922-85F2-74436F2265CA}">

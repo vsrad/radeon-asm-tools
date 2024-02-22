@@ -30,6 +30,7 @@ namespace VSRAD.Package.ProjectSystem
         void SaveProjectState();
         void SaveDocuments(DocumentSaveType type);
         void OpenDocument(string path, uint? line);
+        IEnumerable<string> GetOpenDocuments();
         IVsTextBuffer GetDocumentTextBufferByPath(string path);
         IEditorView GetActiveEditorView();
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
@@ -119,6 +120,15 @@ namespace VSRAD.Package.ProjectSystem
         public void OpenDocument(string path, uint? line)
         {
             VsEditor.OpenFileInEditor(_serviceProvider, path, line, null, forceOppositeTab: false, preserveActiveDoc: false);
+        }
+
+        public IEnumerable<string> GetOpenDocuments()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_runningDocumentTable);
+            foreach (var document in _runningDocumentTable)
+                if ((document.Flags & (uint)_VSRDTFLAGS.RDT_VirtualDocument) == 0 && document.ProjectGuid != Guid.Empty)
+                    yield return document.Moniker;
         }
 
         public IVsTextBuffer GetDocumentTextBufferByPath(string path)
