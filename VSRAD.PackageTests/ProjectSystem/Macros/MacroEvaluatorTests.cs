@@ -24,7 +24,7 @@ namespace VSRAD.PackageTests.ProjectSystem.Macros
         }
 
         private static readonly MacroEvaluatorTransientValues _emptyTransients =
-            new MacroEvaluatorTransientValues(0, "", "", "");
+            new MacroEvaluatorTransientValues(0, "", "", "", "");
 
         [Fact]
         public async Task ProjectPropertiesTestAsync()

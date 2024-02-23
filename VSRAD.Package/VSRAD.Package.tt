@@ -301,7 +301,7 @@
     </Groups>
 
     <Combos>
-      <Combo guid="guidCmdSetDebugMenu" id="DebugFileDropdownId" priority="1" type="IndexCombo" defaultWidth="130" idCommandList="DebugFileDropdownListId">
+      <Combo guid="guidCmdSetDebugMenu" id="DebugFileDropdownId" priority="1" type="IndexCombo" defaultWidth="220" idCommandList="DebugFileDropdownListId">
         <Parent guid="guidCmdSetDebugMenu" id="DebugMenuGroup" />
         <CommandFlag>IconAndText</CommandFlag>
         <CommandFlag>CommandWellOnly</CommandFlag>
@@ -311,7 +311,7 @@
           <ButtonText>Debug:</ButtonText>
         </Strings>
       </Combo>
-      <Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
+      <!--<Combo guid="guidCmdSetProfileDropdown" id="ProfileTargetMachineDropdownId" priority="100" type="DynamicCombo" defaultWidth="115" idCommandList="ProfileTargetMachineDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>
         <CommandFlag>DefaultInvisible</CommandFlag>
@@ -320,7 +320,7 @@
           <ButtonText>Target Host</ButtonText>
           <ToolTipText>Enter the remote machine address and port (e.g. 127.0.0.1:9339)</ToolTipText>
         </Strings>
-      </Combo>
+      </Combo>-->
       <Combo guid="guidCmdSetTargetProcessorDropdown" id="TargetProcessorDropdownId" priority="110" type="DynamicCombo" defaultWidth="105" idCommandList="TargetProcessorDropdownListId">
         <Parent guid="guidCmdSetToolsMenu" id="ToolsMenuGroup" />
         <CommandFlag>CommandWellOnly</CommandFlag>

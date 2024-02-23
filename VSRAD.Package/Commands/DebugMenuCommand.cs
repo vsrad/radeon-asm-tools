@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
@@ -50,24 +51,38 @@ namespace VSRAD.Package.Commands
             {
                 _project.Options.DebuggerOptions.EnableMultipleBreakpoints = !_project.Options.DebuggerOptions.EnableMultipleBreakpoints;
             }
+
+            var debugStartupActiveTab = "(Active tab)";
             if (commandId == Constants.DebugFileDropdownListId && variantOut != IntPtr.Zero)
             {
-                _openDocumentPaths = _projectSourceManager.GetOpenDocuments().Where(p => !string.IsNullOrEmpty(p)).ToArray();
+                _openDocumentPaths = _projectSourceManager.GetOpenDocuments().ToArray();
                 _openDocumentShortNames = GetShortDocumentNames(_openDocumentPaths);
-                var options = _openDocumentShortNames.Prepend("(Active tab)").ToArray();
+                var options = _openDocumentShortNames.Prepend(debugStartupActiveTab).ToArray();
                 Marshal.GetNativeVariantForObject(options, variantOut);
             }
             if (commandId == Constants.DebugFileDropdownId && variantOut != IntPtr.Zero)
             {
-                Marshal.GetNativeVariantForObject("(Active tab)", variantOut);
+                if (_projectSourceManager.DebugStartupPath is string startupPath)
+                {
+                    var shortNames = GetShortDocumentNames(_projectSourceManager.GetOpenDocuments().Prepend(startupPath).Distinct());
+                    Marshal.GetNativeVariantForObject(shortNames[0], variantOut);
+                }
+                else
+                {
+                    Marshal.GetNativeVariantForObject(debugStartupActiveTab, variantOut);
+                }
             }
             if (commandId == Constants.DebugFileDropdownId && variantIn != IntPtr.Zero)
             {
-                var selectedFile = (int)Marshal.GetObjectForNativeVariant(variantIn);
+                var optionIdx = (int)Marshal.GetObjectForNativeVariant(variantIn);
+                if (optionIdx == 0) // "(Active tab)"
+                    _projectSourceManager.DebugStartupPath = null;
+                else if (optionIdx - 1 < _openDocumentPaths.Length)
+                    _projectSourceManager.DebugStartupPath = _openDocumentPaths[optionIdx - 1];
             }
         }
 
-        private static string[] GetShortDocumentNames(string[] documentPaths)
+        private static string[] GetShortDocumentNames(IEnumerable<string> documentPaths)
         {
             var paths = documentPaths.Select(p => p.Split(Path.DirectorySeparatorChar)).ToArray();
             var shortNames = paths.Select(p => p[p.Length - 1]).ToArray();
