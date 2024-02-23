@@ -177,8 +177,7 @@ namespace VSRAD.Package.ProjectSystem
                 _projectSourceManager.SaveProjectState();
 
                 var continueOnError = _project.Options.Profile.General.ContinueActionExecOnError;
-                var checkMagicNumber = _project.Options.VisualizerOptions.CheckMagicNumber ? (uint?)_project.Options.VisualizerOptions.MagicNumber : null;
-                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget, checkMagicNumber);
+                var env = new ActionEnvironment(general.LocalWorkDir, general.RemoteWorkDir, watches, breakTarget);
                 var runner = new ActionRunner(_channel, _serviceProvider, env, _project);
                 var runResult = await runner.RunAsync(action.Name, action.Steps, continueOnError, _runningActionTokenSource.Token).ConfigureAwait(false);
                 return runResult;

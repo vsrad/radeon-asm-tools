@@ -326,15 +326,20 @@ namespace VSRAD.Package.Options
         private int _outputOffset = 0;
         public int OutputOffset { get => _outputOffset; set => SetField(ref _outputOffset, value); }
 
-        public ReadDebugDataStep() : this(new BuiltinActionFile(), new BuiltinActionFile(), new BuiltinActionFile(), binaryOutput: true, outputOffset: 0) { }
+        private uint? _checkMagicNumber = 0x77777777; // Default value, do not change
+        [JsonConverter(typeof(JsonMagicNumberConverter))]
+        public uint? CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
 
-        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile dispatchParamsFile, bool binaryOutput, int outputOffset)
+        public ReadDebugDataStep() : this(new BuiltinActionFile(), new BuiltinActionFile(), new BuiltinActionFile(), binaryOutput: true, outputOffset: 0, magicNumber: null) { }
+
+        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile dispatchParamsFile, bool binaryOutput, int outputOffset, uint? magicNumber)
         {
             OutputFile = outputFile;
             WatchesFile = watchesFile;
             DispatchParamsFile = dispatchParamsFile;
             BinaryOutput = binaryOutput;
             OutputOffset = outputOffset;
+            CheckMagicNumber = magicNumber;
         }
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
@@ -364,7 +369,7 @@ namespace VSRAD.Package.Options
                 dispatchParamsFile.Location = StepEnvironment.Local;
             }
 
-            return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
+            return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput, magicNumber: CheckMagicNumber,
                 outputFile: outputFile, watchesFile: watchesFile, dispatchParamsFile: dispatchParamsFile);
         }
 
@@ -385,7 +390,8 @@ namespace VSRAD.Package.Options
             WatchesFile.Equals(step.WatchesFile) &&
             DispatchParamsFile.Equals(step.DispatchParamsFile) &&
             BinaryOutput == step.BinaryOutput &&
-            OutputOffset == step.OutputOffset;
+            OutputOffset == step.OutputOffset &&
+            CheckMagicNumber == step.CheckMagicNumber;
     }
 
     public sealed class ActionStepJsonConverter : JsonConverter

@@ -208,7 +208,7 @@ namespace VSRAD.PackageTests.Server
                 outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-output", CheckTimestamp = true },
                 watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-watches", CheckTimestamp = false },
                 dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote-status", CheckTimestamp = false },
-                binaryOutput: true, outputOffset: 0));
+                binaryOutput: true, outputOffset: 0, magicNumber: null));
 
             profile.General.RunActionsLocally = false;
             Assert.True((await a.EvaluateAsync(MakeIdentityEvaluator(), profile)).TryGetResult(out var result, out _));

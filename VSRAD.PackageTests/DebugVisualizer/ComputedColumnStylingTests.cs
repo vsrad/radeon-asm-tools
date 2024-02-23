@@ -102,7 +102,7 @@ namespace VSRAD.PackageTests.DebugVisualizer
             system[96] = 0x5;
             system[128] = 0x5;
 
-            var visualizerOptions = new VisualizerOptions { MaskLanes = false, MagicNumber = 0x7 };
+            var visualizerOptions = new VisualizerOptions { MaskLanes = false };
             var styling = new ComputedColumnStyling();
             styling.Recompute(visualizerOptions, new VisualizerAppearance(), new ColumnStylingOptions(),
                 MakeBreakState(system, groupSize: 144, waveSize: 32, checkMagicNumber: 0x7));

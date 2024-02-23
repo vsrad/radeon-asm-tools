@@ -323,7 +323,7 @@ namespace VSRAD.PackageTests.Server
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = false },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
-                    binaryOutput: true, outputOffset: 0)
+                    binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
             var level2Steps = new List<IActionStep>
             {
@@ -417,7 +417,7 @@ namespace VSRAD.PackageTests.Server
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "output", CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "watches", CheckTimestamp = false },
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "status", CheckTimestamp = false },
-                    binaryOutput: true, outputOffset: 0)
+                    binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
 
             var channel = new MockCommunicationChannel();
@@ -455,7 +455,7 @@ namespace VSRAD.PackageTests.Server
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/output", CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/watches", CheckTimestamp = true },
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Remote, Path = "remote/dispatch", CheckTimestamp = true },
-                    binaryOutput: true, outputOffset: 0)
+                    binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
 
             var channel = new MockCommunicationChannel();
@@ -510,7 +510,7 @@ result.StepResults[0].Warning);
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DebugBuffer.bin"), CheckTimestamp = false },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("ValidWatches.txt"), CheckTimestamp = false },
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = TestHelper.GetFixturePath("DispatchParams.txt"), CheckTimestamp = false },
-                    binaryOutput: true, outputOffset: 0)
+                    binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
             var runner = new ActionRunner(null, null, new ActionEnvironment(localWorkDir: Path.GetTempPath(), "", watches: TestHelper.ReadFixtureLines("Watches.txt")), _project);
             var result = await runner.RunAsync("Debug", steps);
@@ -559,7 +559,7 @@ result.StepResults[0].Warning);
                     outputFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = outputFileName, CheckTimestamp = true },
                     watchesFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = watchesFileName, CheckTimestamp = false },
                     dispatchParamsFile: new BuiltinActionFile { Location = StepEnvironment.Local, Path = dispatchFileName, CheckTimestamp = false },
-                    binaryOutput: true, outputOffset: 0)
+                    binaryOutput: true, outputOffset: 0, magicNumber: null)
             };
 
             var channel = new MockCommunicationChannel();

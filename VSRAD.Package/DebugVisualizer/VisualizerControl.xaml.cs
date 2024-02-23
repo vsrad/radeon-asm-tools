@@ -116,17 +116,12 @@ namespace VSRAD.Package.DebugVisualizer
                     _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
                 case nameof(Options.VisualizerOptions.MaskLanes):
-                case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerAppearance.LaneGrouping):
                 case nameof(Options.VisualizerAppearance.VerticalSplit):
                 case nameof(Options.VisualizerAppearance.LaneSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
                     RefreshDataStyling();
-                    break;
-                case nameof(Options.VisualizerOptions.MagicNumber):
-                    if (_context.Options.VisualizerOptions.CheckMagicNumber)
-                        RefreshDataStyling();
                     break;
                 case nameof(Options.VisualizerAppearance.NameColumnAlignment):
                 case nameof(Options.VisualizerAppearance.DataColumnAlignment):
