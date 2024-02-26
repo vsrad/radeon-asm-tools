@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.OLE.Interop;
+﻿using Microsoft.VisualStudio.Composition;
+using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
 using System;
 using System.Collections.Generic;
@@ -55,16 +56,26 @@ namespace VSRAD.Package.Commands
             var debugStartupActiveTab = "(Active tab)";
             if (commandId == Constants.DebugFileDropdownListId && variantOut != IntPtr.Zero)
             {
-                _openDocumentPaths = _projectSourceManager.GetOpenDocuments().ToArray();
+                _openDocumentPaths = GetStartupFileCandidates().ToArray();
                 _openDocumentShortNames = GetShortDocumentNames(_openDocumentPaths);
-                var options = _openDocumentShortNames.Prepend(debugStartupActiveTab).ToArray();
+
+                string activeDocumentPath = "";
+                try { activeDocumentPath = _projectSourceManager.GetActiveEditorView().GetFilePath(); } catch { }
+                string activeDocumentName = _openDocumentPaths.Zip(_openDocumentShortNames, (path, name) => (path, name))
+                    .FirstOrDefault(e => string.Equals(e.path, activeDocumentPath, StringComparison.OrdinalIgnoreCase)).name;
+                string startupName = _openDocumentPaths.Zip(_openDocumentShortNames, (path, name) => (path, name))
+                    .FirstOrDefault(e => string.Equals(e.path, _projectSourceManager.DebugStartupPath, StringComparison.OrdinalIgnoreCase)).name;
+
+                var options = _openDocumentShortNames.Prepend((startupName == null ? "-> " : "") + debugStartupActiveTab)
+                    .Select(n => (n == startupName ? "-> " : "") + (n == activeDocumentName ? "* " : "") + n).ToArray();
+
                 Marshal.GetNativeVariantForObject(options, variantOut);
             }
             if (commandId == Constants.DebugFileDropdownId && variantOut != IntPtr.Zero)
             {
                 if (_projectSourceManager.DebugStartupPath is string startupPath)
                 {
-                    var shortNames = GetShortDocumentNames(_projectSourceManager.GetOpenDocuments().Prepend(startupPath).Distinct());
+                    var shortNames = GetShortDocumentNames(GetStartupFileCandidates().Prepend(startupPath).Distinct());
                     Marshal.GetNativeVariantForObject(shortNames[0], variantOut);
                 }
                 else
@@ -79,6 +90,26 @@ namespace VSRAD.Package.Commands
                     _projectSourceManager.DebugStartupPath = null;
                 else if (optionIdx - 1 < _openDocumentPaths.Length)
                     _projectSourceManager.DebugStartupPath = _openDocumentPaths[optionIdx - 1];
+            }
+        }
+
+        private IEnumerable<string> GetStartupFileCandidates()
+        {
+            var openDocuments = _projectSourceManager.GetOpenDocuments();
+            try
+            {
+                const string syntaxOptsProvider = "VSRAD.Syntax.Options.OptionsProvider";
+                var syntaxOptsImport = new ImportDefinition(syntaxOptsProvider, ImportCardinality.ExactlyOne, new Dictionary<string, object>(), new List<IImportSatisfiabilityConstraint>());
+                var syntaxOptsImported = _project.UnconfiguredProject.Services.ExportProvider.GetExports(syntaxOptsImport);
+                var syntaxOpts = syntaxOptsImported.First().Value;
+                var asm1FileExtensions = (IEnumerable<string>)syntaxOpts.GetType().GetField("Asm1FileExtensions").GetValue(syntaxOpts);
+                var asm2FileExtensions = (IEnumerable<string>)syntaxOpts.GetType().GetField("Asm2FileExtensions").GetValue(syntaxOpts);
+                var exts = asm1FileExtensions.Concat(asm2FileExtensions).ToList();
+                return openDocuments.Where(p => exts.Any(e => p.EndsWith(e, StringComparison.OrdinalIgnoreCase)));
+            }
+            catch
+            {
+                return openDocuments;
             }
         }
 
