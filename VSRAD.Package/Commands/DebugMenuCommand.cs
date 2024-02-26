@@ -19,8 +19,8 @@ namespace VSRAD.Package.Commands
         private readonly IProject _project;
         private readonly IProjectSourceManager _projectSourceManager;
 
-        private string[] _openDocumentPaths;
-        private string[] _openDocumentShortNames;
+        private List<string> _openDocumentPaths;
+        private List<string> _openDocumentShortNames;
 
         [ImportingConstructor]
         public DebugMenuCommand(IProject project, IProjectSourceManager projectSourceManager)
@@ -56,7 +56,7 @@ namespace VSRAD.Package.Commands
             var debugStartupActiveTab = "(Active tab)";
             if (commandId == Constants.DebugFileDropdownListId && variantOut != IntPtr.Zero)
             {
-                _openDocumentPaths = GetStartupFileCandidates().ToArray();
+                _openDocumentPaths = GetStartupFileCandidates();
                 _openDocumentShortNames = GetShortDocumentNames(_openDocumentPaths);
 
                 string activeDocumentPath = "";
@@ -88,14 +88,14 @@ namespace VSRAD.Package.Commands
                 var optionIdx = (int)Marshal.GetObjectForNativeVariant(variantIn);
                 if (optionIdx == 0) // "(Active tab)"
                     _projectSourceManager.DebugStartupPath = null;
-                else if (optionIdx - 1 < _openDocumentPaths.Length)
+                else if (optionIdx - 1 < _openDocumentPaths.Count)
                     _projectSourceManager.DebugStartupPath = _openDocumentPaths[optionIdx - 1];
             }
         }
 
-        private IEnumerable<string> GetStartupFileCandidates()
+        private List<string> GetStartupFileCandidates()
         {
-            var openDocuments = _projectSourceManager.GetOpenDocuments();
+            string[] asmFileExtensions;
             try
             {
                 const string syntaxOptsProvider = "VSRAD.Syntax.Options.OptionsProvider";
@@ -104,25 +104,30 @@ namespace VSRAD.Package.Commands
                 var syntaxOpts = syntaxOptsImported.First().Value;
                 var asm1FileExtensions = (IEnumerable<string>)syntaxOpts.GetType().GetField("Asm1FileExtensions").GetValue(syntaxOpts);
                 var asm2FileExtensions = (IEnumerable<string>)syntaxOpts.GetType().GetField("Asm2FileExtensions").GetValue(syntaxOpts);
-                var exts = asm1FileExtensions.Concat(asm2FileExtensions).ToList();
-                return openDocuments.Where(p => exts.Any(e => p.EndsWith(e, StringComparison.OrdinalIgnoreCase)));
+                asmFileExtensions = asm1FileExtensions.Concat(asm2FileExtensions).ToArray();
             }
             catch
             {
-                return openDocuments;
+                asmFileExtensions = null;
             }
+
+            var openDocuments = _projectSourceManager.GetOpenDocuments().ToList();
+            openDocuments.Sort();
+            if (asmFileExtensions != null)
+                openDocuments.RemoveAll(p => !asmFileExtensions.Any(ext => p.EndsWith(ext, StringComparison.OrdinalIgnoreCase)));
+            return openDocuments;
         }
 
-        private static string[] GetShortDocumentNames(IEnumerable<string> documentPaths)
+        private static List<string> GetShortDocumentNames(IEnumerable<string> documentPaths)
         {
             var paths = documentPaths.Select(p => p.Split(Path.DirectorySeparatorChar)).ToArray();
-            var shortNames = paths.Select(p => p[p.Length - 1]).ToArray();
+            var shortNames = paths.Select(p => p[p.Length - 1]).ToList();
             for (var haveDuplicateNames = true; haveDuplicateNames;)
             {
                 haveDuplicateNames = false;
-                for (var i = 0; i < shortNames.Length; ++i)
+                for (var i = 0; i < shortNames.Count; ++i)
                 {
-                    for (var j = 0; j < shortNames.Length; ++j)
+                    for (var j = 0; j < shortNames.Count; ++j)
                     {
                         if (i != j && shortNames[i] == shortNames[j])
                         {
