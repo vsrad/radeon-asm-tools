@@ -73,9 +73,9 @@ namespace VSRAD.PackageTests.ProjectSystem
             serviceProvider.Setup(p => p.GetService(typeof(SVsStatusbar))).Returns(new Mock<IVsStatusbar>().Object);
 
             var channel = new MockCommunicationChannel();
-            var actionLauncher = new ActionLauncher(project, channel.Object, sourceManager.Object,
-                breakpointTracker.Object, serviceProvider.Object);
-            var debuggerIntegration = new DebuggerIntegration(project, actionLauncher, new Mock<IActionLogger>().Object, breakpointTracker.Object, sourceManager.Object);
+            DebuggerIntegration debuggerIntegration = null;
+            var actionController = new Lazy<IActionController>(() => new ActionController(project, new Mock<IActionLogger>().Object, channel.Object, sourceManager.Object, debuggerIntegration, breakpointTracker.Object, serviceProvider.Object));
+            debuggerIntegration = new DebuggerIntegration(project, actionController, breakpointTracker.Object, sourceManager.Object);
 
             /* Set up server responses */
 

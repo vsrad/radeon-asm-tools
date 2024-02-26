@@ -6,14 +6,15 @@ using Microsoft.VisualStudio.Shell.Interop;
 using System.ComponentModel.Composition;
 using System.Globalization;
 using System.Text;
+using System.Threading.Tasks;
 using VSRAD.Package.Server;
-using Task = System.Threading.Tasks.Task;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
     public interface IActionLogger
     {
-        Task LogActionRunAsync(ActionRunResult runResult);
+        Task<Error> LogActionRunAsync(string actionName, Result<ActionRunResult> actionRun);
     }
 
     [Export(typeof(IActionLogger))]
@@ -39,35 +40,44 @@ namespace VSRAD.Package.ProjectSystem
             });
         }
 
-        public async Task LogActionRunAsync(ActionRunResult runResult)
+        public async Task<Error> LogActionRunAsync(string actionName, Result<ActionRunResult> actionRun)
         {
             await _outputWriter.ClearAsync();
 
-            var title = runResult.ActionName + " action " + (runResult.Successful ? "SUCCEEDED" : "FAILED") + $" in {runResult.TotalMillis}ms";
-
-            var log = new StringBuilder();
-            var warnings = new StringBuilder();
-
-            var actionSucceeded = LogAction(log, warnings, runResult);
-
-            var logString = log.ToString();
-            await _outputWriter.PrintMessageAsync(title, logString);
-
-            var errorListOutput = runResult.GetStepOutputs();
-            var errors = await _errorList.AddToErrorListAsync(errorListOutput);
-
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            if (errors.ErrorCount != 0)
-                _dte.ToolWindows.ErrorList.Parent.Activate();
-            else if (!actionSucceeded)
-                _dte.ToolWindows.OutputWindow.Parent.Activate();
-
-            if (warnings.Length != 0)
+            if (actionRun.TryGetResult(out var runResult, out var error) && runResult != null)
             {
-                if (actionSucceeded)
-                    Errors.ShowWarning(warnings.ToString(), title: runResult.ActionName + " Warning");
-                else
-                    Errors.ShowCritical(warnings.ToString(), title: runResult.ActionName + " Error");
+                var title = runResult.ActionName + " action " + (runResult.Successful ? "SUCCEEDED" : "FAILED") + $" in {runResult.TotalMillis}ms";
+
+                var log = new StringBuilder();
+                var warnings = new StringBuilder();
+
+                var actionSucceeded = LogAction(log, warnings, runResult);
+
+                var logString = log.ToString();
+                await _outputWriter.PrintMessageAsync(title, logString);
+
+                var errorListOutput = runResult.GetStepOutputs();
+                var errors = await _errorList.AddToErrorListAsync(errorListOutput);
+
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                if (errors.ErrorCount != 0)
+                    _dte.ToolWindows.ErrorList.Parent.Activate();
+                else if (!actionSucceeded)
+                    _dte.ToolWindows.OutputWindow.Parent.Activate();
+
+                if (warnings.Length != 0)
+                {
+                    if (actionSucceeded)
+                        return new Error(warnings.ToString(), critical: false, title: runResult.ActionName + " Warning");
+                    else
+                        return new Error(warnings.ToString(), critical: true, title: runResult.ActionName + " Error");
+                }
+                return default;
+            }
+            else
+            {
+                await _outputWriter.PrintMessageAsync(actionName + " action ABORTED");
+                return error;
             }
         }
 

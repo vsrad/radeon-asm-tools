@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -32,6 +33,18 @@ namespace VSRAD.Package.Options
                 Errors.ShowWarning($"An error has occurred while cloning the profile: {e.Message} Proceeding with new profile.");
             }
             return clonedProfile;
+        }
+
+        public bool ActionReadsDebugData(ActionProfileOptions action)
+        {
+            foreach (var step in action.Steps)
+            {
+                if (step is ReadDebugDataStep)
+                    return true;
+                if (step is RunActionStep runOther && Actions.FirstOrDefault(a => a.Name == runOther.Name) is ActionProfileOptions other && ActionReadsDebugData(other))
+                    return true;
+            }
+            return false;
         }
     }
 
