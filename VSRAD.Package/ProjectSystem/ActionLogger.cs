@@ -76,7 +76,7 @@ namespace VSRAD.Package.ProjectSystem
             }
             else
             {
-                await _outputWriter.PrintMessageAsync(actionName + " action FAILED");
+                await _outputWriter.PrintMessageAsync(actionName + " action ABORTED");
                 return error;
             }
         }

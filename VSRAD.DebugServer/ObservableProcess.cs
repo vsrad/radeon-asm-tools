@@ -91,7 +91,7 @@ namespace VSRAD.DebugServer
 
             if (completedTask.IsCanceled || completedTask == processTimeoutTcs.Task)
             {
-                TerminateProcessTree(_process);
+                await Task.Run(() => TerminateProcessTree(_process)); // This might take a few seconds, use Task.Run to avoid blocking the thread
                 if (completedTask.IsCanceled)
                     throw new OperationCanceledException(cancellationToken);
             }

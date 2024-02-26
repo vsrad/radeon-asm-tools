@@ -175,6 +175,7 @@ namespace VSRAD.Package.ProjectSystem
         void IEngineIntegration.CauseBreak()
         {
             _actionController.Value.AbortRunningAction();
+            NotifyDebugActionExecuted((ActionRunResult)null, BreakTargetSelector.SingleNext);
         }
     }
 }

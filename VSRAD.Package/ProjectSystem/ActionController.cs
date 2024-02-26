@@ -1,5 +1,7 @@
-﻿using Microsoft.VisualStudio.Imaging;
+﻿using Microsoft.VisualStudio;
+using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -33,10 +35,9 @@ namespace VSRAD.Package.ProjectSystem
         private readonly SVsServiceProvider _serviceProvider;
         private readonly VsStatusBarWriter _statusBar;
 
-        private readonly object _runningActionLock = new object();
+        private readonly SemaphoreSlim _runningActionSemaphore = new SemaphoreSlim(1, 1);
         private string _runningActionName;
         private CancellationTokenSource _runningActionTokenSource;
-        private VsInfoBar _runningActionWarningBar;
 
         public bool IsActionRunning => _runningActionName != null;
 
@@ -68,8 +69,8 @@ namespace VSRAD.Package.ProjectSystem
             try
             {
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-                lock (_runningActionLock)
+                await _runningActionSemaphore.WaitAsync();
+                try
                 {
                     if (_runningActionName != null)
                     {
@@ -78,6 +79,10 @@ namespace VSRAD.Package.ProjectSystem
                     }
                     _runningActionName = actionName;
                     _runningActionTokenSource = new CancellationTokenSource();
+                }
+                finally
+                {
+                    _runningActionSemaphore.Release();
                 }
 
                 Options.ActionProfileOptions action;
@@ -96,36 +101,47 @@ namespace VSRAD.Package.ProjectSystem
             }
             finally
             {
-                var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
-                if (actionReadsDebugData)
-                    _debuggerIntegration.NotifyDebugActionExecuted(actionRun, debugBreakTarget);
-                if (error != default)
-                    Errors.Show(error);
-
-                lock (_runningActionLock)
+                await _runningActionSemaphore.WaitAsync();
+                try
                 {
                     if (anotherActionRunning)
                     {
-                        _runningActionWarningBar?.Close();
-                        var warningText = new[] { new InfoBarTextSpan($"Cannot launch a new action because {_runningActionName} is already running. "), new InfoBarButton("Abort") };
-                        _runningActionWarningBar = new VsInfoBar(_serviceProvider, new InfoBarModel(warningText, KnownMonikers.StatusNo, true), (s, e) => AbortRunningAction());
+                        var abortAction = VsShellUtilities.ShowMessageBox(_serviceProvider,
+                            "Do you want to cancel the current running action?\r\n\r\nPress Yes to abort the action, or No to wait for it to complete.",
+                            $"Cannot launch a new action because {_runningActionName} is already running.",
+                            OLEMSGICON.OLEMSGICON_WARNING, OLEMSGBUTTON.OLEMSGBUTTON_YESNO, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_SECOND);
+                        if (abortAction == (int)VSConstants.MessageBoxResult.IDYES)
+                            _runningActionTokenSource.Cancel();
                     }
                     else
                     {
                         _runningActionName = null;
                         _runningActionTokenSource = null;
-                        _runningActionWarningBar?.Close();
-                        _runningActionWarningBar = null;
+
+                        var error = await _actionLogger.LogActionRunAsync(actionName, actionRun);
+                        if (actionReadsDebugData)
+                            _debuggerIntegration.NotifyDebugActionExecuted(actionRun, debugBreakTarget);
+                        if (error != default)
+                            Errors.Show(error);
                     }
+                }
+                finally
+                {
+                    _runningActionSemaphore.Release();
                 }
             }
         }
 
         public void AbortRunningAction()
         {
-            lock (_runningActionLock)
+            _runningActionSemaphore.Wait();
+            try
             {
                 _runningActionTokenSource?.Cancel();
+            }
+            finally
+            {
+                _runningActionSemaphore.Release();
             }
         }
 
