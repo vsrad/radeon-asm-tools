@@ -12,6 +12,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
     internal class ScopedCompletionProvider : RadCompletionProvider
     {
+        private static readonly ImageElement FunctionIcon = GetImageElement(KnownImageIds.Method);
         private static readonly ImageElement LabelIcon = GetImageElement(KnownImageIds.Label);
         private static readonly ImageElement PreprocessorMacroIcon = GetImageElement(KnownImageIds.MacroPublic);
         private static readonly ImageElement GlobalVariableIcon = GetImageElement(KnownImageIds.GlobalVariable);
@@ -20,6 +21,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
         private readonly IIntelliSenseService _intelliSenseService;
 
+        private bool _autocompleteFunctions;
         private bool _autocompleteLabels;
         private bool _autocompleteVariables;
         private bool _autocompletePreprocessorMacros;
@@ -28,6 +30,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             : base(optionsProvider)
         {
             _intelliSenseService = intelliSenseService;
+            _autocompleteFunctions = optionsProvider.AutocompleteFunctions;
             _autocompleteLabels = optionsProvider.AutocompleteLabels;
             _autocompleteVariables = optionsProvider.AutocompleteVariables;
             _autocompletePreprocessorMacros = optionsProvider.AutocompletePreprocessorMacros;
@@ -35,6 +38,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
         public override void DisplayOptionsUpdated(OptionsProvider sender)
         {
+            _autocompleteFunctions = sender.AutocompleteFunctions;
             _autocompleteLabels = sender.AutocompleteLabels;
             _autocompleteVariables = sender.AutocompleteVariables;
             _autocompletePreprocessorMacros = sender.AutocompletePreprocessorMacros;
@@ -42,7 +46,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 
         public override async Task<RadCompletionContext> GetContextAsync(IDocument document, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken cancellationToken)
         {
-            if (!_autocompleteLabels && !_autocompleteVariables && !_autocompletePreprocessorMacros)
+            if (!_autocompleteFunctions && !_autocompleteLabels && !_autocompleteVariables && !_autocompletePreprocessorMacros)
                 return RadCompletionContext.Empty;
 
             var analysisResult = await document.DocumentAnalysis.GetAnalysisResultAsync(triggerLocation.Snapshot);
@@ -54,6 +58,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
                 {
                     switch (token.Type)
                     {
+                        case RadAsmTokenType.FunctionName:
+                            if (_autocompleteFunctions)
+                                completions.Add(new RadCompletionItem(_intelliSenseService.GetIntelliSenseInfo(document, token), FunctionIcon));
+                            break;
                         case RadAsmTokenType.Label:
                             if (_autocompleteLabels)
                                 completions.Add(new RadCompletionItem(_intelliSenseService.GetIntelliSenseInfo(document, token), LabelIcon));
