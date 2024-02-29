@@ -49,15 +49,16 @@ namespace VSRAD.Syntax.Core.Parser
 
         private async Task<ParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
-            var tokens = trackingTokens
-                .Where(t => t.Type != RadAsm1Lexer.WHITESPACE && t.Type != RadAsm1Lexer.LINE_COMMENT)
-                .AsParallel()
-                .AsOrdered()
-                .WithCancellation(cancellation)
-                .ToArray();
+            var tokens = new List<TrackingToken>(((ICollection<TrackingToken>)trackingTokens).Count);
+            foreach (var token in trackingTokens)
+            {
+                cancellation.ThrowIfCancellationRequested();
+                if (token.Type != RadAsm1Lexer.WHITESPACE && token.Type != RadAsm1Lexer.LINE_COMMENT)
+                    tokens.Add(token);
+            }
 
             var definitionContainer = new DefinitionContainer();
-            var referenceCandidates = new LinkedList<(string text, TrackingToken trackingToken, IBlock block)>();
+            var referenceCandidates = new List<(string text, TrackingToken trackingToken, IBlock block)>();
 
             var blocks = new List<IBlock>();
             var errors = new List<IErrorToken>();
@@ -67,7 +68,7 @@ namespace VSRAD.Syntax.Core.Parser
             var preprocessBlock = false;
 
             blocks.Add(currentBlock);
-            for (var i = 0; i < tokens.Length; i++)
+            for (var i = 0; i < tokens.Count; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
                 var token = tokens[i];
@@ -96,7 +97,7 @@ namespace VSRAD.Syntax.Core.Parser
                     }
                     else if (token.Type == RadAsm1Lexer.MACRO)
                     {
-                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
+                        if (tokens.Count - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
                         {
                             var funcDefinition = new DefinitionToken(RadAsmTokenType.FunctionName, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, funcDefinition);
@@ -121,7 +122,7 @@ namespace VSRAD.Syntax.Core.Parser
                             searchInCondition = false;
                         }
 
-                        if (tokens.Length - i > 3
+                        if (tokens.Count - i > 3
                             && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER
                             && tokens[i + 2].Type == RadAsm1Lexer.COLON
                             && tokens[i + 3].Type == RadAsm1Lexer.EOL)
@@ -181,7 +182,7 @@ namespace VSRAD.Syntax.Core.Parser
                     }
                     else if (token.Type == RadAsm1Lexer.SET)
                     {
-                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
+                        if (tokens.Count - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
                         {
                             var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, variableDefinition);
@@ -194,7 +195,7 @@ namespace VSRAD.Syntax.Core.Parser
                         if (!TryAddInstruction(tokenText, token, currentBlock, version) && 
                             !TryAddReference(tokenText, token, currentBlock, version, definitionContainer, cancellation))
                         {
-                            if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.EQ)
+                            if (tokens.Count - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.EQ)
                             {
                                 var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
                                 definitionContainer.Add(currentBlock, variableDefinition);
@@ -202,14 +203,14 @@ namespace VSRAD.Syntax.Core.Parser
                             }
                             else
                             {
-                                referenceCandidates.AddLast((tokenText, token, currentBlock));
+                                referenceCandidates.Add((tokenText, token, currentBlock));
                             }
                         }
                     }
                     else if (token.Type == RadAsm1Lexer.INCLUDE
                         || token.Type == RadAsm1Lexer.PP_INCLUDE)
                     {
-                        if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.STRING_LITERAL)
+                        if (tokens.Count - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.STRING_LITERAL)
                         {
                             await AddExternalDefinitionsAsync(document.Path, tokens[i + 1], currentBlock, definitionContainer);
                             i += 1;

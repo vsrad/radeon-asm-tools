@@ -5,15 +5,15 @@ namespace VSRAD.Syntax.Core.Tokens
 {
     public class DefinitionToken : AnalysisToken
     {
-        public readonly LinkedList<ReferenceToken> References;
+        public List<ReferenceToken> References => _references;
+        private readonly List<ReferenceToken> _references = new List<ReferenceToken>();
 
         public DefinitionToken(RadAsmTokenType tokenType, TrackingToken trackingToken, ITextSnapshot snapshot)
             : base(tokenType, trackingToken, snapshot)
         {
-            References = new LinkedList<ReferenceToken>();
         }
 
         public void AddReference(ReferenceToken reference) =>
-            References.AddLast(reference);
+            _references.Add(reference);
     }
 }
