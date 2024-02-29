@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
+using System.Collections.Generic;
 
 namespace VSRAD.Syntax.Core.Tokens
 {
@@ -20,5 +21,14 @@ namespace VSRAD.Syntax.Core.Tokens
 
         public string GetText() =>
             Span.GetText();
+    }
+
+    public class AnalysisTokenTextComparer : EqualityComparer<AnalysisToken>
+    {
+        public override bool Equals(AnalysisToken a, AnalysisToken b) =>
+            a?.GetText() == b?.GetText();
+
+        public override int GetHashCode(AnalysisToken a) =>
+            a.GetText().GetHashCode();
     }
 }

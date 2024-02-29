@@ -12,6 +12,7 @@ namespace VSRAD.Syntax.Core.Blocks
         Condition,
         Repeat,
         Loop,
+        InstructionDoc
     }
 
     public interface IBlock

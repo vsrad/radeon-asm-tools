@@ -66,6 +66,7 @@
     <Compile Include="Core\AnalysisResult.cs" />
     <Compile Include="Core\Blocks\Block.cs" />
     <Compile Include="Core\Blocks\FunctionBlock.cs" />
+    <Compile Include="Core\Blocks\InstructionDocBlock.cs" />
     <Compile Include="Core\Blocks\TrackingBlock.cs" />
     <Compile Include="Core\Document.cs" />
     <Compile Include="Core\DocumentAnalysis.cs" />
@@ -161,7 +162,6 @@
     <Compile Include="Options\GeneralOptions.cs" />
     <Compile Include="Options\GeneralOptionProvider.cs" />
     <Compile Include="Options\Instructions\InstructionListLoader.cs" />
-    <Compile Include="Options\Instructions\Instruction.cs" />
     <Compile Include="Options\Instructions\InstructionListManager.cs" />
     <Compile Include="Options\Instructions\InstructionSet.cs" />
     <Compile Include="Options\Instructions\InstructionSetSelector.cs" />

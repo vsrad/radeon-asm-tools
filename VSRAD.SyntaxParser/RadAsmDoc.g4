@@ -19,7 +19,7 @@ BLOCK_COMMENT
     ;
 
 WHITESPACE
-    : [ \t]+
+    : [ \t]+ -> skip
     ;
 
 EOL

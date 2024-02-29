@@ -17,15 +17,14 @@ namespace VSRAD.Syntax.Core.Parser
         public Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var definitions = new Dictionary<string, DefinitionToken>();
-            IBlock rootBlock = new Block(version);
-            var blocks = new List<IBlock>() { rootBlock };
-            var tokens = trackingTokens
-                .Where(t => t.Type != RadAsmDocLexer.WHITESPACE && t.Type != RadAsmDocLexer.BLOCK_COMMENT)
-                .AsParallel()
-                .AsOrdered()
-                .WithCancellation(cancellation)
-                .ToArray();
 
+            var blocks = new List<IBlock>();
+            var rootBlock = new Block(version);
+            blocks.Add(rootBlock);
+
+            var tokens = trackingTokens.ToArray();
+
+            var currentBlock = rootBlock;
             for (int i = 0; i < tokens.Length; i++)
             {
                 cancellation.ThrowIfCancellationRequested();
@@ -40,19 +39,32 @@ namespace VSRAD.Syntax.Core.Parser
                         i += 1;
                     }
                 }
-                else if (tokens.Length - i > 1 && token.Type == RadAsmDocLexer.EOL && tokens[i + 1].Type == RadAsmDocLexer.IDENTIFIER)
-                {
-                    rootBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, tokens[i + 1], version));
-                }
                 else if (token.Type == RadAsmDocLexer.IDENTIFIER)
                 {
-                    var text = token.GetText(version);
-                    if (definitions.TryGetValue(text, out var definition))
-                        rootBlock.AddToken(new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition));
+                    if (i < 1 || tokens[i - 1].Type == RadAsmDocLexer.EOL)
+                    {
+                        if (i < 2 || tokens[i - 2].Type == RadAsmDocLexer.BLOCK_COMMENT)
+                        {
+                            if (currentBlock != rootBlock && i >= 3 && tokens[i - 3].Type == RadAsmDocLexer.EOL)
+                                currentBlock.SetEnd(tokens[i - 3].GetStart(version), tokens[i - 3]);
+
+                            var docComment = new AnalysisToken(RadAsmTokenType.Comment, tokens[i - 2], version);
+                            currentBlock = blocks.AppendBlock(new InstructionDocBlock(rootBlock, docComment));
+                            currentBlock.SetStart(tokens[i - 2].GetStart(version));
+                        }
+                        currentBlock.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
+                    }
+                    else
+                    {
+                        var text = token.GetText(version);
+                        if (definitions.TryGetValue(text, out var definition))
+                            currentBlock.AddToken(new ReferenceToken(RadAsmTokenType.GlobalVariableReference, token, version, definition));
+                    }
                 }
             }
 
             var result = new ParserResult(blocks, new List<IErrorToken>());
+
             return Task.FromResult(result);
         }
     }

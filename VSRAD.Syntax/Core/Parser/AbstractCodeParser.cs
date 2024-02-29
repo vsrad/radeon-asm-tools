@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.Text;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.Syntax.Core.Blocks;
@@ -16,20 +14,17 @@ namespace VSRAD.Syntax.Core.Parser
 {
     internal abstract class AbstractCodeParser : IParser
     {
-        protected HashSet<string> OtherInstructions { get; private set; }
-
         private readonly IDocumentFactory _documentFactory;
         private readonly IBuiltinInfoProvider _builtinInfoProvider;
         private readonly AsmType _asmType;
-        private HashSet<string> _instructions;
+        private IInstructionSet _selectedInstructionSet;
+        private IInstructionSet _unionInstructionSet;
 
         protected AbstractCodeParser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager, AsmType asmType)
         {
             _asmType = asmType;
             _documentFactory = documentFactory;
             _builtinInfoProvider = builtinInfoProvider;
-            _instructions = new HashSet<string>();
-            OtherInstructions = new HashSet<string>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
             InstructionsUpdated(instructionListManager, _asmType);
@@ -41,20 +36,8 @@ namespace VSRAD.Syntax.Core.Parser
         {
             if ((asmType & _asmType) == _asmType)
             {
-                var instructions = sender.GetInstructions(_asmType);
-                var selectedSetInstructions = sender.GetSelectedSetInstructions(_asmType);
-
-                _instructions = selectedSetInstructions
-                    .Select(i => i.Text)
-                    .Distinct()
-                    .ToHashSet();
-
-                OtherInstructions = instructions
-                    .Select(i => i.Text)
-                    .Distinct()
-                    .ToHashSet();
-
-                OtherInstructions.ExceptWith(_instructions);
+                _selectedInstructionSet = sender.GetSelectedInstructionSet(_asmType);
+                _unionInstructionSet = sender.GetInstructionSetsUnion(_asmType);
             }
         }
 
@@ -124,13 +107,18 @@ namespace VSRAD.Syntax.Core.Parser
 
         protected bool TryAddInstruction(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)
         {
-            if (_instructions.Contains(tokenText))
+            if (_selectedInstructionSet.Instructions.ContainsKey(tokenText))
             {
                 block.AddToken(new AnalysisToken(RadAsmTokenType.Instruction, token, version));
                 return true;
             }
 
             return false;
+        }
+
+        protected bool IsInstructionDefinedInOtherInstructionSet(string tokenText)
+        {
+            return !_selectedInstructionSet.Instructions.ContainsKey(tokenText) && _unionInstructionSet.Instructions.ContainsKey(tokenText);
         }
 
         protected bool TryAddBuiltinReference(string tokenText, TrackingToken token, IBlock block, ITextSnapshot version)

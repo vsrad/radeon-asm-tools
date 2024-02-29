@@ -77,13 +77,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
         }
 
         private static IEnumerable<RadCompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
-            manager.GetSelectedSetInstructions(asmType)
-              .GroupBy(i => i.Text)
-              .Select(g =>
+            manager.GetSelectedInstructionSet(asmType).Instructions
+              .Select(i =>
               {
-                  var instructionName = g.Key;
-                  var definitions = g.SelectMany(i => i.Navigations).ToList();
-                  var info = new IntelliSenseInfo(asmType, instructionName, Core.Tokens.RadAsmTokenType.Instruction, null, definitions, null);
+                  var info = new IntelliSenseInfo(asmType, i.Key, Core.Tokens.RadAsmTokenType.Instruction, null, i.Value.Aliases, null);
                   return new RadCompletionItem(info, Icon);
               });
     }

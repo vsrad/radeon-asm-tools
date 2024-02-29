@@ -236,7 +236,7 @@ namespace VSRAD.Syntax.Core.Parser
 
             foreach (var (text, trackingToken, block) in referenceCandidates)
             {
-                if (!TryAddReference(text, trackingToken, block, version, definitionContainer, cancellation) && OtherInstructions.Contains(text))
+                if (!TryAddReference(text, trackingToken, block, version, definitionContainer, cancellation) && IsInstructionDefinedInOtherInstructionSet(text))
                     errors.Add(new ErrorToken(trackingToken, version, ErrorMessages.InvalidInstructionSetErrorMessage));
             }
 
