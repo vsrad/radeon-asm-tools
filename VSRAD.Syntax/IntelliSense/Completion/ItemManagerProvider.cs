@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text.PatternMatching;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Options;
 
 namespace VSRAD.Syntax.IntelliSense.Completion
 {
@@ -15,9 +16,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         private readonly ItemManager _instance;
 
         [ImportingConstructor]
-        public ItemManagerProvider(IPatternMatcherFactory patternMatcherFactory, IDocumentFactory documentFactory)
+        public ItemManagerProvider(IPatternMatcherFactory patternMatcherFactory, IDocumentFactory documentFactory, OptionsProvider optionsProvider)
         {
-            _instance = new ItemManager(patternMatcherFactory, documentFactory);
+            _instance = new ItemManager(patternMatcherFactory, documentFactory, optionsProvider);
         }
 
         public IAsyncCompletionItemManager GetOrCreate(ITextView textView) => _instance;

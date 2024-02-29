@@ -21,6 +21,16 @@ namespace VSRAD.Syntax.Options
         ByNameDescending,
     }
 
+    public enum AutocompleteFilterMode
+    {
+        [Description("Provide suggestions that account for minor spelling changes")]
+        Fuzzy,
+        [Description("Provide suggestions that have exact substring match")]
+        Substring,
+        [Description("Provide suggestions that have exact prefix match")]
+        Prefix
+    }
+
     public class GeneralOptions : BaseOptionModel<GeneralOptions>
     {
         private const string InstructionCollectionName = "RadeonAsmInstructionCollection";
@@ -167,6 +177,15 @@ namespace VSRAD.Syntax.Options
         {
             get => _optionsProvider.AutocompleteInstructionAliases;
             set => _optionsProvider.AutocompleteInstructionAliases = value;
+        }
+
+        [Category("Autocompletion")]
+        [DisplayName("Suggestion filter")]
+        [Description("The type of filtering used to narrow down the autocomplete suggestion list")]
+        public AutocompleteFilterMode AutocompleteFilter
+        {
+            get => _optionsProvider.AutocompleteFilter;
+            set => _optionsProvider.AutocompleteFilter = value;
         }
         #endregion
 

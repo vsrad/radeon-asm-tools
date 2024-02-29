@@ -39,6 +39,7 @@ namespace VSRAD.Syntax.Options
             AutocompleteVariables = false;
             AutocompleteBuiltins = false;
             AutocompletePreprocessorMacros = false;
+            AutocompleteFilter = AutocompleteFilterMode.Fuzzy;
             AutocompleteInstructionAliases = true;
         }
 
@@ -61,6 +62,7 @@ namespace VSRAD.Syntax.Options
         public bool AutocompleteVariables;
         public bool AutocompleteBuiltins;
         public bool AutocompletePreprocessorMacros;
+        public AutocompleteFilterMode AutocompleteFilter;
         public bool AutocompleteInstructionAliases;
 
         public delegate void OptionsUpdate(OptionsProvider sender);
