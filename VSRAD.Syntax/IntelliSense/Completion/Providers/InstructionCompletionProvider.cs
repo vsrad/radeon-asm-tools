@@ -80,7 +80,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             manager.GetSelectedInstructionSet(asmType).Instructions
               .Select(i =>
               {
-                  var info = new IntelliSenseInfo(asmType, i.Key, Core.Tokens.RadAsmTokenType.Instruction, null, i.Value.Aliases, null);
+                  var info = new IntelliSenseInfo(asmType, i.Key, Core.Tokens.RadAsmTokenType.Instruction, null, i.Value.Aliases, i.Value.Documentation, null);
                   return new RadCompletionItem(info, Icon);
               });
     }

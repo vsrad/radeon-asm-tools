@@ -35,17 +35,23 @@ namespace VSRAD.Syntax.IntelliSense
         public IReadOnlyList<NavigationToken> Definitions { get; }
 
         /// <summary>
+        /// Documentation comment associated with this symbol. May be null.
+        /// </summary>
+        public AnalysisToken DocComment { get; }
+
+        /// <summary>
         /// Documentation for a built-in function. Null if the symbol does not refer to a builtin.
         /// </summary>
         public BuiltinInfo BuiltinInfo { get; }
 
-        public IntelliSenseInfo(AsmType asmType, string symbol, RadAsmTokenType symbolType, SnapshotSpan? symbolSpan, IReadOnlyList<NavigationToken> definitions, BuiltinInfo builtinInfo)
+        public IntelliSenseInfo(AsmType asmType, string symbol, RadAsmTokenType symbolType, SnapshotSpan? symbolSpan, IReadOnlyList<NavigationToken> definitions, AnalysisToken docComment, BuiltinInfo builtinInfo)
         {
             AsmType = asmType;
             Symbol = symbol;
             SymbolType = symbolType;
             SymbolSpan = symbolSpan;
             Definitions = definitions;
+            DocComment = docComment;
             BuiltinInfo = builtinInfo;
         }
     }
