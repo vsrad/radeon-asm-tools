@@ -2,16 +2,11 @@
 using System.IO;
 using System.Linq;
 using VSRAD.Syntax.Core.Tokens;
+using VSRAD.Syntax.Helpers;
 using VSRAD.Syntax.IntelliSense.Navigation;
 
 namespace VSRAD.Syntax.Options.Instructions
 {
-    public enum InstructionType
-    {
-        RadAsm1 = 1,
-        RadAsm2 = 2,
-    }
-
     public sealed class Instruction
     {
         public AnalysisToken Documentation { get; }
@@ -26,7 +21,7 @@ namespace VSRAD.Syntax.Options.Instructions
 
     public interface IInstructionSet
     {
-        InstructionType Type { get; }
+        AsmType Type { get; }
         string SetName { get; }
 
         /// <summary>Includes all instruction names, including aliases. All aliases point to the same Instruction object.</summary>
@@ -35,21 +30,21 @@ namespace VSRAD.Syntax.Options.Instructions
 
     internal class InstructionSet : IInstructionSet
     {
-        public InstructionType Type { get; }
+        public AsmType Type { get; }
         public string SetName { get; }
         public IReadOnlyDictionary<string, Instruction> Instructions => _instructions;
 
         private readonly Dictionary<string, Instruction> _instructions = new Dictionary<string, Instruction>();
 
-        public InstructionSet(string path, InstructionType instructionType)
+        public InstructionSet(AsmType type, string path)
         {
-            Type = instructionType;
+            Type = type;
             SetName = Path.GetFileNameWithoutExtension(path);
         }
 
-        public InstructionSet(InstructionType instructionType, IEnumerable<IInstructionSet> subsets)
+        public InstructionSet(AsmType type, IEnumerable<IInstructionSet> subsets)
         {
-            Type = instructionType;
+            Type = type;
             SetName = "";
             foreach (var subset in subsets)
             {

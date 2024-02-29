@@ -97,10 +97,10 @@ namespace VSRAD.Syntax.Options.Instructions
                 foreach (var filepath in Directory.EnumerateFiles(path))
                 {
                     if (Path.GetExtension(filepath) == Constants.FileExtensionAsm1Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm1));
+                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, AsmType.RadAsm));
 
                     else if (Path.GetExtension(filepath) == Constants.FileExtensionAsm2Doc)
-                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, InstructionType.RadAsm2));
+                        loadTasks.Add(LoadInstructionsFromFileAsync(filepath, AsmType.RadAsm2));
                 }
 
                 var results = await Task.WhenAll(loadTasks);
@@ -118,14 +118,14 @@ namespace VSRAD.Syntax.Options.Instructions
             return instructionSets;
         }
 
-        private async Task<InstructionSet> LoadInstructionsFromFileAsync(string path, InstructionType type)
+        private async Task<InstructionSet> LoadInstructionsFromFileAsync(string path, AsmType type)
         {
             var document = _documentFactory.Value.GetOrCreateDocument(path);
             var documentAnalysis = document.DocumentAnalysis;
             var snapshot = document.CurrentSnapshot;
             var analysisResult = await documentAnalysis.GetAnalysisResultAsync(snapshot);
 
-            var instructionSet = new InstructionSet(path, type);
+            var instructionSet = new InstructionSet(type, path);
             foreach (var block in analysisResult.Root.Children)
             {
                 if (block is InstructionDocBlock docBlock)

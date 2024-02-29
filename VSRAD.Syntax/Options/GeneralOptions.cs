@@ -159,6 +159,15 @@ namespace VSRAD.Syntax.Options
             get => _optionsProvider.AutocompletePreprocessorMacros;
             set => _optionsProvider.AutocompletePreprocessorMacros = value;
         }
+
+        [Category("Autocompletion")]
+        [DisplayName("Suggest instruction aliases")]
+        [Description("Include instruction aliases in autocomplete suggestions")]
+        public bool AutocompleteInstructionAliases
+        {
+            get => _optionsProvider.AutocompleteInstructionAliases;
+            set => _optionsProvider.AutocompleteInstructionAliases = value;
+        }
         #endregion
 
         public override async Task LoadAsync()

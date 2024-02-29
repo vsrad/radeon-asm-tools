@@ -39,6 +39,7 @@ namespace VSRAD.Syntax.Options
             AutocompleteVariables = false;
             AutocompleteBuiltins = false;
             AutocompletePreprocessorMacros = false;
+            AutocompleteInstructionAliases = true;
         }
 
         public SortState SortOptions;
@@ -60,6 +61,7 @@ namespace VSRAD.Syntax.Options
         public bool AutocompleteVariables;
         public bool AutocompleteBuiltins;
         public bool AutocompletePreprocessorMacros;
+        public bool AutocompleteInstructionAliases;
 
         public delegate void OptionsUpdate(OptionsProvider sender);
         public event OptionsUpdate OptionsUpdated;

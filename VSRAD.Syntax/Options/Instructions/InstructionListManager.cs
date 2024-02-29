@@ -48,8 +48,8 @@ namespace VSRAD.Syntax.Options.Instructions
 
             _radAsm1InstructionSets = new List<IInstructionSet>();
             _radAsm2InstructionSets = new List<IInstructionSet>();
-            _radAsm1InstructionsSetsUnion = new InstructionSet(InstructionType.RadAsm1, Enumerable.Empty<InstructionSet>());
-            _radAsm2InstructionsSetsUnion = new InstructionSet(InstructionType.RadAsm2, Enumerable.Empty<InstructionSet>());
+            _radAsm1InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm, Enumerable.Empty<InstructionSet>());
+            _radAsm2InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm2, Enumerable.Empty<InstructionSet>());
             activeDocumentAsm = AsmType.Unknown;
         }
 
@@ -62,13 +62,13 @@ namespace VSRAD.Syntax.Options.Instructions
             {
                 switch (instructionSet.Type)
                 {
-                    case InstructionType.RadAsm1: _radAsm1InstructionSets.Add(instructionSet); break;
-                    case InstructionType.RadAsm2: _radAsm2InstructionSets.Add(instructionSet); break;
+                    case AsmType.RadAsm: _radAsm1InstructionSets.Add(instructionSet); break;
+                    case AsmType.RadAsm2: _radAsm2InstructionSets.Add(instructionSet); break;
                 }
             }
 
-            _radAsm1InstructionsSetsUnion = new InstructionSet(InstructionType.RadAsm1, _radAsm1InstructionSets);
-            _radAsm2InstructionsSetsUnion = new InstructionSet(InstructionType.RadAsm2, _radAsm2InstructionSets);
+            _radAsm1InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm, _radAsm1InstructionSets);
+            _radAsm2InstructionsSetsUnion = new InstructionSet(AsmType.RadAsm2, _radAsm2InstructionSets);
 
             CustomThreadHelper.RunOnMainThread(() =>
             {
