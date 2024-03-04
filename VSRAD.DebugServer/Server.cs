@@ -1,9 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using VSRAD.DebugServer.IPC.Commands;
 
 namespace VSRAD.DebugServer
 {
@@ -15,18 +16,6 @@ namespace VSRAD.DebugServer
         private readonly TcpListener _listener;
         private readonly bool _verboseLogging;
 
-        const uint ENABLE_QUICK_EDIT = 0x0040;
-        const int STD_INPUT_HANDLE = -10;
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint lpMode);
-        [DllImport("kernel32.dll")]
-        static extern uint GetLastError();
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr GetStdHandle(int nStdHandle);
-
         public Server(IPAddress ip, int port, bool verboseLogging = false)
         {
             _listener = new TcpListener(ip, port);
@@ -35,72 +24,56 @@ namespace VSRAD.DebugServer
 
         public async Task LoopAsync()
         {
-            /* disable Quick Edit cmd feature to prevent server hanging */
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var consoleHandle = GetStdHandle(STD_INPUT_HANDLE);
-                UInt32 consoleMode;
-                if (!GetConsoleMode(consoleHandle, out consoleMode))
-                    Console.WriteLine($"Warning! Cannot get console mode. Error code={GetLastError()}");
-                consoleMode &= ~ENABLE_QUICK_EDIT;
-                if (!SetConsoleMode(consoleHandle, consoleMode))
-                    Console.WriteLine($"Warning! Cannot set console mode. Error code={GetLastError()}");
-            }
             _listener.Start();
             uint clientsCount = 0;
             while (true)
             {
-                var client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
-                TcpClientConnected(client, clientsCount);
+                var tcpClient = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
+                var clientId = clientsCount;
                 clientsCount++;
+                _ = Task.Run(() => BeginClientLoopAsync(clientId, tcpClient));
             }
         }
 
-        private void TcpClientConnected(TcpClient tcpClient, uint clientId)
+        private async Task BeginClientLoopAsync(uint clientId, TcpClient tcpClient)
         {
-            var networkClient = new NetworkClient(tcpClient, clientId);
-            var clientLog = new ClientLogger(clientId, _verboseLogging);
-            clientLog.ConnectionEstablished(networkClient.EndPoint);
-            Task.Run(() => BeginClientLoopAsync(networkClient, clientLog));
-        }
-
-        private async Task BeginClientLoopAsync(NetworkClient client, ClientLogger clientLog)
-        {
-            while (true)
+            using (tcpClient)
             {
-                var lockAcquired = false;
-                try
+                var clientLog = new ClientLogger(clientId, _verboseLogging);
+                clientLog.ConnectionEstablished(tcpClient.Client.RemoteEndPoint);
+                while (true)
                 {
-                    var (command, bytesReceived) = await client.ReceiveCommandAsync().ConfigureAwait(false);
-                    clientLog.CommandReceived(command, bytesReceived);
-
-                    await _commandExecutionLock.WaitAsync();
-                    lockAcquired = true;
-
-                    var response = await Dispatcher.DispatchAsync(command, clientLog).ConfigureAwait(false);
-                    if (response != null) // commands like Deploy do not return a response
+                    var lockAcquired = false;
+                    try
                     {
-                        var bytesSent = await client.SendResponseAsync(response).ConfigureAwait(false);
-                        clientLog.ResponseSent(response, bytesSent);
+                        var (command, bytesReceived) = await tcpClient.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
+                        if (command != null)
+                            clientLog.CommandReceived(command, bytesReceived);
+
+                        await _commandExecutionLock.WaitAsync();
+                        lockAcquired = true;
+
+                        var response = await Dispatcher.DispatchAsync(command, clientLog).ConfigureAwait(false);
+                        if (response != null) // commands like Deploy do not return a response
+                        {
+                            var bytesSent = await tcpClient.GetStream().WriteSerializedMessageAsync(response).ConfigureAwait(false);
+                            clientLog.ResponseSent(response, bytesSent);
+                        }
+                        clientLog.CommandProcessed();
                     }
-                    clientLog.CommandProcessed();
-                }
-                catch (ConnectionFailedException)
-                {
-                    client.Disconnect();
-                    clientLog.CliendDisconnected();
-                    break;
-                }
-                catch (Exception e)
-                {
-                    client.Disconnect();
-                    clientLog.FatalClientException(e);
-                    break;
-                }
-                finally
-                {
-                    if (lockAcquired)
-                        _commandExecutionLock.Release();
+                    catch (Exception e)
+                    {
+                        if (e is OperationCanceledException || e is EndOfStreamException || (e.InnerException is SocketException se && se.SocketErrorCode == SocketError.ConnectionReset))
+                            clientLog.CliendDisconnected();
+                        else
+                            clientLog.FatalClientException(e);
+                        break;
+                    }
+                    finally
+                    {
+                        if (lockAcquired)
+                            _commandExecutionLock.Release();
+                    }
                 }
             }
         }
