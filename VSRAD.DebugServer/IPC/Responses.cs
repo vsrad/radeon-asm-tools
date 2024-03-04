@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC.Responses
@@ -17,6 +18,7 @@ namespace VSRAD.DebugServer.IPC.Responses
         PutDirectory = 5,
         ListFiles = 6,
         GetFiles = 7,
+        ExchangeVersions = 9,
 
         CompressedResponse = 0xFF
     }
@@ -42,6 +44,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case ResponseType.PutDirectory: return PutDirectoryResponse.Deserialize(reader);
                 case ResponseType.ListFiles: return ListFilesResponse.Deserialize(reader);
                 case ResponseType.GetFiles: return GetFilesResponse.Deserialize(reader);
+                case ResponseType.ExchangeVersions: return ExchangeVersionsResponse.Deserialize(reader);
 
                 case ResponseType.CompressedResponse: return CompressedResponse.Deserialize(reader);
             }
@@ -61,6 +64,7 @@ namespace VSRAD.DebugServer.IPC.Responses
                 case PutDirectoryResponse _: type = ResponseType.PutDirectory; break;
                 case ListFilesResponse _: type = ResponseType.ListFiles; break;
                 case GetFilesResponse _: type = ResponseType.GetFiles; break;
+                case ExchangeVersionsResponse _: type = ResponseType.ExchangeVersions; break;
 
                 case CompressedResponse _: type = ResponseType.CompressedResponse; break;
                 default: throw new ArgumentException($"Unable to serialize {response.GetType()}");
@@ -271,6 +275,34 @@ namespace VSRAD.DebugServer.IPC.Responses
         }
     }
 
+    public sealed class ExchangeVersionsResponse : IResponse
+    {
+        public ExchangeVersionsStatus Status { get; set; }
+        public Version ServerVersion { get; set; }
+        public OSPlatform ServerPlatform { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[] {
+            "ExchangeVersionsResponse",
+            $"Status = {Status}",
+            $"ServerVersion = {ServerVersion}",
+            $"ServerPlatform = {ServerPlatform}"
+        });
+
+        public static ExchangeVersionsResponse Deserialize(IPCReader reader) => new ExchangeVersionsResponse
+        {
+            Status = (ExchangeVersionsStatus)reader.ReadByte(),
+            ServerVersion = Version.Parse(reader.ReadString()),
+            ServerPlatform = OSPlatform.Create(reader.ReadString())
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write((byte)Status);
+            writer.Write(ServerVersion.ToString());
+            writer.Write(ServerPlatform.ToString());
+        }
+    }
+
     public sealed class EnvironmentVariablesListed : IResponse
     {
         public IReadOnlyDictionary<string, string> Variables { get; set; }
@@ -365,6 +397,12 @@ namespace VSRAD.DebugServer.IPC.Responses
         FileNotFound = 1,
         PermissionDenied = 2,
         OtherIOError = 3
+    }
+
+    public enum ExchangeVersionsStatus : byte
+    {
+        Successful = 0,
+        ClientVersionUnsupported = 1
     }
 #pragma warning restore CA1028
 }

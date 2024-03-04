@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using VSRAD.DebugServer.SharedUtils;
 
 namespace VSRAD.DebugServer.IPC.Commands
@@ -17,17 +18,11 @@ namespace VSRAD.DebugServer.IPC.Commands
         PutDirectory = 6,
         ListFiles = 7,
         GetFiles = 8,
+        ExchangeVersions = 9,
 
         CompressedCommand = 0xFF
     }
 #pragma warning restore CA1028
-    public enum HandShakeStatus
-    {
-        ClientAccepted,
-        ClientNotAccepted,
-        ServerAccepted,
-        ServerNotAccepted
-    }
 
     public interface ICommand
     {
@@ -53,6 +48,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case CommandType.PutDirectory: return PutDirectoryCommand.Deserialize(reader);
                 case CommandType.ListFiles: return ListFilesCommand.Deserialize(reader);
                 case CommandType.GetFiles: return GetFilesCommand.Deserialize(reader);
+                case CommandType.ExchangeVersions: return ExchangeVersionsCommand.Deserialize(reader);
 
                 case CommandType.CompressedCommand: return CompressedCommand.Deserialize(reader);
             }
@@ -73,6 +69,7 @@ namespace VSRAD.DebugServer.IPC.Commands
                 case PutDirectoryCommand _: type = CommandType.PutDirectory; break;
                 case ListFilesCommand _: type = CommandType.ListFiles; break;
                 case GetFilesCommand _: type = CommandType.GetFiles; break;
+                case ExchangeVersionsCommand _: type = CommandType.ExchangeVersions; break;
 
                 case CompressedCommand _: type = CommandType.CompressedCommand; break;
                 default: throw new ArgumentException($"Unable to serialize {command.GetType()}");
@@ -319,6 +316,30 @@ namespace VSRAD.DebugServer.IPC.Commands
             writer.Write(UseCompression);
             writer.WriteLengthPrefixedArray(Paths);
             writer.WriteLengthPrefixedArray(RootPath);
+        }
+    }
+
+    public sealed class ExchangeVersionsCommand : ICommand
+    {
+        public Version ClientVersion { get; set; }
+        public OSPlatform ClientPlatform { get; set; }
+
+        public override string ToString() => string.Join(Environment.NewLine, new[] {
+            "ExchangeVersionsCommand",
+            $"ClientVersion = {ClientVersion}",
+            $"ClientPlatform = {ClientPlatform}"
+        });
+
+        public static ExchangeVersionsCommand Deserialize(IPCReader reader) => new ExchangeVersionsCommand
+        {
+            ClientVersion = Version.Parse(reader.ReadString()),
+            ClientPlatform = OSPlatform.Create(reader.ReadString())
+        };
+
+        public void Serialize(IPCWriter writer)
+        {
+            writer.Write(ClientVersion.ToString());
+            writer.Write(ClientPlatform.ToString());
         }
     }
 

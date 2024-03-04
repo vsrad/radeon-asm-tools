@@ -147,7 +147,7 @@ namespace VSRAD.Package.ProjectSystem
             ThreadHelper.ThrowIfNotOnUIThread();
             Assumes.Present(_textManager);
             _textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
-            return activeView != null ? new VsEditorView(activeView, _textDocumentFactoryService) : throw new InvalidOperationException(NoFilesOpenError);
+            return activeView != null ? new VsEditorView(activeView, _textDocumentFactoryService) : throw new UserException(NoFilesOpenError);
         }
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()

@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
-using Serilog;
 
 namespace VSRAD.DebugServer
 {
@@ -70,33 +70,6 @@ namespace VSRAD.DebugServer
 
             _timer.Stop();
             Log.Information($"{Environment.NewLine}Time Elapsed: {_timer.ElapsedMilliseconds}ms");
-        }
-
-        public void ParseVersionError(String version)
-        {
-            Log.Information($"{Environment.NewLine}Invalid Version on handshake attempt: {version}");
-        }
-
-        public void InvalidVersion(String receivedVersion, String minimalVersion)
-        {
-            Log.Information($"{Environment.NewLine}Version mismatch. Client version: {receivedVersion}," +
-                $" expected version greater then {minimalVersion} ");
-        }
-
-        public void ClientRejectedServerVersion(String serverVersion, String clientVersion)
-        {
-            Log.Information($"{Environment.NewLine}Client rejected server version{Environment.NewLine}" +
-                $"client version: {clientVersion}, server version: {serverVersion}");
-        }
-
-        public void HandshakeFailed(EndPoint clientEndpoint)
-        {
-            Log.Information($"{Environment.NewLine}Handshake in connection with {clientEndpoint} failed");
-        }
-
-        public void ConnectionTimeoutOnHandShake()
-        {
-            Log.Information($"{Environment.NewLine}Connection timeout on handshake attempt");
         }
 
         private void Print(string message) =>
