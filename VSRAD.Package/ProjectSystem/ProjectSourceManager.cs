@@ -1,14 +1,17 @@
 ﻿using EnvDTE;
+using EnvDTE80;
 using Microsoft;
 using Microsoft.VisualStudio.ProjectSystem;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.TextManager.Interop;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Shell.Interop;
-using Task = System.Threading.Tasks.Task;
+using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.ProjectSystem
 {
@@ -24,8 +27,14 @@ namespace VSRAD.Package.ProjectSystem
     public interface IProjectSourceManager
     {
         string ProjectRoot { get; }
+        string DebugStartupPath { get; set; }
+
         void SaveProjectState();
         void SaveDocuments(DocumentSaveType type);
+        void OpenDocument(string path, uint? line);
+        IEnumerable<string> GetOpenDocuments();
+        IVsTextBuffer GetDocumentTextBufferByPath(string path);
+        IEditorView GetActiveEditorView();
         Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync();
     }
 
@@ -33,17 +42,37 @@ namespace VSRAD.Package.ProjectSystem
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     public sealed class ProjectSourceManager : IProjectSourceManager
     {
-        private readonly IProject _project;
-        private readonly SVsServiceProvider _serviceProvider;
+        public const string NoFilesOpenError = "No files open in the editor.";
 
         public string ProjectRoot { get; }
 
+        public string DebugStartupPath { get; set; }
+
+        private readonly IProject _project;
+        private readonly SVsServiceProvider _serviceProvider;
+        private readonly ITextDocumentFactoryService _textDocumentFactoryService;
+
+        private DTE2 _dte;
+        private RunningDocumentTable _runningDocumentTable;
+        private IVsRunningDocumentTable _vsRunningDocumentTable;
+        private IVsTextManager2 _textManager;
+
         [ImportingConstructor]
-        public ProjectSourceManager(IProject project, SVsServiceProvider serviceProvider)
+        public ProjectSourceManager(IProject project, SVsServiceProvider serviceProvider, ITextDocumentFactoryService textDocumentFactoryService)
         {
+            ProjectRoot = Path.GetDirectoryName(project.UnconfiguredProject.FullPath);
             _project = project;
             _serviceProvider = serviceProvider;
-            ProjectRoot = Path.GetDirectoryName(project.UnconfiguredProject.FullPath);
+            _textDocumentFactoryService = textDocumentFactoryService;
+
+            _project.RunWhenLoaded((_) =>
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                _dte = (DTE2)_serviceProvider.GetService(typeof(DTE));
+                _runningDocumentTable = new RunningDocumentTable(_serviceProvider);
+                _vsRunningDocumentTable = _serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
+                _textManager = _serviceProvider.GetService(typeof(SVsTextManager)) as IVsTextManager2;
+            });
         }
 
         public void SaveProjectState()
@@ -57,40 +86,68 @@ namespace VSRAD.Package.ProjectSystem
         public void SaveDocuments(DocumentSaveType type)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            var dte = _serviceProvider.GetService(typeof(DTE)) as DTE;
-            Assumes.Present(dte);
             switch (type)
             {
                 case DocumentSaveType.ActiveDocument:
-                    if (dte.ActiveDocument?.Saved == false)
-                        dte.ActiveDocument.Save();
+                    Assumes.Present(_dte);
+                    if (_dte.ActiveDocument?.Saved == false)
+                        _dte.ActiveDocument.Save();
                     break;
                 case DocumentSaveType.OpenDocuments:
-                    var documentTable = new RunningDocumentTable(_serviceProvider);
-                    var vsDocumentTable = _serviceProvider.GetService(typeof(IVsRunningDocumentTable)) as IVsRunningDocumentTable;
-                    Assumes.Present(vsDocumentTable);
-
-                    foreach (var document in documentTable)
+                    Assumes.Present(_runningDocumentTable);
+                    Assumes.Present(_vsRunningDocumentTable);
+                    foreach (var document in _runningDocumentTable)
                         // save only files in the tabs
                         if ((document.Flags & (uint)(_VSRDTFLAGS.RDT_VirtualDocument | _VSRDTFLAGS.RDT_CantSave)) == 0)
-                            vsDocumentTable.SaveDocuments(
+                            _vsRunningDocumentTable.SaveDocuments(
                                     (uint)__VSRDTSAVEOPTIONS.RDTSAVEOPT_SaveIfDirty,
                                     document.Hierarchy,
                                     document.ItemId,
                                     document.DocCookie);
                     break;
                 case DocumentSaveType.ProjectDocuments:
-                    if (dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
+                    Assumes.Present(_dte);
+                    if (_dte.ActiveSolutionProjects is Array activeSolutionProjects && activeSolutionProjects.Length > 0)
                         if (activeSolutionProjects.GetValue(0) is EnvDTE.Project activeProject)
                             foreach (ProjectItem item in activeProject.ProjectItems)
                                 SaveDocumentsRecursively(item);
                     break;
                 case DocumentSaveType.SolutionDocuments:
-                    foreach (EnvDTE.Project project in dte.Solution.Projects)
+                    Assumes.Present(_dte);
+                    foreach (EnvDTE.Project project in _dte.Solution.Projects)
                         foreach (ProjectItem item in project.ProjectItems)
                             SaveDocumentsRecursively(item);
                     break;
             }
+        }
+
+        public void OpenDocument(string path, uint? line)
+        {
+            VsEditor.OpenFileInEditor(_serviceProvider, path, line, null, forceOppositeTab: false, preserveActiveDoc: false);
+        }
+
+        public IEnumerable<string> GetOpenDocuments()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_runningDocumentTable);
+            foreach (var document in _runningDocumentTable)
+                if ((document.Flags & (uint)_VSRDTFLAGS.RDT_VirtualDocument) == 0 && document.ProjectGuid != Guid.Empty && !string.IsNullOrEmpty(document.Moniker))
+                    yield return document.Moniker;
+        }
+
+        public IVsTextBuffer GetDocumentTextBufferByPath(string path)
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_runningDocumentTable);
+            return _runningDocumentTable.FindDocument(path) as IVsTextBuffer;
+        }
+
+        public IEditorView GetActiveEditorView()
+        {
+            ThreadHelper.ThrowIfNotOnUIThread();
+            Assumes.Present(_textManager);
+            _textManager.GetActiveView2(0, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out var activeView);
+            return activeView != null ? new VsEditorView(activeView, _textDocumentFactoryService) : throw new InvalidOperationException(NoFilesOpenError);
         }
 
         public async Task<IEnumerable<(string absolutePath, string relativePath)>> ListProjectFilesAsync()

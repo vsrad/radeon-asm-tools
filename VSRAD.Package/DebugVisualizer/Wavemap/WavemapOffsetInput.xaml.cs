@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using VSRAD.Package.Server;
 
 namespace VSRAD.Package.DebugVisualizer.Wavemap
 {
@@ -55,42 +56,50 @@ namespace VSRAD.Package.DebugVisualizer.Wavemap
 
         private void UpdateTooltipAndWaveInfo(object sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName == nameof(VisualizerContext.CurrentWaveInfo))
+            if (e.PropertyName == nameof(VisualizerContext.WavemapSelection))
             {
-                var waveInfo = _context.CurrentWaveInfo;
-                var waveInfoText = $"G: {waveInfo.GroupIdx}\nW: {waveInfo.WaveIdx}";
-                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) waveInfoText += " (E)";
-                waveInfoText += "\n";
-                waveInfoText += waveInfo.BreakNotReached
-                    ? "no brk"
-                    : $"L: {waveInfo.BreakLine}";
-
-                var tooltip = $"Group: {waveInfo.GroupIdx}\nWave: {waveInfo.WaveIdx}";
-                if (waveInfo.PartialMask && !waveInfo.BreakNotReached) tooltip += " (partial EXEC mask)";
-                tooltip += "\n";
-                tooltip += waveInfo.BreakNotReached
-                    ? "Brk point not reached"
-                    : $"Line: {waveInfo.BreakLine}";
-
-                WaveInfoTextBlock.Text = waveInfoText;
-                WaveInfoTextBlock.ToolTip = tooltip;
+                if (_context.BreakState is BreakState breakState && _context.WavemapSelection is WavemapCell cell)
+                {
+                    var breakpoint = cell.Wave.BreakpointIndex != null ? breakState.Target.Breakpoints[(int)cell.Wave.BreakpointIndex] : null;
+                    {
+                        var info = $"G: {cell.GroupIndex}\nW: {cell.WaveIndex}";
+                        if (breakpoint != null && (cell.Wave.Scc || cell.Wave.PartialExec))
+                            info += cell.Wave.Scc && cell.Wave.PartialExec ? " (SCC,E)" : cell.Wave.Scc ? " (SCC)" : " (E)";
+                        info += "\n";
+                        info += breakpoint != null ? $"L: {breakpoint.Line + 1}" : "No break";
+                        WaveInfoTextBlock.Text = info;
+                    }
+                    {
+                        var tooltip = $"Group: {cell.GroupIndex}\nWave: {cell.WaveIndex}";
+                        if (breakpoint != null && cell.Wave.Scc)
+                            tooltip += " (SCC = 1)";
+                        if (breakpoint != null && cell.Wave.PartialExec)
+                            tooltip += " (Partial EXEC)";
+                        tooltip += "\n";
+                        tooltip += breakpoint != null ? $"Location: {breakpoint.Location}" : "No breakpoint hit";
+                        WaveInfoTextBlock.ToolTip = tooltip;
+                    }
+                }
+                else
+                {
+                    WaveInfoTextBlock.Text = "";
+                    WaveInfoTextBlock.ToolTip = "";
+                }
             }
         }
 
         private void UpdateControls(object sender, EventArgs e)
         {
-            var groupCount = _context.BreakData?.GetGroupCount((int)_context.Options.DebuggerOptions.GroupSize,
-                (int)_context.Options.DebuggerOptions.WaveSize, (int)_context.Options.DebuggerOptions.NGroups) ?? 0;
-            if (groupCount > 0 && _image.GridSizeX > 0)
+            if (_image.GridSizeX > 0 && _context.BreakState != null && _context.BreakState.NumGroups > 0)
             {
                 DecButton.IsEnabled = _image.FirstGroup != 0;
-                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < groupCount;
+                IncButton.IsEnabled = _image.FirstGroup + _image.GridSizeX < _context.BreakState.NumGroups;
 
                 ShowOffsetSelector = _image.FirstGroup != 0 || IncButton.IsEnabled;
 
-                if (_image.FirstGroup < groupCount)
+                if (_image.FirstGroup < _context.BreakState.NumGroups)
                 {
-                    var lastDisplayedGroup = Math.Min(groupCount, _image.FirstGroup + _image.GridSizeX) - 1;
+                    var lastDisplayedGroup = Math.Min(_context.BreakState.NumGroups, _image.FirstGroup + _image.GridSizeX) - 1;
                     OffsetLabel = $"{_image.FirstGroup} - {lastDisplayedGroup}";
                 }
                 else

@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using VSRAD.Deborgar;
 using VSRAD.Package.Utils;
 
@@ -14,12 +15,6 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 {
     public sealed class BreakLineGlyphTag : IGlyphTag
     {
-        public string ToolTip { get; }
-
-        public BreakLineGlyphTag(string toolTip)
-        {
-            ToolTip = toolTip;
-        }
     }
 
     [Export(typeof(IViewTaggerProvider))]
@@ -31,34 +26,55 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         // Tagger provider can be instantiated before UnconfiguredProject,
         // so we can't use ImportingConstructor to access DebuggerIntegration's
         // ExecutionCompleted event directly.
-        internal event EventHandler<ExecutionCompletedEventArgs> DebugExecutionCompleted;
+        internal event EventHandler<EventArgs> BreakpointsHitChanged;
 
-        public virtual void OnExecutionCompleted(ExecutionCompletedEventArgs execCompleted)
+        // Need to store the breakpoints from the last execution because new taggers may be created at any time and we want them to display the latest breakpoint markers.
+        internal List<BreakLocation> LastExecutionBreakpointsHit { get; } = new List<BreakLocation>();
+
+        public virtual void OnExecutionCompleted(IProjectSourceManager sourceManager, ExecutionCompletedEventArgs execCompleted)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            try
-            {
-                VsEditor.NavigateToFileAndLine(ServiceProvider.GlobalProvider, execCompleted.File, execCompleted.Lines[0]);
+            LastExecutionBreakpointsHit.Clear();
+            if (execCompleted.IsSuccessful)
+                LastExecutionBreakpointsHit.AddRange(execCompleted.BreakLocations);
 
-                // Clear VS debugger break markers because they may be stale (clicking Debug in our toolbar does not update them, for instance)
-                var vsDebuggerBreakLineMarkers = VsEditor.GetLineMarkersOfTypeInActiveView(ServiceProvider.GlobalProvider, 63);
-                foreach (var m in vsDebuggerBreakLineMarkers)
-                    m.Invalidate();
-
-                // Draw our own markers
-                DebugExecutionCompleted?.Invoke(this, execCompleted);
-            }
-            catch (Exception e)
+#pragma warning disable VSTHRD001 // Need to schedule execution after VS debugger adds its line markers 
+            ThreadHelper.Generic.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+#pragma warning restore VSTHRD001
             {
-                Errors.ShowCritical($"An error occurred while showing the current breakpoint location: {e.Message}\r\n\r\n{e.StackTrace}");
-            }
+                ThreadHelper.ThrowIfNotOnUIThread();
+                try
+                {
+                    // Clear VS debugger break markers because:
+                    // 1) They shouldn't be shown when execution fails, but our debugger needs to report the current caret position as the break line, otherwise
+                    //    VS switches focus to a "Source Not Available" tab, however the break line marker shouldn't be displayed in the editor as no break occurred.
+                    // 2) The markers may be stale: clicking Debug in our toolbar does not update them, for instance.
+                    var sourcePaths = execCompleted.BreakLocations.Select(i => i.CallStack[0].SourcePath).Where(p => !string.IsNullOrEmpty(p)).Distinct();
+                    foreach (var path in sourcePaths)
+                    {
+                        var textBuffer = sourceManager.GetDocumentTextBufferByPath(path);
+                        if (textBuffer != null)
+                        {
+                            var vsDebuggerBreakLineMarkers = VsEditor.GetTextLineMarkersOfType(textBuffer, 63).Concat(VsEditor.GetTextLineMarkersOfType(textBuffer, 64));
+                            foreach (var m in vsDebuggerBreakLineMarkers)
+                                m.Invalidate();
+                        }
+                    }
+                    // Draw our own markers instead
+                    BreakpointsHitChanged?.Invoke(this, new EventArgs());
+                }
+                catch (Exception e)
+                {
+                    Errors.ShowCritical($"An error occurred while showing the current breakpoint location: {e.Message}\r\n\r\n{e.StackTrace}");
+                }
+            });
         }
 
         public void RemoveBreakLineMarkers()
         {
             try
             {
-                DebugExecutionCompleted?.Invoke(this, null);
+                LastExecutionBreakpointsHit.Clear();
+                BreakpointsHitChanged?.Invoke(this, new EventArgs());
             }
             catch (Exception e)
             {
@@ -80,6 +96,7 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
 
         private readonly ITextBuffer _buffer;
         private readonly ITextDocument _document;
+        private readonly BreakLineGlyphTaggerProvider _provider;
 
         private readonly List<TagSpan<BreakLineGlyphTag>> _tagSpans = new List<TagSpan<BreakLineGlyphTag>>();
 
@@ -87,27 +104,23 @@ namespace VSRAD.Package.ProjectSystem.EditorExtensions
         {
             _buffer = buffer;
             _document = document;
-            provider.DebugExecutionCompleted += DebugExecutionCompleted;
+            _provider = provider;
+            _provider.BreakpointsHitChanged += BreakpointsHitChanged;
+            BreakpointsHitChanged(_provider, new EventArgs());
         }
 
-        private void DebugExecutionCompleted(object sender, ExecutionCompletedEventArgs e)
+        private void BreakpointsHitChanged(object sender, EventArgs e)
         {
             _tagSpans.Clear();
 
-            if (e != null && e.File == _document.FilePath)
+            foreach (var breakpoint in _provider.LastExecutionBreakpointsHit)
             {
-                var toolTip = "Last RAD debugger break " + (e.Lines.Length == 1
-                            ? $"line: {e.Lines[0]}"
-                            : "lines: " + string.Join(", ", e.Lines));
-
-                foreach (var line in e.Lines)
+                var topFrame = breakpoint.CallStack[0];
+                if (string.Equals(topFrame.SourcePath, _document.FilePath, StringComparison.OrdinalIgnoreCase) && topFrame.SourceLine < _buffer.CurrentSnapshot.LineCount)
                 {
-                    if (line >= _buffer.CurrentSnapshot.LineCount)
-                        continue;
-
-                    var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)line);
+                    var snapshotLine = _buffer.CurrentSnapshot.GetLineFromLineNumber((int)topFrame.SourceLine);
                     var tagSpan = new SnapshotSpan(snapshotLine.Start, snapshotLine.End);
-                    _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag(toolTip)));
+                    _tagSpans.Add(new TagSpan<BreakLineGlyphTag>(tagSpan, new BreakLineGlyphTag()));
                 }
             }
 

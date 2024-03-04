@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using VSRAD.Package.Options;
 
 namespace VSRAD.Package.DebugVisualizer
@@ -19,56 +18,46 @@ namespace VSRAD.Package.DebugVisualizer
         private ColumnStates[] _columnState = new ColumnStates[512];
         public ColumnStates[] ColumnState { get => _columnState; }
 
-        private uint _groupSize;
-        private uint _waveSize;
-
-        public void Recompute(VisualizerOptions options, VisualizerAppearance appearance, ColumnStylingOptions styling, uint groupSize, uint waveSize, Server.WatchView system)
+        public void Recompute(VisualizerOptions options, VisualizerAppearance appearance, ColumnStylingOptions styling, Server.BreakState breakState)
         {
-            _groupSize = groupSize;
-            _waveSize = waveSize;
-
-            Array.Resize(ref _columnState, (int)groupSize);
+            Array.Resize(ref _columnState, (int)breakState.GroupSize);
             Array.Clear(_columnState, 0, _columnState.Length);
-            foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)groupSize))
+            foreach (int i in ColumnSelector.ToIndexes(styling.VisibleColumns, (int)breakState.GroupSize))
                 ColumnState[i] |= ColumnStates.Visible;
 
-            ComputeInactiveLanes(options, system);
-            ComputeLaneGrouping(appearance);
-            ComputeHiddenColumnSeparators();
+            ComputeInactiveLanes(options, breakState);
+            ComputeLaneGrouping(appearance, breakState);
+            ComputeHiddenColumnSeparators(breakState);
         }
 
-        private void ComputeInactiveLanes(VisualizerOptions options, Server.WatchView system)
+        private void ComputeInactiveLanes(VisualizerOptions options, Server.BreakState breakState)
         {
-            if (system == null)
-                return;
-
-            var lastItemId = Math.Min(_groupSize - 1, system.LastIndexInGroup);
-            for (int waveOffset = 0; waveOffset < system.LastIndexInGroup; waveOffset += (int)_waveSize)
+            for (uint wave = 0, waveStartId = 0; wave < breakState.WavesPerGroup; wave += 1, waveStartId += breakState.Dispatch.WaveSize)
             {
-                var lastLaneId = Math.Min(waveOffset + _waveSize - 1, lastItemId);
-                if (options.CheckMagicNumber && system[waveOffset] != options.MagicNumber)
+                var waveStatus = breakState.GetWaveStatus(wave);
+                var waveEndId = Math.Min(waveStartId + breakState.Dispatch.WaveSize, breakState.GroupSize);
+                if (waveStatus.InstanceId == null)
                 {
-                    for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)
-                        _columnState[waveOffset + laneId] |= ColumnStates.Inactive;
+                    for (var lane = 0; lane + waveStartId < waveEndId; ++lane)
+                        _columnState[lane + waveStartId] |= ColumnStates.Inactive;
                 }
-                else if (options.MaskLanes && _waveSize <= 64 && waveOffset + 9 <= lastLaneId)
+                else if (options.MaskLanes)
                 {
-                    var execMask = new BitArray(new[] { (int)system[waveOffset + 8], (int)system[waveOffset + 9] });
-                    for (int laneId = 0; waveOffset + laneId <= lastLaneId; ++laneId)
-                        if (!execMask[laneId])
-                            _columnState[waveOffset + laneId] |= ColumnStates.Inactive;
+                    for (var lane = 0; lane + waveStartId < waveEndId; ++lane)
+                        if ((waveStatus.Exec & (1ul << lane)) == 0)
+                            _columnState[lane + waveStartId] |= ColumnStates.Inactive;
                 }
             }
         }
 
-        private void ComputeLaneGrouping(VisualizerAppearance options)
+        private void ComputeLaneGrouping(VisualizerAppearance options, Server.BreakState breakState)
         {
             var laneGrouping = options.VerticalSplit ? options.LaneGrouping : 0;
-            if (laneGrouping == 0 || laneGrouping > _groupSize)
+            if (laneGrouping == 0 || laneGrouping > breakState.GroupSize)
                 return;
-            for (uint start = 0; start < _groupSize - laneGrouping; start += laneGrouping)
+            for (uint start = 0; start < breakState.GroupSize - laneGrouping; start += laneGrouping)
             {
-                for (int lastVisibleInGroup = (int)Math.Min(start + laneGrouping - 1, _groupSize - 1);
+                for (int lastVisibleInGroup = (int)Math.Min(start + laneGrouping - 1, breakState.GroupSize - 1);
                     lastVisibleInGroup >= start; lastVisibleInGroup--)
                 {
                     if ((_columnState[lastVisibleInGroup] & ColumnStates.Visible) != 0)
@@ -80,9 +69,9 @@ namespace VSRAD.Package.DebugVisualizer
             }
         }
 
-        private void ComputeHiddenColumnSeparators()
+        private void ComputeHiddenColumnSeparators(Server.BreakState breakState)
         {
-            for (int i = 0; i < _groupSize - 1; i++)
+            for (int i = 0; i < breakState.GroupSize - 1; i++)
                 if ((_columnState[i] & ColumnStates.Visible) != 0 && (_columnState[i + 1] & ColumnStates.Visible) == 0)
                     _columnState[i] |= ColumnStates.HasHiddenColumnSeparator;
         }

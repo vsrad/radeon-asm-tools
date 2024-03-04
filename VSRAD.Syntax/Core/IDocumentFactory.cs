@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Utilities;
 
 namespace VSRAD.Syntax.Core
 {
@@ -15,11 +16,10 @@ namespace VSRAD.Syntax.Core
         string GetActiveDocumentPath();
 
         /// <summary>
-        /// Gets <see cref="IDocument"/> or creates if doesn't exist
+        /// Gets <see cref="IDocument"/> with the specified content type or creates if doesn't exist. If content type is null, it is inferred from file extension.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns><see cref="IDocument"/> if <paramref name="path"/> is RadAsm content type otherwise null</returns>
-        IDocument GetOrCreateDocument(string path);
+        /// <returns><see cref="IDocument"/> for RadAsm content type otherwise null</returns>
+        IDocument GetOrCreateDocument(string path, IContentType contentType = null);
 
         /// <summary>
         /// Gets <see cref="IDocument"/> or creates if doesn't exist

@@ -28,6 +28,15 @@ namespace VSRAD.Package
 
     public static class Errors
     {
+        public delegate void CreateMessageBoxImpl(string message, string title, OLEMSGICON icon);
+
+        private static CreateMessageBoxImpl _createMessageBox;
+        public static CreateMessageBoxImpl CreateMessageBox
+        {
+            get => _createMessageBox ?? VsCreateMessageBox;
+            set => _createMessageBox = value;
+        }
+
         public static void Show(Error error) =>
             CreateMessageBox(error.Message, error.Title, error.Critical ? OLEMSGICON.OLEMSGICON_CRITICAL : OLEMSGICON.OLEMSGICON_WARNING);
 
@@ -57,13 +66,20 @@ namespace VSRAD.Package
                 }
                 catch (Exception e)
                 {
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                    exceptionCallbackOnMainThread?.Invoke();
-                    ShowException(e);
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                    try
+                    {
+                        exceptionCallbackOnMainThread?.Invoke();
+                        ShowException(e);
+                    }
+                    catch (Exception callbackExc)
+                    {
+                        ShowCritical(e.Message + "\r\n\r\nAn exception has occurred during the handling of this error. Exception message and stack trace are provided below:\r\n\r\n" + callbackExc.Message + "\r\n\r\n" + callbackExc.StackTrace);
+                    }
                 }
             });
 
-        private static void CreateMessageBox(string message, string title, OLEMSGICON icon)
+        private static void VsCreateMessageBox(string message, string title, OLEMSGICON icon)
         {
             if (ThreadHelper.CheckAccess())
             {

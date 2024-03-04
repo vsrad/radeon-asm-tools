@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: ProvideCodeBase(CodeBase = @"$PackageFolder$\RadeonAsmDebugger.dll")]
+[assembly: ProvideCodeBase(CodeBase = @"$PackageFolder$\VSRAD.Deborgar.dll")]
 
 [assembly: InternalsVisibleTo("VSRAD.PackageTests, PublicKey=002400000480000094000000060200000024000052534131000400000100010021ad8acc5f48512f58127fffddbf12ce9f44e9e27f2e00cdea2ccfb5591acdbf0ba5da109d0800e4380d7101d9bbb701f9d0d0f8254f602c34ae964e107873731548eaa7e768498111bac8b8df43b0677d5edc58f95c4ca54d7c2548c1b947141e750c9b21f1d0203bd0937b25106dde6006c5af2baa3719a01e70c44a9bcfcf")]
 

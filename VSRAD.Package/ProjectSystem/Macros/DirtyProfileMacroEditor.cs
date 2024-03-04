@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -30,7 +29,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public async Task<Result<IActionStep>> EvaluateStepAsync(IActionStep step, string sourceAction)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
@@ -48,13 +47,13 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
         public async Task<string> EditAsync(string macroName, string currentValue)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var transients = GetMacroTransients();
             var evaluator = new MacroEvaluator(ProjectProperties, transients, RemoteEnvironment, _project.Options.DebuggerOptions, _dirtyProfile);
 
             var editor = new MacroEditContext(macroName, currentValue, evaluator);
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
                 editor.LoadPreviewListAsync(_dirtyProfile.Macros, ProjectProperties, RemoteEnvironment));
 
             var editorWindow = new MacroEditorWindow(editor)
@@ -96,36 +95,19 @@ namespace VSRAD.Package.ProjectSystem.Macros
                         {
                             return new Dictionary<string, string>();
                         }
-                    }, VSPackage.TaskFactory);
+                    }, ThreadHelper.JoinableTaskFactory);
                 return _remoteEnv;
             }
         }
 
-        private IActiveCodeEditor _codeEditor;
-        private IBreakpointTracker _breakpointTracker;
-
         private MacroEvaluatorTransientValues GetMacroTransients()
         {
-            if (_codeEditor == null)
-                _codeEditor = _project.UnconfiguredProject.Services.ExportProvider.GetExportedValue<IActiveCodeEditor>();
-            if (_breakpointTracker == null)
-                _breakpointTracker = _project.UnconfiguredProject.Services.ExportProvider.GetExportedValue<IBreakpointTracker>();
-            try
-            {
-                var (file, breakLines) = _breakpointTracker.GetBreakTarget();
-                var sourceLine = _codeEditor.GetCurrentLine();
-                var watches = _project.Options.DebuggerOptions.GetWatchSnapshot();
-                return new MacroEvaluatorTransientValues(sourceLine, file, breakLines, watches);
-            }
-            catch (InvalidOperationException e) when (e.Message == ActiveCodeEditor.NoFilesOpenError)
-            {
-                return new MacroEvaluatorTransientValues(0,
-                    sourcePath: "<current source full path>",
-                    new[] { 0u },
-                    _project.Options.DebuggerOptions.GetWatchSnapshot(),
-                    sourceDir: "<current source dir name>",
-                    sourceFile: "<current source file name>");
-            }
+            return new MacroEvaluatorTransientValues(0,
+                sourcePath: "<active editor tab full path>",
+                debugPath: "<debug startup path>",
+                targetProcessor: "<target processor>",
+                sourceDir: "<active editor tab dir name>",
+                sourceFile: "<active editor tab file name>");
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -13,6 +13,7 @@ using System.Windows.Input;
 using VSRAD.Package.Options;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.ProjectSystem.Profiles
 {
@@ -64,11 +65,11 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             UpdateDescriptionInBackground();
 
         private void UpdateDescriptionInBackground() =>
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() => EvaluateDescriptionAsync());
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() => EvaluateDescriptionAsync());
 
         private async Task EvaluateDescriptionAsync()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var evalResult = await _editor.MacroEditor.EvaluateStepAsync(_step, _editor.ActionName);
             if (evalResult.TryGetResult(out var evaluated, out var error))
                 Description = evaluated.ToString();
@@ -178,7 +179,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var action = editButton.DataContext;
             var propertyName = (string)editButton.Tag;
 
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
                 MacroEditor.EditObjectPropertyAsync(action, propertyName));
         }
 

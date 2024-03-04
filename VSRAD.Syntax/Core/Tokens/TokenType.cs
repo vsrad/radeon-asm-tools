@@ -25,7 +25,10 @@ namespace VSRAD.Syntax.Core.Tokens
         Whitespace,
         Keyword,
         Preprocessor,
+        PreprocessorMacro,
+        PreprocessorMacroReference,
         Unknown,
+        BuiltinFunction,
         FunctionName,
         FunctionReference,
         FunctionParameter,
@@ -46,6 +49,8 @@ namespace VSRAD.Syntax.Core.Tokens
         {
             switch (type)
             {
+                case RadAsmTokenType.PreprocessorMacro:
+                    return "preprocessor macro";
                 case RadAsmTokenType.FunctionParameter:
                     return "argument";
                 case RadAsmTokenType.Label:
@@ -58,6 +63,8 @@ namespace VSRAD.Syntax.Core.Tokens
                     return "function";
                 case RadAsmTokenType.Instruction:
                     return "instruction";
+                case RadAsmTokenType.BuiltinFunction:
+                    return "built-in function";
                 default:
                     return "unknown";
             }
@@ -83,6 +90,8 @@ namespace VSRAD.Syntax.Core.Tokens
             { RadAsmTokenType.Whitespace, PredefinedClassificationTypeNames.WhiteSpace },
             { RadAsmTokenType.Keyword, PredefinedClassificationTypeNames.Keyword },
             { RadAsmTokenType.Preprocessor, PredefinedClassificationTypeNames.PreprocessorKeyword },
+            { RadAsmTokenType.PreprocessorMacro, "cppMacro" },
+            { RadAsmTokenType.PreprocessorMacroReference, "cppMacro" },
             { RadAsmTokenType.Unknown, PredefinedClassificationTypeNames.Other },
             { RadAsmTokenType.FunctionName, SyntaxHighlighter.PredefinedClassificationTypeNames.Functions },
             { RadAsmTokenType.FunctionReference, SyntaxHighlighter.PredefinedClassificationTypeNames.Functions },
@@ -95,6 +104,7 @@ namespace VSRAD.Syntax.Core.Tokens
             { RadAsmTokenType.LocalVariable, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.LocalVariableReference, PredefinedClassificationTypeNames.FormalLanguage },
             { RadAsmTokenType.Instruction, SyntaxHighlighter.PredefinedClassificationTypeNames.Instructions },
+            { RadAsmTokenType.BuiltinFunction, PredefinedClassificationTypeNames.Keyword }
         };
 
         public static string GetClassificationTypeName(this RadAsmTokenType tokenType) =>

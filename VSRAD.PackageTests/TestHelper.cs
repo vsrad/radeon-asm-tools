@@ -1,38 +1,49 @@
-﻿using Microsoft.VisualStudio.Threading;
-using Moq;
+﻿using Microsoft.VisualStudio.Sdk.TestFramework;
+using Microsoft.VisualStudio.Shell.Interop;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using VSRAD.Package;
-using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.ProjectSystem.Macros;
-using VSRAD.Package.Utils;
-
-#pragma warning disable VSSDK005 // Avoid instantiating JoinableTaskContext
+using Xunit;
 
 namespace VSRAD.PackageTests
 {
+    /// <summary><a href="https://github.com/microsoft/vssdktestfx/blob/main/doc/xunit.md">See  Microsoft.VisualStudio.Sdk.TestFramework</a></summary>
+    [CollectionDefinition(Collection)]
+    public class MockedVS : ICollectionFixture<GlobalServiceProvider>, ICollectionFixture<MefHostingFixture>
+    {
+        public const string Collection = "MockedVS";
+    }
+    public class MefHostingFixture : MefHosting
+    {
+        public MefHostingFixture() { }
+    }
+
     public static class TestHelper
     {
-        private static bool _packageFactoryOverridden;
-
-        /* https://github.com/Microsoft/vs-threading/blob/master/doc/testing_vs.md */
-        public static void InitializePackageTaskFactory()
+        public static string GetFixturePath(string fixtureName)
         {
-            if (_packageFactoryOverridden) return;
+            var binDebug = Directory.GetCurrentDirectory();
+            return Path.Combine(Directory.GetParent(binDebug).Parent.FullName, "Fixtures", fixtureName);
+        }
 
-            var sta = new Thread(() =>
-            {
-                var jtc = new JoinableTaskContext();
-                VSPackage.TaskFactory = jtc.Factory;
+        public static int GetFixtureSize(string fixtureName) =>
+            (int)new FileInfo(GetFixturePath(fixtureName)).Length;
 
-                _packageFactoryOverridden = true;
-            });
-            sta.SetApartmentState(ApartmentState.STA); // JTC needs to be created on the main thread
-            sta.Start();
-            sta.Join();
+        public static string ReadFixture(string fixtureName) =>
+            File.ReadAllText(GetFixturePath(fixtureName));
+
+        public static string[] ReadFixtureLines(string fixtureName) =>
+            File.ReadAllLines(GetFixturePath(fixtureName));
+
+        public static byte[] ReadFixtureBytes(string fixtureName) =>
+            File.ReadAllBytes(GetFixturePath(fixtureName));
+
+        public static List<(string Message, string Title, OLEMSGICON Icon)> CapturePackageMessageBoxErrors()
+        {
+            var errorList = new List<(string Message, string Title, OLEMSGICON Icon)>();
+            Errors.CreateMessageBox = (message, title, icon) => errorList.Add((message, title, icon));
+            return errorList;
         }
 
         public static T MakeWithReadOnlyProps<T>(params (string prop, object value)[] properties) where T : new()

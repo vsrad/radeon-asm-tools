@@ -1,37 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 using VSRAD.Package.DebugVisualizer;
 using VSRAD.Package.Options;
-using VSRAD.Package.ProjectSystem.Profiles;
 using Xunit;
 
 namespace VSRAD.PackageTests.ProjectSystem.Profiles
 {
     public class ObsoleteFormatProfileImportTests
     {
-        private static readonly string _fixtureDir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.FullName + @"\ProjectSystem\Profiles\Fixtures";
-
-        private static readonly string _obsoleteConfPath = Path.Combine(_fixtureDir, "ConfigsTest.vcxproj.conf.json");
-        private static readonly string _userOptionsPath = Path.Combine(_fixtureDir, "ConfigsTest.vcxproj.user.json");       // do not exist
-        private static readonly string _profOptionsPath = Path.Combine(_fixtureDir, "ConfigsTest.vcxproj.profiles.json");   // do not exist
+        private static readonly string _obsoleteConfPath = TestHelper.GetFixturePath("ConfigsTest.vcxproj.conf.json");
+        private static readonly string _userOptionsPath = TestHelper.GetFixturePath("ConfigsTest.vcxproj.user.json");       // does not exist
+        private static readonly string _profOptionsPath = TestHelper.GetFixturePath("ConfigsTest.vcxproj.profiles.json");   // does not exist
 
         [Fact]
         public void ProjectImportTest()
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
 
             Assert.Collection(imported.DebuggerOptions.Watches,
-                w1 => Assert.Equal(new Watch("v0", new VariableType(VariableCategory.Hex, 32), false), w1),
-                w2 => Assert.Equal(new Watch(" ", new VariableType(VariableCategory.Uint, 32), false), w2),
-                w3 => Assert.Equal(new Watch("v2", new VariableType(VariableCategory.Float, 32), false), w3));
+                w1 => Assert.Equal(new Watch("v0", new VariableType(VariableCategory.Hex, 32)), w1),
+                w2 => Assert.Equal(new Watch(" ", new VariableType(VariableCategory.Uint, 32)), w2),
+                w3 => Assert.Equal(new Watch("v2", new VariableType(VariableCategory.Float, 32)), w3));
 
             Assert.Equal(42u, imported.DebuggerOptions.Counter);
-            Assert.Equal((uint)0x313313, imported.VisualizerOptions.MagicNumber);
             Assert.Equal("0-3:16-19:32-35:48-51:64-67:80-83:96-99:112-115:128-131:144-147:160-163:176-179:192-195:208-211:224-227:240-243:256-259:272-275:288-291:304-307:320-323:336-339:352-355:368-371:384-387:400-403:416-419:432-435:448-451:464-467:480-483:496-499",
                 imported.VisualizerColumnStyling.VisibleColumns);
             Assert.Equal("miho", imported.ActiveProfile);
@@ -54,7 +46,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                       string userName,
                                       string markerName, string markerValue)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             Assert.Equal("$(RadLocalWorkDir)", profile.General.LocalWorkDir);
@@ -76,7 +71,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                     int timeout,
                                     bool binaryData, int outputOffset)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[0];
@@ -86,7 +84,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -127,7 +124,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                            int timeout,
                                            string lineMarker)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[1];
@@ -136,7 +136,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "$(RadRemoteWorkDir)/src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -153,7 +152,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = true,
                 SourcePath = "src/pp/pp_result",
                 TargetPath = "pp_result_local"
             }, action.Steps[2]);
@@ -172,7 +170,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                            int timeout,
                                            string lineMarker)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[2];
@@ -181,7 +182,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -198,7 +198,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = false,
                 SourcePath = "src/dsm/dsm_src.s",
                 TargetPath = "dsm_src_local.s"
             }, action.Steps[2]);
@@ -217,7 +216,10 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
                                        int timeout,
                                        string vwExec)
         {
+            var packageErrors = TestHelper.CapturePackageMessageBoxErrors();
             var imported = ProjectOptions.Read(_userOptionsPath, _profOptionsPath, _obsoleteConfPath);
+            Assert.Empty(packageErrors);
+
             Assert.True(imported.Profiles.TryGetValue(profileName, out var profile));
 
             var action = profile.Actions[3];
@@ -225,7 +227,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.LocalToRemote,
-                CheckTimestamp = false,
                 SourcePath = "$(RadActiveSourceFullPath)",
                 TargetPath = "src/$(RadActiveSourceFile)"
             }, action.Steps[0]);
@@ -242,7 +243,6 @@ namespace VSRAD.PackageTests.ProjectSystem.Profiles
             Assert.Equal(new CopyFileStep
             {
                 Direction = FileCopyDirection.RemoteToLocal,
-                CheckTimestamp = false,
                 SourcePath = "src/prf/prf_out",
                 TargetPath = "prf_out_local"
             }, action.Steps[2]);

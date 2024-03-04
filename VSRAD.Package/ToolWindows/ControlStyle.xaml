@@ -1,17 +1,13 @@
-﻿<!--
-Background {DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}
-Foreground {DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}
-BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
--->
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+                    xmlns:platformui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
                     xmlns:Themes="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero">
 
     <Style TargetType="{x:Type CheckBox}">
-        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBackgroundKey}}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBackgroundBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBorderBrushKey}}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -23,8 +19,8 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
                         </Grid.ColumnDefinitions>
                         <Border x:Name="checkBoxBorder" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="1" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                             <Grid x:Name="markGrid">
-                                <Path x:Name="optionMark" Data="F1 M 9.97498,1.22334L 4.6983,9.09834L 4.52164,9.09834L 0,5.19331L 1.27664,3.52165L 4.255,6.08833L 8.33331,1.52588e-005L 9.97498,1.22334 Z " Fill="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}" Margin="1" Opacity="0" Stretch="None"/>
-                                <Rectangle x:Name="indeterminateMark" Fill="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}" Margin="2" Opacity="0"/>
+                                <Path x:Name="optionMark" Data="F1 M 9.97498,1.22334L 4.6983,9.09834L 4.52164,9.09834L 0,5.19331L 1.27664,3.52165L 4.255,6.08833L 8.33331,1.52588e-005L 9.97498,1.22334 Z " Fill="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxGlyphBrushKey}}" Margin="1" Opacity="0" Stretch="None"/>
+                                <Rectangle x:Name="indeterminateMark" Fill="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxGlyphBrushKey}}" Margin="2" Opacity="0"/>
                             </Grid>
                         </Border>
                         <ContentPresenter x:Name="contentPresenter" Grid.Column="1" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
@@ -34,15 +30,22 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
                             <Setter Property="Padding" Value="4,-1,0,0"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="true">
-                            <Setter Property="Background" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverBackgroundEndKey}}"/>
+                            <Setter Property="Background" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBackgroundHoverBrushKey}}"/>
+                            <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBorderHoverBrushKey}}"/>
+                            <Setter Property="Fill" TargetName="optionMark" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxGlyphHoverBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxTextHoverBrushKey}}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="false">
-                            <Setter Property="Fill" TargetName="optionMark" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxDisabledGlyphKey}}"/>
-                            <Setter Property="Fill" TargetName="indeterminateMark" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxDisabledGlyphKey}}"/>
+                            <Setter Property="Background" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBackgroundDisabledBrushKey}}"/>
+                            <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBorderDisabledBrushKey}}"/>
+                            <Setter Property="Fill" TargetName="optionMark" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxGlyphDisabledBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxTextDisabledBrushKey}}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="true">
-                            <Setter Property="Fill" TargetName="optionMark" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}"/>
-                            <Setter Property="Fill" TargetName="indeterminateMark" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxDisabledGlyphKey}}"/>
+                            <Setter Property="Background" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBackgroundPressedBrushKey}}"/>
+                            <Setter Property="BorderBrush" TargetName="checkBoxBorder" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxBorderPressedBrushKey}}"/>
+                            <Setter Property="Fill" TargetName="optionMark" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxGlyphPressedBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.CheckBoxTextPressedBrushKey}}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="true">
                             <Setter Property="Opacity" TargetName="optionMark" Value="1"/>
@@ -80,15 +83,27 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
     </Style>
 
     <Style TargetType="{x:Type TextBox}">
-        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderBrushKey}}"/>
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundFocusedBrushKey}}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextFocusedBrushKey}}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderFocusedBrushKey}}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundDisabledBrushKey}}" />
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextDisabledBrushKey}}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderDisabledBrushKey}}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="{x:Type Button}">
-        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderBrushKey}}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -101,10 +116,29 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsDefaulted" Value="true">
-                            <Setter Property="BorderBrush" TargetName="border" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDefaultBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDefaultTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderDefaultBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="true">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonFocusedBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonFocusedTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderFocusedBrushKey}}"/>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="true">
-                            <Setter Property="Background" TargetName="border" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverBackgroundEndKey}}"/>
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderHoverBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="true">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderPressedBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDisabledBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDisabledTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderDisabledBrushKey}}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -148,18 +182,41 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
         </Style.Triggers>
     </Style>
 
+    <ControlTemplate x:Key="ComboBoxItemTemplate" TargetType="{x:Type ComboBoxItem}">
+        <Border Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" SnapsToDevicePixels="true">
+            <ContentPresenter x:Uid="contentPresenter" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="true">
+                <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemBackgroundHoverBrushKey}}"/>
+                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemBorderHoverBrushKey}}" />
+                <Setter TargetName="border" Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextHoverBrushKey}}" />
+            </Trigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
+
     <Style x:Key="ComboBoxToggleButton" TargetType="{x:Type ToggleButton}">
+        <Setter Property="IsTabStop" Value="false"/>
+        <Setter Property="Focusable" Value="false"/>
+        <Setter Property="ClickMode" Value="Press"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ToggleButton}">
-                    <Border x:Name="templateRoot" SnapsToDevicePixels="true" Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}">
-                        <Border x:Name="splitBorder" Width="{DynamicResource {x:Static SystemParameters.VerticalScrollBarWidthKey}}" SnapsToDevicePixels="true" Margin="0" HorizontalAlignment="Right" BorderThickness="1" BorderBrush="Transparent">
-                            <Path x:Name="arrow" VerticalAlignment="Center" Margin="0" HorizontalAlignment="Center" Fill="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxGlyphKey}}" Data="F1 M 0,0 L 2.667,2.66665 L 5.3334,0 L 5.3334,-1.78168 L 2.6667,0.88501 L0,-1.78168 L0,0 Z"/>
+                    <Grid x:Name="clickableArea" Background="Transparent">
+                        <Border x:Name="border" Width="13" HorizontalAlignment="Right" Background="{TemplateBinding Background}" BorderThickness="1,0,0,0" BorderBrush="{TemplateBinding BorderBrush}" SnapsToDevicePixels="True">
+                            <Path x:Name="arrow" Margin="0,1,0,1" Fill="{TemplateBinding TextElement.Foreground}" Data="M0,0L3,3 6,0z" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                    </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="true">
-                            <Setter Property="Background" TargetName="templateRoot" Value="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxMouseOverBackgroundEndKey}}"/>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBackgroundPressedBrushKey}}" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxSeparatorPressedBrushKey}}" />
+                            <Setter TargetName="arrow" Property="Fill" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphPressedBrushKey}}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBackgroundPressedBrushKey}}" />
+                            <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxSeparatorPressedBrushKey}}" />
+                            <Setter TargetName="arrow" Property="Fill" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphPressedBrushKey}}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -168,33 +225,83 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
     </Style>
 
     <ControlTemplate x:Key="ComboBoxTemplate" TargetType="{x:Type ComboBox}">
-        <Grid x:Name="templateRoot" SnapsToDevicePixels="true">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition MinWidth="{DynamicResource {x:Static SystemParameters.VerticalScrollBarWidthKey}}" Width="0"/>
-            </Grid.ColumnDefinitions>
-            <Popup x:Name="PART_Popup" AllowsTransparency="true" Grid.ColumnSpan="2" IsOpen="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Margin="1" PopupAnimation="{DynamicResource {x:Static SystemParameters.ComboBoxPopupAnimationKey}}" Placement="Bottom">
-                <Themes:SystemDropShadowChrome x:Name="shadow" Color="Transparent" MaxHeight="{TemplateBinding MaxDropDownHeight}" MinWidth="{Binding ActualWidth, ElementName=templateRoot}">
-                    <Border x:Name="dropDownBorder" BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}" BorderThickness="1" Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
-                        <ScrollViewer x:Name="DropDownScrollViewer">
-                            <Grid x:Name="grid" RenderOptions.ClearTypeHint="Enabled" Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
-                                <ItemsPresenter x:Name="ItemsPresenter" KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
-                            </Grid>
-                        </ScrollViewer>
-                    </Border>
-                </Themes:SystemDropShadowChrome>
-            </Popup>
-            <ToggleButton x:Name="toggleButton" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" Grid.ColumnSpan="2" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource ComboBoxToggleButton}"/>
-            <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Content="{TemplateBinding SelectionBoxItem}" ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" IsHitTestVisible="false" Margin="{TemplateBinding Padding}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-        </Grid>
+        <Border x:Name="border" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBorderBrushKey}}" Background="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBackgroundBrushKey}}">
+            <Grid SnapsToDevicePixels="true">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition MinWidth="13" Width="0"/>
+                </Grid.ColumnDefinitions>
+                <Popup x:Name="PART_Popup" AllowsTransparency="true" Grid.ColumnSpan="2" IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}" Margin="1" PopupAnimation="{DynamicResource {x:Static SystemParameters.ComboBoxPopupAnimationKey}}" Placement="Bottom" PlacementTarget="{Binding ElementName=border}">
+                    <Themes:SystemDropShadowChrome x:Name="shadow" Color="Transparent" MaxHeight="{TemplateBinding MaxDropDownHeight}" MinWidth="{Binding ActualWidth, ElementName=border}">
+                        <Border x:Name="dropDownBorder" BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListBorderBrushKey}}" BorderThickness="1" Margin="0,1,0,0">
+                            <ScrollViewer x:Name="DropDownScrollViewer">
+                                <Grid x:Name="grid" RenderOptions.ClearTypeHint="Enabled" Background="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListBackgroundBrushKey}}">
+                                    <ItemsPresenter x:Name="ItemsPresenter" KeyboardNavigation.DirectionalNavigation="Contained" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </Grid>
+                            </ScrollViewer>
+                        </Border>
+                    </Themes:SystemDropShadowChrome>
+                </Popup>
+                <ToggleButton x:Name="toggleButton" Grid.ColumnSpan="2" IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource ComboBoxToggleButton}"
+                              Background="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBackgroundBrushKey}}" BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxSeparatorBrushKey}}" TextElement.Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBrushKey}}"/>
+                <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Content="{TemplateBinding SelectionBoxItem}" ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" IsHitTestVisible="false" Margin="{TemplateBinding Padding}" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+            </Grid>
+        </Border>
+
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="true">
+                <Setter TargetName="toggleButton" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxSeparatorFocusedBrushKey}}" />
+                <Setter TargetName="toggleButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBackgroundFocusedBrushKey}}" />
+                <Setter TargetName="toggleButton" Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphFocusedBrushKey}}" />
+                <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBackgroundFocusedBrushKey}}" />
+                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBorderFocusedBrushKey}}" />
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxTextFocusedBrushKey}}" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="toggleButton" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxSeparatorHoverBrushKey}}" />
+                <Setter TargetName="toggleButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBackgroundHoverBrushKey}}" />
+                <Setter TargetName="toggleButton" Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphHoverBrushKey}}" />
+                <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBackgroundHoverBrushKey}}" />
+                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBorderHoverBrushKey}}"/>
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxTextHoverBrushKey}}" />
+            </Trigger>
+            <Trigger Property="IsDropDownOpen" Value="true">
+                <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBackgroundPressedBrushKey}}" />
+                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBorderPressedBrushKey}}" />
+                <Setter Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxTextPressedBrushKey}}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="false">
+                <Setter TargetName="toggleButton" Property="BorderBrush" Value="Transparent" />
+                <Setter TargetName="toggleButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphBackgroundDisabledBrushKey}}" />
+                <Setter TargetName="toggleButton" Property="TextElement.Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxGlyphDisabledBrushKey}}" />
+                <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBorderDisabledBrushKey}}"/>
+                <Setter TargetName="border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxBackgroundDisabledBrushKey}}"/>
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxTextDisabledBrushKey}}"/>
+            </Trigger>
+        </ControlTemplate.Triggers>
     </ControlTemplate>
 
     <Style TargetType="{x:Type ComboBox}">
-        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"/>
-        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxTextBrushKey}}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Template" Value="{StaticResource ComboBoxTemplate}"/>
+        <Setter Property="Padding" Value="6,2"/>
+
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="{x:Type ComboBoxItem}">
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextBrushKey}}" />
+                    <Setter Property="Template" Value="{StaticResource ComboBoxItemTemplate}" />
+                    <Setter Property="Margin" Value="2,0,2,0" />
+                    <Setter Property="InputMethod.IsInputMethodSuspended" Value="True"/>
+                </Style>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style TargetType="{x:Type ListView}">
@@ -261,6 +368,63 @@ BorderBrush {DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarSelectedBorderKey}}"/>
                             <Setter Property="Foreground" Value="White" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="NumberInputButtonFocusVisualStyle">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Rectangle Margin="2" SnapsToDevicePixels="true" Stroke="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" StrokeThickness="1" StrokeDashArray="1 2"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    <Style x:Key="NumberInputRepeatButtonStyle" TargetType="{x:Type RepeatButton}">
+        <Setter Property="Stylus.IsPressAndHoldEnabled" Value="false"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource NumberInputButtonFocusVisualStyle}"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBrushKey}}"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonTextBrushKey}}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderBrushKey}}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="1"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type ButtonBase}">
+                    <Border x:Name="border" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="true">
+                        <ContentPresenter x:Name="contentPresenter" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Button.IsDefaulted" Value="true">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDefaultBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDefaultTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderDefaultBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="true">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonFocusedBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonFocusedTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderFocusedBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="true">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderHoverBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="true">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderPressedBrushKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="false">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDisabledBrushKey}}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonDisabledTextBrushKey}}"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBorderDisabledBrushKey}}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

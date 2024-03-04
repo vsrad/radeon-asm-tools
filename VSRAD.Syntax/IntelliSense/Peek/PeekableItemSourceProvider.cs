@@ -14,15 +14,15 @@ namespace VSRAD.Syntax.IntelliSense.Peek
     internal sealed class PeekableItemSourceProvider : IPeekableItemSourceProvider
     {
         private readonly RadeonServiceProvider _serviceProvider;
-        private readonly INavigationTokenService _navigationTokenService;
+        private readonly IIntelliSenseService _intelliSenseService;
 
         [ImportingConstructor]
         public PeekableItemSourceProvider(
             RadeonServiceProvider serviceProvider,
-            INavigationTokenService definitionService)
+            IIntelliSenseService intelliSenseService)
         {
             _serviceProvider = serviceProvider;
-            _navigationTokenService = definitionService;
+            _intelliSenseService = intelliSenseService;
         }
 
         public IPeekableItemSource TryCreatePeekableItemSource(ITextBuffer textBuffer)
@@ -31,7 +31,7 @@ namespace VSRAD.Syntax.IntelliSense.Peek
                 throw new ArgumentNullException(nameof(textBuffer));
 
             return textBuffer.Properties.GetOrCreateSingletonProperty(
-                () => new PeekableItemSource(textBuffer, _serviceProvider.PeekResultFactory, _navigationTokenService));
+                () => new PeekableItemSource(textBuffer, _serviceProvider.PeekResultFactory, _intelliSenseService));
         }
     }
 }

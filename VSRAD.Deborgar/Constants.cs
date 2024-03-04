@@ -13,11 +13,10 @@ namespace VSRAD.Deborgar
         public const string RemotePortSupplierId = "6F09D2CD-815C-4EE2-A39F-322BE7CB1074";
         public static readonly Guid RemotePortSupplierGuid = new Guid(RemotePortSupplierId);
 
-        public const string RemotePortName = "RAD Remote";
+        public const string RemotePortName = "RAD Debugger";
 
         public const string VisualStudioLocalPortSupplierId = "708C1ECA-FF48-11D2-904F-00C04FA302A1";
 
-        public const string ThreadName = "RAD Program Thread";
         public const string ProgramName = "RAD Program";
 
         public const string LanguageName = "RadeonAsm";

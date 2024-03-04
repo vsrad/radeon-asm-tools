@@ -25,16 +25,16 @@ namespace VSRAD.Syntax.SyntaxHighlighter.ErrorHighlighter
             _documentAnalysis.AnalysisUpdated += UpdateErrorMarker;
 
             if (_documentAnalysis.CurrentResult != null)
-                UpdateErrorMarker(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+                UpdateErrorMarker(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, document.DocumentTokenizer.CurrentResult.UpdatedTokenSpan, CancellationToken.None);
         }
 
         public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans) =>
             currentErrorTags ?? Enumerable.Empty<ITagSpan<IErrorTag>>();
 
-        private void UpdateErrorMarker(IAnalysisResult analysisResult, RescanReason rescanReason, CancellationToken ct) =>
-            Task.Run(() => UpdateSpanAdornments(analysisResult, ct));
+        private void UpdateErrorMarker(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken) =>
+            Task.Run(() => UpdateSpanAdornments(analysisResult, cancellationToken));
 
-        private void UpdateSpanAdornments(IAnalysisResult analysisResult, CancellationToken cancellationToken)
+        private void UpdateSpanAdornments(AnalysisResult analysisResult, CancellationToken cancellationToken)
         {
             if (analysisResult == null || cancellationToken.IsCancellationRequested) return;
 

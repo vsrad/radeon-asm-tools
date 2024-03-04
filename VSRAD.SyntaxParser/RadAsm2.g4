@@ -24,6 +24,8 @@ END     : 'end' ;
 REPEAT  : 'repeat' ;
 UNTIL   : 'until' ;
 
+PRINT   : 'print' ;
+
 /* Preprocessor Keywords */
 PP_INCLUDE  : '#include' ;
 PP_DEFINE   : '#define'  ;

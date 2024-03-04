@@ -40,12 +40,14 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
         public SliceVisualizerContext(Options.ProjectOptions options, VisualizerContext visualizerContext, EnvDTE80.WindowVisibilityEvents visibilityEvents)
         {
             Options = options;
+#if false
             _visualizerContext = visualizerContext;
             _visualizerContext.GroupFetching += SetupDataFetch;
             _visualizerContext.GroupFetched += DisplayFetchedData;
             _windowVisibilityEvents = visibilityEvents;
             _windowVisibilityEvents.WindowShowing += OnToolWindowVisibilityChanged;
             _windowVisibilityEvents.WindowHiding += OnToolWindowVisibilityChanged;
+#endif
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
@@ -55,6 +57,7 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
 
         private void DisplayFetchedData(object sender, GroupFetchedEventArgs e)
         {
+#if false
             if (!Watches.SequenceEqual(_visualizerContext.BreakData.Watches))
             {
                 Watches.Clear();
@@ -69,11 +72,12 @@ namespace VSRAD.Package.DebugVisualizer.SliceVisualizer
                 var typedView = new TypedSliceWatchView(watchView, SelectedType);
                 WatchSelected(this, typedView);
             }
+#endif
         }
 
         private void WatchSelectionChanged()
         {
-            if (!_windowVisible || string.IsNullOrEmpty(SelectedWatch) || _visualizerContext.BreakData == null)
+            if (!_windowVisible || string.IsNullOrEmpty(SelectedWatch) || _visualizerContext.BreakState == null)
                 return;
             _visualizerContext.GroupIndex.Update();
         }

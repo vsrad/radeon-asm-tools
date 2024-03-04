@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -14,30 +15,39 @@ namespace VSRAD.Package.Commands
     public sealed class ActionsMenuCommand : ICommandHandler
     {
         private readonly IProject _project;
-        private readonly IActionLauncher _actionLauncher;
-        private readonly DebuggerIntegration _debuggerIntegration;
+        private readonly IActionController _actionController;
 
         private ProfileOptions SelectedProfile => _project.Options.Profile;
 
         [ImportingConstructor]
-        public ActionsMenuCommand(IProject project, IActionLauncher actionLauncher, DebuggerIntegration debuggerIntegration)
+        public ActionsMenuCommand(IProject project, IActionController actionController)
         {
             _project = project;
-            _actionLauncher = actionLauncher;
-            _debuggerIntegration = debuggerIntegration;
+            _actionController = actionController;
         }
 
         public Guid CommandSet => Constants.ActionsMenuCommandSet;
 
         public OLECMDF GetCommandStatus(uint commandId, IntPtr commandText)
         {
-            if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out _)
-                && SelectedProfile.Actions.Any(a => a.Name == actionName))
+            if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out _) && SelectedProfile.Actions.Any(a => a.Name == actionName))
             {
                 var flags = OleCommandText.GetFlags(commandText);
                 if (flags == OLECMDTEXTF.OLECMDTEXTF_NAME)
-                    OleCommandText.SetText(commandText, actionName);
-
+                {
+                    switch (commandId)
+                    {
+                        case Constants.RerunDebugCommandId:
+                            OleCommandText.SetText(commandText, $"Rerun {actionName}");
+                            break;
+                        case Constants.ReverseDebugCommandId:
+                            OleCommandText.SetText(commandText, $"Reverse {actionName}");
+                            break;
+                        default:
+                            OleCommandText.SetText(commandText, actionName);
+                            break;
+                    }
+                }
                 return OLECMDF.OLECMDF_ENABLED | OLECMDF.OLECMDF_SUPPORTED;
             }
             else
@@ -54,17 +64,12 @@ namespace VSRAD.Package.Commands
         {
             if (GetActionNameByCommandId(commandId).TryGetResult(out var actionName, out var error))
             {
-                VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
-                {
-                    var isDebugAction = actionName == SelectedProfile.MenuCommands.DebugAction;
-                    var result = await _actionLauncher.LaunchActionByNameAsync(actionName, moveToNextDebugTarget: isDebugAction);
-                    await VSPackage.TaskFactory.SwitchToMainThreadAsync();
-                    if (result.Error is Error e)
-                        Errors.Show(e);
-                    if (SelectedProfile.Actions.FirstOrDefault(a => a.Name == actionName) is ActionProfileOptions action
-                        && _actionLauncher.IsDebugAction(action))
-                        _debuggerIntegration.NotifyDebugActionExecuted(result.RunResult, result.Transients);
-                });
+                var debugBreakTarget = _project.Options.DebuggerOptions.EnableMultipleBreakpoints ? BreakTargetSelector.Multiple
+                                     : commandId == Constants.DebugActionCommandId ? BreakTargetSelector.SingleNext
+                                     : commandId == Constants.ReverseDebugCommandId ? BreakTargetSelector.SinglePrev
+                                     : BreakTargetSelector.SingleRerun;
+                ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
+                    _actionController.RunActionAsync(actionName, debugBreakTarget));
             }
             else
             {
@@ -86,6 +91,8 @@ namespace VSRAD.Package.Commands
                 case Constants.PreprocessCommandId:
                     return SelectedProfile.MenuCommands.PreprocessAction;
                 case Constants.DebugActionCommandId:
+                case Constants.RerunDebugCommandId:
+                case Constants.ReverseDebugCommandId:
                     return SelectedProfile.MenuCommands.DebugAction;
                 default:
                     int index = (int)commandId - Constants.ActionsMenuCommandId;

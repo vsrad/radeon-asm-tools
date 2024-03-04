@@ -1,61 +1,67 @@
 ﻿using System.ComponentModel;
+using System.Linq;
 using System.Windows.Controls;
 using VSRAD.Package.DebugVisualizer.Wavemap;
 using VSRAD.Package.ProjectSystem;
-using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 
 namespace VSRAD.Package.DebugVisualizer
 {
     public sealed partial class VisualizerControl : UserControl
     {
+        public VisualizerTable Table => _table;
         private readonly VisualizerTable _table;
         private readonly VisualizerContext _context;
         private readonly WavemapImage _wavemap;
+        private readonly IToolWindowIntegration _integration;
 
-        public VisualizerControl(IToolWindowIntegration integration)
+        public VisualizerControl(IToolWindowIntegration integration, IFontAndColorProvider fontAndColorProvider)
         {
+            _integration = integration;
             _context = integration.GetVisualizerContext();
-            _context.PropertyChanged += ContextPropertyChanged;
+            _context.PropertyChanged += VisualizerStateChanged;
             _context.GroupFetched += GroupFetched;
             _context.GroupFetching += SetupDataFetch;
             DataContext = _context;
             InitializeComponent();
 
             _wavemap = new WavemapImage(HeaderHost.WavemapImage, _context);
-            _wavemap.NavigationRequested += NavigateToWave;
+            _wavemap.NavigationRequested += NavigateFromWavemap;
             HeaderHost.WavemapSelector.Setup(_context, _wavemap);
 
-            integration.ProjectOptions.VisualizerOptions.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.VisualizerOptions.PropertyChanged += VisualizerStateChanged;
             integration.ProjectOptions.VisualizerColumnStyling.PropertyChanged += (s, e) => RefreshDataStyling();
-            integration.ProjectOptions.DebuggerOptions.PropertyChanged += OptionsChanged;
-            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += OptionsChanged;
+            integration.ProjectOptions.DebuggerOptions.PropertyChanged += VisualizerStateChanged;
+            integration.ProjectOptions.VisualizerAppearance.PropertyChanged += VisualizerStateChanged;
 
-            var tableFontAndColor = new FontAndColorProvider();
-            tableFontAndColor.FontAndColorInfoChanged += RefreshDataStyling;
-            _table = new VisualizerTable(
-                _context.Options,
-                tableFontAndColor,
-                getValidWatches: () => _context?.BreakData?.Watches);
+            fontAndColorProvider.FontAndColorInfoChanged += RefreshDataStyling;
+            _table = new VisualizerTable(_context.Options, fontAndColorProvider);
             integration.AddWatch += _table.AddWatch;
             _table.WatchStateChanged += (newWatchState, invalidatedRows) =>
             {
                 _context.Options.DebuggerOptions.Watches.Clear();
                 _context.Options.DebuggerOptions.Watches.AddRange(newWatchState);
-                if (invalidatedRows != null)
-                    foreach (var row in invalidatedRows)
-                        SetRowContentsFromBreakState(row);
+                foreach (var row in invalidatedRows)
+                    SetRowContentsFromBreakState(row);
             };
+            _table.BreakpointInfoRequested += (uint threadId, ref BreakpointInfo breakpointInfo) =>
+            {
+                breakpointInfo = _context.GetBreakpointByThreadId(threadId);
+            };
+            _table.BreakpointNavigationRequested += integration.OpenFileInEditor;
             _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
             TableHost.Setup(_table);
             RestoreSavedState();
         }
 
-        private void NavigateToWave(object sender, WavemapImage.NagivationEventArgs e)
+        private void NavigateFromWavemap(object sender, WavemapImage.NagivationEventArgs e)
         {
-            _context.GroupIndex.GoToGroup(e.GroupIdx);
-            if (e.WaveIdx is uint waveIdx)
-                _table.GoToWave(waveIdx, _context.Options.DebuggerOptions.WaveSize);
+            if (e.GroupIndex is uint groupIndex)
+                _context.GroupIndex.GoToGroup(groupIndex);
+            if (e.WaveIndex is uint waveIndex && _context.BreakState != null)
+                _table.GoToWave(waveIndex, _context.BreakState.Dispatch.WaveSize);
+            if (e.Breakpoint is BreakpointInfo breakpoint)
+                _integration.OpenFileInEditor(breakpoint.File, breakpoint.Line);
         }
 
         private void SetupDataFetch(object sender, GroupFetchingEventArgs e)
@@ -67,40 +73,14 @@ namespace VSRAD.Package.DebugVisualizer
             _table.HostWindowFocusChanged(hasFocus);
 
         private void RefreshDataStyling() =>
-            _table.ApplyDataStyling(_context.Options, _context.BreakData?.GetSystem());
-
-        private void GrayOutWatches() =>
-            _table.GrayOutRows();
-
-        private void ContextPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(VisualizerContext.WatchesValid):
-                    if (!_context.WatchesValid)
-                        GrayOutWatches();
-                    break;
-            }
-        }
+            _table.ApplyDataStyling(_context.Options, _context.BreakState);
 
         private void GroupFetched(object sender, GroupFetchedEventArgs e)
         {
             if (e.Warning != null)
                 Errors.ShowWarning(e.Warning);
-            if (e.DispatchParameters == null && !_context.Options.VisualizerOptions.ManualMode)
-                Errors.ShowWarning(@"Automatic grid size selection is enabled, but dispatch parameters are unavailable for this run.
 
-To enable dispatch parameters extraction:
-1. Go to Tools -> RAD Debug -> Options and open profile editor.
-2. Select your current debug action and navigate to the Read Debug Data step.
-3. Enter the path to the dispatch parameters file.
-
-To switch to manual grid size selection, right-click on the space next to the Group # field and check ""Manual override dispatch"".");
-
-            _table.ApplyWatchStyling();
             RefreshDataStyling();
-
-            _wavemap.View = _context.BreakData.GetWavemapView();
 
             foreach (System.Windows.Forms.DataGridViewRow row in _table.Rows)
                 SetRowContentsFromBreakState(row);
@@ -110,7 +90,7 @@ To switch to manual grid size selection, right-click on the space next to the Gr
         {
             RefreshDataStyling();
             _table.Rows.Clear();
-            _table.AppendVariableRow(new Watch("System", new VariableType(VariableCategory.Hex, 32), isAVGPR: false), canBeRemoved: false);
+            _table.InsertUserWatchRow(new Watch("System", new VariableType(VariableCategory.Hex, 32)), canBeRemoved: false);
             _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
             _table.AlignmentChanged(
                     _context.Options.VisualizerAppearance.NameColumnAlignment,
@@ -118,16 +98,16 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                     _context.Options.VisualizerAppearance.HeadersAlignment
                 );
             foreach (var watch in _context.Options.DebuggerOptions.Watches)
-                _table.AppendVariableRow(watch);
+                _table.InsertUserWatchRow(watch);
             _table.PrepareNewWatchRow();
         }
 
-        private void OptionsChanged(object sender, PropertyChangedEventArgs e)
+        private void VisualizerStateChanged(object sender, PropertyChangedEventArgs e)
         {
             switch (e.PropertyName)
             {
-                case nameof(Options.DebuggerOptions.Counter):
-                    GrayOutWatches();
+                case nameof(VisualizerContext.WatchDataValid):
+                    _table.WatchDataValid = _context.WatchDataValid;
                     break;
                 case nameof(Options.VisualizerOptions.ShowSystemVariable):
                     _table.ShowSystemRow = _context.Options.VisualizerOptions.ShowSystemVariable;
@@ -135,23 +115,13 @@ To switch to manual grid size selection, right-click on the space next to the Gr
                 case nameof(Options.VisualizerAppearance.ScalingMode):
                     _table.SetScalingMode(_context.Options.VisualizerAppearance.ScalingMode);
                     break;
-                case nameof(Options.DebuggerOptions.GroupSize):
                 case nameof(Options.VisualizerOptions.MaskLanes):
-                case nameof(Options.VisualizerOptions.CheckMagicNumber):
                 case nameof(Options.VisualizerAppearance.LaneGrouping):
                 case nameof(Options.VisualizerAppearance.VerticalSplit):
                 case nameof(Options.VisualizerAppearance.LaneSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.HiddenColumnSeparatorWidth):
                 case nameof(Options.VisualizerAppearance.DarkenAlternatingRowsBy):
                     RefreshDataStyling();
-                    break;
-                case nameof(Options.DebuggerOptions.WaveSize):
-                    RefreshDataStyling();
-                    _wavemap.View = _context.BreakData?.GetWavemapView();
-                    break;
-                case nameof(Options.VisualizerOptions.MagicNumber):
-                    if (_context.Options.VisualizerOptions.CheckMagicNumber)
-                        RefreshDataStyling();
                     break;
                 case nameof(Options.VisualizerAppearance.NameColumnAlignment):
                 case nameof(Options.VisualizerAppearance.DataColumnAlignment):
@@ -171,41 +141,85 @@ To switch to manual grid size selection, right-click on the space next to the Gr
             }
         }
 
-        private void SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
+        /// <returns>The number of child item rows.</returns>
+        private int SetRowContentsFromBreakState(System.Windows.Forms.DataGridViewRow row)
         {
-            if (_context.BreakData == null)
-                return;
-            if (row.Index == 0)
+            var nChildRows = 0;
+            if (_context.BreakState != null && row.Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nameCell && nameCell.Value != null)
             {
-                RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, _context.BreakData.GetSystem(),
-                    _context.Options.VisualizerAppearance.BinHexSeparator, _context.Options.VisualizerAppearance.IntUintSeparator,
-                    _context.Options.VisualizerAppearance.BinHexLeadingZeroes);
-            }
-            else
-            {
-                var watch = (string)row.Cells[VisualizerTable.NameColumnIndex].Value;
-                var watchData = _context.BreakData.GetWatch(watch);
-                if (watchData != null)
-                    RenderRowData(row, _context.Options.DebuggerOptions.GroupSize, watchData,
-                        _context.Options.VisualizerAppearance.BinHexSeparator, _context.Options.VisualizerAppearance.IntUintSeparator,
-                        _context.Options.VisualizerAppearance.BinHexLeadingZeroes);
+                var watchType = VariableTypeUtils.TypeFromShortName((string)row.HeaderCell.Value);
+                var binHexSeparator = _context.Options.VisualizerAppearance.BinHexSeparator;
+                var intSeparator = _context.Options.VisualizerAppearance.IntUintSeparator;
+                var leadingZeroes = _context.Options.VisualizerAppearance.BinHexLeadingZeroes;
+
+                if (row.Index == 0) // System watch
+                {
+                    int tid = 0;
+                    for (uint wave = 0; wave < _context.BreakState.WavesPerGroup; ++wave)
+                    {
+                        var data = _context.BreakState.GetSystemData(wave);
+                        for (var lane = 0; lane < data.Length && tid < _context.BreakState.GroupSize; ++tid, ++lane)
+                        {
+                            row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = data[lane];
+                            row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
+                        }
+                    }
+                }
                 else
-                    EraseRowData(row, _table.DataColumnCount);
+                {
+                    Server.WatchMeta watchMeta = null;
+                    foreach (var r in nameCell.ParentRows.Append(row))
+                    {
+                        if (watchMeta == null)
+                            watchMeta = _context.BreakState.GetWatchMeta((string)r.Cells[VisualizerTable.NameColumnIndex].Value);
+                        else
+                            watchMeta = watchMeta.ListItems[((WatchNameCell)r.Cells[VisualizerTable.NameColumnIndex]).IndexInList];
+                    }
+                    for (int wave = 0, tid = 0; wave < _context.BreakState.WavesPerGroup; ++wave)
+                    {
+                        var instance = _context.BreakState.GetWaveStatus((uint)wave).InstanceId;
+                        var (_, DataSlot, ListSize) = watchMeta != null ? watchMeta.Instances.Find(v => v.Instance == instance) : default;
+                        if (DataSlot is uint dataSlot)
+                        {
+                            var data = _context.BreakState.GetWatchData((uint)wave, dataSlot);
+                            for (var lane = 0; lane < data.Length && tid < _context.BreakState.GroupSize; ++tid, ++lane)
+                            {
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = data[lane];
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(watchType, data[lane], binHexSeparator, intSeparator, leadingZeroes);
+                            }
+                        }
+                        else
+                        {
+                            var label = (ListSize is uint listSize) ? $"[{listSize}]" : "";
+                            for (var lane = 0; lane < _context.BreakState.Dispatch.WaveSize && tid < _context.BreakState.GroupSize; ++tid, ++lane)
+                            {
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Tag = null;
+                                row.Cells[tid + VisualizerTable.DataColumnOffset].Value = label;
+                            }
+                        }
+                    }
+                    for (var i = 0; i < (watchMeta?.ListItems?.Count ?? 0); ++i)
+                    {
+                        var nextRowIndex = row.Index + nChildRows + 1;
+                        if (!(nextRowIndex < _table.NewWatchRowIndex
+                            && _table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex] is WatchNameCell nextNameCell
+                            && Enumerable.SequenceEqual(nextNameCell.ParentRows, nameCell.ParentRows.Append(row))))
+                        {
+                            _table.Rows.Insert(nextRowIndex);
+                            _table.Rows[nextRowIndex].HeaderCell.Value = VariableTypeUtils.ShortName(watchType); // Inherit watch type
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).IndexInList = i;
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ParentRows.AddRange(nameCell.ParentRows.Append(row));
+                            ((WatchNameCell)_table.Rows[nextRowIndex].Cells[VisualizerTable.NameColumnIndex]).ExpandCollapse(nameCell.ListExpanded);
+                        }
+                        nChildRows += 1;
+                        nChildRows += SetRowContentsFromBreakState(_table.Rows[nextRowIndex]);
+                    }
+                    // Remove all child rows that no longer match watch data
+                    for (var r = row.Index + nChildRows + 1; r < _table.NewWatchRowIndex && ((WatchNameCell)_table.Rows[r].Cells[VisualizerTable.NameColumnIndex]).ParentRows.Count > nameCell.ParentRows.Count;)
+                        _table.Rows.RemoveAt(r);
+                }
             }
-        }
-
-        private static void EraseRowData(System.Windows.Forms.DataGridViewRow row, int columnCount)
-        {
-            for (int i = 0; i < columnCount; ++i)
-                row.Cells[i + VisualizerTable.DataColumnOffset].Value = "";
-        }
-
-        private static void RenderRowData(System.Windows.Forms.DataGridViewRow row, uint groupSize, WatchView data, uint binHexSeparator, uint intSeparator, bool leadingZeroes)
-        {
-            var variableType = VariableTypeUtils.TypeFromShortName(row.HeaderCell.Value.ToString());
-            for (int i = 0; i < groupSize; i++)
-                row.Cells[i + VisualizerTable.DataColumnOffset].Value = DataFormatter.FormatDword(variableType, data[i],
-                                                                            binHexSeparator, intSeparator, leadingZeroes);
+            return nChildRows;
         }
     }
 }

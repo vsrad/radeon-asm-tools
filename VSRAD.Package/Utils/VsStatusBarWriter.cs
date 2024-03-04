@@ -16,7 +16,7 @@ namespace VSRAD.Package.Utils
 
         public async Task SetTextAsync(string text)
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             if (_statusBar == null)
                 _statusBar = (IVsStatusbar)_serviceProvider.GetService(typeof(SVsStatusbar));
@@ -28,7 +28,7 @@ namespace VSRAD.Package.Utils
 
         public async Task ClearAsync()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             _statusBar?.FreezeOutput(0);
             _statusBar?.Clear();

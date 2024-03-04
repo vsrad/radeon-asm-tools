@@ -8,6 +8,6 @@ namespace VSRAD.Syntax.Core.Parser
 {
     public interface IParser
     {
-        Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
+        Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> tokens, CancellationToken cancellation);
     }
 }

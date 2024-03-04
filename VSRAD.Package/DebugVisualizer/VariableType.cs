@@ -13,6 +13,8 @@ namespace VSRAD.Package.DebugVisualizer
 
     public readonly struct VariableType : System.IEquatable<VariableType>
     {
+        public static readonly VariableType Default = new VariableType(VariableCategory.Int, 32);
+
         [JsonConstructor]
         public VariableType(VariableCategory category, int size)
         {
@@ -59,6 +61,9 @@ namespace VSRAD.Package.DebugVisualizer
 
         public static VariableType TypeFromShortName(string shortName)
         {
+            if (string.IsNullOrEmpty(shortName))
+                return VariableType.Default;
+
             switch (shortName[0])
             {
                 case 'B':

@@ -3,23 +3,19 @@
         "Watches": [
             {
                 "Name": "v[tid]",
-                "Type": "Uint",
-                "IsAVGPR": false
+                "Type": "Uint"
             },
             {
                 "Name": "v[in1]",
-                "Type": "Float",
-                "IsAVGPR": false
+                "Type": "Float"
             },
             {
                 "Name": "v[in2]",
-                "Type": "Float",
-                "IsAVGPR": false
+                "Type": "Float"
             },
             {
                 "Name": "v[out]",
-                "Type": "Float",
-                "IsAVGPR": false
+                "Type": "Float"
             }
         ],
         "Counter": 0,
@@ -53,7 +49,7 @@
             },
             "Debugger": {
                 "Executable": "bash",
-                "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLine) -f $(RadDeployDir)/$(RadActiveSourceFile) -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
+                "Arguments": "$(RadDebugWorkDir)/common/debugger/vadd_debug.sh -l $(RadBreakLines) -f $(RadDeployDir)/$(RadActiveSourceFile) -w $(RadWatches) -t $(RadCounter) -o $(RadDebugDataOutputPath)",
                 "WorkingDirectory": "/home/stud/radeon-asm-debugger-example",
                 "OutputPath": "$(RadDebugWorkDir)/tmp_dir/debug_result",
                 "BinaryOutput": true,

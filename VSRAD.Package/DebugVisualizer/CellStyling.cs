@@ -55,19 +55,19 @@ namespace VSRAD.Package.DebugVisualizer
             if (_appearance.DarkenAlternatingRowsBy == 0 || e.RowIndex % 2 == 0 || e.RowIndex == _table.NewWatchRowIndex)
                 return;
 
-            e.CellStyle.ForeColor = DarkenColor(e.CellStyle.ForeColor, _appearance.DarkenAlternatingRowsBy / 100f);
-            e.CellStyle.BackColor = DarkenColor(e.CellStyle.BackColor, _appearance.DarkenAlternatingRowsBy / 100f);
+            e.CellStyle.ForeColor = e.CellStyle.ForeColor.ScaleLightness(1.0f - 0.01f * _appearance.DarkenAlternatingRowsBy);
+            e.CellStyle.BackColor = e.CellStyle.BackColor.ScaleLightness(1.0f - 0.01f * _appearance.DarkenAlternatingRowsBy);
         }
 
         private void PaintInvalidWatchName(DataGridViewCellPaintingEventArgs e)
         {
-            if (e.ColumnIndex == VisualizerTable.NameColumnIndex && e.Value is string watchName && watchName.IndexOf(':') >= 0)
+            if (e.ColumnIndex == VisualizerTable.NameColumnIndex && e.Value is string watchName && !string.IsNullOrWhiteSpace(watchName) && !Watch.IsWatchNameValid(watchName))
                 e.CellStyle.BackColor = Color.Red;
         }
 
         private void GrayOutInactiveLanes(int dataColumnIndex, DataGridViewCellPaintingEventArgs e)
         {
-            if ((_computedStyling.ColumnState[dataColumnIndex] & ColumnStates.Inactive) != 0)
+            if (!_table.WatchDataValid || (_computedStyling.ColumnState[dataColumnIndex] & ColumnStates.Inactive) != 0 || (e.Value is string v && v.Length == 0))
             {
                 e.CellStyle.ForeColor = _fontAndColor.FontAndColorState.HighlightForeground[(int)DataHighlightColor.None];
                 e.CellStyle.BackColor = _fontAndColor.FontAndColorState.HighlightBackground[(int)DataHighlightColor.Inactive];
@@ -105,14 +105,6 @@ namespace VSRAD.Package.DebugVisualizer
             e.Graphics.FillRectangle(color, r);
             e.Graphics.ResetClip();
             e.Handled = true;
-        }
-
-        private static Color DarkenColor(Color c, float by)
-        {
-            ushort h = 0, l = 0, s = 0;
-            c.ToHls(ref h, ref l, ref s);
-            l = (ushort)(l * (1 - by));
-            return FromHls(h, l, s);
         }
     }
 }

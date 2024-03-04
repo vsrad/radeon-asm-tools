@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.ProjectSystem;
+using Microsoft.VisualStudio.Shell;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -15,6 +16,7 @@ using VSRAD.Package.ProjectSystem;
 using VSRAD.Package.Server;
 using VSRAD.Package.Utils;
 using static VSRAD.BuildTools.IPCBuildResult;
+using Task = System.Threading.Tasks.Task;
 
 namespace VSRAD.Package.BuildTools
 {
@@ -67,7 +69,7 @@ namespace VSRAD.Package.BuildTools
                 _project.RunWhenLoaded((_) =>
                 {
                     _serverLoopCts = new CancellationTokenSource();
-                    VSPackage.TaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
+                    ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(RunServerLoopAsync);
                 });
                 _project.Unloaded += () => _serverLoopCts.Cancel();
             }
@@ -126,7 +128,7 @@ namespace VSRAD.Package.BuildTools
 
         private async Task<Result<IPCBuildResult>> BuildAsync()
         {
-            await VSPackage.TaskFactory.SwitchToMainThreadAsync();
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             var evaluator = await _project.GetMacroEvaluatorAsync(default);
             BuildProfileOptions buildOptions = null;// await _project.Options.Profile.Build.EvaluateAsync(evaluator);
             PreprocessorProfileOptions preprocessorOptions = null;// await Options.PreprocessorProfileOptions.EvaluateAsync(evaluator);

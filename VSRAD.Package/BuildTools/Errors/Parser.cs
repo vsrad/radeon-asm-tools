@@ -41,6 +41,10 @@ namespace VSRAD.Package.BuildTools.Errors
 
         private static Message ParseClangMessage(string header)
         {
+            // Fast check to see if the string may contain a clang error, necessary because the full error regex takes too much time to match long lines
+            if (!(header.Contains("error") || header.Contains("warning") || header.Contains("note")))
+                return null;
+
             var match = ClangErrorRegex.Match(header);
             if (!match.Success) return null;
             return new Message

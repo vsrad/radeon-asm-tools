@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace VSRAD.Package.DebugVisualizer
 {
@@ -7,25 +6,21 @@ namespace VSRAD.Package.DebugVisualizer
     {
         public string Name { get; }
 
-        //[JsonConverter(typeof(StringEnumConverter))]
         public VariableType Info { get; }
 
-        public bool IsAVGPR { get; }
-
-        [JsonIgnore]
-        public bool IsEmpty => string.IsNullOrWhiteSpace(Name);
-
         [JsonConstructor]
-        public Watch(string name, VariableType type, bool isAVGPR)
+        public Watch(string name, VariableType type)
         {
             Name = name;
             Info = type;
-            IsAVGPR = isAVGPR;
         }
 
-        public bool Equals(Watch w) => Name == w.Name && Info == w.Info && IsAVGPR == w.IsAVGPR;
+        public static bool IsWatchNameValid(string name) =>
+            !string.IsNullOrWhiteSpace(name) && name.IndexOfAny(new[] { '\n', '\r' }) == -1;
+
+        public bool Equals(Watch w) => Name == w.Name && Info == w.Info;
         public override bool Equals(object o) => o is Watch w && Equals(w);
-        public override int GetHashCode() => (Name, Info, IsAVGPR).GetHashCode();
+        public override int GetHashCode() => (Name, Info).GetHashCode();
         public static bool operator ==(Watch left, Watch right) => left.Equals(right);
         public static bool operator !=(Watch left, Watch right) => !(left == right);
     }

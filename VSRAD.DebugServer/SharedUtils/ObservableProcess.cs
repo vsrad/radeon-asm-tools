@@ -1,6 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VSRAD.DebugServer.IPC.Responses;
 
@@ -15,7 +17,6 @@ namespace VSRAD.DebugServer.SharedUtils
         private readonly Process _process;
         private readonly bool _waitForCompletion;
         private readonly int _timeout;
-        private bool _stoppedByTimeout = false;
 
         public ObservableProcess(IPC.Commands.Execute command)
         {
@@ -46,13 +47,13 @@ namespace VSRAD.DebugServer.SharedUtils
             _timeout = command.ExecutionTimeoutSecs;
         }
 
-        public async Task<ExecutionCompleted> StartAndObserveAsync()
+        public async Task<ExecutionCompleted> StartAndObserveAsync(CancellationToken cancellationToken = default)
         {
             if (!_waitForCompletion)
                 return RunWithoutAwaitingCompletion();
 
             var processExitedTcs = new TaskCompletionSource<bool>();
-            _process.Exited += (sender, args) => processExitedTcs.SetResult(true);
+            _process.Exited += (sender, args) => processExitedTcs.TrySetResult(true);
 
             var (stdoutTask, stderrTask) = InitializeOutputCapture();
 
@@ -66,9 +67,8 @@ namespace VSRAD.DebugServer.SharedUtils
                     _process.BeginOutputReadLine();
                     _process.BeginErrorReadLine();
                 }
-                SetProcessTimeout();
             }
-            catch (System.ComponentModel.Win32Exception)
+            catch (Win32Exception)
             {
                 return new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch };
             }
@@ -77,9 +77,26 @@ namespace VSRAD.DebugServer.SharedUtils
                 return new ExecutionCompleted { Status = ExecutionStatus.CouldNotLaunch };
             }
 
-            await processExitedTcs.Task;
+            var processTimeoutTcs = new TaskCompletionSource<bool>();
+            if (_timeout != 0)
+            {
+                var timeoutTimer = new System.Timers.Timer { AutoReset = false, Interval = _timeout * 1000.0 /* ms */ };
+                timeoutTimer.Elapsed += (sender, e) => processTimeoutTcs.TrySetResult(true);
+                timeoutTimer.Start();
+            }
 
-            var status = _stoppedByTimeout ? ExecutionStatus.TimedOut : ExecutionStatus.Completed;
+            Task<bool> completedTask;
+            using (cancellationToken.Register(() => processExitedTcs.TrySetCanceled()))
+                completedTask = await Task.WhenAny(processExitedTcs.Task, processTimeoutTcs.Task);
+
+            if (completedTask.IsCanceled || completedTask == processTimeoutTcs.Task)
+            {
+                await Task.Run(() => TerminateProcessTree(_process)); // This might take a few seconds, use Task.Run to avoid blocking the thread
+                if (completedTask.IsCanceled)
+                    throw new OperationCanceledException(cancellationToken);
+            }
+
+            var status = completedTask == processTimeoutTcs.Task ? ExecutionStatus.TimedOut : ExecutionStatus.Completed;
 
             var stdout = await stdoutTask;
             var stderr = await stderrTask;
@@ -141,26 +158,31 @@ namespace VSRAD.DebugServer.SharedUtils
             return (stdoutTcs.Task, stderrTcs.Task);
         }
 
-        private void SetProcessTimeout()
+        private static void TerminateProcessTree(Process parent)
         {
-            if (_timeout == 0)
-                return;
-
-            var timeoutTimer = new System.Timers.Timer()
-            {
-                AutoReset = false,
-                Interval = _timeout * 1000.0 // seconds -> milliseconds
-            };
-            timeoutTimer.Elapsed += (sender, e) =>
+#if NETCOREAPP
+            parent.Kill(entireProcessTree: true);
+#else
+            var searcher = new System.Management.ManagementObjectSearcher("SELECT ProcessID FROM Win32_Process WHERE ParentProcessID = " + parent.Id);
+            var processCollection = searcher.Get();
+            foreach (var p in processCollection)
             {
                 try
                 {
-                    _process.Kill();
-                    _stoppedByTimeout = true;
+                    var childPid = Convert.ToInt32(p["ProcessID"]);
+                    var child = Process.GetProcessById(childPid);
+                    if (parent.StartTime < child.StartTime) // PIDs may be reused
+                        TerminateProcessTree(child);
                 }
-                catch (InvalidOperationException) { /* Already stopped */ }
-            };
-            timeoutTimer.Start();
+                catch (ArgumentException) { /* already exited */ }
+            }
+            try
+            {
+                parent.Kill();
+            }
+            catch (Win32Exception) { /* cannot terminate */ }
+            catch (InvalidOperationException) { /* cannot terminate */ }
+#endif
         }
     }
 }

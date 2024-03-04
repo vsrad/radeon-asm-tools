@@ -12,10 +12,10 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
     internal class RadCompletionContext
     {
-        public static RadCompletionContext Empty => new RadCompletionContext(new List<ICompletionItem>());
-        public IReadOnlyList<ICompletionItem> Items;
+        public static RadCompletionContext Empty => new RadCompletionContext(new List<RadCompletionItem>());
+        public IReadOnlyList<RadCompletionItem> Items;
 
-        public RadCompletionContext(IReadOnlyList<ICompletionItem> items)
+        public RadCompletionContext(IReadOnlyList<RadCompletionItem> items)
         {
             Items = items;
         }

@@ -3,12 +3,12 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using VSRAD.Syntax.Options;
-using VSRAD.Syntax.Core;
-using VSRAD.Syntax.Options.Instructions;
-using VSRAD.Syntax.Helpers;
 using System.Threading;
+using System.Threading.Tasks;
+using VSRAD.Syntax.Core;
+using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.Options;
+using VSRAD.Syntax.Options.Instructions;
 
 namespace VSRAD.Syntax.IntelliSense.Completion.Providers
 {
@@ -16,15 +16,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
     {
         private static readonly ImageElement Icon = GetImageElement(KnownImageIds.Assembly);
         private bool _autocomplete;
-        private readonly List<MultipleCompletionItem> _asm1InstructionCompletions;
-        private readonly List<MultipleCompletionItem> _asm2InstructionCompletions;
+        private readonly List<RadCompletionItem> _asm1InstructionCompletions;
+        private readonly List<RadCompletionItem> _asm2InstructionCompletions;
 
         public InstructionCompletionProvider(OptionsProvider optionsProvider, IInstructionListManager instructionListManager)
             : base(optionsProvider)
         {
             _autocomplete = optionsProvider.AutocompleteInstructions;
-            _asm1InstructionCompletions = new List<MultipleCompletionItem>();
-            _asm2InstructionCompletions = new List<MultipleCompletionItem>();
+            _asm1InstructionCompletions = new List<RadCompletionItem>();
+            _asm2InstructionCompletions = new List<RadCompletionItem>();
 
             instructionListManager.InstructionsUpdated += InstructionsUpdated;
             InstructionsUpdated(instructionListManager, AsmType.RadAsmCode);
@@ -76,15 +76,15 @@ namespace VSRAD.Syntax.IntelliSense.Completion.Providers
             }
         }
 
-        private static IEnumerable<MultipleCompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
+        private static IEnumerable<RadCompletionItem> GetInstructionCompletions(IInstructionListManager manager, AsmType asmType) =>
             manager.GetSelectedSetInstructions(asmType)
               .GroupBy(i => i.Text)
               .Select(g =>
               {
                   var instructionName = g.Key;
-                  var navigationList = g.SelectMany(i => i.Navigations).ToList();
-
-                  return new MultipleCompletionItem(instructionName, navigationList, Icon);
+                  var definitions = g.SelectMany(i => i.Navigations).ToList();
+                  var info = new IntelliSenseInfo(asmType, instructionName, Core.Tokens.RadAsmTokenType.Instruction, null, definitions, null);
+                  return new RadCompletionItem(info, Icon);
               });
     }
 }

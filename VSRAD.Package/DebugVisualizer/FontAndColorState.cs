@@ -6,11 +6,14 @@ namespace VSRAD.Package.DebugVisualizer
 {
     public sealed class FontAndColorState
     {
-        public Color[] HighlightForeground { get; }
-        public Color[] HighlightBackground { get; }
-        public bool[] HighlightBold { get; }
+        private static readonly DataHighlightColor[] _highlightColorVariants = (DataHighlightColor[])Enum.GetValues(typeof(DataHighlightColor));
+        private static readonly HeatmapColor[] _heatmapColorVariants = (HeatmapColor[])Enum.GetValues(typeof(HeatmapColor));
 
-        public Color[] HeatmapBackground { get; }
+        public Color[] HighlightForeground { get; } = new Color[_highlightColorVariants.Length];
+        public Color[] HighlightBackground { get; } = new Color[_highlightColorVariants.Length];
+        public bool[] HighlightBold { get; } = new bool[_highlightColorVariants.Length];
+
+        public Color[] HeatmapBackground { get; } = new Color[_heatmapColorVariants.Length];
 
         public Color HeaderForeground { get; }
         public Color HeaderBackground { get; }
@@ -29,21 +32,14 @@ namespace VSRAD.Package.DebugVisualizer
         {
             ThreadHelper.ThrowIfNotOnUIThread();
 
-            var highlightColors = (DataHighlightColor[])Enum.GetValues(typeof(DataHighlightColor));
-            HighlightForeground = new Color[highlightColors.Length];
-            HighlightBackground = new Color[highlightColors.Length];
-            HighlightBold = new bool[highlightColors.Length];
-            foreach (var color in highlightColors)
+            foreach (var color in _highlightColorVariants)
             {
                 var (fg, bg, bold) = provider.GetHighlightInfo(color);
                 HighlightForeground[(int)color] = fg;
                 HighlightBackground[(int)color] = bg;
                 HighlightBold[(int)color] = bold;
             }
-
-            var heatmapColors = (HeatmapColor[])Enum.GetValues(typeof(HeatmapColor));
-            HeatmapBackground = new Color[heatmapColors.Length];
-            foreach (var color in heatmapColors)
+            foreach (var color in _heatmapColorVariants)
             {
                 var (_, bg, _) = provider.GetInfo(color);
                 HeatmapBackground[(int)color] = bg;

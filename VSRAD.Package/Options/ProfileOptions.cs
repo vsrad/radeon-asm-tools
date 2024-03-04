@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using VSRAD.Package.ProjectSystem.Macros;
 using VSRAD.Package.Utils;
@@ -32,6 +33,18 @@ namespace VSRAD.Package.Options
                 Errors.ShowWarning($"An error has occurred while cloning the profile: {e.Message} Proceeding with new profile.");
             }
             return clonedProfile;
+        }
+
+        public bool ActionReadsDebugData(ActionProfileOptions action)
+        {
+            foreach (var step in action.Steps)
+            {
+                if (step is ReadDebugDataStep)
+                    return true;
+                if (step is RunActionStep runOther && Actions.FirstOrDefault(a => a.Name == runOther.Name) is ActionProfileOptions other && ActionReadsDebugData(other))
+                    return true;
+            }
+            return false;
         }
     }
 
@@ -108,6 +121,9 @@ namespace VSRAD.Package.Options
         private string _remoteWorkDir = "$(" + CleanProfileMacros.RemoteWorkDir + ")";
         public string RemoteWorkDir { get => _remoteWorkDir; set => SetField(ref _remoteWorkDir, value); }
 
+        private string _defaultTargetProcessor;
+        public string DefaultTargetProcessor { get => _defaultTargetProcessor; set => SetField(ref _defaultTargetProcessor, value); }
+
         public async Task<Result<GeneralProfileOptions>> EvaluateAsync(IMacroEvaluator evaluator)
         {
             var localDirResult = await evaluator.EvaluateAsync(LocalWorkDir);
@@ -122,7 +138,8 @@ namespace VSRAD.Package.Options
                 ProfileName = ProfileName,
                 RunActionsLocally = RunActionsLocally,
                 LocalWorkDir = evaluatedLocalDir,
-                RemoteWorkDir = evaluatedRemoteDir
+                RemoteWorkDir = evaluatedRemoteDir,
+                DefaultTargetProcessor = DefaultTargetProcessor
             };
         }
     }
@@ -145,30 +162,5 @@ namespace VSRAD.Package.Options
         public override int GetHashCode() => (RemoteMachine, Port).GetHashCode();
         public static bool operator ==(ServerConnectionOptions left, ServerConnectionOptions right) => left.Equals(right);
         public static bool operator !=(ServerConnectionOptions left, ServerConnectionOptions right) => !(left == right);
-    }
-
-    public readonly struct ActionEnvironment : IEquatable<ActionEnvironment>
-    {
-        public string LocalWorkDir { get; }
-        public string RemoteWorkDir { get; }
-        public ReadOnlyCollection<string> Watches { get; }
-
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir) :
-            this(localWorkDir, remoteWorkDir, new ReadOnlyCollection<string>(Array.Empty<string>()))
-        {
-        }
-
-        public ActionEnvironment(string localWorkDir, string remoteWorkDir, ReadOnlyCollection<string> watches)
-        {
-            LocalWorkDir = localWorkDir;
-            RemoteWorkDir = remoteWorkDir;
-            Watches = watches;
-        }
-
-        public bool Equals(ActionEnvironment o) => LocalWorkDir == o.LocalWorkDir && RemoteWorkDir == o.RemoteWorkDir;
-        public override bool Equals(object o) => o is ActionEnvironment env && Equals(env);
-        public override int GetHashCode() => (LocalWorkDir, RemoteWorkDir).GetHashCode();
-        public static bool operator ==(ActionEnvironment left, ActionEnvironment right) => left.Equals(right);
-        public static bool operator !=(ActionEnvironment left, ActionEnvironment right) => !(left == right);
     }
 }

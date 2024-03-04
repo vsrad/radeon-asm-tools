@@ -23,7 +23,7 @@ namespace VSRAD.Syntax.IntelliSense.Completion
         }
 
         public Task<ImmutableArray<CompletionItem>> SortCompletionListAsync(IAsyncCompletionSession session, AsyncCompletionSessionInitialDataSnapshot data, CancellationToken token) =>
-            Task.FromResult(data.InitialList.OrderBy(i => i.SortText).ToImmutableArray());
+            Task.FromResult(data.InitialList.Sort((a, b) => string.Compare(a.SortText, b.SortText, System.StringComparison.Ordinal)));
 
         public Task<FilteredCompletionModel> UpdateCompletionListAsync(IAsyncCompletionSession session, AsyncCompletionSessionDataSnapshot data, CancellationToken token) =>
             Task.FromResult(UpdateCompletionList(session, data, token));

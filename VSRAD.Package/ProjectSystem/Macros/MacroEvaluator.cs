@@ -2,7 +2,6 @@ using Microsoft.VisualStudio.ProjectSystem.Properties;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,17 +17,17 @@ namespace VSRAD.Package.ProjectSystem.Macros
         public string ActiveSourceFile { get; }
         public string ActiveSourceDir { get; }
         public uint ActiveSourceLine { get; }
-        public uint[] BreakLines { get; }
-        public ReadOnlyCollection<string> Watches { get; }
+        public string DebugStartupPath { get; }
+        public string TargetProcessor { get; }
 
-        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, uint[] breakLines, ReadOnlyCollection<string> watches, string sourceDir = null, string sourceFile = null)
+        public MacroEvaluatorTransientValues(uint sourceLine, string sourcePath, string debugPath = "", string targetProcessor = "", string sourceDir = null, string sourceFile = null)
         {
             ActiveSourceFullPath = sourcePath;
             ActiveSourceDir = sourceDir ?? Path.GetDirectoryName(sourcePath);
             ActiveSourceFile = sourceFile ?? Path.GetFileName(sourcePath);
             ActiveSourceLine = sourceLine;
-            BreakLines = breakLines;
-            Watches = watches;
+            DebugStartupPath = debugPath;
+            TargetProcessor = targetProcessor;
         }
     }
 
@@ -49,51 +48,14 @@ namespace VSRAD.Package.ProjectSystem.Macros
 
     public static class RadMacros
     {
-        public const string DeployDirectory = "RadDeployDir";
-
-        public const string DebuggerExecutable = "RadDebugExe";
-        public const string DebuggerArguments = "RadDebugArgs";
-        public const string DebuggerWorkingDirectory = "RadDebugWorkDir";
-        public const string DebuggerOutputPath = "RadDebugDataOutputPath";
-        public const string DebuggerValidWatchesFilePath = "RadDebugValidWatchesFilePath";
-
-        public const string DisassemblerExecutable = "RadDisasmExe";
-        public const string DisassemblerArguments = "RadDisasmArgs";
-        public const string DisassemblerWorkingDirectory = "RadDisasmWorkDir";
-        public const string DisassemblerOutputPath = "RadDisasmOutputPath";
-        public const string DisassemblerLocalPath = "RadDisasmLocalCopyPath";
-
-        public const string ProfilerExecutable = "RadProfileExe";
-        public const string ProfilerArguments = "RadProfileArgs";
-        public const string ProfilerWorkingDirectory = "RadProfileWorkDir";
-        public const string ProfilerOutputPath = "RadProfileOutputPath";
-        public const string ProfilerViewerExecutable = "RadProfileViewerExe";
-        public const string ProfilerViewerArguments = "RadProfileViewerArgs";
-        public const string ProfilerLocalPath = "RadProfileLocalCopyPath";
-
         public const string ActiveSourceFullPath = "RadActiveSourceFullPath";
         public const string ActiveSourceDir = "RadActiveSourceDir";
         public const string ActiveSourceFile = "RadActiveSourceFile";
         public const string ActiveSourceFileLine = "RadActiveSourceFileLine";
-        public const string Watches = "RadWatches";
-        public const string AWatches = "RadAWatches";
-        public const string BreakLine = "RadBreakLine";
         public const string DebugAppArgs = "RadDebugAppArgs";
         public const string DebugBreakArgs = "RadDebugBreakArgs";
-        public const string Counter = "RadCounter";
-        public const string NGroups = "RadNGroups";
-        public const string GroupSize = "RadGroupSize";
-
-        public const string BuildExecutable = "RadBuildExe";
-        public const string BuildArguments = "RadBuildArgs";
-        public const string BuildWorkingDirectory = "RadBuildWorkDir";
-
-        public const string PreprocessorExecutable = "RadPpExe";
-        public const string PreprocessorArguments = "RadPpArgs";
-        public const string PreprocessorWorkingDirectory = "RadPpDir";
-        public const string PreprocessorOutputPath = "RadPpOutputPath";
-        public const string PreprocessorLocalPath = "RadPpLocalCopyPath";
-        public const string PreprocessorLineMarker = "RadPpLineMarker";
+        public const string DebugStartupPath = "RadDebugStartupPath";
+        public const string TargetProcessor = "RadTargetProcessor";
     }
 
     public interface IMacroEvaluator
@@ -109,38 +71,26 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private static readonly Regex _macroRegex = new Regex(@"\$(ENVR?)?\(([^()]+)\)", RegexOptions.Compiled);
 
         private readonly IProjectProperties _projectProperties;
+        private readonly MacroEvaluatorTransientValues _transientValues;
         private readonly AsyncLazy<IReadOnlyDictionary<string, string>> _remoteEnvironment;
 
+        private readonly Options.DebuggerOptions _debuggerOptions;
         private readonly Options.ProfileOptions _profileOptions;
-        private readonly Dictionary<string, string> _macroCache;
+
+        private readonly Dictionary<string, string> _macroCache = new Dictionary<string, string>();
 
         public MacroEvaluator(
             IProjectProperties projectProperties,
-            MacroEvaluatorTransientValues values,
+            MacroEvaluatorTransientValues transientValues,
             AsyncLazy<IReadOnlyDictionary<string, string>> remoteEnvironment,
             Options.DebuggerOptions debuggerOptions,
             Options.ProfileOptions profileOptions)
         {
             _projectProperties = projectProperties;
+            _transientValues = transientValues;
             _remoteEnvironment = remoteEnvironment;
+            _debuggerOptions = debuggerOptions;
             _profileOptions = profileOptions;
-
-            // Predefined macros
-            _macroCache = new Dictionary<string, string>
-            {
-                { RadMacros.ActiveSourceFullPath, values.ActiveSourceFullPath },
-                { RadMacros.ActiveSourceDir, values.ActiveSourceDir },
-                { RadMacros.ActiveSourceFile, values.ActiveSourceFile },
-                { RadMacros.ActiveSourceFileLine, values.ActiveSourceLine.ToString() },
-                { RadMacros.Watches, string.Join(":", values.Watches) },
-                { RadMacros.AWatches, string.Join(":", debuggerOptions.GetAWatchSnapshot()) },
-                { RadMacros.BreakLine, string.Join(":", values.BreakLines ?? new[] { 0u }) },
-                { RadMacros.DebugAppArgs, debuggerOptions.AppArgs },
-                { RadMacros.DebugBreakArgs, debuggerOptions.BreakArgs },
-                { RadMacros.Counter, debuggerOptions.Counter.ToString() },
-                { RadMacros.NGroups, debuggerOptions.NGroups.ToString() },
-                { RadMacros.GroupSize, debuggerOptions.GroupSize.ToString() }
-            };
         }
 
         public Task<Result<string>> GetMacroValueAsync(string name) => GetMacroValueAsync(name, new List<string>());
@@ -157,25 +107,40 @@ namespace VSRAD.Package.ProjectSystem.Macros
             }
             evaluationChain.Add(name);
 
-            string unevaluated = null;
-            foreach (var macro in _profileOptions.Macros)
+            switch (name)
             {
-                if (macro.Name == name)
-                {
-                    unevaluated = macro.Value;
+                case RadMacros.ActiveSourceFullPath: value = _transientValues.ActiveSourceFullPath; break;
+                case RadMacros.ActiveSourceDir: value = _transientValues.ActiveSourceDir; break;
+                case RadMacros.ActiveSourceFile: value = _transientValues.ActiveSourceFile; break;
+                case RadMacros.ActiveSourceFileLine: value = _transientValues.ActiveSourceLine.ToString(); break;
+                case RadMacros.DebugAppArgs: value = _debuggerOptions.AppArgs; break;
+                case RadMacros.DebugBreakArgs: value = _debuggerOptions.BreakArgs; break;
+                case RadMacros.DebugStartupPath: value = _transientValues.DebugStartupPath; break;
+                case RadMacros.TargetProcessor:
+                    if (!(await EvaluateAsync(_transientValues.TargetProcessor, evaluationChain)).TryGetResult(out value, out var error))
+                        return error;
                     break;
-                }
-            }
-
-            if (unevaluated != null)
-            {
-                var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
-                if (!evalResult.TryGetResult(out value, out var error))
-                    return error;
-            }
-            else
-            {
-                value = await _projectProperties.GetEvaluatedPropertyValueAsync(name);
+                default:
+                    string unevaluated = null;
+                    foreach (var macro in _profileOptions.Macros)
+                    {
+                        if (macro.Name == name)
+                        {
+                            unevaluated = macro.Value;
+                            break;
+                        }
+                    }
+                    if (unevaluated != null)
+                    {
+                        var evalResult = await EvaluateAsync(unevaluated, evaluationChain);
+                        if (!evalResult.TryGetResult(out value, out error))
+                            return error;
+                    }
+                    else
+                    {
+                        value = await _projectProperties.GetEvaluatedPropertyValueAsync(name);
+                    }
+                    break;
             }
 
             _macroCache.Add(name, value);

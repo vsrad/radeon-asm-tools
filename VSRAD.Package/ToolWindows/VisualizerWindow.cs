@@ -15,7 +15,8 @@ namespace VSRAD.Package.ToolWindows
 
         protected override UIElement CreateToolControl(IToolWindowIntegration integration)
         {
-            _visualizerControl = new VisualizerControl(integration);
+            var fontAndColorProvider = new FontAndColorProvider();
+            _visualizerControl = new VisualizerControl(integration, fontAndColorProvider);
             return _visualizerControl;
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -313,7 +314,7 @@ namespace VSRAD.Package.ProjectSystem.Profiles
             var editButton = (Button)sender;
             var options = editButton.DataContext;
             var propertyName = (string)editButton.Tag;
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(() =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(() =>
                 MacroEditor.EditObjectPropertyAsync(options, propertyName));
         }
     }

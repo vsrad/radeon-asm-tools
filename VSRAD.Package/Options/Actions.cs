@@ -48,7 +48,10 @@ namespace VSRAD.Package.Options
             file.Location == StepEnvironment.Remote;
 
         public static Error EvaluationError(string action, string step, string description) =>
-            new Error(description, title: $"Action \"{action}\" could not be run due to a misconfigured {step} step");
+            new Error(description, title: $"{step} step failed in \"{action}\"");
+
+        public static Error NestedEvaluationError(string parentAction, Error childError) =>
+            new Error(childError.Message, title: childError.Title + " <- " + $"\"{parentAction}\"");
     }
 
     public sealed class CopyFileStep : DefaultNotifyPropertyChanged, IActionStep
@@ -106,10 +109,10 @@ namespace VSRAD.Package.Options
 
             var sourcePathResult = await evaluator.EvaluateAsync(SourcePath);
             if (!sourcePathResult.TryGetResult(out var evaluatedSourcePath, out var error))
-                return error;
+                return EvaluationError(sourceAction, "Copy File", error.Message);
             var targetPathResult = await evaluator.EvaluateAsync(TargetPath);
             if (!targetPathResult.TryGetResult(out var evaluatedTargetPath, out error))
-                return error;
+                return EvaluationError(sourceAction, "Copy File", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedSourcePath))
                 return EvaluationError(sourceAction, "Copy File", $"The specified source path (\"{SourcePath}\") evaluates to an empty string");
@@ -182,13 +185,13 @@ namespace VSRAD.Package.Options
 
             var executableResult = await evaluator.EvaluateAsync(Executable);
             if (!executableResult.TryGetResult(out var evaluatedExecutable, out var error))
-                return error;
+                return EvaluationError(sourceAction, "Execute", error.Message);
             var argumentsResult = await evaluator.EvaluateAsync(Arguments);
             if (!argumentsResult.TryGetResult(out var evaluatedArguments, out error))
-                return error;
+                return EvaluationError(sourceAction, "Execute", error.Message);
             var workdirResult = await evaluator.EvaluateAsync(WorkingDirectory);
             if (!workdirResult.TryGetResult(out var evaluatedWorkdir, out error))
-                return error;
+                return EvaluationError(sourceAction, "Execute", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedExecutable))
                 return EvaluationError(sourceAction, "Execute", $"The specified executable (\"{Executable}\") evaluates to an empty string");
@@ -233,7 +236,7 @@ namespace VSRAD.Package.Options
 
             var pathResult = await evaluator.EvaluateAsync(Path);
             if (!pathResult.TryGetResult(out var evaluatedPath, out var error))
-                return error;
+                return EvaluationError(sourceAction, "Open in Editor", error.Message);
 
             if (string.IsNullOrWhiteSpace(evaluatedPath))
                 return EvaluationError(sourceAction, "Open in Editor", $"The specified file path (\"{Path}\") evaluates to an empty string");
@@ -264,66 +267,68 @@ namespace VSRAD.Package.Options
 
         public override int GetHashCode() => 7;
 
-        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
-        {
-            var traversed = new List<string>() { sourceAction };
-            return EvaluateAsync(evaluator, profile, traversed);
-        }
+        public Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction) =>
+            EvaluateAsync(evaluator, profile, actionStack: new[] { sourceAction });
 
-        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, List<string> actionsTraversed)
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, IEnumerable<string> actionStack)
         {
             if (string.IsNullOrWhiteSpace(Name))
-            {
-                var message = "No action specified";
-                if (actionsTraversed.Count > 1)
-                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                return EvaluationError(actionsTraversed[0], "Run Action", message);
-            }
-            if (actionsTraversed.Contains(Name))
-            {
-                var t = string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\"")) + " -> \"" + Name + "\"";
-                return EvaluationError(actionsTraversed[0], "Run Action", "Encountered a circular dependency: " + t);
-            }
+                return EvaluationError(actionStack.Last(), "Run Action", "No action specified");
+            if (actionStack.Contains(Name))
+                return NestedEvaluationError(actionStack.Last(), EvaluationError(Name, "Run Action", "Circular dependency between actions"));
 
             var action = profile.Actions.FirstOrDefault(a => a.Name == Name);
             if (action == null)
-            {
-                var message = "Action \"" + Name + "\" is not found";
-                if (actionsTraversed.Count > 1)
-                    message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                return EvaluationError(actionsTraversed[0], "Run Action", message);
-            }
-
-            actionsTraversed.Add(Name);
+                return EvaluationError(actionStack.Last(), "Run Action", $"Action \"{Name}\" is not found");
 
             var evaluatedSteps = new List<IActionStep>();
             foreach (var step in action.Steps)
             {
-                IActionStep evaluated;
+                Result<IActionStep> evalResult;
                 if (step is RunActionStep runAction)
-                {
-                    var evalResult = await runAction.EvaluateAsync(evaluator, profile, actionsTraversed);
-                    if (!evalResult.TryGetResult(out evaluated, out var error))
-                        return error;
-                }
+                    evalResult = await runAction.EvaluateAsync(evaluator, profile, actionStack.Append(Name));
                 else
-                {
-                    var evalResult = await step.EvaluateAsync(evaluator, profile, actionsTraversed[0]);
-                    if (!evalResult.TryGetResult(out evaluated, out _))
-                    {
-                        var message = "Action \"" + Name + "\" is misconfigured";
-                        actionsTraversed.Remove(Name);
-                        if (actionsTraversed.Count > 1)
-                            message += ", required by " + string.Join(" -> ", actionsTraversed.Select(a => "\"" + a + "\""));
-                        return EvaluationError(actionsTraversed[0], "Run Action", message);
-                    }
-                }
+                    evalResult = await step.EvaluateAsync(evaluator, profile, Name);
+                if (!evalResult.TryGetResult(out var evaluated, out var error))
+                    return NestedEvaluationError(actionStack.Last(), error);
+
                 evaluatedSteps.Add(evaluated);
             }
-
-            actionsTraversed.RemoveAt(actionsTraversed.Count - 1);
-
             return new RunActionStep(evaluatedSteps) { Name = Name };
+        }
+    }
+
+    public sealed class WriteDebugTargetStep : DefaultNotifyPropertyChanged, IActionStep
+    {
+        private string _breakpointListPath = "";
+        public string BreakpointListPath { get => _breakpointListPath; set => SetField(ref _breakpointListPath, value); }
+
+        private string _watchListPath = "";
+        public string WatchListPath { get => _watchListPath; set => SetField(ref _watchListPath, value); }
+
+        public override string ToString() =>
+            string.IsNullOrWhiteSpace(BreakpointListPath) ? "Write Debug Target (Breakpoint List) (Watch List)" : $"Write Debug Target (Breakpoint List {BreakpointListPath}) (Watch List {WatchListPath})";
+
+        public override bool Equals(object obj) =>
+            obj is WriteDebugTargetStep step && BreakpointListPath == step.BreakpointListPath && WatchListPath == step.WatchListPath;
+
+        public override int GetHashCode() => 9;
+
+        public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
+        {
+            var breakpointsResult = await evaluator.EvaluateAsync(BreakpointListPath);
+            if (!breakpointsResult.TryGetResult(out var breakpointsPath, out var error))
+                return EvaluationError(sourceAction, "Write Debug Target", error.Message);
+            if (string.IsNullOrEmpty(breakpointsPath))
+                return EvaluationError(sourceAction, "Write Debug Target", "Breakpoint list path is not specified or evaluates to an empty string");
+
+            var watchesResult = await evaluator.EvaluateAsync(WatchListPath);
+            if (!watchesResult.TryGetResult(out var watchesPath, out error))
+                return EvaluationError(sourceAction, "Write Debug Target", error.Message);
+            if (string.IsNullOrEmpty(watchesPath))
+                return EvaluationError(sourceAction, "Write Debug Target", "Watch list path is not specified or evaluates to an empty string");
+
+            return new WriteDebugTargetStep { BreakpointListPath = breakpointsPath, WatchListPath = watchesPath };
         }
     }
 
@@ -344,15 +349,20 @@ namespace VSRAD.Package.Options
         private int _outputOffset = 0;
         public int OutputOffset { get => _outputOffset; set => SetField(ref _outputOffset, value); }
 
-        public ReadDebugDataStep() : this(new BuiltinActionFile(), new BuiltinActionFile(), new BuiltinActionFile(), binaryOutput: true, outputOffset: 0) { }
+        private uint? _checkMagicNumber = 0x77777777; // Default value, do not change
+        [JsonConverter(typeof(JsonMagicNumberConverter))]
+        public uint? CheckMagicNumber { get => _checkMagicNumber; set => SetField(ref _checkMagicNumber, value); }
 
-        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile dispatchParamsFile, bool binaryOutput, int outputOffset)
+        public ReadDebugDataStep() : this(new BuiltinActionFile(), new BuiltinActionFile(), new BuiltinActionFile(), binaryOutput: true, outputOffset: 0, magicNumber: null) { }
+
+        public ReadDebugDataStep(BuiltinActionFile outputFile, BuiltinActionFile watchesFile, BuiltinActionFile dispatchParamsFile, bool binaryOutput, int outputOffset, uint? magicNumber)
         {
             OutputFile = outputFile;
             WatchesFile = watchesFile;
             DispatchParamsFile = dispatchParamsFile;
             BinaryOutput = binaryOutput;
             OutputOffset = outputOffset;
+            CheckMagicNumber = magicNumber;
         }
 
         public async Task<Result<IActionStep>> EvaluateAsync(IMacroEvaluator evaluator, ProfileOptions profile, string sourceAction)
@@ -366,10 +376,14 @@ namespace VSRAD.Package.Options
             var watchesResult = await WatchesFile.EvaluateAsync(evaluator);
             if (!watchesResult.TryGetResult(out var watchesFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            if (string.IsNullOrEmpty(watchesFile.Path))
+                return EvaluationError(sourceAction, "Read Debug Data", "Valid watches path is not specified");
 
             var dispatchParamsResult = await DispatchParamsFile.EvaluateAsync(evaluator);
             if (!dispatchParamsResult.TryGetResult(out var dispatchParamsFile, out error))
                 return EvaluationError(sourceAction, "Read Debug Data", error.Message);
+            if (string.IsNullOrEmpty(dispatchParamsFile.Path))
+                return EvaluationError(sourceAction, "Read Debug Data", "Dispatch parameters path is not specified");
 
             if (profile.General.RunActionsLocally)
             {
@@ -378,7 +392,7 @@ namespace VSRAD.Package.Options
                 dispatchParamsFile.Location = StepEnvironment.Local;
             }
 
-            return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput,
+            return new ReadDebugDataStep(outputOffset: OutputOffset, binaryOutput: BinaryOutput, magicNumber: CheckMagicNumber,
                 outputFile: outputFile, watchesFile: watchesFile, dispatchParamsFile: dispatchParamsFile);
         }
 
@@ -391,7 +405,7 @@ namespace VSRAD.Package.Options
             return $"Read Debug Data {env} {OutputFile.Path}";
         }
 
-        public override int GetHashCode() => 9;
+        public override int GetHashCode() => 11;
 
         public override bool Equals(object obj) =>
             obj is ReadDebugDataStep step &&
@@ -399,7 +413,8 @@ namespace VSRAD.Package.Options
             WatchesFile.Equals(step.WatchesFile) &&
             DispatchParamsFile.Equals(step.DispatchParamsFile) &&
             BinaryOutput == step.BinaryOutput &&
-            OutputOffset == step.OutputOffset;
+            OutputOffset == step.OutputOffset &&
+            CheckMagicNumber == step.CheckMagicNumber;
     }
 
     public sealed class ActionStepJsonConverter : JsonConverter
@@ -430,6 +445,7 @@ namespace VSRAD.Package.Options
                 case "CopyFile": return new CopyFileStep();
                 case "OpenInEditor": return new OpenInEditorStep();
                 case "RunAction": return new RunActionStep();
+                case "WriteDebugTarget": return new WriteDebugTargetStep();
                 case "ReadDebugData": return new ReadDebugDataStep();
             }
             throw new ArgumentException($"Unknown step type identifer {type}", nameof(type));
@@ -443,6 +459,7 @@ namespace VSRAD.Package.Options
                 case CopyFileStep _: return "CopyFile";
                 case OpenInEditorStep _: return "OpenInEditor";
                 case RunActionStep _: return "RunAction";
+                case WriteDebugTargetStep _: return "WriteDebugTarget";
                 case ReadDebugDataStep _: return "ReadDebugData";
             }
             throw new ArgumentException($"Step type identifier is not defined for {step.GetType()}", nameof(step));

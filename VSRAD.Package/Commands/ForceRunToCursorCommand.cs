@@ -11,14 +11,14 @@ namespace VSRAD.Package.Commands
     [AppliesTo(Constants.RadOrVisualCProjectCapability)]
     internal sealed class ForceRunToCursorCommand : ICommandHandler
     {
-        private readonly IActiveCodeEditor _codeEditor;
+        private readonly IProjectSourceManager _projectSourceManager;
         private readonly IBreakpointTracker _breakpointTracker;
-        private readonly DebuggerIntegration _debuggerIntegration;
+        private readonly IDebuggerIntegration _debuggerIntegration;
 
         [ImportingConstructor]
-        public ForceRunToCursorCommand(IActiveCodeEditor codeEditor, IBreakpointTracker breakpointTracker, DebuggerIntegration debuggerIntegration)
+        public ForceRunToCursorCommand(IProjectSourceManager projectSourceManager, IBreakpointTracker breakpointTracker, IDebuggerIntegration debuggerIntegration)
         {
-            _codeEditor = codeEditor;
+            _projectSourceManager = projectSourceManager;
             _breakpointTracker = breakpointTracker;
             _debuggerIntegration = debuggerIntegration;
         }
@@ -37,9 +37,10 @@ namespace VSRAD.Package.Commands
             ThreadHelper.ThrowIfNotOnUIThread();
             if (commandId == Constants.MenuCommandId)
             {
-                var currentFile = _codeEditor.GetAbsoluteSourcePath();
-                var currentLine = _codeEditor.GetCurrentLine();
-                _breakpointTracker.SetRunToLine(currentFile, currentLine);
+                var activeEditor = _projectSourceManager.GetActiveEditorView();
+                var (currentFile, currentLine) = (activeEditor.GetFilePath(), activeEditor.GetCaretPos().Line);
+                var debugFile = _projectSourceManager.DebugStartupPath ?? currentFile;
+                _breakpointTracker.SetRunToLine(debugFile, currentFile, currentLine);
                 _debuggerIntegration.Execute(step: false);
             }
         }

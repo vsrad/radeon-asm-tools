@@ -19,6 +19,8 @@
     <TargetFrameworkProfile />
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -68,11 +70,9 @@
     <Compile Include="DebugVisualizer\ColumnSelectorTests.cs" />
     <Compile Include="DebugVisualizer\ColumnStylingTests.cs" />
     <Compile Include="DebugVisualizer\DataFormattingTests.cs" />
-    <Compile Include="DebugVisualizer\GroupIndexSelectorTests.cs" />
     <Compile Include="DebugVisualizer\ComputedColumnStylingTests.cs" />
-    <Compile Include="DebugVisualizer\WavemapTests.cs" />
+    <Compile Include="DebugVisualizer\VisualizerIntegrationTests.cs" />
     <Compile Include="MockCommunicationChannel.cs" />
-    <Compile Include="ProjectSystem\ActionLoggerTests.cs" />
     <Compile Include="ProjectSystem\DebuggerIntegrationTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEvaluatorTests.cs" />
     <Compile Include="ProjectSystem\Macros\MacroEditContextTests.cs" />
@@ -83,12 +83,16 @@
     <Compile Include="Server\ActionRunnerTests.cs" />
     <Compile Include="Server\BreakStateDispatchParametersTests.cs" />
     <Compile Include="Server\BreakStateTests.cs" />
+    <Compile Include="Server\BreakStateValidWatchesTests.cs" />
     <Compile Include="TestHelper.cs" />
     <Compile Include="Utils\ArrayRangeTests.cs" />
+    <Compile Include="Utils\FloatTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Fixtures\DebugBuffer.bin" />
+    <None Include="Fixtures\DebugBufferGen.pl" />
     <None Include="Key.snk" />
-    <None Include="ProjectSystem\Profiles\Fixtures\ConfigsTest.vcxproj.conf.json" />
+    <None Include="Fixtures\ConfigsTest.vcxproj.conf.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VSRAD.Deborgar\VSRAD.Deborgar.csproj">
@@ -96,11 +100,14 @@
       <Name>VSRAD.Deborgar</Name>
     </ProjectReference>
     <ProjectReference Include="..\VSRAD.Package\VSRAD.Package.csproj">
-      <Project>{7DDAD15C-AF23-4B42-8ADE-CD3BB23DF072}</Project>
+      <Project>{7ddad15c-af23-4b42-8ade-cd3bb23df072}</Project>
       <Name>VSRAD.Package</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Sdk.TestFramework">
+      <Version>16.5.22-beta</Version>
+    </PackageReference>
     <PackageReference Include="Moq">
       <Version>4.14.1</Version>
     </PackageReference>
@@ -148,7 +155,7 @@
       <Version>14.3.26929</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Threading">
-      <Version>16.5.132</Version>
+      <Version>16.6.13</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.VSSDK.BuildTools">
       <Version>16.5.2044</Version>
@@ -158,6 +165,11 @@
     <PackageReference Include="System.Composition">
       <Version>1.4.1</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Fixtures\DispatchParams.txt" />
+    <Content Include="Fixtures\ValidWatches.txt" />
+    <Content Include="Fixtures\Watches.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

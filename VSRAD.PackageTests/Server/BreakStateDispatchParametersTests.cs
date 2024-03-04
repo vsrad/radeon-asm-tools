@@ -21,9 +21,9 @@ comment -");
             Assert.Equal<uint>(8192, ps.GridSizeX);
             Assert.Equal<uint>(1, ps.GridSizeY);
             Assert.Equal<uint>(1, ps.GridSizeZ);
-            Assert.Equal<uint>(16, ps.DimX);
-            Assert.Equal<uint>(0, ps.DimY);
-            Assert.Equal<uint>(0, ps.DimZ);
+            Assert.Equal<uint>(16, ps.NumGroupsX);
+            Assert.Equal<uint>(0, ps.NumGroupsY);
+            Assert.Equal<uint>(0, ps.NumGroupsZ);
 
             paramsResult = BreakStateDispatchParameters.Parse(@"
 grid_size (8192, 2048, 256)
@@ -38,9 +38,9 @@ comment -");
             Assert.Equal<uint>(8192, ps.GridSizeX);
             Assert.Equal<uint>(2048, ps.GridSizeY);
             Assert.Equal<uint>(256, ps.GridSizeZ);
-            Assert.Equal<uint>(16, ps.DimX);
-            Assert.Equal<uint>(8, ps.DimY);
-            Assert.Equal<uint>(2, ps.DimZ);
+            Assert.Equal<uint>(16, ps.NumGroupsX);
+            Assert.Equal<uint>(8, ps.NumGroupsY);
+            Assert.Equal<uint>(2, ps.NumGroupsZ);
 
             paramsResult = BreakStateDispatchParameters.Parse(@"
 grid_size (8192, 2, 1)

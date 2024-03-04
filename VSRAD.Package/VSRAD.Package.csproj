@@ -36,7 +36,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;VS2019</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>
@@ -47,7 +47,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;VS2019</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>true</RunCodeAnalysis>
@@ -77,6 +77,7 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Reflection" />
@@ -135,13 +136,11 @@
     <Compile Include="BuildTools\Errors\Parser.cs" />
     <Compile Include="Commands\ActionsMenuCommand.cs" />
     <Compile Include="Commands\AddToWatchesCommand.cs" />
-    <Compile Include="Commands\BaseCommand.cs" />
-    <Compile Include="Commands\BaseRemoteCommand.cs" />
-    <Compile Include="Commands\BreakModeDropdownCommand.cs" />
+    <Compile Include="Commands\DebugMenuCommand.cs" />
     <Compile Include="Commands\CommandRouter.cs" />
+    <Compile Include="Commands\TargetProcessorDropdownCommand.cs" />
     <Compile Include="Commands\ProfileDropdownCommand.cs" />
     <Compile Include="Commands\ToolWindowCommand.cs" />
-    <Compile Include="Commands\EvaluateSelectedCommand.cs" />
     <Compile Include="Commands\ForceRunToCursorCommand.cs" />
     <Compile Include="Commands\AddToWatchesCustomSliceEditor.xaml.cs">
       <DependentUpon>AddToWatchesCustomSliceEditor.xaml</DependentUpon>
@@ -151,8 +150,6 @@
     <Compile Include="DebugVisualizer\FontAndColorState.cs" />
     <Compile Include="DebugVisualizer\ColumnSelector.cs" />
     <Compile Include="DebugVisualizer\ContentAlignment.cs" />
-    <Compile Include="DebugVisualizer\ContextMenus\ContextMenuController.cs" />
-    <Compile Include="DebugVisualizer\ContextMenus\IContextMenu.cs" />
     <Compile Include="DebugVisualizer\CustomTableGraphics.cs" />
     <Compile Include="DebugVisualizer\ScalingMode.cs" />
     <Compile Include="DebugVisualizer\FontAndColorService.cs" />
@@ -190,20 +187,19 @@
     <Compile Include="DebugVisualizer\VisualizerTableHost.cs" />
     <Compile Include="DebugVisualizer\Watch.cs" />
     <Compile Include="BuildTools\BuildToolsServer.cs" />
+    <Compile Include="DebugVisualizer\WatchNameColumn.cs" />
     <Compile Include="DebugVisualizer\Wavemap\WavemapOffsetInput.xaml.cs">
       <DependentUpon>WavemapOffsetInput.xaml</DependentUpon>
     </Compile>
     <Compile Include="DebugVisualizer\Wavemap\WavemapImage.cs" />
+    <Compile Include="DebugVisualizer\Wavemap\WavemapCell.cs" />
     <Compile Include="Options\Actions.cs" />
     <Compile Include="Options\BuiltinActionFile.cs" />
-    <Compile Include="DebugVisualizer\Wavemap\WavemapView.cs" />
-    <Compile Include="Options\DefaultOptionValues.cs" />
     <Compile Include="Options\MacroItem.cs" />
     <Compile Include="Options\SliceVisualizerOptions.cs" />
     <Compile Include="Options\VisualizerAppearance.cs" />
-    <Compile Include="ProjectSystem\ActionLauncher.cs" />
+    <Compile Include="ProjectSystem\ActionController.cs" />
     <Compile Include="ProjectSystem\ActionLogger.cs" />
-    <Compile Include="ProjectSystem\BreakpointIntegration.cs" />
     <Compile Include="ProjectSystem\BreakpointTracker.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphFactory.cs" />
     <Compile Include="ProjectSystem\EditorExtensions\BreakLineGlyphTagger.cs" />
@@ -222,9 +218,6 @@
       <DependentUpon>ExtendedTreeView.xaml</DependentUpon>
     </Compile>
     <Compile Include="ProjectSystem\Profiles\ProfileOptionsWindowContext.cs" />
-    <Compile Include="ProjectSystem\Profiles\TargetHostsEditor.xaml.cs">
-      <DependentUpon>TargetHostsEditor.xaml</DependentUpon>
-    </Compile>
     <Compile Include="ProjectSystem\ProjectItemPasteProcessor.cs" />
     <Compile Include="ProjectSystem\SolutionManager.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -232,36 +225,35 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="DebugVisualizer\ContextMenus\CopyContextMenu.cs" />
     <Compile Include="DebugVisualizer\MouseMove\PanOperation.cs" />
-    <Compile Include="DebugVisualizer\RowStyling.cs" />
     <Compile Include="DebugVisualizer\MouseMove\ScaleOperation.cs" />
-    <Compile Include="DebugVisualizer\ContextMenus\SubgroupContextMenu.cs" />
-    <Compile Include="DebugVisualizer\ContextMenus\TypeContextMenu.cs" />
     <Compile Include="Errors.cs" />
     <Compile Include="Server\ActionRunner.cs" />
     <Compile Include="Server\ActionRunResult.cs" />
-    <Compile Include="Server\BreakStateData.cs" />
     <Compile Include="Server\BreakStateDispatchParameters.cs" />
     <Compile Include="Server\BreakStateOutputFile.cs" />
-    <Compile Include="ToolWindows\EvaluateSelectedControl.xaml.cs">
-      <DependentUpon>EvaluateSelectedControl.xaml</DependentUpon>
+    <Compile Include="ToolWindows\FloatInspectorControl.xaml.cs">
+      <DependentUpon>FloatInspectorControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ToolWindows\EvaluateSelectedWindow.cs" />
+    <Compile Include="ToolWindows\FloatInspectorWindow.cs" />
     <Compile Include="ToolWindows\SliceVisualizerWindow.cs" />
     <Compile Include="Utils\ArrayRange.cs" />
-    <Compile Include="Utils\BreakModeConverter.cs" />
+    <Compile Include="Utils\MathUtils.cs" />
     <Compile Include="Utils\PinnableMruCollection.cs" />
     <Compile Include="Utils\CollectionExtensions.cs" />
     <Compile Include="Utils\MruCollection.cs" />
     <Compile Include="Utils\OleCommandText.cs" />
     <Compile Include="Utils\VsEditor.cs" />
+    <Compile Include="Utils\VsEditorView.cs" />
+    <Compile Include="Utils\VsInfoBar.cs" />
     <Compile Include="Utils\VsStatusBarWriter.cs" />
+    <Compile Include="Utils\WpfMruEditor.xaml.cs">
+      <DependentUpon>WpfMruEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Utils\WpfConverters.cs" />
     <Compile Include="Utils\MagicNumberConverter.cs" />
     <Compile Include="Options\ProfileOptions.cs" />
     <Compile Include="Options\ProjectOptions.cs" />
-    <Compile Include="ProjectSystem\ActiveCodeEditor.cs" />
     <Compile Include="ProjectSystem\Macros\DirtyProfileMacroEditor.cs" />
     <Compile Include="ProjectSystem\OutputWindow.cs" />
     <Compile Include="ProjectSystem\Profiles\ProfileNameWindow.xaml.cs">
@@ -296,8 +288,6 @@
     <Compile Include="ProjectTypeRegistration.cs" />
     <Compile Include="Options\VisualizerOptions.cs" />
     <Compile Include="ProjectProperties.cs" />
-    <Compile Include="ProjectSystem\EditorExtensions\EvaluateSelectedQuickInfoSource.cs" />
-    <Compile Include="ProjectSystem\EditorExtensions\QuickInfoEvaluateSelectedState.cs" />
     <Compile Include="ProjectSystem\Project.cs" />
     <Compile Include="Registry\ProvideDebugEngineAttribute.cs" />
     <Compile Include="Registry\ProvideDebugPortSupplierAttribute.cs" />
@@ -307,9 +297,10 @@
     <Compile Include="ToolWindows\VisualizerWindow.cs" />
     <Compile Include="Utils\DataFormatter.cs" />
     <Compile Include="Utils\NotifyPropertyChanged.cs" />
-    <Compile Include="Utils\Half.cs" />
+    <Compile Include="Utils\Float.cs" />
     <Compile Include="Utils\Result.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
+    <Compile Include="Utils\WpfDecorators.cs" />
     <Compile Include="Utils\WpfDelegateCommand.cs" />
     <Compile Include="VSLanguageInfo.cs" />
     <Compile Include="VSPackage.cs" />
@@ -411,10 +402,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DebugVisualizer\NumberInputStyle.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="DebugVisualizer\SliceVisualizer\SliceVisualizerControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -467,19 +454,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ProjectSystem\Profiles\TargetHostsEditor.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="ToolWindows\ControlStyle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ToolWindows\EvaluateSelectedControl.xaml">
+    <Page Include="ToolWindows\FloatInspectorControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\OptionsControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Utils\WpfMruEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

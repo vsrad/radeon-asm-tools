@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -18,7 +19,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
     {
         public MacroListDesignTimeCollection()
         {
-            Add(new MacroItem("RadBreakLine", "<next breakpoint line>", userDefined: false));
+            Add(new MacroItem("RadBreakLines", "<next breakpoint line>", userDefined: false));
             Add(new MacroItem("RadDeployDir", "/home/rad/deploy", userDefined: true));
             Add(new MacroItem("RadDebugOutputPath", "$(RadDeployDir)/out.bin", userDefined: true));
         }
@@ -45,13 +46,9 @@ namespace VSRAD.Package.ProjectSystem.Macros
             new MacroItem(RadMacros.ActiveSourceDir, "<current source dir name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFile, "<current source file name>", userDefined: false),
             new MacroItem(RadMacros.ActiveSourceFileLine, "<line number under the cursor>", userDefined: false),
-            new MacroItem(RadMacros.Watches, "<visualizer watches, colon-separated>", userDefined: false),
-            new MacroItem(RadMacros.BreakLine, "<next breakpoint line(s), colon-separated>", userDefined: false),
             new MacroItem(RadMacros.DebugAppArgs, "<app args, set in visualizer>", userDefined: false),
             new MacroItem(RadMacros.DebugBreakArgs, "<break args, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.Counter, "<counter, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.NGroups, "<ngroups, set in visualizer>", userDefined: false),
-            new MacroItem(RadMacros.GroupSize, "<group size, set in visualizer>", userDefined: false)
+            new MacroItem(RadMacros.TargetProcessor, "<target processor, set in toolbar>", userDefined: false)
         };
 
         public ICommand DeleteMacroCommand { get; }
@@ -154,7 +151,7 @@ namespace VSRAD.Package.ProjectSystem.Macros
         private void OpenMacroEditor(object param)
         {
             var item = (MacroItem)param;
-            VSPackage.TaskFactory.RunAsyncWithErrorHandling(async () =>
+            ThreadHelper.JoinableTaskFactory.RunAsyncWithErrorHandling(async () =>
                 item.Value = await MacroEditor.EditAsync(item.Name, item.Value));
         }
 

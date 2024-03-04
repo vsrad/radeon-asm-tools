@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.Shell;
 using VSRAD.Syntax.Core.Blocks;
 using VSRAD.Syntax.Core.Helper;
 using VSRAD.Syntax.Core.Tokens;
 using VSRAD.Syntax.Helpers;
+using VSRAD.Syntax.IntelliSense;
 using VSRAD.Syntax.Options.Instructions;
 using VSRAD.SyntaxParser;
 
@@ -22,15 +23,16 @@ namespace VSRAD.Syntax.Core.Parser
         {
             var serviceProvider = ServiceProvider.GlobalProvider;
             var documentFactory = serviceProvider.GetMefService<IDocumentFactory>();
+            var builtinInfoProvider = serviceProvider.GetMefService<IBuiltinInfoProvider>();
             var instructionListManager = serviceProvider.GetMefService<IInstructionListManager>();
 
-            return new Asm1Parser(documentFactory, instructionListManager);
+            return new Asm1Parser(documentFactory, builtinInfoProvider, instructionListManager);
         });
 
-        private Asm1Parser(IDocumentFactory documentFactory, IInstructionListManager instructionListManager) 
-            : base(documentFactory, instructionListManager, AsmType.RadAsm) { }
+        private Asm1Parser(IDocumentFactory documentFactory, IBuiltinInfoProvider builtinInfoProvider, IInstructionListManager instructionListManager)
+            : base(documentFactory, builtinInfoProvider, instructionListManager, AsmType.RadAsm) { }
 
-        public override Task<IParserResult> RunAsync(IDocument document, ITextSnapshot version,
+        public override Task<ParserResult> RunAsync(IDocument document, ITextSnapshot version,
             ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             try
@@ -45,7 +47,7 @@ namespace VSRAD.Syntax.Core.Parser
             }
         }
 
-        private async Task<IParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
+        private async Task<ParserResult> ParseAsync(IDocument document, ITextSnapshot version, ITokenizerCollection<TrackingToken> trackingTokens, CancellationToken cancellation)
         {
             var tokens = trackingTokens
                 .Where(t => t.Type != RadAsm1Lexer.WHITESPACE && t.Type != RadAsm1Lexer.LINE_COMMENT)
@@ -181,9 +183,7 @@ namespace VSRAD.Syntax.Core.Parser
                     {
                         if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.IDENTIFIER)
                         {
-                            var variableDefinition = (tokens.Length - i > 3 && tokens[i + 2].Type == RadAsm1Lexer.COMMA && tokens[i + 3].Type == RadAsm1Lexer.CONSTANT)
-                                ? new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version, tokens[i + 3])
-                                : new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
+                            var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, tokens[i + 1], version);
                             definitionContainer.Add(currentBlock, variableDefinition);
                             currentBlock.AddToken(variableDefinition);
                         }
@@ -196,7 +196,7 @@ namespace VSRAD.Syntax.Core.Parser
                         {
                             if (tokens.Length - i > 1 && tokens[i + 1].Type == RadAsm1Lexer.EQ)
                             {
-                                var variableDefinition = new VariableToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
+                                var variableDefinition = new DefinitionToken(currentBlock.Type == BlockType.Root ? RadAsmTokenType.GlobalVariable : RadAsmTokenType.LocalVariable, token, version);
                                 definitionContainer.Add(currentBlock, variableDefinition);
                                 currentBlock.AddToken(variableDefinition);
                             }

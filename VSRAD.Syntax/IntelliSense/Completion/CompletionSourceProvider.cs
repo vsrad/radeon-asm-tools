@@ -17,16 +17,17 @@ namespace VSRAD.Syntax.IntelliSense.Completion
     internal class CompletionSourceProvider : IAsyncCompletionSourceProvider
     {
         private readonly OptionsProvider _optionsEventProvider;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly IDocumentFactory _documentFactory;
         private readonly IReadOnlyList<RadCompletionProvider> _providers;
 
         [ImportingConstructor]
         public CompletionSourceProvider(OptionsProvider optionsEventProvider,
+            IBuiltinInfoProvider builtinInfoProvider,
             IInstructionListManager instructionListManager,
-            IIntellisenseDescriptionBuilder descriptionBuilder,
+            IIntelliSenseDescriptionBuilder descriptionBuilder,
             IDocumentFactory documentFactory, 
-            INavigationTokenService navigationTokenService)
+            IIntelliSenseService intelliSenseService)
         {
             _optionsEventProvider = optionsEventProvider;
             _descriptionBuilder = descriptionBuilder;
@@ -35,8 +36,9 @@ namespace VSRAD.Syntax.IntelliSense.Completion
             _providers = new List<RadCompletionProvider>()
             {
                 new InstructionCompletionProvider(optionsEventProvider, instructionListManager),
-                new FunctionCompletionProvider(optionsEventProvider, navigationTokenService),
-                new ScopedCompletionProvider(optionsEventProvider, navigationTokenService),
+                new FunctionCompletionProvider(optionsEventProvider, intelliSenseService),
+                new ScopedCompletionProvider(optionsEventProvider, intelliSenseService),
+                new BuiltinCompletionProvider(optionsEventProvider, builtinInfoProvider)
             };
         }
 

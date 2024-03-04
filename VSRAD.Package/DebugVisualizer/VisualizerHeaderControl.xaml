@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:VSRAD.Package.DebugVisualizer"
-             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:platformui="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:wavemap="clr-namespace:VSRAD.Package.DebugVisualizer.Wavemap"
              xmlns:utils="clr-namespace:VSRAD.Package.Utils"
              mc:Ignorable="d"
@@ -13,7 +13,6 @@
     <UserControl.ContextMenu>
         <ContextMenu>
             <MenuItem Header="Show hidden system variable" IsChecked="{Binding Options.VisualizerOptions.ShowSystemVariable, Mode=TwoWay}" IsCheckable="True"/>
-            <MenuItem Header="Manual override dispatch" IsChecked="{Binding Options.VisualizerOptions.ManualMode, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem Header="3D NDRange" IsChecked="{Binding Options.VisualizerOptions.NDRange3D, Mode=TwoWay}" IsCheckable="True"/>
             <MenuItem IsEnabled="False" Header="Show:"/>
             <MenuItem Header="Columns" IsChecked="{Binding Options.VisualizerOptions.ShowColumnsField, Mode=TwoWay}" IsCheckable="True"/>
@@ -24,6 +23,9 @@
     </UserControl.ContextMenu>
     <UserControl.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../ToolWindows/ControlStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
             <utils:WpfBoolToStringConverter x:Key="PinnedButtonRotConverter" TrueValue="-45" FalseValue="0" />
             <utils:WpfBoolToStringConverter x:Key="PinnedButtonTrXConverter" TrueValue="-3" FalseValue="0" />
@@ -46,29 +48,47 @@
                     </Grid.ColumnDefinitions>
                     <Border x:Name="Border"
                             CornerRadius="0"
-                            Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"
+                            Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderBrushKey}}"
                             BorderThickness="1" />
                     <Path x:Name="Arrow"
                           Grid.Column="0"
-                          Fill="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                          Fill="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextBrushKey}}"
                           HorizontalAlignment="Center"
                           VerticalAlignment="Center"
                           Data="M0,0 L0,2 L4,6 L8,2 L8,0 L4,4 z"/>
                 </Grid>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True">
+                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundFocusedBrushKey}}" />
+                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderFocusedBrushKey}}" />
+                        <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextFocusedBrushKey}}" />
+                    </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="Border" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundFocusedBrushKey}}" />
+                        <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderFocusedBrushKey}}" />
+                        <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextFocusedBrushKey}}" />
+                    </Trigger>
+                </ControlTemplate.Triggers>
             </ControlTemplate>
 
             <ControlTemplate TargetType="{x:Type ComboBoxItem}" x:Key="ComboBoxItemTemplate">
-                <StackPanel Orientation="Horizontal" x:Name="SP"
-                                Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
-                    <Button Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}" x:Name="PinButton"
-                            Width="22" Height="22"
+                <Grid x:Name="Grid" Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="20"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="24"/>
+                    </Grid.ColumnDefinitions>
+                    <Label x:Name="Text" Grid.Column="1" Content="{Binding Value}" Padding="0,2" VerticalContentAlignment="Center"
+                           Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextBrushKey}}"/>
+                    <Button x:Name="PinButton" Grid.Column="2" Width="24" Height="24"
                             Command="{Binding PinnedButtonCommand, ElementName=Root}" CommandParameter="{Binding}"
-                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                            RenderTransformOrigin="0.5 0.5" BorderThickness="0">
+                            Background="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonBrushKey}}"
+                            Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonTextBrushKey}}"
+                            BorderThickness="0" RenderTransformOrigin="0.5 0.5">
                         <Button.Content>
                             <TextBlock>
-                                📌
+                            📌
                                 <TextBlock.RenderTransform>
                                     <TransformGroup>
                                         <RotateTransform Angle="{Binding Pinned, Converter={StaticResource PinnedButtonRotConverter}}"/>
@@ -79,23 +99,19 @@
                             </TextBlock>
                         </Button.Content>
                     </Button>
-                    <Label  Content="{Binding Value}" x:Name="CL" Padding="4,2" VerticalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-                </StackPanel>
+                </Grid>
                 <ControlTemplate.Triggers>
                     <Trigger SourceName="PinButton" Property="IsMouseOver" Value="True">
-                        <Setter TargetName="PinButton" Property="Foreground" Value="Black"/>
-                        <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowButtonHoverActiveKey}}"/>
+                        <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverBrushKey}}"/>
+                        <Setter TargetName="PinButton" Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonHoverTextBrushKey}}"/>
                     </Trigger>
-                    <Trigger Property="IsHighlighted" Value="True">
-                        <Setter TargetName="SP" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-                        <Setter TargetName="CL" Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
-                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                    <Trigger SourceName="PinButton" Property="IsPressed" Value="True">
+                        <Setter TargetName="PinButton" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedBrushKey}}" />
+                        <Setter TargetName="PinButton" Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ButtonPressedTextBrushKey}}" />
                     </Trigger>
-                    <Trigger Property="IsEnabled" Value="False">
-                        <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                    <Trigger Property="IsMouseOver" Value="True">
+                        <Setter TargetName="Grid" Property="Background" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemBackgroundHoverBrushKey}}" />
+                        <Setter Property="Foreground" Value="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListItemTextHoverBrushKey}}" />
                     </Trigger>
                 </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -118,10 +134,10 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="{x:Type ComboBox}">
-                            <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}" BorderThickness="1" x:Name="Brd">
-                                <Grid x:Name="ComboGrid">
+                            <Border BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBorderBrushKey}}" BorderThickness="1" x:Name="Brd">
+                                <Grid x:Name="ComboGrid" Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="22"/>
+                                        <ColumnDefinition Width="20"/>
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
                                     <ToggleButton Name="ToggleButton"
@@ -145,10 +161,10 @@
                                              VerticalAlignment="Center"
                                              VerticalContentAlignment="Center"
                                              Grid.Column="1"
-                                             Margin="0,0,0,0"
+                                             Margin="1,0,0,0"
                                              Focusable="True"
-                                             Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                                             Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                             Background="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxBackgroundBrushKey}}"
+                                             Foreground="{DynamicResource {x:Static platformui:CommonControlsColors.TextBoxTextBrushKey}}"
                                              IsReadOnly="{TemplateBinding IsReadOnly}"/>
                                     <Popup Name="Popup"
                                            Placement="Bottom"
@@ -161,9 +177,8 @@
                                               MinWidth="{TemplateBinding ActualWidth}"
                                               MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                             <Border x:Name="DropDownBorder"
-                                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                                     BorderThickness="1"
-                                                    BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                                                    BorderBrush="{DynamicResource {x:Static platformui:CommonControlsColors.ComboBoxListBorderBrushKey}}"/>
                                             <ScrollViewer Margin="2,4" SnapsToDevicePixels="True">
                                                 <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained" />
                                             </ScrollViewer>
@@ -204,17 +219,17 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <StackPanel>
-        <StackPanel.Style>
-            <Style TargetType="StackPanel">
-                <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
-            </Style>
-        </StackPanel.Style>
         <WrapPanel>
-            <Label Content="Counter:" Height="26" Width="68" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}"
+            <Label Content="Counter:" Height="26" Width="75"/>
+            <local:NumberInput Value="{Binding Options.DebuggerOptions.Counter, UpdateSourceTrigger=PropertyChanged}" Minimum="1"
                                Width="60" Height="24" />
+            <StackPanel Orientation="Horizontal" Height="24">
+                <CheckBox  Margin="6,0,6,0" Padding="-4,-1,0,0" IsChecked="{Binding Options.DebuggerOptions.StopOnHit}" VerticalContentAlignment="Center" UseLayoutRounding="False">
+                    <Label Content="Stop on hit"/>
+                </CheckBox>
+            </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <Label Content="Group #:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                <Label Content="Group #:" Height="26"/>
                 <local:NumberInput Value="{Binding GroupIndex.X, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumX, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRangeInput}"/>
                 <local:NumberInput Value="{Binding GroupIndex.Y, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumY, Mode=TwoWay}"
@@ -222,38 +237,13 @@
                 <local:NumberInput Value="{Binding GroupIndex.Z, UpdateSourceTrigger=PropertyChanged}" Maximum="{Binding GroupIndex.MaximumZ, Mode=TwoWay}"
                                    Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Groups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                       Visibility="{Binding Options.VisualizerOptions.NDRange3D, Converter={StaticResource BoolToVisibility}}"/>
-                <local:NumberInput Value="{Binding GroupIndex.DimX, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding GroupIndex.DimY, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-                <local:NumberInput Value="{Binding GroupIndex.DimZ, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Width="38" Height="24" Margin="6,0,0,0" Style="{StaticResource NDRange3DInput}"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Group size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.DebuggerOptions.GroupSize, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Step="64" Width="38" Height="24"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Visibility="{Binding Options.VisualizerOptions.ManualMode, Converter={StaticResource BoolToVisibility}}">
-                <Label Content="Wave size:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput IsEnabled="{Binding GroupIndexEditable}" Value="{Binding Options.DebuggerOptions.WaveSize, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="1" Step="32" Width="38" Height="24"/>
-            </StackPanel>
-            <!--
-            <StackPanel Orientation="Horizontal">
-                <Label Content="NGroups:" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                <local:NumberInput Value="{Binding Options.DebuggerOptions.NGroups, UpdateSourceTrigger=PropertyChanged}"
-                                   Minimum="0" Step="1" Width="38" Height="24"/>
-            </StackPanel>
-            -->
-            <Label Content="{Binding Status, Mode=OneWay}" Height="26" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Height="26">
+                <TextBlock Text="{Binding Status, Mode=OneWay}"/>
+            </Label>
         </WrapPanel>
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="68"/>
+                <ColumnDefinition Width="75"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
@@ -306,34 +296,23 @@
                     </RowDefinition.Style>
                 </RowDefinition>
             </Grid.RowDefinitions>
-            <Label Grid.Row="0" Grid.Column="0" Content="Columns:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <Label Grid.Row="1" Grid.Column="0" Content="App args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <Label Grid.Row="2" Grid.Column="0" Content="Break args:" Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+            <Label Grid.Row="0" Grid.Column="0" Content="Columns:"/>
+            <Label Grid.Row="1" Grid.Column="0" Content="App args:"/>
+            <Label Grid.Row="2" Grid.Column="0" Content="Break args:"/>
             <TextBox Text="{Binding Options.VisualizerColumnStyling.VisibleColumns, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
-                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
+                     Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center" />
             <ComboBox Text="{Binding Options.DebuggerOptions.AppArgs, UpdateSourceTrigger=PropertyChanged}"
                       IsEditable="True" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
                       ItemsSource="{Binding Options.DebuggerOptions.LastAppArgs, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"
                       DisplayMemberPath="Value" x:Name="LastAppArgsCombo" Grid.Row="1" IsTextSearchEnabled="False"/>
             <TextBox Text="{Binding Options.DebuggerOptions.BreakArgs, UpdateSourceTrigger=PropertyChanged}"
-                     Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center"
-                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBorderKey}}"/>
-            <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" HorizontalAlignment="Stretch">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="85"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <wavemap:WavemapOffsetInput HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
-                                            Grid.Column="0" Grid.Row="0" Margin="5,5,5,5"/>
-                <Border Grid.Column="1" Grid.Row="0" HorizontalAlignment="Stretch" BorderBrush="{x:Null}" Margin="4">
-                    <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0" Stretch="None"/>
-                </Border>
-            </Grid>
+                     Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center" />
+
+            <wavemap:WavemapOffsetInput HorizontalAlignment="Stretch" VerticalAlignment="Center" x:Name="WavemapSelector"
+                                        Grid.Row="3" Grid.Column="0" Margin="5,5,5,5"/>
+            <Border Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch" BorderBrush="{x:Null}" Margin="0,4">
+                <Image x:Name="WavemapImage" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0" Stretch="None"/>
+            </Border>
         </Grid>
     </StackPanel>
 </UserControl>

@@ -7,16 +7,16 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
 {
     internal class QuickInfoSource : IAsyncQuickInfoSource
     {
-        private readonly INavigationTokenService _navigationTokenService;
-        private readonly IIntellisenseDescriptionBuilder _descriptionBuilder;
+        private readonly IIntelliSenseService _intelliSenseService;
+        private readonly IIntelliSenseDescriptionBuilder _descriptionBuilder;
         private readonly ITextBuffer _textBuffer;
 
-        public QuickInfoSource(ITextBuffer textBuffer, 
-            INavigationTokenService navigationTokenService, 
-            IIntellisenseDescriptionBuilder descriptionBuilder)
+        public QuickInfoSource(ITextBuffer textBuffer,
+            IIntelliSenseService intelliSenseService,
+            IIntelliSenseDescriptionBuilder descriptionBuilder)
         {
             _textBuffer = textBuffer;
-            _navigationTokenService = navigationTokenService;
+            _intelliSenseService = intelliSenseService;
             _descriptionBuilder = descriptionBuilder;
         }
 
@@ -26,15 +26,13 @@ namespace VSRAD.Syntax.IntelliSense.QuickInfo
             var triggerPoint = session.GetTriggerPoint(snapshot);
             if (!triggerPoint.HasValue) return null;
 
-            var navigationsResult = await _navigationTokenService.GetNavigationsAsync(triggerPoint.Value);
-            if (navigationsResult == null) return null;
+            var intelliSenseToken = await _intelliSenseService.GetIntelliSenseInfoAsync(triggerPoint.Value);
+            if (intelliSenseToken == null || !intelliSenseToken.SymbolSpan.HasValue) return null;
 
-            var dataElement = await _descriptionBuilder.GetColorizedDescriptionAsync(navigationsResult.Values, cancellationToken);
+            var dataElement = await _descriptionBuilder.GetDescriptionAsync(intelliSenseToken, cancellationToken);
             if (dataElement == null) return null;
 
-            var tokenSpan = navigationsResult.ApplicableToken.Span;
-            var applicableSpan = snapshot.CreateTrackingSpan(tokenSpan, SpanTrackingMode.EdgeInclusive);
-
+            var applicableSpan = snapshot.CreateTrackingSpan(intelliSenseToken.SymbolSpan.Value, SpanTrackingMode.EdgeInclusive);
             return new QuickInfoItem(applicableSpan, dataElement);
         }
 

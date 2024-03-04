@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using VSRAD.Package.Properties;
 
@@ -23,21 +22,24 @@ namespace VSRAD.Package.DebugVisualizer.MouseMove
 
         public bool AppliesOnMouseDown(MouseEventArgs e, DataGridView.HitTestInfo hit)
         {
-            if (e.Button != MouseButtons.Left) return false;
+            if (e.Button != MouseButtons.Left || hit.ColumnIndex == VisualizerTable.NameColumnIndex)
+                return false;
+
             if (_state.ScalingMode == ScalingMode.ResizeQuad)
             {
                 float f = _state.GetNormalizedXCoordinate(e.X);
                 if (f <= 0.25 || f >= 0.75)
                     return false;
             }
-            else if(_state.ScalingMode == ScalingMode.ResizeHalf)
+            else if (_state.ScalingMode == ScalingMode.ResizeHalf)
             {
-                if (hit.Type != DataGridViewHitTestType.Cell) return false;
+                if (hit.Type != DataGridViewHitTestType.Cell)
+                    return false;
             }
             else
             {
-                if (hit.RowIndex == -1) return false;
-                if (hit.ColumnIndex < VisualizerTable.DataColumnOffset && hit.ColumnIndex != VisualizerTable.PhantomColumnIndex) return false;
+                if (hit.RowIndex == -1 || hit.ColumnIndex == -1)
+                    return false;
             }
 
             _lastX = Cursor.Position.X;

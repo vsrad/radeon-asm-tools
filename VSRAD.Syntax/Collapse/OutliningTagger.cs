@@ -25,7 +25,7 @@ namespace VSRAD.Syntax.Collapse
 
             _documentAnalysis.AnalysisUpdated += AnalysisUpdated;
             if (_documentAnalysis.CurrentResult != null) 
-                AnalysisUpdated(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, CancellationToken.None);
+                AnalysisUpdated(_documentAnalysis.CurrentResult, RescanReason.ContentChanged, document.DocumentTokenizer.CurrentResult.UpdatedTokenSpan, CancellationToken.None);
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
@@ -53,7 +53,7 @@ namespace VSRAD.Syntax.Collapse
             }
         }
 
-        private void AnalysisUpdated(IAnalysisResult analysisResult, RescanReason reason, CancellationToken cancellationToken)
+        private void AnalysisUpdated(AnalysisResult analysisResult, RescanReason reason, Span updatedTokenSpan, CancellationToken cancellationToken)
         {
             if (reason == RescanReason.ContentChanged)
                 ThreadHelper.JoinableTaskFactory.RunAsync(() => UpdateTagSpansAsync(analysisResult.Snapshot, analysisResult.Scopes, cancellationToken));

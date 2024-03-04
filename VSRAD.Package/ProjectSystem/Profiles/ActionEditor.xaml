@@ -29,6 +29,7 @@
         </ObjectDataProvider>
         <local:ActionEditorStepDescriptionConverter x:Key="StepDescriptionConverter"/>
         <local:ActionEditorIfNotModifiedConverter x:Key="IfNotModifiedConverter"/>
+        <utils:WpfMagicNumberConverter x:Key="MagicNumberConverter"/>
         <utils:WpfBoolToIndexConverter x:Key="BoolToIndexConverter"/>
         <utils:WpfInverseBoolConverter x:Key="InverseBoolConverter"/>
         <utils:WpfBoolToVisibilityConverter x:Key="VisibleWhenTrueConverter" TrueValue="Visible" FalseValue="Collapsed" />
@@ -60,6 +61,7 @@
                 <MenuItem Header="Copy File/Directory" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:CopyFileStep}" />
                 <MenuItem Header="Open in Editor" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:OpenInEditorStep}" />
                 <MenuItem Header="Run Action" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:RunActionStep}" />
+                <MenuItem Header="Write Debug Target" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:WriteDebugTargetStep}" />
                 <MenuItem Header="Read Debug Data" Height="22" Command="{Binding AddCommand}" CommandParameter="{x:Type opts:ReadDebugDataStep}" />
             </Menu>
         </Popup>
@@ -283,6 +285,28 @@
                                       SelectedItem="{Binding Name, Mode=TwoWay}" Height="22" Width="160" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
                         </Grid>
                     </DataTemplate>
+                    <DataTemplate DataType="{x:Type opts:WriteDebugTargetStep}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="173"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="34"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
+                                <RowDefinition Height="26"/>
+                            </Grid.RowDefinitions>
+                            <Label Content="Breakpoint List Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="0" Grid.Column="0"/>
+                            <TextBox Text="{Binding BreakpointListPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="1" />
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="0" Grid.Column="2"
+                                    Tag="BreakpointListPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+
+                            <Label Content="Watch List Path:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="1" Grid.Column="0"/>
+                            <TextBox Text="{Binding WatchListPath, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="1" />
+                            <Button Content="Edit" VerticalContentAlignment="Center" Height="22" Grid.Row="1" Grid.Column="2"
+                                    Tag="WatchListPath" Command="{Binding DataContext.RichEditCommand, ElementName=Root}" CommandParameter="{Binding RelativeSource={RelativeSource Self}}"/>
+                        </Grid>
+                    </DataTemplate>
                     <DataTemplate DataType="{x:Type opts:ReadDebugDataStep}">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -291,6 +315,7 @@
                                 <ColumnDefinition Width="34"/>
                             </Grid.ColumnDefinitions>
                             <Grid.RowDefinitions>
+                                <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="26"/>
                                 <RowDefinition Height="Auto"/>
@@ -311,20 +336,25 @@
                                      ToolTip="How many values should be skipped at the start of the file (in bytes for binary output mode, in lines for text output mode)"
                                      Height="22" Width="160" Grid.Row="1" Grid.Column="1"/>
 
+                            <Label Content="Wave Hit Magic Number:" VerticalContentAlignment="Center" Padding="4,0" Height="22" Grid.Row="2" Grid.Column="0"/>
+                            <TextBox Text="{Binding CheckMagicNumber, Converter={StaticResource MagicNumberConverter}, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="The value expected to be found in the first lane of a wave that has hit a breakpoint"
+                                     VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="22" Width="160" Grid.Row="2" Grid.Column="1"/>
+
                             <local:BuiltinActionFileEditor DataContext="{Binding OutputFile}"
                                                            MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
                                                            CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Output" Grid.Row="2" Grid.ColumnSpan="3" />
+                                                           Header="Output" Grid.Row="3" Grid.ColumnSpan="3" />
 
                             <local:BuiltinActionFileEditor DataContext="{Binding WatchesFile}"
                                                            MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
                                                            CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Watches" Grid.Row="3" Grid.ColumnSpan="3" />
+                                                           Header="Watches" Grid.Row="4" Grid.ColumnSpan="3" />
 
                             <local:BuiltinActionFileEditor DataContext="{Binding DispatchParamsFile}"
                                                            MacroEditor="{Binding DataContext.MacroEditor, ElementName=Root}"
                                                            CurrentProfile="{Binding DataContext.CurrentProfile, ElementName=Root}"
-                                                           Header="Dispatch Params" Grid.Row="4" Grid.ColumnSpan="3" />
+                                                           Header="Dispatch Params" Grid.Row="5" Grid.ColumnSpan="3" />
                         </Grid>
                     </DataTemplate>
                 </ContentControl.Resources>
