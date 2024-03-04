@@ -47,8 +47,7 @@ namespace VSRAD.DebugServer
                     try
                     {
                         var (command, bytesReceived) = await tcpClient.GetStream().ReadSerializedCommandAsync<ICommand>().ConfigureAwait(false);
-                        if (command != null)
-                            clientLog.CommandReceived(command, bytesReceived);
+                        clientLog.CommandReceived(command, bytesReceived);
 
                         await _commandExecutionLock.WaitAsync();
                         lockAcquired = true;

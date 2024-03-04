@@ -13,7 +13,7 @@ namespace VSRAD.DebugServer
         {
             byte[] messageLengthBytes = new byte[4];
             if (await stream.ReadAsync(messageLengthBytes, 0, 4).ConfigureAwait(false) != 4)
-                return default;
+                throw new EndOfStreamException();
 
             int messageLength = BitConverter.ToInt32(messageLengthBytes, 0);
             byte[] messageBytes = new byte[messageLength];
@@ -24,7 +24,7 @@ namespace VSRAD.DebugServer
                 var received = await stream.ReadAsync(messageBytes, buffered, messageLength - buffered).ConfigureAwait(false);
                 buffered += received;
                 if (buffered != messageLength && received == 0)
-                    return default;
+                    throw new EndOfStreamException();
             }
             using (var memStream = new MemoryStream(messageBytes))
             using (var reader = new IPCReader(memStream))
@@ -35,7 +35,7 @@ namespace VSRAD.DebugServer
         {
             byte[] messageLengthBytes = new byte[4];
             if (await stream.ReadAsync(messageLengthBytes, 0, 4).ConfigureAwait(false) != 4)
-                return default;
+                throw new EndOfStreamException();
 
             int messageLength = BitConverter.ToInt32(messageLengthBytes, 0);
             byte[] messageBytes = new byte[messageLength];
@@ -46,7 +46,7 @@ namespace VSRAD.DebugServer
                 var received = await stream.ReadAsync(messageBytes, buffered, messageLength - buffered).ConfigureAwait(false);
                 buffered += received;
                 if (buffered != messageLength && received == 0)
-                    return default;
+                    throw new EndOfStreamException();
             }
             using (var memStream = new MemoryStream(messageBytes))
             using (var reader = new IPCReader(memStream))

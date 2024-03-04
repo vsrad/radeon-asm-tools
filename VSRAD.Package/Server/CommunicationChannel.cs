@@ -136,6 +136,7 @@ namespace VSRAD.Package.Server
             }
             catch (Exception e) when (!(e is UnsupportedServerVersionException || e is UnsupportedExtensionVersionException))
             {
+                ForceDisconnect(); // At this point, the stream may be corrupted while we are still connected (e.g. in case of EndOfStreamException), so close the connection first
                 if (tryReconnect)
                 {
                     await _outputWindowWriter.PrintMessageAsync($"Connection to {ConnectionOptions} lost, attempting to reconnect...").ConfigureAwait(false);
@@ -143,9 +144,8 @@ namespace VSRAD.Package.Server
                 }
                 else
                 {
-                    ForceDisconnect();
                     await _outputWindowWriter.PrintMessageAsync($"Could not reconnect to {ConnectionOptions}").ConfigureAwait(false);
-                    throw new Exception($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
+                    throw new UserException($"Connection to {ConnectionOptions} has been terminated: {e.Message}");
                 }
             }
         }
